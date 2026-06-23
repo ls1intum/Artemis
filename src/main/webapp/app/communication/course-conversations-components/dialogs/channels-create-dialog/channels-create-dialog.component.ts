@@ -1,11 +1,11 @@
-import { Component, Input } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ChannelFormData, ChannelType } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ChannelFormComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-channels-create-dialog',
@@ -13,27 +13,27 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, ChannelFormComponent, ArtemisTranslatePipe],
 })
 export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
-    @Input() course: Course;
+    course = signal<Course | undefined>(undefined);
 
     initialize() {
         super.initialize(['course']);
     }
 
     channelToCreate: ChannelDTO = new ChannelDTO();
-    isPublicChannel = true;
-    isAnnouncementChannel = false;
-    isCourseWideChannel = false;
+    readonly isPublicChannel = signal<boolean>(true);
+    readonly isAnnouncementChannel = signal<boolean>(false);
+    readonly isCourseWideChannel = signal<boolean>(false);
 
     onChannelTypeChanged($event: ChannelType) {
-        this.isPublicChannel = $event === 'PUBLIC';
+        this.isPublicChannel.set($event === 'PUBLIC');
     }
 
     onIsAnnouncementChannelChanged($event: boolean) {
-        this.isAnnouncementChannel = $event;
+        this.isAnnouncementChannel.set($event);
     }
 
     onIsCourseWideChannelChanged($event: boolean) {
-        this.isCourseWideChannel = $event;
+        this.isCourseWideChannel.set($event);
     }
 
     onFormSubmitted($event: ChannelFormData) {

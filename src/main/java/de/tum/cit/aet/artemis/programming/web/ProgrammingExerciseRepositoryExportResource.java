@@ -35,13 +35,13 @@ import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
 
 /**
  * REST resource exposing repository export endpoints for programming exercises.
@@ -113,15 +113,20 @@ public class ProgrammingExerciseRepositoryExportResource {
     /**
      * GET /programming-exercises/:exerciseId/export-instructor-auxiliary-repository/:repositoryType : sends an auxiliary repository as a zip file
      *
-     * @param exerciseId   The id of the programming exercise
-     * @param repositoryId The id of the auxiliary repository
+     * @param exerciseId        The id of the programming exercise
+     * @param repositoryIdQuery The id of the auxiliary repository (provided as a query parameter; preferred)
+     * @param repositoryIdPath  The id of the auxiliary repository (provided as a legacy path variable; deprecated)
      * @return ResponseEntity with status
      * @throws IOException if something during the zip process went wrong
      */
-    @GetMapping("programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}")
+    @GetMapping({ "programming-exercises/{exerciseId}/export-instructor-auxiliary-repository",
+            "programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}" })
     @EnforceAtLeastTutorInExercise(resourceIdFieldName = "exerciseId")
     @FeatureToggle(Feature.Exports)
-    public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
+    public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId,
+            @RequestParam(name = "repositoryId", required = false) Long repositoryIdQuery, @PathVariable(name = "repositoryId", required = false) Long repositoryIdPath)
+            throws IOException {
+        long repositoryId = repositoryIdQuery != null ? repositoryIdQuery : (repositoryIdPath != null ? repositoryIdPath : -1L);
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
@@ -130,7 +135,7 @@ public class ProgrammingExerciseRepositoryExportResource {
         long start = System.nanoTime();
 
         if (auxiliaryRepository.getVcsRepositoryUri() == null) {
-            return ResponseEntity.unprocessableEntity()
+            return ResponseEntity.unprocessableContent()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "repositoryNotConfigured", "The auxiliary repository is not configured correctly."))
                     .body(null);
         }
@@ -199,15 +204,18 @@ public class ProgrammingExerciseRepositoryExportResource {
     /**
      * GET /programming-exercises/:exerciseId/export-student-repository/:participationId : Exports the repository belonging to a participation as a zip file.
      *
-     * @param exerciseId      The id of the programming exercise
-     * @param participationId The id of the student participation for which to export the repository.
+     * @param exerciseId           The id of the programming exercise
+     * @param participationIdQuery The id of the student participation for which to export the repository. (provided as a query parameter; preferred)
+     * @param participationIdPath  The id of the student participation for which to export the repository. (provided as a legacy path variable; deprecated)
      * @return A ResponseEntity containing the zipped repository.
      * @throws IOException If the repository could not be zipped.
      */
-    @GetMapping("programming-exercises/{exerciseId}/export-student-repository/{participationId}")
+    @GetMapping({ "programming-exercises/{exerciseId}/export-student-repository", "programming-exercises/{exerciseId}/export-student-repository/{participationId}" })
     @EnforceAtLeastStudentInExercise(resourceIdFieldName = "exerciseId")
     @FeatureToggle(Feature.Exports)
-    public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
+    public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @RequestParam(name = "participationId", required = false) Long participationIdQuery,
+            @PathVariable(name = "participationId", required = false) Long participationIdPath) throws IOException {
+        long participationId = participationIdQuery != null ? participationIdQuery : (participationIdPath != null ? participationIdPath : -1L);
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
                 .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()

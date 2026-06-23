@@ -5,7 +5,6 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
@@ -31,12 +32,10 @@ import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -44,9 +43,9 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentTest {
+class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "cscservicetest";
 
@@ -307,14 +306,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         Set<ExerciseCourseScoreDTO> courseExercises = course.getExercises().stream().map(ExerciseCourseScoreDTO::from).collect(Collectors.toSet());
-        StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), Collections.emptyList(),
-                new MaxAndReachablePointsDTO(100.00, 100.00, 0.0), Collections.emptyList(), courseExercises);
+        StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), List.of(),
+                new MaxAndReachablePointsDTO(100.00, 100.00, 0.0), List.of(), courseExercises);
         assertThat(studentScore.absoluteScore()).isZero();
         assertThat(studentScore.relativeScore()).isZero();
         assertThat(studentScore.currentRelativeScore()).isZero();
         assertThat(studentScore.presentationScore()).isZero();
 
-        PlagiarismVerdict mostSeverePlagiarismVerdict = courseScoreCalculationService.findMostServerePlagiarismVerdict(Collections.emptyList());
+        PlagiarismVerdict mostSeverePlagiarismVerdict = courseScoreCalculationService.findMostServerePlagiarismVerdict(List.of());
         assertThat(mostSeverePlagiarismVerdict).isNull();
         boolean presentationScorePassed = courseScoreCalculationService.isPresentationScoreSufficientForBonus(studentScore.presentationScore(), course.getPresentationScore());
         assertThat(presentationScorePassed).isFalse();

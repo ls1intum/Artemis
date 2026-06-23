@@ -1,9 +1,9 @@
-import { Component, effect, inject, input } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { Component, effect, inject, input, signal } from '@angular/core';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CompetencyContributionCardComponent } from 'app/atlas/shared/competency-contribution/competency-contribution-card/competency-contribution-card.component';
@@ -25,18 +25,21 @@ export class CompetencyContributionComponent {
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
 
-    atlasEnabled = false;
-    competencies: CompetencyContributionCardDTO[] = [];
+    // `competencies` is assigned inside an async HTTP subscribe; both fields are read in the template,
+    // so they must be signals to render under zoneless change detection.
+    readonly atlasEnabled = signal(false);
+    readonly competencies = signal<CompetencyContributionCardDTO[]>([]);
 
     constructor() {
         effect(() => this.loadData());
     }
 
     private loadData(): void {
-        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+        const atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+        this.atlasEnabled.set(atlasEnabled);
 
         // we can return early if atlas is not enabled
-        if (!this.atlasEnabled) {
+        if (!atlasEnabled) {
             return;
         }
 
@@ -48,7 +51,7 @@ export class CompetencyContributionComponent {
         }
         observable.subscribe({
             next: (res) => {
-                this.competencies = res.body ?? [];
+                this.competencies.set(res.body ?? []);
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });

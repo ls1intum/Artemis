@@ -1,11 +1,15 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Structured Grading Criteria Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: StructuredGradingCriterionService;
     let httpMock: HttpTestingController;
     let feedbacks: Feedback[];
@@ -19,18 +23,18 @@ describe('Structured Grading Criteria Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should calculate the total score', fakeAsync(() => {
+        it('should calculate the total score', () => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();
             limitedSGI.id = 1;
             limitedSGI.credits = 1.0;
             limitedSGI.usageCount = 1;
             const unlimitedSGI = new GradingInstruction();
-            limitedSGI.id = 2;
+            unlimitedSGI.id = 2;
             unlimitedSGI.credits = 1.0;
             unlimitedSGI.usageCount = 0;
             const bigLimitSGI = new GradingInstruction();
-            limitedSGI.id = 3;
+            bigLimitSGI.id = 3;
             bigLimitSGI.credits = 1.0;
             bigLimitSGI.usageCount = 3;
 
@@ -45,20 +49,19 @@ describe('Structured Grading Criteria Service', () => {
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
             expect(totalScore).toBe(5.0);
-            tick();
-        }));
-        it('should calculate the total score too', fakeAsync(() => {
+        });
+        it('should calculate the total score too', () => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();
             limitedSGI.id = 1;
             limitedSGI.credits = 1.5;
             limitedSGI.usageCount = 1;
             const unlimitedSGI = new GradingInstruction();
-            limitedSGI.id = 2;
+            unlimitedSGI.id = 2;
             unlimitedSGI.credits = -0.5;
             unlimitedSGI.usageCount = 0;
             const bigLimitSGI = new GradingInstruction();
-            limitedSGI.id = 3;
+            bigLimitSGI.id = 3;
             bigLimitSGI.credits = 1.0;
             bigLimitSGI.usageCount = 3;
 
@@ -73,8 +76,7 @@ describe('Structured Grading Criteria Service', () => {
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
             expect(totalScore).toBe(2.5);
-            tick();
-        }));
+        });
     });
 
     afterEach(() => {

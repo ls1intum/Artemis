@@ -19,8 +19,6 @@ import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -30,15 +28,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 
 @Entity
 @Table(name = "exam")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Exam extends DomainObject {
 
@@ -144,12 +141,12 @@ public class Exam extends DomainObject {
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @OrderColumn(name = "exercise_group_order")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "exam", allowSetters = true)
     private List<ExerciseGroup> exerciseGroups = new ArrayList<>();
 
+    // No @Cache on studentExams / examUsers / examRoomExamAssignments: all grow / are mutated during exam registration and prep while conduction monitoring reads
+    // them concurrently; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exam")
     private Set<StudentExam> studentExams = new HashSet<>();
 
@@ -157,12 +154,10 @@ public class Exam extends DomainObject {
     private String examArchivePath;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exam")
     private Set<ExamUser> examUsers = new HashSet<>();
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference("examRoomExamAssignments_exam")
     private Set<ExamRoomExamAssignment> examRoomExamAssignments = new HashSet<>();
 
@@ -531,9 +526,19 @@ public class Exam extends DomainObject {
         this.quizExamMaxPoints = quizExamMaxPoints;
     }
 
+    /**
+     * Returns the exam title in a form that is safe to use in file or directory names.
+     *
+     * @return the sanitized exam title, or a stable unique fallback if the title has no ASCII representation
+     */
     @JsonIgnore
     public String getSanitizedExamTitle() {
-        // exam titles are non-nullable
-        return StringUtil.sanitizeStringForFileName(this.title);
+        // exam titles are non-nullable, but may sanitize to an empty string when they consist only of non-ASCII letters
+        // (sanitizeStringForFileName reduces the input to ASCII). Fall back to a stable, unique name in that case.
+        String sanitizedTitle = this.title == null ? "" : StringUtil.sanitizeStringForFileName(this.title);
+        if (sanitizedTitle.isBlank()) {
+            return getId() != null ? "exam_" + getId() : "exam";
+        }
+        return sanitizedTitle;
     }
 }

@@ -1,51 +1,39 @@
 name: Deploy Documentation to GitHub Pages
 
+# Manual redeploy of the docs site. The AUTOMATIC develop-push deploy now lives in ci.yml's
+# `deploy-docs` job; this file is the `workflow_dispatch` fallback for republishing without a code
+# change (e.g. after a failed deploy or a Pages settings change). Both deploy paths reuse
+# ci-docs.yml's build and share the `pages` concurrency group, so a manual redeploy and an
+# automatic deploy never run at the same time.
+
 on:
-  push:
-    branches: [develop]
-    paths:
-      - 'documentation/**'
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
-  group: 'pages'
+  group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-
-      - name: Install dependencies
-        working-directory: documentation
-        run: npm install
-
-      - name: Build Docusaurus site
-        working-directory: documentation
-        run: npm run build
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v4
-        with:
-          path: documentation/build
+  docs:
+    uses: ./.github/workflows/ci-docs.yml
+    permissions:
+      contents: read
+    with:
+      upload_pages_artifact: true
 
   deploy:
-    needs: build
+    needs: docs
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

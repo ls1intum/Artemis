@@ -8,9 +8,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -23,7 +20,6 @@ import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
  */
 @Entity
 @Table(name = "static_code_analysis_category")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StaticCodeAnalysisCategory extends DomainObject {
 

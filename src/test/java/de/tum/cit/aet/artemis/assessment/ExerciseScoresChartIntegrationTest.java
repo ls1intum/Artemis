@@ -14,21 +14,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "exercisescoreschart";
 
@@ -126,6 +126,6 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     private String getEndpointUrl(long courseId) {
-        return String.format("/api/exercise/courses/%d/charts/exercise-scores", courseId);
+        return "/api/exercise/courses/%d/charts/exercise-scores".formatted(courseId);
     }
 }

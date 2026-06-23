@@ -1,19 +1,19 @@
-import { AfterViewInit, Component, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { BuildPlanService } from 'app/programming/manage/services/build-plan.service';
 import { BuildPlan } from 'app/programming/shared/entities/build-plan.model';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-build-plan-editor',
@@ -32,21 +32,20 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     readonly faCircleNotch = faCircleNotch;
     readonly farPlayCircle = faPlayCircle;
 
-    @ViewChild('editor', { static: true })
-    editor: MonacoEditorComponent;
-    isLoading = false;
+    readonly editor = viewChild.required<MonacoEditorComponent>('editor');
+    readonly isLoading = signal(false);
 
-    loadingResults = true;
+    readonly loadingResults = signal(true);
     exerciseId: number;
-    programmingExercise: ProgrammingExercise;
-    buildPlan: BuildPlan | undefined;
+    readonly programmingExercise = signal<ProgrammingExercise | undefined>(undefined);
+    readonly buildPlan = signal<BuildPlan | undefined>(undefined);
 
     /**
      * Sets the exercise and corresponding build plan based on the exerciseId in the current URL.
      */
     ngOnInit(): void {
         this.activatedRoute.data.subscribe(({ exercise }) => {
-            this.programmingExercise = exercise;
+            this.programmingExercise.set(exercise);
             this.loadSolutionAndTemplateParticipation();
         });
     }
@@ -59,11 +58,11 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     }
 
     private loadSolutionAndTemplateParticipation() {
-        this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(this.programmingExercise.id!).subscribe((response) => {
-            this.programmingExercise = response.body!;
-            this.exerciseId = this.programmingExercise.id!;
+        this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(this.programmingExercise()!.id!).subscribe((response) => {
+            this.programmingExercise.set(response.body!);
+            this.exerciseId = this.programmingExercise()!.id!;
 
-            this.loadingResults = false;
+            this.loadingResults.set(false);
         });
     }
 
@@ -71,16 +70,16 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
      * Fetches the requested file by filename and opens a new editor session for it (if not yet done)
      */
     private loadBuildPlan(exerciseId: number) {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.buildPlanService.getBuildPlan(exerciseId).subscribe({
             next: (buildPlan) => {
-                this.buildPlan = buildPlan.body!;
+                this.buildPlan.set(buildPlan.body!);
                 this.initEditor();
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
             error: (error) => {
-                this.buildPlan = undefined;
-                this.isLoading = false;
+                this.buildPlan.set(undefined);
+                this.isLoading.set(false);
 
                 if (error.status == 404) {
                     this.alertService.error('artemisApp.programmingExercise.buildPlanFetchError');
@@ -93,12 +92,12 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
 
     private initEditor() {
         this.onBuildPlanUpdate();
-        this.editor.layout();
+        this.editor().layout();
     }
 
     private onBuildPlanUpdate() {
-        const text = this.buildPlan?.buildPlan ?? '';
-        this.editor.setText(text);
+        const text = this.buildPlan()?.buildPlan ?? '';
+        this.editor().setText(text);
     }
 
     /**
@@ -106,12 +105,12 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
      * currently loaded.
      */
     submit() {
-        if (!this.buildPlan) {
+        if (!this.buildPlan()) {
             return;
         }
 
-        this.buildPlanService.putBuildPlan(this.exerciseId, this.buildPlan).subscribe((buildPlan) => {
-            this.buildPlan = buildPlan.body!;
+        this.buildPlanService.putBuildPlan(this.exerciseId, this.buildPlan()!).subscribe((buildPlan) => {
+            this.buildPlan.set(buildPlan.body!);
             this.onBuildPlanUpdate();
         });
     }
@@ -121,7 +120,7 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
      * @param event The text inside the editor window.
      */
     onTextChanged(event: { text: string; fileName: string }) {
-        this.buildPlan!.buildPlan = event.text;
+        this.buildPlan()!.buildPlan = event.text;
     }
 
     /**
@@ -129,6 +128,6 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
      * @param tabSize The new tab size.
      */
     updateTabSize(tabSize: number) {
-        this.editor.updateModelIndentationSize(tabSize);
+        this.editor().updateModelIndentationSize(tabSize);
     }
 }

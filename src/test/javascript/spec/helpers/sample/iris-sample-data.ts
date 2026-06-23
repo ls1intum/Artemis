@@ -2,6 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
@@ -57,27 +58,58 @@ export const mockClientMessageWithMemories = {
     createdMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
 } as IrisUserMessage;
 
-export const mockWebsocketServerMessage = {
+// Wire-format message DTOs for WebSocket payloads (mirrors server IrisMessageResponseDTO)
+const mockServerMessageDTO: IrisMessageResponseDTO = {
+    sender: IrisSender.LLM,
+    id: 4,
+    content: [{ type: 'text', textContent: 'Hello, world!' }],
+    sentAt: dayjs().toISOString(),
+};
+
+const mockServerMessageWithMemoriesDTO: IrisMessageResponseDTO = {
+    sender: IrisSender.LLM,
+    id: 3,
+    content: [{ type: 'text', textContent: 'Hello, world!' }],
+    sentAt: dayjs().toISOString(),
+    accessedMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
+};
+
+const mockClientMessageDTO: IrisMessageResponseDTO = {
+    id: 2,
+    sender: IrisSender.USER,
+    content: [{ type: 'text', textContent: 'Hello, world!' }],
+    sentAt: dayjs().toISOString(),
+};
+
+const mockClientMessageWithMemoriesDTO: IrisMessageResponseDTO = {
+    id: 5,
+    sender: IrisSender.USER,
+    content: [{ type: 'text', textContent: 'Hello, world!' }],
+    sentAt: dayjs().toISOString(),
+    createdMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
+};
+
+export const mockWebsocketServerMessage: IrisChatWebsocketDTO = {
     type: IrisChatWebsocketPayloadType.MESSAGE,
-    message: mockServerMessage2,
+    message: mockServerMessageDTO,
     stages: [],
-} as IrisChatWebsocketDTO;
+};
 
-export const mockWebsocketServerMessageWithMemories = {
+export const mockWebsocketServerMessageWithMemories: IrisChatWebsocketDTO = {
     type: IrisChatWebsocketPayloadType.MESSAGE,
-    message: mockServerMessageWithMemories,
+    message: mockServerMessageWithMemoriesDTO,
     stages: [],
-} as IrisChatWebsocketDTO;
+};
 
-export const mockWebsocketClientMessage = {
+export const mockWebsocketClientMessage: IrisChatWebsocketDTO = {
     type: IrisChatWebsocketPayloadType.MESSAGE,
-    message: mockClientMessage,
-} as IrisChatWebsocketDTO;
+    message: mockClientMessageDTO,
+};
 
-export const mockWebsocketClientMessageWithMemories = {
+export const mockWebsocketClientMessageWithMemories: IrisChatWebsocketDTO = {
     type: IrisChatWebsocketPayloadType.MESSAGE,
-    message: mockClientMessageWithMemories,
-} as IrisChatWebsocketDTO;
+    message: mockClientMessageWithMemoriesDTO,
+};
 
 export const mockWebsocketStatusMessage = {
     type: IrisChatWebsocketPayloadType.STATUS,
@@ -106,19 +138,19 @@ export const mockWebsocketStatusMessageWithInteralStage = {
 
 export const mockConversation = {
     id: 1,
-    exercise: irisExercise,
     messages: [mockClientMessage, mockServerMessage],
-    chatMode: ChatServiceMode.COURSE,
+    mode: ChatServiceMode.COURSE,
     entityId: 1,
+    userId: 1,
     creationDate: new Date(),
 } as IrisSession;
 
 export const mockConversationWithNoMessages = {
     id: 1,
-    exercise: irisExercise,
     messages: [],
-    chatMode: ChatServiceMode.COURSE,
+    mode: ChatServiceMode.COURSE,
     entityId: 1,
+    userId: 1,
     creationDate: new Date(),
 } as IrisSession;
 

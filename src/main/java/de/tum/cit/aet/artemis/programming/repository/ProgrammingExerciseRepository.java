@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
@@ -24,11 +25,11 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.DynamicSpecificationRepository;
 import de.tum.cit.aet.artemis.core.repository.base.FetchOptions;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -83,6 +84,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndBuildConfigById(long exerciseId);
 
+    @Query("SELECT COALESCE(bc.timeoutSeconds, 0) FROM ProgrammingExercise pe LEFT JOIN pe.buildConfig bc WHERE pe.id = :exerciseId")
+    Optional<Integer> findBuildTimeoutSecondsByExerciseId(@Param("exerciseId") long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
             "auxiliaryRepositories", "plagiarismDetectionConfig", "templateParticipation", "solutionParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findForCreationById(long exerciseId);
@@ -93,11 +97,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "competencyLinks.competency", "buildConfig", "categories" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "competencyLinks.competency", "buildConfig",
+            "categories", "plagiarismDetectionConfig", "gradingCriteria", "gradingCriteria.structuredGradingInstructions", "exampleSubmissions" })
     Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = "buildConfig")
+    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     List<ProgrammingExercise> findAllByProjectKey(String projectKey);
 
@@ -377,9 +385,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.solutionParticipation
                 LEFT JOIN FETCH p.auxiliaryRepositories
                 LEFT JOIN FETCH p.buildConfig
+                LEFT JOIN FETCH p.categories
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(
+    Optional<ProgrammingExercise> findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigCategories(
             @Param("exerciseId") long exerciseId);
 
     @Query("""
@@ -624,6 +633,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE e.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT e
+            FROM ProgrammingExercise e
+                LEFT JOIN FETCH e.gradingCriteria
+                LEFT JOIN FETCH e.exampleSubmissions
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdWithGradingCriteriaAndExampleSubmissions(@Param("exerciseId") long exerciseId);
+
+    default ProgrammingExercise findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithGradingCriteriaAndExampleSubmissions(exerciseId), exerciseId);
+    }
 
     @Query("""
             SELECT e
@@ -993,6 +1015,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             throw new BadRequestAlertException("The shortname is invalid", "Exercise", "shortnameInvalid");
         }
 
+        // Programming exercise short names are immutable after creation, so this check only applies to newly created or imported exercises.
+        // It guards against student repository URLs exceeding the participation.repository_url column / NAME_MAX limits.
+        if (programmingExercise.getShortName().length() > PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH) {
+            throw new BadRequestAlertException("The shortname must not exceed " + PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH + " characters", "Exercise",
+                    "programmingExerciseShortnameTooLong");
+        }
+
         // NOTE: we have to cover two cases here: exercises directly stored in the course and exercises indirectly stored in the course (exercise -> exerciseGroup -> exam ->
         // course)
         long numberOfProgrammingExercisesWithSameShortName = countByShortNameAndCourse(programmingExercise.getShortName(), course)
@@ -1099,5 +1128,16 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     default ProgrammingExercise findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithTemplateParticipationAndLatestSubmissionById(exerciseId), exerciseId);
+    }
+
+    /**
+     * Find a programming exercise by its id, including its build config, and throw an Exception if it cannot be found.
+     *
+     * @param exerciseId of the programming exercise.
+     * @return The programming exercise with the associated build config related to the given id.
+     * @throws EntityNotFoundException if the programming exercise with the given id cannot be found.
+     */
+    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithBuildConfigById(exerciseId), exerciseId);
     }
 }

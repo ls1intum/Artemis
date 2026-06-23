@@ -7,14 +7,13 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.NonNull;
 import org.springframework.util.ResourceUtils;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseFactory;
@@ -114,9 +113,9 @@ public class QuizExerciseFactory {
      * @param quizExercise The quiz to which questions should be added.
      */
     public static void addQuestionsToQuizExercise(QuizExercise quizExercise) {
-        quizExercise.addQuestions(createMultipleChoiceQuestion());
-        quizExercise.addQuestions(createDragAndDropQuestion());
-        quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.addQuestion(createMultipleChoiceQuestion());
+        quizExercise.addQuestion(createDragAndDropQuestion());
+        quizExercise.addQuestion(createShortAnswerQuestion());
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
     }
@@ -136,16 +135,12 @@ public class QuizExerciseFactory {
         sa.setSimilarityValue(100);
 
         var shortAnswerSpot1 = new ShortAnswerSpot().spotNr(0).width(1);
-        shortAnswerSpot1.setTempID(generateTempId());
         var shortAnswerSpot2 = new ShortAnswerSpot().spotNr(2).width(2);
-        shortAnswerSpot2.setTempID(generateTempId());
-        sa.getSpots().add(shortAnswerSpot1);
-        sa.getSpots().add(shortAnswerSpot2);
+        sa.addSpot(shortAnswerSpot1);
+        sa.addSpot(shortAnswerSpot2);
 
         var shortAnswerSolution1 = new ShortAnswerSolution().text("is");
-        shortAnswerSolution1.setTempID(generateTempId());
         var shortAnswerSolution2 = new ShortAnswerSolution().text("long");
-        shortAnswerSolution2.setTempID(generateTempId());
         sa.addSolution(shortAnswerSolution1);
         // also invoke remove once
         sa.removeSolution(shortAnswerSolution1);
@@ -179,13 +174,9 @@ public class QuizExerciseFactory {
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
 
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
-        dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
-        dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
-        dropLocation3.setTempID(generateTempId());
         var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
-        dropLocation4.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
@@ -195,13 +186,9 @@ public class QuizExerciseFactory {
         dnd.addDropLocation(dropLocation4);
 
         var dragItem1 = new DragItem().text("D1");
-        dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage2.png");
-        dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
-        dragItem3.setTempID(generateTempId());
         var dragItem4 = new DragItem().pictureFilePath(DRAG_ITEM_PATH_PREFIX + "dragItemImage4.png");
-        dragItem4.setTempID(generateTempId());
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
@@ -232,15 +219,6 @@ public class QuizExerciseFactory {
     }
 
     /**
-     * Generates a temporary id for a quiz exercise using ThreadLocalRandom.
-     *
-     * @return The generated temporary id.
-     */
-    public static Long generateTempId() {
-        return ThreadLocalRandom.current().nextLong(Long.MAX_VALUE);
-    }
-
-    /**
      * Creates a multiple choice question with score 4 and 2 different answer options. One answer is correct and the other one incorrect.
      * The scoring type of the question is all or nothing.
      *
@@ -250,8 +228,8 @@ public class QuizExerciseFactory {
     public static MultipleChoiceQuestion createMultipleChoiceQuestion() {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
-        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.addAnswerOption(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.addAnswerOption(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         mc.setExplanation("Explanation");
         mc.setRandomizeOrder(true);
 
@@ -441,10 +419,10 @@ public class QuizExerciseFactory {
      * @param quizExercise The quiz to which questions should be added.
      */
     public static void addAllQuestionTypesToQuizExercise(QuizExercise quizExercise) {
-        quizExercise.addQuestions(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
-        quizExercise.addQuestions(createDragAndDropQuestionWithAllTypesOfMappings());
-        quizExercise.addQuestions(createShortAnswerQuestionWithRealisticText());
-        quizExercise.addQuestions(createSingleChoiceQuestion());
+        quizExercise.addQuestion(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quizExercise.addQuestion(createDragAndDropQuestionWithAllTypesOfMappings());
+        quizExercise.addQuestion(createShortAnswerQuestionWithRealisticText());
+        quizExercise.addQuestion(createSingleChoiceQuestion());
     }
 
     /**
@@ -470,16 +448,11 @@ public class QuizExerciseFactory {
         dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
 
         var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
-        dropLocation1.setTempID(generateTempId());
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
-        dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
         dropLocation3.setInvalid(true);
-        dropLocation3.setTempID(generateTempId());
         var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
-        dropLocation4.setTempID(generateTempId());
         var dropLocation5 = new DropLocation().posX(50d).posY(50d).height(10d).width(10d);
-        dropLocation5.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
@@ -490,13 +463,9 @@ public class QuizExerciseFactory {
         dnd.addDropLocation(dropLocation5);
 
         var dragItem1 = new DragItem().text("D1");
-        dragItem1.setTempID(generateTempId());
         var dragItem2 = new DragItem().text("D2");
-        dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
-        dragItem3.setTempID(generateTempId());
         var dragItem4 = new DragItem().text("invalid drag item");
-        dragItem4.setTempID(generateTempId());
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"),
                     FilePathConverter.getDragItemFilePath().resolve("10").resolve("drag_item.jpg").toFile());

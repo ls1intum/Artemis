@@ -1,13 +1,13 @@
 <div>
-    @if (exercise?.studentParticipations?.length && exercise?.studentParticipations?.[0]?.id) {
+    @if (exercise()?.studentParticipations?.length && exercise()?.studentParticipations?.[0]?.id) {
         <jhi-modeling-submission
-            [participationId]="exercise.studentParticipations![0].id"
+            [participationId]="exercise().studentParticipations![0].id"
             [displayHeader]="false"
-            [isPrinting]="isPrinting"
-            [expandProblemStatement]="expandProblemStatement"
-            [inputExercise]="isAfterResultsArePublished ? undefined : exercise"
-            [inputSubmission]="isAfterResultsArePublished ? undefined : submission"
-            [inputParticipation]="isAfterResultsArePublished ? undefined : exercise.studentParticipations![0]"
+            [isPrinting]="isPrinting()"
+            [expandProblemStatement]="expandProblemStatement()"
+            [inputExercise]="isAfterResultsArePublished() ? undefined : exercise()"
+            [inputSubmission]="isAfterResultsArePublished() ? undefined : submission()"
+            [inputParticipation]="isAfterResultsArePublished() ? undefined : exercise().studentParticipations![0]"
             [isExamSummary]="true"
         />
     } @else {

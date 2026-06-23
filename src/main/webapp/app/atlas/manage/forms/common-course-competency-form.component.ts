@@ -1,4 +1,4 @@
-import { Component, OnChanges, effect, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
@@ -6,12 +6,12 @@ import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription, merge } from 'rxjs';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     selector: 'jhi-common-course-competency-form',
@@ -29,7 +29,7 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
         MarkdownEditorMonacoComponent,
     ],
 })
-export class CommonCourseCompetencyFormComponent implements OnChanges {
+export class CommonCourseCompetencyFormComponent {
     private translateService = inject(TranslateService);
 
     formData = input.required<CourseCompetencyFormData>();
@@ -45,7 +45,7 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
     protected readonly competencyValidators = CourseCompetencyValidators;
     protected readonly DateTimePickerType = DateTimePickerType;
 
-    suggestedTaxonomies: string[] = [];
+    readonly suggestedTaxonomies = signal<string[]>([]);
 
     // Icons
     protected readonly faTimes = faTimes;
@@ -81,6 +81,12 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
     }
 
     constructor() {
+        // Patch the form with the provided data in edit mode (replaces ngOnChanges).
+        effect(() => {
+            if (this.isEditMode() && this.formData()) {
+                this.setFormValues(this.formData());
+            }
+        });
         effect((onCleanup) => {
             const titleCtrl = this.titleControl;
             const descCtrl = this.descriptionControl;
@@ -94,12 +100,6 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
         });
     }
 
-    ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData());
-        }
-    }
-
     private setFormValues(formData: CourseCompetencyFormData) {
         this.form().patchValue(formData);
     }
@@ -109,7 +109,7 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
      * Triggered after the user changes the title or description input field.
      */
     suggestTaxonomies() {
-        this.suggestedTaxonomies = [];
+        const suggestedTaxonomies: string[] = [];
         const title = this.titleControl?.value?.toLowerCase() ?? '';
         const description = this.descriptionControl?.value?.toLowerCase() ?? '';
         for (const taxonomy in this.competencyTaxonomy) {
@@ -117,8 +117,9 @@ export class CommonCourseCompetencyFormComponent implements OnChanges {
             const taxonomyName = this.translateService.instant('artemisApp.courseCompetency.taxonomies.' + taxonomy);
             keywords.push(taxonomyName);
             if (keywords.map((keyword: string) => keyword.toLowerCase()).some((keyword: string) => title.includes(keyword) || description.includes(keyword))) {
-                this.suggestedTaxonomies.push(taxonomyName);
+                suggestedTaxonomies.push(taxonomyName);
             }
         }
+        this.suggestedTaxonomies.set(suggestedTaxonomies);
     }
 }

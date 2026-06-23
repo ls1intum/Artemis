@@ -1,18 +1,18 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { User } from 'app/core/user/user.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { User } from 'app/account/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { UMLModel } from '@ls1intum/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import {
@@ -39,39 +39,44 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/submission/submission.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { SortService } from 'app/shared/service/sort.service';
-import { onError } from 'app/shared/util/global.utils';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { SortService } from 'app/foundation/service/sort.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { doughnutChartOptions } from 'app/shared-ui/chart/chart-options';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
-import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
 import { NgStyle } from '@angular/common';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard-information.component';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -87,7 +92,7 @@ export interface ExampleSubmissionQueryParams {
         HeaderExercisePageWithDetailsComponent,
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
-        PieChartModule,
+        ChartModule,
         SidePanelComponent,
         TranslateDirective,
         RouterLink,
@@ -131,55 +136,58 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    exercise: Exercise;
-    modelingExercise: ModelingExercise;
-    programmingExercise: ProgrammingExercise;
-    courseId: number;
-    exam?: Exam;
+    // Async-loaded, template-bound state — signals so writes schedule change detection under zoneless (no markForCheck).
+    readonly exercise = signal<Exercise>(undefined!);
+    readonly modelingExercise = signal<ModelingExercise>(undefined!);
+    readonly programmingExercise = signal<ProgrammingExercise>(undefined!);
+    readonly courseId = signal<number>(undefined!);
+    readonly exam = signal<Exam | undefined>(undefined);
     examId: number;
     exerciseGroupId: number;
-    isExamMode = false;
-    isTestRun = false;
-    isLoading = false;
+    readonly isExamMode = signal(false);
+    readonly isTestRun = signal<boolean>(false);
+    readonly isLoading = signal(false);
 
-    statsForDashboard = new StatsForDashboard();
+    readonly statsForDashboard = signal(new StatsForDashboard());
 
-    exerciseId: number;
-    numberOfTutorAssessments = 0;
-    numberOfSubmissions = new DueDateStat();
-    totalNumberOfAssessments = 0;
-    numberOfAutomaticAssistedAssessments = new DueDateStat();
-    numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
-    numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = [new DueDateStat()];
-    complaintsEnabled = false;
-    feedbackRequestEnabled = false;
-    tutorAssessmentPercentage = 0;
-    tutorParticipationStatus: TutorParticipationStatus;
-    assessedSubmissionsByRound: Map<number, Submission[]> = new Map<number, Submission[]>();
-    unassessedSubmissionByRound?: Map<number, Submission> = new Map<number, Submission>();
-    exampleSubmissionsToReview: ExampleSubmission[] = [];
-    exampleSubmissionsToAssess: ExampleSubmission[] = [];
-    exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
-    tutorParticipation: TutorParticipation;
-    nextExampleSubmissionId: number;
-    exampleSolutionModel: UMLModel;
-    complaints: Complaint[] = [];
-    submissionsWithMoreFeedbackRequests: SubmissionWithComplaintDTO[] = [];
-    submissionsWithComplaints: SubmissionWithComplaintDTO[] = [];
-    submissionLockLimitReached = false;
-    openingAssessmentEditorForNewSubmission = false;
-    secondCorrectionEnabled = false;
-    numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
+    readonly exerciseId = signal<number>(undefined!);
+    readonly numberOfTutorAssessments = signal(0);
+    readonly numberOfSubmissions = signal(new DueDateStat());
+    readonly totalNumberOfAssessments = signal(0);
+    readonly numberOfAutomaticAssistedAssessments = signal(new DueDateStat());
+    readonly numberOfAssessmentsOfCorrectionRounds = signal<DueDateStat[]>([new DueDateStat()]);
+    readonly numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = signal<DueDateStat[]>([new DueDateStat()]);
+    readonly complaintsEnabled = signal(false);
+    readonly feedbackRequestEnabled = signal(false);
+    readonly tutorAssessmentPercentage = signal(0);
+    readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
+    // Indexed by correction round (0, 1) — readonly so any in-place mutation is a compile error and updates go through .update() with a new array.
+    readonly assessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);
+    readonly unassessedSubmissionByRound = signal<readonly (Submission | undefined)[]>([]);
+    readonly exampleSubmissionsToReview = signal<ExampleSubmission[]>([]);
+    readonly exampleSubmissionsToAssess = signal<ExampleSubmission[]>([]);
+    readonly exampleSubmissionsCompletedByTutor = signal<ExampleSubmission[]>([]);
+    readonly tutorParticipation = signal<TutorParticipation>(undefined!);
+    readonly nextExampleSubmissionId = signal<number>(undefined!);
+    readonly exampleSolutionModel = signal<UMLModel>(undefined!);
+    readonly complaints = signal<Complaint[]>([]);
+    readonly submissionsWithMoreFeedbackRequests = signal<SubmissionWithComplaintDTO[]>([]);
+    readonly submissionsWithComplaints = signal<SubmissionWithComplaintDTO[]>([]);
+    readonly submissionLockLimitReached = signal(false);
+    readonly openingAssessmentEditorForNewSubmission = signal(false);
+    readonly secondCorrectionEnabled = signal(false);
+    readonly numberOfCorrectionRoundsEnabled = computed(() => (this.secondCorrectionEnabled() ? 2 : 1));
 
-    formattedGradingInstructions?: SafeHtml;
-    formattedProblemStatement?: SafeHtml;
-    formattedSampleSolution?: SafeHtml;
+    readonly formattedGradingInstructions = signal<SafeHtml | undefined>(undefined);
+    readonly formattedProblemStatement = signal<SafeHtml | undefined>(undefined);
+    readonly formattedSampleSolution = signal<SafeHtml | undefined>(undefined);
     getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
-    // helper variables to display information message about why no new assessments are possible anymore
+    // helper variables to display information message about why no new assessments are possible anymore.
+    // Computed synchronously in calculateAssessmentProgressInformation alongside statsForDashboard.set(), so they render on that signal's CD tick.
     lockedSubmissionsByOtherTutor: number[] = [];
     notYetAssessed: number[] = [];
-    firstRoundAssessments: number;
+    readonly firstRoundAssessments = signal<number>(undefined!);
 
     // attributes for sorting the tables
     sortPredicates = ['submissionDate', 'complaint.accepted', 'complaint.accepted'];
@@ -187,6 +195,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     readonly ExerciseType = ExerciseType;
 
+    // Mutated in place only within the getForTutors subscribe (alongside exercise.set()), so it renders on that signal's CD tick.
     stats = {
         toReview: {
             done: 0,
@@ -203,23 +212,32 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    tutor?: User;
-    togglingSecondCorrectionButton = false;
+    readonly tutor = signal<User | undefined>(undefined);
+    readonly togglingSecondCorrectionButton = signal(false);
 
-    complaintsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
-    moreFeedbackRequestsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
-    ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
+    readonly complaintsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
+    readonly moreFeedbackRequestsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
+    readonly ratingsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
 
-    // graph
-    view: [number, number] = [330, 150];
-    legendPosition = LegendPosition.Below;
-    assessments: any[];
-    customColors: any[];
-    isAutomaticAssessedProgrammingExercise = false;
+    // graph (rebuilt in setupGraph, which also runs on the async onLangChange — signals so the chart re-renders under zoneless)
+    private readonly chartEntries = signal<ChartSeriesEntry[]>([]);
+    // raw colors (CSS variable references), index-aligned with chartEntries; resolved theme-reactively below
+    private readonly rawChartColors = signal<string[]>([]);
+    private readonly resolvedChartColors = inject(ChartColorService).resolvedColors(() => this.rawChartColors());
 
-    // links
-    complaintsLink: any[];
-    moreFeedbackRequestsLink: any[];
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedChartColors()));
+    readonly chartOptions = computed(() =>
+        doughnutChartOptions({
+            arcWidth: 1,
+            legend: { position: 'bottom' },
+            tooltip: { label: (item) => `${((item.parsed * 100) / this.numberOfSubmissions().total).toFixed(2)}%` },
+        }),
+    );
+    readonly isAutomaticAssessedProgrammingExercise = signal(false);
+
+    // links (set in setupLinks alongside exercise.set() in the getForTutors subscribe)
+    readonly complaintsLink = signal<any[]>(undefined!);
+    readonly moreFeedbackRequestsLink = signal<any[]>(undefined!);
 
     // Icons
     faSpinner = faSpinner;
@@ -234,16 +252,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
      */
     ngOnInit(): void {
-        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.isTestRun = this.router.url.indexOf('test-assessment-dashboard') >= 0;
-        this.unassessedSubmissionByRound = new Map<number, Submission>();
+        this.exerciseId.set(Number(this.route.snapshot.paramMap.get('exerciseId')));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.isTestRun.set(this.router.url.indexOf('test-assessment-dashboard') >= 0);
+        this.unassessedSubmissionByRound.set([]);
 
         if (this.route.snapshot.paramMap.has('examId')) {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         }
 
-        this.tutor = this.accountService.userIdentity();
+        this.tutor.set(this.accountService.userIdentity());
 
         this.loadAll();
 
@@ -255,119 +273,118 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     setupGraph() {
         // If the programming exercise is assessed automatically but complaints are enabled, the term "unassessed submissions" might be misleading.
         // In this case, we only show open and resolved complaints
-        if (this.programmingExercise && this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC && this.programmingExercise.allowComplaintsForAutomaticAssessments) {
+        if (
+            this.programmingExercise() &&
+            this.programmingExercise().assessmentType === AssessmentType.AUTOMATIC &&
+            this.programmingExercise().allowComplaintsForAutomaticAssessments
+        ) {
             const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
             const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
-            this.isAutomaticAssessedProgrammingExercise = true;
-            this.customColors = [
-                { name: numberOfComplaintsLabel, value: GraphColors.YELLOW },
-                { name: numberOfResolvedComplaintsLabel, value: GraphColors.GREEN },
-            ];
-            this.assessments = [
+            this.isAutomaticAssessedProgrammingExercise.set(true);
+            this.rawChartColors.set([GraphColors.YELLOW, GraphColors.GREEN]);
+            this.chartEntries.set([
                 {
                     name: numberOfComplaintsLabel,
-                    value: this.statsForDashboard.numberOfOpenComplaints,
+                    value: this.statsForDashboard().numberOfOpenComplaints,
                 },
                 {
                     name: numberOfResolvedComplaintsLabel,
-                    value: this.statsForDashboard.numberOfComplaints - this.statsForDashboard.numberOfOpenComplaints,
+                    value: this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints,
                 },
-            ];
+            ]);
         } else {
             const numberOfUnassessedSubmissionLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
             const numberOfAutomaticAssistedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
             const numberOfManualAssessedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
-            this.customColors = [
-                { name: numberOfUnassessedSubmissionLabel, value: GraphColors.RED },
-                { name: numberOfManualAssessedSubmissionsLabel, value: GraphColors.BLUE },
-                { name: numberOfAutomaticAssistedSubmissionsLabel, value: GraphColors.YELLOW },
-            ];
-            this.assessments = [
+            this.rawChartColors.set([GraphColors.RED, GraphColors.BLUE, GraphColors.YELLOW]);
+            this.chartEntries.set([
                 {
                     name: numberOfUnassessedSubmissionLabel,
-                    value: this.numberOfSubmissions.total - this.totalNumberOfAssessments,
+                    value: this.numberOfSubmissions().total - this.totalNumberOfAssessments(),
                 },
                 {
                     name: numberOfManualAssessedSubmissionsLabel,
-                    value: this.totalNumberOfAssessments - this.numberOfAutomaticAssistedAssessments.total,
+                    value: this.totalNumberOfAssessments() - this.numberOfAutomaticAssistedAssessments().total,
                 },
                 {
                     name: numberOfAutomaticAssistedSubmissionsLabel,
-                    value: this.numberOfAutomaticAssistedAssessments.total,
+                    value: this.numberOfAutomaticAssistedAssessments().total,
                 },
-            ];
+            ]);
         }
     }
 
     setupLinks() {
-        this.complaintsLink = ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!, 'complaints'];
-        this.moreFeedbackRequestsLink = ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!, 'more-feedback-requests'];
+        this.complaintsLink.set(['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!, 'complaints']);
+        this.moreFeedbackRequestsLink.set(['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!, 'more-feedback-requests']);
     }
 
     /**
      * Loads all information from the server regarding this exercise that is needed for the tutor exercise dashboard
      */
     loadAll() {
-        this.exerciseService.getForTutors(this.exerciseId).subscribe({
+        this.exerciseService.getForTutors(this.exerciseId()).subscribe({
             next: (res: HttpResponse<Exercise>) => {
-                this.exercise = res.body!;
-                this.secondCorrectionEnabled = this.exercise.secondCorrectionEnabled;
-                this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
-                this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
-                this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
+                const exercise = res.body!;
+                this.exercise.set(exercise);
+                this.secondCorrectionEnabled.set(exercise.secondCorrectionEnabled);
+                this.formattedGradingInstructions.set(this.artemisMarkdown.safeHtmlForMarkdown(exercise.gradingInstructions));
+                this.formattedProblemStatement.set(this.artemisMarkdown.safeHtmlForMarkdown(exercise.problemStatement));
 
-                switch (this.exercise.type) {
+                switch (exercise.type) {
                     case ExerciseType.TEXT:
-                        const textExercise = this.exercise as TextExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(textExercise.exampleSolution);
+                        const textExercise = exercise as TextExercise;
+                        this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(textExercise.exampleSolution));
                         break;
                     case ExerciseType.MODELING:
-                        this.modelingExercise = this.exercise as ModelingExercise;
-                        if (this.modelingExercise.exampleSolutionModel) {
-                            this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.exampleSolutionExplanation);
-                            this.exampleSolutionModel = JSON.parse(this.modelingExercise.exampleSolutionModel);
+                        const modelingExercise = exercise as ModelingExercise;
+                        this.modelingExercise.set(modelingExercise);
+                        if (modelingExercise.exampleSolutionModel) {
+                            this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(modelingExercise.exampleSolutionExplanation));
+                            this.exampleSolutionModel.set(importDiagram(JSON.parse(modelingExercise.exampleSolutionModel)));
                         }
                         break;
                     case ExerciseType.FILE_UPLOAD:
-                        const fileUploadExercise = this.exercise as FileUploadExercise;
-                        this.formattedSampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution);
+                        const fileUploadExercise = exercise as FileUploadExercise;
+                        this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution));
                         break;
                     case ExerciseType.PROGRAMMING:
-                        this.programmingExercise = this.exercise as ProgrammingExercise;
+                        this.programmingExercise.set(exercise as ProgrammingExercise);
                         break;
                 }
 
-                this.tutorParticipation = this.exercise.tutorParticipations![0];
-                this.tutorParticipationStatus = this.tutorParticipation.status!;
-                if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
-                    this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
-                    this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
+                const tutorParticipation = exercise.tutorParticipations![0];
+                this.tutorParticipation.set(tutorParticipation);
+                this.tutorParticipationStatus.set(tutorParticipation.status!);
+                if (exercise.exampleSubmissions && exercise.exampleSubmissions.length > 0) {
+                    this.exampleSubmissionsToReview.set(exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial));
+                    this.exampleSubmissionsToAssess.set(exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial));
                 }
-                this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions || [];
+                this.exampleSubmissionsCompletedByTutor.set(tutorParticipation.trainedExampleSubmissions || []);
 
-                this.stats.toReview.total = this.exampleSubmissionsToReview.length;
-                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter((e) => !e.usedForTutorial).length;
-                this.stats.toAssess.total = this.exampleSubmissionsToAssess.length;
-                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter((e) => e.usedForTutorial).length;
+                this.stats.toReview.total = this.exampleSubmissionsToReview().length;
+                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor().filter((e) => !e.usedForTutorial).length;
+                this.stats.toAssess.total = this.exampleSubmissionsToAssess().length;
+                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor().filter((e) => e.usedForTutorial).length;
 
                 if (this.stats.toReview.done < this.stats.toReview.total) {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id!;
+                    this.nextExampleSubmissionId.set(this.exampleSubmissionsToReview()[this.stats.toReview.done].id!);
                 } else if (this.stats.toAssess.done < this.stats.toAssess.total) {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id!;
+                    this.nextExampleSubmissionId.set(this.exampleSubmissionsToAssess()[this.stats.toAssess.done].id!);
                 }
 
                 // exercise belongs to an exam
-                if (this.exercise?.exerciseGroup) {
-                    this.isExamMode = true;
-                    this.exam = this.exercise.exerciseGroup.exam;
-                    this.exerciseGroupId = this.exercise.exerciseGroup.id!;
-                    this.secondCorrectionEnabled = this.exercise.secondCorrectionEnabled;
+                if (exercise.exerciseGroup) {
+                    this.isExamMode.set(true);
+                    this.exam.set(exercise.exerciseGroup.exam);
+                    this.exerciseGroupId = exercise.exerciseGroup.id!;
+                    this.secondCorrectionEnabled.set(exercise.secondCorrectionEnabled);
                 }
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
                 // The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
-                const isAfterDueDate = !this.exercise.dueDate || this.exercise.dueDate.isBefore(dayjs());
-                if ((this.exercise.allowFeedbackRequests || isAfterDueDate) && !this.exercise.teamMode && !this.isTestRun) {
+                const isAfterDueDate = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
+                if ((exercise.allowFeedbackRequests || isAfterDueDate) && !exercise.teamMode && !this.isTestRun()) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
 
@@ -376,71 +393,81 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             error: (response: string) => this.onError(response),
         });
 
-        if (!this.isTestRun) {
-            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId).subscribe({
+        if (!this.isTestRun()) {
+            this.submissionService.getSubmissionsWithComplaintsForTutor(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
-                    this.submissionsWithComplaints = res.body || [];
+                    this.submissionsWithComplaints.set(res.body || []);
                     this.sortComplaintRows();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
-            this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId).subscribe({
+            this.submissionService.getSubmissionsWithMoreFeedbackRequestsForTutor(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<SubmissionWithComplaintDTO[]>) => {
-                    this.submissionsWithMoreFeedbackRequests = res.body || [];
+                    this.submissionsWithMoreFeedbackRequests.set(res.body || []);
                     this.sortMoreFeedbackRows();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
 
-            this.exerciseService.getStatsForTutors(this.exerciseId).subscribe({
+            this.exerciseService.getStatsForTutors(this.exerciseId()).subscribe({
                 next: (res: HttpResponse<StatsForDashboard>) => {
-                    this.statsForDashboard = StatsForDashboard.from(res.body!);
-                    this.numberOfSubmissions = this.statsForDashboard.numberOfSubmissions;
-                    this.totalNumberOfAssessments = this.statsForDashboard.totalNumberOfAssessments;
-                    this.numberOfAssessmentsOfCorrectionRounds = this.statsForDashboard.numberOfAssessmentsOfCorrectionRounds;
-                    this.numberOfAutomaticAssistedAssessments = this.statsForDashboard.numberOfAutomaticAssistedAssessments;
-                    this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = this.statsForDashboard.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
+                    this.statsForDashboard.set(StatsForDashboard.from(res.body!));
+                    this.numberOfSubmissions.set(this.statsForDashboard().numberOfSubmissions);
+                    this.totalNumberOfAssessments.set(this.statsForDashboard().totalNumberOfAssessments);
+                    this.numberOfAssessmentsOfCorrectionRounds.set(this.statsForDashboard().numberOfAssessmentsOfCorrectionRounds);
+                    this.numberOfAutomaticAssistedAssessments.set(this.statsForDashboard().numberOfAutomaticAssistedAssessments);
+                    this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound.set(this.statsForDashboard().numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
 
-                    const tutorLeaderboardEntry = this.statsForDashboard.tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor!.id);
-                    this.sortService.sortByProperty(this.statsForDashboard.tutorLeaderboardEntries, 'points', false);
+                    const tutorLeaderboardEntry = this.statsForDashboard().tutorLeaderboardEntries?.find((entry) => entry.userId === this.tutor()!.id);
+                    this.sortService.sortByProperty(this.statsForDashboard().tutorLeaderboardEntries, 'points', false);
 
                     // Prepare the table data for the side table
                     if (tutorLeaderboardEntry) {
-                        this.numberOfTutorAssessments = tutorLeaderboardEntry.numberOfAssessments;
-                        this.complaintsDashboardInfo = new AssessmentDashboardInformationEntry(
-                            this.statsForDashboard.numberOfComplaints,
-                            tutorLeaderboardEntry.numberOfTutorComplaints,
-                            this.statsForDashboard.numberOfComplaints - this.statsForDashboard.numberOfOpenComplaints,
+                        this.numberOfTutorAssessments.set(tutorLeaderboardEntry.numberOfAssessments);
+                        this.complaintsDashboardInfo.set(
+                            new AssessmentDashboardInformationEntry(
+                                this.statsForDashboard().numberOfComplaints,
+                                tutorLeaderboardEntry.numberOfTutorComplaints,
+                                this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints,
+                            ),
                         );
-                        this.moreFeedbackRequestsDashboardInfo = new AssessmentDashboardInformationEntry(
-                            this.statsForDashboard.numberOfMoreFeedbackRequests,
-                            tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests,
-                            this.statsForDashboard.numberOfMoreFeedbackRequests - this.statsForDashboard.numberOfOpenMoreFeedbackRequests,
+                        this.moreFeedbackRequestsDashboardInfo.set(
+                            new AssessmentDashboardInformationEntry(
+                                this.statsForDashboard().numberOfMoreFeedbackRequests,
+                                tutorLeaderboardEntry.numberOfTutorMoreFeedbackRequests,
+                                this.statsForDashboard().numberOfMoreFeedbackRequests - this.statsForDashboard().numberOfOpenMoreFeedbackRequests,
+                            ),
                         );
-                        this.ratingsDashboardInfo = new AssessmentDashboardInformationEntry(this.statsForDashboard.numberOfRatings, tutorLeaderboardEntry.numberOfTutorRatings);
+                        this.ratingsDashboardInfo.set(
+                            new AssessmentDashboardInformationEntry(this.statsForDashboard().numberOfRatings, tutorLeaderboardEntry.numberOfTutorRatings),
+                        );
                     } else {
-                        this.numberOfTutorAssessments = 0;
-                        this.complaintsDashboardInfo = new AssessmentDashboardInformationEntry(
-                            this.statsForDashboard.numberOfComplaints,
-                            0,
-                            this.statsForDashboard.numberOfComplaints - this.statsForDashboard.numberOfOpenComplaints,
+                        this.numberOfTutorAssessments.set(0);
+                        this.complaintsDashboardInfo.set(
+                            new AssessmentDashboardInformationEntry(
+                                this.statsForDashboard().numberOfComplaints,
+                                0,
+                                this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints,
+                            ),
                         );
-                        this.moreFeedbackRequestsDashboardInfo = new AssessmentDashboardInformationEntry(
-                            this.statsForDashboard.numberOfMoreFeedbackRequests,
-                            0,
-                            this.statsForDashboard.numberOfMoreFeedbackRequests - this.statsForDashboard.numberOfOpenMoreFeedbackRequests,
+                        this.moreFeedbackRequestsDashboardInfo.set(
+                            new AssessmentDashboardInformationEntry(
+                                this.statsForDashboard().numberOfMoreFeedbackRequests,
+                                0,
+                                this.statsForDashboard().numberOfMoreFeedbackRequests - this.statsForDashboard().numberOfOpenMoreFeedbackRequests,
+                            ),
                         );
-                        this.ratingsDashboardInfo = new AssessmentDashboardInformationEntry(this.statsForDashboard.numberOfRatings, 0);
+                        this.ratingsDashboardInfo.set(new AssessmentDashboardInformationEntry(this.statsForDashboard().numberOfRatings, 0));
                     }
 
-                    if (this.numberOfSubmissions.total > 0) {
-                        this.tutorAssessmentPercentage = Math.floor((this.numberOfTutorAssessments / this.numberOfSubmissions.total) * 100);
+                    if (this.numberOfSubmissions().total > 0) {
+                        this.tutorAssessmentPercentage.set(Math.floor((this.numberOfTutorAssessments() / this.numberOfSubmissions().total) * 100));
                     } else {
-                        this.tutorAssessmentPercentage = 100;
+                        this.tutorAssessmentPercentage.set(100);
                     }
-                    this.complaintsEnabled = this.statsForDashboard.complaintsEnabled;
-                    this.feedbackRequestEnabled = this.statsForDashboard.feedbackRequestEnabled;
+                    this.complaintsEnabled.set(this.statsForDashboard().complaintsEnabled);
+                    this.feedbackRequestEnabled.set(this.statsForDashboard().feedbackRequestEnabled);
                     this.calculateAssessmentProgressInformation();
 
                     this.setupGraph();
@@ -448,25 +475,28 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 error: (response: string) => this.onError(response),
             });
         } else {
-            this.complaintService.getComplaintsForTestRun(this.exerciseId).subscribe({
-                next: (res: HttpResponse<Complaint[]>) => (this.complaints = res.body as Complaint[]),
+            this.complaintService.getComplaintsForTestRun(this.exerciseId()).subscribe({
+                next: (res: HttpResponse<ComplaintDTO[]>) => {
+                    this.complaints.set(res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? []);
+                },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
         }
     }
 
     get yourStatusTitle(): string {
-        switch (this.tutorParticipationStatus) {
+        switch (this.tutorParticipationStatus()) {
             case TutorParticipationStatus.TRAINED:
                 // If we are in 'TRAINED' state, but never really "trained" on example submissions, display the
                 // 'REVIEWED_INSTRUCTIONS' state text instead.
-                if (!this.exercise.exampleSubmissions || this.exercise.exampleSubmissions.length === 0) {
+                const exampleSubmissions = this.exercise().exampleSubmissions;
+                if (!exampleSubmissions || exampleSubmissions.length === 0) {
                     return TutorParticipationStatus.REVIEWED_INSTRUCTIONS.toString();
                 }
 
                 return TutorParticipationStatus.TRAINED.toString();
             default:
-                return this.tutorParticipationStatus.toString();
+                return this.tutorParticipationStatus().toString();
         }
     }
 
@@ -482,8 +512,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * If not in examMode, correction rounds defaults to 0, as more than 1 is currently not supported.
      */
     private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
-        if (this.isExamMode) {
-            for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
+        if (this.isExamMode()) {
+            for (let i = 0; i < this.exam()!.numberOfCorrectionRoundsInExam!; i++) {
                 this.getAllTutorAssessedSubmissionsForCorrectionRound(i);
             }
         } else {
@@ -498,22 +528,22 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     private getAllTutorAssessedSubmissionsForCorrectionRound(correctionRound: number): void {
         let submissionsObservable: Observable<HttpResponse<Submission[]>> = of();
-        if (this.isTestRun) {
-            submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId);
+        if (this.isTestRun()) {
+            submissionsObservable = this.submissionService.getTestRunSubmissionsForExercise(this.exerciseId());
         } else {
             // TODO: This could be one generic endpoint.
-            switch (this.exercise.type) {
+            switch (this.exercise().type) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.textSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.textSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.MODELING:
-                    submissionsObservable = this.modelingSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.modelingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.fileUploadSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.fileUploadSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.PROGRAMMING:
-                    submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId(), { assessedByTutor: true }, correctionRound);
                     break;
             }
         }
@@ -535,7 +565,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         return submission;
                     });
 
-                this.assessedSubmissionsByRound.set(correctionRound, sub);
+                this.assessedSubmissionsByRound.update((rounds) => {
+                    const next = [...rounds];
+                    next[correctionRound] = sub;
+                    return next;
+                });
                 this.sortSubmissionRows(correctionRound);
             });
     }
@@ -560,9 +594,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * If not in examMode correction rounds defaults to 0.
      */
     private getSubmissionWithoutAssessmentForAllCorrectionRounds(): void {
-        if (this.isExamMode) {
-            for (let i = 0; i < this.exam!.numberOfCorrectionRoundsInExam!; i++) {
-                if (i <= this.numberOfCorrectionRoundsEnabled) {
+        if (this.isExamMode()) {
+            for (let i = 0; i < this.exam()!.numberOfCorrectionRoundsInExam!; i++) {
+                if (i <= this.numberOfCorrectionRoundsEnabled()) {
                     this.getSubmissionWithoutAssessmentForCorrectionRound(i);
                 }
             }
@@ -580,18 +614,18 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     private getSubmissionWithoutAssessmentForCorrectionRound(correctionRound: number): void {
         let submissionObservable: Observable<Submission | undefined> = of();
-        switch (this.exercise.type) {
+        switch (this.exercise().type) {
             case ExerciseType.TEXT:
-                submissionObservable = this.textSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, 'head', correctionRound);
+                submissionObservable = this.textSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), 'head', correctionRound);
                 break;
             case ExerciseType.MODELING:
-                submissionObservable = this.modelingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
+                submissionObservable = this.modelingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), undefined, correctionRound);
                 break;
             case ExerciseType.FILE_UPLOAD:
-                submissionObservable = this.fileUploadSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
+                submissionObservable = this.fileUploadSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), undefined, correctionRound);
                 break;
             case ExerciseType.PROGRAMMING:
-                submissionObservable = this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
+                submissionObservable = this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId(), undefined, correctionRound);
                 break;
         }
 
@@ -600,20 +634,26 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 if (!submission) {
                     // there are no unassessed submissions
                     // Delete this correction round, as we are done with all
-                    if (this.unassessedSubmissionByRound) {
-                        this.unassessedSubmissionByRound.delete(correctionRound);
-                    }
+                    this.unassessedSubmissionByRound.update((rounds) => {
+                        const next = [...rounds];
+                        next[correctionRound] = undefined;
+                        return next;
+                    });
                     return;
                 }
 
                 setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                this.unassessedSubmissionByRound!.set(correctionRound, submission);
+                this.unassessedSubmissionByRound.update((rounds) => {
+                    const next = [...rounds];
+                    next[correctionRound] = submission;
+                    return next;
+                });
 
-                this.submissionLockLimitReached = false;
+                this.submissionLockLimitReached.set(false);
             },
             error: (error: HttpErrorResponse) => {
                 if (error.error?.errorKey === 'lockedSubmissionsLimitReached') {
-                    this.submissionLockLimitReached = true;
+                    this.submissionLockLimitReached.set(true);
                 } else {
                     this.onError(error.error?.detail || error.message);
                 }
@@ -626,25 +666,25 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param correctionRound Round to check for unassessed submissions
      */
     showSubmissionsForRound(correctionRound: number): boolean {
-        const unassessedSubmissionExist = !!this.unassessedSubmissionByRound?.get(correctionRound)?.id;
-        const assessedSubmissionsExist = !!this.assessedSubmissionsByRound.get(correctionRound)?.length;
+        const unassessedSubmissionExist = !!this.unassessedSubmissionByRound()[correctionRound]?.id;
+        const assessedSubmissionsExist = !!this.assessedSubmissionsByRound()[correctionRound]?.length;
 
-        return (unassessedSubmissionExist || assessedSubmissionsExist) && !this.exercise.allowComplaintsForAutomaticAssessments;
+        return (unassessedSubmissionExist || assessedSubmissionsExist) && !this.exercise().allowComplaintsForAutomaticAssessments;
     }
 
     /**
      * Called after the tutor has read the instructions and creates a new tutor participation
      */
     readInstruction() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.tutorParticipationService
-            .create(this.exerciseId)
-            .pipe(finalize(() => (this.isLoading = false)))
+            .create(this.exerciseId())
+            .pipe(finalize(() => this.isLoading.set(false)))
             .subscribe({
                 next: (res: HttpResponse<TutorParticipationDTO>) => {
                     const dto = res.body!;
-                    this.tutorParticipation = dto;
-                    this.tutorParticipationStatus = dto.status!;
+                    this.tutorParticipation.set(dto);
+                    this.tutorParticipationStatus.set(dto.status!);
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,
@@ -656,7 +696,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param exampleSubmissionId Id of the example submission which to check for completion
      */
     hasBeenCompletedByTutor(exampleSubmissionId: number) {
-        return this.exampleSubmissionsCompletedByTutor.filter((exampleSubmission) => exampleSubmission.id === exampleSubmissionId).length > 0;
+        return this.exampleSubmissionsCompletedByTutor().filter((exampleSubmission) => exampleSubmission.id === exampleSubmissionId).length > 0;
     }
 
     private onError(error: string) {
@@ -680,10 +720,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param toComplete Flag whether the view should be opened in to-complete mode
      */
     openExampleSubmission(submissionId: number, readOnly?: boolean, toComplete?: boolean) {
-        if (!this.exercise?.type || !submissionId) {
+        if (!this.exercise()?.type || !submissionId) {
             return;
         }
-        const route = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/example-submissions/${submissionId}`;
+        const route = `/course-management/${this.courseId()}/${this.exercise().type}-exercises/${this.exercise().id}/example-submissions/${submissionId}`;
         // TODO CZ: add both flags and check for value in example submission components
         const queryParams: ExampleSubmissionQueryParams = {};
         if (readOnly) {
@@ -697,7 +737,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     isComplaintLocked(complaint: Complaint) {
-        return this.complaintService.isComplaintLockedForLoggedInUser(complaint, this.exercise);
+        return this.complaintService.isComplaintLockedForLoggedInUser(complaint, this.exercise());
     }
 
     /**
@@ -710,7 +750,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (submission !== 'new' && submission.participation) {
             participationId = submission.participation.id;
         }
-        return getLinkToSubmissionAssessment(this.exercise.type!, this.courseId, this.exerciseId, participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
+        return getLinkToSubmissionAssessment(this.exercise().type!, this.courseId(), this.exerciseId(), participationId, submissionUrlParameter, this.examId, this.exerciseGroupId);
     }
 
     /**
@@ -718,9 +758,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param correctionRound
      */
     getAssessmentQueryParams(correctionRound = 0): object {
-        if (this.isTestRun) {
+        if (this.isTestRun()) {
             return {
-                testRun: this.isTestRun,
+                testRun: this.isTestRun(),
                 'correction-round': correctionRound,
             };
         } else {
@@ -737,7 +777,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         const submission: Submission = complaint.result?.submission!;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
-            return this.getAssessmentQueryParams(this.numberOfAssessmentsOfCorrectionRounds.length - 1);
+            return this.getAssessmentQueryParams(this.numberOfAssessmentsOfCorrectionRounds().length - 1);
         }
         const result = this.getSubmissionToViewFromComplaintSubmission(submission);
 
@@ -752,7 +792,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param submission
      */
     getSubmissionToViewFromComplaintSubmission(submission: Submission): Submission | undefined {
-        const submissionToView = this.submissionsWithComplaints.find((dto) => dto.submission.id === submission.id)?.submission;
+        const submissionToView = this.submissionsWithComplaints().find((dto) => dto.submission.id === submission.id)?.submission;
         if (submissionToView) {
             if (submissionToView.results) {
                 submissionToView.results = submissionToView.results.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC);
@@ -764,12 +804,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     }
 
     toggleSecondCorrection() {
-        this.togglingSecondCorrectionButton = true;
-        this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: boolean) => {
-            this.secondCorrectionEnabled = res as boolean;
-            this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
+        this.togglingSecondCorrectionButton.set(true);
+        this.exerciseService.toggleSecondCorrection(this.exerciseId()).subscribe((res: boolean) => {
+            this.secondCorrectionEnabled.set(res as boolean);
             this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
-            this.togglingSecondCorrectionButton = false;
+            this.togglingSecondCorrectionButton.set(false);
         });
     }
 
@@ -777,57 +816,60 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * To correctly display why a tutor cannot assess any further submissions we need to calculate those values.
      */
     calculateAssessmentProgressInformation() {
-        if (this.exam) {
-            for (let i = 0; i < (this.exam.numberOfCorrectionRoundsInExam ?? 0); i++) {
-                this.lockedSubmissionsByOtherTutor[i] = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[i]?.inTime;
+        const exam = this.exam();
+        if (exam) {
+            for (let i = 0; i < (exam.numberOfCorrectionRoundsInExam ?? 0); i++) {
+                this.lockedSubmissionsByOtherTutor[i] = this.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound()[i]?.inTime;
 
                 // number of submissions in the particular round that still need assessment and are not locked
-                this.notYetAssessed[i] = this.numberOfSubmissions.inTime - this.numberOfAssessmentsOfCorrectionRounds[i].inTime - this.lockedSubmissionsByOtherTutor[i];
+                this.notYetAssessed[i] = this.numberOfSubmissions().inTime - this.numberOfAssessmentsOfCorrectionRounds()[i].inTime - this.lockedSubmissionsByOtherTutor[i];
 
                 // The number of assessments which are still open but cannot be assessed as they were already assessed in the first round.
                 // Since if this will be displayed the number of assessments the tutor can create is 0 we can simply get this number by subtracting the
                 // lock-count from the remaining unassessed submissions of the current correction round.
-                this.firstRoundAssessments = this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i];
+                this.firstRoundAssessments.set(this.notYetAssessed[i] - this.lockedSubmissionsByOtherTutor[i]);
             }
         }
     }
 
     sortSubmissionRows(correctionRound: number) {
-        this.sortService.sortByProperty(
-            this.assessedSubmissionsByRound.get(correctionRound)!,
-            this.sortPredicates[0].replace('correctionRound', correctionRound + ''),
-            this.reverseOrders[0],
-        );
+        this.assessedSubmissionsByRound.update((rounds) => {
+            const next = [...rounds];
+            const sorted = [...(next[correctionRound] ?? [])];
+            this.sortService.sortByProperty(sorted, this.sortPredicates[0].replace('correctionRound', correctionRound + ''), this.reverseOrders[0]);
+            next[correctionRound] = sorted;
+            return next;
+        });
     }
 
     sortComplaintRows() {
         // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
-        this.sortService.sortByProperty(this.submissionsWithComplaints, 'complaint.submittedTime', true);
+        const sorted = [...this.submissionsWithComplaints()];
+        this.sortService.sortByProperty(sorted, 'complaint.submittedTime', true);
         if (this.sortPredicates[1] === 'responseTime') {
-            this.sortService.sortByFunction(this.submissionsWithComplaints, (element) => this.complaintService.getResponseTimeInSeconds(element.complaint), this.reverseOrders[1]);
+            this.sortService.sortByFunction(sorted, (element) => this.complaintService.getResponseTimeInSeconds(element.complaint), this.reverseOrders[1]);
         } else {
-            this.sortService.sortByProperty(this.submissionsWithComplaints, this.sortPredicates[1], this.reverseOrders[1]);
+            this.sortService.sortByProperty(sorted, this.sortPredicates[1], this.reverseOrders[1]);
         }
+        this.submissionsWithComplaints.set(sorted);
     }
 
     sortMoreFeedbackRows() {
         // If the selected sort predicate is indifferent about two elements, the one submitted earlier should be displayed on top
-        this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, 'complaint.submittedTime', true);
+        const sorted = [...this.submissionsWithMoreFeedbackRequests()];
+        this.sortService.sortByProperty(sorted, 'complaint.submittedTime', true);
         if (this.sortPredicates[2] === 'responseTime') {
-            this.sortService.sortByFunction(
-                this.submissionsWithMoreFeedbackRequests,
-                (element) => this.complaintService.getResponseTimeInSeconds(element.complaint),
-                this.reverseOrders[2],
-            );
+            this.sortService.sortByFunction(sorted, (element) => this.complaintService.getResponseTimeInSeconds(element.complaint), this.reverseOrders[2]);
         } else {
-            this.sortService.sortByProperty(this.submissionsWithMoreFeedbackRequests, this.sortPredicates[2], this.reverseOrders[2]);
+            this.sortService.sortByProperty(sorted, this.sortPredicates[2], this.reverseOrders[2]);
         }
+        this.submissionsWithMoreFeedbackRequests.set(sorted);
     }
 
     /**
      * Generates a link to the respective exercise details page
      */
     getExerciseDetailsLink() {
-        return ['/course-management', this.courseId, this.exercise.type! + '-exercises', this.exercise.id!];
+        return ['/course-management', this.courseId(), this.exercise().type! + '-exercises', this.exercise().id!];
     }
 }

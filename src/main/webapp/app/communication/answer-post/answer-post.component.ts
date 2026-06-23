@@ -1,16 +1,17 @@
 import {
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     HostListener,
-    OnChanges,
     OnDestroy,
     OnInit,
     Renderer2,
     ViewContainerRef,
+    effect,
     inject,
     input,
     output,
+    signal,
+    untracked,
     viewChild,
 } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -25,12 +26,13 @@ import { PostingHeaderComponent } from '../posting-header/posting-header.compone
 import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-answer-post',
@@ -53,8 +55,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         ArtemisDatePipe,
     ],
 })
-export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
-    changeDetector = inject(ChangeDetectorRef);
+export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
 
@@ -71,7 +72,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
 
     isAnswerPost = true;
-    course: Course;
+    readonly course = signal<Course>(undefined!);
 
     // Icons
     faBookmark = faBookmark;
@@ -81,20 +82,27 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     readonly faSmile = faSmile;
     readonly faTrash = faTrash;
     static activeDropdownPost: AnswerPostComponent | undefined = undefined;
-    mayEdit = false;
-    mayDelete = false;
+    readonly mayEdit = signal<boolean>(false);
+    readonly mayDelete = signal<boolean>(false);
 
     constructor() {
         super();
-        this.course = this.metisService.getCourse();
+        this.course.set(this.metisService.getCourse());
+        // Track posting signal changes (replaces ngOnChanges)
+        effect(() => {
+            this.posting();
+            untracked(() => {
+                const posting = this.posting();
+                if (!posting) return;
+                if (!(posting instanceof AnswerPost)) {
+                    this.posting.set(Object.assign(new AnswerPost(), posting));
+                }
+            });
+        });
     }
 
     ngOnInit() {
         super.ngOnInit();
-        this.assignPostingToAnswerPost();
-    }
-
-    ngOnChanges() {
         this.assignPostingToAnswerPost();
     }
 
@@ -103,11 +111,17 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     }
 
     onPostingUpdated(updatedPosting: AnswerPost) {
-        this.posting = updatedPosting;
+        this.posting.set(updatedPosting);
     }
 
     onReactionsUpdated(updatedReactions: Reaction[]) {
-        this.posting = { ...this.posting, reactions: updatedReactions };
+        const current = this.posting();
+        if (!current) {
+            return;
+        }
+        const updated = deepClone(current);
+        updated.reactions = updatedReactions;
+        this.posting.set(updated);
     }
 
     /**
@@ -115,7 +129,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     @HostListener('document:click')
     onClickOutside() {
-        this.showDropdown = false;
+        this.showDropdown.set(false);
         this.enableBodyScroll();
     }
 
@@ -142,12 +156,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     /** Updates internal flag for delete permission */
     onMayDelete(value: boolean) {
-        this.mayDelete = value;
+        this.mayDelete.set(value);
     }
 
     /** Updates internal flag for edit permission */
     onMayEdit(value: boolean) {
-        this.mayEdit = value;
+        this.mayEdit.set(value);
     }
 
     /**
@@ -174,12 +188,12 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
             AnswerPostComponent.activeDropdownPost = this;
 
-            this.dropdownPosition = {
+            this.dropdownPosition.set({
                 x: event.clientX,
                 y: event.clientY,
-            };
+            });
 
-            this.showDropdown = true;
+            this.showDropdown.set(true);
             this.adjustDropdownPosition();
             this.disableBodyScroll();
         }
@@ -192,8 +206,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         const dropdownWidth = 200;
         const screenWidth = window.innerWidth;
 
-        if (this.dropdownPosition.x + dropdownWidth > screenWidth) {
-            this.dropdownPosition.x = screenWidth - dropdownWidth - 10;
+        if (this.dropdownPosition().x + dropdownWidth > screenWidth) {
+            this.dropdownPosition.update((position) => ({ ...position, x: screenWidth - dropdownWidth - 10 }));
         }
     }
 
@@ -203,9 +217,8 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
      */
     private static cleanupActiveDropdown(): void {
         if (AnswerPostComponent.activeDropdownPost) {
-            AnswerPostComponent.activeDropdownPost.showDropdown = false;
+            AnswerPostComponent.activeDropdownPost.showDropdown.set(false);
             AnswerPostComponent.activeDropdownPost.enableBodyScroll();
-            AnswerPostComponent.activeDropdownPost.changeDetector.detectChanges();
             AnswerPostComponent.activeDropdownPost = undefined;
         }
     }
@@ -218,8 +231,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     private assignPostingToAnswerPost() {
         // This is needed because otherwise instanceof returns 'object'.
-        if (this.posting && !(this.posting instanceof AnswerPost)) {
-            this.posting = Object.assign(new AnswerPost(), this.posting);
+        const posting = this.posting();
+        if (posting && !(posting instanceof AnswerPost)) {
+            this.posting.set(Object.assign(new AnswerPost(), posting));
         }
     }
 }

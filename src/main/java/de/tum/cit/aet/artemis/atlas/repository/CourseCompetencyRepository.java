@@ -13,12 +13,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyLectureUnitMasteryCalculationDTO;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -268,6 +268,15 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             """)
     Optional<CourseCompetency> findByIdWithLectureUnitsAndExercises(@Param("competencyId") long competencyId);
 
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+                LEFT JOIN FETCH c.exerciseLinks el
+                LEFT JOIN FETCH el.exercise
+            WHERE c.course.id = :courseId
+            """)
+    List<CourseCompetency> findByCourseIdWithExercises(@Param("courseId") long courseId);
+
     default CourseCompetency findByIdWithLectureUnitsElseThrow(long competencyId) {
         return getValueElseThrow(findByIdWithLectureUnits(competencyId), competencyId);
     }
@@ -314,6 +323,8 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
     List<CourseCompetency> findByCourseIdAndLinkedToLearningObjectOrderById(@Param("courseId") long courseId);
 
     boolean existsByIdAndCourseId(long competencyId, long courseId);
+
+    boolean existsByCourseId(long courseId);
 
     @Query("""
             SELECT c

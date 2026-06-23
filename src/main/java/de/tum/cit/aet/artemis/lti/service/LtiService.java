@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lti.service;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,19 +23,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
-import tech.jhipster.security.RandomUtil;
 
 @Lazy
 @Service
@@ -48,7 +47,7 @@ public class LtiService {
 
     public static final String LTI_GROUP_NAME = "lti";
 
-    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
+    protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
     private static final Logger log = LoggerFactory.getLogger(LtiService.class);
 

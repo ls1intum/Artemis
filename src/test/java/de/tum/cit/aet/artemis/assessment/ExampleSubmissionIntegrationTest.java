@@ -28,9 +28,9 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -39,14 +39,14 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final Logger log = LoggerFactory.getLogger(ExampleSubmissionIntegrationTest.class);
 
@@ -230,7 +230,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         request.putWithResponseBody("/api/modeling/modeling-submissions/" + exampleSubmission.getId() + "/example-assessment", feedbacks, Result.class, HttpStatus.OK);
 
         Result cleanResult = request.get(
-                "/api/modeling/exercise/" + modelingExercise.getId() + "/modeling-submissions/" + exampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
+                "/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + exampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 Result.class);
         for (Feedback feedback : cleanResult.getFeedbacks()) {
             assertThat(feedback.getCredits()).isNull();
@@ -319,8 +319,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private ExampleSubmission importExampleSubmission(Long exerciseId, Long submissionId, HttpStatus expectedStatus) throws Exception {
-        return request.postWithResponseBody("/api/assessment/exercises/" + exerciseId + "/example-submissions/import/" + submissionId, null, ExampleSubmission.class,
-                expectedStatus);
+        return request.postWithResponseBody("/api/assessment/exercises/" + exerciseId + "/example-submissions/import?sourceSubmissionId=" + submissionId, null,
+                ExampleSubmission.class, expectedStatus);
     }
 
     @Test
@@ -351,10 +351,11 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((TextSubmission) exampleSubmission.getSubmission()).getText()).isEqualTo(submission.getText());
         assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks()).isNotEmpty();
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getCredits()).isEqualTo(feedback.getCredits());
+        Feedback importedFeedback = exampleSubmission.getSubmission().getLatestResult().getFeedbacks().iterator().next();
+        assertThat(importedFeedback.getCredits()).isEqualTo(feedback.getCredits());
         assertThat(copiedTextBlocks).isNotEmpty();
         assertThat(copiedTextBlocks.getFirst().getText()).isEqualTo(textBlock.getText());
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getReference()).isEqualTo(copiedTextBlocks.getFirst().getId());
+        assertThat(importedFeedback.getReference()).isEqualTo(copiedTextBlocks.getFirst().getId());
     }
 
     @Test
@@ -390,8 +391,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         Optional<Result> orginalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);
-        assertThat(exampleSubmission.getSubmission().getResults().getFirst().getFeedbacks().getFirst().getGradingInstruction().getId())
-                .isEqualTo(orginalResult.orElseThrow().getFeedbacks().getFirst().getGradingInstruction().getId());
+        assertThat(exampleSubmission.getSubmission().getResults().getFirst().getFeedbacks().iterator().next().getGradingInstruction().getId())
+                .isEqualTo(orginalResult.orElseThrow().getFeedbacks().iterator().next().getGradingInstruction().getId());
     }
 
     @Test

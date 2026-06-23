@@ -107,15 +107,6 @@ public class ModuleFeatureService {
     }
 
     /**
-     * Check if the Nebula module is enabled.
-     *
-     * @return true if the Nebula module is enabled, false otherwise
-     */
-    public boolean isNebulaEnabled() {
-        return artemisConfigHelper.isNebulaEnabled(environment);
-    }
-
-    /**
      * Check if the LTI module is enabled.
      *
      * @return true if the LTI module is enabled, false otherwise
@@ -131,5 +122,21 @@ public class ModuleFeatureService {
      */
     public boolean isTheiaEnabled() {
         return artemisConfigHelper.isTheiaEnabled(environment);
+    }
+
+    public boolean isAthenaEnabled() {
+        return artemisConfigHelper.isAthenaEnabled(environment);
+    }
+
+    public boolean isApollonEnabled() {
+        return artemisConfigHelper.isApollonEnabled(environment);
+    }
+
+    public boolean isLdapEnabled() {
+        return artemisConfigHelper.isLdapEnabled(environment);
+    }
+
+    public boolean isSaml2Enabled() {
+        return artemisConfigHelper.isSaml2Enabled(environment);
     }
 }

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { ApplicationRef } from '@angular/core';
+import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionEditComponent } from 'app/quiz/manage/short-answer-question/short-answer-question-edit.component';
@@ -14,8 +15,8 @@ import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mappin
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
-import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import * as markdownConversionUtil from 'app/foundation/util/markdown.conversion.util';
+import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -23,6 +24,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD } from 'app/foundation/constants/input.constants';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -76,19 +78,12 @@ describe('ShortAnswerQuestionEditComponent', () => {
                 ShortAnswerQuestionEditComponent,
             ],
             providers: [
-                MockProvider(NgbModal),
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: ThemeService, useClass: MockThemeService },
             ],
-        })
-            .overrideComponent(ShortAnswerQuestionEditComponent, {
-                set: {
-                    providers: [MockProvider(NgbModal)],
-                },
-            })
-            .compileComponents();
+        }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionEditComponent);
         component = fixture.componentInstance;
     });
@@ -126,7 +121,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['This', 'is', 'a', '[-spot 12]', 'regarding', 'this', 'question.'],
             ['Another', '[-spot 8]', 'is', 'in', 'the', 'line', 'above'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // test a long method with multiple indentations and concatenated words
         const newQuestion2 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -189,7 +184,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['}'],
             ['To', 'define', 'the', 'solution', 'for', 'the', 'input', 'fields', 'you', 'need', 'to', 'create', 'a', 'mapping', '(multiple', 'mapping', 'also', 'possible):'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // tests simple indentation
         const newQuestion3 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -199,7 +194,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.detectChanges();
 
         expectedTextParts = [['[-spot 5]'], ['    [-spot 6]'], ['        [-spot 7]'], ['            [-spot 8]'], ['                [-spot 9]'], ['                    [-spot 10]']];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // classic java main method test
         const newQuestion4 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -219,7 +214,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['    }'],
             ['}'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // test multiple line parameter for method header
         const newQuestion5 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -243,7 +238,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['        System.out.', '[-spot 4]', '("', '[-spot 5]', '");'],
             ['}'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // test nested arrays
         const newQuestion6 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -261,7 +256,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ["    ['", '[-spot 2]', "'],"],
             ['];'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
 
         // test textual enumeration
         const newQuestion7 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -285,7 +280,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             ['-', 'third', 'major', 'point'],
             ['        -', 'first', 'very', 'not', 'major', 'point,', 'super', 'indented'],
         ];
-        expect(component.textParts).toEqual(expectedTextParts);
+        expect(component.textParts()).toEqual(expectedTextParts);
     });
 
     it('should update shortAnswerQuestion and emit questionUpdated on question input change', () => {
@@ -381,14 +376,6 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.optionsWithID).toEqual(['[-option 0]', '[-option 1]']);
     });
 
-    it('should open', () => {
-        const content = {};
-        const modalService = fixture.debugElement.injector.get(NgbModal);
-        const modalSpy = vi.spyOn(modalService, 'open');
-        component.open(content);
-        expect(modalSpy).toHaveBeenCalledOnce();
-    });
-
     it('should add spot to cursor and increase the spot number', () => {
         const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
         // Mock console methods to prevent test failures
@@ -397,7 +384,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         // Mock the action to simulate inserting a spot
         vi.spyOn(component.insertShortAnswerSpotAction, 'executeInCurrentEditor').mockImplementation(() => {
-            component.questionEditorText = `[-spot 1]${component.questionEditorText}`;
+            component.questionEditorText.set(`[-spot 1]${component.questionEditorText()}`);
             component.numberOfSpot++;
             component.questionUpdated.emit();
         });
@@ -405,7 +392,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.addSpotAtCursor();
 
         expect(questionUpdatedSpy).toHaveBeenCalled();
-        const text: string = component.questionEditorText;
+        const text: string = component.questionEditorText();
         const firstLine = text.split('\n')[0];
         expect(firstLine).toContain('[-spot 1]');
         expect(component.numberOfSpot).toBe(2);
@@ -419,21 +406,21 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         // Mock the action to simulate inserting an option
         vi.spyOn(component.insertShortAnswerOptionAction, 'executeInCurrentEditor').mockImplementation(() => {
-            component.questionEditorText = `${component.questionEditorText}\n[-option 1]`;
+            component.questionEditorText.set(`${component.questionEditorText()}\n[-option 1]`);
             component.questionUpdated.emit();
         });
 
         component.addOption();
 
         expect(questionUpdatedSpy).toHaveBeenCalled();
-        const text: string = component.questionEditorText;
+        const text: string = component.questionEditorText();
         const lastLine = text.split('\n').last();
         expect(lastLine).toContain('[-option');
     });
 
     it('should add text solution', () => {
         // Setup text
-        component.questionEditorText = '';
+        component.questionEditorText.set('');
         component.addOptionToSpot(1, shortAnswerSolution1.text!);
         component.addOptionToSpot(2, shortAnswerSolution2.text!);
 
@@ -520,7 +507,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             getText: vi.fn().mockReturnValue('Question text [-option 1]'),
         };
         const mockQuestionEditor = {
-            monacoEditor: mockMonacoEditor,
+            monacoEditor: () => mockMonacoEditor,
             applyOptionPreset: vi.fn(),
         };
         // Use Object.defineProperty to mock the signal getter since vi.spyOn doesn't work with Angular signals
@@ -540,7 +527,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
         component.numberOfSpot = 1;
-        component.textParts = textParts;
+        component.textParts.set(textParts);
 
         component.addSpotAtCursorVisualMode();
 
@@ -558,7 +545,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     it('should toggle preview', () => {
         component.shortAnswerQuestion.text = 'This is the text of a question';
-        component.showVisualMode = false;
+        component.showVisualMode.set(false);
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [];
         let mapping = new ShortAnswerMapping(spot1, shortAnswerSolution1);
@@ -567,8 +554,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.correctMappings.push(mapping);
 
         component.togglePreview();
-        expect(component.textParts).toHaveLength(1);
-        const firstElement = component.textParts.pop();
+        expect(component.textParts()).toHaveLength(1);
+        const firstElement = component.textParts().pop();
         expect(firstElement).toHaveLength(1);
         expect(firstElement).toEqual(['<p>This is the text of a question</p>']);
     });
@@ -626,19 +613,22 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(component.shortAnswerQuestion.spots[0]).toEqual(spot2);
     });
 
-    it('should set question text', () => {
+    it('should set question text', async () => {
         const text = 'This is a text for a test';
         const returnValue = { value: text } as unknown as HTMLElement;
         const getNavigationSpy = vi.spyOn(document, 'getElementById').mockReturnValue(returnValue);
         const array = ['0'];
-        component.textParts = [array, array];
+        component.textParts.set([array, array]);
         fixture.changeDetectorRef.detectChanges();
 
         component.setQuestionText('0-0-0-0');
-
         expect(getNavigationSpy).toHaveBeenCalledOnce();
+        // Restore the global getElementById mock, then run a tick so the deferred (afterNextRender) refill executes.
+        getNavigationSpy.mockRestore();
+        TestBed.inject(ApplicationRef).tick();
+
         const splitString = ['This', 'is', 'a', 'text', 'for', 'a', 'test'];
-        expect(component.textParts.pop()).toEqual(splitString);
+        expect(component.textParts().pop()).toEqual(splitString);
     });
 
     it('should toggle exact match', () => {
@@ -648,6 +638,39 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         expect(component.shortAnswerQuestion.similarityValue).toBe(100);
         expect(questionUpdated).toHaveBeenCalledOnce();
+    });
+
+    it('should enforce the title maxlength on the short answer question input', () => {
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
+
+        expect(titleInput).not.toBeNull();
+        expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
+    });
+
+    it('should show visual feedback when the short answer question title limit is reached', () => {
+        component.shortAnswerQuestion.title = 'a'.repeat(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1);
+        fixture.detectChanges();
+
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('#short-answer-question-title');
+        const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-title small');
+
+        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(feedback).not.toBeNull();
+    });
+
+    it('should show visual feedback when the re-evaluation short answer question title limit is reached', () => {
+        vi.advanceTimersToNextFrame();
+        fixture.componentRef.setInput('reEvaluationInProgress', true);
+        component.shortAnswerQuestion.title = 'a'.repeat(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1);
+        fixture.detectChanges();
+
+        const titleInput: HTMLInputElement | null = fixture.nativeElement.querySelector('.question-reevaluation-title input');
+        const feedback: HTMLElement | null = fixture.nativeElement.querySelector('.question-reevaluation-title small');
+
+        expect(titleInput).not.toBeNull();
+        expect(titleInput?.getAttribute('maxlength')).toBe(String(MAX_QUIZ_QUESTION_LENGTH_THRESHOLD - 1));
+        expect(titleInput?.classList.contains('ng-invalid')).toBe(true);
+        expect(feedback).not.toBeNull();
     });
 
     it('should return highest spot number', () => {

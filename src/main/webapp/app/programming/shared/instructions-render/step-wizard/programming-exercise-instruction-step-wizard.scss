@@ -5,10 +5,6 @@
 $step-font-size: 0.6rem;
 $step-button-size: 21px; // Make sure to keep it uneven so that centering works
 
-.card-second-header {
-    padding: 1rem 1rem 0;
-}
-
 .stepwizard {
     display: table;
     width: 100%;
@@ -33,10 +29,6 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
 
     .fa {
         vertical-align: initial;
-    }
-
-    p {
-        margin-top: 10px;
     }
 
     button[disabled] {

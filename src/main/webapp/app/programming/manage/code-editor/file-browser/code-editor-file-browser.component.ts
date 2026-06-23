@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild, computed, effect, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -21,15 +21,15 @@ import {
     faListAlt,
     faPlus,
 } from '@fortawesome/free-solid-svg-icons';
-import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorFileBrowserCreateNodeComponent } from './create-node/code-editor-file-browser-create-node.component';
 import { CodeEditorFileBrowserFolderComponent } from './folder/code-editor-file-browser-folder.component';
 import { CodeEditorFileBrowserFileComponent } from './file/code-editor-file-browser-file.component';
 import { CodeEditorFileBrowserProblemStatementComponent } from './problem-statement/code-editor-file-browser-problem-statement.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view/tree-view.component';
 import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
@@ -94,19 +94,25 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     CommitState = CommitState;
     FileType = FileType;
     constructor() {
+        // The handlers below read AND write repositoryFiles/filesTreeViewItem. They must run
+        // untracked: a tracked read of a signal the handler itself replaces (always with a fresh
+        // object) re-triggers the effect and spins forever. Only the explicitly read inputs are
+        // intended triggers. (Found via vitest workers pinned at 100% CPU in this exact cycle.)
+
         // React to participation() signal changes
         effect(() => {
             const p = this.participation();
             if (p !== undefined) {
-                this.initializeRepositoryFiles();
+                untracked(() => this.initializeRepositoryFiles());
             }
         });
 
         // React to showEditorInstructions and isProblemStatementVisible signal changes
         effect(() => {
             this.showEditorInstructions();
+            this.isProblemStatementVisible();
             if (this.participation()) {
-                this.handleProblemStatementVisibility();
+                untracked(() => this.handleProblemStatementVisibility());
             }
         });
 
@@ -119,10 +125,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                 (this.previousEditorState !== undefined && this.previousEditorState === EditorState.REFRESHING && editorState === EditorState.CLEAN);
 
             if (shouldInitialize) {
-                this.initializeComponent();
+                untracked(() => this.initializeComponent());
             } else if (selectedFile && selectedFile !== this.previousSelectedFile) {
-                this.renamingFile = undefined;
-                this.setupTreeview();
+                this.renamingFile.set(undefined);
+                untracked(() => this.setupTreeview());
             }
 
             this.previousCommitState = commitState;
@@ -131,8 +137,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
         });
     }
 
-    @ViewChild('status', { static: false }) status: CodeEditorStatusComponent;
-    @ViewChild('treeview', { static: false }) treeview: TreeViewComponent<string>;
+    status = viewChild<CodeEditorStatusComponent>('status');
+    treeview = viewChild<TreeViewComponent<string>>('treeview');
     participation = input<Participation>();
     showEditorInstructions = input(true);
     selectedFile = input<string | undefined>();
@@ -148,6 +154,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     allowHiddenFiles = input<boolean>(false);
 
     isProblemStatementVisible = input<boolean>(true);
+    showHeader = input<boolean>(true);
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
 
     onToggleCollapse = output<InteractableEvent>();
@@ -156,24 +163,22 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     commitStateChange = output<CommitState>();
     onError = output<string>();
 
-    isLoadingFiles: boolean;
+    readonly isLoadingFiles = signal(false);
     isProblemStatementSelected = computed(() => this.selectedFile() === PROBLEM_STATEMENT_IDENTIFIER);
-    repositoryFiles: { [fileName: string]: FileType };
-    repositoryFilesWithInformationAboutChange: { [fileName: string]: boolean } | undefined;
-    filesTreeViewItem: TreeViewItem<string>[] = [];
-    compressFolders = true;
+    readonly repositoryFiles = signal<{ [fileName: string]: FileType }>(undefined!);
+    readonly repositoryFilesWithInformationAboutChange = signal<{ [fileName: string]: boolean } | undefined>(undefined);
+    readonly filesTreeViewItem = signal<TreeViewItem<string>[]>([]);
+    readonly compressFolders = signal(true);
 
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    readonly collapsed = signal(false);
 
-    collapsed = false;
-
-    @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
-    @ViewChild('creatingInput', { static: false }) creatingInput: ElementRef;
+    renamingInput = viewChild<ElementRef>('renamingInput');
+    creatingInput = viewChild<ElementRef>('creatingInput');
 
     // Triple: [filePath, fileName, fileType]
-    renamingFile?: [string, string, FileType];
+    readonly renamingFile = signal<[string, string, FileType] | undefined>(undefined);
     // Tuple: [filePath, fileType]
-    creatingFile?: [string, FileType];
+    readonly creatingFile = signal<[string, FileType] | undefined>(undefined);
 
     // Default limit is 500, as our styling makes tree item relatively large, we need to increase it a lot
     treeViewMaxHeight: 5000;
@@ -218,24 +223,29 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      * Initialize repositoryFiles with Problem Statement as a first-class file type
      */
     private initializeRepositoryFiles(): void {
-        if (!this.repositoryFiles) {
-            this.repositoryFiles = {};
+        if (!this.repositoryFiles()) {
+            this.repositoryFiles.set({});
         }
 
-        // Add Problem Statement as a first-class file type
+        // Add Problem Statement as a first-class file type. Only write when the entry is missing —
+        // re-publishing an unchanged map would emit a fresh object reference on every call, and a
+        // real repository file occupying the identifier must not be clobbered.
         if (this.isProblemStatementVisible() && this.showEditorInstructions()) {
-            const existing = this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
-            if (!existing || existing === FileType.PROBLEM_STATEMENT) {
-                this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+            if (!this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER]) {
+                this.repositoryFiles.update((files) => ({ ...files, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
             }
-        } else {
-            // Ensure Problem Statement is removed when in repository view mode
-            delete this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
+        } else if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] === FileType.PROBLEM_STATEMENT) {
+            this.repositoryFiles.update((files) => {
+                const updated = { ...files };
+                delete updated[PROBLEM_STATEMENT_IDENTIFIER];
+                return updated;
+            });
         }
     }
 
     ngOnDestroy(): void {
         this.conflictSubscription?.unsubscribe();
+        this.interactResizable?.unset();
     }
 
     /**
@@ -253,17 +263,23 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      */
     private handleProblemStatementVisibility(): void {
         // Ensure the map exists before we mutate / render
-        if (!this.repositoryFiles) {
-            this.repositoryFiles = {};
+        if (!this.repositoryFiles()) {
+            this.repositoryFiles.set({});
         }
 
         if (!this.isProblemStatementVisible() || !this.showEditorInstructions()) {
-            delete this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER];
+            if (this.repositoryFiles()[PROBLEM_STATEMENT_IDENTIFIER] === FileType.PROBLEM_STATEMENT) {
+                this.repositoryFiles.update((files) => {
+                    const updated = { ...files };
+                    delete updated[PROBLEM_STATEMENT_IDENTIFIER];
+                    return updated;
+                });
+            }
             if (this.isProblemStatementSelected()) {
                 this.selectedFileChange.emit(undefined);
             }
-        } else {
-            this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
+        } else if (!(PROBLEM_STATEMENT_IDENTIFIER in this.repositoryFiles())) {
+            this.repositoryFiles.update((files) => ({ ...files, [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
         }
 
         this.setupTreeview();
@@ -271,8 +287,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
 
     initializeComponent = () => {
         let currentCommitState: CommitState;
-        this.isLoadingFiles = true;
-        this.changeDetectorRef.markForCheck();
+        this.isLoadingFiles.set(true);
         // We need to make sure to not trigger multiple requests on the git repo at the same time.
         // This is why we first wait until the repository state was checked and then load the files.
         this.checkIfRepositoryIsClean()
@@ -291,7 +306,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                     return this.loadFiles();
                 }),
                 tap((files) => {
-                    this.repositoryFiles = files;
+                    this.repositoryFiles.set(files);
                     // Ensure Problem Statement is present if not in display-only mode
                     this.initializeRepositoryFiles();
                 }),
@@ -303,14 +318,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                     }
                 }),
                 tap((filesWithInfoAboutChange) => {
-                    this.repositoryFilesWithInformationAboutChange = filesWithInfoAboutChange;
+                    this.repositoryFilesWithInformationAboutChange.set(filesWithInfoAboutChange);
                     this.setupTreeview();
-                    this.changeDetectorRef.markForCheck();
                 }),
                 finalize(() => {
                     // Guarantee that the loading indicator is cleared even if an upstream error or cancellation happens.
-                    this.isLoadingFiles = false;
-                    this.changeDetectorRef.markForCheck();
+                    this.isLoadingFiles.set(false);
                 }),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -319,7 +332,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                     this.initializeRepositoryFiles();
                     this.setupTreeview();
                     this.onError.emit(error.message);
-                    this.changeDetectorRef.markForCheck();
                 },
             });
     };
@@ -350,12 +362,12 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      */
     handleFileChange(fileChange: FileChange, isRemote = false) {
         if (fileChange instanceof CreateFileChange) {
-            this.repositoryFiles = { ...this.repositoryFiles, [fileChange.fileName]: fileChange.fileType };
+            this.repositoryFiles.set({ ...this.repositoryFiles(), [fileChange.fileName]: fileChange.fileType });
         } else {
-            this.repositoryFiles = this.fileService.updateFileReferences(this.repositoryFiles, fileChange);
+            this.repositoryFiles.set(this.fileService.updateFileReferences(this.repositoryFiles(), fileChange));
         }
         this.setupTreeview();
-        this.onFileChange.emit([Object.keys(this.repositoryFiles), fileChange, isRemote]);
+        this.onFileChange.emit([Object.keys(this.repositoryFiles()), fileChange, isRemote]);
     }
 
     /**
@@ -381,7 +393,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
             item.checked = true;
             // If we had selected a file prior to this, we 'uncheck' it
             if (this.selectedFile()) {
-                const priorFileSelection = findItemInList(this.filesTreeViewItem, this.selectedFile());
+                const priorFileSelection = findItemInList(this.filesTreeViewItem(), this.selectedFile());
                 // Avoid issues after file deletion
                 if (priorFileSelection) {
                     priorFileSelection.checked = false;
@@ -393,7 +405,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
     }
 
     toggleTreeCompress() {
-        this.compressFolders = !this.compressFolders;
+        this.compressFolders.update((value) => !value);
         this.setupTreeview();
     }
 
@@ -402,22 +414,22 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      */
     setupTreeview() {
         // nothing to render yet
-        if (!this.repositoryFiles) {
-            this.filesTreeViewItem = [];
+        if (!this.repositoryFiles()) {
+            this.filesTreeViewItem.set([]);
             return;
         }
 
-        const fileKeys = Object.keys(this.repositoryFiles).sort((a, b) => {
+        const fileKeys = Object.keys(this.repositoryFiles()).sort((a, b) => {
             if (a === PROBLEM_STATEMENT_IDENTIFIER) return -1;
             if (b === PROBLEM_STATEMENT_IDENTIFIER) return 1;
             return a.localeCompare(b);
         });
 
         let tree = this.buildTree(fileKeys);
-        if (this.compressFolders) {
+        if (this.compressFolders()) {
             tree = tree.map(this.compressTree.bind(this));
         }
-        this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
+        this.filesTreeViewItem.set(this.transformTreeToTreeViewItem(tree));
     }
 
     /**
@@ -499,7 +511,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      */
     compressTree(node: FileTreeItem): FileTreeItem {
         // If the node has only one child and that child is a folder, we can compress the tree.
-        if (node.children && node.children.length === 1 && this.repositoryFiles[node.children[0].value] === FileType.FOLDER) {
+        if (node.children && node.children.length === 1 && this.repositoryFiles()[node.children[0].value] === FileType.FOLDER) {
             return this.compressTree({ ...node.children[0], text: node.text + '/' + node.children[0].text, folder: node.folder, file: node.file });
         }
         // If the node has children, we cannot compress it. However, we can try to compress its children.
@@ -517,7 +529,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      * @param event
      */
     toggleEditorCollapse(event: any) {
-        this.collapsed = !this.collapsed;
+        this.collapsed.update((value) => !value);
         this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable });
     }
 
@@ -531,15 +543,15 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
         // Take the actual file name if the packages are collapsed, otherwise take the name directly
         const newFileName = newFileNamePath.split('/').pop() || newFileNamePath;
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
-        if (!this.renamingFile) {
+        if (!this.renamingFile()) {
             return;
         }
-        const [filePath, , fileType] = this.renamingFile;
+        const [filePath, , fileType] = this.renamingFile()!;
         let newFilePath: any = filePath.split('/');
         newFilePath[newFilePath.length - 1] = newFileName;
         newFilePath = newFilePath.join('/');
 
-        if (Object.keys(this.repositoryFiles).includes(newFilePath)) {
+        if (Object.keys(this.repositoryFiles()).includes(newFilePath)) {
             this.onError.emit('fileExists');
             return;
         } else if (!this.allowHiddenFiles() && !CodeEditorFileBrowserComponent.shouldDisplayFile(newFileName, fileType)) {
@@ -553,7 +565,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                 next: () => {
                     this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
                     this.fileSyncService()?.emitFileRenamed(filePath, newFilePath, this.toSyncFileType(fileType));
-                    this.renamingFile = undefined;
+                    this.renamingFile.set(undefined);
                 },
                 error: () => this.onError.emit('fileOperationFailed'),
             });
@@ -563,21 +575,21 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      * Enter rename file mode and focus the created input.
      **/
     setRenamingFile(item: TreeViewItem<string>) {
-        const fileType = this.repositoryFiles[item.value];
+        const fileType = this.repositoryFiles()[item.value];
 
         // Guard against PROBLEM_STATEMENT rename - only allow FILE and FOLDER
         if (fileType !== FileType.FILE && fileType !== FileType.FOLDER) {
             return;
         }
 
-        this.renamingFile = [item.value, item.text, fileType];
+        this.renamingFile.set([item.value, item.text, fileType]);
     }
 
     /**
      * Set renamingFile to undefined so that the input disappears.
      **/
     clearRenamingFile() {
-        this.renamingFile = undefined;
+        this.renamingFile.set(undefined);
     }
 
     /**
@@ -585,15 +597,15 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      **/
     onCreateFile(fileName: string) {
         // It is possible, that multiple events fire at once and come back when the creation mode is already turned off.
-        if (!this.creatingFile) {
+        if (!this.creatingFile()) {
             return;
         }
-        const [folderPath, fileType] = this.creatingFile;
+        const [folderPath, fileType] = this.creatingFile()!;
 
         if (!this.allowHiddenFiles() && !CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType)) {
             this.onError.emit('unsupportedFile');
             return;
-        } else if (Object.keys(this.repositoryFiles).includes(folderPath ? [folderPath, fileName].join('/') : fileName)) {
+        } else if (Object.keys(this.repositoryFiles()).includes(folderPath ? [folderPath, fileName].join('/') : fileName)) {
             this.onError.emit('fileExists');
             return;
         }
@@ -606,7 +618,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                     next: () => {
                         this.handleFileChange(new CreateFileChange(FileType.FILE, file));
                         this.fileSyncService()?.emitFileCreated(file, 'FILE');
-                        this.creatingFile = undefined;
+                        this.creatingFile.set(undefined);
                     },
                     error: () => this.onError.emit('fileOperationFailed'),
                 });
@@ -617,7 +629,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
                     next: () => {
                         this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
                         this.fileSyncService()?.emitFileCreated(file, 'FOLDER');
-                        this.creatingFile = undefined;
+                        this.creatingFile.set(undefined);
                     },
                     error: () => this.onError.emit('fileOperationFailed'),
                 });
@@ -628,18 +640,18 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      * Enter rename file mode and focus the created input.
      **/
     setCreatingFile({ item: { value: folder }, fileType }: { item: TreeViewItem<string>; fileType: FileType }) {
-        this.creatingFile = [folder, fileType];
+        this.creatingFile.set([folder, fileType]);
     }
 
     setCreatingFileInRoot(fileType: FileType) {
-        this.creatingFile = ['', fileType];
+        this.creatingFile.set(['', fileType]);
     }
 
     /**
      * Set creatingFile to undefined so that the input disappears.
      **/
     clearCreatingFile() {
-        this.creatingFile = undefined;
+        this.creatingFile.set(undefined);
     }
 
     /**
@@ -686,7 +698,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, On
      */
     openDeleteFileModal(item: TreeViewItem<string>) {
         const { value: filePath } = item;
-        const fileType = this.repositoryFiles[filePath];
+        const fileType = this.repositoryFiles()[filePath];
         if (filePath && fileType !== FileType.PROBLEM_STATEMENT) {
             const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.setInputs({

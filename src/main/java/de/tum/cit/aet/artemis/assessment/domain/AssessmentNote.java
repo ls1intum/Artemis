@@ -16,8 +16,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Represents an internal assessment note.
@@ -41,6 +41,13 @@ public class AssessmentNote extends DomainObject {
     @Column(name = "last_modified_date")
     @JsonIgnore
     private Instant lastModifiedDate;
+
+    /**
+     * Read-only mapping of the FK column managed by {@link Result#assessmentNote}.
+     * Allows JPQL queries (e.g. {@code deleteByResultId}) without a full {@code @ManyToOne} relationship.
+     */
+    @Column(name = "result_id", insertable = false, updatable = false)
+    private Long resultId;
 
     @Column(name = "note")
     private String note;

@@ -2,13 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item.component';
 import { By } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faChalkboardUser, faKeyboard } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -118,7 +118,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 1,
             title: 'New chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.LECTURE,
+            mode: ChatServiceMode.LECTURE,
             entityId: 42,
             entityName: 'Lecture 1',
         };
@@ -130,11 +130,23 @@ describe('ChatHistoryItemComponent', () => {
             id: 2,
             title: 'New chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 77,
             entityName: 'Exercise 1',
         };
         testSessionRendering(session, faKeyboard, 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise', '../exercises/77');
+    });
+
+    it('should render correct icon with correct tooltip and entity route for text exercise session', () => {
+        const session: IrisSessionDTO = {
+            id: 3,
+            title: 'New chat',
+            creationDate: new Date(),
+            mode: ChatServiceMode.TEXT_EXERCISE,
+            entityId: 55,
+            entityName: 'Text Exercise 1',
+        };
+        testSessionRendering(session, faFont, 'artemisApp.iris.chatHistory.relatedEntityTooltip.textExercise', '../exercises/55');
     });
 
     it('should detect new chat session with English title', async () => {
@@ -142,7 +154,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 4,
             title: 'New chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -158,7 +170,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 4,
             title: 'Neuer Chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -174,7 +186,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 4,
             title: 'NEW CHAT',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -190,7 +202,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 5,
             title: 'Some regular chat title',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -206,7 +218,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 10,
             title: 'Some chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -223,7 +235,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 11,
             title: 'Chat to delete',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -242,7 +254,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 12,
             title: 'Chat with menu',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -251,16 +263,16 @@ describe('ChatHistoryItemComponent', () => {
         await fixture.whenStable();
 
         // Menu items are empty before the first toggle
-        expect(component.menuItems).toHaveLength(0);
+        expect(component.menuItems()).toHaveLength(0);
 
         // Simulate menu toggle (stopPropagation on the event, build items, toggle menu)
         const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
         component.onMenuToggle(mockEvent);
 
         // After toggle, menu items should be populated with the delete action
-        expect(component.menuItems).toHaveLength(1);
-        expect(component.menuItems[0].styleClass).toBe('danger');
-        expect(component.menuItems[0].label).toBeTruthy();
+        expect(component.menuItems()).toHaveLength(1);
+        expect(component.menuItems()[0].styleClass).toBe('danger');
+        expect(component.menuItems()[0].label).toBeTruthy();
     });
 
     it('should emit deleteSession when menu item command is invoked', async () => {
@@ -268,7 +280,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 13,
             title: 'Chat to delete via menu',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -283,7 +295,7 @@ describe('ChatHistoryItemComponent', () => {
         component.onMenuToggle(mockEvent);
 
         // Invoke the command (simulates clicking the menu item)
-        component.menuItems[0].command!({});
+        component.menuItems()[0].command!({});
 
         expect(component.deleteSession.emit).toHaveBeenCalledWith(session);
     });
@@ -293,7 +305,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 14,
             title: 'Chat for language test',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
         };
@@ -307,12 +319,12 @@ describe('ChatHistoryItemComponent', () => {
         vi.spyOn(translateService, 'instant').mockReturnValue('Delete');
         const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
         component.onMenuToggle(mockEvent);
-        expect(component.menuItems[0].label).toBe('Delete');
+        expect(component.menuItems()[0].label).toBe('Delete');
 
         // Simulate language change to German and toggle again
         vi.spyOn(translateService, 'instant').mockReturnValue('Löschen');
         component.onMenuToggle(mockEvent);
-        expect(component.menuItems[0].label).toBe('Löschen');
+        expect(component.menuItems()[0].label).toBe('Löschen');
     });
 
     it('should not render related-entity-icon for course session', async () => {
@@ -320,7 +332,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 3,
             title: 'Course chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.COURSE,
+            mode: ChatServiceMode.COURSE,
             entityId: 123,
             entityName: 'Course 1',
         };
@@ -337,7 +349,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 20,
             title: 'Exercise chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 99,
             entityName: 'Exercise 1',
         };
@@ -359,7 +371,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 21,
             title: 'Exercise chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 99,
             entityName: 'Exercise 1',
         };
@@ -380,7 +392,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 22,
             title: 'Exercise chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 99,
             entityName: 'Exercise 1',
         };
@@ -401,7 +413,7 @@ describe('ChatHistoryItemComponent', () => {
             id: 30,
             title: 'Locale test chat',
             creationDate: new Date(),
-            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            mode: ChatServiceMode.PROGRAMMING_EXERCISE,
             entityId: 50,
             entityName: 'Exercise 1',
         };

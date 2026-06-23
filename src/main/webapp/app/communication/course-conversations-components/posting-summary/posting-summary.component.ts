@@ -1,16 +1,16 @@
-import { Component, effect, input, output } from '@angular/core';
+import { Component, effect, input, output, signal, untracked } from '@angular/core';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { faBarsProgress, faBookmark, faBoxArchive, faCheckSquare, faEllipsis, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
@@ -30,11 +30,11 @@ export class PostingSummaryComponent {
     protected readonly ConversationType = ConversationType;
     protected readonly SavedPostStatus = SavedPostStatus;
 
-    protected isAnswerPost = false;
-    protected postingIsOfToday = false;
-    protected isShowPosting = false;
-    protected isShowSummary = false;
-    protected isShowContent = false;
+    protected readonly isAnswerPost = signal(false);
+    protected readonly postingIsOfToday = signal(false);
+    protected readonly isShowPosting = signal(false);
+    protected readonly isShowSummary = signal(false);
+    protected readonly isShowContent = signal(false);
 
     // Icons
     readonly faLock = faLock;
@@ -47,14 +47,17 @@ export class PostingSummaryComponent {
 
     constructor() {
         effect(() => {
-            this.isShowPosting = this.post() !== undefined;
-            this.isShowSummary =
-                this.isShowPosting && this.post()!.conversation !== undefined && this.post()!.conversation!.type !== undefined && this.post()!.conversation!.title !== undefined;
-            this.isShowContent = this.isShowPosting && this.post()!.author !== undefined && this.post()!.content !== undefined && this.post()!.postingType !== undefined;
-            this.isAnswerPost = this.post()?.postingType === PostingType.ANSWER.valueOf();
-            if (this.post()) {
-                this.postingIsOfToday = dayjs().isSame(this.post()!.creationDate, 'day');
-            }
+            const post = this.post();
+            untracked(() => {
+                const isShowPosting = post !== undefined;
+                this.isShowPosting.set(isShowPosting);
+                this.isShowSummary.set(isShowPosting && post!.conversation !== undefined && post!.conversation!.type !== undefined && post!.conversation!.title !== undefined);
+                this.isShowContent.set(isShowPosting && post!.author !== undefined && post!.content !== undefined && post!.postingType !== undefined);
+                this.isAnswerPost.set(post?.postingType === PostingType.ANSWER.valueOf());
+                if (post) {
+                    this.postingIsOfToday.set(dayjs().isSame(post!.creationDate, 'day'));
+                }
+            });
         });
     }
 

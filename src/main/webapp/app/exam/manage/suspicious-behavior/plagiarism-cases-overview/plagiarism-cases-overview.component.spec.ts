@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 
@@ -8,6 +10,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('PlagiarismCasesOverviewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<PlagiarismCasesOverviewComponent>;
     let router: Router;
     const exercise1 = {
@@ -65,6 +69,10 @@ describe('PlagiarismCasesOverviewComponent', () => {
         );
 
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should navigate to plagiarism cases on view plagiarism cases click', () => {

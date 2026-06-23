@@ -1,13 +1,12 @@
 import { Component, effect, input, output, signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'faq-consistency-check',
     templateUrl: './faq-consistency.component.html',
     imports: [TranslateDirective, FontAwesomeModule],
-    standalone: true,
 })
 export class FaqConsistencyComponent {
     protected readonly faCheck = faCheck;

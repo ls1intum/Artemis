@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -7,6 +9,8 @@ import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/ma
 import { HttpResponse } from '@angular/common/http';
 
 describe('StudentsRoomDistributionService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: StudentsRoomDistributionService;
     let httpMock: HttpTestingController;
 
@@ -197,7 +201,7 @@ describe('StudentsRoomDistributionService', () => {
 
             req.flush(null);
 
-            expect(completed).toBeTrue();
+            expect(completed).toBe(true);
         });
 
         it('should send newSeat as undefined when omitted', () => {

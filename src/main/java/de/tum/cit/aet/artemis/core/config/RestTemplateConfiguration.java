@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
@@ -22,10 +20,11 @@ import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConve
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
-import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.jenkins.service.JenkinsAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 
 /**
@@ -45,6 +44,12 @@ public class RestTemplateConfiguration {
 
     private static final int VERY_SHORT_READ_TIMEOUT = 1000;
 
+    // The Hermes health check pings /api/health, which must fail fast: it blocks the Actuator /health endpoint
+    // and every metrics scrape, so a hung relay must not tie up those threads for the full short timeout.
+    private static final int HERMES_HEALTH_CONNECTION_TIMEOUT = 3 * 1000;
+
+    private static final int HERMES_HEALTH_READ_TIMEOUT = 3 * 1000;
+
     @Bean
     @Profile(PROFILE_JENKINS)
     public RestTemplate jenkinsRestTemplate(JenkinsAuthorizationInterceptor jenkinsInterceptor) {
@@ -52,13 +57,13 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile(PROFILE_ATHENA)
+    @Conditional(AthenaEnabled.class)
     public RestTemplate athenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
-    @Profile(PROFILE_APOLLON)
+    @Conditional(ApollonEnabled.class)
     public RestTemplate apollonRestTemplate() {
         return createRestTemplate();
     }
@@ -74,17 +79,6 @@ public class RestTemplateConfiguration {
     @Conditional(SharingEnabled.class)
     public RestTemplate sharingRestTemplate() {
         return createShortTimeoutRestTemplate();
-    }
-
-    /**
-     * Creates a RestTemplate that can be used to communicate with Aeolus
-     *
-     * @return a RestTemplate with short timeouts
-     */
-    @Bean
-    @Profile("aeolus | localci")
-    public RestTemplate aeolusRestTemplate() {
-        return createRestTemplate();
     }
 
     @Bean
@@ -103,26 +97,27 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile(PROFILE_ATHENA)
+    @Conditional(AthenaEnabled.class)
     public RestTemplate shortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
-    @Profile(PROFILE_APOLLON)
+    @Conditional(ApollonEnabled.class)
     public RestTemplate shortTimeoutApollonRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
 
     @Bean
     public RestTemplate shortTimeoutHermesRestTemplate() {
-        return createShortTimeoutRestTemplate();
+        final var requestFactory = getSimpleClientHttpRequestFactory(HERMES_HEALTH_READ_TIMEOUT, HERMES_HEALTH_CONNECTION_TIMEOUT);
+        return new RestTemplate(requestFactory);
     }
 
     // Note: for certain requests, e.g. the Athena submission selection, we would like to have even shorter timeouts.
     // Therefore, we need additional rest templates. It is recommended to keep the timeout settings constant per rest template.
     @Bean
-    @Profile(PROFILE_ATHENA)
+    @Conditional(AthenaEnabled.class)
     public RestTemplate veryShortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createVeryShortTimeoutRestTemplate());
     }
@@ -131,23 +126,6 @@ public class RestTemplateConfiguration {
     @Conditional(IrisEnabled.class)
     public RestTemplate shortTimeoutPyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
-    }
-
-    @Bean
-    @Conditional(NebulaEnabled.class)
-    public RestTemplate nebulaRestTemplate() {
-        return createRestTemplate();
-    }
-
-    /**
-     * Creates a RestTemplate that can be used to communicate with Aeolus
-     *
-     * @return a RestTemplate with short timeouts
-     */
-    @Bean
-    @Profile("aeolus | localci")
-    public RestTemplate shortTimeoutAeolusRestTemplate() {
-        return createShortTimeoutRestTemplate();
     }
 
     @NonNull

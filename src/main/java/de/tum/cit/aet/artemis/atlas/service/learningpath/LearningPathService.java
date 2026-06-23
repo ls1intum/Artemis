@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +15,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -38,15 +39,13 @@ import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.profile.CourseLearnerProfileService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
@@ -403,7 +402,7 @@ public class LearningPathService {
         Optional<LearningPath> optionalLearningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
         LearningPath learningPath;
         if (optionalLearningPath.isEmpty()) {
-            LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
+            LearningPath learningPathWithCourse = learningPathRepository.findWithEagerUserAndCourseByIdElseThrow(learningPathId);
             courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
             learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
         }
@@ -422,9 +421,9 @@ public class LearningPathService {
 
         if (learningPath.getUser() == null) {
             learningPath.getCompetencies().forEach(competency -> {
-                competency.setUserProgress(Collections.emptySet());
-                competency.getLectureUnitLinks().forEach(lectureUnitLink -> lectureUnitLink.getLectureUnit().setCompletedUsers(Collections.emptySet()));
-                competency.getExerciseLinks().forEach(exerciseLink -> exerciseLink.getExercise().setStudentParticipations(Collections.emptySet()));
+                competency.setUserProgress(Set.of());
+                competency.getLectureUnitLinks().forEach(lectureUnitLink -> lectureUnitLink.getLectureUnit().setCompletedUsers(Set.of()));
+                competency.getExerciseLinks().forEach(exerciseLink -> exerciseLink.getExercise().setStudentParticipations(Set.of()));
             });
             return learningPath;
         }
@@ -447,14 +446,14 @@ public class LearningPathService {
                 competency.setUserProgress(Set.of(competencyProgresses.get(competency.getId())));
             }
             else {
-                competency.setUserProgress(Collections.emptySet());
+                competency.setUserProgress(Set.of());
             }
             competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).forEach(lectureUnit -> {
                 if (completions.containsKey(lectureUnit.getId())) {
                     lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
                 }
                 else {
-                    lectureUnit.setCompletedUsers(Collections.emptySet());
+                    lectureUnit.setCompletedUsers(Set.of());
                 }
             });
             competency.getExerciseLinks().stream().map(CompetencyExerciseLink::getExercise).forEach(exercise -> {
@@ -462,7 +461,7 @@ public class LearningPathService {
                     exercise.setStudentParticipations(Set.of(studentParticipations.get(exercise.getId())));
                 }
                 else {
-                    exercise.setStudentParticipations(Collections.emptySet());
+                    exercise.setStudentParticipations(Set.of());
                 }
             });
         });

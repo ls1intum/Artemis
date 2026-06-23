@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -11,10 +11,14 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('TextExamSubmissionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
     let component: TextExamSubmissionComponent;
 
@@ -36,7 +40,7 @@ describe('TextExamSubmissionComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -48,7 +52,7 @@ describe('TextExamSubmissionComponent', () => {
         fixture.detectChanges();
         component.onDeactivate();
 
-        expect(component.answer).toBe('Hello World');
+        expect(component.answer()).toBe('Hello World');
         expect(component.wordCount).toBe(2);
         expect(component.characterCount).toBe(11);
         expect(component.getExerciseId()).toEqual(exercise.id);
@@ -61,7 +65,7 @@ describe('TextExamSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.answer).toBe('');
+        expect(component.answer()).toBe('');
         expect(component.wordCount).toBe(0);
         expect(component.characterCount).toBe(0);
     });
@@ -73,7 +77,7 @@ describe('TextExamSubmissionComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasUnsavedChanges()).toBeTrue();
+        expect(component.hasUnsavedChanges()).toBe(true);
     });
 
     it('should update text of the submission', () => {
@@ -95,17 +99,17 @@ describe('TextExamSubmissionComponent', () => {
 
         component.updateProblemStatement(TestBed.inject(ArtemisMarkdownService).safeHtmlForMarkdown(newProblemStatement));
 
-        expect((component.problemStatementHtml as any).changingThisBreaksApplicationSecurity).toBe(htmlForMarkdown(newProblemStatement));
+        expect((component.problemStatementHtml() as any).changingThisBreaksApplicationSecurity).toBe(htmlForMarkdown(newProblemStatement));
     });
 
-    it('should trigger text editor events', fakeAsync(() => {
+    it('should trigger text editor events', async () => {
         fixture.componentRef.setInput('exercise', exercise);
         textSubmission.text = 'Hello World';
         fixture.componentRef.setInput('studentSubmission', textSubmission);
 
         fixture.detectChanges();
         fixture.whenStable().then(() => {
-            expect(component.answer).toBe('Hello World');
+            expect(component.answer()).toBe('Hello World');
             const textareaDebugElement = fixture.debugElement.query(By.css('#text-editor'));
             expect(textareaDebugElement).not.toBeNull();
             const textarea = textareaDebugElement.nativeElement;
@@ -116,14 +120,14 @@ describe('TextExamSubmissionComponent', () => {
             textarea.dispatchEvent(new Event('input'));
             fixture.detectChanges();
             expect(textarea.value).toBe('Test\t');
-            expect(component.studentSubmission().isSynced).toBeFalse();
+            expect(component.studentSubmission().isSynced).toBe(false);
         });
-    }));
+    });
 
     it('should update the answer if the submission version changes', () => {
         const submissionVersion = { id: 1, content: 'submission version', submission: textSubmission, createdDate: dayjs('2021-01-01') };
         component.setSubmissionVersion(submissionVersion);
-        expect(component.answer).toBe('submission version');
+        expect(component.answer()).toBe('submission version');
         expect(component.submissionVersion).toBe(submissionVersion);
     });
 
@@ -132,7 +136,7 @@ describe('TextExamSubmissionComponent', () => {
         textSubmission.text = 'Hello World';
         fixture.componentRef.setInput('studentSubmission', textSubmission);
         fixture.detectChanges();
-        const saveExerciseSpy = jest.spyOn(component, 'notifyTriggerSave');
+        const saveExerciseSpy = vi.spyOn(component, 'notifyTriggerSave');
         const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
         saveButton.triggerEventHandler('save', null);
         expect(saveExerciseSpy).toHaveBeenCalledOnce();

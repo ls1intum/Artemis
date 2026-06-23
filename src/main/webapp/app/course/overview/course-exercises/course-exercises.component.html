@@ -1,0 +1,47 @@
+<div class="d-flex horizontal-scroll">
+    @if (course()) {
+        @if (!isShownViaLti()) {
+            <div [class]="{ 'sidebar-collapsed': isCollapsed() }">
+                @if (sidebarData(); as data) {
+                    <jhi-sidebar
+                        [itemSelected]="exerciseSelected()"
+                        [courseId]="courseId()"
+                        [sidebarData]="data"
+                        [collapseState]="DEFAULT_COLLAPSE_STATE"
+                        [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                        [showFilter]="true"
+                        [pageTitle]="pageTitle()"
+                        [showSidebarToggle]="true"
+                        [isSidebarCollapsed]="isCollapsed()"
+                        (toggleSidebar)="toggleSidebar()"
+                    />
+                }
+            </div>
+        } @else if (isMultiLaunch()) {
+            @if (sidebarData(); as data) {
+                <jhi-sidebar
+                    [itemSelected]="exerciseSelected()"
+                    [courseId]="courseId()"
+                    [sidebarData]="data"
+                    [collapseState]="DEFAULT_COLLAPSE_STATE"
+                    [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                    [showFilter]="true"
+                />
+            }
+        }
+
+        @if (exerciseSelected()) {
+            <div
+                [class]="{ 'content-sidebar-width': !isCollapsed() }"
+                class="content-width scrollable-content no-header-bar-height"
+                [ngStyle]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"
+            >
+                <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
+            </div>
+        } @else {
+            <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
+                <div class="col-12 text-center my-auto" jhiTranslate="artemisApp.courseOverview.exerciseDetails.selectExercise"></div>
+            </div>
+        }
+    }
+</div>

@@ -1,5 +1,5 @@
-import { Component, OnInit, inject, input, model, output } from '@angular/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { Component, OnInit, inject, input, model, output, signal } from '@angular/core';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -7,17 +7,17 @@ import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complai
 import { finalize } from 'rxjs/operators';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Router } from '@angular/router';
-import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
+import { assessmentNavigateBack } from 'app/foundation/util/navigate-back.util';
 import { Location } from '@angular/common';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { isAllowedToRespondToComplaintAction } from 'app/assessment/manage/services/assessment.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TextareaCounterComponent } from 'app/shared-ui/textarea/textarea-counter.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; onSuccess: () => void; onError: () => void };
 
@@ -42,33 +42,40 @@ export class ComplaintsForTutorComponent implements OnInit {
     // that should be sent to the server along with the assessment update.
     readonly updateAssessmentAfterComplaint = output<AssessmentAfterComplaint>();
     complaintText?: string;
-    handled: boolean;
-    complaintResponse: ComplaintResponse = new ComplaintResponse();
+    readonly handled = signal(false);
+    // Deep [(ngModel)]="complaintResponse.responseText" two-way target → getter/setter facade over a signal so template reads stay reactive.
+    private readonly _complaintResponse = signal<ComplaintResponse>(new ComplaintResponse());
+    get complaintResponse(): ComplaintResponse {
+        return this._complaintResponse();
+    }
+    set complaintResponse(value: ComplaintResponse) {
+        this._complaintResponse.set(value);
+    }
     complaintResponseUpdate: ComplaintResponseUpdateDTO;
     ComplaintType = ComplaintType;
-    isLoading = false;
-    showLockDuration = false;
-    lockedByCurrentUser = false;
-    isLockedForLoggedInUser = false;
+    readonly isLoading = signal(false);
+    readonly showLockDuration = signal(false);
+    readonly lockedByCurrentUser = signal(false);
+    readonly isLockedForLoggedInUser = signal(false);
     course?: Course;
-    maxComplaintResponseTextLimit: number;
+    readonly maxComplaintResponseTextLimit = signal<number>(undefined!);
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise()!);
 
-        this.maxComplaintResponseTextLimit = this.course?.maxComplaintResponseTextLimit ?? 0;
+        this.maxComplaintResponseTextLimit.set(this.course?.maxComplaintResponseTextLimit ?? 0);
         if (this.exercise()?.exerciseGroup) {
             // Exams should always allow at least 2000 characters
-            this.maxComplaintResponseTextLimit = Math.max(2000, this.maxComplaintResponseTextLimit);
+            this.maxComplaintResponseTextLimit.set(Math.max(2000, this.maxComplaintResponseTextLimit()));
         }
 
         if (this.complaint()) {
             this.complaintText = this.complaint().complaintText;
-            this.handled = this.complaint().accepted !== undefined;
-            if (this.handled) {
+            this.handled.set(this.complaint().accepted !== undefined);
+            if (this.handled()) {
                 this.complaintResponse = this.complaint().complaintResponse!;
-                this.lockedByCurrentUser = false;
-                this.showLockDuration = false;
+                this.lockedByCurrentUser.set(false);
+                this.showLockDuration.set(false);
             } else {
                 if (this.isAllowedToRespond) {
                     if (this.complaint().complaintResponse) {
@@ -86,20 +93,22 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     private createLock() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.complaintResponseService
             .createLock(this.complaint().id!)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: (response) => {
                     this.complaintResponse = response.body!;
+                    this.complaintResponse.complaint = this.complaint();
+                    this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                     this.complaint.set(this.complaintResponse.complaint!);
-                    this.lockedByCurrentUser = true;
-                    this.showLockDuration = true;
+                    this.lockedByCurrentUser.set(true);
+                    this.showLockDuration.set(true);
                     this.alertService.success('artemisApp.locks.acquired');
                 },
                 error: (err: HttpErrorResponse) => {
@@ -110,24 +119,26 @@ export class ComplaintsForTutorComponent implements OnInit {
 
     private refreshLock() {
         this.complaintResponse = this.complaint().complaintResponse!;
-        this.showLockDuration = true;
-        // if a lock exists we have to check if it affects the currently logged-in user
-        this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise()!);
-        if (!this.isLockedForLoggedInUser) {
+        this.showLockDuration.set(true);
+        // if a lock exists, we have to check if it affects the currently logged-in user
+        this.isLockedForLoggedInUser.set(this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise()!));
+        if (!this.isLockedForLoggedInUser()) {
             // update the lock
-            this.isLoading = true;
+            this.isLoading.set(true);
             this.complaintResponseService
                 .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint().id!)
                 .pipe(
                     finalize(() => {
-                        this.isLoading = false;
+                        this.isLoading.set(false);
                     }),
                 )
                 .subscribe({
                     next: (response) => {
                         this.complaintResponse = response.body!;
+                        this.complaintResponse.complaint = this.complaint();
+                        this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                         this.complaint.set(this.complaintResponse.complaint!);
-                        this.lockedByCurrentUser = true;
+                        this.lockedByCurrentUser.set(true);
                         this.alertService.success('artemisApp.locks.acquired');
                     },
                     error: (err: HttpErrorResponse) => {
@@ -135,7 +146,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                     },
                 });
         } else {
-            this.lockedByCurrentUser = false;
+            this.lockedByCurrentUser.set(false);
         }
     }
 
@@ -160,9 +171,9 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.alertService.error('artemisApp.complaintResponse.noText');
             return;
         }
-        if (this.complaintResponse.responseText.length > this.maxComplaintResponseTextLimit) {
+        if (this.complaintResponse.responseText.length > this.maxComplaintResponseTextLimit()) {
             this.alertService.error('artemisApp.complaint.exceededComplaintResponseTextLimit', {
-                maxComplaintRespondTextLimit: this.maxComplaintResponseTextLimit,
+                maxComplaintRespondTextLimit: this.maxComplaintResponseTextLimit(),
             });
             return;
         }
@@ -177,17 +188,17 @@ export class ComplaintsForTutorComponent implements OnInit {
         if (acceptComplaint && this.complaint().complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
             // The complaint is sent along with the assessment update by the parent to avoid additional requests.
-            this.isLoading = true;
+            this.isLoading.set(true);
             this.updateAssessmentAfterComplaint.emit({
                 complaintResponse: this.complaintResponse,
                 onSuccess: () => {
-                    this.isLoading = false;
-                    this.handled = true;
-                    this.showLockDuration = false;
-                    this.lockedByCurrentUser = false;
+                    this.isLoading.set(false);
+                    this.handled.set(true);
+                    this.showLockDuration.set(false);
+                    this.lockedByCurrentUser.set(false);
                 },
                 onError: () => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
         } else {
@@ -201,27 +212,30 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     private resolveComplaint() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.complaintResponseService
             .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaintResponse.complaint!.id)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({
                 next: (response) => {
-                    this.handled = true;
+                    this.handled.set(true);
                     if (this.complaint().complaintType === ComplaintType.MORE_FEEDBACK) {
                         this.alertService.success('artemisApp.moreFeedbackResponse.created');
                     } else {
                         this.alertService.success('artemisApp.complaintResponse.created');
                     }
                     this.complaintResponse = response.body!;
+                    this.complaintResponse.complaint = this.complaint();
+                    this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
+                    this.complaintResponse.complaint!.accepted = this.complaintResponseUpdate.complaintIsAccepted;
                     this.complaint.set(this.complaintResponse.complaint!);
-                    this.isLockedForLoggedInUser = false;
-                    this.showLockDuration = false;
-                    this.lockedByCurrentUser = false;
+                    this.isLockedForLoggedInUser.set(false);
+                    this.showLockDuration.set(false);
+                    this.lockedByCurrentUser.set(false);
                 },
                 error: (err: HttpErrorResponse) => {
                     this.onError(err);
@@ -241,8 +255,8 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     /**
-     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests themself
-     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor themself
+     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests themselves
+     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor themselves
      * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {

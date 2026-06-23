@@ -10,11 +10,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 
@@ -45,7 +44,7 @@ public class PublicOAuth2JWKSResource {
     public ResponseEntity<String> getJwkSet() {
         String keysAsJson = null;
         try {
-            keysAsJson = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT).writeValueAsString(jwksService.getJwkSet().toPublicJWKSet().toJSONObject());
+            keysAsJson = JsonObjectMapper.get().writerWithDefaultPrettyPrinter().writeValueAsString(jwksService.getJwkSet().toPublicJWKSet().toJSONObject());
         }
         catch (JsonProcessingException exception) {
             log.debug("Error occurred parsing jwkSet: {}", exception.getMessage());

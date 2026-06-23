@@ -1,9 +1,9 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommitsInfoGroupComponent } from './commits-info-group/commits-info-group.component';
 import { NgStyle } from '@angular/common';
 
@@ -15,54 +15,35 @@ import { NgStyle } from '@angular/common';
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
 
-    @Input() commits?: CommitInfo[];
-    @Input() currentSubmissionHash?: string;
-    @Input() previousSubmissionHash?: string;
-    @Input() participationId?: number;
-    @Input() submissions?: ProgrammingSubmission[];
-    @Input() exerciseProjectKey?: string;
-    @Input() isRepositoryView = false;
+    readonly commits = input<CommitInfo[]>();
+    readonly currentSubmissionHash = input<string>();
+    readonly previousSubmissionHash = input<string>();
+    readonly participationId = input<number>();
+    readonly submissions = input<ProgrammingSubmission[]>();
+    readonly exerciseProjectKey = input<string>();
+    readonly isRepositoryView = input(false);
 
     private commitsInfoSubscription: Subscription;
-    protected isGroupsExpanded = true;
-    protected groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
+    protected readonly isGroupsExpanded = signal(true);
 
-    ngOnInit(): void {
-        if (!this.commits) {
-            if (this.participationId) {
-                this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participationId).subscribe((commits) => {
-                    if (commits) {
-                        this.commits = commits;
-                    }
-                    this.groupCommits();
-                });
-            }
-        } else {
-            this.groupCommits();
-        }
-    }
+    private readonly fetchedCommits = signal<CommitInfo[] | undefined>(undefined);
 
-    ngOnDestroy(): void {
-        this.commitsInfoSubscription?.unsubscribe();
-    }
-
-    /**
-     * Groups commits together that were pushed in one batch.
-     * As we don't have a direct indicator whether commits were pushed together,
-     * we infer groups based on the presence of a 'result' on a commit.
-     */
-    private groupCommits() {
-        if (!this.commits) {
-            return;
+    protected readonly groupedCommits = computed<{ key: string; commits: CommitInfo[]; date: string }[]>(() => {
+        const commits = this.fetchedCommits() ?? this.commits();
+        if (!commits) {
+            return [];
         }
 
         const commitGroups: { key: string; commits: CommitInfo[]; date: string }[] = [];
         let tempGroup: CommitInfo[] = [];
 
-        this.commits = this.commits?.sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? -1 : 1));
+        // Subtract valueOf() so equal timestamps return 0 (stable order) and the comparator is total.
+        // Ascending (oldest first) — the downstream grouping logic depends on this order; the
+        // newest-first display is produced by the trailing commitGroups.reverse().
+        const sorted = [...commits].sort((a, b) => dayjs(a.timestamp).valueOf() - dayjs(b.timestamp).valueOf());
 
-        for (let i = 0; i < this.commits.length; i++) {
-            const commit = this.commits[i];
+        for (let i = 0; i < sorted.length; i++) {
+            const commit = sorted[i];
             tempGroup.push(commit);
 
             if (commit.result) {
@@ -84,10 +65,29 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
             });
         }
 
-        this.groupedCommits = commitGroups.reverse();
+        return commitGroups.reverse();
+    });
+
+    ngOnInit(): void {
+        if (this.commits()) {
+            return;
+        }
+        const participationId = this.participationId();
+        if (!participationId) {
+            return;
+        }
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(participationId).subscribe((commits) => {
+            if (commits) {
+                this.fetchedCommits.set(commits);
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.commitsInfoSubscription?.unsubscribe();
     }
 
     protected toggleAllExpanded() {
-        this.isGroupsExpanded = !this.isGroupsExpanded;
+        this.isGroupsExpanded.update((expanded) => !expanded);
     }
 }

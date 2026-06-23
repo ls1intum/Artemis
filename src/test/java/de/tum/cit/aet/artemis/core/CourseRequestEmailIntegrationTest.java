@@ -23,11 +23,12 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * Integration tests that verify course request emails are actually delivered with correct content.
@@ -82,7 +83,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
 
         // Explicitly configure a non-default mail.from to ensure MailSendingService's mailConfigured guard
         // allows sending. The default "artemis@localhost" would cause emails to be silently skipped.
-        var mailEnabledProperties = new JHipsterProperties();
+        var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
@@ -100,7 +101,8 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         var courseRequestData = new CourseRequestEmailData("Introduction to Testing", "INTTEST", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
                 "Need this course for our testing department.", null);
 
-        testMailService.buildAndSendSync(recipient, "email.courseRequest.received.title", "mail/courseRequestReceivedEmail", Map.of("courseRequest", courseRequestData));
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail",
+                Map.of("courseRequest", courseRequestData));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Introduction to Testing");
@@ -116,7 +118,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         var course = new Course();
         course.setId(42L);
 
-        testMailService.buildAndSendSync(recipient, "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
                 Map.of("courseRequest", courseRequestData, "course", course));
 
         String body = getDeliveredEmailBody();
@@ -128,7 +130,8 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
     void rejectedEmailTemplate_shouldRenderRecordFieldsIncludingDecisionReason() throws Exception {
         var courseRequestData = new CourseRequestEmailData("Rejected Course", "REJCRS", null, null, null, false, null, "Not enough justification provided.");
 
-        testMailService.buildAndSendSync(recipient, "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail", Map.of("courseRequest", courseRequestData));
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail",
+                Map.of("courseRequest", courseRequestData));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Rejected Course");
@@ -141,7 +144,8 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         var courseRequestData = new CourseRequestEmailData("Einführung in Tests", "EINFTEST", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), true,
                 "Kurs wird für die Abteilung benötigt.", null);
 
-        testMailService.buildAndSendSync(recipient, "email.courseRequest.received.title", "mail/courseRequestReceivedEmail", Map.of("courseRequest", courseRequestData));
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail",
+                Map.of("courseRequest", courseRequestData));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("EINFTEST");
@@ -153,7 +157,8 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         var contactData = new ContactEmailData("New Course Request", "NEWCRS", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
                 "We need this course urgently.", "Jane Doe", "jane@example.com");
 
-        testMailService.buildAndSendSync(recipient, "email.courseRequest.contact.title", "mail/courseRequestContactEmail", Map.of("courseRequest", contactData));
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.contact.title", "mail/courseRequestContactEmail",
+                Map.of("courseRequest", contactData));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("New Course Request");
@@ -170,7 +175,8 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         var contactData = new ContactEmailData("Neuer Kurs", "NEUKRS", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), true, "Dringend benötigt.",
                 "Max Mustermann", "max@example.com");
 
-        testMailService.buildAndSendSync(recipient, "email.courseRequest.contact.title", "mail/courseRequestContactEmail", Map.of("courseRequest", contactData));
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.contact.title", "mail/courseRequestContactEmail",
+                Map.of("courseRequest", contactData));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("NEUKRS");
@@ -186,7 +192,7 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         var course = new Course();
         course.setId(99L);
 
-        testMailService.buildAndSendSync(recipient, "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.accepted.title", "mail/courseRequestAcceptedEmail",
                 Map.of("courseRequest", courseRequestData, "course", course));
 
         String body = getDeliveredEmailBody();
@@ -199,7 +205,8 @@ class CourseRequestEmailIntegrationTest extends AbstractSpringIntegrationIndepen
         recipient.setLangKey("de");
         var courseRequestData = new CourseRequestEmailData("Abgelehnter Kurs", "ABLKRS", null, null, null, false, null, "Keine ausreichende Begründung.");
 
-        testMailService.buildAndSendSync(recipient, "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail", Map.of("courseRequest", courseRequestData));
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail",
+                Map.of("courseRequest", courseRequestData));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Abgelehnter Kurs");

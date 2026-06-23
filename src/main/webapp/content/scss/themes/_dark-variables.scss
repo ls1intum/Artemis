@@ -25,6 +25,10 @@ $teal: #20c997;
 $cyan: #17a2b8;
 
 $primary: $blue;
+
+// On dark theme the primary is already on a dark surface; keep a slightly darker shade so that
+// the on-brand buttons remain crisp (contrast is driven mostly by lightness of --white here).
+$primary-dark: #2d6cae;
 $secondary: $gray-600;
 $success: $green;
 $info: $cyan;
@@ -259,9 +263,6 @@ $fo-container-box-icon-background: $neutral-dark-l-10;
 $fo-blue-font-color: #4188d3;
 $fo-box-overlay-background: $neutral-dark-l-5;
 
-// Header Participation
-$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 5%), 15%);
-
 // Markdown Editor
 $md-wrapper-body-bg: $body-bg;
 $md-wrapper-color: white;
@@ -336,7 +337,7 @@ $update-footer-background: $neutral-dark;
 // Edit Quiz
 $quiz-mapping-letter-number-mixin-color: white;
 
-$edit-quiz-footer-background: $brighter-body-bg;
+$edit-quiz-footer-background: $body-bg;
 $quiz-exercise-detail-max-score-background: $artemis-dark;
 $quiz-exercise-detail-max-score-color: white;
 $quiz-edit-question-border: $neutral-dark-l-10;
@@ -606,7 +607,7 @@ $apollon-grid: $neutral-dark-l-10;
 $feedback-suggestions-primary: rgb(181, 78, 254, 1);
 $feedback-suggestions-background: darken($feedback-suggestions-primary, 50%);
 
-// NGX Graph Colors
+// Graph Colors
 $graph-light-grey: rgb(182, 182, 182);
 $graph-grey: rgb(150, 150, 150);
 $graph-dark-blue: rgb(159, 186, 248);
@@ -616,6 +617,10 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgb(229, 229, 229);
+
+// Chart text and grid line colors (consumed by chart.js via ChartColorService)
+$chart-text-color: #a0aabe;
+$chart-grid-color: #2f3646;
 
 // User-Management
 $user-management-background-color: rgba($white, 0.02);
@@ -638,6 +643,8 @@ $iris-accent-background: $neutral-dark-l-15;
 $iris-label-color: $gray-500;
 $iris-accent-border-color: $gray-500;
 $iris-table-header-background: $neutral-dark-l-5;
+$iris-onboarding-backdrop: rgba($black, 0.5);
+
 // Iris Communication
 $tutor-suggestion-background: $gray-700;
 
@@ -667,10 +674,14 @@ $calendar-day-badge-selected: $gray-700;
 $league-badge-bronze-color: #cd7f32;
 $league-badge-silver-color: #c0c0c0;
 $league-badge-gold-color: #ffd700;
-$league-badge-diamond-color: hsl(195, 60%, 60%);
-$league-badge-master-color: hsl(270, 60%, 60%);
+$league-badge-diamond-color: hsl(195deg, 60%, 60%);
+$league-badge-master-color: hsl(270deg, 60%, 60%);
 $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-700;
+
+// Tutorial Groups
+$registration-suggestion-panel-bg: #18181b;
+$registration-suggestion-panel-selection-bg: #27272a;
 
 // LLM Selection Popup
 $ai-modal-card-bg: $neutral-dark-l-10;
@@ -689,5 +700,15 @@ $ai-modal-shadow-hover: rgba(0, 0, 0, 0.4);
 // Global search navbar (same in both themes since navbar bg is always artemis-dark)
 $global-search-navbar-kbd-bg: #6c757d;
 
-// Global search modal
-$global-search-modal-footer-bg: rgba($white, 0.03);
+// Global search modal - Artemis blue tones for dark mode
+$global-search-modal-bg: #1a2a3a;
+$global-search-modal-footer-bg: rgba(#3e8acc, 0.06);
+$global-search-item-hover-bg: rgba(#3e8acc, 0.12);
+$global-search-kbd-bg: #243447;
+$global-search-kbd-border: rgba(#5a9ed6, 0.3);
+$global-search-icon-bg: rgba(#3e8acc, 0.15);
+$global-search-border-color: rgba(#5a9ed6, 0.15);
+$global-search-lecture-accent: #c084fc;
+$global-search-result-icon-bg: rgba($global-search-lecture-accent, 0.18);
+$global-search-result-hover-border: rgba($global-search-lecture-accent, 0.4);
+$global-search-result-hover-bg: rgba($global-search-lecture-accent, 0.08);

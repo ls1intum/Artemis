@@ -8,9 +8,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -20,7 +17,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  */
 @Entity
 @Table(name = "plagiarism_detection_config")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismDetectionConfig extends DomainObject {
 

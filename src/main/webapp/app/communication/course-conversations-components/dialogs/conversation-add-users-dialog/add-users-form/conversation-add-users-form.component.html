@@ -1,11 +1,11 @@
-@if (activeConversation && courseId) {
+@if (activeConversation() && courseId()) {
     <div class="row">
         <div class="col-12">
-            @if (maxSelectable !== undefined) {
-                <div class="alert alert-info" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.maxUsersNote" [translateValues]="{ max: maxSelectable }"></div>
+            @if (maxSelectable() !== undefined) {
+                <div class="alert alert-info" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.maxUsersNote" [translateValues]="{ max: maxSelectable() }"></div>
             }
-            <div [hidden]="maxSelectable === 0">
-                <div class="mode-switch" [hidden]="!getAsChannel(activeConversation)">
+            <div [hidden]="maxSelectable() === 0">
+                <div class="mode-switch" [hidden]="!getAsChannel(activeConversation())">
                     <div class="form-group">
                         <div class="btn-group" role="group">
                             <input
@@ -28,7 +28,7 @@
                         <div class="col-12">
                             <jhi-course-users-selector
                                 formControlName="selectedUsers"
-                                [courseId]="courseId"
+                                [courseId]="courseId()"
                                 [label]="'artemisApp.dialogs.addUsers.addUsersForm.addUserLabel' | artemisTranslate"
                             />
                             @if (selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)) {
@@ -37,7 +37,7 @@
                                         <div jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.requiredError"></div>
                                     }
                                     @if (selectedUsersControl?.errors?.maxlength) {
-                                        <div jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.maxError" [translateValues]="{ max: maxSelectable }"></div>
+                                        <div jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.maxError" [translateValues]="{ max: maxSelectable() }"></div>
                                     }
                                 </div>
                             }

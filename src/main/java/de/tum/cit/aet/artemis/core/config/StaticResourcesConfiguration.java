@@ -18,8 +18,6 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistra
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import tech.jhipster.config.JHipsterProperties;
-
 /**
  * Configures serving and caching of static resources.
  * <p>
@@ -37,9 +35,9 @@ import tech.jhipster.config.JHipsterProperties;
 @Lazy
 public class StaticResourcesConfiguration implements WebMvcConfigurer {
 
-    private final JHipsterProperties jHipsterProperties;
+    private final ArtemisProperties jHipsterProperties;
 
-    public StaticResourcesConfiguration(JHipsterProperties jHipsterProperties) {
+    public StaticResourcesConfiguration(ArtemisProperties jHipsterProperties) {
         this.jHipsterProperties = jHipsterProperties;
     }
 

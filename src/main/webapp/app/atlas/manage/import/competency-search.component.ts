@@ -1,12 +1,12 @@
-import { Component, model } from '@angular/core';
+import { Component, model, signal } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { getSemesters } from 'app/shared/util/semester-utils';
-import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { getSemesters } from 'app/foundation/util/semester-utils';
+import { CourseCompetencyFilter } from 'app/foundation/pagination/pageable-table';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -17,7 +17,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class CompetencySearchComponent {
     search = model.required<CourseCompetencyFilter>();
 
-    advancedSearchEnabled = false;
+    readonly advancedSearchEnabled = signal(false);
 
     protected readonly faChevronDown = faChevronDown;
     protected readonly faChevronUp = faChevronUp;
@@ -29,7 +29,7 @@ export class CompetencySearchComponent {
      * Toggles advanced search (expands component to show more search fields)
      */
     toggleAdvancedSearch() {
-        this.advancedSearchEnabled = !this.advancedSearchEnabled;
+        this.advancedSearchEnabled.update((enabled) => !enabled);
     }
 
     /**
@@ -56,7 +56,7 @@ export class CompetencySearchComponent {
      * Triggered every time the user manually presses Enter or the search button
      */
     performSearch() {
-        if (this.advancedSearchEnabled) {
+        if (this.advancedSearchEnabled()) {
             this.search.update((s) => ({ ...s }));
         } else {
             //only search with competency title if advancedSearch is disabled

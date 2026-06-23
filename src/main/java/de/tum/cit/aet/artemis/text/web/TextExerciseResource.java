@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -31,15 +33,11 @@ import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -47,6 +45,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -229,12 +229,13 @@ public class TextExerciseResource {
      * with answer if existing and the assessments if the submission was already submitted.
      *
      * @param participationId the participationId for which to find the data for the text editor
+     * @param resultId        optional id of a specific result to retrieve; if not provided, returns the latest result
      * @return the ResponseEntity with the participation as body
      */
     // TODO: fix the URL scheme
-    @GetMapping("text-editor/{participationId}")
+    @GetMapping({ "participations/{participationId}/text-editor", "text-editor/{participationId}" })
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         if (!(participation.getExercise() instanceof TextExercise textExercise)) {
@@ -255,6 +256,7 @@ public class TextExerciseResource {
         Set<Submission> submissions = participation.getSubmissions();
         participation.setSubmissions(new HashSet<>());
 
+        boolean resultFound = false;
         for (Submission submission : submissions) {
             if (submission != null) {
                 TextSubmission textSubmission = (TextSubmission) submission;
@@ -268,8 +270,11 @@ public class TextExerciseResource {
                     textSubmission.setResults(athenaResults);
                 }
 
-                Result result = textSubmission.getLatestResult();
+                // Use specific result if resultId is provided, otherwise use latest
+                Result result = (resultId != null) ? textSubmission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElse(null)
+                        : textSubmission.getLatestResult();
                 if (result != null) {
+                    resultFound = true;
                     // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
                     final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
                     textSubmission.setBlocks(textBlocks);
@@ -283,11 +288,15 @@ public class TextExerciseResource {
                         result.filterSensitiveInformation();
                     }
 
-                    // only send the one latest result to the client
+                    // Only send the relevant result to the client
                     textSubmission.setResults(List.of(result));
                 }
                 participation.addSubmission(textSubmission);
             }
+        }
+
+        if (resultId != null && !resultFound) {
+            throw new EntityNotFoundException("Result", resultId);
         }
 
         // if all submissions were deleted, add a new one since the client relies on the existence of at least one submission

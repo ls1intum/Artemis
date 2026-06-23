@@ -1,0 +1,21 @@
+/* Entity list */
+.entity-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Search results list */
+.search-results-list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Skeleton loading items */
+.skeleton-result-item {
+    border-bottom: 1px solid var(--global-search-border-color);
+    border-left: 3px solid transparent;
+
+    &:last-child {
+        border-bottom: none;
+    }
+}

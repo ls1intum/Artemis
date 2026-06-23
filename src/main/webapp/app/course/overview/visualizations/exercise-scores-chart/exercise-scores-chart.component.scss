@@ -1,0 +1,27 @@
+.chart-wrapper {
+    width: 90%;
+}
+
+.filter {
+    margin-left: 0.5rem;
+}
+
+.line-chart-container {
+    width: 75%;
+
+    // the chart inside grows with the number of exercises and is scrolled horizontally
+    overflow-x: auto;
+}
+
+.chart-scroll-content {
+    height: 350px;
+
+    // never shrink below the visible container width, even with few exercises
+    min-width: 100%;
+}
+
+@media (max-width: 1300px) {
+    .line-chart-container {
+        width: 100% !important;
+    }
+}

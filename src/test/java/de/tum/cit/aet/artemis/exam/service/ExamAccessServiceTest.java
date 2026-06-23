@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -15,18 +14,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -112,8 +111,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         User instructor2 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor2");
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        instructor1.setGroups(Collections.singleton("course1InstructorGroup"));
-        instructor2.setGroups(Collections.singleton("course2InstructorGroup"));
+        instructor1.setGroups(Set.of("course1InstructorGroup"));
+        instructor2.setGroups(Set.of("course2InstructorGroup"));
         userRepository.save(instructor1);
         userRepository.save(instructor2);
         course1 = courseUtilService.addEmptyCourse();
@@ -397,7 +396,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         examRepository.save(exam1);
         studentExamRepository.delete(studentExam1);
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
-                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
+                .satisfies(error -> assertThat(error.getBody().getProperties().get("skipAlert")).isEqualTo(Boolean.TRUE));
     }
 
     @Test

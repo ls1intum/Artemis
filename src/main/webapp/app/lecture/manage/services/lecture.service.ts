@@ -5,7 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { Lecture, LectureSeriesCreateLectureDTO, SimpleLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Lecture>;
@@ -103,9 +103,9 @@ export class LectureService {
      * @param lectureId Lecture to be cloned and imported
      */
     import(courseId: number, lectureId: number): Observable<EntityResponseType> {
-        const params = new HttpParams().set('courseId', courseId);
+        const params = new HttpParams().set('courseId', courseId).set('sourceLectureId', lectureId);
         return this.http
-            .post<Lecture>(`${this.resourceUrl}/import/${lectureId}`, null, {
+            .post<Lecture>(`${this.resourceUrl}/import`, null, {
                 params,
                 observe: 'response',
             })
@@ -127,7 +127,6 @@ export class LectureService {
         const copy: Lecture = Object.assign({}, lecture, {
             startDate: convertDateFromClient(lecture.startDate),
             endDate: convertDateFromClient(lecture.endDate),
-            visibleDate: convertDateFromClient(lecture.visibleDate),
         });
         if (copy.lectureUnits) {
             copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
@@ -143,7 +142,6 @@ export class LectureService {
         if (res.body) {
             res.body.startDate = convertDateFromServer(res.body.startDate);
             res.body.endDate = convertDateFromServer(res.body.endDate);
-            res.body.visibleDate = convertDateFromServer(res.body.visibleDate);
             if (res.body.lectureUnits) {
                 res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
             }
@@ -191,7 +189,6 @@ export class LectureService {
         if (lecture) {
             lecture.startDate = convertDateFromServer(lecture.startDate);
             lecture.endDate = convertDateFromServer(lecture.endDate);
-            lecture.visibleDate = convertDateFromServer(lecture.visibleDate);
             if (lecture.lectureUnits) {
                 lecture.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(lecture.lectureUnits);
             }

@@ -1,13 +1,13 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-
+import { filter, take } from 'rxjs';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
-import { LtiService } from 'app/shared/service/lti.service';
+import { LtiService } from 'app/foundation/service/lti.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 type LtiLaunchResponse = {
     targetLinkUri: string;
@@ -29,11 +29,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     private ltiService = inject(LtiService);
     private themeService = inject(ThemeService);
 
-    isLaunching: boolean;
-
-    constructor() {
-        this.isLaunching = true;
-    }
+    readonly isLaunching = signal(true);
 
     /**
      * perform an LTI launch with state and id_token query parameters
@@ -48,7 +44,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
         if (!state || !idToken) {
             captureException('Required parameter for LTI launch missing');
-            this.isLaunching = false;
+            this.isLaunching.set(false);
             return;
         }
 
@@ -98,13 +94,14 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     redirectUserToLoginThenTargetLink(error: any): void {
         // Redirect the user to the login page
-        this.router.navigate(['/']).then(() => {
+        this.router.navigate(['/sign-in']).then(() => {
             // After navigating to the login page, set up a listener for when the user logs in
-            this.accountService.getAuthenticationState().subscribe((user) => {
-                if (user) {
+            this.accountService
+                .getAuthenticationState()
+                .pipe(filter(Boolean), take(1))
+                .subscribe(() => {
                     this.redirectUserToTargetLink(error);
-                }
-            });
+                });
         });
     }
 
@@ -119,14 +116,14 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         if (targetLinkUri) {
             this.replaceWindowLocationWrapper(targetLinkUri);
         } else {
-            this.isLaunching = false;
+            this.isLaunching.set(false);
             captureException('No LTI targetLinkUri received for a successful launch');
         }
     }
 
     handleLtiLaunchError(): void {
         this.sessionStorageService.remove('state');
-        this.isLaunching = false;
+        this.isLaunching.set(false);
     }
 
     storeLtiSessionData(ltiIdToken: string, clientRegistrationId: string): void {

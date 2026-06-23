@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.exception;
 
 import java.net.URI;
 
-import org.zalando.problem.Status;
+import org.springframework.http.HttpStatus;
 
 public class ConflictException extends HttpStatusException {
 
@@ -11,6 +11,6 @@ public class ConflictException extends HttpStatusException {
     }
 
     public ConflictException(URI type, String defaultMessage, String entityName, String errorKey, boolean skipAlert) {
-        super(type, defaultMessage, Status.CONFLICT, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
+        super(type, defaultMessage, HttpStatus.CONFLICT, entityName, errorKey, getAlertParameters(entityName, errorKey, skipAlert));
     }
 }

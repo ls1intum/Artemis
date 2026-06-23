@@ -38,6 +38,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderColumn;
+
 import org.awaitility.Awaitility;
 import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.AfterAll;
@@ -53,8 +57,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -78,6 +80,7 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaConstructor;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
+import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
@@ -87,17 +90,22 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.cit.aet.artemis.account.repository.CustomOrganizationRepositoryImpl;
+import de.tum.cit.aet.artemis.communication.repository.CustomPostRepositoryImpl;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
+import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTestBase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTestBase;
 
 /**
@@ -124,6 +132,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void testNoShadedDependencies() {
+        ArchRule noShadedDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("..shaded..", "..repackaged..")
+                .because("Depending on a third-party library's shaded/relocated internal copy (e.g. org.apache.velocity.shaded.commons.io.FilenameUtils) is fragile: "
+                        + "the host library can drop or relocate the shaded package on any version bump, silently breaking the build (this happened during the OpenSAML/Velocity "
+                        + "upgrade in the Spring Boot 4.1 bump). Depend on the real, explicitly-declared library instead (e.g. commons-io for FilenameUtils).");
+        noShadedDependencies.check(allClasses);
+    }
+
+    @Test
     void testClassNameAndVisibility() {
         ArchRule classNames = methods().that().areAnnotatedWith(Test.class).should().beDeclaredInClassesThat().haveNameMatching(".*Test").orShould().beDeclaredInClassesThat()
                 .areAnnotatedWith(Nested.class);
@@ -134,16 +151,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classNames.check(testClasses);
         noPublicTestClasses.check(testClasses.that(are(not(or(simpleNameContaining("Abstract"), INTERFACES)))));
         noPublicTests.check(testClasses);
-    }
-
-    @Test
-    // TODO When upgrading to Spring Boot 4, we can remove this test.
-    @SuppressWarnings("removal")
-    void testNoMockBeanAndSpyBean() {
-        ArchRule noMockBeanAndSpyBean = noFields().should().beAnnotatedWith(MockBean.class).orShould().beAnnotatedWith(SpyBean.class)
-                .because("We use @MockitoBean or @MockitoSpyBean.");
-        noMockBeanAndSpyBean.check(testClasses);
-
     }
 
     @Test
@@ -168,6 +175,80 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule toListUsage = noClasses().should().callMethod(Collectors.class, "toList")
                 .because("You should use .toList() or .collect(Collectors.toCollection(ArrayList::new)) instead");
         toListUsage.check(allClasses);
+    }
+
+    @Test
+    void testNoHibernateSecondLevelCacheAnnotation() {
+        String reason = "Hibernate L2 cache is disabled cluster-wide. @Modifying queries bypass L2 invalidation and the absence of service-level @Transactional leaves no clean "
+                + "place to coordinate cache eviction within a REST call, both of which produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR "
+                + "#12578; further cleanup in PR #12579). Use Spring @Cacheable with explicit eviction for DTOs (see TitleCacheEvictionService for the canonical pattern). "
+                + "Full rationale: documentation/docs/developer/guidelines/caching.mdx.";
+
+        ArchRule noClassLevelCache = noClasses().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
+        ArchRule noFieldLevelCache = noFields().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
+        ArchRule noMethodLevelCache = noMethods().should().beAnnotatedWith("org.hibernate.annotations.Cache").because(reason);
+
+        noClassLevelCache.check(productionClasses);
+        noFieldLevelCache.check(productionClasses);
+        noMethodLevelCache.check(productionClasses);
+    }
+
+    @Test
+    void testOrderColumnUsage() {
+        String reason = "Misuse of @OrderColumn caused production incidents #12574 and #12584. The unidirectional shape "
+                + "(@OneToMany + @JoinColumn + @OrderColumn) makes Hibernate DELETE+INSERT the entire child collection on every parent save, "
+                + "regenerating primary keys and breaking in-flight references. Required pattern: @OneToMany(mappedBy = \"...\") with the child "
+                + "owning the FK via @ManyToOne + @JoinColumn(name = \"...\"), an explicit @OrderColumn(name = \"...\"), and a "
+                + "@PrePersist/@PreUpdate hook on the parent that re-asserts child back-references. Prefer Set + @OrderBy on a domain field "
+                + "(see Lecture.lectureUnits) when the order can be derived from a domain attribute. "
+                + "Full rationale: documentation/docs/developer/guidelines/database.mdx → \"Ordered Collection with Duplicates (List)\".";
+
+        // Rule 1: @OrderColumn must not coexist with @JoinColumn on the same field. The parent's @OneToMany must use mappedBy
+        // and let the child @ManyToOne own the FK column. Carrying both annotations is the unidirectional shape that caused #12584.
+        ArchRule noUnidirectionalOrderColumn = noFields().that().areAnnotatedWith(OrderColumn.class).should().beAnnotatedWith(JoinColumn.class)
+                .because("@OrderColumn must not coexist with @JoinColumn on the same field. " + reason);
+
+        // Rule 2: every @OneToMany + @OrderColumn must have a non-empty mappedBy. Catches the same shape from the other side
+        // — fields that omit @JoinColumn but also omit mappedBy are still unidirectional and equally dangerous.
+        ArchRule oneToManyOrderColumnHasMappedBy = fields().that().areAnnotatedWith(OrderColumn.class).and().areAnnotatedWith(OneToMany.class).should(haveBidirectionalOneToMany())
+                .because("@OneToMany combined with @OrderColumn must specify mappedBy = \"...\" to be bidirectional. " + reason);
+
+        // Rule 3: @OrderColumn must have an explicit `name`. Relying on Hibernate's default-naming heuristic
+        // (e.g. <field>_order) is brittle across schema and Hibernate version changes.
+        ArchRule orderColumnHasExplicitName = fields().that().areAnnotatedWith(OrderColumn.class).should(haveOrderColumnNameSet())
+                .because("@OrderColumn must specify an explicit name attribute. " + reason);
+
+        noUnidirectionalOrderColumn.check(productionClasses);
+        oneToManyOrderColumnHasMappedBy.check(productionClasses);
+        orderColumnHasExplicitName.check(productionClasses);
+    }
+
+    private ArchCondition<JavaField> haveBidirectionalOneToMany() {
+        return new ArchCondition<>("have @OneToMany(mappedBy = \"...\") set") {
+
+            @Override
+            public void check(JavaField field, ConditionEvents events) {
+                JavaAnnotation<?> annotation = findJavaAnnotation(field, OneToMany.class);
+                Object mappedBy = annotation.getProperties().get("mappedBy");
+                if (!(mappedBy instanceof String value) || value.isBlank()) {
+                    events.add(violated(field, field.getFullName() + " is annotated with @OneToMany + @OrderColumn but does not specify mappedBy"));
+                }
+            }
+        };
+    }
+
+    private ArchCondition<JavaField> haveOrderColumnNameSet() {
+        return new ArchCondition<>("have @OrderColumn(name = \"...\") set") {
+
+            @Override
+            public void check(JavaField field, ConditionEvents events) {
+                JavaAnnotation<?> annotation = findJavaAnnotation(field, OrderColumn.class);
+                Object name = annotation.getProperties().get("name");
+                if (!(name instanceof String value) || value.isBlank()) {
+                    events.add(violated(field, field.getFullName() + " is annotated with @OrderColumn but does not specify an explicit name"));
+                }
+            }
+        };
     }
 
     @Test
@@ -233,15 +314,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testJSONImplementations() {
         // Note: we should only use Jackson. There are rare cases where gson is still used
-        noClasses().should().dependOnClassesThat(
-                have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
-                .check(allClasses);
-        noClasses().should().dependOnClassesThat(
-                have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
-                .check(allClasses);
-        noClasses().should().dependOnClassesThat(
-                have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))).and(not(resideInAPackage("com.fasterxml.jackson.core"))))
-                .check(allClasses);
+        noClasses().should().dependOnClassesThat(have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson")))
+                .and(not(resideInAPackage("com.fasterxml.jackson.core"))).and(not(resideInAPackage("tools.jackson.core")))).check(allClasses);
+        noClasses().should().dependOnClassesThat(have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson")))
+                .and(not(resideInAPackage("com.fasterxml.jackson.core"))).and(not(resideInAPackage("tools.jackson.core")))).check(allClasses);
+        noClasses().should().dependOnClassesThat(have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson")))
+                .and(not(resideInAPackage("com.fasterxml.jackson.core"))).and(not(resideInAPackage("tools.jackson.core")))).check(allClasses);
     }
 
     @Test
@@ -303,6 +381,28 @@ class ArchitectureTest extends AbstractArchitectureTest {
         classes().that().areAnnotatedWith(JsonInclude.class).should(useJsonIncludeNonEmpty()).check(allClasses);
     }
 
+    /**
+     * Forbids {@code Class<>} fields (and the raw {@code Class} type) in DTO records and classes.
+     * <p>
+     * Exposing a {@code Class<? extends SomeEntity>} as a DTO component leaks the JVM/package layout
+     * over the wire: serializing it emits a fully-qualified class name, which couples every client
+     * (including stale tabs after a refactor) to internal Java package names. The replacement is a
+     * dedicated discriminator type — typically an {@code enum} whose values are stable JSON strings
+     * via {@code @JsonValue} (see {@link de.tum.cit.aet.artemis.exercise.domain.ExerciseType} and
+     * {@link de.tum.cit.aet.artemis.lecture.domain.LectureUnitType}).
+     * <p>
+     * This rule only inspects <em>fields</em> (which includes synthesized record components). It does
+     * <em>not</em> flag {@code Class<>} parameters on JPQL-overloaded constructors that convert the
+     * raw entity class produced by Hibernate's {@code TYPE(...)} function into the canonical
+     * discriminator field — those are an internal mapping concern that never reaches the wire.
+     */
+    @Test
+    void testNoClassFieldsInDtos() {
+        ArchRule rule = noFields().that().areDeclaredInClassesThat().resideInAPackage("..dto..").should().haveRawType(Class.class).because(
+                "DTOs must not expose Class<> tokens; that leaks fully-qualified class names over the wire and couples clients to JVM package layout. Use a discriminator enum with @JsonValue instead (see ExerciseType, LectureUnitType).");
+        rule.check(productionClasses);
+    }
+
     private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmpty() {
         return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY) or NON_NULL for build agent DTOs") {
 
@@ -333,8 +433,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 boolean hasConditionalOnExpression = item.isAnnotatedWith(ConditionalOnExpression.class);
                 boolean hasConditionalOnProperty = item.isAnnotatedWith(ConditionalOnProperty.class);
                 if (!(hasProfileAnnotation || hasConditionalAnnotation || hasConditionalOnExpression || hasConditionalOnProperty)) {
-                    String message = String.format("Class %s is neither annotated with @Profile, @Conditional, @ConditionalOnExpression or @ConditionalOnProperty",
-                            item.getFullName());
+                    String message = "Class %s is neither annotated with @Profile, @Conditional, @ConditionalOnExpression or @ConditionalOnProperty".formatted(item.getFullName());
                     events.add(SimpleConditionEvent.violated(item, message));
                 }
             }
@@ -343,9 +442,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoRestControllersImported() {
-        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
-                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest",
-                "IrisTutorSuggestionIntegrationTest", "HyperionCodeGenerationResourceTest" };
+        final var exceptions = new String[] { "AccountResourceIntegrationTest", "AdminResourceArchitectureTest", "AndroidAppSiteAssociationResourceTest",
+                "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
+                "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest",
+                "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest",
+                "LegacyCalendarResource" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -369,6 +470,21 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
+    void shouldNotUseEntityManagerDirectly() {
+        // No class should inject EntityManager or EntityManagerFactory directly.
+        // All persistence operations must go through Spring Data repositories.
+        // Direct EntityManager usage bypasses the repository abstraction, makes code harder to test,
+        // and can introduce subtle persistence context bugs (e.g. stale proxies after JPQL bulk operations).
+        // See server-development.mdx for details.
+        ArchRule rule = noFields().should().haveRawType(jakarta.persistence.EntityManager.class).orShould().haveRawType(jakarta.persistence.EntityManagerFactory.class)
+                .because("classes should use Spring Data repositories instead of EntityManager directly. " + "See server-development.mdx for details.");
+        // TODO: Refactor these classes to eliminate direct EntityManager usage and remove from this exception list.
+        final var exceptions = new Class[] { RepositoryImpl.class, CustomOrganizationRepositoryImpl.class, CustomPostRepositoryImpl.class, TitleCacheEvictionService.class };
+        JavaClasses classes = classesExcept(productionClasses, exceptions);
+        rule.check(classes);
+    }
+
+    @Test
     void hasMatchingAuthorizationTestClassBeCorrectlyImplemented() throws NoSuchMethodException {
         // Prepare the method that the authorization test should call to be identified as such
         Method allCheckMethod = AuthorizationTestService.class.getMethod("testAllEndpoints", Map.class);
@@ -377,6 +493,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
         // Exclude shared base classes that are not test environments themselves but provide shared code for multiple environments
         ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class)).and(not(type(AbstractSpringIntegrationJenkinsLocalVCTestBase.class)))
+                .and(not(type(AbstractSpringIntegrationIndependentTestBase.class)))
                 .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
                 .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);
@@ -499,10 +616,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 for (var parameter : constructor.getParameters()) {
                     if (parameter.isAnnotatedWith(Lazy.class)) {
                         events.add(violated(constructor,
-                                String.format(
-                                        "Constructor %s has parameter '%s' annotated with @Lazy. "
-                                                + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.",
-                                        constructor.getFullName(), parameter.getRawType().getSimpleName())));
+                                ("Constructor %s has parameter '%s' annotated with @Lazy. "
+                                        + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.")
+                                        .formatted(constructor.getFullName(), parameter.getRawType().getSimpleName())));
                     }
                 }
             }
@@ -517,10 +633,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 for (var parameter : method.getParameters()) {
                     if (parameter.isAnnotatedWith(Lazy.class)) {
                         events.add(violated(method,
-                                String.format(
-                                        "Method %s has parameter '%s' annotated with @Lazy. "
-                                                + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.",
-                                        method.getFullName(), parameter.getRawType().getSimpleName())));
+                                ("Method %s has parameter '%s' annotated with @Lazy. "
+                                        + "Remove @Lazy from the parameter and ensure the injected bean class is annotated with @Lazy instead.")
+                                        .formatted(method.getFullName(), parameter.getRawType().getSimpleName())));
                     }
                 }
             }
@@ -568,8 +683,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     String typeName = parameter.getRawType().getName();
                     if (typeName.equals("org.springframework.beans.factory.ObjectProvider")) {
                         events.add(violated(constructor,
-                                String.format("Constructor %s has parameter of type ObjectProvider. " + "ObjectProvider should not be used to work around circular dependencies. "
-                                        + "Refactor the code to break the dependency cycle instead.", constructor.getFullName())));
+                                ("Constructor %s has parameter of type ObjectProvider. " + "ObjectProvider should not be used to work around circular dependencies. "
+                                        + "Refactor the code to break the dependency cycle instead.").formatted(constructor.getFullName())));
                     }
                 }
             }
@@ -676,7 +791,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 for (var parameter : parameters) {
                     if (classWithSchedulingProfile().test(parameter.getRawType())) {
                         events.add(violated(parameter,
-                                String.format("Class %s uses class %s without wrapping it with Optionals.", parameter.getOwner().getFullName(), parameter.getType().getName())));
+                                "Class %s uses class %s without wrapping it with Optionals.".formatted(parameter.getOwner().getFullName(), parameter.getType().getName())));
                     }
                 }
             }
@@ -701,7 +816,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     JavaClass caller = call.getOriginOwner();
                     if (!caller.isAssignableTo(allowedCaller)) {
                         events.add(violated(call,
-                                String.format("%s calls %s, but only %s should call this method", caller.getName(), method.getFullName(), allowedCaller.getSimpleName())));
+                                "%s calls %s, but only %s should call this method".formatted(caller.getName(), method.getFullName(), allowedCaller.getSimpleName())));
                     }
                 }
             }

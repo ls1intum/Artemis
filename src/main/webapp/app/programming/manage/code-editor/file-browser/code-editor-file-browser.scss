@@ -11,10 +11,6 @@ File browser
     }
 
     .card-second-header {
-        display: flex;
-        background-color: var(--code-editor-file-browser-header-background);
-        border-bottom: 1px solid var(--code-editor-file-browser-header-border);
-
         button {
             width: 60px;
         }

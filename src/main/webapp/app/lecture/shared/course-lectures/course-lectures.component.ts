@@ -1,18 +1,18 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { NgClass } from '@angular/common';
-import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
-import { LtiService } from 'app/shared/service/lti.service';
+import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
+import { LtiService } from 'app/foundation/service/lti.service';
 import { forkJoin } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -41,7 +41,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
-    styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
@@ -58,24 +58,24 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private multiLaunchSubscription: Subscription;
     private queryParamsSubscription: Subscription;
 
-    course?: Course;
-    courseId: number;
+    readonly course = signal<Course | undefined>(undefined);
+    readonly courseId = signal<number>(undefined!);
 
-    lectureSelected = true;
-    sidebarData: SidebarData;
+    readonly lectureSelected = signal(true);
+    readonly sidebarData = signal<SidebarData>(undefined!);
     accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
-    isCollapsed = false;
+    readonly isCollapsed = signal(false);
     isMultiLaunch = false;
     multiLaunchLectureIDs: number[] = [];
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     ngOnInit() {
-        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture');
+        this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture'));
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = Number(params.courseId);
+            this.courseId.set(Number(params.courseId));
         });
 
         this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
@@ -84,10 +84,10 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.course = this.courseStorageService.getCourse(this.courseId);
+        this.course.set(this.courseStorageService.getCourse(this.courseId()));
         this.prepareSidebarData();
-        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.course = course;
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId()).subscribe((course: Course) => {
+            this.course.set(course);
             this.prepareSidebarData();
         });
 
@@ -100,7 +100,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     navigateToLecture() {
-        const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.course?.lectures);
+        const upcomingLecture = this.courseOverviewService.getUpcomingLecture(this.course()?.lectures);
         const lastSelectedLecture = this.getLastSelectedLecture();
         const lectureId = this.route.firstChild?.snapshot?.params?.lectureId;
         if (!lectureId && lastSelectedLecture) {
@@ -108,7 +108,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         } else if (!lectureId && upcomingLecture) {
             this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
         } else {
-            this.lectureSelected = !!lectureId;
+            this.lectureSelected.set(!!lectureId);
         }
     }
 
@@ -125,10 +125,11 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
                 this.processLectures(lectures);
             });
         } else {
-            if (!this.course?.lectures) {
+            const lectures = this.course()?.lectures;
+            if (!lectures) {
                 return;
             }
-            this.processLectures(this.course.lectures);
+            this.processLectures(lectures);
         }
     }
 
@@ -141,21 +142,21 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     updateSidebarData() {
-        this.sidebarData = {
+        this.sidebarData.set({
             groupByCategory: true,
             storageId: 'lecture',
             groupedData: this.accordionLectureGroups,
             ungroupedData: this.sidebarLectures,
-        };
+        });
     }
 
     toggleSidebar() {
-        this.isCollapsed = !this.isCollapsed;
-        this.courseOverviewService.setSidebarCollapseState('lecture', this.isCollapsed);
+        this.isCollapsed.update((collapsed) => !collapsed);
+        this.courseOverviewService.setSidebarCollapseState('lecture', this.isCollapsed());
     }
 
     getLastSelectedLecture(): string | undefined {
-        return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId);
+        return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId());
     }
 
     onSubRouteDeactivate() {

@@ -1,12 +1,12 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { OnlineTeamStudent, Team } from 'app/exercise/shared/entities/team/team.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { orderBy } from 'lodash-es';
 import { Observable, Subscription } from 'rxjs';
 import { map, throttleTime } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';
@@ -28,14 +28,15 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     readonly SHOW_TYPING_DURATION = 2000; // ms
     readonly SEND_TYPING_INTERVAL = this.SHOW_TYPING_DURATION / 1.5;
 
-    @Input() typing$: Observable<any>;
-    @Input() participation: StudentParticipation;
+    readonly typing$ = input<Observable<any> | undefined>(undefined);
+    readonly participation = input.required<StudentParticipation>();
 
     currentUser: User;
     onlineTeamStudents: OnlineTeamStudent[] = [];
     typingTeamStudents: OnlineTeamStudent[] = [];
     websocketTopic: string;
     private websocketSubscription?: Subscription;
+    private typingSubscription?: Subscription;
 
     // Icons
     faCircle = faCircle;
@@ -73,8 +74,9 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     }
 
     private setupTypingIndicatorSender() {
-        if (this.typing$) {
-            this.typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
+        const typing$ = this.typing$();
+        if (typing$) {
+            this.typingSubscription = typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
                 next: () => this.websocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
                 error: (error: unknown) => captureException(error),
             });
@@ -86,10 +88,11 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy(): void {
         this.websocketSubscription?.unsubscribe();
+        this.typingSubscription?.unsubscribe();
     }
 
     get team(): Team {
-        return this.participation.team!;
+        return this.participation().team!;
     }
 
     /**
@@ -163,6 +166,6 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      * Topic for updates on online status of team members (needs to match route in ParticipationTeamWebsocketService.java)
      */
     private buildWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation.id}/team${path}`;
+        return `/topic/participations/${this.participation().id}/team${path}`;
     }
 }

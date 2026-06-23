@@ -1,0 +1,80 @@
+<h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.keysTablePageTitle"></h2>
+@if (!isLoading()) {
+    <div class="list-group d-block">
+        <div class="list-group-item">
+            <dt>
+                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"></span>
+                <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'" />
+            </dt>
+        </div>
+
+        <div class="list-group-item">
+            @if (keyCount() > 0) {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th jhiTranslate="artemisApp.userSettings.sshSettingsPage.keys"></th>
+                            <th jhiTranslate="artemisApp.userSettings.sshSettingsPage.actions"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (key of sshPublicKeys(); track key; let i = $index) {
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ key.label }}</div>
+                                    <div class="text-muted small">{{ key.keyHash }}</div>
+                                    @if (key.expiryDate) {
+                                        <div class="text-muted small">
+                                            <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.{{ key.hasExpired ? 'hasExpiredOn' : 'expiresOn' }}"></span>
+                                            {{ key.expiryDate | artemisDate: 'long-date' }}
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    <div ngbDropdown container="body" placement="bottom auto" class="d-inline-block">
+                                        <button class="btn btn-outline-secondary btn-sm" ngbDropdownToggle>
+                                            <fa-icon [icon]="faEllipsis" />
+                                        </button>
+                                        <div ngbDropdownMenu>
+                                            <a ngbDropdownItem [routerLink]="['view', key.id]">
+                                                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.viewExistingSshKey"></span>
+                                            </a>
+                                            <button
+                                                ngbDropdownItem
+                                                jhiDeleteButton
+                                                [renderButtonText]="false"
+                                                (delete)="deleteSshKey(key)"
+                                                deleteQuestion="artemisApp.userSettings.sshSettingsPage.deleteSshKeyQuestion"
+                                                [dialogError]="dialogError$"
+                                            >
+                                                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.deleteSshKey"></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div class="d-flex justify-content-between align-items-center">
+                    <a [routerLink]="['fingerprints']" jhiTranslate="artemisApp.userSettings.sshSettingsPage.fingerprints"></a>
+                    <a class="btn btn-primary btn-sm" data-testid="addNewSshKeyButton" [routerLink]="['add']">
+                        <fa-icon [icon]="faPlus" />
+                        <span class="ms-1" jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
+                    </a>
+                </div>
+            } @else {
+                <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.noKeysHaveBeenAdded"></div>
+            }
+        </div>
+
+        @if (keyCount() === 0) {
+            <div class="list-group-item">
+                <a class="btn btn-primary btn-sm" data-testid="addNewSshKeyButton" [routerLink]="['add']">
+                    <fa-icon [icon]="faPlus" />
+                    <span class="ms-1" jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></span>
+                </a>
+            </div>
+        }
+    </div>
+}

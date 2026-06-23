@@ -5,13 +5,11 @@ import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingL
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { ExamExerciseGroupCreationPage } from './pageobjects/exam/ExamExerciseGroupCreationPage';
-import { CoursesPage } from './pageobjects/course/CoursesPage';
-import { CourseOverviewPage } from './pageobjects/course/CourseOverviewPage';
 import { ModelingEditor } from './pageobjects/exercises/modeling/ModelingEditor';
 import { OnlineEditorPage } from './pageobjects/exercises/programming/OnlineEditorPage';
 import { MultipleChoiceQuiz } from './pageobjects/exercises/quiz/MultipleChoiceQuiz';
@@ -58,6 +56,45 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
 export function dayjsToString(day: dayjs.Dayjs) {
     // We need to add the Z at the end. Otherwise, the server can't parse it.
     return day.utc().format(TIME_FORMAT) + 'Z';
+}
+
+export const BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS = 10;
+
+export function getExamBuildAndTestAfterDueDate(exam: Exam) {
+    return getExamEndDateWithGrace(exam).add(BUILD_AND_TEST_AFTER_DUE_DATE_BUFFER_SECONDS, 'seconds');
+}
+
+export function getExamEndDateWithGrace(exam: Exam) {
+    const gracePeriodSeconds = exam.gracePeriod ?? 0;
+    return dayjs(exam.endDate as any).add(gracePeriodSeconds, 'seconds');
+}
+
+export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page) {
+    // For exam programming exercises the score-producing build "test" phase runs only AFTER_DUE_DATE, which
+    // the server schedules at dueDate + 15 min (the intended default; see
+    // AutomaticAfterDueDateService.BUILD_AND_TEST_OFFSET_MINUTES). Instead of waiting that long, trigger the
+    // instructor build-and-test for the exam's programming exercise on demand: by the time this is called the
+    // student's individual working period is already over, so the AFTER_DUE_DATE-gated phase runs and produces
+    // the score immediately. This is a no-op when the exam has no programming exercise. We authenticate as
+    // admin first so the helper works regardless of the caller's current auth state (some callers, e.g. the
+    // ExamResults "Assess all submissions" beforeAll, invoke it on a fresh page before logging in).
+    await Commands.login(page, admin);
+    const examAPIRequests = new ExamAPIRequests(page);
+    const exerciseAPIRequests = new ExerciseAPIRequests(page);
+    const exerciseGroups = await examAPIRequests.getExerciseGroups(exam);
+    const programmingExercise = exerciseGroups.flatMap((group) => group.exercises ?? []).find((exercise) => (exercise.type as string) === ExerciseType.PROGRAMMING);
+    if (!programmingExercise?.id) {
+        return;
+    }
+    await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
+    await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
+    // The build above produces the automatic result, but for exam programming exercises the server also defaults
+    // the "Run Tests after Due Date" date to (latest exam end + grace + 15 min). Until that date passes, the server
+    // rejects manual assessment with 403 "Creating manual results is disabled for this exercise!"
+    // (ProgrammingExercise.areManualResultsAllowed). Mirror what an instructor would do to assess immediately and
+    // move the date into the recent past. We do this only now, after waiting for the build, so the new date is
+    // safely past the exam end date (the server keeps a client value only when it is not before the exam end).
+    await exerciseAPIRequests.setProgrammingExerciseBuildAndTestDateToPast(programmingExercise.id);
 }
 
 /**
@@ -176,76 +213,7 @@ export async function clearTextField(textField: Locator, page?: Page) {
  * @param text - The text to set in the editor
  */
 export async function setMonacoEditorContent(page: Page, containerSelector: string, text: string) {
-    // Wait for the Monaco editor to be visible
-    const container = page.locator(containerSelector);
-    await container.waitFor({ state: 'visible' });
-    const monacoEditor = container.locator('.monaco-editor').first();
-    await monacoEditor.waitFor({ state: 'visible' });
-
-    // Wait for Monaco to be available on window (exposed by MonacoEditorService)
-    await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
-
-    // Get the bounding box of the target Monaco editor element
-    const boundingBox = await monacoEditor.boundingBox();
-    if (!boundingBox) {
-        throw new Error('Could not get bounding box of Monaco editor');
-    }
-
-    // Click on the editor to ensure it's initialized
-    await monacoEditor.click();
-    await page.waitForTimeout(100);
-
-    // Use JavaScript to find the editor by matching its DOM element position
-    const success = await page.evaluate(
-        ({ newText, targetBox }) => {
-            const monaco = (window as any).monaco;
-            if (!monaco || !monaco.editor) {
-                return { success: false, error: 'Monaco not available' };
-            }
-
-            const editors = monaco.editor.getEditors();
-            if (editors.length === 0) {
-                return { success: false, error: 'No Monaco editors registered' };
-            }
-
-            // Find the editor whose DOM node matches the target position
-            let targetEditor = null;
-            for (const editor of editors) {
-                const domNode = editor.getDomNode();
-                if (domNode) {
-                    const rect = domNode.getBoundingClientRect();
-                    // Check if this editor's position matches our target (within a small tolerance)
-                    if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
-                        targetEditor = editor;
-                        break;
-                    }
-                }
-            }
-
-            // Fallback: try focused editor or last editor
-            if (!targetEditor) {
-                targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
-            }
-            if (!targetEditor) {
-                targetEditor = editors[editors.length - 1];
-            }
-
-            if (!targetEditor) {
-                return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
-            }
-
-            targetEditor.setValue(newText);
-            return { success: true };
-        },
-        { newText: text, targetBox: boundingBox },
-    );
-
-    if (!success.success) {
-        throw new Error(`Failed to set Monaco editor content: ${success.error}`);
-    }
-
-    // Wait for Angular change detection to process the update
-    await page.waitForTimeout(300);
+    await setMonacoEditorContentByLocator(page, page.locator(containerSelector), text);
 }
 
 /**
@@ -266,67 +234,96 @@ export async function setMonacoEditorContentByLocator(page: Page, containerLocat
     // Wait for Monaco to be available on window (exposed by MonacoEditorService)
     await page.waitForFunction(() => (window as any).monaco?.editor, { timeout: 10000 });
 
-    // Get the bounding box of the target Monaco editor element
-    const boundingBox = await monacoEditor.boundingBox();
-    if (!boundingBox) {
-        throw new Error('Could not get bounding box of Monaco editor');
+    // Identify the target Monaco instance via its DOM node reference rather than
+    // screen coordinates. Bounding-box matching was fragile when hydration
+    // caused layout shifts — coordinates could change mid-observation and
+    // silently fall through to "last editor", which is not necessarily the
+    // right one when multiple editors coexist.
+    const editorHandle = await monacoEditor.elementHandle();
+    if (!editorHandle) {
+        throw new Error('Could not resolve Monaco editor element handle');
     }
 
-    // Click on the editor to ensure it's initialized
-    await monacoEditor.click();
-    await page.waitForTimeout(100);
+    // When called on an /edit page, the Angular component may still be hydrating the
+    // form from the server response. A setValue() that races ahead of hydration gets
+    // overwritten when the API response arrives (including late arrivals after our
+    // debounce wait). Retry setValue until Monaco holds our text *and keeps holding
+    // it* across a sustained observation window — i.e., no late hydration will
+    // clobber it after we return.
+    const MAX_ATTEMPTS = 8;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        // Click on the editor to ensure it's initialized + focused
+        await monacoEditor.click();
+        await page.waitForTimeout(100);
 
-    // Use JavaScript to find the editor by matching its DOM element position
-    const success = await page.evaluate(
-        ({ newText, targetBox }) => {
-            const monaco = (window as any).monaco;
-            if (!monaco || !monaco.editor) {
-                return { success: false, error: 'Monaco not available' };
-            }
-
-            const editors = monaco.editor.getEditors();
-            if (editors.length === 0) {
-                return { success: false, error: 'No Monaco editors registered' };
-            }
-
-            // Find the editor whose DOM node matches the target position
-            let targetEditor = null;
-            for (const editor of editors) {
-                const domNode = editor.getDomNode();
-                if (domNode) {
-                    const rect = domNode.getBoundingClientRect();
-                    // Check if this editor's position matches our target (within a small tolerance)
-                    if (Math.abs(rect.left - targetBox.x) < 10 && Math.abs(rect.top - targetBox.y) < 10) {
-                        targetEditor = editor;
-                        break;
-                    }
+        const result = await page.evaluate(
+            ({ newText, editorNode }) => {
+                const monaco = (window as any).monaco;
+                if (!monaco || !monaco.editor) {
+                    return { success: false, error: 'Monaco not available' };
                 }
-            }
+                const editors = monaco.editor.getEditors();
+                if (editors.length === 0) {
+                    return { success: false, error: 'No Monaco editors registered' };
+                }
+                // Deterministic match: identical or contained DOM node reference.
+                // No coordinate comparisons — layout shifts don't affect this.
+                const findByNode = () =>
+                    editors.find((e: any) => {
+                        const dom = e.getDomNode();
+                        return dom && (dom === editorNode || dom.contains(editorNode) || editorNode.contains(dom));
+                    });
+                const targetEditor = findByNode() || editors.find((e: any) => e.hasTextFocus() || e.hasWidgetFocus()) || editors[editors.length - 1];
+                if (!targetEditor) {
+                    return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
+                }
+                targetEditor.setValue(newText);
+                return { success: true };
+            },
+            { newText: text, editorNode: editorHandle },
+        );
 
-            // Fallback: try focused editor or last editor
-            if (!targetEditor) {
-                targetEditor = editors.find((editor: any) => editor.hasTextFocus() || editor.hasWidgetFocus());
-            }
-            if (!targetEditor) {
-                targetEditor = editors[editors.length - 1];
-            }
+        if (!result.success) {
+            throw new Error(`Failed to set Monaco editor content: ${result.error}`);
+        }
 
-            if (!targetEditor) {
-                return { success: false, error: `No matching Monaco editor found (${editors.length} editors registered)` };
+        // Sustained-value check: read Monaco's value every 300ms for 2.1s. We need
+        // the value to both (a) match `text` and (b) stay that way — that catches
+        // late hydration that would otherwise overwrite after we return. The first
+        // 1s covers the textChanged debounce (200ms, with buffer), the rest guards
+        // against deferred form population. `readValue` uses the same fallback
+        // chain as `setValue` above so they can never pick different editors.
+        const readValue = async () =>
+            page.evaluate(
+                ({ editorNode }) => {
+                    const monaco = (window as any).monaco;
+                    const editors = monaco?.editor?.getEditors() || [];
+                    const findByNode = () =>
+                        editors.find((e: any) => {
+                            const dom = e.getDomNode();
+                            return dom && (dom === editorNode || dom.contains(editorNode) || editorNode.contains(dom));
+                        });
+                    const targetEditor = findByNode() || editors.find((e: any) => e.hasTextFocus() || e.hasWidgetFocus()) || editors[editors.length - 1];
+                    return targetEditor?.getValue() ?? null;
+                },
+                { editorNode: editorHandle },
+            );
+
+        let stable = true;
+        for (let i = 0; i < 7; i++) {
+            await page.waitForTimeout(300);
+            const v = await readValue();
+            if (v !== text) {
+                stable = false;
+                break;
             }
-
-            targetEditor.setValue(newText);
-            return { success: true };
-        },
-        { newText: text, targetBox: boundingBox },
-    );
-
-    if (!success.success) {
-        throw new Error(`Failed to set Monaco editor content: ${success.error}`);
+        }
+        if (stable) {
+            return;
+        }
     }
 
-    // Wait for Angular change detection to process the update
-    await page.waitForTimeout(300);
+    throw new Error(`Monaco editor did not retain the expected text after ${MAX_ATTEMPTS} attempts (likely clobbered by Angular form hydration)`);
 }
 
 export async function hasAttributeWithValue(page: Page, selector: string, value: string): Promise<boolean> {
@@ -360,7 +357,45 @@ export async function createFileWithContent(filePath: string, content: string) {
 
 export async function newBrowserPage(browser: Browser) {
     const context = await browser.newContext({ ignoreHTTPSErrors: true });
-    return await context.newPage();
+    const page = await context.newPage();
+    await addE2EInitScript(page);
+    return page;
+}
+
+/**
+ * Adds init scripts that must run on every E2E page to prevent overlays from blocking
+ * test interactions. This is called automatically for the main `page` fixture via
+ * `baseFixtures.ts` and must also be applied to pages created by `newBrowserPage`.
+ */
+export async function addE2EInitScript(page: Page) {
+    // Register on the context so the suppression also applies to pages created later.
+    await page.context().addInitScript(() => {
+        // Hide the notification popup overlay
+        const injectStyle = () => {
+            const style = document.createElement('style');
+            style.textContent = [
+                'jhi-course-notification-popup-overlay { display: none !important; }',
+                // Hide the passkey setup modal overlay (PrimeNG appends it to <body>).
+                // CSS backup for the localStorage suppression below.
+                '.p-dialog-mask:has(.passkey-setup-dialog) { display: none !important; }',
+            ].join('\n');
+            document.head.appendChild(style);
+        };
+        if (document.head) {
+            injectStyle();
+        } else {
+            document.addEventListener('DOMContentLoaded', injectStyle);
+        }
+
+        // Suppress the passkey setup modal by setting a far-future reminder date.
+        try {
+            const futureDate = new Date();
+            futureDate.setFullYear(futureDate.getFullYear() + 10);
+            localStorage.setItem('earliestSetupPasskeyReminderDate', JSON.stringify(futureDate));
+        } catch {
+            // localStorage may not be available on about:blank — safe to ignore
+        }
+    });
 }
 
 /**
@@ -393,8 +428,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
-    const courseList = new CoursesPage(page);
-    const courseOverview = new CourseOverviewPage(page);
     const modelingExerciseEditor = new ModelingEditor(page);
     const programmingExerciseEditor = new OnlineEditorPage(page);
     const quizExerciseMultipleChoice = new MultipleChoiceQuiz(page);
@@ -402,8 +435,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examNavigation = new ExamNavigationBar(page);
     const examStartEnd = new ExamStartEndPage(page);
     const examParticipation = new ExamParticipationPage(
-        courseList,
-        courseOverview,
         examNavigation,
         examStartEnd,
         modelingExerciseEditor,
@@ -433,6 +464,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
                 submission: cPartiallySuccessful,
                 progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
                 programmingLanguage: ProgrammingLanguage.C,
+                skipBuildResultCheck: true,
             };
             break;
         case ExerciseType.TEXT:
@@ -464,7 +496,7 @@ export async function makeExamSubmission(
     await examParticipation.startParticipation(studentOne, course, exam);
     await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(1000);
     await examNavigation.handInEarly();
     await examStartEnd.finishExam();
 }
@@ -477,7 +509,7 @@ export async function makeExamSubmission(
  */
 export async function waitForExamEnd(examEnd: dayjs.Dayjs, page: Page) {
     if (examEnd.isAfter(dayjs())) {
-        const timeToWait = examEnd.diff(dayjs()) + 1000; // Add 1 second buffer
+        const timeToWait = examEnd.diff(dayjs()) + 2000; // Add 2 second buffer
         console.log(`Waiting ${timeToWait}ms for exam to end...`);
         await page.waitForTimeout(timeToWait);
     }
@@ -494,7 +526,7 @@ export async function startAssessing(
     isFirstTimeAssessing: boolean = true,
 ) {
     await examManagement.openAssessmentDashboard(courseID, examID, timeout);
-    await courseAssessment.clickExerciseDashboardButton();
+    await courseAssessment.clickExerciseDashboardButton(0, timeout);
     if (toggleSecondRound) {
         await exerciseAssessment.toggleSecondCorrectionRound();
     }

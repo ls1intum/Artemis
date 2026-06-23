@@ -1,5 +1,5 @@
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -10,17 +10,17 @@ import {
 } from 'app/atlas/shared/entities/standardized-competency.model';
 import { faBan, faDownLeftAndUpRightToCenter, faFileImport, faSort, faTrash, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, HostListener, OnInit, inject, viewChild } from '@angular/core';
-import { onError } from 'app/shared/util/global.utils';
+import { Component, HostListener, OnInit, inject, signal, viewChild } from '@angular/core';
+import { onError } from 'app/foundation/util/global.utils';
 import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { forkJoin, map } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
@@ -58,7 +58,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected sourceString = '';
     protected courseId: number;
     protected sources: Source[] = [];
-    protected isLoading = false;
+    protected readonly isLoading = signal(false);
     protected isSubmitted = false;
 
     // constants
@@ -75,7 +75,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected readonly faSort = faSort;
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const getKnowledgeAreasObservable = this.standardizedCompetencyService.getAllForTreeView();
         const getSourcesObservable = this.standardizedCompetencyService.getSources();
         forkJoin([getKnowledgeAreasObservable, getSourcesObservable]).subscribe({
@@ -92,7 +92,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             complete: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
@@ -132,7 +132,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
 
         const idsToImport = this.selectedCompetencies.map((competency) => competency.id!);
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         service
             .importStandardizedCompetencies(idsToImport, this.courseId)
             .pipe(map((response) => response.body!.length))
@@ -144,7 +144,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 complete: () => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
     }
@@ -166,7 +166,7 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
      * Only allow to leave page after submitting or if no pending changes exist
      */
     canDeactivate() {
-        return this.isSubmitted || (!this.isLoading && this.selectedCompetencies.length === 0);
+        return this.isSubmitted || (!this.isLoading() && this.selectedCompetencies.length === 0);
     }
 
     get canDeactivateWarning(): string {

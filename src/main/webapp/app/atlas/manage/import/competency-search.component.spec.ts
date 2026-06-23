@@ -1,9 +1,9 @@
 import { vi } from 'vitest';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
 import { CompetencySearchComponent } from 'app/atlas/manage/import/competency-search.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -66,7 +66,7 @@ describe('CompetencySearchComponent', () => {
     it('should submit with advanced search', () => {
         componentFixture.detectChanges();
         initializeSearch();
-        component.advancedSearchEnabled = true;
+        component.advancedSearchEnabled.set(true);
 
         componentFixture.debugElement.nativeElement.querySelector('#submitFilterButton > .jhi-btn').click();
         expect(component.search()).toEqual({ title: 'any value', description: 'any value', courseTitle: 'any value', semester: 'any value' });
@@ -77,10 +77,10 @@ describe('CompetencySearchComponent', () => {
         const advancedSearchToggle = componentFixture.debugElement.nativeElement.querySelector('#toggleAdvancedSearch');
 
         advancedSearchToggle.click();
-        expect(component.advancedSearchEnabled).toBeTruthy();
+        expect(component.advancedSearchEnabled()).toBeTruthy();
 
         advancedSearchToggle.click();
-        expect(component.advancedSearchEnabled).toBeFalsy();
+        expect(component.advancedSearchEnabled()).toBeFalsy();
     });
 
     function initializeSearch(): void {

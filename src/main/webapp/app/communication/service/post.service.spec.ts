@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -8,10 +10,13 @@ import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreat
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Post Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: PostService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting()],
         });
@@ -19,8 +24,14 @@ describe('Post Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+        httpMock.verify();
+        vi.restoreAllMocks();
+    });
+
     describe('Service methods', () => {
-        it('should create a Post', fakeAsync(() => {
+        it('should create a Post', () => {
             const returnedFromService = { ...metisPostToCreateUser1 };
             const expected = { ...returnedFromService };
             service
@@ -29,10 +40,10 @@ describe('Post Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should update a Post', fakeAsync(() => {
+        it('should update a Post', () => {
             const returnedFromService = { ...metisPostExerciseUser1, content: 'This is another test post' };
             const expected = { ...returnedFromService };
             service
@@ -41,10 +52,10 @@ describe('Post Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should pin a Post', fakeAsync(() => {
+        it('should pin a Post', () => {
             const newDisplayPriority = DisplayPriority.PINNED;
             const returnedFromService = { ...metisPostExerciseUser1, displayPriority: newDisplayPriority };
             const expected = { ...returnedFromService };
@@ -54,10 +65,10 @@ describe('Post Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should archive a Post', fakeAsync(() => {
+        it('should archive a Post', () => {
             const newDisplayPriority = DisplayPriority.ARCHIVED;
             const returnedFromService = { ...metisPostExerciseUser1, displayPriority: newDisplayPriority };
             const expected = { ...returnedFromService };
@@ -67,17 +78,17 @@ describe('Post Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should delete a Post', fakeAsync(() => {
+        it('should delete a Post', () => {
             service.delete(1, metisPostExerciseUser1).subscribe((resp) => expect(resp.ok).toBeTruthy());
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should return all student posts for a course', fakeAsync(() => {
+        it('should return all student posts for a course', () => {
             const returnedFromService = metisCoursePosts;
             const expected = metisCoursePosts;
             service
@@ -86,10 +97,10 @@ describe('Post Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should use /posts endpoints if plagiarismCaseId is provided in the postContextFilter', fakeAsync(() => {
+        it('should use /posts endpoints if plagiarismCaseId is provided in the postContextFilter', () => {
             const plagiarismCaseId = 123;
             const expectedUrl = `api/plagiarism/courses/${metisCourse.id}/posts?plagiarismCaseId=${plagiarismCaseId}`;
             const mockResponse: Post[] = [];
@@ -101,10 +112,10 @@ describe('Post Service', () => {
             const req = httpMock.expectOne({ method: 'GET', url: expectedUrl });
 
             req.flush(mockResponse);
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should use /messages endpoints if conversation ids are provided', fakeAsync(() => {
+        it('should use /messages endpoints if conversation ids are provided', () => {
             const conversationIds = [123];
             const expectedUrl = `api/communication/courses/${metisCourse.id}/messages?conversationIds=${conversationIds}`;
             const mockResponse: Post[] = [];
@@ -116,10 +127,10 @@ describe('Post Service', () => {
             const req = httpMock.expectOne({ method: 'GET', url: expectedUrl });
 
             req.flush(mockResponse);
-            tick();
-        }));
+            vi.advanceTimersByTime(0);
+        });
 
-        it('should get source posts by IDs', fakeAsync(() => {
+        it('should get source posts by IDs', () => {
             const postIds = [1, 2, 3];
             const returnedFromService = metisCoursePosts.slice(0, 3);
             const expected = returnedFromService;
@@ -134,11 +145,7 @@ describe('Post Service', () => {
                 url: `api/communication/courses/${metisCourse.id}/messages-source-posts?postIds=${postIds.join(',')}`,
             });
             req.flush(returnedFromService);
-            tick();
-        }));
-    });
-
-    afterEach(() => {
-        httpMock.verify();
+            vi.advanceTimersByTime(0);
+        });
     });
 });

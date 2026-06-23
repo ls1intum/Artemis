@@ -6,18 +6,21 @@ import { HttpResponse } from '@angular/common/http';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scores/average-scores-graph/exam-scores-average-scores-graph.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
+import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { RouterModule } from '@angular/router';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExamScoresAverageScoresGraphComponent>;
     let component: ExamScoresAverageScoresGraphComponent;
-    let navigateToExerciseMock: jest.SpyInstance;
+    let navigateToExerciseMock: ReturnType<typeof vi.spyOn>;
 
     const returnValue = {
         exerciseGroupId: 1,
@@ -50,8 +53,8 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         ],
     } as AggregatedExerciseGroupResult;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [RouterModule.forRoot([])],
             providers: [
                 MockProvider(CourseManagementService, {
@@ -65,19 +68,22 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
                     },
                 }),
                 { provide: TranslateService, useClass: MockTranslateService },
-                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamScoresAverageScoresGraphComponent);
         component = fixture.componentInstance;
-        navigateToExerciseMock = jest.spyOn(component, 'navigateToExercise').mockImplementation();
+        navigateToExerciseMock = vi.spyOn(component, 'navigateToExercise').mockImplementation(() => {});
 
         fixture.componentRef.setInput('averageScores', returnValue);
         fixture.detectChanges();
     });
 
-    it('should set ngx data objects and bar colors correctly', () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should set chart entries and bar colors correctly', () => {
         const expectedData = [
             { name: 'Patterns', value: 50 },
             { name: '2 StrategyPattern', value: 60 },
@@ -93,29 +99,28 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         adaptExpectedData(2, GraphColors.RED, expectedColorDomain, expectedData);
     });
 
-    const adaptExpectedData = (averagePoints: number, newColor: string, expectedColorDomain: string[], expectedData: NgxChartsSingleSeriesDataEntry[]) => {
+    const adaptExpectedData = (averagePoints: number, newColor: string, expectedColorDomain: string[], expectedData: ChartSeriesEntry[]) => {
         component.averageScores().averagePoints = averagePoints;
         component.averageScores().averagePercentage = averagePoints * 10;
 
         expectedColorDomain[0] = newColor;
         expectedData[0].value = averagePoints * 10;
-        component.ngxColor.domain = [];
-        component.ngxData = [];
 
         component.ngOnInit();
 
         executeExpectStatements(expectedData, expectedColorDomain);
     };
 
-    const executeExpectStatements = (expectedData: NgxChartsSingleSeriesDataEntry[], expectedColorDomain: string[]) => {
-        expect(component.ngxData).toEqual(expectedData);
-        expect(component.ngxColor.domain).toEqual(expectedColorDomain);
+    const executeExpectStatements = (expectedData: ChartSeriesEntry[], expectedColorDomain: string[]) => {
+        expect(component.chartEntries()).toEqual(expectedData);
+        expect(component.barColors()).toEqual(expectedColorDomain);
     };
 
     describe('test exercise navigation', () => {
-        const event = { name: 'test', value: 3 };
+        // index 1 corresponds to the entry '2 StrategyPattern' in the chart data
+        const event = { element: { datasetIndex: 0, index: 1 } };
         it('should navigate if event is valid', () => {
-            component.lookup['test'] = { exerciseId: 42, exerciseType: ExerciseType.QUIZ };
+            component.lookup['2 StrategyPattern'] = { exerciseId: 42, exerciseType: ExerciseType.QUIZ };
 
             component.onSelect(event);
 
@@ -124,7 +129,7 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         });
 
         it('should not navigate if exercise id is missing', () => {
-            component.lookup['test'] = { exerciseType: ExerciseType.QUIZ };
+            component.lookup['2 StrategyPattern'] = { exerciseType: ExerciseType.QUIZ };
 
             component.onSelect(event);
 
@@ -132,16 +137,22 @@ describe('ExamScoresAverageScoresGraphComponent', () => {
         });
 
         it('should not navigate if exercise type is missing', () => {
-            component.lookup['test'] = { exerciseId: 42 };
+            component.lookup['2 StrategyPattern'] = { exerciseId: 42 };
 
             component.onSelect(event);
+
+            expect(navigateToExerciseMock).not.toHaveBeenCalled();
+        });
+
+        it('should not navigate if the click did not hit a bar', () => {
+            component.onSelect({});
 
             expect(navigateToExerciseMock).not.toHaveBeenCalled();
         });
     });
 
     it('should look up absolute value', () => {
-        const roundAndPerformLocalConversionSpy = jest.spyOn(component, 'roundAndPerformLocalConversion');
+        const roundAndPerformLocalConversionSpy = vi.spyOn(component, 'roundAndPerformLocalConversion');
         const updatedCourse = {
             accuracyOfScores: 2,
         };

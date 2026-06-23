@@ -18,11 +18,12 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.Authority;
+import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.dto.AuditingEntityDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.Organization;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * A DTO representing a user, with their authorities.
@@ -129,8 +130,12 @@ public class UserDTO extends AuditingEntityDTO {
         if (authorities != null && Hibernate.isInitialized(authorities)) {
             this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
-        this.groups = groups;
-        this.organizations = organizations;
+        if (groups != null && Hibernate.isInitialized(groups)) {
+            this.groups = groups;
+        }
+        if (organizations != null && Hibernate.isInitialized(organizations)) {
+            this.organizations = organizations;
+        }
         this.selectedLLMUsage = selectedLLMUsage;
         this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
         this.memirisEnabled = memirisEnabled;

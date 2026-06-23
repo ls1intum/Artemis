@@ -1,74 +1,27 @@
-name: "CodeQL"
+name: CodeQL (Scheduled)
+
+# Weekly full-repository CodeQL scan. The PR/push CodeQL signal lives in ci.yml (advisory
+# `codeql` job → ci-codeql.yml); this file exists ONLY for the `schedule:` cron, which cannot
+# be expressed inside a `workflow_call` reusable — only a top-level workflow's `on:` registers
+# cron. It reuses ci-codeql.yml so the scan steps are defined in exactly one place.
 
 on:
-  push:
-    branches: [develop, main]
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'documentation/**'
-    - '.github/**'
-    - '!.github/workflows/codeql-analysis.yml'
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [develop]
-    paths-ignore:
-    - 'README.md'
-    - 'CODE_OF_CONDUCT.md'
-    - 'CONTRIBUTING.md'
-    - 'LICENSE'
-    - 'SECURITY.md'
-    - 'documentation/**'
-    - '.github/**'
-    - '!.github/workflows/codeql-analysis.yml'
   schedule:
     - cron: '0 16 * * 0'
+  workflow_dispatch:
 
-# Keep in sync with build.yml and test.yml and analysis-of-endpoint-connections.yml
-env:
-  CI: true
-  node: 24
-  java: 21
+concurrency:
+  group: codeql-scheduled-${{ github.ref }}
+  cancel-in-progress: false
 
+permissions: {}
 
 jobs:
-  analyse:
-    name: Analyse
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: '${{ env.node }}'
-        cache: 'npm'
-
-    # Install Java
-    - name: Setup Java
-      uses: actions/setup-java@v5
-      with:
-        distribution: 'temurin'
-        java-version: '${{ env.java }}'
-        cache: 'gradle'
-
-    # Initializes the CodeQL tools for scanning.
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v4
-      # Override language selection by uncommenting this and choosing your languages
-      with:
-         languages: javascript, java
-
-    # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v4
-
-    - run: rm -rf build/resources/main/static
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v4
+  codeql:
+    uses: ./.github/workflows/ci-codeql.yml
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    with:
+      commit_sha: ${{ github.sha }}

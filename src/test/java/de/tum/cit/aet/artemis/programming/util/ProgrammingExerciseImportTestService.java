@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,8 +23,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 

@@ -1,11 +1,11 @@
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { AccountService } from 'app/core/auth/account.service';
 import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -18,29 +18,27 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 })
 export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
-    private cdr = inject(ChangeDetectorRef);
     protected themeService = inject(ThemeService);
     private profileService = inject(ProfileService);
     private accountService = inject(AccountService);
     private router = inject(Router);
 
-    @Output() choice = new EventEmitter<LLMModalResult>();
+    readonly choice = output<LLMModalResult>();
 
-    isVisible = false;
-    currentSelection?: LLMSelectionDecision;
-    memirisEnabled = true;
+    readonly isVisible = signal(false);
+    readonly currentSelection = signal<LLMSelectionDecision | undefined>(undefined);
+    readonly memirisEnabled = signal(true);
     private modalSubscription?: Subscription;
 
-    isOnPremiseEnabled: boolean;
+    readonly isOnPremiseEnabled = signal<boolean>(undefined!);
 
     ngOnInit(): void {
         this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
-            this.currentSelection = currentSelection;
-            this.memirisEnabled = this.accountService.userIdentity()?.memirisEnabled ?? true;
+            this.currentSelection.set(currentSelection);
+            this.memirisEnabled.set(this.accountService.userIdentity()?.memirisEnabled ?? true);
             this.open();
-            this.cdr.detectChanges(); // Manually trigger change detection
         });
-        this.isOnPremiseEnabled = this.profileService.isLLMDeploymentEnabled();
+        this.isOnPremiseEnabled.set(this.profileService.isLLMDeploymentEnabled());
     }
 
     ngOnDestroy(): void {
@@ -48,11 +46,11 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     }
 
     open(): void {
-        this.isVisible = true;
+        this.isVisible.set(true);
     }
 
     close(): void {
-        this.isVisible = false;
+        this.isVisible.set(false);
     }
 
     selectCloud(): void {
@@ -74,7 +72,7 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     }
 
     onMemirisToggle(): void {
-        this.accountService.setUserEnabledMemiris(this.memirisEnabled);
+        this.accountService.setUserEnabledMemiris(this.memirisEnabled());
     }
 
     onBackdropClick(event: MouseEvent): void {

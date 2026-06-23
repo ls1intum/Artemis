@@ -55,9 +55,15 @@ export class ExamParticipationActions {
 
     async getResultScore(exerciseID?: number) {
         const parentComponent = exerciseID ? getExercise(this.page, exerciseID) : this.page;
-        const resultScoreLocator = parentComponent.getByTestId('achieved-percentage');
-        await Commands.reloadUntilFound(this.page, resultScoreLocator, 10000, 60000);
-        return resultScoreLocator;
+        const summaryScoreLocator = parentComponent.getByTestId('achieved-percentage');
+        const resultComponentScoreLocator = parentComponent.locator('#result-score');
+        try {
+            await Commands.reloadUntilFound(this.page, summaryScoreLocator, 10000, 60000);
+            return summaryScoreLocator;
+        } catch {
+            await Commands.reloadUntilFound(this.page, resultComponentScoreLocator, 10000, 60000);
+            return resultComponentScoreLocator;
+        }
     }
 
     async checkResultScore(scoreText: string, exerciseID?: number) {
@@ -84,7 +90,8 @@ export class ExamParticipationActions {
     }
 
     async checkExamTimeChangeDialog(previousWorkingTime: string, newWorkingTime: string, announcementTime: Dayjs, authorUsername: string, message: string) {
-        const timeChangeDialog = this.page.locator('.modal-content');
+        // Match either the legacy NgbModal (.modal-content) or the migrated PrimeNG dialog (.p-dialog-content).
+        const timeChangeDialog = this.page.locator('.p-dialog-content, .modal-content').first();
         await expect(timeChangeDialog.getByTestId('old-time').getByText(previousWorkingTime)).toBeVisible();
         await expect(timeChangeDialog.getByTestId('new-time').getByText(newWorkingTime)).toBeVisible();
         const timeFormat = 'MMM D, YYYY HH:mm';

@@ -1,0 +1,4 @@
+artemis:
+  iris:
+    lecture-content-processing:
+      enabled: true

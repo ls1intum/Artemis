@@ -7,7 +7,6 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -19,16 +18,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.core.service.user.PasswordService;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -296,7 +295,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
         int numberOfStudentsInCourse = userTestRepository.findAllByDeletedIsFalseAndGroupsContains(course1.getStudentGroupName()).size();
 
         User student99 = userUtilService.createAndSaveUser(TEST_PREFIX + "student99"); // not registered for the course
-        student99.setGroups(Collections.singleton("tumuser"));
+        student99.setGroups(Set.of("tumuser"));
         userUtilService.setRegistrationNumberOfUserAndSave(student99, "1234");
         assertThat(student99.getGroups()).contains(course1.getStudentGroupName());
 

@@ -14,6 +14,7 @@ import { CourseMessagesPage } from './pageobjects/course/CourseMessagesPage';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { CommunicationAPIRequests } from './requests/CommunicationAPIRequests';
 import { CourseCommunicationPage } from './pageobjects/course/CourseCommunicationPage';
+import { CourseOnboardingPage } from './pageobjects/course/CourseOnboardingPage';
 import { LectureManagementPage } from './pageobjects/lecture/LectureManagementPage';
 import { LectureCreationPage } from './pageobjects/lecture/LectureCreationPage';
 import { ExamCreationPage } from './pageobjects/exam/ExamCreationPage';
@@ -75,7 +76,7 @@ import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/prog
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number, minResults?: number) => Promise<void>;
-    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number) => Promise<void>;
+    waitForParticipationBuildToFinish: (participationId: number, interval?: number, timeout?: number, initialResultId?: number | null) => Promise<StudentParticipation>;
     toggleSidebar: () => Promise<void>;
     createCompetency: (
         courseId: number,
@@ -106,6 +107,7 @@ export type ArtemisPageObjects = {
     courseOverview: CourseOverviewPage;
     courseMessages: CourseMessagesPage;
     courseCommunication: CourseCommunicationPage;
+    courseOnboarding: CourseOnboardingPage;
     lectureManagement: LectureManagementPage;
     lectureCreation: LectureCreationPage;
     examCreation: ExamCreationPage;
@@ -166,6 +168,79 @@ export type ArtemisRequests = {
  * Custom test object extended to use Artemis related fixtures.
  */
 export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
+    /**
+     * Wrap `page.goto` with a lightweight Angular-render check. Under heavy parallel
+     * multi-node load the SPA occasionally fails to bootstrap the route component on
+     * the first navigation — only the static app shell + footer render, leaving every
+     * subsequent locator call to time out against a blank page. The wrapper:
+     *   - waits up to 1s for the navbar's `#account-menu` (the universal post-bootstrap
+     *     indicator on routes that include the navbar);
+     *   - if not attached AND the URL is on a navbar-bearing route, reloads once with a
+     *     10s grace window for a fresh chunk fetch to recover;
+     *   - if the URL is on a known no-navbar route (exam participation, quiz live,
+     *     problem-statement standalone, LTI), returns immediately so those tests pay no
+     *     overhead.
+     * Net cost on healthy pages: a single sub-100ms locator check. Net benefit on broken
+     * pages: ~10s reload that turns a deterministic test failure into a passing test.
+     */
+    page: async ({ page }, use) => {
+        // Unauthenticated routes (login / account / reset) do not render `#account-menu`
+        // (the navbar template gates it on `isAuthenticated()`), so the render-check would
+        // always go through the reload+10s grace path on those routes and burn budget for
+        // nothing. Short-circuit them via a path prefix.
+        const isUnauthenticatedRoute = (url: string) => /\/(sign-in|account|reset|register|forget-password)(\/|\?|$)/.test(url);
+
+        const originalGoto = page.goto.bind(page);
+        page.goto = async (url, options) => {
+            const response = await originalGoto(url, options);
+            try {
+                const currentUrl = page.url();
+                if (Commands.isNoNavbarRoute(currentUrl) || isUnauthenticatedRoute(currentUrl)) {
+                    return response;
+                }
+                const attached = await page
+                    .locator('#account-menu')
+                    .waitFor({ state: 'attached', timeout: 1_000 })
+                    .then(() => true)
+                    .catch(() => false);
+                if (!attached) {
+                    // Before reloading, re-check the URL — Angular's auth guard may have
+                    // redirected to /sign-in (or another unauthenticated route) during the
+                    // 1s wait, in which case reloading would disrupt that redirect and pin
+                    // the page back to a route the user cannot access. The reload-recovery
+                    // is for "Angular lazy chunk failed to bootstrap", not "user is
+                    // unauthenticated and Angular redirected them out".
+                    const urlAfterWait = page.url();
+                    if (Commands.isNoNavbarRoute(urlAfterWait) || isUnauthenticatedRoute(urlAfterWait)) {
+                        return response;
+                    }
+                    // Recover from a failed lazy-chunk bootstrap by re-fetching the shell. Wait only
+                    // for `domcontentloaded`, NOT the full `load` event: when a lazy chunk stalls (an
+                    // intermittent TLS/module-fetch failure behind the multi-node HTTPS LB) the `load`
+                    // event may never fire, and waiting on it would hang the navigation until the
+                    // per-test timeout. The `#account-menu` wait below is the real recovery signal.
+                    await page.reload({ waitUntil: 'domcontentloaded' });
+                    await page
+                        .locator('#account-menu')
+                        .waitFor({ state: 'attached', timeout: 10_000 })
+                        .catch(() => undefined);
+                }
+                // Detect & recover from `/courses` lazy-chunk fall-back drift. The navbar
+                // attaches fine on /courses too, so the attached-check above does not catch
+                // this; we re-issue the original goto so the caller actually lands on the
+                // URL they asked for. Reuses the single drift heuristic from `Commands`.
+                if (typeof url === 'string' && Commands.driftedToCoursesFallback(url, page.url())) {
+                    await originalGoto(url, options);
+                }
+            } catch {
+                // Never let the render-check throw — it must be invisible to tests
+                // whose post-goto assertions are perfectly capable of surfacing their own
+                // errors.
+            }
+            return response;
+        };
+        await use(page);
+    },
     loginPage: async ({ page }, use) => {
         await use(new LoginPage(page));
     },
@@ -185,8 +260,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         });
     },
     waitForParticipationBuildToFinish: async ({ exerciseAPIRequests }, use) => {
-        await use(async (participationId: number, interval?, timeout?) => {
-            await Commands.waitForParticipationBuildToFinish(exerciseAPIRequests, participationId, interval, timeout);
+        await use(async (participationId: number, interval?, timeout?, initialResultId?) => {
+            return await Commands.waitForParticipationBuildToFinish(exerciseAPIRequests, participationId, interval, timeout, initialResultId);
         });
     },
     navigationBar: async ({ page }, use) => {
@@ -240,6 +315,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     courseCommunication: async ({ page }, use) => {
         await use(new CourseCommunicationPage(page));
     },
+    courseOnboarding: async ({ page }, use) => {
+        await use(new CourseOnboardingPage(page));
+    },
     lectureManagement: async ({ page }, use) => {
         await use(new LectureManagementPage(page));
     },
@@ -267,23 +345,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     examNavigation: async ({ page }, use) => {
         await use(new ExamNavigationBar(page));
     },
-    examParticipation: async (
-        { page, courseList, courseOverview, examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor },
-        use,
-    ) => {
-        await use(
-            new ExamParticipationPage(
-                courseList,
-                courseOverview,
-                examNavigation,
-                examStartEnd,
-                modelingExerciseEditor,
-                programmingExerciseEditor,
-                quizExerciseMultipleChoice,
-                textExerciseEditor,
-                page,
-            ),
-        );
+    examParticipation: async ({ page, examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor }, use) => {
+        await use(new ExamParticipationPage(examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor, page));
     },
     examParticipationActions: async ({ page }, use) => {
         await use(new ExamParticipationActions(page));

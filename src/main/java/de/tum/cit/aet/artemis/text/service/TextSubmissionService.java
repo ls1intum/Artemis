@@ -12,16 +12,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -85,7 +85,7 @@ public class TextSubmissionService extends SubmissionService {
         }
 
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation) || participation.isPracticeMode()) {
             textSubmission.setSubmitted(true);
         }
 

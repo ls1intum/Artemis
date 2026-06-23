@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, HostListener, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AfterViewInit, Component, HostListener, OnDestroy, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -11,28 +11,28 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MonacoEditorMode } from 'app/editor/monaco-editor/model/monaco-editor.types';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
-import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
-import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
+import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
+import { TaskAction } from 'app/editor/monaco-editor/model/actions/task.action';
+import { TestCaseAction } from 'app/editor/monaco-editor/model/actions/test-case.action';
+import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 
-import { RewriteAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
+import { RewriteAction } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewrite.action';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS } from 'app/app.constants';
-import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
+import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import {
     EditorSelectionWithPosition,
@@ -43,7 +43,10 @@ import {
 import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
 import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
+import { InlineRefinementButtonComponent } from 'app/editor/monaco-editor/inline-refinement-button/inline-refinement-button.component';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -70,6 +73,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private problemStatementSyncService = inject(ProblemStatementSyncService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     /**
      * Legacy manual diff state used inside the `effect()` below.
@@ -79,9 +83,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     private previousExercise?: ProgrammingExercise;
 
-    unsavedChangesValue = false;
+    readonly unsavedChangesValue = signal(false);
 
-    exerciseTestCases: string[] = [];
+    readonly exerciseTestCases = signal<string[]>([]);
 
     taskRegex = TaskAction.GLOBAL_TASK_REGEX;
     testCaseAction = new TestCaseAction();
@@ -106,7 +110,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     });
     protected readonly isAiApplying = computed(() => this.isGeneratingOrRefining() || this.artemisIntelligenceService.isLoading());
 
-    savingInstructions = false;
+    readonly savingInstructions = signal(false);
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
@@ -118,7 +122,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private suppressUnsavedForNextProblemStatementChange = false;
     private dirtySignalSuppressedDuringInitialSync = false;
 
-    @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
+    readonly markdownEditorMonaco = viewChild(MarkdownEditorMonacoComponent);
 
     readonly showStatus = input<boolean>(true);
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
@@ -167,7 +171,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly diffLineChange = output<{ ready: boolean; lineChange: LineChange }>();
 
     set unsavedChanges(hasChanges: boolean) {
-        this.unsavedChangesValue = hasChanges;
+        this.unsavedChangesValue.set(hasChanges);
         // Why emit only `true` transitions? Once an exercise is saved, the page would automatically re-navigate to the exercise page.
         // This would unmount this component and clear the unsaved changes indicator.
         if (hasChanges) {
@@ -241,25 +245,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      **/
     saveInstructions(event: any) {
         event.stopPropagation();
-        this.savingInstructions = true;
-        const problemStatementToSave = this.exercise().problemStatement?.trim() || undefined;
-        return this.programmingExerciseService
-            .updateProblemStatement(this.exercise().id!, problemStatementToSave)
-            .pipe(
-                tap(() => {
-                    this.unsavedChanges = false;
-                    this.onProblemStatementSaved.emit();
-                }),
-                catchError(() => {
-                    // TODO: move to programming exercise translations
-                    this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
-                    return EMPTY;
-                }),
-                finalize(() => {
-                    this.savingInstructions = false;
-                }),
-            )
-            .subscribe();
+        this.persistProblemStatement().subscribe();
+    }
+
+    private persistProblemStatement(): Observable<void> {
+        this.savingInstructions.set(true);
+        const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
+        const problemStatementToSave = currentProblemStatement?.trim() || undefined;
+        return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
+            tap(() => {
+                this.unsavedChanges = false;
+                this.onProblemStatementSaved.emit();
+            }),
+            map(() => undefined),
+            catchError(() => {
+                this.alertService.error(`artemisApp.editor.errors.problemStatementCouldNotBeUpdated`);
+                return EMPTY;
+            }),
+            finalize(() => {
+                this.savingInstructions.set(false);
+            }),
+        );
     }
 
     @HostListener('document:keydown.control.s', ['$event'])
@@ -335,8 +341,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         return of();
                     }),
                     tap((testCaseNames: string[]) => {
-                        this.exerciseTestCases = testCaseNames;
-                        const cases = this.exerciseTestCases.map((value) => ({ value, id: value }));
+                        this.exerciseTestCases.set(testCaseNames);
+                        const cases = this.exerciseTestCases().map((value) => ({ value, id: value }));
                         this.testCaseAction.setValues(cases);
                     }),
                     catchError(() => of()),
@@ -368,7 +374,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     onAnalysisUpdate = (analysis: ProblemStatementAnalysis) => {
         const lineWarnings = this.mapAnalysisToWarnings(analysis);
-        this.markdownEditorMonaco?.monacoEditor?.setAnnotations(lineWarnings as Annotation[]);
+        this.markdownEditorMonaco()
+            ?.monacoEditor?.()
+            ?.setAnnotations(lineWarnings as Annotation[]);
     };
 
     /**
@@ -379,7 +387,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @returns The current editor content, or undefined if editor is not available.
      */
     getCurrentContent(): string | undefined {
-        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        const monacoEditor = this.markdownEditorMonaco()?.monacoEditor?.();
         if (!monacoEditor) {
             return undefined;
         }
@@ -393,7 +401,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * @param text The text to set in the editor.
      */
     setText(text: string): void {
-        const monacoEditor = this.markdownEditorMonaco?.monacoEditor;
+        const monacoEditor = this.markdownEditorMonaco()?.monacoEditor?.();
         if (!monacoEditor) {
             return;
         }
@@ -409,11 +417,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      *        The line to reveal in the editor.
      */
     jumpToLine(lineNumber: number) {
-        this.markdownEditorMonaco?.monacoEditor.revealLine(lineNumber, editor.ScrollType.Immediate);
+        this.markdownEditorMonaco()?.monacoEditor?.()?.revealLine(lineNumber, editor.ScrollType.Immediate);
     }
 
     clearReviewCommentDrafts(): void {
-        this.markdownEditorMonaco?.clearReviewCommentDrafts();
+        this.markdownEditorMonaco()?.clearReviewCommentDrafts();
     }
 
     private mapAnalysisToWarnings = (analysis: ProblemStatementAnalysis) => {
@@ -483,11 +491,32 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     /**
+     * Persists the current problem statement and marks the corresponding inline fix as applied.
+     *
+     * @param payload The thread id whose consistency inline fix was applied in the editor.
+     */
+    onApplyInlineFix(payload: { threadId: number }): void {
+        if (this.savingInstructions()) {
+            return;
+        }
+
+        const thread = this.exerciseReviewCommentService.threads().find((candidate) => candidate.id === payload.threadId);
+        const firstComment = getFirstCommentByCreatedDateThenId(thread?.comments);
+        if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+            return;
+        }
+
+        this.persistProblemStatement().subscribe(() => {
+            this.exerciseReviewCommentService.markInlineFixAppliedInContext(firstComment.id);
+        });
+    }
+
+    /**
      * Applies the refined content to the editor in diff mode.
      * @param refined The new content to show in the modified editor.
      */
     applyRefinedContent(refined: string): void {
-        this.markdownEditorMonaco?.applyRefinedContent(refined);
+        this.markdownEditorMonaco()?.applyRefinedContent(refined);
         // No explicit updateProblemStatement call needed: Monaco's onDidChangeModelContent
         // event propagates the change via textChanged → markdownChange → updateProblemStatement.
     }
@@ -496,8 +525,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Reverts all changes in the diff editor by restoring the snapshot taken when diff mode was entered.
      */
     revertAll(): void {
-        this.markdownEditorMonaco?.revertAll();
-        const currentContent = this.markdownEditorMonaco?.monacoEditor?.getText();
+        this.markdownEditorMonaco()?.revertAll();
+        const currentContent = this.markdownEditorMonaco()?.monacoEditor?.()?.getText();
         if (currentContent !== undefined) {
             this.updateProblemStatement(currentContent);
         }
@@ -518,18 +547,23 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (!this.editMode() || this.problemStatementBinding) {
             return;
         }
-        if (!this.markdownEditorMonaco?.monacoEditor) {
+        if (!this.markdownEditorMonaco()?.monacoEditor?.()) {
             return;
         }
-        const model = this.markdownEditorMonaco.monacoEditor.getModel();
-        const editorInstance = this.markdownEditorMonaco.monacoEditor.getEditor();
+        const model = this.markdownEditorMonaco()!.monacoEditor()!.getModel();
+        const editorInstance = this.markdownEditorMonaco()!.monacoEditor()!.getEditor();
         if (!model || !editorInstance) {
             return;
         }
         this.teardownProblemStatementSync();
         this.suppressUnsavedForNextProblemStatementChange = false;
         this.dirtySignalSuppressedDuringInitialSync = false;
-        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
+        // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
+        // Monaco/Yjs offsets diverge by one char per line break on LF peers.
+        const normalizedText = this.normalizeLineEndings(initialText);
+        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, normalizedText);
+        model.setValue('');
+        this.enforceLfEol(model);
         this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
         this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(
             ({ contentChangedDuringFinalize, contentDivergedFromFallback }) => {
@@ -544,11 +578,29 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         );
         this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
             this.problemStatementSyncState = syncState;
+            // Detach the old binding before mutating the model so that the setValue does not
+            // propagate as a spurious delete+insert through the old Y.Doc to peers.
+            this.problemStatementBinding?.destroy();
+            this.problemStatementBinding = undefined;
             // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
             this.suppressUnsavedForNextProblemStatementChange = true;
-            model.setValue(syncState.text.toString());
+            // Late leader replacement can carry content originally seeded from Windows peers.
+            // Normalize + enforce LF to keep local model offsets consistent with Y.Text.
+            const replacedText = this.normalizeLineEndings(syncState.text.toString());
+            model.setValue(replacedText);
+            this.enforceLfEol(model);
             this.createProblemStatementBinding(syncState, model, editorInstance);
         });
+    }
+
+    /** Normalize CRLF to LF so all peers use the same newline width for offset math. */
+    private normalizeLineEndings(content: string): string {
+        return content.replace(/\r\n/g, '\n');
+    }
+
+    /** Enforce LF on Monaco model to avoid CRLF/LF positional drift in collaborative edits. */
+    private enforceLfEol(model: editor.ITextModel): void {
+        model.setEOL(editor.EndOfLineSequence.LF);
     }
 
     /**

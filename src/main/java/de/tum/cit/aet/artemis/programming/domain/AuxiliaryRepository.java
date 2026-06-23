@@ -8,8 +8,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,12 +15,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
 @Entity
 @Table(name = "programming_exercise_auxiliary_repositories")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AuxiliaryRepository extends DomainObject {
 

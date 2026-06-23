@@ -3,9 +3,9 @@
         <div class="modal-header">
             <h4 class="modal-title">
                 <span>
-                    @if (getAsChannel(activeConversation); as channel) {
+                    @if (getAsChannel(activeConversation()); as channel) {
                         <jhi-channel-icon [isPublic]="channel.isPublic!" [isAnnouncementChannel]="channel.isAnnouncementChannel!" />
-                    } @else if (getAsGroupChat(activeConversation)) {
+                    } @else if (getAsGroupChat(activeConversation())) {
                         <fa-icon [icon]="faPeopleGroup" size="xs" />
                     } @else {
                         <jhi-profile-picture
@@ -13,19 +13,19 @@
                             fontSizeInRem="0.8"
                             imageId="user-profile-picture"
                             defaultPictureId="user-default-profile-picture"
-                            [authorId]="otherUser?.id"
-                            [authorName]="otherUser?.name"
-                            [imageUrl]="addPublicFilePrefix(otherUser?.imageUrl)"
+                            [authorId]="otherUser()?.id"
+                            [authorName]="otherUser()?.name"
+                            [imageUrl]="addPublicFilePrefix(otherUser()?.imageUrl)"
                         />
                     }
-                    {{ conversationService.getConversationName(activeConversation, true) }}
+                    {{ conversationService.getConversationName(activeConversation(), true) }}
                 </span>
-                @if (getAsChannel(activeConversation); as channel) {
+                @if (getAsChannel(activeConversation()); as channel) {
                     @if (channel.tutorialGroupId && channel.tutorialGroupTitle) {
                         <a
                             (click)="clear()"
                             class="btn btn-info btn-sm ms-2"
-                            [routerLink]="['/courses', course.id, 'tutorial-groups', channel.tutorialGroupId]"
+                            [routerLink]="['/courses', course()?.id, 'tutorial-groups', channel.tutorialGroupId]"
                             role="button"
                             jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
                             [translateValues]="{ title: channel.tutorialGroupTitle }"
@@ -46,7 +46,7 @@
                         jhiTranslate="artemisApp.dialogs.conversationDetail.tabs.info"
                     ></a>
                 </li>
-                @if (!isOneToOneChat) {
+                @if (!isOneToOneChat()) {
                     <li class="nav-item members-tab">
                         <a
                             class="nav-link"
@@ -72,19 +72,19 @@
             @switch (selectedTab) {
                 @case (Tabs.MEMBERS) {
                     <jhi-conversation-members
-                        [course]="course"
-                        [activeConversationInput]="activeConversation"
-                        (changesPerformed)="changesWerePerformed = true"
+                        [course]="course()!"
+                        [activeConversationInput]="activeConversation()!"
+                        (changesPerformed)="changesWerePerformed.set(true)"
                         (userNameClicked)="onUserNameClicked($event)"
                     />
                 }
                 @case (Tabs.INFO) {
-                    <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" (changesPerformed)="changesWerePerformed = true" />
+                    <jhi-conversation-info [activeConversation]="activeConversation()!" [course]="course()" (changesPerformed)="changesWerePerformed.set(true)" />
                 }
                 @case (Tabs.SETTINGS) {
                     <jhi-conversation-settings
-                        [activeConversation]="activeConversation"
-                        [course]="course"
+                        [activeConversation]="activeConversation()!"
+                        [course]="course()!"
                         (channelArchivalChange)="onArchivalChange()"
                         (channelPrivacyChange)="onPrivacyChange()"
                         (channelDeleted)="onChannelDeleted()"

@@ -2,22 +2,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { EditTutorialGroupsConfigurationComponent } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import {
     generateExampleTutorialGroupsConfigurationDTO,
     tutorialsGroupsConfigurationDtoToFormData,
 } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -83,8 +83,8 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(course.id);
         fixture.detectChanges();
-        expect(component.formData).toEqual(tutorialsGroupsConfigurationDtoToFormData(exampleConfiguration));
-        expect(formStub.formData()).toEqual(component.formData);
+        expect(component.formData()).toEqual(tutorialsGroupsConfigurationDtoToFormData(exampleConfiguration));
+        expect(formStub.formData()).toEqual(component.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -111,6 +111,6 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
-        expect(updateCourseSpy).toHaveBeenCalledWith(component.course);
+        expect(updateCourseSpy).toHaveBeenCalledWith(component.course());
     });
 });

@@ -10,8 +10,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ConcreteProxy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -36,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("SP")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@ConcreteProxy
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // @formatter:off

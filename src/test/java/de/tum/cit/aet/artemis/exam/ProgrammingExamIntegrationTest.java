@@ -2,7 +2,10 @@ package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -23,12 +26,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -149,6 +155,100 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
 
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_rescheduleProgramming_gracePeriodChanged_shouldReschedule() throws Exception {
+        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+        examWithProgrammingEx.setGracePeriod(examWithProgrammingEx.getGracePeriod() + 60);
+
+        request.put("/api/exam/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+
+        verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithSingleProgrammingExercise_successful() throws Exception {
+        programmingExerciseTestService.setup(this, versionControlService);
+
+        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        programmingExerciseTestService.setupRepositoryMocks(sourceExercise, programmingExerciseTestService.sourceExerciseRepo, programmingExerciseTestService.sourceSolutionRepo,
+                programmingExerciseTestService.sourceTestRepo, programmingExerciseTestService.sourceAuxRepo);
+        exerciseRepository.save(sourceExercise);
+
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
+        doNothing().when(continuousIntegrationService).createProjectForExercise(any());
+        doReturn("build-plan").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
+        doNothing().when(continuousIntegrationService).enablePlan(any(), any());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
+
+        ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
+
+        final Exam received = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class, HttpStatus.CREATED)
+                .exam();
+
+        assertThat(received.getExerciseGroups()).hasSize(1);
+        Exercise importedExercise = received.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
+        assertThat(importedExercise).isInstanceOf(ProgrammingExercise.class);
+        ProgrammingExercise importedProgrammingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) importedExercise);
+
+        assertThat(importedProgrammingExercise.getId()).isNotEqualTo(sourceExercise.getId());
+        assertThat(importedProgrammingExercise.getTitle()).isEqualTo(sourceExercise.getTitle());
+        assertThat(importedProgrammingExercise.getShortName()).isEqualTo(sourceExercise.getShortName());
+        assertThat(importedProgrammingExercise.getProgrammingLanguage()).isEqualTo(sourceExercise.getProgrammingLanguage());
+        assertThat(importedProgrammingExercise.getProjectType()).isEqualTo(sourceExercise.getProjectType());
+        assertThat(importedProgrammingExercise.getPackageName()).isEqualTo(sourceExercise.getPackageName());
+        assertThat(importedProgrammingExercise.isExamExercise()).isTrue();
+        assertThat(importedProgrammingExercise.getExerciseGroup().getExam().getCourse()).isEqualTo(course1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExamWithProgrammingExercise_repositoryCopyFailureReportedAsIncomplete() throws Exception {
+        // Regression test for the resilient exam import: when a programming exercise's repository copy fails mid-import,
+        // its basis entity has already been committed (importProgrammingExerciseBasis is @Transactional, and runs before
+        // the repository copy). The import must still succeed (no 5xx) and report that exercise as INCOMPLETE in the
+        // response body (it failed partway and may have left a partial exercise that needs review) - rather than the
+        // empty-group cleanup hitting the exercise -> exercise_group RESTRICT foreign key on the committed-but-failed
+        // exercise and aborting the whole import with a 5xx.
+        programmingExerciseTestService.setup(this, versionControlService);
+
+        Course sourceCourse = courseUtilService.addEmptyCourse();
+        Exam sourceExam = examUtilService.addExamWithExerciseGroup(sourceCourse, true);
+        ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToExam(sourceExam, 0);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
+        sourceExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        programmingExerciseTestService.setupRepositoryMocks(sourceExercise, programmingExerciseTestService.sourceExerciseRepo, programmingExerciseTestService.sourceSolutionRepo,
+                programmingExerciseTestService.sourceTestRepo, programmingExerciseTestService.sourceAuxRepo);
+        exerciseRepository.save(sourceExercise);
+
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
+        doNothing().when(continuousIntegrationService).createProjectForExercise(any());
+
+        // Fail the repository copy, which happens after the (transactional) basis import has already persisted the new exercise.
+        doThrow(new RuntimeException("Simulated repository copy failure")).when(gitServiceSpy).copyBareRepositoryWithHistory(any(), any(), any());
+
+        String sourceTitle = sourceExercise.getTitle();
+        ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
+
+        // The import must NOT abort with a 5xx; it succeeds and reports the failing programming exercise in the response body.
+        ExamImportResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import", importDTO, ExamImportResultDTO.class,
+                HttpStatus.CREATED);
+
+        // The programming exercise failed during the (post-commit) repository copy, so it is reported as incomplete (may need review), not as a clean skip.
+        assertThat(result.incompleteExercises()).as("the programming exercise must be reported as incomplete").contains(sourceTitle);
+        // Nothing was cleanly skipped, so the skipped list is empty and omitted from the response (DTO uses @JsonInclude(NON_EMPTY)).
+        assertThat(result.skippedExercises()).as("no exercise must be reported as cleanly skipped").isNullOrEmpty();
     }
 
     @Test

@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.domain;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -15,22 +14,18 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 
 @Entity
 @Table(name = "plagiarism_case")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismCase extends AbstractAuditingEntity {
 
@@ -110,7 +105,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
         else if (team != null) {
             return team.getStudents();
         }
-        return Collections.emptySet();
+        return Set.of();
     }
 
     public Post getPost() {

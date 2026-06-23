@@ -27,14 +27,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -173,7 +173,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
 
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.getFilePath());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.getFilePath());
         MvcResult file = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(expectedMediaType)).andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }
@@ -519,7 +519,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(submission).isNotNull();
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getLatestResult().getFeedbacks()).isEqualTo(feedbacks);
+        assertThat(submission.getLatestResult().getFeedbacks()).containsExactlyInAnyOrderElementsOf(feedbacks);
         assertThat(submission.getLatestResult().getAssessor()).as("students should not see the assessor information").isNull();
     }
 

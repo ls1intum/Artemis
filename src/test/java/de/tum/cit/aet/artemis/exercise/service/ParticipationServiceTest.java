@@ -24,14 +24,14 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultResource;
 import de.tum.cit.aet.artemis.buildagent.util.BuildJobUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;

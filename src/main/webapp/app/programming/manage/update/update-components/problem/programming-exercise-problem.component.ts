@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Injector, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faSave, faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
@@ -7,12 +7,12 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming
 import { CompetencyExerciseLink, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
@@ -20,13 +20,14 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
-import { facArtemisIntelligence } from 'app/shared/icons/icons';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { TranslateService } from '@ngx-translate/core';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH } from 'app/foundation/constants/input.constants';
 
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
@@ -96,6 +97,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     protected readonly templateLoaded = this.aiOps.templateLoaded;
     protected readonly isAiApplying = this.aiOps.isAiApplying;
     readonly shouldShowGenerateButton = this.aiOps.shouldShowGenerateButton;
+    readonly maxProblemStatementLength = MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH;
 
     // Icons
     facArtemisIntelligence = facArtemisIntelligence;
@@ -218,4 +220,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
             this.problemStatementChange.emit(problemStatement);
         }
     }
+
+    problemStatementLength = computed(() => this.aiOps.currentProblemStatement()?.length ?? 0);
+
+    isProblemStatementTooLong = computed(() => this.problemStatementLength() > this.maxProblemStatementLength);
 }

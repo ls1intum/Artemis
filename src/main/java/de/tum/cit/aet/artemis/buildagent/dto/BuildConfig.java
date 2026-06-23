@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.buildagent.dto;
 
 import java.io.Serializable;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -8,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 
 // NOTE: this data structure is used in shared code between core and build agent nodes. Changing it requires that the shared data structures in Hazelcast (or potentially Redis)
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
@@ -22,5 +25,29 @@ public record BuildConfig(String buildScript, String dockerImage, String commitH
     public String dockerImage() {
         // make sure to avoid whitespace issues
         return dockerImage.trim();
+    }
+
+    public boolean areTestsExpected() {
+        if (resultPaths == null || resultPaths.isEmpty()) {
+            return false;
+        }
+        return hasNonStaticCodeAnalysisResultPath();
+    }
+
+    private boolean hasNonStaticCodeAnalysisResultPath() {
+        return resultPaths.stream().anyMatch(BuildConfig::isNonStaticCodeAnalysisResultPath);
+    }
+
+    private static boolean isNonStaticCodeAnalysisResultPath(String path) {
+        if (path == null) {
+            return true;
+        }
+        try {
+            String fileName = Path.of(path).getFileName().toString();
+            return StaticCodeAnalysisTool.getToolByFilePattern(fileName).isEmpty();
+        }
+        catch (InvalidPathException ex) {
+            return true;
+        }
     }
 }

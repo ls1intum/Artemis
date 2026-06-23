@@ -1,10 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/services/text-unit.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
@@ -22,13 +22,13 @@ export class EditTextUnitComponent implements OnInit {
     private textUnitService = inject(TextUnitService);
     private alertService = inject(AlertService);
 
-    isLoading = false;
+    readonly isLoading = signal(false);
     textUnit: TextUnit;
-    formData: TextUnitFormData;
+    readonly formData = signal<TextUnitFormData>(undefined!);
     lectureId: number;
 
     ngOnInit(): void {
-        this.isLoading = true;
+        this.isLoading.set(true);
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([this.activatedRoute.paramMap, lectureRoute.paramMap])
             .pipe(
@@ -38,18 +38,18 @@ export class EditTextUnitComponent implements OnInit {
                     this.lectureId = Number(parentParams.get('lectureId'));
                     return this.textUnitService.findById(textUnitId, this.lectureId);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
                 next: (textUnitResponse: HttpResponse<TextUnit>) => {
                     this.textUnit = textUnitResponse.body!;
 
-                    this.formData = {
+                    this.formData.set({
                         name: this.textUnit.name,
                         releaseDate: this.textUnit.releaseDate,
                         content: this.textUnit.content,
                         competencyLinks: this.textUnit.competencyLinks,
-                    };
+                    });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -62,12 +62,12 @@ export class EditTextUnitComponent implements OnInit {
         this.textUnit.content = content;
         this.textUnit.competencyLinks = competencyLinks;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.textUnitService
             .update(this.textUnit, this.lectureId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     // navigate back to unit-management from :courseId/lectures/:lectureId/unit-management/text-units/:textUnitId/edit
                     this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
                 }),

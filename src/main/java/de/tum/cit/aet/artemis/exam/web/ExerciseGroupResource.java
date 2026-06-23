@@ -23,11 +23,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -35,6 +35,8 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
@@ -124,28 +126,30 @@ public class ExerciseGroupResource {
     /**
      * PUT /courses/{courseId}/exams/{examId}/exercise-groups : Update an existing exercise group.
      *
-     * @param courseId             the course to which the exercise group belongs to
-     * @param examId               the exam to which the exercise group belongs to
-     * @param updatedExerciseGroup the exercise group to update
+     * @param courseId               the course to which the exercise group belongs to
+     * @param examId                 the exam to which the exercise group belongs to
+     * @param exerciseGroupUpdateDTO the exercise group update DTO containing the new values
      * @return the ResponseEntity with status 200 (OK) and with the body of the updated exercise group
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups")
     @EnforceAtLeastEditor
-    public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup updatedExerciseGroup)
-            throws URISyntaxException {
-        log.debug("REST request to update an exercise group : {}", updatedExerciseGroup);
-        if (updatedExerciseGroup.getId() == null) {
-            return createExerciseGroup(courseId, examId, updatedExerciseGroup);
+    public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroupUpdateDTO exerciseGroupUpdateDTO) {
+        log.debug("REST request to update an exercise group : {}", exerciseGroupUpdateDTO);
+
+        if (exerciseGroupUpdateDTO.id() == null) {
+            throw new BadRequestAlertException("An exercise group update must have an ID", ENTITY_NAME, "idMissing");
         }
 
-        if (updatedExerciseGroup.getExam() == null) {
-            throw new ConflictException("The exercise group has to belong to an exam.", ENTITY_NAME, "missingExam");
-        }
+        // Fetch the existing exercise group from the database (this is the managed entity)
+        ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(exerciseGroupUpdateDTO.id());
 
-        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, updatedExerciseGroup);
+        // Check access using the managed entity
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, exerciseGroup);
 
-        ExerciseGroup result = exerciseGroupRepository.save(updatedExerciseGroup);
+        // Apply DTO values to the managed entity
+        exerciseGroupUpdateDTO.applyTo(exerciseGroup);
+
+        ExerciseGroup result = exerciseGroupRepository.save(exerciseGroup);
         return ResponseEntity.ok(result);
     }
 
@@ -155,19 +159,26 @@ public class ExerciseGroupResource {
      * @param courseId             the course to which the exam belongs
      * @param examId               the exam to which the exercise groups should be added
      * @param updatedExerciseGroup the list of Exercise Groups to be imported
+     * @param importId             an optional client-supplied id; when present, live import progress is sent to the importing user over a websocket
      * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
      */
     @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup)
-            throws IOException {
+    public ResponseEntity<ExerciseGroupImportResultDTO> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestBody List<ExerciseGroup> updatedExerciseGroup, @RequestParam(required = false) String importId) throws IOException {
         log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
 
-        List<ExerciseGroup> result = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId);
+        // When the client supplies an importId, live progress is reported to the importing user over a websocket so the UI
+        // can show a progress dialog while this (synchronous) request runs.
+        ExerciseGroupImportResultDTO importResult = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId, importId,
+                userRepository.getCurrentUserLogin());
 
-        return ResponseEntity.ok(result);
+        // The exercise groups are always created. Any exercises that could not be imported are reported in the response
+        // body, split into "skipped" (cleanly not imported) and "incomplete" (failed partway, may need review), so the
+        // editor gets precise feedback instead of the whole import failing.
+        return ResponseEntity.ok(importResult);
     }
 
     /**

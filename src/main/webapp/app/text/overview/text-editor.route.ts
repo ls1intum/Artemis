@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
-import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
+import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
+import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 
 export const textEditorRoute: Routes = [
     {
@@ -10,7 +10,7 @@ export const textEditorRoute: Routes = [
         loadComponent: () => import('./text-editor/text-editor.component').then((m) => m.TextEditorComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.textExercise.home.title',
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
@@ -20,7 +20,16 @@ export const textEditorRoute: Routes = [
         loadComponent: () => import('./text-editor/text-editor.component').then((m) => m.TextEditorComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,
-            pageTitle: 'artemisApp.textExercise.home.title',
+            pageTitle: 'overview.exercises',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'participate/:participationId/submission/:submissionId/result/:resultId',
+        loadComponent: () => import('./text-editor/text-editor.component').then((m) => m.TextEditorComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'overview.exercises',
         },
         canActivate: [UserRouteAccessService],
     },

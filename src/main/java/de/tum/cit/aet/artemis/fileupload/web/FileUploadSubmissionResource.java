@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.fileupload.web;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,15 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -53,6 +51,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionService;
+import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
 
 /**
  * REST controller for managing FileUploadSubmission.
@@ -333,7 +332,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             boolean assessmentDueDateNotOver = !ExerciseDateService.isAfterAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
-                fileUploadSubmission.setResults(Collections.emptyList());
+                fileUploadSubmission.setResults(List.of());
             }
         }
 
@@ -354,7 +353,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // Check the file size
         if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
             // NOTE: Maximum file size for submission is MAX_SUBMISSION_FILE_SIZE
-            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The maximum file size is " + Constants.MAX_SUBMISSION_FILE_SIZE + " MB!");
+            throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE, "The maximum file size is " + Constants.MAX_SUBMISSION_FILE_SIZE + " MB!");
         }
     }
 }

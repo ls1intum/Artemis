@@ -22,22 +22,20 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.weaviate.WeaviateContainer;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
-import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.jenkins.service.JenkinsService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
 import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
@@ -81,9 +79,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     @Autowired
     protected JenkinsRequestMockProvider jenkinsRequestMockProvider;
 
-    @Autowired
-    protected AeolusRequestMockProvider aeolusRequestMockProvider;
-
     @MockitoSpyBean
     protected ExamLiveEventsService examLiveEventsService;
 
@@ -122,14 +117,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
         String templateBuildJobName = projectKey + "-" + templatePlanKey;
         String solutionBuildJobName = projectKey + "-" + solutionPlanKey;
         if (useCustomBuildPlanDefinition) {
-            aeolusRequestMockProvider.enableMockingOfRequests();
-            if (useCustomBuildPlanWorked) {
-                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, templateBuildJobName);
-                aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.JENKINS, solutionBuildJobName);
-            }
-            else {
-                aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
-                aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
+            if (!useCustomBuildPlanWorked) {
                 jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, templateBuildJobName, false);
                 jenkinsRequestMockProvider.mockCreateBuildPlan(projectKey, solutionBuildJobName, false);
             }

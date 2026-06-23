@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -23,6 +22,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -30,11 +31,9 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
@@ -49,6 +48,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -263,7 +263,7 @@ public class ExerciseResource {
         if (exampleSubmissions.isEmpty() && tutorParticipation.getStatus().equals(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)) {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
-        exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
+        exercise.setTutorParticipations(Set.of(tutorParticipation));
         return ResponseEntity.ok(exercise);
     }
 
@@ -280,6 +280,19 @@ public class ExerciseResource {
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
         final var title = exerciseRepository.getExerciseTitle(exerciseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/deletion-summary : Get a summary for the deletion of an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the exercise
+     */
+    @GetMapping("exercises/{exerciseId}/deletion-summary")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<ExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
+        log.debug("REST request to get deletion summary for exercise : {}", exerciseId);
+        return ResponseEntity.ok(exerciseDeletionService.getDeletionSummary(exerciseId));
     }
 
     /**

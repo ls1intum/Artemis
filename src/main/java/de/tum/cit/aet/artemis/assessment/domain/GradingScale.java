@@ -16,8 +16,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -25,8 +23,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**
@@ -34,7 +32,6 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  */
 @Entity
 @Table(name = "grading_scale")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingScale extends DomainObject {
 
@@ -83,14 +80,13 @@ public class GradingScale extends DomainObject {
      * Current implementation works with one Bonus instance as GradingScale.bonusFrom per Bonus.bonusTo instance (OneToOne) but
      * the relation is defined as OneToMany in order to allow applying multiple bonuses.
      */
+    // No @Cache on the two child collections below: mutated during grading-scale edits, same bug class as #12574 / #12584.
     @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingScale", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<GradeStep> gradeSteps = new HashSet<>();
 
     @OneToMany(mappedBy = "bonusToGradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "bonusFrom", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Bonus> bonusFrom = new HashSet<>();
 
     public GradeType getGradeType() {

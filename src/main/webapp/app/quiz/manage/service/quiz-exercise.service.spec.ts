@@ -6,27 +6,27 @@ import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@a
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import * as downloadUtil from 'app/shared/util/download.util';
+import * as downloadUtil from 'app/foundation/util/download.util';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import dayjs from 'dayjs/esm';
 import { firstValueFrom } from 'rxjs';
-import JSZip from 'jszip';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
-// Mock JSZip to prevent unhandled rejection errors during zip creation
-vi.mock('jszip', () => {
-    class MockJSZip {
+// Mock ZipBuilder to prevent real zip creation (and the resulting browser download) during the export tests
+vi.mock('app/foundation/util/zip.util', () => {
+    class MockZipBuilder {
         file = vi.fn();
-        generateAsync = vi.fn().mockResolvedValue(new Blob(['mock zip content'], { type: 'application/zip' }));
+        generateBlob = vi.fn().mockResolvedValue(new Blob(['mock zip content'], { type: 'application/zip' }));
     }
     return {
-        default: MockJSZip,
+        ZipBuilder: MockZipBuilder,
     };
 });
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
@@ -112,7 +112,7 @@ describe('QuizExercise Service', () => {
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
-    const mockJSZip = {} as JSZip;
+    const mockZipBuilder = {} as ZipBuilder;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -222,7 +222,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.update(1, expected, fileMap));
-        const req = httpMock.expectOne({ method: 'PATCH', url: 'api/quiz/quiz-exercises/1' });
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz/quiz-exercises/1' });
         validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
@@ -451,7 +451,7 @@ describe('QuizExercise Service', () => {
         const errorMessage = 'File with name: mockFile.png at path: path/to/mockFile.png could not be fetched';
         vi.spyOn(service, 'fetchFilePromise').mockRejectedValue(new Error(errorMessage));
 
-        await expect(service.fetchFilePromise(fileName, mockJSZip, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
+        await expect(service.fetchFilePromise(fileName, mockZipBuilder, filePath)).rejects.toThrow(`File with name: ${fileName} at path: ${filePath} could not be fetched`);
     });
 
     function validateFormData(req: TestRequest) {

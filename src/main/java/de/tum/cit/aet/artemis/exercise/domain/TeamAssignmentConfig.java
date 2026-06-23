@@ -7,8 +7,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -23,7 +21,6 @@ import de.tum.cit.aet.artemis.exercise.web.TeamAssignmentConfigConstraints;
 @Entity
 @Table(name = "team_assignment_config")
 @TeamAssignmentConfigConstraints
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TeamAssignmentConfig extends DomainObject {
 

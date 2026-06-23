@@ -1,4 +1,4 @@
-import { Directive, ElementRef, NgZone, OnDestroy, OnInit, inject, output } from '@angular/core';
+import { Directive, ElementRef, OnDestroy, OnInit, inject, output } from '@angular/core';
 
 /**
  * Disclaimer:
@@ -31,7 +31,6 @@ enum EventType {
 @Directive({ selector: '[jhiTextSelect]' })
 export class TextSelectDirective implements OnInit, OnDestroy {
     private elementRef = inject(ElementRef);
-    private zone = inject(NgZone);
 
     public jhiTextSelect = output<TextSelectEvent>();
     private hasSelection = false;
@@ -40,21 +39,15 @@ export class TextSelectDirective implements OnInit, OnDestroy {
      * Init text select directive by adding event listenes mouseDown and selectionChange event listeners to element.
      */
     public ngOnInit(): void {
-        // Since not all interactions will lead to an event that is meaningful to the
-        // calling context, we want to setup the DOM bindings outside of the Angular
-        // Zone. This way, we don't trigger any change-detection digests until we know
-        // that we have a computed event to emit.
-        this.zone.runOutsideAngular(() => {
-            // While there are several ways to create a selection on the page, this
-            // directive is only going to be concerned with selections that were
-            // initiated by MOUSE-based selections within the current element.
-            this.elementRef.nativeElement.addEventListener(EventType.MouseDown, this.handleMouseDown, false);
+        // While there are several ways to create a selection on the page, this
+        // directive is only going to be concerned with selections that were
+        // initiated by MOUSE-based selections within the current element.
+        this.elementRef.nativeElement.addEventListener(EventType.MouseDown, this.handleMouseDown, false);
 
-            // While the mouse-even takes care of starting new selections within the
-            // current element, we need to listen for the selectionchange event in
-            // order to pick-up on selections being removed from the current element.
-            document.addEventListener(EventType.SelectionChange, this.handleSelectionChange, false);
-        });
+        // While the mouse-even takes care of starting new selections within the
+        // current element, we need to listen for the selectionchange event in
+        // order to pick-up on selections being removed from the current element.
+        document.addEventListener(EventType.SelectionChange, this.handleSelectionChange, false);
     }
 
     /**
@@ -112,16 +105,11 @@ export class TextSelectDirective implements OnInit, OnDestroy {
         // If there is a new selection and an existing selection, let's clear out the
         // existing selection first.
         if (this.hasSelection) {
-            // Since emitting event may cause the calling context to change state, we
-            // want to run the .emit() inside of the Angular Zone. This way, it can
-            // trigger change detection and update the views.
-            this.zone.runGuarded(() => {
-                this.hasSelection = false;
-                this.jhiTextSelect.emit({
-                    text: '',
-                    viewportRectangle: null,
-                    hostRectangle: null,
-                });
+            this.hasSelection = false;
+            this.jhiTextSelect.emit({
+                text: '',
+                viewportRectangle: null,
+                hostRectangle: null,
             });
         }
 
@@ -141,26 +129,21 @@ export class TextSelectDirective implements OnInit, OnDestroy {
             const viewportRectangle = range.getBoundingClientRect();
             const localRectangle = this.viewportToHost(viewportRectangle, rangeContainer);
 
-            // Since emitting event may cause the calling context to change state, we
-            // want to run the .emit() inside of the Angular Zone. This way, it can
-            // trigger change detection and update the views.
-            this.zone.runGuarded(() => {
-                this.hasSelection = true;
-                this.jhiTextSelect.emit({
-                    text: selection.toString(),
-                    viewportRectangle: {
-                        left: viewportRectangle.left,
-                        top: viewportRectangle.top,
-                        width: viewportRectangle.width,
-                        height: viewportRectangle.height,
-                    },
-                    hostRectangle: {
-                        left: localRectangle.left,
-                        top: localRectangle.top,
-                        width: localRectangle.width,
-                        height: localRectangle.height,
-                    },
-                });
+            this.hasSelection = true;
+            this.jhiTextSelect.emit({
+                text: selection.toString(),
+                viewportRectangle: {
+                    left: viewportRectangle.left,
+                    top: viewportRectangle.top,
+                    width: viewportRectangle.width,
+                    height: viewportRectangle.height,
+                },
+                hostRectangle: {
+                    left: localRectangle.left,
+                    top: localRectangle.top,
+                    width: localRectangle.width,
+                    height: localRectangle.height,
+                },
             });
         }
     }

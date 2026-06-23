@@ -1,27 +1,48 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
+import { By } from '@angular/platform-browser';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
-import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
-import { QueryList } from '@angular/core';
+import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
+import { Signal, signal } from '@angular/core';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 
+/**
+ * Typed view onto the component's view-query signals so the spec can stub the child components/form
+ * controls that would otherwise only become available after a real render, without a blanket
+ * `(component as any)` cast. Each property mirrors the component's declaration and is reassigned with a
+ * plain `signal(...)` (a `WritableSignal` is assignable to the declared `Signal<...>` field).
+ */
+type InformationInternals = ProgrammingExerciseInformationComponent & {
+    checkoutSolutionRepositoryField: Signal<NgModel | undefined>;
+    recreateBuildPlansField: Signal<NgModel | undefined>;
+    updateTemplateFilesField: Signal<NgModel | undefined>;
+    tableEditableFields: Signal<readonly TableEditableFieldComponent[]>;
+    programmingExerciseEditCheckoutDirectories: Signal<ProgrammingExerciseEditCheckoutDirectoriesComponent | undefined>;
+};
+const internals = (c: ProgrammingExerciseInformationComponent): InformationInternals => c as InformationInternals;
+
 describe('ProgrammingExerciseInformationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
     let comp: ProgrammingExerciseInformationComponent;
 
@@ -36,7 +57,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        });
         fixture = TestBed.createComponent(ProgrammingExerciseInformationComponent);
         comp = fixture.componentInstance;
 
@@ -53,34 +74,44 @@ describe('ProgrammingExerciseInformationComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should initialize', fakeAsync(() => {
+    it('should initialize', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
-    }));
+    });
 
     it('should should calculate Form Sections correctly', () => {
-        const calculateFormValidSpy = jest.spyOn(comp, 'calculateFormValid');
+        const calculateFormValidSpy = vi.spyOn(comp, 'calculateFormValid');
         const editableField = {
             editingInput: {
                 valueChanges: new Subject(),
                 valid: true,
             },
         } as unknown as TableEditableFieldComponent;
-        comp.checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as any as NgModel;
-        comp.recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as any as NgModel;
-        comp.updateTemplateFilesField = { valueChanges: new Subject(), valid: true } as any as NgModel;
-        comp.tableEditableFields = { changes: new Subject<any>() } as any as QueryList<TableEditableFieldComponent>;
-        comp.programmingExerciseEditCheckoutDirectories = { formValidChanges: new Subject() } as ProgrammingExerciseEditCheckoutDirectoriesComponent;
+        const checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+        const recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+        const updateTemplateFilesField = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+        const programmingExerciseEditCheckoutDirectories = {
+            formValidChanges: new Subject(),
+            formValid: signal(true),
+            areValuesUnique: () => true,
+        } as unknown as ProgrammingExerciseEditCheckoutDirectoriesComponent;
+
+        // Stub the view-query signals so registerInputFields() wires up the valueChanges subscriptions.
+        internals(comp).checkoutSolutionRepositoryField = signal(checkoutSolutionRepositoryField);
+        internals(comp).recreateBuildPlansField = signal(recreateBuildPlansField);
+        internals(comp).updateTemplateFilesField = signal(updateTemplateFilesField);
+        internals(comp).tableEditableFields = signal([editableField]);
+        internals(comp).programmingExerciseEditCheckoutDirectories = signal(programmingExerciseEditCheckoutDirectories);
+
         comp.ngAfterViewInit();
-        (comp.tableEditableFields.changes as Subject<any>).next({ toArray: () => [editableField] } as any as QueryList<TableEditableFieldComponent>);
-        (comp.checkoutSolutionRepositoryField.valueChanges as Subject<boolean>).next(false);
-        (comp.recreateBuildPlansField.valueChanges as Subject<boolean>).next(false);
-        (comp.updateTemplateFilesField.valueChanges as Subject<boolean>).next(false);
+        (checkoutSolutionRepositoryField.valueChanges as Subject<boolean>).next(false);
+        (recreateBuildPlansField.valueChanges as Subject<boolean>).next(false);
+        (updateTemplateFilesField.valueChanges as Subject<boolean>).next(false);
         (editableField.editingInput.valueChanges as Subject<boolean>).next(false);
-        comp.programmingExerciseEditCheckoutDirectories.formValidChanges.next(false);
+        programmingExerciseEditCheckoutDirectories.formValidChanges.next(false);
         expect(calculateFormValidSpy).toHaveBeenCalledTimes(5);
     });
 
@@ -114,6 +145,20 @@ describe('ProgrammingExerciseInformationComponent', () => {
             expect(comp.programmingExercise().shortName).toMatch('TestExercise');
         });
 
+        it('should derive shortname when the title changes via the title component output (simple mode)', () => {
+            // Regression: typing a title must auto-generate the short name in simple mode. This goes through the real
+            // (onTitleChange) output binding of jhi-exercise-title-channel-name instead of setting the title property
+            // directly, so it covers the reactive wiring (output binding -> updateShortName -> generation effect).
+            fixture.componentRef.setInput('isSimpleMode', true);
+            fixture.detectChanges();
+
+            const titleComponent = fixture.debugElement.query(By.directive(ExerciseTitleChannelNameComponent)).componentInstance as ExerciseTitleChannelNameComponent;
+            titleComponent.updateTitle('My New Exercise');
+            fixture.detectChanges();
+
+            expect(comp.programmingExercise().shortName).toMatch('MyNewExercise');
+        });
+
         it('should derive shortname from title when directly derived shortname is already taken', () => {
             fixture.componentRef.setInput('isSimpleMode', true);
             comp.alreadyUsedShortNames.set(new Set(['TestExercise']));
@@ -122,6 +167,29 @@ describe('ProgrammingExerciseInformationComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise1');
+        });
+
+        it('should truncate auto-generated short names to PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+
+            // 50-char title sanitises to 50 chars, must be truncated to 36.
+            comp.programmingExercise().title = 'A'.repeat(50);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().shortName!).toHaveLength(36);
+            expect(comp.programmingExercise().shortName).toBe('A'.repeat(36));
+        });
+
+        it('should truncate the base when adding a uniqueness suffix would exceed the max length', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+            // Pre-load the truncated 36-char base so the generator must add a numeric suffix while keeping length <= 36.
+            comp.alreadyUsedShortNames.set(new Set(['A'.repeat(36)]));
+
+            comp.programmingExercise().title = 'A'.repeat(50);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().shortName!).toHaveLength(36);
+            expect(comp.programmingExercise().shortName).toBe('A'.repeat(35) + '1');
         });
     });
 });

@@ -1,18 +1,18 @@
-import { Component, computed, effect, input, model, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-
-import { Edge, NgxGraphModule, Node } from '@swimlane/ngx-graph';
-import { Subject } from 'rxjs';
+import { CompetencyRelationDTO, CourseCompetency, CourseCompetencyGraphNode } from 'app/atlas/shared/entities/competency.model';
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 import { CourseCompetencyRelationNodeComponent } from 'app/atlas/manage/course-competency-relation-node/course-competency-relation-node.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DagGraphComponent } from 'app/atlas/shared/dag-graph/dag-graph.component';
+import { DagGraphEdge } from 'app/atlas/shared/dag-graph/dag-graph.model';
 
 @Component({
     selector: 'jhi-course-competencies-relation-graph',
-    imports: [FontAwesomeModule, NgbAccordionModule, NgxGraphModule, CourseCompetencyRelationNodeComponent, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [FontAwesomeModule, NgbAccordionModule, DagGraphComponent, CourseCompetencyRelationNodeComponent, ArtemisTranslatePipe],
     templateUrl: './course-competencies-relation-graph.component.html',
     styleUrl: './course-competencies-relation-graph.component.scss',
 })
@@ -26,12 +26,9 @@ export class CourseCompetenciesRelationGraphComponent {
 
     readonly onCourseCompetencySelection = output<number>();
 
-    readonly update$ = new Subject<boolean>();
-    readonly center$ = new Subject<boolean>();
+    readonly nodes = signal<CourseCompetencyGraphNode[]>([]);
 
-    readonly nodes = signal<Node[]>([]);
-
-    readonly edges = computed<Edge[]>(() => {
+    readonly edges = computed<DagGraphEdge[]>(() => {
         return this.relations().map((relation) => ({
             id: `edge-${relation.id}`,
             source: `${relation.headCompetencyId}`,
@@ -47,11 +44,11 @@ export class CourseCompetenciesRelationGraphComponent {
         effect(() => {
             return this.nodes.set(
                 this.courseCompetencies().map(
-                    (courseCompetency): Node => ({
+                    (courseCompetency): CourseCompetencyGraphNode => ({
                         id: courseCompetency.id!.toString(),
                         label: courseCompetency.title,
                         data: {
-                            id: courseCompetency.id,
+                            id: courseCompetency.id!,
                             type: courseCompetency.type,
                         },
                     }),

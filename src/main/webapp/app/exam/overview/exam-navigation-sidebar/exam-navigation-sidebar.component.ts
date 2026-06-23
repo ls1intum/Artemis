@@ -1,6 +1,6 @@
-import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { SidebarEventService } from 'app/shared/sidebar/service/sidebar-event.service';
+import { SidebarEventService } from 'app/course/sidebar/service/sidebar-event.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -11,16 +11,16 @@ import { map } from 'rxjs/operators';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CommitState, DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { SidebarData } from 'app/shared/types/sidebar';
-import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
+import { SidebarData } from 'app/foundation/types/sidebar';
+import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 export enum ExerciseButtonStatus {
@@ -42,14 +42,14 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     private repositoryService = inject(CodeEditorRepositoryService);
     private conflictService = inject(CodeEditorConflictStateService);
 
-    @Input() sidebarData: SidebarData;
-    @Input() exercises: Exercise[] = [];
-    @Input() exerciseIndex = 0;
-    @Input() overviewPageOpen: boolean;
-    @Input() examSessions?: ExamSession[] = [];
-    @Input() examTimeLineView = false;
-    @Input() isTestRun = 0;
-    @Output() onPageChanged = new EventEmitter<{
+    readonly sidebarData = input<SidebarData>(undefined!);
+    readonly exercises = input<Exercise[]>([]);
+    readonly exerciseIndex = input(0);
+    readonly overviewPageOpen = input<boolean>(undefined!);
+    readonly examSessions = input<ExamSession[] | undefined>([]);
+    readonly examTimeLineView = input(false);
+    readonly isTestRun = input(0);
+    readonly onPageChanged = output<{
         overViewChange: boolean;
         exercise?: Exercise;
         forceSave: boolean;
@@ -60,19 +60,20 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * Index indicating that the content is exercise overview
      */
     readonly EXERCISE_OVERVIEW_INDEX = -1;
-    subscriptionToLiveExamExerciseUpdates: Subscription;
+    subscriptionToLiveExamExerciseUpdates?: Subscription;
 
     // Icons
-    icon: IconProp;
     readonly faFileLines = faFileLines;
     readonly faChevronRight = faChevronRight;
 
-    isCollapsed = false;
+    readonly isCollapsed = signal(false);
     exerciseId: string;
-    numberOfSavedExercises: number = 0;
+    // Bumped whenever submission sync state is mutated in place (async callbacks) so the pure
+    // template methods below re-evaluate under zoneless change detection.
+    private readonly syncStateVersion = signal(0);
 
     ngOnInit(): void {
-        if (!this.examTimeLineView) {
+        if (!this.examTimeLineView()) {
             this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
                 // another exercise will only be displayed if the student clicks on the corresponding pop-up notification
                 this.changeExerciseById(exerciseIdToNavigateTo);
@@ -80,13 +81,14 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
         }
 
         // TODO: avoid duplicated code
-        const isInitialSession = this.examSessions && this.examSessions.length > 0 && this.examSessions[0].initialSession;
+        const examSessions = this.examSessions();
+        const isInitialSession = examSessions && examSessions.length > 0 && examSessions[0].initialSession;
         if (isInitialSession || isInitialSession == undefined) {
             return;
         }
 
         // If it is not an initial session, update the isSynced variable for out of sync submissions.
-        this.exercises
+        this.exercises()
             .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
             .forEach((exercise) => {
                 const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
@@ -101,14 +103,14 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                         if (commitState === CommitState.UNCOMMITTED_CHANGES && submission) {
                             // If there are uncommitted changes: set isSynced to false.
                             submission.isSynced = false;
+                            this.syncStateVersion.update((version) => version + 1);
                         }
                     });
             });
-
-        this.refreshExerciseSaveCount();
     }
 
     ngOnDestroy() {
+        this.subscriptionToLiveExamExerciseUpdates?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }
 
@@ -128,25 +130,18 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      */
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {
         if (!overviewPage) {
-            // out of index -> do nothing
-            if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
+            if (exerciseIndex > this.exercises().length - 1 || exerciseIndex < 0) {
                 return;
             }
-            // set index and emit event
-            this.exerciseIndex = exerciseIndex;
             this.onPageChanged.emit({
                 overViewChange: false,
-                exercise: this.exercises[this.exerciseIndex],
+                exercise: this.exercises()[exerciseIndex],
                 forceSave: !!forceSave,
                 submission: submission,
             });
-        } else if (overviewPage) {
-            // set index and emit event
-            this.exerciseIndex = this.EXERCISE_OVERVIEW_INDEX;
-            // save current exercise
+        } else {
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }
-        this.setExerciseButtonStatus(this.exerciseIndex);
     }
 
     /**
@@ -154,42 +149,31 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
      * @param exerciseId the unique identifier of an exercise that stays the same regardless of student exam ordering
      */
     changeExerciseById(exerciseId: number) {
-        const foundIndex = this.exercises.findIndex((exercise) => exercise.id === exerciseId);
+        const foundIndex = this.exercises().findIndex((exercise) => exercise.id === exerciseId);
         this.changePage(false, foundIndex, true);
     }
 
-    refreshExerciseSaveCount() {
-        this.numberOfSavedExercises = 0;
-        this.exercises.forEach((exercise) => {
-            const submission = ExamParticipationService.getSubmissionForExercise(exercise);
-            if (submission && submission.submitted) {
-                this.numberOfSavedExercises++;
-            }
-        });
+    savedExercisesCount(): number {
+        this.syncStateVersion();
+        return this.exercises().filter((exercise) => ExamParticipationService.getSubmissionForExercise(exercise)?.submitted).length;
     }
 
     /**
-     * calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent)
-     * also determines the used icon and its color
-     * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
-     *  this method could e.g. return the sync status and the icon
+     * Calculate the exercise status (also see exam-exercise-overview-page.component.ts --> make sure the logic is consistent).
+     * Pure (no side effects), so it is safe to call from template bindings under zoneless change detection.
      *
      * @param exerciseIndex index of the exercise
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
-    setExerciseButtonStatus(exerciseIndex: number): ExerciseButtonStatus {
-        this.icon = facSaveSuccess;
+    getExerciseButtonStatus(exerciseIndex: number): ExerciseButtonStatus {
+        this.syncStateVersion();
         // If we are in the exam timeline we do not use not synced as not synced shows
         // that the current submission is not saved which doesn't make sense in the timeline.
-        if (this.examTimeLineView) {
-            return this.exerciseIndex === exerciseIndex ? ExerciseButtonStatus.SyncedSaved : ExerciseButtonStatus.Synced;
+        if (this.examTimeLineView()) {
+            return this.exerciseIndex() === exerciseIndex ? ExerciseButtonStatus.SyncedSaved : ExerciseButtonStatus.Synced;
         }
 
-        // start with a yellow status (save warning icon)
-        // TODO: it's a bit weird, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
-        //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
-        this.icon = faHourglassHalf;
-        const exercise = this.exercises[exerciseIndex];
+        const exercise = this.exercises()[exerciseIndex];
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
@@ -197,17 +181,28 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             return ExerciseButtonStatus.Synced;
         }
         if (submission.submitted && submission.isSynced) {
-            this.icon = facSaveSuccess;
-            this.refreshExerciseSaveCount();
             return ExerciseButtonStatus.SyncedSaved;
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
-            // make save icon green
+            // green save icon
             return ExerciseButtonStatus.Synced;
         } else {
-            // make save icon yellow except for programming exercises with only offline IDE
-            this.icon = facSaveWarning;
+            // yellow save icon except for programming exercises with only offline IDE
             return ExerciseButtonStatus.NotSynced;
+        }
+    }
+
+    /**
+     * Derives the save-state icon for an exercise from the same logic as getExerciseButtonStatus.
+     */
+    getExerciseIcon(exerciseIndex: number): IconProp {
+        switch (this.getExerciseButtonStatus(exerciseIndex)) {
+            case ExerciseButtonStatus.SyncedSaved:
+                return facSaveSuccess;
+            case ExerciseButtonStatus.NotSynced:
+                return facSaveWarning;
+            default:
+                return this.examTimeLineView() ? facSaveSuccess : faHourglassHalf;
         }
     }
 
@@ -220,7 +215,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     toggleCollapseState() {
-        this.isCollapsed = !this.isCollapsed;
+        this.isCollapsed.update((value) => !value);
     }
 
     @HostListener('window:keydown.Control.m', ['$event'])

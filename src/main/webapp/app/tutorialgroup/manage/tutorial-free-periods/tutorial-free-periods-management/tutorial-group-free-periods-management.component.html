@@ -1,30 +1,23 @@
-<jhi-loading-indicator-container [isLoading]="isLoading">
-    @if (tutorialGroupsConfiguration && tutorialGroupFreePeriods) {
+<jhi-loading-indicator-container [isLoading]="isLoading()">
+    @if (tutorialGroupsConfiguration() && tutorialGroupFreePeriods()) {
         <div class="row">
-            <div class="col-12">
-                <div class="d-flex justify-content-between">
-                    <h4 jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.title"></h4>
-                    <div>
-                        <button type="button" class="btn btn-primary" id="create-tutorial-free-day" (click)="openCreateFreePeriodDialog($event)">
-                            <fa-icon [icon]="faPlus" />
-                            <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton"></span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <button *titleBarActions type="button" class="btn btn-primary btn-sm" id="create-tutorial-free-day" (click)="openCreateFreePeriodDialog($event)">
+                <fa-icon [icon]="faPlus" />
+                <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton"></span>
+            </button>
             <div class="col-12 mb-2">
                 <div
                     class="alert alert-info"
                     jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation"
-                    [translateValues]="{ timeZone: course.timeZone }"
+                    [translateValues]="{ timeZone: course().timeZone }"
                 ></div>
             </div>
 
             <!-- List of free Periods -->
             @if (freePeriods?.length) {
                 <jhi-tutorial-group-free-periods-table
-                    [course]="course"
-                    [tutorialGroupsConfiguration]="tutorialGroupsConfiguration"
+                    [course]="course()"
+                    [tutorialGroupsConfiguration]="tutorialGroupsConfiguration()"
                     [tutorialGroupFreePeriods]="freePeriods"
                     [labelText]="'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period'"
                     [loadAll]="loadAll.bind(this)"
@@ -34,8 +27,8 @@
             <!-- List of TutorialGroupFreeDays -->
             @if (freeDays?.length) {
                 <jhi-tutorial-group-free-periods-table
-                    [course]="course"
-                    [tutorialGroupsConfiguration]="tutorialGroupsConfiguration"
+                    [course]="course()"
+                    [tutorialGroupsConfiguration]="tutorialGroupsConfiguration()"
                     [tutorialGroupFreePeriods]="freeDays"
                     [labelText]="'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day'"
                     [loadAll]="loadAll.bind(this)"
@@ -45,8 +38,8 @@
             <!-- FreePeriodWithinDay -->
             @if (freePeriodsWithinDay?.length) {
                 <jhi-tutorial-group-free-periods-table
-                    [course]="course"
-                    [tutorialGroupsConfiguration]="tutorialGroupsConfiguration"
+                    [course]="course()"
+                    [tutorialGroupsConfiguration]="tutorialGroupsConfiguration()"
                     [tutorialGroupFreePeriods]="freePeriodsWithinDay"
                     [labelText]="'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay'"
                     [loadAll]="loadAll.bind(this)"
@@ -58,7 +51,7 @@
 
 <jhi-create-tutorial-group-free-day
     #createFreePeriodDialog
-    [course]="course"
-    [tutorialGroupConfigurationId]="tutorialGroupsConfiguration?.id!"
+    [course]="course()"
+    [tutorialGroupConfigurationId]="tutorialGroupsConfiguration()?.id!"
     (freePeriodCreated)="onFreePeriodCreated()"
 />

@@ -1,0 +1,249 @@
+import { ArtemisTextReplacementPlugin } from 'app/foundation/util/ArtemisTextReplacementPlugin';
+import DOMPurify, { Config } from 'dompurify';
+import type { PluginSimple } from 'markdown-it';
+import type Token from 'markdown-it/lib/token.mjs';
+import MarkdownItKatex from '@vscode/markdown-it-katex';
+import hljs from 'highlight.js';
+import TurndownService from 'turndown';
+import MarkdownIt from 'markdown-it';
+import { markdownItGitHubAlerts } from 'app/foundation/util/markdown-github-alerts.plugin';
+
+// An inline math formula has some other characters before or after the formula and uses $$ as delimiters
+const inlineFormulaRegex = /.+\$\$[^$]+\$\$|\$\$[^$]+\$\$.+/g;
+
+class FormulaCompatibilityPlugin extends ArtemisTextReplacementPlugin {
+    replaceText(text: string): string {
+        return text
+            .split('\n')
+            .map((line) => {
+                if (line.match(inlineFormulaRegex)) {
+                    line = line.replace(/\$\$/g, '$');
+                }
+                if (line.includes('\\\\begin') || line.includes('\\\\end')) {
+                    line = line.replaceAll('\\\\begin', '\\begin').replaceAll('\\\\end', '\\end');
+                }
+                return line;
+            })
+            .join('\n');
+    }
+}
+const formulaCompatibilityPlugin = new FormulaCompatibilityPlugin();
+
+const turndownService = new TurndownService();
+
+type MarkdownRenderRule = NonNullable<MarkdownIt['renderer']['rules']['fence']>;
+
+/**
+ * Highlights a code block with highlight.js: auto-detect the language when none is given, highlight
+ * with the explicit language otherwise, and fall back to escaped HTML when the language is unknown.
+ */
+function highlightWithHljs(md: MarkdownIt, code: string, language: string): string {
+    if (language) {
+        if (!hljs.getLanguage(language)) {
+            return md.utils.escapeHtml(code);
+        }
+        return hljs.highlight(code, { language, ignoreIllegals: true }).value;
+    }
+    return hljs.highlightAuto(code).value;
+}
+
+/**
+ * Wraps a code renderer so the rendered `<code>` element gains the `hljs` CSS class. The highlight.js
+ * themes (vs.css / monokai.css) target this class, so it is required for highlighted code to be
+ * styled in both the light and dark theme.
+ */
+function addHljsClass(renderer: MarkdownRenderRule): MarkdownRenderRule {
+    return (...args: Parameters<MarkdownRenderRule>) =>
+        renderer(...args)
+            .replace(/<code class="/g, '<code class="hljs ')
+            .replace(/<code>/g, '<code class="hljs">');
+}
+
+/**
+ * markdown-it plugin that highlights fenced and indented code blocks with highlight.js (auto language
+ * detection, ignoring illegal sequences) and tags each rendered `<code>` element with the `hljs` class.
+ */
+const markdownItHighlightjs: PluginSimple = (md) => {
+    md.options.highlight = (code, language) => highlightWithHljs(md, code, language);
+    if (md.renderer.rules.fence) {
+        md.renderer.rules.fence = addHljsClass(md.renderer.rules.fence);
+    }
+    if (md.renderer.rules.code_block) {
+        md.renderer.rules.code_block = addHljsClass(md.renderer.rules.code_block);
+    }
+};
+
+/**
+ * Cache for MarkdownIt instances to avoid expensive re-initialization on every render.
+ * Only caches the default instance (no custom extensions) since custom extensions
+ * may have different identities across test runs or component instances.
+ */
+let defaultMarkdownItCache: { lineBreaks: boolean; instance: MarkdownIt } | undefined;
+
+/**
+ * Gets or creates a cached MarkdownIt instance with the specified configuration.
+ * This significantly improves performance by reusing instances instead of creating
+ * new ones on every markdown render.
+ *
+ * Note: Only caches when no custom extensions are provided, since custom extensions
+ * may hold state or have different identities in test environments.
+ */
+function getOrCreateMarkdownIt(extensions: PluginSimple[], lineBreaks: boolean): MarkdownIt {
+    // Only use caching when no custom extensions are provided
+    // Custom extensions may have different instance identities (e.g., in tests)
+    if (extensions.length === 0) {
+        if (defaultMarkdownItCache && defaultMarkdownItCache.lineBreaks === lineBreaks) {
+            return defaultMarkdownItCache.instance;
+        }
+
+        const markdownIt = MarkdownIt({
+            html: true,
+            linkify: true,
+            breaks: lineBreaks,
+        });
+
+        // Add default extensions (Code Highlight, Latex, Alerts)
+        markdownIt
+            .use(markdownItHighlightjs)
+            .use(formulaCompatibilityPlugin.getExtension())
+            .use(MarkdownItKatex, {
+                enableMathInlineInHtml: true,
+            })
+            .use(markdownItGitHubAlerts)
+            .use(MarkdownitTagClass, {
+                table: 'table',
+            });
+
+        defaultMarkdownItCache = { lineBreaks, instance: markdownIt };
+        return markdownIt;
+    }
+
+    // For custom extensions, create a fresh instance each time
+    // This ensures the correct extension instances are used (important for tests)
+    const markdownIt = MarkdownIt({
+        html: true,
+        linkify: true,
+        breaks: lineBreaks,
+    });
+
+    // Register custom extensions
+    for (const extension of extensions) {
+        markdownIt.use(extension);
+    }
+
+    // Add default extensions (Code Highlight, Latex, Alerts)
+    markdownIt
+        // Code Highlight
+        .use(markdownItHighlightjs)
+        .use(formulaCompatibilityPlugin.getExtension())
+        // Latex formulas
+        .use(MarkdownItKatex, {
+            enableMathInlineInHtml: true,
+        })
+        // Github like alerts inside Markdown
+        .use(markdownItGitHubAlerts)
+        // Add custom html classes to be allowed it markdown
+        .use(MarkdownitTagClass, {
+            table: 'table',
+        });
+
+    return markdownIt;
+}
+
+/**
+ * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
+ * Note: If possible, please use safeHtmlForMarkdown
+ *
+ * @param {string} markdownText the original Markdown text
+ * @param extensions to use for markdown parsing
+ * @param {string[]} allowedHtmlTags to allow during sanitization
+ * @param {string[]} allowedHtmlAttributes to allow during sanitization
+ * @param {boolean} lineBreaks to indicate if line breaks should be added
+ * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template
+ */
+export function htmlForMarkdown(
+    markdownText?: string,
+    extensions: PluginSimple[] = [],
+    allowedHtmlTags: string[] | undefined = undefined,
+    allowedHtmlAttributes: string[] | undefined = undefined,
+    lineBreaks: boolean = false,
+): string {
+    if (!markdownText || markdownText === '') {
+        return '';
+    }
+
+    // Use cached MarkdownIt instance for better performance
+    const markdownIt = getOrCreateMarkdownIt(extensions, lineBreaks);
+
+    let markdownRender = markdownIt.render(markdownText);
+    if (markdownRender.endsWith('\n')) {
+        // Keep legacy behavior from showdown where the output does not end with \n.
+        // This is needed because e.g. for quiz questions, we render the markdown in multiple small parts and then concatenate them.
+        markdownRender = markdownRender.slice(0, -1);
+    }
+
+    const purifyParameters = {} as Config;
+    // Prevents sanitizer from deleting <testid>id</testid>
+    purifyParameters['ADD_TAGS'] = ['testid'];
+    if (allowedHtmlTags) {
+        purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
+    }
+    if (allowedHtmlAttributes) {
+        purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
+    }
+    return DOMPurify.sanitize(markdownRender, purifyParameters) as string;
+}
+
+export function markdownForHtml(htmlText: string): string {
+    return turndownService.turndown(htmlText);
+}
+
+type TagClassMapping = { [key: string]: string | string[] };
+
+/**
+ * Takes the markdown-it tokens and assigns classes to each token
+ *
+ * @param tokens Tokens injected by the markdown-it plugin
+ * @param mapping Tag to class mapping
+ */
+function setTokenClasses(tokens: Token[], mapping: TagClassMapping = {}): void {
+    tokens.forEach((token) => {
+        /**
+         * `token.nesting` is a number referring to the nature of the tag.
+         *
+         * - `1` means the tag is opening
+         * - `0` means the tag is self-closing
+         * - `-1` means the tag is closing
+         *
+         * @see https://github.com/markdown-it/markdown-it/blob/2e31d3430187d2eee1ba120c954783eebb93b4e8/lib/token.js#L44-L53
+         **/
+        const isOpeningTag = token.nesting !== -1;
+
+        if (isOpeningTag && mapping[token.tag]) {
+            const existingClassAttr = token.attrGet('class') || '';
+            const existingClasses = existingClassAttr.split(' ').filter(Boolean);
+            const givenClasses = mapping[token.tag];
+
+            const newClasses = [...existingClasses, ...(Array.isArray(givenClasses) ? givenClasses : [givenClasses])];
+
+            token.attrSet('class', newClasses.join(' ').trim());
+        }
+
+        // If the tag has any nested children, assign classes to those also
+        if (token.children) {
+            setTokenClasses(token.children, mapping);
+        }
+    });
+}
+
+/**
+ * Markdown-it plugin to assign CSS classes to specific tags.
+ *
+ * @param markdown Instance of markdown-it
+ * @param mapping Mapping of tags to CSS classes
+ */
+export function MarkdownitTagClass(markdown: MarkdownIt, mapping: TagClassMapping = {}): void {
+    markdown.core.ruler.push('markdownit-tag-class', (state) => {
+        setTokenClasses(state.tokens, mapping);
+    });
+}

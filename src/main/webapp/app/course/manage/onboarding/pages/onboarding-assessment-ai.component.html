@@ -1,0 +1,121 @@
+<div>
+    <div class="step-hero step-hero--assessment">
+        <div class="step-hero-icon">
+            <fa-icon [icon]="faChartLine" />
+        </div>
+        <div class="step-hero-text">
+            <h4>
+                <span jhiTranslate="artemisApp.course.onboarding.assessment.title"></span>
+                <jhi-documentation-button [type]="'Assessment'" />
+            </h4>
+            <p jhiTranslate="artemisApp.course.onboarding.assessment.description"></p>
+        </div>
+    </div>
+    <div class="step-body">
+        <div class="row mb-3 g-3">
+            <div class="col-md-6">
+                <label class="form-label" jhiTranslate="artemisApp.course.maxPoints.title"></label>
+                <input type="number" class="form-control" [ngModel]="course().maxPoints" (ngModelChange)="updateField('maxPoints', $event)" min="1" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" jhiTranslate="artemisApp.course.accuracyOfScores.title"></label>
+                <input type="number" class="form-control" [ngModel]="course().accuracyOfScores" (ngModelChange)="updateField('accuracyOfScores', $event)" min="0" max="5" />
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-3 mb-1">
+            <strong jhiTranslate="artemisApp.course.complaintsEnabled.title"></strong>
+            <div class="feature-toggle">
+                <button
+                    type="button"
+                    id="onboarding_complaintsEnabled"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-enabled': complaintsToggled() }"
+                    [attr.aria-pressed]="complaintsToggled()"
+                    (click)="!complaintsToggled() && toggleComplaints()"
+                >
+                    <fa-icon [icon]="faCheck" />
+                    <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                </button>
+                <button
+                    type="button"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-disabled': !complaintsToggled() }"
+                    [attr.aria-pressed]="!complaintsToggled()"
+                    (click)="complaintsToggled() && toggleComplaints()"
+                >
+                    <fa-icon [icon]="faTimes" />
+                    <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                </button>
+            </div>
+        </div>
+        @if (complaintsToggled()) {
+            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.complaintsEnabled"></p>
+        } @else {
+            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.complaintsDisabled"></p>
+        }
+
+        @if (complaintsToggled()) {
+            <div class="ms-4 mb-3">
+                <div class="row g-3 mb-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label" jhiTranslate="artemisApp.course.maxComplaints.title"></label>
+                        <input type="number" class="form-control" [ngModel]="course().maxComplaints" (ngModelChange)="updateField('maxComplaints', $event)" min="0" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" jhiTranslate="artemisApp.course.maxTeamComplaints.title"></label>
+                        <input type="number" class="form-control" [ngModel]="course().maxTeamComplaints" (ngModelChange)="updateField('maxTeamComplaints', $event)" min="0" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" jhiTranslate="artemisApp.course.maxComplaintTimeDays.title"></label>
+                        <input type="number" class="form-control" [ngModel]="course().maxComplaintTimeDays" (ngModelChange)="updateField('maxComplaintTimeDays', $event)" min="0" />
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="d-flex align-items-center gap-3 mb-1">
+            <strong jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title"></strong>
+            <div class="feature-toggle">
+                <button
+                    type="button"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-enabled': requestMoreFeedbackToggled() }"
+                    [attr.aria-pressed]="requestMoreFeedbackToggled()"
+                    (click)="!requestMoreFeedbackToggled() && toggleRequestMoreFeedback()"
+                >
+                    <fa-icon [icon]="faCheck" />
+                    <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                </button>
+                <button
+                    type="button"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-disabled': !requestMoreFeedbackToggled() }"
+                    [attr.aria-pressed]="!requestMoreFeedbackToggled()"
+                    (click)="requestMoreFeedbackToggled() && toggleRequestMoreFeedback()"
+                >
+                    <fa-icon [icon]="faTimes" />
+                    <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                </button>
+            </div>
+        </div>
+        @if (requestMoreFeedbackToggled()) {
+            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.moreFeedbackEnabled"></p>
+        } @else {
+            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.moreFeedbackDisabled"></p>
+        }
+
+        @if (requestMoreFeedbackToggled()) {
+            <div class="ms-4 mb-3">
+                <label class="form-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title"></label>
+                <input
+                    type="number"
+                    class="form-control"
+                    [ngModel]="course().maxRequestMoreFeedbackTimeDays"
+                    (ngModelChange)="updateField('maxRequestMoreFeedbackTimeDays', $event)"
+                    min="0"
+                />
+            </div>
+        }
+    </div>
+</div>

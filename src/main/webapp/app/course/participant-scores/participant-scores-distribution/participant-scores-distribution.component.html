@@ -1,0 +1,24 @@
+<div>
+    <div class="row score-distribution-chart" [style.height.px]="height()">
+        <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" (onDataSelect)="onChartSelect($event)" />
+    </div>
+    <div class="d-flex justify-content-center align-items-center">
+        @if (gradingScaleExists() && !isBonus()) {
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="color-box insufficient-performance"></div>
+                <span class="ms-2" jhiTranslate="artemisApp.examScores.insufficientPerformance"></span>
+                <div class="ms-4 color-box sufficient-performance"></div>
+                <span class="ms-2" jhiTranslate="artemisApp.examScores.sufficientPerformance"></span>
+            </div>
+        }
+        @if (!gradingScaleExists() || isBonus()) {
+            <div class="d-flex justify-content-center align-items-center">
+                <div class="color-box critical-performance"></div>
+                <span class="ms-2" jhiTranslate="artemisApp.examScores.criticalPerformance"></span>
+                <div class="ms-4 color-box sufficient-performance"></div>
+                <span class="ms-2" jhiTranslate="artemisApp.examScores.uncriticalPerformance"></span>
+            </div>
+        }
+        <jhi-help-icon class="ms-2" placement="right auto" text="{{ helpIconTooltip() }}" />
+    </div>
+</div>

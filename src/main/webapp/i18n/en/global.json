@@ -38,8 +38,63 @@
             "title": "Search",
             "placeholder": "Search or ask a question...",
             "noResultsFound": "No results found",
+            "tooShortQueryHint": "Please enter a longer search term.",
+            "shortQueryHint": "Your search term is quite short. Try using a longer search term to get better results.",
+            "searching": "Searching...",
             "toNavigate": "to navigate",
-            "toClose": "to close"
+            "toSelect": "to select",
+            "toClose": "to close",
+            "toAddFilter": "to add a filter",
+            "tipTitle": "Quick Search",
+            "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
+            "arrowUpAriaLabel": "Arrow up",
+            "arrowDownAriaLabel": "Arrow down",
+            "searchLectureContentHint": "Type to search through lecture transcripts and materials",
+            "lectureResultsAriaLabel": "Lecture search results",
+            "lectureSearchError": "Search failed. Please try again.",
+            "pageAbbreviation": "pg.",
+            "filterChipAriaLabel": "Filter: {{ filter }}",
+            "actionBadge": "Action",
+            "actions": {
+                "lectureSearchTitle": "Lecture Search",
+                "lectureSearchDescription": "Search through lecture content and slides"
+            },
+            "entities": {
+                "exercisesTitle": "Exercises",
+                "exercisesDescription": "View and complete course exercises",
+                "lecturesTitle": "Lecture Details",
+                "lecturesDescription": "View lecture content and units",
+                "communicationTitle": "Communication",
+                "communicationDescription": "Search channels and messages",
+                "faqsTitle": "FAQs",
+                "faqsDescription": "Search frequently asked questions",
+                "examsTitle": "Exams",
+                "examsDescription": "Search exams across your courses",
+                "coursesTitle": "Courses",
+                "coursesDescription": "Search courses you are enrolled in"
+            },
+            "types": {
+                "filter": "#Filter",
+                "feature": "Feature",
+                "course": "Course"
+            },
+            "results": {
+                "due": "Due: {{ date }}",
+                "point": "point",
+                "points": "points",
+                "examExercise": "Exam",
+                "reply": "Reply"
+            },
+            "comingSoon": "Coming soon",
+            "enterToActivate": "Press Enter to activate",
+            "courseFallbackLabel": "Course {{ id }}",
+            "searchFailed": "Search failed. Please try again.",
+            "irisAnswerShowMore": "Show more",
+            "irisAnswerShowLess": "Show less",
+            "irisAnswerMore": "more",
+            "irisAnswerThinking": "Iris is thinking…",
+            "irisCollapseSources": "Show fewer sources",
+            "irisAiBadge": "AI"
         },
         "menu": {
             "home": "Home",
@@ -169,7 +224,8 @@
                     "privacy": "Privacy",
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms",
-                    "dependencies": "Dependencies"
+                    "dependencies": "Dependencies",
+                    "irisDashboard": "Iris Dashboard"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",
@@ -194,8 +250,7 @@
                 "lti": "LTI Configuration",
                 "standardizedCompetencies": "Standardized Competencies",
                 "cleanupService": "Cleanup Service",
-                "lectureTranscription": "Lecture Transcription",
-                "examRooms": "Exam Rooms"
+                "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
             "settings": "Settings"
@@ -220,7 +275,8 @@
             "cancel": "Cancel",
             "confirm": "Confirm",
             "refresh": "Refresh",
-            "invalidInput": "Invalid Input"
+            "invalidInput": "Invalid Input",
+            "requiredLabel": "* required"
         },
         "messages": {
             "info": {
@@ -268,7 +324,7 @@
             "dev": "Development",
             "test": "Test Server"
         },
-        "item-count": "Showing {{first}} - {{second}} of {{total}} items."
+        "item-count": "Showing {{first}} to {{second}} of {{total}} items"
     },
     "entity": {
         "actions": "Actions",
@@ -280,6 +336,7 @@
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "continue": "Continue",
             "units": "Content",
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
@@ -308,14 +365,6 @@
             "purge": "Purge",
             "archive": "Archive",
             "submit": "Submit",
-            "continueSubmission": "Continue",
-            "viewTimeline": "View Timeline",
-            "hideTimeline": "Hide Timeline",
-            "submitTooltip": "You can submit multiple times until the exercise due date. Your last submission will count towards your score.",
-            "submitNoDueDateTooltip": "You can submit multiple times. Your last submission will count towards your score.",
-            "submitDueDateMissedTooltip": "The due date has passed. Your submissions will not be graded!",
-            "dueDateMissedTooltip": "The due date has passed. You may no longer submit any solutions!",
-            "submitDueDateMissed": "Submit (due date missed)",
             "submitSuccessfulAlert": "Your submission was successful! You can change your submission or wait for your feedback.",
             "submitDueDateMissedAlert": "Your submission was successful! You can change your submission or wait for your feedback. As you missed the due date, your score will not be counted.",
             "retry": "Retry",
@@ -356,8 +405,10 @@
             "show": "Show",
             "addExercise": "Add exercise",
             "addLecture": "Add lecture",
-            "addFaq": "Add FAQ",
+            "addTutorial": "Add tutorial",
             "addExam": "Add exam",
+            "addCompetency": "Add competency",
+            "addFaq": "Add FAQ",
             "addStudent": "Add student",
             "addTutor": "Add tutor",
             "addEditor": "Add editor",

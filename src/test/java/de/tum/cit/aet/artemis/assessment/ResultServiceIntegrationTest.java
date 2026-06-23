@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -32,8 +33,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterion
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -198,7 +198,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         List<Feedback> feedbacks = request.getList(
                 "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
-        assertThat(feedbacks).isEqualTo(result.getFeedbacks());
+        assertThat(feedbacks).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
     }
 
     @Test

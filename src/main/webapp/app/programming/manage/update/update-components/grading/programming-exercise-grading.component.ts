@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, Input, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, inject, input, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -12,15 +12,14 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { Subject, Subscription } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
-import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { ProgrammingExerciseUpdateTimelineComponent } from '../../../../shared/programming-exercise-update-timeline/programming-exercise-update-timeline.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { KeyValuePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -34,15 +33,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         NgbTooltip,
         SubmissionPolicyUpdateComponent,
         NgbAlert,
-        HelpIconComponent,
-        ProgrammingExerciseLifecycleComponent,
+        ProgrammingExerciseUpdateTimelineComponent,
         GradingInstructionsDetailsComponent,
         PresentationScoreComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
     ],
 })
-export class ProgrammingExerciseGradingComponent implements AfterContentInit, OnDestroy {
+export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
     private translateService = inject(TranslateService);
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -51,16 +49,16 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, On
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
-    @Input() importOptions: ImportOptions;
+    programmingExercise = input.required<ProgrammingExercise>();
+    programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
+    importOptions = input.required<ImportOptions>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
-    @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent?: SubmissionPolicyUpdateComponent;
-    @ViewChild(ProgrammingExerciseLifecycleComponent) lifecycleComponent?: ProgrammingExerciseLifecycleComponent;
-    @ViewChild('maxScore') maxScoreField?: NgModel;
-    @ViewChild('bonusPoints') bonusPointsField?: NgModel;
-    @ViewChild('maxPenalty') maxPenaltyField?: NgModel;
+    submissionPolicyUpdateComponent = viewChild(SubmissionPolicyUpdateComponent);
+    lifecycleComponent = viewChild(ProgrammingExerciseUpdateTimelineComponent);
+    maxScoreField = viewChild<NgModel>('maxScore');
+    bonusPointsField = viewChild<NgModel>('bonusPoints');
+    maxPenaltyField = viewChild<NgModel>('maxPenalty');
 
     formValidSignal = signal<boolean>(false);
 
@@ -70,14 +68,14 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, On
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
-    editPolicyUrl: string;
+    readonly editPolicyUrl = signal<string | undefined>(undefined);
 
-    ngAfterContentInit(): void {
-        this.inputFieldSubscriptions.push(this.maxScoreField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.bonusPointsField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.maxPenaltyField?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent?.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
-        this.inputFieldSubscriptions.push(this.lifecycleComponent?.formValidChanges?.subscribe(() => this.calculateFormStatus()));
+    ngAfterViewInit() {
+        this.inputFieldSubscriptions.push(this.maxScoreField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.bonusPointsField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.maxPenaltyField()?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.submissionPolicyUpdateComponent()?.form?.valueChanges?.subscribe(() => this.calculateFormStatus()));
+        this.inputFieldSubscriptions.push(this.lifecycleComponent()?.formValidChanges?.subscribe(() => this.calculateFormStatus()));
         this.setEditPolicyPageLink();
     }
 
@@ -88,64 +86,65 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, On
     }
 
     calculateFormStatus() {
-        const newFormValidValue = Boolean(
-            this.maxScoreField?.valid &&
-            this.bonusPointsField?.valid &&
-            (this.maxPenaltyField?.valid || !this.programmingExercise.staticCodeAnalysisEnabled) &&
-            !this.submissionPolicyUpdateComponent?.invalid &&
-            this.lifecycleComponent?.formValid,
-        );
+        // Bonus points are only entered (and the field only rendered) when the exercise is INCLUDED_COMPLETELY,
+        // so its validity must not block the form in the other modes (the field is hidden via [hidden]).
+        const bonusPointsValidOrHidden = this.bonusPointsField()?.valid || this.programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
+        const maxPenaltyValidOrDisabled = this.maxPenaltyField()?.valid || !this.programmingExercise().staticCodeAnalysisEnabled;
+        const scoreFieldsValid = this.maxScoreField()?.valid && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
+        const dependentComponentsValid = !this.submissionPolicyUpdateComponent()?.invalid && this.lifecycleComponent()?.formValid;
+        const newFormValidValue = Boolean(scoreFieldsValid && dependentComponentsValid);
 
         this.formValidSignal.set(newFormValidValue);
         this.formValid = newFormValidValue;
-        this.formEmpty = this.lifecycleComponent?.formEmpty ?? false;
+        this.formEmpty = this.lifecycleComponent()?.formEmpty ?? false;
         this.formValidChanges.next(this.formValid);
     }
 
     getGradingSummary() {
         const summary = [];
 
-        if (!this.programmingExercise.maxPoints) {
+        const programmingExercise = this.programmingExercise();
+        if (!programmingExercise.maxPoints) {
             return '';
         }
 
-        const exerciseType = this.programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'bonusExercise' : 'normalExercise';
-        const assessmentType = this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC ? 'assessmentAutomatic' : 'assessmentSemiautomatic';
+        const exerciseType = programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 'bonusExercise' : 'normalExercise';
+        const assessmentType = programmingExercise.assessmentType === AssessmentType.AUTOMATIC ? 'assessmentAutomatic' : 'assessmentSemiautomatic';
         const replacements = {
             exerciseType: this.translateService.instant(this.translationBasePath + exerciseType),
-            maxPoints: this.programmingExercise.maxPoints.toString(),
-            bonusPoints: (this.programmingExercise.bonusPoints ?? 0).toString(),
+            maxPoints: programmingExercise.maxPoints.toString(),
+            bonusPoints: (programmingExercise.bonusPoints ?? 0).toString(),
             assessmentType: this.translateService.instant(this.translationBasePath + assessmentType),
-            submissionLimit: this.programmingExercise.submissionPolicy?.submissionLimit,
-            exceedingPenalty: this.programmingExercise.submissionPolicy?.exceedingPenalty,
-            maxPenalty: ((this.programmingExercise.maxPoints * (this.programmingExercise.maxStaticCodeAnalysisPenalty ?? 100)) / 100).toString(),
+            submissionLimit: programmingExercise.submissionPolicy?.submissionLimit,
+            exceedingPenalty: programmingExercise.submissionPolicy?.exceedingPenalty,
+            maxPenalty: ((programmingExercise.maxPoints * (programmingExercise.maxStaticCodeAnalysisPenalty ?? 100)) / 100).toString(),
         };
 
         summary.push(this.translateService.instant(this.translationBasePath + 'points'));
 
-        if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+        if (programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
             summary.push(this.translateService.instant(this.translationBasePath + 'noBonus'));
-        } else if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
+        } else if (programmingExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
             summary.push(this.translateService.instant(this.translationBasePath + 'bonus'));
         }
 
-        if (this.programmingExercise.assessmentType) {
+        if (programmingExercise.assessmentType) {
             summary.push(this.translateService.instant(this.translationBasePath + 'assessment'));
         }
 
-        if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.LOCK_REPOSITORY) {
-            if (this.programmingExercise.submissionPolicy.submissionLimit) {
+        if (programmingExercise.submissionPolicy?.type === SubmissionPolicyType.LOCK_REPOSITORY) {
+            if (programmingExercise.submissionPolicy.submissionLimit) {
                 summary.push(this.translateService.instant(this.translationBasePath + 'lockedSubmission'));
             }
-        } else if (this.programmingExercise.submissionPolicy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
-            if (this.programmingExercise.submissionPolicy.submissionLimit && this.programmingExercise.submissionPolicy.exceedingPenalty) {
+        } else if (programmingExercise.submissionPolicy?.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
+            if (programmingExercise.submissionPolicy.submissionLimit && programmingExercise.submissionPolicy.exceedingPenalty) {
                 summary.push(this.translateService.instant(this.translationBasePath + 'penaltySubmission'));
             }
         } else {
             summary.push(this.translateService.instant(this.translationBasePath + 'unrestrictedSubmission'));
         }
 
-        if (this.programmingExercise.staticCodeAnalysisEnabled) {
+        if (programmingExercise.staticCodeAnalysisEnabled) {
             summary.push(this.translateService.instant(this.translationBasePath + 'staticAnalysisEnabled'));
         } else {
             summary.push(this.translateService.instant(this.translationBasePath + 'staticAnalysisDisabled'));
@@ -165,15 +164,16 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, On
     }
 
     private setEditPolicyPageLink(): void {
+        const programmingExercise = this.programmingExercise();
         const linkParts = [
             'course-management',
-            getCourseFromExercise(this.programmingExercise)?.id,
-            ...(this.programmingExercise?.exerciseGroup?.exam ? ['exams', this.programmingExercise.exerciseGroup.exam.id] : []),
+            getCourseFromExercise(programmingExercise)?.id,
+            ...(programmingExercise?.exerciseGroup?.exam ? ['exams', programmingExercise.exerciseGroup.exam.id] : []),
             'programming-exercises',
-            this.programmingExercise.id,
+            programmingExercise.id,
             'grading',
             'submission-policy',
         ];
-        this.editPolicyUrl = linkParts.join('/');
+        this.editPolicyUrl.set(linkParts.join('/'));
     }
 } /* istanbul ignore next */

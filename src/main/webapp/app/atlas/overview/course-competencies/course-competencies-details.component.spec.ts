@@ -1,18 +1,18 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
+import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -23,13 +23,13 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -37,7 +37,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceService } from 'app/foundation/science/science.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesDetails', () => {
@@ -131,7 +131,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnitLinks).toHaveLength(2);
+        expect(component.competency()!.lectureUnitLinks).toHaveLength(2);
         expect(textUnit).not.toBeNull();
         expect(exerciseUnit).not.toBeNull();
     });
@@ -149,7 +149,7 @@ describe('CourseCompetenciesDetails', () => {
         const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
 
         expect(findByIdSpy).toHaveBeenCalledOnce();
-        expect(component.competency.lectureUnitLinks).toHaveLength(1);
+        expect(component.competency()!.lectureUnitLinks).toHaveLength(1);
         expect(exerciseUnit).not.toBeNull();
     });
 
@@ -174,21 +174,21 @@ describe('CourseCompetenciesDetails', () => {
             component.showFireworksIfMastered();
 
             vi.advanceTimersByTime(1000);
-            expect(component.showFireworks).toBeTruthy();
+            expect(component.showFireworks()).toBeTruthy();
 
             vi.advanceTimersByTime(5000);
-            expect(component.showFireworks).toBeFalsy();
+            expect(component.showFireworks()).toBeFalsy();
         } finally {
             vi.useRealTimers();
         }
     });
 
     it('should detect if due date is passed', () => {
-        component.competency = { softDueDate: dayjs().add(1, 'days') } as Competency;
+        component.competency.set({ softDueDate: dayjs().add(1, 'days') } as Competency);
         fixture.changeDetectorRef.detectChanges();
         expect(component.softDueDatePassed).toBeFalsy();
 
-        component.competency = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
+        component.competency.set({ softDueDate: dayjs().subtract(1, 'days') } as Competency);
         fixture.changeDetectorRef.detectChanges();
         expect(component.softDueDatePassed).toBeTruthy();
     });
@@ -197,7 +197,7 @@ describe('CourseCompetenciesDetails', () => {
         { competency: { softDueDate: dayjs().add(1, 'days') } as Competency, expectedBadge: 'success' },
         { competency: { softDueDate: dayjs().subtract(1, 'days') } as Competency, expectedBadge: 'danger' },
     ])('should have [ngClass] resolve to correct date badge', ({ competency, expectedBadge }) => {
-        component.competency = competency;
+        component.competency.set(competency);
         fixture.changeDetectorRef.detectChanges();
         const badge = fixture.debugElement.query(By.css('#date-badge')).nativeElement;
         expect(badge.classList).toContain('bg-' + expectedBadge);
@@ -205,7 +205,7 @@ describe('CourseCompetenciesDetails', () => {
 
     it('should update progress after lecture unit completion', () => {
         component.competencyId = 42;
-        component.courseId = 21;
+        component.courseId.set(21);
 
         setCompletionSpy.mockReturnValue(of(new HttpResponse({ body: null })));
         const lectureUnitCompletionEvent = { lectureUnit: { id: 1, lecture: { id: 2 }, visibleToStudents: true, completed: false }, completed: true } as LectureUnitCompletionEvent;

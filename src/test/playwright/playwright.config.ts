@@ -1,9 +1,8 @@
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import { parseNumber } from './support/utils';
-import 'app/shared/util/map.extension';
-import 'app/shared/util/string.extension';
-import 'app/shared/util/array.extension';
+import 'app/foundation/util/map.extension';
+import 'app/foundation/util/array.extension';
 import path from 'path';
 
 /**
@@ -27,9 +26,9 @@ export default defineConfig({
         ['list'],
         ['junit', { outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/results-${process.env.PLAYWRIGHT_TEST_TYPE}.xml` : './test-reports/results.xml' }],
         ...(process.env.PLAYWRIGHT_COVERAGE !== 'off'
-            ? [
+            ? ([
                   [
-                      'monocart-reporter' as const,
+                      'monocart-reporter',
                       {
                           outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
                           coverage: {
@@ -43,11 +42,15 @@ export default defineConfig({
                           },
                       },
                   ],
-              ]
+              ] as const)
             : []),
     ],
     globalSetup: require.resolve('./init/global-setup.ts'),
 
+    /* Increase default expect timeout from 5s to 10s for CI environments under parallel load */
+    expect: {
+        timeout: parseNumber(process.env.EXPECT_TIMEOUT_MS) ?? 10000,
+    },
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
@@ -60,14 +63,32 @@ export default defineConfig({
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
+        launchOptions: {
+            args: [
+                '--disable-features=WebAuthnICloudKeychain,WebAuthnEnclaveAuthenticator',
+                // When the app is served over HTTPS with a self-signed cert (multi-node runner), bypass
+                // certificate validation at the browser-process level. The context-level `ignoreHTTPSErrors`
+                // does not reliably cover ES-module / lazy-chunk script fetches, which intermittently failed
+                // with "An SSL certificate error occurred when fetching the script", aborting route bootstraps
+                // (Angular NG05604). No-op when the app is served over plain HTTP (single-node fast runner).
+                ...((process.env.BASE_URL || '').startsWith('https') ? ['--ignore-certificate-errors'] : []),
+                // Optional browser-level host resolver override (e.g. "MAP localhost 127.0.0.1"). The multi-node
+                // runner sets this so the browser reaches the nginx LB over IPv4 (avoiding the historical ::1
+                // ECONNREFUSED cascade) while still using a domain origin (https://localhost) — an IP literal such
+                // as 127.0.0.1 is not a valid WebAuthn Relying Party ID and breaks every passkey test.
+                ...(process.env.PW_BROWSER_HOST_RESOLVER_RULES ? [`--host-resolver-rules=${process.env.PW_BROWSER_HOST_RESOLVER_RULES}`] : []),
+            ],
+        },
     },
 
-    /* Configure projects for fast and slow tests */
+    /* Configure projects for fast, slow, and multi-node tests */
     projects: [
         // Tests with @fast tag or without any tags. These are the lightweight tests with lower timeout.
+        // grepInvert excludes @multi-node so single-node runs do not pick up cluster-only assertions.
         {
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
+            grepInvert: /@multi-node/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 60) * 1000,
             use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
@@ -76,6 +97,18 @@ export default defineConfig({
         {
             name: 'slow-tests',
             grep: /@slow/,
+            grepInvert: /@multi-node/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
+        },
+        // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and
+        // are skipped by the single-node fast pipeline. The multi-node runner opts in explicitly.
+        {
+            name: 'multi-node-tests',
+            grep: /@multi-node/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',

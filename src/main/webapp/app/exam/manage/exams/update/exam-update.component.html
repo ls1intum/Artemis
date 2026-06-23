@@ -3,7 +3,7 @@
         <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="handleSubmit()">
             @if (!exam.id) {
                 <div class="d-flex align-items-center">
-                    @if (!isImport) {
+                    @if (!isImport()) {
                         <h4 jhiTranslate="artemisApp.examManagement.createExam"></h4>
                     } @else {
                         <h4 jhiTranslate="artemisApp.examManagement.importExam"></h4>
@@ -21,8 +21,8 @@
                     [(title)]="exam.title"
                     [(channelName)]="exam.channelName"
                     channelNamePrefix="exam-"
-                    [hideChannelName]="hideChannelNameInput"
-                    [initChannelName]="isImport || exam.id === undefined"
+                    [hideChannelName]="hideChannelNameInput()"
+                    [initChannelName]="isImport() || exam.id === undefined"
                 />
             </div>
             <div class="form-group">
@@ -65,23 +65,41 @@
                     </span>
                 </div>
             }
-            <ng-template #workingTimeConfirmationContent>
-                <div class="bg-light rounded-2 p-3">
-                    @if (oldWorkingTime && newWorkingTime) {
-                        <jhi-working-time-change [oldWorkingTime]="oldWorkingTime" [newWorkingTime]="newWorkingTime" />
-                    }
-                </div>
-                <hr />
-                <div>
-                    <jhi-confirm-entity-name
-                        confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
-                        [entityName]="exam.title!"
-                        name="confirmEntityName"
-                        [ngModel]="confirmEntityNameValue()"
-                        (ngModelChange)="onConfirmNameChange($event)"
-                    />
-                </div>
-            </ng-template>
+            @if (confirmDateChangeVisible()) {
+                <p-dialog
+                    [(visible)]="confirmDateChangeVisible"
+                    [modal]="true"
+                    [closable]="true"
+                    [closeOnEscape]="true"
+                    [dismissableMask]="false"
+                    [draggable]="false"
+                    [appendTo]="'body'"
+                    [style]="{ width: '40rem' }"
+                    [header]="'artemisApp.examManagement.dateChange.title' | artemisTranslate"
+                    (onHide)="cancelDateChange()"
+                >
+                    <p style="white-space: pre-line">{{ 'artemisApp.examManagement.dateChange.message' | artemisTranslate }}</p>
+                    <div class="bg-light rounded-2 p-3">
+                        @if (oldWorkingTime && newWorkingTime) {
+                            <jhi-working-time-change [oldWorkingTime]="oldWorkingTime" [newWorkingTime]="newWorkingTime" />
+                        }
+                    </div>
+                    <hr />
+                    <div>
+                        <jhi-confirm-entity-name
+                            confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
+                            [entityName]="exam.title!"
+                            name="confirmEntityName"
+                            [ngModel]="confirmEntityNameValue()"
+                            (ngModelChange)="onConfirmNameChange($event)"
+                        />
+                    </div>
+                    <ng-template #footer>
+                        <button type="button" class="btn btn-outline-secondary" (click)="cancelDateChange()" jhiTranslate="global.form.cancel"></button>
+                        <button type="button" class="btn btn-danger" (click)="confirmDateChange()" [disabled]="confirmDisabled()" jhiTranslate="global.form.confirm"></button>
+                    </ng-template>
+                </p-dialog>
+            }
             <div class="row mb-3 position-relative">
                 <div class="col-sm-4">
                     <jhi-date-time-picker
@@ -212,11 +230,11 @@
                 <label class="form-check-label" for="DublerandomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder"></label>
             </div>
             <!-- Subsection Exercise Selection for Exam Import -->
-            @if (isImport && exam.exerciseGroups) {
+            @if (isImport() && exam.exerciseGroups) {
                 <div class="mb-3">
                     <h5 jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.title"></h5>
                     <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.explanation"></p>
-                    <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse" />
+                    <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="exam.course?.id" />
                 </div>
             }
             <!-- Section exam assessment and student review
@@ -322,7 +340,7 @@
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.MEDIUM"
                     [disabled]="editForm.form.invalid || !isValidConfiguration"
-                    [isLoading]="isSaving"
+                    [isLoading]="isSaving()"
                     [icon]="faSave"
                     [title]="saveTitle"
                 />
@@ -339,3 +357,5 @@
         </form>
     </div>
 </div>
+
+<jhi-exam-import-progress-dialog />

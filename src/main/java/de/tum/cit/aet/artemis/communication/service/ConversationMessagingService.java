@@ -23,6 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
@@ -33,9 +35,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.communication.dto.CreatePostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
@@ -47,16 +46,22 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnnouncementNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
+import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -77,11 +82,16 @@ public class ConversationMessagingService extends PostingService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final Optional<AutonomousTutorApi> autonomousTutorApi;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
             ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService,
             SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService, PostRepository postRepository,
-            SingleUserNotificationService singleUserNotificationService) {
+            SingleUserNotificationService singleUserNotificationService, Optional<AutonomousTutorApi> autonomousTutorApi,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -89,6 +99,8 @@ public class ConversationMessagingService extends PostingService {
         this.courseNotificationService = courseNotificationService;
         this.postRepository = postRepository;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.autonomousTutorApi = autonomousTutorApi;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -107,8 +119,11 @@ public class ConversationMessagingService extends PostingService {
 
         var conversationId = message.conversation().id();
 
-        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
-                .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
+        var conversation = conversationService.loadConversationWithParticipantsIfGroupChat(conversationId);
+        // the path courseId is authoritative: reject messages targeting a conversation that belongs to a different course.
+        // this must happen before isMemberOrCreateForCourseWideElseThrow, which would otherwise persist a course-wide auto-join for a mismatching course.
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
+        conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty());
         log.debug("      createMessage:conversationService.isMemberOrCreateForCourseWideElseThrow DONE");
 
         newMessage.setConversation(conversation);
@@ -139,6 +154,8 @@ public class ConversationMessagingService extends PostingService {
 
         createdMessage.setAuthor(author);
         setAuthorRoleForPosting(createdMessage, course);
+
+        syncPostWithWeaviate(createdMessage, conversation);
 
         return new CreatedConversationMessage(createdMessage, conversation, mentionedUsers);
     }
@@ -218,7 +235,7 @@ public class ConversationMessagingService extends PostingService {
         }
         else {
             var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
-                    conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId());
+                    conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId(), author.isBot());
 
             var isChannelVisibleForStudents = (conversation instanceof Channel channel) && conversationService.isChannelVisibleToStudents(channel);
 
@@ -238,11 +255,18 @@ public class ConversationMessagingService extends PostingService {
 
         var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
                 post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), null, null, post.getAuthor().getName(), post.getAuthor().getId(),
-                post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId());
+                post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId(), post.getAuthor().isBot());
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
+
+        try {
+            autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to forward message to autonomous tutor pipeline for post {}", createdMessage.getId(), e);
+        }
     }
 
     /**
@@ -320,6 +344,7 @@ public class ConversationMessagingService extends PostingService {
 
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         parseUserMentions(course, messagePost.content());
@@ -331,6 +356,8 @@ public class ConversationMessagingService extends PostingService {
 
         Post updatedPost = conversationMessageRepository.save(existingMessage);
         updatedPost.setConversation(conversation);
+
+        syncPostWithWeaviate(updatedPost, conversation);
 
         // emit a post update via websocket
         preparePostForBroadcast(updatedPost);
@@ -352,11 +379,16 @@ public class ConversationMessagingService extends PostingService {
         // checks
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         var conversation = mayUpdateOrDeleteMessageElseThrow(post, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
         post.setConversation(conversation);
 
         // delete
         conversationMessageRepository.deleteById(postId);
+        searchableEntityWeaviateService.ifPresent(service -> {
+            service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
+            service.deleteAllAnswerPostsForPostAsync(postId);
+        });
         conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
         conversation = conversationService.getConversationById(conversation.getId());
 
@@ -383,6 +415,8 @@ public class ConversationMessagingService extends PostingService {
         preCheckUserAndCourseForCommunicationOrMessaging(user, course);
 
         Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
+        // the path courseId is authoritative: reject before isMemberOrCreateForCourseWideElseThrow can persist a course-wide auto-join for a mismatching course
+        ensureConversationBelongsToCourseElseThrow(message.getConversation(), courseId);
 
         Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty())
                 .orElse(message.getConversation());
@@ -425,6 +459,20 @@ public class ConversationMessagingService extends PostingService {
         else {
             throw new AccessForbiddenException("You are not allowed to edit or delete this message");
         }
+    }
+
+    /**
+     * Synchronizes a post with Weaviate. Only posts in public, non-archived channels are indexed.
+     */
+    private void syncPostWithWeaviate(Post post, Conversation conversation) {
+        if (!(conversation instanceof Channel channel)) {
+            return;
+        }
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (PostSearchableEntityDTO.isIndexable(channel)) {
+                service.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            }
+        });
     }
 
     @Override

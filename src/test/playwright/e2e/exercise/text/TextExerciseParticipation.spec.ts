@@ -20,11 +20,10 @@ test.describe('Text exercise participation', { tag: '@fast' }, () => {
     test('Makes a text exercise submission as student', async ({ login, courseOverview, textExerciseEditor }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         await courseOverview.startExercise(exercise.id!);
-        await courseOverview.openRunningExercise(exercise.id!);
 
         // Verify the initial state of the text editor
-        await textExerciseEditor.shouldShowExerciseTitleInHeader(exercise.title!);
-        await textExerciseEditor.shouldShowProblemStatement();
+        await courseOverview.shouldShowExerciseTitleInHeader(exercise.title!);
+        await courseOverview.shouldShowProblemStatement();
 
         // Make a submission
         const submission = await Fixtures.get('loremIpsum.txt');
@@ -33,7 +32,7 @@ test.describe('Text exercise participation', { tag: '@fast' }, () => {
         await textExerciseEditor.typeSubmission(exercise.id!, submission!);
         await textExerciseEditor.shouldShowNumberOfWords(74);
         await textExerciseEditor.shouldShowNumberOfCharacters(451);
-        const response = await textExerciseEditor.submit();
+        const response = await courseOverview.submitExercise('api/text/exercises/*/text-submissions');
         const textSubmission: TextSubmission = await response.json();
         expect(textSubmission.text).toBe(submission);
         expect(textSubmission.submitted).toBe(true);

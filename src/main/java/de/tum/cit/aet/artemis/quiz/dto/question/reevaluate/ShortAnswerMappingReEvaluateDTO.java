@@ -10,6 +10,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 public record ShortAnswerMappingReEvaluateDTO(Long solutionId, Long solutionTempID, @NotNull Long spotId) {
 
     public static ShortAnswerMappingReEvaluateDTO of(ShortAnswerMapping shortAnswerMapping) {
-        return new ShortAnswerMappingReEvaluateDTO(shortAnswerMapping.getSolution().getId(), shortAnswerMapping.getSolution().getTempID(), shortAnswerMapping.getSpot().getId());
+        return new ShortAnswerMappingReEvaluateDTO(shortAnswerMapping.getSolution().getId(), null, shortAnswerMapping.getSpot().getId());
     }
 }

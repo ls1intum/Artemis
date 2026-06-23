@@ -44,7 +44,7 @@ export class OnlineEditorPage {
     }
 
     async deleteFile(exerciseID: number, name: string) {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/repository/*/**`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/repository/**`);
         await this.findFile(exerciseID, name).locator('#file-browser-file-delete').click();
         await this.page.locator('#delete-file').click();
         const response = await responsePromise;
@@ -61,20 +61,41 @@ export class OnlineEditorPage {
         await this.page.waitForTimeout(500);
     }
 
-    async submit(exerciseID: number) {
-        await getExercise(this.page, exerciseID).locator('#submit_button').click();
-        await expect(getExercise(this.page, exerciseID).locator('#result-score-badge', { hasText: 'GRADED' })).toBeVisible({ timeout: 200000 });
+    /**
+     * Clicks submit. By default also waits for the build result score to appear (the standard non-exam flow).
+     * Pass `waitForResult = false` for exam setup, where the score-producing build only runs after the due
+     * date and is verified separately — waiting here would block on a result that is not (yet) produced and
+     * could overrun the enclosing hook/exam window. In that case we still wait for the commit to be persisted
+     * server-side (the `#submit_button` click commits via POST .../repository/commit), so the caller can hand
+     * in the exam without risking that the commit lands too late and an empty repository gets built.
+     */
+    async submit(exerciseID: number, waitForResult = true) {
+        const submitButton = this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first();
+        if (waitForResult) {
+            await submitButton.click();
+            await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
+            return;
+        }
+        // Wait for the commit request triggered by the submit click to complete before returning. Tolerant of
+        // a missing response (e.g. nothing to commit) so it never hangs — it degrades to proceeding immediately.
+        const commitResponse = this.page
+            .waitForResponse((response) => /\/programming\/participations\/\d+\/repository\/commit$/.test(response.url()) && response.request().method() === 'POST', {
+                timeout: 30000,
+            })
+            .catch(() => undefined);
+        await submitButton.click();
+        await commitResponse;
     }
 
     async submitPractice(exerciseID: number) {
-        await getExercise(this.page, exerciseID).locator('#submit_button').click();
-        await expect(getExercise(this.page, exerciseID).locator('#result-score-badge', { hasText: 'PRACTICE' })).toBeVisible({ timeout: 200000 });
+        await this.page.locator('#submit-exercise, #submit-exercise-popover, #submit_button').first().click();
+        await expect(this.page.locator('#exercise-header #result-score, jhi-code-editor-container #result-score').first()).toBeVisible({ timeout: 200000 });
     }
 
     async createFileInRootFolder(exerciseID: number, fileName: string) {
         await getExercise(this.page, exerciseID).locator('[id="create_file_root"]').click();
         await this.page.waitForTimeout(500);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/repository/*/file?file=${fileName}`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/repository/file?file=${fileName}`);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');
@@ -89,7 +110,7 @@ export class OnlineEditorPage {
         const filePath = `src/${packagePath}/${fileName}`;
         await getExercise(this.page, exerciseID).locator('#file-browser-folder-create-file').nth(2).click();
         await this.page.waitForTimeout(500);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/repository/*/file?file=${filePath}`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/programming/participations/*/repository/file?file=${filePath}`);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').pressSequentially(fileName);
         await this.page.waitForTimeout(500);
         await getExercise(this.page, exerciseID).locator('#file-browser-create-node').press('Enter');

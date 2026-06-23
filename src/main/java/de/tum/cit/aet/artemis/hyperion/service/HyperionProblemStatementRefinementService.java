@@ -21,12 +21,12 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementTargetedRefinementRequestDTO;
@@ -236,14 +236,14 @@ public class HyperionProblemStatementRefinementService {
         if (singleLine) {
             if (request.hasColumnRange()) {
                 String selectedText = extractSelectedText(request, lines);
-                return String.format("Line %d, columns %d-%d (modify ONLY the text: \"%s\")", request.startLine(), request.startColumn(), request.endColumn() - 1, selectedText);
+                return "Line %d, columns %d-%d (modify ONLY the text: \"%s\")".formatted(request.startLine(), request.startColumn(), request.endColumn() - 1, selectedText);
             }
             return "Line " + request.startLine();
         }
         else {
             if (request.hasColumnRange()) {
                 String selectedText = extractSelectedText(request, lines);
-                return String.format("Lines %d-%d, from column %d on line %d to column %d on line %d (modify ONLY the text: \"%s\")", request.startLine(), request.endLine(),
+                return "Lines %d-%d, from column %d on line %d to column %d on line %d (modify ONLY the text: \"%s\")".formatted(request.startLine(), request.endLine(),
                         request.startColumn(), request.startLine(), request.endColumn() - 1, request.endLine(), selectedText);
             }
             return "Lines " + request.startLine() + "-" + request.endLine();
@@ -287,7 +287,7 @@ public class HyperionProblemStatementRefinementService {
             String text = line.substring(startCol, endCol);
             return truncateForDisplay(text);
         }
-        throw new BadRequestAlertException(String.format("Invalid column range for line selection: startCol=%d, endCol=%d, lineLength=%d", startCol, endCol, line.length()),
+        throw new BadRequestAlertException("Invalid column range for line selection: startCol=%d, endCol=%d, lineLength=%d".formatted(startCol, endCol, line.length()),
                 "ProblemStatement", "ProblemStatementRefinement.textExtractionFailed");
     }
 

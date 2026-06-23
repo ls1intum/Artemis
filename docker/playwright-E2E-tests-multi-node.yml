@@ -112,6 +112,17 @@ services:
         condition: service_healthy
     environment:
       PLAYWRIGHT_DB_TYPE: 'Postgres'
+      # Opt this stack into the @multi-node Playwright project. run-tests.sh checks for this
+      # variable; the test reads the value to assert the expected cluster size.
+      #
+      # The cluster is asymmetric:
+      #   - node-1 (profiles: core, scheduling, localvc, localci, docker)         -> Hazelcast member
+      #   - node-2 (profiles: core, buildagent, localvc, localci, docker)         -> Hazelcast member + build agent
+      #   - node-3 (profiles: buildagent only)                                    -> Hazelcast client + build agent
+      # Hazelcast `cluster.getMembers()` reports the two members (node-1, node-2). node-3
+      # connects as a client and is exposed via the build-agents endpoint instead.
+      EXPECTED_CLUSTER_NODE_COUNT: '2'
+      EXPECTED_MIN_BUILD_AGENTS: '1'
     networks:
       - artemis
 

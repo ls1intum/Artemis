@@ -5,10 +5,11 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.zalando.problem.AbstractThrowableProblem;
-import org.zalando.problem.Status;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.ErrorResponseException;
 
-public abstract class HttpStatusException extends AbstractThrowableProblem {
+public abstract class HttpStatusException extends ErrorResponseException {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -27,10 +28,23 @@ public abstract class HttpStatusException extends AbstractThrowableProblem {
      *                           interceptor that the error should not be handled by the interceptor - this is useful when the
      *                           component where the error occurred has information to display a more concrete error message)
      */
-    public HttpStatusException(URI type, String defaultMessage, Status status, String entityName, String errorKey, Map<String, Object> parameters) {
-        super(type, defaultMessage, status, null, null, null, parameters);
+    public HttpStatusException(URI type, String defaultMessage, HttpStatus status, String entityName, String errorKey, Map<String, Object> parameters) {
+        super(status, asProblemDetail(type, defaultMessage, status, entityName, errorKey, parameters), null);
         this.entityName = entityName;
         this.errorKey = errorKey;
+    }
+
+    private static ProblemDetail asProblemDetail(URI type, String title, HttpStatus status, String entityName, String errorKey, Map<String, Object> parameters) {
+        ProblemDetail detail = ProblemDetail.forStatus(status);
+        detail.setType(type);
+        detail.setTitle(title);
+        // Include entityName and errorKey in the response for backward compatibility with client-side error handling
+        detail.setProperty("entityName", entityName);
+        detail.setProperty("errorKey", errorKey);
+        if (parameters != null) {
+            parameters.forEach(detail::setProperty);
+        }
+        return detail;
     }
 
     public String getEntityName() {
@@ -39,6 +53,16 @@ public abstract class HttpStatusException extends AbstractThrowableProblem {
 
     public String getErrorKey() {
         return errorKey;
+    }
+
+    /**
+     * Returns the title of the problem detail, preserving backward compatibility with the old Zalando API
+     * where getMessage() returned just the title string.
+     */
+    @Override
+    public String getMessage() {
+        ProblemDetail body = getBody();
+        return body.getTitle() != null ? body.getTitle() : super.getMessage();
     }
 
     /**

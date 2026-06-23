@@ -137,6 +137,16 @@ Analysis: Problem contradicts itself about return type
 - For problem statement locations, use `problem_statement.md`.
 - If you cannot identify a valid existing file path from the context, do not emit that repository location.
 
+# LINE RANGE + INLINE FIX RULES (MANDATORY)
+- `relatedLocations[].startLine` and `relatedLocations[].endLine` must cover the smallest possible contiguous range needed for the finding.
+- Prefer single-line ranges whenever possible, especially for simple renames or signature token changes.
+- Do not include surrounding unchanged lines for extra context.
+- Extend each location with `relatedLocations[].inlineFixOperation`: `NONE`, `REPLACE`, or `DELETE`.
+- Use `REPLACE` only if that location needs a direct replacement and the fix is simple/local (e.g., rename, return type, visibility, parameter name/order, straightforward signature correction). Then set `suggestedInlineFix` to the exact replacement.
+- Use `DELETE` only if the correct fix is deleting the selected lines. Then set `suggestedInlineFix` to an empty string.
+- Use `NONE` when the location does not need a direct replacement, or the fix is complex/non-local. Then set `suggestedInlineFix` to `null`.
+- When present, `relatedLocations[].suggestedInlineFix` must be the exact replacement code for lines `startLine..endLine` only (no explanations, no markdown).
+
 # OUTPUT FORMAT
 Use real paths from the provided context. The file paths in this JSON snippet are illustrative examples only.
 ```json
@@ -146,27 +156,33 @@ Use real paths from the provided context. The file paths in this JSON snippet ar
       "description": "Precise explanation of the inconsistency and how it affects student understanding/implementation",
       "severity": "HIGH" | "MEDIUM" | "LOW",
       "category": "METHOD_RETURN_TYPE_MISMATCH" | "METHOD_PARAMETER_MISMATCH" | "CONSTRUCTOR_PARAMETER_MISMATCH" | "ATTRIBUTE_TYPE_MISMATCH" | "VISIBILITY_MISMATCH",
-    "relatedLocations": [
+      "relatedLocations": [
         {
           "type": "TEMPLATE_REPOSITORY",
-      "filePath": "src/etc/BubbleSort.java",
-      "startLine": 1,
-      "endLine": 10
+          "filePath": "src/etc/BubbleSort.java",
+          "startLine": 12,
+          "endLine": 12,
+          "inlineFixOperation": "REPLACE",
+          "suggestedInlineFix": "public double getArea() {"
         },
         {
           "type": "TESTS_REPOSITORY",
-      "filePath": "test/etc/MethodTest.java",
-      "startLine": 12,
-      "endLine": 20
+          "filePath": "test/etc/MethodTest.java",
+          "startLine": 12,
+          "endLine": 12,
+          "inlineFixOperation": "REPLACE",
+          "suggestedInlineFix": "assertEquals(12.5, shape.getArea());"
         },
         {
           "type": "PROBLEM_STATEMENT",
-      "filePath": "problem_statement.md",
-      "startLine": 5,
-      "endLine": 8
+          "filePath": "problem_statement.md",
+          "startLine": 5,
+          "endLine": 5,
+          "inlineFixOperation": "NONE",
+          "suggestedInlineFix": null
         }
       ],
-    "suggestedFix": "Specific correction that resolves the inconsistency while preserving educational intent"
+      "suggestedFix": "High-level correction summary that aligns all listed locations and their inline replacements."
     }
   ]
 }

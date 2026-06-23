@@ -24,13 +24,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -187,8 +187,9 @@ public abstract class SubmissionExportService {
                 return Optional.<Path>empty();
             }
 
-            // create file path
-            String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId()
+            // create file path (sanitize the title-based name so the submission file stays filesystem-safe, consistent
+            // with the zip group name above; the exercise title may contain spaces or international letters)
+            String submissionFileName = FileUtil.sanitizeFilename(exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId())
                     + this.getFileEndingForSubmission(latestSubmission);
             Path submissionFilePath = outputDir.resolve(submissionFileName);
 

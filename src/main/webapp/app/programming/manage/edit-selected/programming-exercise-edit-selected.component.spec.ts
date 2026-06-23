@@ -1,8 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 
 import dayjs from 'dayjs/esm';
@@ -11,13 +13,15 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
 import { MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExercise Edit Selected Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: ProgrammingExerciseEditSelectedComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditSelectedComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
@@ -42,7 +46,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
     });
 
     describe('saveAll', () => {
-        it('should update each selected exercise', fakeAsync(() => {
+        it('should update each selected exercise', () => {
             // GIVEN
             // the exercise containing the values to update the selected ones
             const newProgrammingExercise = new ProgrammingExercise(new Course(), undefined);
@@ -61,11 +65,11 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.newProgrammingExercise = newProgrammingExercise;
             comp.notificationText = 'A Notification Text';
 
-            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(of(new HttpResponse({ body: entityOne })));
+            vi.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(of(new HttpResponse({ body: entityOne })));
 
             // WHEN
+            // The mocked service emits synchronously via of(...), so the subscribe callback runs during saveAll().
             comp.saveAll();
-            tick(); // simulate async
 
             // THEN
             expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityOne, { notificationText: comp.notificationText });
@@ -74,10 +78,10 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             expect(comp.selectedProgrammingExercises[1].dueDate).toEqual(newProgrammingExercise.dueDate);
             expect(comp.selectedProgrammingExercises[0].releaseDate).toEqual(newProgrammingExercise.releaseDate);
             expect(comp.selectedProgrammingExercises[1].releaseDate).toEqual(newProgrammingExercise.releaseDate);
-            expect(comp.isSaving).toBeFalse();
-        }));
+            expect(comp.isSaving()).toBe(false);
+        });
 
-        it('should display error and not close modal', fakeAsync(() => {
+        it('should display error and not close modal', () => {
             // GIVEN
             const newProgrammingExercise = new ProgrammingExercise(new Course(), undefined);
             newProgrammingExercise.releaseDate = dayjs();
@@ -90,17 +94,17 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             comp.selectedProgrammingExercises = selectedProgrammingExercises;
             comp.newProgrammingExercise = newProgrammingExercise;
 
-            jest.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-            jest.spyOn(comp, 'closeModal');
+            vi.spyOn(programmingExerciseService, 'updateTimeline').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            vi.spyOn(comp, 'closeModal');
             // WHEN
+            // The mocked service emits synchronously via throwError(...), so the error callback runs during saveAll().
             comp.saveAll();
-            tick(); // simulate async
 
             // THEN
             expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityOne, {});
-            expect(comp.failureOccurred).toBeTrue();
-            expect(comp.isSaving).toBeFalse();
+            expect(comp.failureOccurred()).toBe(true);
+            expect(comp.isSaving()).toBe(false);
             expect(comp.closeModal).not.toHaveBeenCalled();
-        }));
+        });
     });
 });

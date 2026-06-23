@@ -10,17 +10,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest {
+class LectureImportServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "lectureimport";
 
@@ -78,10 +78,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(lecture2.getDescription()).isNotNull().isEqualTo(this.lecture1.getDescription());
         assertThat(lecture2.getStartDate()).isNotNull().isEqualTo(this.lecture1.getStartDate());
         assertThat(lecture2.getEndDate()).isNotNull().isEqualTo(this.lecture1.getEndDate());
-
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // assertThat(lecture2.getVisibleDate()).isNotNull().isEqualTo(this.lecture1.getVisibleDate());
 
         // Assert that all lecture units (except exercise units) were copied
         assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(

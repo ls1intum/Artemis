@@ -15,21 +15,19 @@ class IrisEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitect
         return ARTEMIS_PACKAGE + ".iris";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
-    protected int getMaxEntityReturnViolations() {
-        return 20;
+    protected int getExpectedEntityReturnViolations() {
+        return 0;
     }
 
     // This module is already compliant for input violations
     @Override
-    protected int getMaxEntityInputViolations() {
+    protected int getExpectedEntityInputViolations() {
         return 0;
     }
 
-    // TODO: Reduce this to 0 by removing entity references from DTOs
     @Override
-    protected int getMaxDtoEntityFieldViolations() {
-        return 3;
+    protected int getExpectedDtoEntityFieldViolations() {
+        return 0;
     }
 }

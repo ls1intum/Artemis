@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import {
     faAt,
@@ -21,9 +21,9 @@ import { MatDialog } from '@angular/material/dialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FileService } from 'app/shared/service/file.service';
+import { HtmlForPostingMarkdownPipe } from 'app/foundation/pipes/html-for-posting-markdown.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FileService } from 'app/foundation/service/file.service';
 
 @Component({
     selector: 'jhi-posting-content-part',
@@ -31,7 +31,7 @@ import { FileService } from 'app/shared/service/file.service';
     styleUrls: ['../../metis.component.scss'],
     imports: [RouterLink, FaIconComponent, HtmlForPostingMarkdownPipe, TranslateDirective],
 })
-export class PostingContentPartComponent implements OnInit, OnChanges {
+export class PostingContentPartComponent implements OnInit {
     private fileService = inject(FileService);
     private dialog = inject(MatDialog);
     private accountService = inject(AccountService);
@@ -40,7 +40,7 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     userReferenceClicked = output<string>();
     channelReferenceClicked = output<number>();
 
-    imageNotFound = false;
+    readonly imageNotFound = signal(false);
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
@@ -85,15 +85,25 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     protected readonly faQuestion = faQuestion;
 
     protected readonly ReferenceType = ReferenceType;
-    processedContentBeforeReference: string;
-    processedContentAfterReference: string;
+    readonly processedContentBeforeReference = signal<string>(undefined!);
+    readonly processedContentAfterReference = signal<string>(undefined!);
+
+    private initialized = false;
+
+    constructor() {
+        effect(() => {
+            this.postingContentPart();
+            untracked(() => {
+                if (this.initialized) {
+                    this.processContent();
+                }
+            });
+        });
+    }
 
     ngOnInit() {
         this.processContent();
-    }
-
-    ngOnChanges() {
-        this.processContent();
+        this.initialized = true;
     }
 
     /**
@@ -106,7 +116,7 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
     }
 
     toggleImageNotFound(): void {
-        this.imageNotFound = true;
+        this.imageNotFound.set(true);
     }
 
     /**
@@ -114,11 +124,11 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
      */
     processContent() {
         if (this.postingContentPart()?.contentBeforeReference) {
-            this.processedContentBeforeReference = this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || '');
+            this.processedContentBeforeReference.set(this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || ''));
         }
 
         if (this.postingContentPart()?.contentAfterReference) {
-            this.processedContentAfterReference = this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || '');
+            this.processedContentAfterReference.set(this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || ''));
         }
     }
 

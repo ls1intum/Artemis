@@ -1,11 +1,11 @@
-import { Component, Input } from '@angular/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { Component, signal } from '@angular/core';
+import { Course } from 'app/course/shared/entities/course.model';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 import { FormsModule } from '@angular/forms';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-one-to-one-chat-create-dialog',
@@ -13,10 +13,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, CourseUsersSelectorComponent, FormsModule, ArtemisTranslatePipe],
 })
 export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
-    @Input() course: Course;
+    course = signal<Course | undefined>(undefined);
 
     isInitialized = false;
-    selectedUsers: UserPublicInfoDTO[] = [];
+    readonly selectedUsers = signal<UserPublicInfoDTO[]>([]);
     userToChatWith?: UserPublicInfoDTO;
 
     initialize() {
@@ -33,8 +33,8 @@ export class OneToOneChatCreateDialogComponent extends AbstractDialogComponent {
 
     onSelectedUsersChange(selectedUsers: UserPublicInfoDTO[]) {
         if (selectedUsers && selectedUsers.length > 0) {
-            this.selectedUsers = selectedUsers;
-            this.userToChatWith = this.selectedUsers[0];
+            this.selectedUsers.set(selectedUsers);
+            this.userToChatWith = this.selectedUsers()[0];
             this.onUserSelected();
         }
     }

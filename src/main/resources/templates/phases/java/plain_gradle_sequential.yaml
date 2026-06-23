@@ -1,0 +1,13 @@
+- name: compile
+  script: |-
+    chmod +x ./gradlew
+    ./gradlew clean compileJava compileTestJava
+- name: structural_tests
+  script: |-
+    ./gradlew structuralTests
+  resultPaths:
+    - '**/test-results/structuralTests/*.xml'
+- name: behavior_tests
+  script: ./gradlew behaviorTests
+  resultPaths:
+    - '**/test-results/behaviorTests/*.xml'

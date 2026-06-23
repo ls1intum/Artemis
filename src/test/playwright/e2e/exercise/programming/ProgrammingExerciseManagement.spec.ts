@@ -54,6 +54,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
+            await page.waitForLoadState('domcontentloaded');
             await programmingExerciseCreation.changeEditMode();
 
             const firstSectionHeadline = 'General';
@@ -82,11 +83,16 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
         });
 
         test('Deletes an existing programming exercise', async ({ login, navigationBar, courseManagement, courseManagementExercises }) => {
+            // The beforeEach creates a C exercise (triggers builds). Under CI load,
+            // the setup + deletion + verification exceeds the 60s fast-test timeout.
+            test.setTimeout(180000);
             await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.deleteProgrammingExercise(exercise);
-            await expect(courseManagementExercises.getExercise(exercise.id!)).not.toBeAttached({ timeout: 30000 });
+            // Deletion of a C programming exercise can take > 30s under CI parallel load
+            // (LocalCI must process pending builds and clean up repositories).
+            await expect(courseManagementExercises.getExercise(exercise.id!)).not.toBeAttached({ timeout: 90000 });
         });
     });
 
@@ -107,6 +113,10 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
         });
 
         test('Create an exercise team', async ({ login, page, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
+            // The beforeEach creates a C programming exercise (triggers builds).
+            // Under CI parallel load, the combined setup + team creation + verification
+            // can exceed the 60s fast-test timeout.
+            test.setTimeout(600000);
             await login(instructor, `/course-management/${course.id}/exercises`);
             await courseManagementExercises.openExerciseTeams(exercise.id!);
             await page.getByRole('table').waitFor({ state: 'visible' });
@@ -133,9 +143,14 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await exerciseTeams.checkTeamOnList(teamShortName);
 
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(programmingExerciseOverview.getExerciseDetails().locator('.view-team')).toBeVisible();
+            // The exercise-details template is wrapped in `@if (exercise)`, so the element only
+            // appears once the route component finishes its initial GET for the exercise. Under
+            // parallel CI load that round-trip occasionally creeps past 30s; allow up to 60s here.
+            await expect(programmingExerciseOverview.getExerciseDetails()).toBeVisible({ timeout: 60_000 });
+            await expect(programmingExerciseOverview.getExerciseDetails().locator('.view-team')).toBeVisible({ timeout: 60_000 });
             await login(studentFour, `/courses/${course.id}/exercises/${exercise.id}`);
-            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText(/No team yet/);
+            await expect(programmingExerciseOverview.getExerciseDetails()).toBeVisible({ timeout: 60_000 });
+            await expect(programmingExerciseOverview.getExerciseDetails()).toHaveText(/No team yet/, { timeout: 60_000 });
         });
     });
 

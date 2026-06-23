@@ -1,31 +1,31 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { SortService } from 'app/shared/service/sort.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import dayjs from 'dayjs/esm';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { faClipboard, faEye, faFileImport, faListAlt, faPlus, faSort, faThList, faTimes, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ExamImportComponent, ExamImportDialogData } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { ExamStatusComponent } from '../exam-status/exam-status.component';
-import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
-import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
-import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -57,8 +57,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
     readonly documentationType: DocumentationType = 'Exams';
 
-    course: Course;
-    exams: Exam[];
+    readonly course = signal<Course>(undefined!);
+    readonly exams = signal<Exam[]>(undefined!);
     predicate: string;
     ascending: boolean;
     eventSubscriber: Subscription;
@@ -91,7 +91,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
             next: (res: HttpResponse<Course>) => {
-                this.course = res.body!;
+                this.course.set(res.body!);
                 this.loadAllExamsForCourse();
                 this.registerChangeInExams();
                 this.currentTime = dayjs();
@@ -114,15 +114,17 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * Load all exams for a course.
      */
     loadAllExamsForCourse() {
-        this.examManagementService.findAllExamsForCourse(this.course.id!).subscribe({
+        this.examManagementService.findAllExamsForCourse(this.course().id!).subscribe({
             next: (res: HttpResponse<Exam[]>) => {
-                this.exams = res.body!;
-                this.exams.forEach((exam) => {
+                this.exams.set(res.body!);
+                this.exams().forEach((exam) => {
                     this.examManagementService
-                        .getLatestIndividualEndDateOfExam(this.course.id!, exam.id!)
-                        .subscribe(
-                            (examInformationDTORes: HttpResponse<ExamInformationDTO>) => (exam.latestIndividualEndDate = examInformationDTORes.body!.latestIndividualEndDate),
-                        );
+                        .getLatestIndividualEndDateOfExam(this.course().id!, exam.id!)
+                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => {
+                            exam.latestIndividualEndDate = examInformationDTORes.body!.latestIndividualEndDate;
+                            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders with the updated end date.
+                            this.exams.set([...this.exams()]);
+                        });
                 });
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -149,7 +151,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.exams, this.predicate, this.ascending);
+        // sortByProperty sorts in place; re-set a new array reference so the signal notifies and the (zoneless) view re-renders.
+        this.exams.set([...this.sortService.sortByProperty(this.exams(), this.predicate, this.ascending)]);
     }
 
     examHasFinished(exam: Exam): boolean {
@@ -178,7 +181,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
             data: dialogData,
         });
 
-        const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
+        const importBaseRoute = ['/course-management', this.course().id, 'exams', 'import'];
 
         dialogRef?.onClose.subscribe((exam: Exam | undefined) => {
             if (exam) {

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -88,12 +89,12 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(result.isRated()).isTrue();
         assertThat(result.getScore()).isEqualTo(60); // total score 3P (60%) because gradingInstructionWithLimit was applied twice but only counts once
         assertThat(result.getFeedbacks()).hasSize(4);
-        assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
-        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+        assertThat(findByReference(result.getFeedbacks(), feedbacks.getFirst().getReference()).getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
+        assertThat(findByReference(result.getFeedbacks(), feedbacks.get(1).getReference()).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
         assertThat(result.getAssessmentNote().getNote()).isEqualTo("text");
         assertThat(result.getAssessor()).isEqualTo(result.getAssessmentNote().getCreator());
 
-        Course course = request.get("/api/core/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard",
+        Course course = request.get("/api/course/courses/" + afterReleaseFileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-assessment-dashboard",
                 HttpStatus.OK, Course.class);
         Exercise exercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
@@ -218,8 +219,8 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(result.isRated()).isTrue();
         assertThat(((StudentParticipation) result.getSubmission().getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
         assertThat(result.getFeedbacks()).hasSize(3);
-        assertThat(result.getFeedbacks().getFirst().getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
-        assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
+        assertThat(findByReference(result.getFeedbacks(), feedbacks.getFirst().getReference()).getCredits()).isEqualTo(feedbacks.getFirst().getCredits());
+        assertThat(findByReference(result.getFeedbacks(), feedbacks.get(1).getReference()).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
     }
 
     @Test
@@ -618,5 +619,9 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getResults().get(1)).isEqualTo(lastResult);
+    }
+
+    private static Feedback findByReference(Collection<Feedback> feedbacks, String reference) {
+        return feedbacks.stream().filter(f -> reference.equals(f.getReference())).findFirst().orElseThrow();
     }
 }

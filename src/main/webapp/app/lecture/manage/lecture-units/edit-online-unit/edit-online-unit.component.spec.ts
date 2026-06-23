@@ -6,7 +6,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditOnlineUnitComponent } from 'app/lecture/manage/lecture-units/edit-online-unit/edit-online-unit.component';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
@@ -105,11 +105,11 @@ describe('EditOnlineUnitComponent', () => {
         editOnlineUnitComponentFixture.detectChanges(); // onInit
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitOfResponse);
         expect(findByIdStub).toHaveBeenCalledTimes(1);
-        expect(editOnlineUnitComponent.formData.name).toEqual(onlineUnitOfResponse.name);
-        expect(editOnlineUnitComponent.formData.releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
-        expect(editOnlineUnitComponent.formData.description).toEqual(onlineUnitOfResponse.description);
-        expect(editOnlineUnitComponent.formData.source).toEqual(onlineUnitOfResponse.source);
-        expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData);
+        expect(editOnlineUnitComponent.formData().name).toEqual(onlineUnitOfResponse.name);
+        expect(editOnlineUnitComponent.formData().releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
+        expect(editOnlineUnitComponent.formData().description).toEqual(onlineUnitOfResponse.description);
+        expect(editOnlineUnitComponent.formData().source).toEqual(onlineUnitOfResponse.source);
+        expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {

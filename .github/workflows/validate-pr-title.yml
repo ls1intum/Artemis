@@ -4,11 +4,15 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, edited]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   validate-pr-title:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
-      - uses: Slashgear/action-check-pr-title@v5.0.1
+      - uses: Slashgear/action-check-pr-title@161cede0311ec624ae3ee76a2c27522f7b6fa2d8  # v5.0.1
         with:
-          regexp: '^`(Programming exercises|Integrated code lifecycle|Quiz exercises|Modeling exercises|Text exercises|File upload exercises|Exam mode|Grading|Assessment|Communication|Notifications|Team exercises|Lectures|Integrated markdown editor|Plagiarism checks|Learning analytics|Adaptive learning|Learning path|Tutorial groups|Iris|Hyperion|Scalability|Usability|Performance|Infrastructure|Mobile apps|Development|General)`:\s[A-Z].*$'
+          regexp: '^`(Administration|Lectures|Tutorial groups|Communication|Notifications|Exercises|Programming exercises|Quiz exercises|Modeling exercises|Text exercises|File upload exercises|Team exercises|Exam mode|Integrated code lifecycle|LocalCI|LocalVC|Assessment|Grading|Plagiarism checks|Learning analytics|Adaptive learning|Learning path|Iris|Hyperion|Athena|Global search|Integrated markdown editor|Mobile apps|Scalability|Usability|Performance|Infrastructure|Migration|Development|General)`:\s[A-Z].*$'

@@ -23,8 +23,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
-import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
@@ -32,16 +33,15 @@ import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
-import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -832,12 +832,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var courseWideChannelWhereMember = createCourseWideChannel(TEST_PREFIX + "5");
         addUsersToConversation(courseWideChannelWhereMember.getId(), userLogin);
         var courseWideChannelWhereNotMember = createCourseWideChannel(TEST_PREFIX + "6");
-        var visibleLecture = lectureUtilService.createLecture(exampleCourse, null);
+        var visibleLecture = lectureUtilService.createLecture(exampleCourse);
         var visibleLectureChannel = lectureUtilService.addLectureChannel(visibleLecture);
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // var invisibleLecture = lectureUtilService.createLecture(exampleCourse, ZonedDateTime.now().plusDays(1));
-        // var invisibleLectureChannel = lectureUtilService.addLectureChannel(invisibleLecture);
 
         // then
         userUtilService.changeUser(testPrefix + userLogin);
@@ -854,9 +850,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(courseWideChannelWhereMember.getId());
         conversationRepository.deleteById(courseWideChannelWhereNotMember.getId());
         conversationRepository.deleteById(visibleLectureChannel.getId());
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // conversationRepository.deleteById(invisibleLectureChannel.getId());
     }
 
     @Test
@@ -889,7 +882,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void getLectureChannel_asCourseStudent_IfNotParticipantYet() throws Exception {
         Course course = courseUtilService.createCourse();
         courseUtilService.enableMessagingForCourse(course);
-        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Lecture lecture = lectureUtilService.createLecture(course);
         Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
 
         Channel returnedLectureChannel = request.get("/api/communication/courses/" + course.getId() + "/lectures/" + lecture.getId() + "/channel", HttpStatus.OK, Channel.class);

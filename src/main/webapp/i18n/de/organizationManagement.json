@@ -39,6 +39,9 @@
             "updated": "Organisation aktualisiert!",
             "deleted": "Organisation gelöscht!",
             "created": "Organisation angelegt!"
+        },
+        "organizationUser": {
+            "deleted": "Nutzer:in aus Organisation entfernt!"
         }
     }
 }

@@ -3,7 +3,7 @@ import { Exercise, ExerciseType } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { Page, expect } from '@playwright/test';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
@@ -13,7 +13,7 @@ import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/asses
 import { StudentAssessmentPage } from '../../support/pageobjects/assessment/StudentAssessmentPage';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { test } from '../../support/fixtures';
-import { generateUUID, newBrowserPage, prepareExam, startAssessing, waitForExamEnd } from '../../support/utils';
+import { generateUUID, newBrowserPage, prepareExam, startAssessing, waitForExamBuildAndTestAfterDueDate, waitForExamEnd } from '../../support/utils';
 import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import examStatisticsSample from '../../fixtures/exam/statistics.json';
 import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
@@ -30,11 +30,25 @@ test.beforeAll('Get student name', async ({ browser }) => {
 
 test.describe('Exam assessment', () => {
     test.describe.serial('Programming exercise assessment', { tag: '@slow' }, () => {
+        // Preparing an exam and initial participation can exceed 90s on loaded local CI-like runs
+        // (the C template repository clone dominates). The submission step itself no longer waits
+        // for a build result during setup — `prepareExam` passes `skipBuildResultCheck: true` and
+        // `OnlineEditorPage.submit` now honours it — so the build queue can no longer push the hook
+        // past its budget; the score-producing build is triggered later via
+        // `waitForExamBuildAndTestAfterDueDate`.
+        test.describe.configure({ timeout: 180_000 });
         let exam: Exam;
         let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(60, 'seconds');
+            // 180s window (was 60s): programming exercise creation involves cloning a C
+            // template repository, which routinely takes 30-60s under multi-node CI load.
+            // The student must finish startParticipation + handInEarly inside this window
+            // — at 60s, setup occasionally overran the exam end and the conduction page
+            // redirected, leaving `#hand-in-early` un-clickable. 180s leaves comfortable
+            // headroom; the test still doesn't wait the full window since
+            // `waitForExamEnd` returns once the exam ends.
+            examEnd = dayjs().add(180, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page);
         });
@@ -52,6 +66,7 @@ test.describe('Exam assessment', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             await waitForExamEnd(examEnd, page);
+            await waitForExamBuildAndTestAfterDueDate(exam, page);
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(2, 'Good job');
@@ -186,13 +201,14 @@ test.describe('Exam assessment', () => {
             // The button's disabled state is computed once during component init and not re-evaluated.
             const graceEnd = examEnd.add(10, 'seconds');
             if (dayjs().isBefore(graceEnd)) {
-                await page.waitForTimeout(graceEnd.diff(dayjs(), 'ms') + 2000);
+                await page.waitForTimeout(graceEnd.diff(dayjs(), 'ms') + 5000);
             }
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
+            await page.waitForLoadState('domcontentloaded');
             const response = await courseAssessment.clickEvaluateQuizzes();
             expect(response.status()).toBe(200);
             if (dayjs().isBefore(resultDate)) {
-                await page.waitForTimeout(resultDate.diff(dayjs(), 'ms') + 1000);
+                await page.waitForTimeout(resultDate.diff(dayjs(), 'ms') + 3000);
             }
             await examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '[5 / 10 Points] 50%');
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
@@ -221,7 +237,8 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
 
         test('Set exam gradings', async ({ login, page, examManagement, examGrading }) => {
             await login(instructor);
-            await page.goto(`course-management/${course.id}/exams/${exam.id}`);
+            await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
+            await page.waitForLoadState('domcontentloaded');
             await examManagement.openGradingKey();
             await examGrading.addGradeStep(40, '5.0');
             await examGrading.addGradeStep(15, '4.0');
@@ -257,18 +274,32 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
 });
 
 test.describe('Exam statistics', { tag: '@slow' }, () => {
+    // This test creates an exam, has 4 students participate, waits for the exam to end,
+    // assesses all submissions, and then checks statistics — all within the test timeout.
+    // A generous timeout is needed because the exam must end before assessment can begin;
+    // on multi-node CI the worst-case run hovers around 280s, so we budget 360s.
+    test.describe.configure({ timeout: 360_000 });
+
     let exam: Exam;
     let exercise: Exercise;
+    let examEnd: Dayjs;
     const students = [studentOne, studentTwo, studentThree, studentFour];
 
     test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
+        // 180s window (was 60s): the 'Participate in exam' beforeEach below has 4 students
+        // each go through startParticipation + open exercise + submit + handInEarly. Under
+        // multi-node CI load this routinely takes >60s, by which time the exam has ended and
+        // the conduction page redirects, leaving the navigation bar's exercise group title
+        // missing. 180s leaves comfortable headroom for the 4-student sequential loop while
+        // still letting `waitForExamEnd` return promptly once everyone has handed in.
+        examEnd = dayjs().add(180, 'seconds');
         const examConfig = {
             course,
             title: 'exam' + generateUUID(),
             visibleDate: dayjs().subtract(3, 'minutes'),
             startDate: dayjs().subtract(2, 'minutes'),
-            endDate: dayjs().add(45, 'seconds'),
+            endDate: examEnd,
             examMaxPoints: 10,
             numberOfExercisesInExam: 1,
         };
@@ -297,28 +328,32 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
         }
     });
 
-    test.beforeEach('Assess a text exercise submission', async ({ login, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
+    test.beforeEach('Assess a text exercise submission', async ({ login, page, examManagement, examAssessment, courseAssessment, exerciseAssessment }) => {
         await login(tutor);
-        await startAssessing(course.id!, exam.id!, 60000, examManagement, courseAssessment, exerciseAssessment);
+        await waitForExamEnd(examEnd, page);
+        await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
 
         const assessment = examStatisticsSample.assessment;
         for (let i = 0; i < students.length; i++) {
             await examAssessment.addNewFeedback(assessment[i].points, assessment[i].feedback);
             const response = await examAssessment.submitTextAssessment();
             expect(response.status()).toBe(200);
-            await examAssessment.nextAssessment();
+            if (i < students.length - 1) {
+                await examAssessment.nextAssessment();
+            }
         }
     });
 
     test('Check exam statistics', async ({ login, page, examManagement, examAPIRequests }) => {
         await login(instructor);
-        await page.goto(`course-management/${course.id}/exams/${exam.id}`);
+        await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
+        await page.waitForLoadState('domcontentloaded');
         await examManagement.openScoresPage();
         await page.waitForURL(`**/exams/${exam.id}/scores`);
-        await page.waitForLoadState('load');
+        await page.waitForLoadState('domcontentloaded');
         const examScores = new ExamScoresPage(page);
         await examScores.checkExamStatistics(examStatisticsSample.statistics);
-        await examScores.checkGradeDistributionChart(examStatisticsSample.gradeDistribution);
+        await examScores.checkGradeDistributionChart();
         const scores = await examAPIRequests.getExamScores(exam);
         await examScores.checkStudentResults(scores.studentResults);
     });

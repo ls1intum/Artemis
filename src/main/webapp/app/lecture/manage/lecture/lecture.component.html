@@ -81,11 +81,11 @@
         </div>
     </div>
 
-    @if (lectures) {
+    @if (lectures()) {
         <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
     }
 
-    @if (filteredLectures) {
+    @if (filteredLectures()) {
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -102,14 +102,6 @@
                             <span jhiTranslate="artemisApp.lecture.description"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        <!-- Lecture.visibleDate is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal -->
-                        <!-- TODO: #11479 - remove the commented out code OR comment back in -->
-                        <!--
-                        <th jhiSortBy="visibleDate">
-                            <span jhiTranslate="artemisApp.lecture.visibleDate"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        -->
                         <th jhiSortBy="startDate">
                             <span jhiTranslate="artemisApp.lecture.startDate"></span>
                             <fa-icon [icon]="faSort" />
@@ -122,7 +114,7 @@
                     </tr>
                 </thead>
                 <tbody class="markdown-preview" id="lecture-preview">
-                    @for (lecture of filteredLectures; track trackId(i, lecture); let i = $index) {
+                    @for (lecture of filteredLectures(); track trackId(i, lecture); let i = $index) {
                         <tr id="lecture-{{ lecture.id }}">
                             <td>
                                 <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
@@ -131,11 +123,6 @@
                                 <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
                             </td>
                             <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
-                            <!-- Lecture.visibleDate is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal -->
-                            <!-- TODO: #11479 - remove the commented out code OR comment back in -->
-                            <!--
-                            <td>{{ lecture.visibleDate | artemisDate }}</td>
-                            -->
                             <td>{{ lecture.startDate | artemisDate }}</td>
                             <td>{{ lecture.endDate | artemisDate }}</td>
                             <td class="text-end">

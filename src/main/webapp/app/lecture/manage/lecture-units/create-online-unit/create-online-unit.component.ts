@@ -1,11 +1,11 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { finalize } from 'rxjs/operators';
 import { combineLatest } from 'rxjs';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
@@ -23,7 +23,7 @@ export class CreateOnlineUnitComponent implements OnInit {
     private alertService = inject(AlertService);
 
     onlineUnitToCreate: OnlineUnit = new OnlineUnit();
-    isLoading: boolean;
+    readonly isLoading = signal<boolean>(undefined!);
     lectureId: number;
     courseId: number;
 
@@ -49,13 +49,13 @@ export class CreateOnlineUnitComponent implements OnInit {
         this.onlineUnitToCreate.source = source || undefined;
         this.onlineUnitToCreate.competencyLinks = competencyLinks || [];
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.onlineUnitService
             .create(this.onlineUnitToCreate!, this.lectureId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
             )
             .subscribe({

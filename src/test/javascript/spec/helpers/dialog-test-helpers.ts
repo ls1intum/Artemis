@@ -6,17 +6,16 @@ type RequiredInputs = {
 };
 
 export function initializeDialog(component: AbstractDialogComponent, fixture: ComponentFixture<AbstractDialogComponent>, requiredInputs: RequiredInputs) {
+    // Populate the DynamicDialogConfig.data with the provided inputs,
+    // so that AbstractDialogComponent.initialize() can apply them correctly
+    // (including setting writable signals via .set()).
+    if (component.dialogConfig) {
+        Object.keys(requiredInputs).forEach((key) => {
+            component.dialogConfig!.data[key] = requiredInputs[key];
+        });
+    }
+
     component.initialize();
     fixture.changeDetectorRef.detectChanges();
-    expect(component.isInitialized).toBeFalse();
-
-    // expect console.err not to be called
-    // loop over required inputs and set on component
-    Object.keys(requiredInputs).forEach((key) => {
-        component[key as keyof AbstractDialogComponent] = requiredInputs[key];
-    });
-
-    component.initialize();
-    fixture.changeDetectorRef.detectChanges();
-    expect(component.isInitialized).toBeTrue();
+    expect(component.isInitialized).toBe(true);
 }

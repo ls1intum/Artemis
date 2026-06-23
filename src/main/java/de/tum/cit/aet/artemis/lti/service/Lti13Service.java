@@ -33,15 +33,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -292,7 +293,7 @@ public class Lti13Service {
     }
 
     private String getScoreBody(String userId, String comment, Double score) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = JsonObjectMapper.get();
         ObjectNode requestBody = objectMapper.createObjectNode();
         requestBody.put("userId", userId);
         requestBody.put("timestamp", new DateTime().toString());
@@ -301,7 +302,7 @@ public class Lti13Service {
         requestBody.put("comment", comment);
         requestBody.put("scoreGiven", score);
         requestBody.put("scoreMaximum", 100D);
-        return new ObjectMapper().writeValueAsString(requestBody);
+        return objectMapper.writeValueAsString(requestBody);
     }
 
     /**

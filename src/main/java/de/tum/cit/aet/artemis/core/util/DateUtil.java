@@ -13,7 +13,7 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.List;
 
-import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
+import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
 
 public class DateUtil {
 

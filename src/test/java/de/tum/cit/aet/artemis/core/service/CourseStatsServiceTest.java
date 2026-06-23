@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.course.CourseStatsService;
+import de.tum.cit.aet.artemis.course.service.CourseStatsService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;

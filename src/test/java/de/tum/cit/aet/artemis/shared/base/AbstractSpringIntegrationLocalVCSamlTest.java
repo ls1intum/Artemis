@@ -1,17 +1,18 @@
 package de.tum.cit.aet.artemis.shared.base;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.SAML2_ENABLED_PROPERTY_NAME;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -33,8 +34,9 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.user.PasswordService;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -42,9 +44,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @Tag("BucketSmall")
 @ResourceLock("BucketSmall")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_LOCALVC, PROFILE_LOCALCI, PROFILE_SAML2, PROFILE_SCHEDULING })
-@TestPropertySource(properties = { ATLAS_ENABLED_PROPERTY_NAME + "=false", "artemis.user-management.use-external=false",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml", "artemis.lti.enabled=true" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_LOCALVC, PROFILE_LOCALCI, PROFILE_SCHEDULING })
+@TestPropertySource(locations = "classpath:config/application-saml2.yml", factory = YamlPropertySourceFactory.class, properties = { SAML2_ENABLED_PROPERTY_NAME + "=true",
+        ATLAS_ENABLED_PROPERTY_NAME + "=false", "artemis.athena.enabled=false", "artemis.apollon.enabled=false", PASSKEY_ENABLED_PROPERTY_NAME + "=true",
+        "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml", "artemis.lti.enabled=true" })
 public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractArtemisIntegrationTest {
 
     private static int sshPort;
@@ -90,7 +93,7 @@ public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractA
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject, boolean useCustomBuildPlanDefinition, boolean useCustomBuildPlanWorked) {
         // saml2-specific mocks
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());
-        doNothing().when(mailService).sendSAML2SetPasswordMail(any(User.class));
+        doNothing().when(mailService).sendSAML2SetPasswordMail(any(MailRecipientDTO.class));
     }
 
     @Override

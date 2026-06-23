@@ -1,22 +1,22 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
-import { onError } from 'app/shared/util/global.utils';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { onError } from 'app/foundation/util/global.utils';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-assessment-buttons',
@@ -32,19 +32,20 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     private accountService = inject(AccountService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
-    courseId: number;
-    examId: number;
+    readonly courseId = signal<number>(undefined!);
+    readonly examId = signal<number>(undefined!);
     studentExams: StudentExam[];
-    course: Course;
-    exam: Exam;
+    // Async-loaded, template-bound state — signals so writes schedule change detection under zoneless (no markForCheck).
+    readonly course = signal<Course | undefined>(undefined);
+    readonly exam = signal<Exam | undefined>(undefined);
 
     paramSub: Subscription;
-    isLoading: boolean;
-    isEvaluatingQuizExercises: boolean;
-    isAssessingUnsubmittedExams: boolean;
-    isExamOver = false;
-    longestWorkingTime?: number;
-    isAdmin = false;
+    readonly isLoading = signal(false);
+    readonly isEvaluatingQuizExercises = signal(false);
+    readonly isAssessingUnsubmittedExams = signal(false);
+    readonly isExamOver = signal(false);
+    readonly longestWorkingTime = signal<number | undefined>(undefined);
+    readonly isAdmin = signal(false);
 
     // icons
     faClipboard = faClipboard;
@@ -53,17 +54,17 @@ export class ExamAssessmentButtonsComponent implements OnInit {
      * Initialize the courseId and examId
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.examId = Number(this.route.snapshot.paramMap.get('examId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.examId.set(Number(this.route.snapshot.paramMap.get('examId')));
         this.loadAll();
     }
 
     private loadAll() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.paramSub = this.route.params.subscribe(() => {
-            this.isAdmin = this.accountService.isAdmin();
-            this.courseService.find(this.courseId).subscribe((courseResponse) => {
-                this.course = courseResponse.body!;
+            this.isAdmin.set(this.accountService.isAdmin());
+            this.courseService.find(this.courseId()).subscribe((courseResponse) => {
+                this.course.set(courseResponse.body!);
             });
 
             /*
@@ -71,9 +72,9 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             - set the longestWorkingTime
             - trigger (re)calculation of whether the exam is over
              */
-            const workingTimeObservable = this.studentExamService.getLongestWorkingTimeForExam(this.courseId, this.examId).pipe(
+            const workingTimeObservable = this.studentExamService.getLongestWorkingTimeForExam(this.courseId(), this.examId()).pipe(
                 tap((value) => {
-                    this.longestWorkingTime = value;
+                    this.longestWorkingTime.set(value);
                     this.calculateIsExamOver();
                 }),
             );
@@ -83,16 +84,16 @@ export class ExamAssessmentButtonsComponent implements OnInit {
             - set the exam
             - trigger (re)calculation of whether the exam is over
              */
-            const examObservable = this.examManagementService.find(this.courseId, this.examId, true).pipe(
+            const examObservable = this.examManagementService.find(this.courseId(), this.examId(), true).pipe(
                 tap((examResponse) => {
-                    this.exam = examResponse.body!;
+                    this.exam.set(examResponse.body!);
                     this.calculateIsExamOver();
                 }),
             );
 
             // Calculate hasStudentsWithoutExam only when both observables emitted
             forkJoin([workingTimeObservable, examObservable]).subscribe(() => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             });
         });
     }
@@ -101,29 +102,29 @@ export class ExamAssessmentButtonsComponent implements OnInit {
      * Evaluates all the quiz exercises that belong to the exam
      */
     evaluateQuizExercises() {
-        this.isEvaluatingQuizExercises = true;
-        this.examManagementService.evaluateQuizExercises(this.courseId, this.examId).subscribe({
+        this.isEvaluatingQuizExercises.set(true);
+        this.examManagementService.evaluateQuizExercises(this.courseId(), this.examId()).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
-                this.isEvaluatingQuizExercises = false;
+                this.isEvaluatingQuizExercises.set(false);
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.evaluateQuizExerciseFailure', err);
-                this.isEvaluatingQuizExercises = false;
+                this.isEvaluatingQuizExercises.set(false);
             },
         });
     }
 
     assessUnsubmittedExamModelingAndTextParticipations() {
-        this.isAssessingUnsubmittedExams = true;
-        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId, this.examId).subscribe({
+        this.isAssessingUnsubmittedExams.set(true);
+        this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.courseId(), this.examId()).subscribe({
             next: (res) => {
                 this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
-                this.isAssessingUnsubmittedExams = false;
+                this.isAssessingUnsubmittedExams.set(false);
             },
             error: (err: HttpErrorResponse) => {
                 this.handleError('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure', err);
-                this.isAssessingUnsubmittedExams = false;
+                this.isAssessingUnsubmittedExams.set(false);
             },
         });
     }
@@ -149,13 +150,15 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     }
 
     calculateIsExamOver() {
-        if (this.longestWorkingTime && this.exam) {
-            const startDate = dayjs(this.exam.startDate);
-            let endDate = startDate.add(this.longestWorkingTime, 'seconds');
-            if (this.exam.gracePeriod) {
-                endDate = endDate.add(this.exam.gracePeriod!, 'seconds');
+        const longestWorkingTime = this.longestWorkingTime();
+        const exam = this.exam();
+        if (longestWorkingTime && exam) {
+            const startDate = dayjs(exam.startDate);
+            let endDate = startDate.add(longestWorkingTime, 'seconds');
+            if (exam.gracePeriod) {
+                endDate = endDate.add(exam.gracePeriod, 'seconds');
             }
-            this.isExamOver = endDate.isBefore(dayjs());
+            this.isExamOver.set(endDate.isBefore(dayjs()));
         }
     }
 }

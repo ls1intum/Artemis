@@ -4,70 +4,58 @@
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from 'test/helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
-import { BehaviorSubject, of } from 'rxjs';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject } from 'rxjs';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
 import { textEditorRoute } from 'app/text/overview/text-editor.route';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { MockTextSubmissionService } from 'test/helpers/mocks/service/mock-text-submission.service';
-import { Language } from 'app/core/course/shared/entities/course.model';
+import { Language } from 'app/course/shared/entities/course.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
-import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
+import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FormsModule } from '@angular/forms';
 import { Component, input } from '@angular/core';
 
 // Mock components to avoid complex dependencies
-@Component({ selector: 'jhi-header-participation-page', template: '<ng-content></ng-content>', standalone: true })
-class MockHeaderParticipationPageComponent {
-    exercise = input<any>();
-    participation = input<any>();
-}
-
 @Component({ selector: 'jhi-request-feedback-button', template: '', standalone: true })
 class MockRequestFeedbackButtonComponent {
     exercise = input<any>();
@@ -75,14 +63,6 @@ class MockRequestFeedbackButtonComponent {
     hasAthenaResultForLatestSubmission = input<any>();
     isGeneratingFeedback = input<any>();
     isSubmitted = input<any>();
-}
-
-@Component({ selector: 'jhi-result-history', template: '', standalone: true })
-class MockResultHistoryComponent {
-    results = input<any>();
-    exercise = input<any>();
-    participationInput = input<any>();
-    selectedResultId = input<any>();
 }
 
 @Component({ selector: 'jhi-exercise-chatbot-button', template: '', standalone: true })
@@ -97,8 +77,6 @@ describe('TextEditorComponent', () => {
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
     let getTextForParticipationStub: any;
-    let profileService: ProfileService;
-    let irisSettingsService: IrisSettingsService;
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
@@ -128,7 +106,7 @@ describe('TextEditorComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamParticipateInfoBoxComponent),
                 MockComponent(TeamSubmissionSyncComponent),
-                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(UnifiedFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockDirective(TranslateDirective),
             ],
@@ -141,24 +119,16 @@ describe('TextEditorComponent', () => {
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: ProfileService, useClass: MockProfileService },
-                MockProvider(IrisSettingsService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         })
             .overrideComponent(TextEditorComponent, {
                 remove: {
-                    imports: [HeaderParticipationPageComponent, RequestFeedbackButtonComponent, ResultHistoryComponent, IrisExerciseChatbotButtonComponent],
+                    imports: [RequestFeedbackButtonComponent, IrisExerciseChatbotButtonComponent],
                 },
                 add: {
-                    imports: [
-                        MockHeaderParticipationPageComponent,
-                        MockRequestFeedbackButtonComponent,
-                        MockResultHistoryComponent,
-                        MockIrisExerciseChatbotButtonComponent,
-                        FormsModule,
-                    ],
+                    imports: [MockRequestFeedbackButtonComponent, MockIrisExerciseChatbotButtonComponent, FormsModule],
                 },
             })
             .compileComponents();
@@ -166,8 +136,6 @@ describe('TextEditorComponent', () => {
         comp = fixture.componentInstance;
         textService = TestBed.inject(TextEditorService);
         textSubmissionService = TestBed.inject(TextSubmissionService);
-        profileService = TestBed.inject(ProfileService);
-        irisSettingsService = TestBed.inject(IrisSettingsService);
         getTextForParticipationStub = vi.spyOn(textService, 'get');
     });
 
@@ -189,19 +157,103 @@ describe('TextEditorComponent', () => {
         expect(getTextForParticipationStub).not.toHaveBeenCalled();
         expect(updateParticipationSpy).not.toHaveBeenCalled();
         expect(setupComponentWithInputValuesSpy).toHaveBeenCalled();
-        expect(comp.answer).toBeDefined();
+        expect(comp.answer()).toBeDefined();
+    });
+
+    it('should ignore participation changes that belong to a different participation', () => {
+        // Regression test: subscribeForParticipationChanges() is backed by a single app-wide BehaviorSubject.
+        // When several text editors are rendered together (e.g. multiple text exercises in the exam summary),
+        // an emission for another participation must not overwrite this instance's state.
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
+        fixture.detectChanges();
+
+        // @ts-ignore updateParticipation is private
+        const updateParticipationSpy = vi.spyOn(comp, 'updateParticipation').mockImplementation(() => {});
+        const participationSubject = TestBed.inject(ParticipationWebsocketService).subscribeForParticipationChanges();
+
+        const otherParticipation = new StudentParticipation();
+        otherParticipation.id = 99;
+        otherParticipation.exercise = { id: 2 } as TextExercise;
+        otherParticipation.submissions = [new TextSubmission()];
+        participationSubject.next(otherParticipation);
+
+        expect(updateParticipationSpy).not.toHaveBeenCalled();
+
+        // an emission for our own participation must still be applied
+        participationSubject.next(participation);
+        expect(updateParticipationSpy).toHaveBeenCalledExactlyOnceWith(participation, undefined, undefined);
+
+        fixture.destroy();
+    });
+
+    it('should not be overwritten by a sibling text editor for a different participation (multi-instance)', () => {
+        // The actual reported bug: several text editors render together in the exam summary and share the app-wide
+        // participation-change subject. When a sibling editor initializes (addParticipation), its emission must not
+        // overwrite this editor's exercise/submission.
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'A' });
+        fixture.detectChanges();
+        expect(comp.textExercise().id).toBe(1);
+        expect(comp.submission().id).toBe(1);
+
+        // A second editor for a DIFFERENT text exercise/participation initializes and pushes its participation.
+        const fixture2 = TestBed.createComponent(TextEditorComponent);
+        const otherExercise = { id: 2 } as TextExercise;
+        const otherParticipation = new StudentParticipation();
+        otherParticipation.id = 99;
+        otherParticipation.exercise = otherExercise;
+        otherParticipation.submissions = [{ id: 5, text: 'B' } as TextSubmission];
+        fixture2.componentRef.setInput('inputExercise', otherExercise);
+        fixture2.componentRef.setInput('inputParticipation', otherParticipation);
+        fixture2.componentRef.setInput('inputSubmission', { id: 5, text: 'B' });
+        fixture2.detectChanges();
+
+        // This editor must still show its own exercise/submission, not the sibling's.
+        expect(comp.textExercise().id).toBe(1);
+        expect(comp.submission().id).toBe(1);
+
+        fixture2.destroy();
+        fixture.destroy();
+    });
+
+    it('should apply a participation-change emission with the same id but a different object reference', () => {
+        // Real result updates arrive as a different object (the cached clone) with the same participation id. The guard
+        // must compare by id, not by reference, so such own-participation updates are still applied.
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
+        fixture.detectChanges();
+
+        // @ts-ignore updateParticipation is private
+        const updateParticipationSpy = vi.spyOn(comp, 'updateParticipation').mockImplementation(() => {});
+        const participationSubject = TestBed.inject(ParticipationWebsocketService).subscribeForParticipationChanges();
+
+        const sameIdDifferentObject = new StudentParticipation();
+        sameIdDifferentObject.id = participation.id; // 42 - same participation, different object
+        sameIdDifferentObject.exercise = textExercise;
+        sameIdDifferentObject.submissions = [new TextSubmission()];
+        participationSubject.next(sameIdDifferentObject);
+
+        expect(updateParticipationSpy).toHaveBeenCalledExactlyOnceWith(sameIdDifferentObject, undefined, undefined);
+
+        fixture.destroy();
     });
 
     it('should not allow to submit after the due date if there is no due date', async () => {
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.textExercise = textExercise;
+        comp.textExercise.set(textExercise);
+
+        // @ts-ignore updateParticipation is private
+        comp.updateParticipation(participation);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
-        expect(comp.isAlwaysActive).toBeTruthy();
+        expect(comp.isAllowedToSubmitAfterDueDate()).toBeFalsy();
 
         fixture.destroy();
     });
@@ -211,12 +263,12 @@ describe('TextEditorComponent', () => {
         textExercise.dueDate = dayjs().add(1, 'days');
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.textExercise = textExercise;
+        comp.textExercise.set(textExercise);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
+        expect(comp.isAllowedToSubmitAfterDueDate()).toBeFalsy();
 
         fixture.destroy();
     });
@@ -226,41 +278,14 @@ describe('TextEditorComponent', () => {
         textExercise.dueDate = dayjs();
         const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
         getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.textExercise = textExercise;
+        comp.textExercise.set(textExercise);
+        // @ts-ignore updateParticipation is private
+        comp.updateParticipation(participation);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
-        expect(comp.isAllowedToSubmitAfterDueDate).toBeTruthy();
-
-        fixture.destroy();
-    });
-
-    it('should not be always active if there is a result and no due date', async () => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.result = result;
-        comp.textExercise = textExercise;
-
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        expect(comp.isAlwaysActive).toBeFalsy();
-
-        fixture.destroy();
-    });
-
-    it('should be always active if there is no result and the initialization date is after the due date', async () => {
-        const participationSubject = new BehaviorSubject<StudentParticipation>(participation);
-        getTextForParticipationStub.mockReturnValue(participationSubject);
-        comp.textExercise = textExercise;
-        comp.textExercise.dueDate = dayjs();
-        participation.initializationDate = dayjs().add(1, 'days');
-
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        expect(comp.isAlwaysActive).toBeTruthy();
+        expect(comp.isAllowedToSubmitAfterDueDate()).toBeTruthy();
 
         fixture.destroy();
     });
@@ -270,13 +295,15 @@ describe('TextEditorComponent', () => {
         getTextForParticipationStub.mockReturnValue(participationSubject);
         textExercise.dueDate = dayjs().add(1, 'days');
         participation.initializationDate = dayjs();
+        // @ts-ignore updateParticipation is private
+        comp.updateParticipation(participation);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(comp.isActive).toBeTruthy();
 
-        comp.textExercise.dueDate = dayjs().subtract(1, 'days');
+        comp.textExercise().dueDate = dayjs().subtract(1, 'days');
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
@@ -287,39 +314,38 @@ describe('TextEditorComponent', () => {
     });
 
     it('should not submit while saving', () => {
-        comp.isSaving = true;
+        comp.isSaving.set(true);
         vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 
     it('should not submit without submission', () => {
-        // @ts-ignore
-        delete comp.submission;
+        comp.submission.set(undefined!);
         vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 
     it('should submit', () => {
-        comp.participation = { id: 1 };
-        comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
-        comp.textExercise = { id: 1 } as TextExercise;
-        comp.answer = 'abc';
+        comp.participation.set({ id: 1 });
+        comp.submission.set({ id: 1, participation: { id: 1 } as Participation } as TextSubmission);
+        comp.textExercise.set({ id: 1 } as TextExercise);
+        comp.answer.set('abc');
         vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
-        expect(comp.isSaving).toBeFalsy();
+        expect(comp.isSaving()).toBeFalsy();
     });
 
     it('should alert successful on submit if not isAllowedToSubmitAfterDueDate', () => {
         const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = vi.spyOn(alertService, 'success');
-        comp.participation = { id: 1 };
-        comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
-        comp.textExercise = { id: 1 } as TextExercise;
-        comp.answer = 'abc';
-        comp.isAllowedToSubmitAfterDueDate = false;
+        comp.participation.set({ id: 1 });
+        comp.submission.set({ id: 1, participation: { id: 1 } as Participation } as TextSubmission);
+        comp.textExercise.set({ id: 1 } as TextExercise);
+        comp.answer.set('abc');
+        comp.isAllowedToSubmitAfterDueDate.set(false);
         vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
@@ -329,11 +355,11 @@ describe('TextEditorComponent', () => {
     it('should warn alert on submit if submitDueDateMissedAlert', () => {
         const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = vi.spyOn(alertService, 'warning');
-        comp.participation = { id: 1 };
-        comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
-        comp.textExercise = { id: 1 } as TextExercise;
-        comp.answer = 'abc';
-        comp.isAllowedToSubmitAfterDueDate = true;
+        comp.participation.set({ id: 1 });
+        comp.submission.set({ id: 1, participation: { id: 1 } as Participation } as TextSubmission);
+        comp.textExercise.set({ id: 1 } as TextExercise);
+        comp.answer.set('abc');
+        comp.isAllowedToSubmitAfterDueDate.set(true);
         vi.spyOn(textSubmissionService, 'update');
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
@@ -348,7 +374,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should return unreferenced feedback', () => {
-        comp.result = {
+        comp.result.set({
             id: 1,
             feedbacks: [
                 {
@@ -357,17 +383,17 @@ describe('TextEditorComponent', () => {
                     type: FeedbackType.MANUAL_UNREFERENCED,
                 } as Feedback,
             ],
-        } as Result;
+        } as Result);
         const unreferencedFeedback = comp.unreferencedFeedback;
         expect(unreferencedFeedback?.length).toBe(1);
     });
 
     it('should receive submission from team', () => {
-        comp.participation = { id: 1, team: { id: 1 } } as StudentParticipation;
-        comp.textExercise = {
+        comp.participation.set({ id: 1, team: { id: 1 } } as StudentParticipation);
+        comp.textExercise.set({
             id: 1,
             studentParticipations: [] as StudentParticipation[],
-        } as TextExercise;
+        } as TextExercise);
         const submission = {
             id: 1,
             participation: {
@@ -381,15 +407,15 @@ describe('TextEditorComponent', () => {
         vi.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
-        expect(comp.answer).toBe('abc');
+        expect(comp.answer()).toBe('abc');
     });
 
     it('should receive empty submission from team', () => {
-        comp.participation = { id: 1, team: { id: 1 } } as StudentParticipation;
-        comp.textExercise = {
+        comp.participation.set({ id: 1, team: { id: 1 } } as StudentParticipation);
+        comp.textExercise.set({
             id: 1,
             studentParticipations: [] as StudentParticipation[],
-        } as TextExercise;
+        } as TextExercise);
         const submission = {
             id: 1,
             participation: {
@@ -402,7 +428,7 @@ describe('TextEditorComponent', () => {
         vi.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
-        expect(comp.answer).toBe('');
+        expect(comp.answer()).toBe('');
     });
 
     it('should set latest submission if submissionId is undefined in updateParticipation', () => {
@@ -416,13 +442,13 @@ describe('TextEditorComponent', () => {
             dueDate: dayjs().add(5, 'minutes'),
             exerciseGroup: exGroup,
         } as TextExercise;
-        comp.participation = {
+        comp.participation.set({
             id: 2,
             submissions: submissionList,
             exercise: textExercise,
-        } as StudentParticipation;
-        comp['updateParticipation'](comp.participation, undefined);
-        expect(comp.submission.id).toEqual(submissionList[submissionList.length - 1].id);
+        } as StudentParticipation);
+        comp['updateParticipation'](comp.participation(), undefined);
+        expect(comp.submission().id).toEqual(submissionList[submissionList.length - 1].id);
     });
 
     it('should set the correct submission if updateParticipation is called with submission id', () => {
@@ -436,13 +462,39 @@ describe('TextEditorComponent', () => {
             dueDate: dayjs().add(5, 'minutes'),
             exerciseGroup: exGroup,
         } as TextExercise;
-        comp.participation = {
+        comp.participation.set({
             id: 2,
             submissions: submissionList,
             exercise: textExercise,
-        } as StudentParticipation;
-        comp['updateParticipation'](comp.participation, 2);
-        expect(comp.submission.id).toBe(2);
+        } as StudentParticipation);
+        comp['updateParticipation'](comp.participation(), 2);
+        expect(comp.submission().id).toBe(2);
+    });
+
+    it('should set the correct result when updateParticipation is called with resultId', () => {
+        const manualResult = { id: 99, assessmentType: AssessmentType.MANUAL, score: 85, completionDate: dayjs() } as Result;
+        const athenaResult = { id: 100, assessmentType: AssessmentType.AUTOMATIC_ATHENA, score: 75, completionDate: dayjs() } as Result;
+        const submissionList = [{ id: 2, results: [manualResult, athenaResult], latestResult: athenaResult }];
+
+        const textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            course: { id: 1 },
+            assessmentDueDate: dayjs().add(6, 'minutes'),
+        } as TextExercise;
+        comp.participation.set({
+            id: 2,
+            submissions: submissionList,
+            exercise: textExercise,
+        } as StudentParticipation);
+
+        // Call with submissionId and resultId to select specific manual result
+        comp['updateParticipation'](comp.participation(), 2, 99);
+
+        expect(comp.submission().id).toBe(2);
+        expect(comp.result()?.id).toBe(99);
+        expect(comp.result()?.assessmentType).toBe(AssessmentType.MANUAL);
+        expect(comp.result()?.score).toBe(85);
     });
 
     it('should set the latest submission if updateParticipation is called with submission id that does not exist', () => {
@@ -458,113 +510,86 @@ describe('TextEditorComponent', () => {
             course: { id: 1 },
             assessmentDueDate: dayjs().add(6, 'minutes'),
         } as TextExercise;
-        comp.participation = {
+        comp.participation.set({
             id: 2,
             submissions: submissionList,
             exercise: textExercise,
             results: [{ id: 1 }, { id: 2 }],
-        } as StudentParticipation;
-        comp['updateParticipation'](comp.participation, 2);
-        expect(comp.submission.id).toBe(4);
+        } as StudentParticipation);
+        comp['updateParticipation'](comp.participation(), 2);
+        expect(comp.submission().id).toBe(4);
     });
 
-    it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
-        comp.isReadOnlyWithShowResult = true;
-        comp.textExercise = textExercise;
+    it('should hide the textarea when there is an Athena result and isExamSummary is true', () => {
+        comp.textExercise.set(textExercise);
+        comp.result.set({ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+        fixture.componentRef.setInput('isExamSummary', true);
         fixture.changeDetectorRef.detectChanges();
 
-        const submitButton = fixture.debugElement.query(By.css('#submit'));
-        expect(submitButton).toBeFalsy();
+        const textarea = fixture.debugElement.query(By.css('#text-editor'));
+        expect(textarea).toBeFalsy();
     });
 
-    it('should render the submit button when isReadOnlyWithShowResult is false', () => {
-        comp.isOwnerOfParticipation = true;
-        comp.isReadOnlyWithShowResult = false;
-        comp.isAlwaysActive = true;
-        comp.textExercise = textExercise;
-        comp.submission = { id: 5, submitted: true };
-
+    it('should render the textarea when there is an Athena result and isExamSummary is false', () => {
+        comp.textExercise.set(textExercise);
+        comp.result.set({ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+        fixture.componentRef.setInput('isExamSummary', false);
         fixture.changeDetectorRef.detectChanges();
 
-        const submitButton = fixture.debugElement.query(By.css('#submit'));
-        expect(submitButton).toBeTruthy();
+        const textarea = fixture.debugElement.query(By.css('#text-editor'));
+        expect(textarea).toBeTruthy();
     });
 
     it('should destroy', () => {
-        comp.submission = { text: 'abc' } as TextSubmission;
-        comp.answer = 'def';
-        comp.textExercise = { id: 1 } as TextExercise;
+        comp.submission.set({ text: 'abc' } as TextSubmission);
+        comp.answer.set('def');
+        comp.textExercise.set({ id: 1 } as TextExercise);
         vi.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 
     it('should destroy and call submission service when submission id', () => {
-        comp.submission = { id: 1, text: 'abc' } as TextSubmission;
-        comp.answer = 'def';
-        comp.textExercise = { id: 1 } as TextExercise;
+        comp.submission.set({ id: 1, text: 'abc' } as TextSubmission);
+        comp.answer.set('def');
+        comp.textExercise.set({ id: 1 } as TextExercise);
         vi.spyOn(textSubmissionService, 'update');
         comp.ngOnDestroy();
         expect(textSubmissionService.update).toHaveBeenCalled();
     });
 
-    it('should load Iris settings when Iris module feature is active and not in exam mode', async () => {
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-
-        // Set up course with ID
-        comp.course = { id: 123 } as any;
-
-        const mockIrisSettings = {
-            courseId: 123,
-            settings: {
-                enabled: true,
-                customInstructions: '',
-                variant: 'default',
-                rateLimit: { requests: 100, timeframeHours: 24 },
-            },
-            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
-            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
-        } as IrisCourseSettingsWithRateLimitDTO;
-        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockIrisSettings));
-
-        route.params = of({ exerciseId: '456' });
-
-        comp.examMode = false;
-
-        comp['loadIrisSettings']();
-        await fixture.whenStable();
-
-        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
-        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(123);
-        expect(comp.irisSettings).toEqual(mockIrisSettings);
+    it('isAutomaticResult reflects automatic Athena result', () => {
+        comp.result.set({ assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
+        expect(comp.isAutomaticResult).toBe(true);
+        comp.result.set({ assessmentType: AssessmentType.MANUAL } as Result);
+        expect(comp.isAutomaticResult).toBe(false);
     });
 
-    it('should not load Iris settings when in exam mode', () => {
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
-
-        // Set up exercise and exam mode
-        comp.textExercise = textExercise;
-        comp.examMode = true;
-
-        comp['loadIrisSettings']();
-
-        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
-        expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
-        expect(comp.irisSettings).toBeUndefined();
+    it('canDeactivate true when no submission or unchanged; false when changed', () => {
+        // no submission
+        comp.submission.set(undefined!);
+        expect(comp.canDeactivate()).toBe(true);
+        // unchanged
+        comp.submission.set({ text: 'same' } as TextSubmission);
+        comp.answer.set('same');
+        expect(comp.canDeactivate()).toBe(true);
+        // changed
+        comp.answer.set('different');
+        expect(comp.canDeactivate()).toBe(false);
+        // cleanup to avoid ngOnDestroy side-effects
+        comp.submission.set(undefined as any);
     });
 
-    it('should not load Iris settings when Iris module feature is not active', () => {
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
-        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
-
-        comp.textExercise = textExercise;
-        comp.examMode = false;
-
-        comp['loadIrisSettings']();
-
-        expect(profileService.isModuleFeatureActive).toHaveBeenCalledWith(MODULE_FEATURE_IRIS);
-        expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
-        expect(comp.irisSettings).toBeUndefined();
+    it('unloadNotification returns translation key when there are unsaved changes', () => {
+        const translate = TestBed.inject(TranslateService) as any;
+        vi.spyOn(translate, 'instant');
+        comp.submission.set({ text: 'before' } as TextSubmission);
+        comp.answer.set('after');
+        const event = new Event('beforeunload') as unknown as BeforeUnloadEvent;
+        const res = comp.unloadNotification(event);
+        expect(translate.instant).toHaveBeenCalledWith('pendingChanges');
+        expect(res).toBe('pendingChanges');
+        // cleanup to avoid ngOnDestroy side-effects
+        comp.submission.set(undefined as any);
     });
 });

@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 
@@ -26,6 +26,8 @@ public interface TutorialGroupScheduleRepository extends ArtemisJpaRepository<Tu
             WHERE tutorialGroupSchedule.id = :tutorialGroupScheduleId
             """)
     Optional<TutorialGroupSchedule> findByIdWithSessions(@Param("tutorialGroupScheduleId") long tutorialGroupScheduleId);
+
+    Optional<TutorialGroupSchedule> findByTutorialGroup_Id(Long tutorialGroupId);
 
     Set<TutorialGroupSchedule> getAllByTutorialGroupCourse(Course course);
 

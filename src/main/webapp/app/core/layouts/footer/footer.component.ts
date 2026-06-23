@@ -1,9 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -19,22 +19,22 @@ export class FooterComponent implements OnInit {
     readonly FEEDBACK_URL = 'https://github.com/ls1intum/Artemis/issues/new/choose';
 
     email: string;
-    gitBranch: string;
-    gitCommitId: string;
-    gitTimestamp: dayjs.Dayjs;
-    gitCommitUser: string;
-    isTestServer: boolean;
-    isProduction: boolean;
+    readonly gitBranch = signal<string>(undefined!);
+    readonly gitCommitId = signal<string>(undefined!);
+    readonly gitTimestamp = signal<dayjs.Dayjs>(undefined!);
+    readonly gitCommitUser = signal<string>(undefined!);
+    readonly isTestServer = signal<boolean>(undefined!);
+    readonly isProduction = signal<boolean>(undefined!);
 
     ngOnInit(): void {
         const profileInfo = this.profileService.getProfileInfo();
         this.contact = profileInfo.contact;
-        this.gitBranch = profileInfo.git.branch;
-        this.gitCommitId = profileInfo.git.commit.id.abbrev;
-        this.gitTimestamp = dayjs(profileInfo.git.commit.time);
-        this.gitCommitUser = profileInfo.git.commit.user.name;
-        this.isTestServer = this.profileService.isTestServer();
-        this.isProduction = this.profileService.isProduction();
+        this.gitBranch.set(profileInfo.git.branch);
+        this.gitCommitId.set(profileInfo.git.commit.id.abbrev);
+        this.gitTimestamp.set(dayjs(profileInfo.git.commit.time));
+        this.gitCommitUser.set(profileInfo.git.commit.user.name);
+        this.isTestServer.set(this.profileService.isTestServer());
+        this.isProduction.set(this.profileService.isProduction());
     }
 
     set contact(mail: string) {

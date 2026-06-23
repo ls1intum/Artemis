@@ -2,16 +2,16 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { EMPTY, Observable, ReplaySubject, Subject, Subscription, catchError, finalize, map, of, switchMap, tap } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { ConversationWebsocketDTO } from 'app/communication/shared/entities/conversation/conversation-websocket-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/communication/metis.util';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
@@ -67,8 +67,8 @@ export class MetisConversationService implements OnDestroy {
             this.userId = user.id!;
             const conversationTopic = `/topic/user/${this.userId}/notifications/conversations`;
             this.activeConversationSubscription = this.websocketService.subscribe<MetisPostDTO>(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
-                if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
-                    this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
+                if (postDTO.action === MetisPostAction.CREATE && postDTO.post?.author?.id !== this.userId) {
+                    this.handleNewMessage(postDTO.post?.conversation?.id, postDTO.post?.conversation?.lastMessageDate);
                 }
             });
         });

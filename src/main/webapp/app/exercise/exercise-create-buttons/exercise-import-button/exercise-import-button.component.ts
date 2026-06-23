@@ -2,16 +2,17 @@ import { Component, Type, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseManageButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-manage-button/exercise-manage-button.component';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
+import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-exercise-import-button',
-    imports: [TranslateDirective, FaIconComponent, FeatureToggleLinkDirective],
+    imports: [TranslateDirective, FaIconComponent, FeatureToggleLinkDirective, ButtonModule],
     templateUrl: './exercise-import-button.component.html',
 })
 export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent {
@@ -63,9 +64,5 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
         } else {
             this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id]);
         }
-    }
-
-    protected getTranslationSuffix(): string {
-        return 'importLabel';
     }
 }

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 
@@ -80,7 +80,7 @@ export class LoginService {
     private onLogout(): void {
         this.accountService.authenticate(undefined);
         this.alertService.closeAll();
-        this.router.navigateByUrl('/');
+        this.router.navigateByUrl('/sign-in');
         this.authServerProvider.clearCaches().subscribe();
     }
 

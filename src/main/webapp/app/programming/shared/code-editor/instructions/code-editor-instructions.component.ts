@@ -1,11 +1,11 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output, input } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, input, output, signal } from '@angular/core';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-code-editor-instructions',
@@ -13,12 +13,16 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './code-editor-instructions.component.html',
     imports: [NgStyle, FaIconComponent, TranslateDirective],
 })
-export class CodeEditorInstructionsComponent implements AfterViewInit {
-    @Output()
-    onToggleCollapse = new EventEmitter<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight?: number }>();
+export class CodeEditorInstructionsComponent implements AfterViewInit, OnDestroy {
+    readonly onToggleCollapse = output<{
+        event: MouseEvent;
+        horizontal: boolean;
+        interactable: Interactable;
+        resizableMinWidth?: number;
+        resizableMinHeight?: number;
+    }>();
 
-    @Input()
-    isAssessmentMode = true;
+    readonly isAssessmentMode = input(true);
 
     // make instructions monaco editor in the main editor not collapsible
     disableCollapse = input(false);
@@ -28,12 +32,16 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
     interactResizable: Interactable;
-    collapsed = false;
+    readonly collapsed = signal(false);
 
     // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     farListAlt = faListAlt;
+
+    ngOnDestroy(): void {
+        this.interactResizable?.unset();
+    }
 
     /**
      * After the view was initialized, we create an interact.js resizable object,
@@ -48,17 +56,15 @@ export class CodeEditorInstructionsComponent implements AfterViewInit {
 
     /**
      * Calls the parent (editorComponent) toggleCollapse method
-     * @param event - any event
+     * @param event - click event from the collapse header
      */
-    toggleEditorCollapse(event: any) {
+    toggleEditorCollapse(event: MouseEvent) {
         // make instructions monaco editor in the main editor not collapsible
         if (this.disableCollapse()) {
-            if (event?.stopPropagation) {
-                event.stopPropagation();
-            }
+            event?.stopPropagation();
             return;
         }
-        this.collapsed = !this.collapsed;
+        this.collapsed.update((collapsed) => !collapsed);
         this.onToggleCollapse.emit({ event, horizontal: true, interactable: this.interactResizable, resizableMinWidth: this.minInstructionsWidth });
     }
 }

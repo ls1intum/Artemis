@@ -9,9 +9,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -22,8 +19,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
 
+    // No @Cache: counters are incremented on every evaluation while instructors watch live statistics, same class of bug as #12574.
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "multipleChoiceQuestionStatistic")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<AnswerCounter> answerCounters = new HashSet<>();
 
     public Set<AnswerCounter> getAnswerCounters() {

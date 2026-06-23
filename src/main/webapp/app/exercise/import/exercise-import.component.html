@@ -3,14 +3,14 @@
         <span jhiTranslate="artemisApp.exercise.import.search"></span>:
         <input class="form-control mx-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
         <div class="form-check form-check-inline">
-            <input class="form-check-input" type="checkbox" id="courseFilter" [checked]="isCourseFilter" [disabled]="!isExamFilter" (change)="onCourseFilterChange()" />
+            <input class="form-check-input" type="checkbox" id="courseFilter" [checked]="isCourseFilter()" [disabled]="!isExamFilter()" (change)="onCourseFilterChange()" />
             <label class="form-check-label" for="courseFilter" jhiTranslate="artemisApp.exercise.import.searchInCourses"></label>
         </div>
         <div class="form-check form-check-inline">
-            <input class="form-check-input" type="checkbox" id="examFilter" [checked]="isExamFilter" [disabled]="!isCourseFilter" (change)="onExamFilterChange()" />
+            <input class="form-check-input" type="checkbox" id="examFilter" [checked]="isExamFilter()" [disabled]="!isCourseFilter()" (change)="onExamFilterChange()" />
             <label class="form-check-label" for="examFilter" jhiTranslate="artemisApp.exercise.import.searchInExams"></label>
         </div>
-        @if (loading) {
+        @if (loading()) {
             <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
         }
     </div>
@@ -25,28 +25,28 @@
                     <span jhiTranslate="artemisApp.exercise.import.table.title"></span>
                     <fa-icon [icon]="faSort" />
                 </th>
-                @if (this.exerciseType === ExerciseType.PROGRAMMING) {
+                @if (selectedExerciseType() === ExerciseType.PROGRAMMING) {
                     <th jhiSortBy="PROGRAMMING_LANGUAGE" class="col-2">
                         <span jhiTranslate="artemisApp.exercise.import.table.language"></span>
                         <fa-icon [icon]="faSort" />
                     </th>
                 }
                 <th jhiSortBy="COURSE_TITLE" class="col-4">
-                    <span [hidden]="!isCourseFilter" jhiTranslate="artemisApp.exercise.import.table.course"></span>
-                    <span [hidden]="!(isCourseFilter && isExamFilter)"> | </span>
-                    <span [hidden]="!isExamFilter" jhiTranslate="artemisApp.exercise.import.table.exam"></span>
-                    @if (!(isCourseFilter && isExamFilter)) {
+                    <span [hidden]="!isCourseFilter()" jhiTranslate="artemisApp.exercise.import.table.course"></span>
+                    <span [hidden]="!(isCourseFilter() && isExamFilter())"> | </span>
+                    <span [hidden]="!isExamFilter()" jhiTranslate="artemisApp.exercise.import.table.exam"></span>
+                    @if (!(isCourseFilter() && isExamFilter())) {
                         <fa-icon [icon]="faSort" />
                     }
                 </th>
-                <th class="col-2" [hidden]="!(isCourseFilter && isExamFilter)">
+                <th class="col-2" [hidden]="!(isCourseFilter() && isExamFilter())">
                     <span jhiTranslate="artemisApp.exercise.import.table.examQuestion"></span>
                 </th>
                 <th class="col-1"></th>
             </tr>
         </thead>
         <tbody>
-            @for (exercise of content.resultsOnPage; track trackId($index, exercise)) {
+            @for (exercise of content().resultsOnPage; track trackId($index, exercise)) {
                 <tr [class]="'flex-row exercise-' + exercise.id">
                     <td class="col-1">
                         <span [class.ngb-highlight]="'' + exercise.id === searchTerm"> {{ exercise.id }}</span>
@@ -54,7 +54,7 @@
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exercise.title" [term]="searchTerm" />
                     </td>
-                    @if (exerciseType === ExerciseType.PROGRAMMING) {
+                    @if (selectedExerciseType() === ExerciseType.PROGRAMMING) {
                         <td class="text-break col-3">
                             <span>{{ asProgrammingExercise(exercise)?.programmingLanguage }}</span>
                         </td>
@@ -62,7 +62,7 @@
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm" />
                     </td>
-                    <td class="col-2" [hidden]="!(isCourseFilter && isExamFilter)">
+                    <td class="col-2" [hidden]="!(isCourseFilter() && isExamFilter())">
                         <div style="text-align: center; vertical-align: middle">
                             @if (exercise.exerciseGroup) {
                                 <fa-icon [icon]="faCheck" />
@@ -82,7 +82,7 @@
             [rotate]="true"
             [ellipses]="true"
             [boundaryLinks]="true"
-            [collectionSize]="total"
+            [collectionSize]="total()"
             [(page)]="state.page"
             [pageSize]="state.pageSize"
             (pageChange)="onPageChange($event)"

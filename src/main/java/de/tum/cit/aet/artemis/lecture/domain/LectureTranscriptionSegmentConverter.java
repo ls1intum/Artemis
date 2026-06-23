@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 import jakarta.persistence.AttributeConverter;
@@ -11,10 +10,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+
 @Converter
 public class LectureTranscriptionSegmentConverter implements AttributeConverter<List<LectureTranscriptionSegment>, String> {
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     @Override
     public String convertToDatabaseColumn(List<LectureTranscriptionSegment> transcriptionSegments) {
@@ -32,7 +33,7 @@ public class LectureTranscriptionSegmentConverter implements AttributeConverter<
     @Override
     public List<LectureTranscriptionSegment> convertToEntityAttribute(String jsonData) {
         if (jsonData == null || jsonData.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         try {

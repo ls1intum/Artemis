@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +18,13 @@ import java.util.Set;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -30,12 +32,11 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -47,6 +48,18 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @Lazy
 @Repository
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
+
+    /**
+     * Deletes a result via JPQL bulk delete, bypassing Hibernate cascade and JPA lifecycle callbacks.
+     * All child entities must be deleted first.
+     * See {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResult ResultService.deleteResult} Path 2 for full details.
+     *
+     * @param resultId the id of the result to delete
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM Result r WHERE r.id = :resultId")
+    void deleteResultById(@Param("resultId") long resultId);
 
     /**
      * Count the number of results for a course by its exercise IDs.
@@ -136,7 +149,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         List<Long> ids = findLatestAutomaticResultsForExercise(exerciseId).stream().map(DomainObject::getId).toList();
 
         if (ids.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         return findResultsWithFeedbacksAndTestCaseByIdIn(ids);
@@ -757,10 +770,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * The points of an assessment model is not summed up only in the case the usageCount limit is exceeded
      * meaning the structured grading instruction was applied on the assessment model more often than allowed
      *
-     * @param assessments the list of feedback items that are used to calculate the points
+     * @param assessments the collection of feedback items that are used to calculate the points
      * @return the total points
      */
-    default double calculateTotalPoints(List<Feedback> assessments) {
+    default double calculateTotalPoints(Collection<Feedback> assessments) {
         double totalPoints = 0.0;
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
@@ -923,6 +936,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                  SELECT MAX(r2.id)
                  FROM Result r2
                  WHERE r2.submission.id = r.submission.id
+                 AND r2.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                )
             """)
     Set<Result> findLatestResultsWithAssessmentNoteBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);

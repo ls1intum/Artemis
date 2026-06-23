@@ -1,33 +1,34 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
-import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { downloadFile, downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Range } from 'app/shared/util/utils';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { Range } from 'app/foundation/util/utils';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogModule } from 'primeng/dialog';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { Subscription } from 'rxjs';
 import { PlagiarismResultDTO, PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FormsModule } from '@angular/forms';
 import { PlagiarismSidebarComponent } from '../plagiarism-sidebar/plagiarism-sidebar.component';
 import { PlagiarismDetailsComponent } from '../plagiarism-details/plagiarism-details.component';
 import { PlagiarismRunDetailsComponent } from '../plagiarism-run-details/plagiarism-run-details.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 
 export type PlagiarismCheckState = {
@@ -49,6 +50,7 @@ export type PlagiarismCheckState = {
         NgbDropdownButtonItem,
         NgbDropdownItem,
         NgbTooltip,
+        DialogModule,
         FormsModule,
         PlagiarismSidebarComponent,
         PlagiarismDetailsComponent,
@@ -64,40 +66,39 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private inspectorService = inject(PlagiarismInspectorService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
-    private modalService = inject(NgbModal);
     private alertService = inject(AlertService);
 
     /**
      * The exercise for which plagiarism is to be detected.
      */
-    exercise: Exercise;
+    readonly exercise = signal<Exercise>(undefined!);
 
     /**
      * Result of the automated plagiarism detection
      */
-    plagiarismResult?: PlagiarismResult;
+    readonly plagiarismResult = signal<PlagiarismResult | undefined>(undefined);
 
     /**
      * Statistics for the automated plagiarism detection result
      */
-    plagiarismResultStats?: PlagiarismResultStats;
+    readonly plagiarismResultStats = signal<PlagiarismResultStats | undefined>(undefined);
 
     /**
      * True, if an automated plagiarism detection is running; false otherwise.
      */
-    detectionInProgress = false;
+    readonly detectionInProgress = signal(false);
 
-    detectionInProgressMessage = '';
+    readonly detectionInProgressMessage = signal('');
 
     /**
      * Index of the currently selected comparison.
      */
-    selectedComparisonId: number;
+    readonly selectedComparisonId = signal<number | undefined>(undefined);
 
     /**
      * True, if the plagiarism details tab is active.
      */
-    showRunDetails = false;
+    readonly showRunDetails = signal(false);
 
     /**
      * True, if the plagiarism options should be displayed.
@@ -136,17 +137,22 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     /**
      * Comparisons that are currently visible (might differ from the original set as filtering can be applied)
      */
-    visibleComparisons?: PlagiarismComparison[];
-    chartFilterApplied = false;
+    readonly visibleComparisons = signal<PlagiarismComparison[] | undefined>(undefined);
+    readonly chartFilterApplied = signal(false);
     /**
      * Offset of the currently visible comparisons to the original set in order to keep the numbering even if comparisons are filtered
      */
-    sidebarOffset = 0;
+    readonly sidebarOffset = signal(0);
 
     /**
      * Whether all plagiarism comparisons should be deleted. If this is true, comparisons with the status "approved" or "denied" will also be deleted
      */
-    deleteAllPlagiarismComparisons = false;
+    readonly deleteAllPlagiarismComparisons = signal(false);
+
+    /**
+     * Controls the visibility of the clean-up confirmation dialog.
+     */
+    readonly cleanUpModalVisible = signal(false);
 
     readonly FeatureToggle = FeatureToggle;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -159,7 +165,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.route.data.subscribe(({ exercise }) => {
-            this.exercise = exercise;
+            this.exercise.set(exercise);
 
             this.registerToPlagarismDetectionTopic();
             this.getLatestPlagiarismResult();
@@ -187,7 +193,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
      */
     getPlagarismDetectionTopic() {
         let topic = '/topic/';
-        switch (this.exercise.type) {
+        switch (this.exercise().type) {
             case ExerciseType.PROGRAMMING:
                 topic += 'programming-exercises';
                 break;
@@ -195,7 +201,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
                 topic += 'text-exercises';
                 break;
         }
-        return topic + '/' + this.exercise.id + '/plagiarism-check';
+        return topic + '/' + this.exercise().id + '/plagiarism-check';
     }
 
     /**
@@ -206,11 +212,11 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
      */
     handlePlagiarismCheckStateChange(plagiarismCheckState: PlagiarismCheckState) {
         const { state, messages } = plagiarismCheckState;
-        this.detectionInProgress = state === 'RUNNING';
-        this.detectionInProgressMessage = state === 'RUNNING' ? messages : this.translateService.instant('artemisApp.plagiarism.loading');
+        this.detectionInProgress.set(state === 'RUNNING');
+        this.detectionInProgressMessage.set(state === 'RUNNING' ? messages : this.translateService.instant('artemisApp.plagiarism.loading'));
 
         if (state === 'COMPLETED') {
-            this.detectionInProgressMessage = this.translateService.instant('artemisApp.plagiarism.fetchingResults');
+            this.detectionInProgressMessage.set(this.translateService.instant('artemisApp.plagiarism.fetchingResults'));
             this.getLatestPlagiarismResult();
         }
     }
@@ -219,25 +225,25 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
      * Fetch the latest plagiarism result. There might be no plagiarism result for the given exercise yet.
      */
     getLatestPlagiarismResult() {
-        this.detectionInProgress = true;
+        this.detectionInProgress.set(true);
 
-        switch (this.exercise.type) {
+        switch (this.exercise().type) {
             case ExerciseType.PROGRAMMING: {
-                this.programmingExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
+                this.programmingExerciseService.getLatestPlagiarismResult(this.exercise().id!).subscribe({
                     next: (result) => this.handlePlagiarismResult(result),
                     error: () => this.handleError(),
                 });
                 return;
             }
             case ExerciseType.TEXT: {
-                this.textExerciseService.getLatestPlagiarismResult(this.exercise.id!).subscribe({
+                this.textExerciseService.getLatestPlagiarismResult(this.exercise().id!).subscribe({
                     next: (result) => this.handlePlagiarismResult(result),
                     error: () => this.handleError(),
                 });
                 return;
             }
             default: {
-                this.detectionInProgress = false;
+                this.detectionInProgress.set(false);
             }
         }
     }
@@ -256,19 +262,19 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     }
 
     selectComparisonWithID(id: number) {
-        this.selectedComparisonId = id;
-        this.showRunDetails = false;
+        this.selectedComparisonId.set(id);
+        this.showRunDetails.set(false);
     }
 
     /**
      * This method triggers the plagiarism detection for programming exercises and downloads the zipped report generated by JPlag.
      */
     checkPlagiarismJPlagReport(options?: PlagiarismOptions) {
-        this.detectionInProgress = true;
+        this.detectionInProgress.set(true);
 
-        this.programmingExerciseService.checkPlagiarismJPlagReport(this.exercise.id!, options).subscribe({
+        this.programmingExerciseService.checkPlagiarismJPlagReport(this.exercise().id!, options).subscribe({
             next: (response: HttpResponse<Blob>) => {
-                this.detectionInProgress = false;
+                this.detectionInProgress.set(false);
                 downloadZipFileFromResponse(response);
             },
             error: (error: HttpErrorResponse) => {
@@ -287,22 +293,22 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     }
 
     isProgrammingExercise() {
-        return this.exercise?.type === ExerciseType.PROGRAMMING;
+        return this.exercise()?.type === ExerciseType.PROGRAMMING;
     }
 
     /**
      * Trigger the server-side plagiarism detection and fetch its result.
      */
     checkPlagiarismJPlag(options?: PlagiarismOptions) {
-        this.detectionInProgress = true;
+        this.detectionInProgress.set(true);
 
-        if (this.exercise.type === ExerciseType.TEXT) {
-            this.textExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
+        if (this.exercise().type === ExerciseType.TEXT) {
+            this.textExerciseService.checkPlagiarism(this.exercise().id!, options).subscribe({
                 next: (result) => this.handlePlagiarismResult(result),
                 error: () => this.handleError(),
             });
         } else {
-            this.programmingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
+            this.programmingExerciseService.checkPlagiarism(this.exercise().id!, options).subscribe({
                 next: (result) => this.handlePlagiarismResult(result),
                 error: () => this.handleError(),
             });
@@ -310,20 +316,20 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     }
 
     handleError() {
-        this.detectionInProgress = false;
+        this.detectionInProgress.set(false);
     }
 
     handlePlagiarismResult(result: PlagiarismResultDTO) {
-        this.detectionInProgress = false;
+        this.detectionInProgress.set(false);
 
         if (result?.plagiarismResult?.comparisons) {
             this.sortComparisonsForResult(result.plagiarismResult);
-            this.showRunDetails = true;
+            this.showRunDetails.set(true);
         }
 
-        this.plagiarismResult = result?.plagiarismResult;
-        this.plagiarismResultStats = result?.plagiarismResultStats;
-        this.visibleComparisons = result?.plagiarismResult?.comparisons;
+        this.plagiarismResult.set(result?.plagiarismResult);
+        this.plagiarismResultStats.set(result?.plagiarismResultStats);
+        this.visibleComparisons.set(result?.plagiarismResult?.comparisons);
     }
 
     sortComparisonsForResult(result: PlagiarismResult) {
@@ -341,31 +347,19 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
      * Download plagiarism detection results as JSON document.
      */
     downloadPlagiarismResultsJson() {
-        const json = JSON.stringify(this.plagiarismResult);
+        const json = JSON.stringify(this.plagiarismResult());
         const blob = new Blob([json], { type: 'application/json' });
 
-        downloadFile(blob, `plagiarism-result_${this.exercise.type}-exercise-${this.exercise.id}.json`);
+        downloadFile(blob, `plagiarism-result_${this.exercise().type}-exercise-${this.exercise().id}.json`);
     }
 
     /**
      * Download plagiarism detection results as CSV document.
      */
     downloadPlagiarismResultsCsv() {
-        if (this.plagiarismResult && this.plagiarismResult.comparisons.length > 0) {
-            const exportOptions = {
-                fieldSeparator: ';',
-                quoteStrings: true,
-                quoteCharacter: '"',
-                decimalSeparator: 'locale',
-                showLabels: true,
-                title: `Plagiarism Check for Exercise ${this.exercise.id}: ${this.exercise.title}`,
-                filename: `plagiarism-result_${this.exercise.type}-exercise-${this.exercise.id}`,
-                useTextFile: false,
-                useBom: true,
-                columnHeaders: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
-            };
-
-            const rowData = (this.plagiarismResult.comparisons as PlagiarismComparison[]).map((comparison) => {
+        const plagiarismResult = this.plagiarismResult();
+        if (plagiarismResult && plagiarismResult.comparisons.length > 0) {
+            const rowData = (plagiarismResult.comparisons as PlagiarismComparison[]).map((comparison) => {
                 return Object.assign({
                     Similarity: comparison.similarity,
                     Status: comparison.status,
@@ -380,14 +374,19 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
                 });
             });
 
-            const combinedOptions = mkConfig(exportOptions);
-            const csvData = generateCsv(combinedOptions)(rowData);
-            download(combinedOptions)(csvData);
+            downloadCsv(rowData, {
+                columnHeaders: ['Similarity', 'Status', 'Participant 1', 'Submission 1', 'Score 1', 'Size 1', 'Participant 2', 'Submission 2', 'Score 2', 'Size 2'],
+                fileName: `plagiarism-result_${this.exercise().type}-exercise-${this.exercise().id}`,
+                fieldSeparator: ';',
+                quoteStrings: true,
+                quoteCharacter: '"',
+                decimalSeparator: 'locale',
+            });
         }
     }
 
     getMinimumSizeLabel() {
-        switch (this.exercise.type) {
+        switch (this.exercise().type) {
             case ExerciseType.PROGRAMMING: {
                 return 'artemisApp.plagiarism.minimumTokenCount';
             }
@@ -404,7 +403,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
     getMinimumSizeTooltip() {
-        switch (this.exercise.type) {
+        switch (this.exercise().type) {
             case ExerciseType.PROGRAMMING: {
                 return 'artemisApp.plagiarism.minimumTokenCountTooltipProgrammingExercise';
             }
@@ -423,19 +422,20 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
      * @param range the range selected by the user in the chart by clicking on a chart bar
      */
     filterByChart(range: Range): void {
-        this.visibleComparisons = this.inspectorService.filterComparisons(range, this.plagiarismResult?.comparisons);
-        const index = this.plagiarismResult?.comparisons.indexOf(this.visibleComparisons[0]) ?? 0;
-        this.sidebarOffset = index !== -1 ? index : 0;
-        this.chartFilterApplied = true;
+        const visibleComparisons = this.inspectorService.filterComparisons(range, this.plagiarismResult()?.comparisons);
+        this.visibleComparisons.set(visibleComparisons);
+        const index = this.plagiarismResult()?.comparisons.indexOf(visibleComparisons[0]) ?? 0;
+        this.sidebarOffset.set(index !== -1 ? index : 0);
+        this.chartFilterApplied.set(true);
     }
 
     /**
      * Resets the filter applied by chart interaction
      */
     resetFilter(): void {
-        this.visibleComparisons = this.plagiarismResult?.comparisons;
-        this.chartFilterApplied = false;
-        this.sidebarOffset = 0;
+        this.visibleComparisons.set(this.plagiarismResult()?.comparisons);
+        this.chartFilterApplied.set(false);
+        this.sidebarOffset.set(0);
     }
 
     /**
@@ -446,7 +446,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     showSimilarityDistribution(flag: boolean): void {
         this.resetFilter();
         this.getLatestPlagiarismResult();
-        this.showRunDetails = flag;
+        this.showRunDetails.set(flag);
     }
 
     /**
@@ -454,27 +454,27 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
      */
     getSelectedComparison(): PlagiarismComparison {
         // as the id is unique, the filtered array should always have length 1
-        return this.visibleComparisons!.filter((comparison) => comparison.id === this.selectedComparisonId)[0];
+        return this.visibleComparisons()!.filter((comparison) => comparison.id === this.selectedComparisonId())[0];
     }
 
     /**
      * Switches the state if all plagiarism comparisons should be deleted
      */
     toggleDeleteAllPlagiarismComparisons(): void {
-        this.deleteAllPlagiarismComparisons = !this.deleteAllPlagiarismComparisons;
+        this.deleteAllPlagiarismComparisons.update((deleteAll) => !deleteAll);
     }
 
     /**
      * Clean up plagiarism results and related objects belonging to this exercise
      */
     cleanUpPlagiarism(): void {
-        this.plagiarismCasesService.cleanUpPlagiarism(this.exercise.id!, this.plagiarismResult!.id!, this.deleteAllPlagiarismComparisons).subscribe({
+        this.plagiarismCasesService.cleanUpPlagiarism(this.exercise().id!, this.plagiarismResult()!.id!, this.deleteAllPlagiarismComparisons()).subscribe({
             next: () => {
-                if (this.deleteAllPlagiarismComparisons) {
-                    this.deleteAllPlagiarismComparisons = false;
-                    this.plagiarismResult = undefined;
+                if (this.deleteAllPlagiarismComparisons()) {
+                    this.deleteAllPlagiarismComparisons.set(false);
+                    this.plagiarismResult.set(undefined);
                 } else {
-                    this.deleteAllPlagiarismComparisons = false;
+                    this.deleteAllPlagiarismComparisons.set(false);
                     this.getLatestPlagiarismResult();
                 }
             },
@@ -482,14 +482,17 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Open a modal that requires the user's confirmation.
-     * @param content the modal content
+     * Open the dialog that requires the user's confirmation before cleaning up plagiarism results.
      */
-    openCleanUpModal(content: any) {
-        this.modalService.open(content).result.then((result: string) => {
-            if (result === 'confirm') {
-                this.cleanUpPlagiarism();
-            }
-        });
+    openCleanUpModal() {
+        this.cleanUpModalVisible.set(true);
+    }
+
+    /**
+     * Confirm the clean-up: close the dialog and trigger the clean-up.
+     */
+    confirmCleanUp() {
+        this.cleanUpModalVisible.set(false);
+        this.cleanUpPlagiarism();
     }
 }

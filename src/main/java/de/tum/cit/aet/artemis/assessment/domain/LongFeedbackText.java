@@ -7,16 +7,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "long_feedback_text")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class LongFeedbackText extends DomainObject {
 
     @Column(name = "feedback_text", nullable = false)

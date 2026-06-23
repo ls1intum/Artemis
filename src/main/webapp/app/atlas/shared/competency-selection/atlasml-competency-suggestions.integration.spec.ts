@@ -5,7 +5,7 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { delay, of, throwError } from 'rxjs';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
@@ -17,10 +17,10 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 /**
@@ -168,12 +168,12 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
                 vi.spyOn(httpClient, 'post').mockReturnValue(of(mockResponse).pipe(delay(100)));
 
                 component.suggestCompetencies();
-                expect(component.isSuggesting).toBeTruthy();
+                expect(component.isSuggesting()).toBeTruthy();
 
                 vi.advanceTimersByTime(100);
                 fixture.detectChanges();
 
-                expect(component.isSuggesting).toBeFalsy();
+                expect(component.isSuggesting()).toBeFalsy();
                 expect(component.suggestedCompetencyIds.has(1)).toBeTruthy();
                 expect(component.suggestedCompetencyIds.has(2)).toBeTruthy();
                 expect(component.suggestedCompetencyIds.has(3)).toBeFalsy();
@@ -190,7 +190,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             // After error, isSuggesting should be false due to finalize operator
             fixture.detectChanges();
 
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting()).toBeFalsy();
             expect(component.suggestedCompetencyIds.size).toBe(0);
             consoleSpy.mockRestore();
         });
@@ -200,7 +200,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
             component.suggestCompetencies();
 
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting()).toBeFalsy();
             expect(component.suggestedCompetencyIds.size).toBe(0);
         });
     });
@@ -239,7 +239,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
         });
 
         it('should maintain suggested status when toggling competencies', () => {
-            const dataStructuresLink = component.competencyLinks?.find((link) => link.competency?.id === 2);
+            const dataStructuresLink = component.competencyLinks()?.find((link) => link.competency?.id === 2);
             expect(dataStructuresLink).toBeTruthy();
 
             // Toggle competency on/off - suggestion status should persist
@@ -387,7 +387,7 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             component.suggestCompetencies();
 
             expect(component.suggestedCompetencyIds.size).toBe(0);
-            expect(component.isSuggesting).toBeFalsy();
+            expect(component.isSuggesting()).toBeFalsy();
         });
 
         it('should handle malformed API response', () => {
@@ -447,8 +447,8 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
     describe('User Workflow Integration', () => {
         it('should maintain user selections when suggestions are made', () => {
             // User selects some competencies first
-            const competency1 = component.competencyLinks?.[0];
-            const competency4 = component.competencyLinks?.[3];
+            const competency1 = component.competencyLinks()?.[0];
+            const competency4 = component.competencyLinks()?.[3];
 
             if (competency1 && competency4) {
                 component.toggleCompetency(competency1);
@@ -464,8 +464,8 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
 
                 // User selections should be preserved
                 expect(component.selectedCompetencyLinks?.length).toBe(2);
-                expect(component.checkboxStates[1]).toBeTruthy();
-                expect(component.checkboxStates[4]).toBeTruthy();
+                expect(component.checkboxStates()[1]).toBeTruthy();
+                expect(component.checkboxStates()[4]).toBeTruthy();
 
                 // But suggestions should still be shown
                 expect(component.isSuggested(2)).toBeTruthy();
@@ -480,10 +480,10 @@ describe('AtlasML Competency Suggestions Integration Tests', () => {
             fixture.detectChanges();
 
             // User clicks on suggested competency
-            const suggestedCompetency = component.competencyLinks?.find((link) => link.competency?.id === 2);
+            const suggestedCompetency = component.competencyLinks()?.find((link) => link.competency?.id === 2);
             if (suggestedCompetency) {
                 component.toggleCompetency(suggestedCompetency);
-                expect(component.checkboxStates[2]).toBeTruthy();
+                expect(component.checkboxStates()[2]).toBeTruthy();
                 expect(component.selectedCompetencyLinks).toContainEqual(suggestedCompetency);
                 expect(component.isSuggested(2)).toBeTruthy(); // Should still be marked as suggested
             }

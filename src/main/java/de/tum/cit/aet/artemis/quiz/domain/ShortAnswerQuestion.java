@@ -10,12 +10,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,29 +31,28 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyShortAnswerProp
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestion extends QuizQuestion {
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    // No @Cache on the three child collections below: they are the parent collections of ShortAnswerSpot / ShortAnswerSolution /
+    // ShortAnswerMapping references resolved during submission merge cascade. See #12574 / #12584 for why the clustered NONSTRICT cache failed.
+    // Bidirectional mapping: each child owns the question_id FK via its @ManyToOne back-reference, so a parent saveAndFlush
+    // issues targeted UPDATEs on the order column instead of the DELETE+INSERT cascade that produced #12584.
+    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
+    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn(name = "spots_order")
     private List<ShortAnswerSpot> spots = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn(name = "solutions_order")
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
-    // TODO: making this a bidirectional relation leads to weird Hibernate behavior with missing data when loading quiz questions, we should investigate this again in the future
-    // after 6.x upgrade
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @JoinColumn(name = "question_id")
-    @OrderColumn
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
+    // Stored as a Set: see DragAndDropQuestion.correctMappings rationale. Position carries no semantic meaning — each
+    // mapping is identified by its (spot, solution) pair. HashSet membership is contract-safe across transient →
+    // persisted transitions because ShortAnswerMapping overrides hashCode() to a class constant (see
+    // ShortAnswerMapping.hashCode). With this shape Hibernate does not DELETE+INSERT on parent save (the #12584
+    // failure mode requires the unidirectional + @JoinColumn shape).
+    // The legacy correct_mappings_order column on short_answer_mapping is now orphaned; tracked in #12807 for a follow-up Liquibase changeset.
+    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    private Set<ShortAnswerMapping> correctMappings = new HashSet<>();
 
     @Column(name = "similarity_value")
     private Integer similarityValue = 85;
@@ -68,7 +65,37 @@ public class ShortAnswerQuestion extends QuizQuestion {
     }
 
     public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
+        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.spots = shortAnswerSpots;
+    }
+
+    /**
+     * Adds a single spot and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param shortAnswerSpot the spot to add
+     * @return this question for fluent chaining
+     */
+    public ShortAnswerQuestion addSpot(ShortAnswerSpot shortAnswerSpot) {
+        if (this.spots == null) {
+            this.spots = new ArrayList<>();
+        }
+        this.spots.add(shortAnswerSpot);
+        shortAnswerSpot.setQuestion(this);
+        return this;
+    }
+
+    /**
+     * Removes a single spot and clears its back-reference; with {@code orphanRemoval = true} the spot will also be deleted on the next flush.
+     *
+     * @param shortAnswerSpot the spot to remove
+     * @return this question for fluent chaining
+     */
+    public ShortAnswerQuestion removeSpot(ShortAnswerSpot shortAnswerSpot) {
+        if (this.spots != null) {
+            this.spots.remove(shortAnswerSpot);
+        }
+        shortAnswerSpot.setQuestion(null);
+        return this;
     }
 
     public List<ShortAnswerSolution> getSolutions() {
@@ -76,37 +103,73 @@ public class ShortAnswerQuestion extends QuizQuestion {
     }
 
     public void setSolutions(List<ShortAnswerSolution> shortAnswerSolutions) {
+        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.solutions = shortAnswerSolutions;
     }
 
+    /**
+     * Adds a single solution and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param shortAnswerSolution the solution to add
+     * @return this question for fluent chaining
+     */
     public ShortAnswerQuestion addSolution(ShortAnswerSolution shortAnswerSolution) {
+        if (this.solutions == null) {
+            this.solutions = new ArrayList<>();
+        }
         this.solutions.add(shortAnswerSolution);
         shortAnswerSolution.setQuestion(this);
         return this;
     }
 
+    /**
+     * Removes a single solution and clears its back-reference; with {@code orphanRemoval = true} the solution will also be deleted on the next flush.
+     *
+     * @param shortAnswerSolution the solution to remove
+     * @return this question for fluent chaining
+     */
     public ShortAnswerQuestion removeSolution(ShortAnswerSolution shortAnswerSolution) {
-        this.solutions.remove(shortAnswerSolution);
+        if (this.solutions != null) {
+            this.solutions.remove(shortAnswerSolution);
+        }
         shortAnswerSolution.setQuestion(null);
         return this;
     }
 
-    public List<ShortAnswerMapping> getCorrectMappings() {
+    public Set<ShortAnswerMapping> getCorrectMappings() {
         return correctMappings;
     }
 
-    public void setCorrectMappings(List<ShortAnswerMapping> shortAnswerMappings) {
+    public void setCorrectMappings(Set<ShortAnswerMapping> shortAnswerMappings) {
+        // Direct field assignment; back-references are set defensively via @PrePersist / @PreUpdate hooks.
         this.correctMappings = shortAnswerMappings;
     }
 
+    /**
+     * Adds a single mapping and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     *
+     * @param shortAnswerMapping the mapping to add
+     * @return this question for fluent chaining
+     */
     public ShortAnswerQuestion addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
+        if (this.correctMappings == null) {
+            this.correctMappings = new HashSet<>();
+        }
         this.correctMappings.add(shortAnswerMapping);
         shortAnswerMapping.setQuestion(this);
         return this;
     }
 
+    /**
+     * Removes a single mapping and clears its back-reference; with {@code orphanRemoval = true} the mapping will also be deleted on the next flush.
+     *
+     * @param shortAnswerMapping the mapping to remove
+     * @return this question for fluent chaining
+     */
     public ShortAnswerQuestion removeCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        this.correctMappings.remove(shortAnswerMapping);
+        if (this.correctMappings != null) {
+            this.correctMappings.remove(shortAnswerMapping);
+        }
         shortAnswerMapping.setQuestion(null);
         return this;
     }
@@ -262,6 +325,8 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
+            // correctMappings is a Set: Hibernate may return rows in any order on reload, so Set equality avoids
+            // spuriously triggering recalculation when the only difference is row order.
             return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) || checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion)
                     || !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
         }
@@ -337,6 +402,37 @@ public class ShortAnswerQuestion extends QuizQuestion {
             updateNecessary = true;
         }
         return updateNecessary;
+    }
+
+    /**
+     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any child added
+     * via {@code getSpots().add(...)} / {@code getSolutions().add(...)} / {@code getCorrectMappings().add(...)}
+     * (bypassing the helpers) would otherwise INSERT with {@code question_id = NULL}.
+     */
+    @PrePersist
+    @PreUpdate
+    private void ensureChildBackReferences() {
+        if (spots != null) {
+            for (ShortAnswerSpot spot : spots) {
+                if (spot != null && spot.getQuestion() != this) {
+                    spot.setQuestion(this);
+                }
+            }
+        }
+        if (solutions != null) {
+            for (ShortAnswerSolution solution : solutions) {
+                if (solution != null && solution.getQuestion() != this) {
+                    solution.setQuestion(this);
+                }
+            }
+        }
+        if (correctMappings != null) {
+            for (ShortAnswerMapping mapping : correctMappings) {
+                if (mapping != null && mapping.getQuestion() != this) {
+                    mapping.setQuestion(this);
+                }
+            }
+        }
     }
 
     @Override

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lti.dto;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,6 +8,8 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /**
  * A wrapper record for an LTI 1.3 Assignment and Grading Services Claim. We support the Score Publishing Service in order to transmit scores.
@@ -29,13 +30,13 @@ public record Lti13AgsClaim(List<String> scope, String lineItem) {
         }
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JsonObjectMapper.get();
             JsonNode agsClaimJson = objectMapper.convertValue(idToken.getClaim(Claims.AGS_CLAIM), JsonNode.class);
 
             JsonNode scopes = agsClaimJson.get("scope");
             List<String> scopeList = null;
             if (scopes != null && scopes.isArray() && scopes.has(Scopes.AGS_SCORE)) {
-                scopeList = Collections.singletonList(Scopes.AGS_SCORE);
+                scopeList = List.of(Scopes.AGS_SCORE);
             }
 
             // For moodle lineItem is stored in lineitem claim, for edX it is in lineitems

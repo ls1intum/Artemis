@@ -7,30 +7,30 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faCircleInfo, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { captureException } from '@sentry/angular';
-import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
-import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { getCurrentLocaleSignal, onError } from 'app/shared/util/global.utils';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/foundation/constants/file-extensions.constants';
+import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { getCurrentLocaleSignal, onError } from 'app/foundation/util/global.utils';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
 import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
-import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
 import { TranslateService } from '@ngx-translate/core';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { LectureService } from '../services/lecture.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnsavedChangesComponent } from 'app/lecture/manage/hasLectureUnsavedChanges.guard';
 
@@ -98,16 +98,16 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     lectureOnInit: Lecture;
     existingLectures = signal<Lecture[]>([]);
     isEditMode = signal<boolean>(false);
-    isSaving: boolean;
-    isProcessing: boolean;
-    processUnitMode: boolean;
-    formStatusSections: FormSectionStatus[];
+    readonly isSaving = signal<boolean>(undefined!);
+    readonly isProcessing = signal<boolean>(undefined!);
+    readonly processUnitMode = signal<boolean>(undefined!);
+    readonly formStatusSections = signal<FormSectionStatus[]>(undefined!);
     domainActionsDescription = [new FormulaAction()];
     file: File;
-    fileName: string;
+    readonly fileName = signal<string>(undefined!);
     fileInputTouched = false;
     isNewlyCreatedExercise = false;
-    isChangeMadeToTitleOrPeriodSection = false;
+    readonly isChangeMadeToTitleOrPeriodSection = signal(false);
     shouldDisplayDismissWarning = true;
     areSectionsValid = computed(() => this.computeAreSectionsValid());
     createLectureOptions = computed(() => this.computeCreateLectureOptions());
@@ -170,9 +170,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     ngOnInit() {
-        this.isSaving = false;
-        this.processUnitMode = false;
-        this.isProcessing = false;
+        this.isSaving.set(false);
+        this.processUnitMode.set(false);
+        this.isProcessing.set(false);
         this.activatedRoute.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'] as Lecture;
@@ -222,7 +222,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             });
         }
 
-        this.formStatusSections = updatedFormStatusSections;
+        this.formStatusSections.set(updatedFormStatusSections);
     }
 
     isChangeMadeToTitleSection() {
@@ -235,25 +235,20 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     isChangeMadeToPeriodSection() {
-        const { visibleDate, startDate, endDate } = this.lecture();
-        const { visibleDate: visibleDateOnInit, startDate: startDateOnInit, endDate: endDateOnInit } = this.lectureOnInit;
+        const { startDate, endDate } = this.lecture();
+        const { startDate: startDateOnInit, endDate: endDateOnInit } = this.lectureOnInit;
 
         const isInvalid = (date: Dayjs | undefined) => !dayjs(date).isValid();
         const isSame = (date1: Dayjs | undefined, date2: Dayjs | undefined) => dayjs(date1).isSame(dayjs(date2));
 
-        const emptyVisibleDateWasCleared = !visibleDateOnInit && isInvalid(visibleDate);
         const emptyStartDateWasCleared = !startDateOnInit && isInvalid(startDate);
         const emptyEndDateWasCleared = !endDateOnInit && isInvalid(endDate);
 
-        return (
-            (!isSame(visibleDate, visibleDateOnInit) && !emptyVisibleDateWasCleared) ||
-            (!isSame(startDate, startDateOnInit) && !emptyStartDateWasCleared) ||
-            (!isSame(endDate, endDateOnInit) && !emptyEndDateWasCleared)
-        );
+        return (!isSame(startDate, startDateOnInit) && !emptyStartDateWasCleared) || (!isSame(endDate, endDateOnInit) && !emptyEndDateWasCleared);
     }
 
     protected updateIsChangesMadeToTitleOrPeriodSection() {
-        this.isChangeMadeToTitleOrPeriodSection = this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection();
+        this.isChangeMadeToTitleOrPeriodSection.set(this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection());
     }
 
     /**
@@ -272,7 +267,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      */
     save() {
         this.shouldDisplayDismissWarning = false;
-        this.isSaving = true;
+        this.isSaving.set(true);
         if (this.lecture().id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture()));
         } else {
@@ -282,7 +277,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     proceedToUnitSplit() {
-        this.isProcessing = true;
+        this.isProcessing.set(true);
         this.save();
     }
 
@@ -291,17 +286,17 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      * This function is called by checking Automatic unit processing checkbox when creating a new lecture
      */
     onSelectProcessUnit() {
-        this.processUnitMode = !this.processUnitMode;
+        this.processUnitMode.update((value) => !value);
     }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (!input.files?.length) {
-            this.fileName = '';
+            this.fileName.set('');
             return;
         }
         this.file = input.files[0];
-        this.fileName = this.file.name;
+        this.fileName.set(this.file.name);
     }
 
     /**
@@ -319,18 +314,18 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      * Action on successful lecture creation or edit
      */
     protected onSaveSuccess(lecture: Lecture) {
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         if (!lecture.course?.id) {
             captureException('Lecture has no course id: ' + lecture);
             return;
         }
 
-        if (this.processUnitMode) {
-            this.isProcessing = false;
+        if (this.processUnitMode()) {
+            this.isProcessing.set(false);
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
             this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
-                state: { file: this.file, fileName: this.fileName },
+                state: { file: this.file, fileName: this.fileName() },
             });
         } else if (this.isEditMode()) {
             this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
@@ -354,7 +349,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      * @param errorRes the errorRes handed to the alert service
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         if (errorRes.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
@@ -366,16 +361,10 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     onDatesValuesChanged = () => {
         const startDate = this.lecture().startDate;
         const endDate = this.lecture().endDate;
-        const visibleDate = this.lecture().visibleDate;
 
         // Prevent endDate from being before startDate, if both dates are set
         if (endDate && startDate?.isAfter(endDate)) {
             this.lecture().endDate = startDate.clone();
-        }
-
-        // Prevent visibleDate from being after startDate, if both dates are set
-        if (visibleDate && startDate?.isBefore(visibleDate)) {
-            this.lecture().visibleDate = startDate.clone();
         }
     };
 

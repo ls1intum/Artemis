@@ -11,12 +11,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -88,13 +88,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
             examRepository.save(exam);
         });
 
-        exerciseRepository.findAll().forEach(exercise -> {
-            // Set dates of existing exercises to past to that they are not returned in the metrics
-            exercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
-            exercise.setStartDate(ZonedDateTime.now().minusHours(2));
-            exercise.setDueDate(ZonedDateTime.now().minusHours(1));
-            exerciseRepository.save(exercise);
-        });
+        // Use bulk update to avoid loading QuizExercise entities, which would trigger
+        // Hibernate 7's strict @OrderColumn validation on quizQuestions
+        exerciseRepository.updateAllExerciseDates(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1));
     }
 
     @Test
@@ -296,11 +292,9 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
         assertMetricEquals(1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.QUIZ.toString());
         assertMetricEquals(1, "artemis.statistics.public.active_exercises", "exerciseType", ExerciseType.TEXT.toString());
 
-        assertMetricEquals(
-                exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.QUIZ.getExerciseClass()).findFirst().get().value(),
+        assertMetricEquals(exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.QUIZ).findFirst().get().value(),
                 "artemis.statistics.public.exercises", "exerciseType", ExerciseType.QUIZ.toString());
-        assertMetricEquals(
-                exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.TEXT.getExerciseClass()).findFirst().get().value(),
+        assertMetricEquals(exerciseRepository.countExercisesGroupByExerciseType().stream().filter(e -> e.exerciseType() == ExerciseType.TEXT).findFirst().get().value(),
                 "artemis.statistics.public.exercises", "exerciseType", ExerciseType.TEXT.toString());
     }
 

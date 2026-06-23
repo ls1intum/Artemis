@@ -10,7 +10,6 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,20 +23,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 
 class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
@@ -48,7 +48,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     private FeatureToggleService featureToggleService;
 
     @Autowired
-    private IrisCourseChatSessionService irisCourseChatSessionService;
+    private IrisChatSessionService irisChatSessionService;
 
     @Autowired
     private IrisSessionRepository irisSessionRepository;
@@ -58,7 +58,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
 
     private Course course;
 
-    private IrisCourseChatSession irisSession;
+    private IrisChatSession irisSession;
 
     private AtomicBoolean pipelineDone;
 
@@ -81,7 +81,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         userTestRepository.updateMemirisEnabled(user.getId(), true);
 
-        irisSession = irisCourseChatSessionService.createSession(course, user);
+        irisSession = irisChatSessionService.createSession(IrisChatMode.COURSE_CHAT, course.getId(), user);
 
         pipelineDone = new AtomicBoolean(false);
     }
@@ -96,8 +96,8 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             assertThatNoException().isThrownBy(() -> sendCourseStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), List.of("Try this"),
-                    List.of(new MemirisMemoryDTO("ACC-1", "Acc Title", "Acc Content", Collections.emptyList(), Collections.emptyList(), false, false)),
-                    List.of(new MemirisMemoryDTO("CRT-1", "Crt Title", "Crt Content", Collections.emptyList(), Collections.emptyList(), false, false))));
+                    List.of(new MemirisMemoryDTO("ACC-1", "Acc Title", "Acc Content", List.of(), List.of(), false, false)),
+                    List.of(new MemirisMemoryDTO("CRT-1", "Crt Title", "Crt Content", List.of(), List.of(), false, false))));
 
             pipelineDone.set(true);
         });
@@ -138,16 +138,16 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
 
         // Build non-terminal and terminal stage lists
         var preparingDone = stagesRef.get().getFirst();
-        var executingInProgress = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS, null, false);
-        var executingDone = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE, null, false);
+        var executingInProgress = new PyrisStageDTO("Analyzing context", 30, IN_PROGRESS, null, false, null);
+        var executingDone = new PyrisStageDTO("Analyzing context", 30, DONE, null, false, null);
 
         // Send intermediate status with accessed memories only (no result yet) and non-terminal stages
         sendCourseStatus(jobIdRef.get(), null, List.of(preparingDone, executingInProgress), null,
-                List.of(new MemirisMemoryDTO("ACC-2", "Acc2", "Acc2 Content", Collections.emptyList(), Collections.emptyList(), false, false)), null);
+                List.of(new MemirisMemoryDTO("ACC-2", "Acc2", "Acc2 Content", List.of(), List.of(), false, false)), null);
 
         // Final status with assistant message and created memories and terminal stages
         sendCourseStatus(jobIdRef.get(), "Hello Again", List.of(preparingDone, executingDone), null, null,
-                List.of(new MemirisMemoryDTO("CRT-2", "Crt2", "Crt2 Content", Collections.emptyList(), Collections.emptyList(), false, false)));
+                List.of(new MemirisMemoryDTO("CRT-2", "Crt2", "Crt2 Content", List.of(), List.of(), false, false)));
 
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
 
@@ -175,7 +175,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     private void sendCourseStatus(String jobId, String result, List<PyrisStageDTO> stages, List<String> suggestions, List<MemirisMemoryDTO> accessedMemories,
             List<MemirisMemoryDTO> createdMemories) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/course-chat/runs/" + jobId + "/status",
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
                 new PyrisChatStatusUpdateDTO(result, stages, null, suggestions, null, accessedMemories, createdMemories), HttpStatus.OK, headers);
     }
 
@@ -198,14 +198,14 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
         await().until(() -> jobIdRef.get() != null && stagesRef.get() != null);
 
         var preparingDone = stagesRef.get().getFirst();
-        var executingInProgress = new PyrisStageDTO("Executing pipeline", 30, de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS, null, false);
+        var executingInProgress = new PyrisStageDTO("Analyzing context", 30, IN_PROGRESS, null, false, null);
 
         // First: send assistant result to create assistant message and set assistantMessageId on the job (keep job running with non-terminal stages)
         sendCourseStatus(jobIdRef.get(), "Initial Answer", List.of(preparingDone, executingInProgress), null, null, null);
 
         // Then: send only created memories (no result), which should update the existing assistant message and resend it via websocket
         sendCourseStatus(jobIdRef.get(), null, List.of(preparingDone, executingInProgress), null, null,
-                List.of(new MemirisMemoryDTO("CRT-3", "Crt3", "Crt3 Content", Collections.emptyList(), Collections.emptyList(), false, false)));
+                List.of(new MemirisMemoryDTO("CRT-3", "Crt3", "Crt3 Content", List.of(), List.of(), false, false)));
 
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
 

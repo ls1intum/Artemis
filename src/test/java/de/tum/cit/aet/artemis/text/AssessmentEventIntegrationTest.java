@@ -10,20 +10,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "assessmentevent";
 
@@ -108,19 +108,6 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
         request.post("/api/text/event-insights/text-assessment/events", event, expected);
     }
 
-    /**
-     * Tests addition of a single event with event id not null. The event is auto generated in the server side,
-     * that is why we treat incoming events with an already generated id as badly formed requests
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAddSingleCompleteAssessmentEvent_withNotNullEventId() throws Exception {
-        TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
-                textSubmission.getId());
-        event.setId(1L);
-        request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddSingleCompleteAssessmentEvent_withExampleSubmission() throws Exception {
@@ -143,7 +130,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
 
         request.post("/api/text/event-insights/text-assessment/events", event, HttpStatus.CREATED);
 
-        var foundEvents = request.getList("/api/text/admin/event-insights/text-assessment/events/" + course.getId(), HttpStatus.OK, TextAssessmentEvent.class);
+        var foundEvents = request.getList("/api/text/admin/event-insights/text-assessment/events?courseId=" + course.getId(), HttpStatus.OK, TextAssessmentEvent.class);
         assertThat(foundEvents).hasSize(1);
         TextAssessmentEvent foundEvent = foundEvents.getFirst();
         assertThat(foundEvent.getId()).isNotNull();

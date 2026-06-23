@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.lti.web.admin;
 
 import java.util.UUID;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +26,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationDTO;
+import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationUpdateDTO;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
@@ -74,13 +78,13 @@ public class AdminLtiConfigurationResource {
      * Returns {@code ResponseEntity} with status OK if found, or NOT_FOUND if no configuration exists.
      *
      * @param platformId The ID of the LTI platform to retrieve configuration for.
-     * @return a {@code ResponseEntity} with an {@code Optional<LtiPlatformConfiguration>} and HTTP status.
+     * @return a {@code ResponseEntity} with the platform configuration DTO and HTTP status.
      */
-    @GetMapping("lti-platform/{platformId}")
-    public ResponseEntity<LtiPlatformConfiguration> getLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
+    @GetMapping({ "lti-platforms/{platformId}", "lti-platform/{platformId}" })
+    public ResponseEntity<LtiPlatformConfigurationDTO> getLtiPlatformConfiguration(@PathVariable("platformId") Long platformId) {
         log.debug("REST request to configured lti platform");
-        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
-        return new ResponseEntity<>(platform, HttpStatus.OK);
+        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(platformId);
+        return new ResponseEntity<>(LtiPlatformConfigurationDTO.of(platform), HttpStatus.OK);
     }
 
     /**
@@ -89,59 +93,64 @@ public class AdminLtiConfigurationResource {
      * @param platformId the ID of the platform configuration to delete.
      * @return a {@code ResponseEntity<Void>} with status {@code 200 (OK)} and a header indicating the deletion.
      */
-    @DeleteMapping("lti-platform/{platformId}")
-    public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
+    @DeleteMapping({ "lti-platforms/{platformId}", "lti-platform/{platformId}" })
+    public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") Long platformId) {
         log.debug("REST request to delete configured LTI platform");
-        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
+        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(platformId);
 
         ltiPlatformConfigurationRepository.delete(platform);
         oAuth2JWKSService.updateKey(platform.getRegistrationId());
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, platformId)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, platformId.toString())).build();
     }
 
     /**
      * Updates an existing LTI platform configuration.
      *
-     * @param platform the updated LTI platform configuration to be saved.
+     * @param updateDTO the LTI platform configuration update DTO containing the new values.
      * @return a {@link ResponseEntity} with status 200 (OK) if the update was successful,
      *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
      */
-    @PutMapping("lti-platform")
-    public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
+    @PutMapping({ "lti-platforms", "lti-platform" })
+    public ResponseEntity<LtiPlatformConfigurationDTO> updateLtiPlatformConfiguration(@Valid @RequestBody LtiPlatformConfigurationUpdateDTO updateDTO) {
         log.debug("REST request to update configured LTI platform");
 
-        if (platform.getId() == null) {
+        if (updateDTO.id() == null) {
             return ResponseEntity.badRequest().build();
         }
 
-        LtiPlatformConfiguration existingPlatform = ltiPlatformConfigurationRepository.findByIdElseThrow(platform.getId());
-        if (!existingPlatform.getRegistrationId().equals(platform.getRegistrationId())) {
+        // Fetch the existing configuration from the database (this is the managed entity)
+        LtiPlatformConfiguration existingPlatform = ltiPlatformConfigurationRepository.findByIdElseThrow(updateDTO.id());
+        if (!existingPlatform.getRegistrationId().equals(updateDTO.registrationId())) {
             return ResponseEntity.badRequest().build();
         }
 
-        ltiPlatformConfigurationRepository.save(platform);
+        // Apply DTO values to the managed entity
+        updateDTO.applyTo(existingPlatform);
 
-        return ResponseEntity.ok().build();
+        ltiPlatformConfigurationRepository.save(existingPlatform);
+
+        return ResponseEntity.ok(LtiPlatformConfigurationDTO.of(existingPlatform));
     }
 
     /**
      * Adds a new LTI platform configuration.
      *
-     * @param platform the new LTI platform configuration to be saved.
+     * @param dto the LTI platform configuration DTO containing the new values.
      * @return a {@link ResponseEntity} with status 200 (OK) if the creation was successful
      */
-    @PostMapping("lti-platform")
-    public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
+    @PostMapping({ "lti-platforms", "lti-platform" })
+    public ResponseEntity<LtiPlatformConfigurationDTO> addLtiPlatformConfiguration(@Valid @RequestBody LtiPlatformConfigurationUpdateDTO dto) {
         log.debug("REST request to add new LTI platform");
 
+        LtiPlatformConfiguration platform = dto.toEntity();
         String clientRegistrationId = "artemis-" + UUID.randomUUID();
         platform.setRegistrationId(clientRegistrationId);
 
         ltiPlatformConfigurationRepository.save(platform);
         oAuth2JWKSService.updateKey(clientRegistrationId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(LtiPlatformConfigurationDTO.of(platform));
     }
 
     /**

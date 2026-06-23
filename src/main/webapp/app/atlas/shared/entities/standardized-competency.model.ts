@@ -1,5 +1,5 @@
 import { CompetencyTaxonomy, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 import { BaseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 export interface StandardizedCompetency extends BaseCompetency {
@@ -48,12 +48,17 @@ export interface Source extends BaseEntity {
 export enum StandardizedCompetencyValidators {
     TITLE_MAX = 255,
     DESCRIPTION_MAX = 2000,
+    VERSION_MAX = 30,
 }
 
 export enum KnowledgeAreaValidators {
     TITLE_MAX = 255,
     SHORT_TITLE_MAX = 10,
     DESCRIPTION_MAX = 2000,
+}
+
+export enum SourceValidators {
+    FIELD_MAX = 255,
 }
 
 /**
@@ -72,6 +77,8 @@ export interface KnowledgeAreasForImportDTO {
     knowledgeAreas: KnowledgeAreaDTO[];
     sources: Source[];
 }
+
+export type StandardizedCompetencyCatalogDTO = KnowledgeAreasForImportDTO;
 
 /**
  * StandardizedCompetencyDTO with additional information for the tree view

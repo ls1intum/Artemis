@@ -1,12 +1,12 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject, input } from '@angular/core';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { Component, OnInit, inject, input, output } from '@angular/core';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 
 export interface AddUsersFormData {
@@ -22,14 +22,14 @@ export interface AddUsersFormData {
     templateUrl: './conversation-add-users-form.component.html',
     imports: [TranslateDirective, FormsModule, ReactiveFormsModule, CourseUsersSelectorComponent, FaIconComponent, ArtemisTranslatePipe],
 })
-export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
+export class ConversationAddUsersFormComponent implements OnInit {
     private fb = inject(FormBuilder);
 
-    @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();
+    readonly formSubmitted = output<AddUsersFormData>();
 
-    @Input() courseId: number;
-    @Input() maxSelectable?: number = undefined;
-    @Input() activeConversation: ConversationDTO;
+    readonly courseId = input.required<number>();
+    readonly maxSelectable = input<number | undefined>(undefined);
+    readonly activeConversation = input.required<ConversationDTO>();
 
     isLoading = input<boolean>(false);
 
@@ -58,15 +58,12 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
         this.initializeForm();
     }
 
-    ngOnChanges() {
-        this.initializeForm();
-    }
-
     private initializeForm() {
         if (this.form) {
             return;
         }
-        const validators = this.maxSelectable ? [Validators.required, Validators.maxLength(this.maxSelectable)] : [Validators.required];
+        const maxSel = this.maxSelectable();
+        const validators = maxSel ? [Validators.required, Validators.maxLength(maxSel)] : [Validators.required];
 
         this.form = this.fb.group({
             selectedUsers: [[], validators],

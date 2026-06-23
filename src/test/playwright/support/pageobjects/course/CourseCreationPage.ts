@@ -148,19 +148,6 @@ export class CourseCreationPage {
     }
 
     /**
-     * Sets if FAQs are enabled for the course
-     * @param enableFaq if FAQs should be enabled
-     */
-    async setEnableFaq(enableFaq: boolean) {
-        const selector = this.page.locator('#field_faq_enabled');
-        if (enableFaq) {
-            await selector.check();
-        } else {
-            await selector.uncheck();
-        }
-    }
-
-    /**
      * Sets maximum amount of complaints
      * @param maxComplaints the maximum complaints
      */
@@ -260,10 +247,20 @@ export class CourseCreationPage {
 
     /**
      * Updates the created exam.
+     *
+     * Scopes `waitForResponse` to the update method (PUT/POST `multipart/form-data`)
+     * — the generic `api/course/courses/*` glob also matches concurrent GETs (refresh,
+     * stats, dashboards) that the page issues right before the form save, and racing
+     * against those returns a course object without the just-edited fields.
+     *
      * @returns the response if a test needs it
      */
     async update() {
-        const responsePromise = this.page.waitForResponse(`api/core/courses/*`);
+        // Matches both the canonical /api/course/courses/{id} and the legacy /api/core/courses/{id} so
+        // the test stays correct during the deprecation window where either prefix could fire.
+        const responsePromise = this.page.waitForResponse(
+            (resp) => /\/api\/(?:course|core)\/courses\/\d+(\?|$)/.test(resp.url()) && ['POST', 'PUT'].includes(resp.request().method()),
+        );
         await this.page.click('#save-entity');
         const response = await responsePromise;
         return response.json();

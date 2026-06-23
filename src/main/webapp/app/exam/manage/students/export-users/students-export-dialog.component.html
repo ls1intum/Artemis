@@ -1,4 +1,13 @@
-<p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
+<p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [dismissableMask]="true"
+    (onHide)="closeDialog()"
+    [style]="{ width: '45dvw' }"
+    [draggable]="false"
+    appendTo="body"
+>
     <ng-template pTemplate="header">
         <h4>
             <span jhiTranslate="artemisApp.exam.examUsers.export.dialogTitle"></span>

@@ -1,4 +1,4 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Page } from '@playwright/test';
 import { Channel, ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -83,7 +83,7 @@ export class CommunicationAPIRequests {
     async getCourseWideChannels(courseId: number): Promise<ChannelDTO[]> {
         const response = await this.page.request.get(`api/communication/courses/${courseId}/conversations`);
         const conversations: ConversationDTO[] = await response.json();
-        // @ts-ignore
+        // @ts-expect-error: filter narrows ConversationDTO to ChannelDTO but TS can't infer that
         return conversations.filter((conv: ConversationDTO) => getAsChannelDTO(conv)?.isCourseWide === true);
     }
 
@@ -189,6 +189,16 @@ export class CommunicationAPIRequests {
     }
 
     /**
+     * Marks all messages in a conversation as read for the currently authenticated user.
+     *
+     * @param courseId - The id of the course.
+     * @param conversationId - The id of the conversation to mark as read.
+     */
+    async markConversationAsRead(courseId: number, conversationId: number) {
+        await this.page.request.patch(`api/communication/courses/${courseId}/conversations/${conversationId}/mark-as-read`);
+    }
+
+    /**
      * Creates a new course post reply.
      *
      * @param course - The course to which the post belongs.
@@ -254,6 +264,40 @@ export class CommunicationAPIRequests {
             visibleForStudents: true,
         };
         const response = await this.page.request.post(`api/communication/courses/${course.id}/posts`, { data });
+        return response.json();
+    }
+
+    /**
+     * Creates a one-to-one chat (DM) with the specified partner.
+     *
+     * @param course - The course in which to create the DM.
+     * @param partnerUsername - The username of the partner.
+     * @returns Promise with the created conversation.
+     */
+    async createOneToOneChat(course: Course, partnerUsername: string) {
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/one-to-one-chats`, { data: [partnerUsername] });
+        if (!response.ok()) {
+            throw new Error(`createOneToOneChat failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Adds an emoji reaction to a post.
+     *
+     * @param courseId - The ID of the course.
+     * @param postId - The ID of the post to react to.
+     * @param emojiId - The emoji identifier (e.g., 'thumbsup').
+     */
+    async addReactionToPost(courseId: number, postId: number, emojiId: string) {
+        const data = {
+            emojiId,
+            relatedPostId: postId,
+        };
+        const response = await this.page.request.post(`api/communication/courses/${courseId}/postings/reactions`, { data });
+        if (!response.ok()) {
+            throw new Error(`addReactionToPost failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
         return response.json();
     }
 }

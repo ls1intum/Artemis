@@ -9,6 +9,7 @@
             "language": "Sprache",
             "button": "Speichern"
         },
+        "saml2SyncedInfo": "Dein Name und deine E-Mail-Adresse werden von deiner Institution über SAML2 verwaltet und können hier nicht geändert werden.",
         "messages": {
             "error": {
                 "fail": "<strong>Es ist ein Fehler aufgetreten!</strong> Die Einstellungen konnten nicht gespeichert werden.",

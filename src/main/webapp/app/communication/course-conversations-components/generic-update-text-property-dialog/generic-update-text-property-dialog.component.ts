@@ -1,9 +1,9 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormBuilder } from '@angular/forms';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export interface GenericUpdateTextPropertyTranslationKeys {
     labelKey: string;
@@ -26,12 +26,12 @@ export interface GenericUpdateTextPropertyTranslationKeys {
 export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComponent {
     private fb = inject(FormBuilder);
 
-    @Input() propertyName: string;
-    @Input() isRequired = false;
-    @Input() regexPattern: RegExp | undefined;
-    @Input() maxPropertyLength: number;
-    @Input() initialValue: string | undefined;
-    @Input() translationKeys: GenericUpdateTextPropertyTranslationKeys;
+    propertyName = signal<string | undefined>(undefined);
+    isRequired = signal(false);
+    regexPattern = signal<RegExp | undefined>(undefined);
+    maxPropertyLength = signal<number | undefined>(undefined);
+    initialValue = signal<string | undefined>(undefined);
+    translationKeys = signal<GenericUpdateTextPropertyTranslationKeys | undefined>(undefined);
 
     form: FormGroup;
 
@@ -47,7 +47,7 @@ export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComp
     }
 
     get control() {
-        return this.form.get(this.propertyName);
+        return this.form.get(this.propertyName()!);
     }
 
     private initializeForm() {
@@ -56,18 +56,20 @@ export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComp
         }
 
         const validators = [];
-        if (this.isRequired) {
+        if (this.isRequired()) {
             validators.push(Validators.required);
         }
-        if (this.regexPattern) {
-            validators.push(Validators.pattern(this.regexPattern));
+        const regexPattern = this.regexPattern();
+        if (regexPattern) {
+            validators.push(Validators.pattern(regexPattern));
         }
-        if (this.maxPropertyLength) {
-            validators.push(Validators.maxLength(this.maxPropertyLength));
+        const maxPropertyLength = this.maxPropertyLength();
+        if (maxPropertyLength) {
+            validators.push(Validators.maxLength(maxPropertyLength));
         }
 
         this.form = this.fb.group({
-            [this.propertyName]: [this.initialValue, validators],
+            [this.propertyName()!]: [this.initialValue(), validators],
         });
     }
 

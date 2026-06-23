@@ -13,10 +13,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -70,7 +71,7 @@ public class GradingScaleService {
      * @param user   The user for whom to fetch all available grading scales
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<GradingScaleDTO> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.GRADING_SCALE);
         final var searchTerm = search.getSearchTerm();
         final Page<GradingScale> gradingScalePage;
@@ -80,7 +81,8 @@ public class GradingScaleService {
         else {
             gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getGroups(), pageable);
         }
-        return new SearchResultPageDTO<>(gradingScalePage.getContent(), gradingScalePage.getTotalPages());
+        List<GradingScaleDTO> dtoContent = gradingScalePage.getContent().stream().map(GradingScaleDTO::of).toList();
+        return new SearchResultPageDTO<>(dtoContent, gradingScalePage.getTotalPages());
     }
 
     /**

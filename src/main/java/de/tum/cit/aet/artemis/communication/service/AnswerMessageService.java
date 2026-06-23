@@ -10,17 +10,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
@@ -32,21 +34,29 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewAnswerNotification;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewMentionNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
+import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
 public class AnswerMessageService extends PostingService {
+
+    private static final Logger log = LoggerFactory.getLogger(AnswerMessageService.class);
 
     private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
 
@@ -64,12 +74,17 @@ public class AnswerMessageService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final Optional<AutonomousTutorApi> autonomousTutorApi;
+
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
+
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
             ConversationService conversationService, ExerciseRepository exerciseRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService) {
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, CourseNotificationService courseNotificationService,
+            Optional<AutonomousTutorApi> autonomousTutorApi, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -78,6 +93,8 @@ public class AnswerMessageService extends PostingService {
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
         this.courseNotificationService = courseNotificationService;
+        this.autonomousTutorApi = autonomousTutorApi;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateService;
     }
 
     /**
@@ -96,6 +113,10 @@ public class AnswerMessageService extends PostingService {
         newAnswerMessage.setContent(answerMessage.content());
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.post().id());
+        // the path courseId is authoritative: reject answers targeting a conversation that belongs to a different course.
+        // this must happen before isMemberOrCreateForCourseWideElseThrow, which would otherwise persist a course-wide auto-join for a mismatching course.
+        ensureConversationBelongsToCourseElseThrow(post.getConversation(), courseId);
+
         var conversationId = post.getConversation().getId();
         // For group chats we need the participants to generate the conversation title
         var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
@@ -122,7 +143,7 @@ public class AnswerMessageService extends PostingService {
         var newAnswerNotification = new NewAnswerNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
                 post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(), newAnswerMessage.getCreationDate().toString(),
                 newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(), newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(),
-                conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId);
+                conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId, newAnswerMessage.getAuthor().isBot());
 
         var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
         usersInvolved.add(post.getAuthor());
@@ -145,11 +166,24 @@ public class AnswerMessageService extends PostingService {
         var mentionCourseNotification = new NewMentionNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
                 newAnswerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), newAnswerMessage.getContent(),
                 newAnswerMessage.getCreationDate().toString(), newAnswerMessage.getAuthor().getName(), newAnswerMessage.getAuthor().getId(),
-                newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(), conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId);
+                newAnswerMessage.getAuthor().getImageUrl(), newAnswerMessage.getId(), conversation.getHumanReadableNameForReceiver(newAnswerMessage.getAuthor()), conversationId,
+                newAnswerMessage.getAuthor().isBot());
 
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
+        syncAnswerPostWithWeaviate(savedAnswerMessage, conversation);
+
         this.preparePostAndBroadcast(savedAnswerMessage, course);
+
+        // Include the new answer in the parent post's in-memory answers set so it is part of the thread context forwarded to Iris
+        post.addAnswerPost(savedAnswerMessage);
+        try {
+            autonomousTutorApi.ifPresent(api -> api.onNewAnswerMessage(savedAnswerMessage, post, conversation, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to forward answer message to autonomous tutor pipeline for answer post {}", savedAnswerMessage.getId(), e);
+        }
+
         return savedAnswerMessage;
     }
 
@@ -175,6 +209,7 @@ public class AnswerMessageService extends PostingService {
         AnswerPost updatedAnswerMessage;
 
         Conversation conversation = conversationService.getConversationById(existingAnswerMessage.getPost().getConversation().getId());
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
         parseUserMentions(course, answerMessage.content());
         // only the content of the message can be updated
@@ -198,6 +233,8 @@ public class AnswerMessageService extends PostingService {
 
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
         updatedAnswerMessage.getPost().setConversation(conversation);
+
+        syncAnswerPostWithWeaviate(updatedAnswerMessage, conversation);
 
         this.preparePostAndBroadcast(updatedAnswerMessage, course);
         return updatedAnswerMessage;
@@ -230,6 +267,7 @@ public class AnswerMessageService extends PostingService {
         // checks
         AnswerPost answerMessage = this.findById(answerMessageId);
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
+        ensureConversationBelongsToCourseElseThrow(conversation, courseId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
@@ -242,6 +280,7 @@ public class AnswerMessageService extends PostingService {
 
         // delete
         answerPostRepository.deleteById(answerMessageId);
+        searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.ANSWER_POST, answerMessageId));
         preparePostForBroadcast(updatedMessage);
 
         // Delete all connected saved posts
@@ -284,5 +323,19 @@ public class AnswerMessageService extends PostingService {
         if (!answerMessage.getPost().getAuthor().equals(user)) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         }
+    }
+
+    /**
+     * Synchronizes an answer post with Weaviate. Only answer posts in public, non-archived channels are indexed.
+     */
+    private void syncAnswerPostWithWeaviate(AnswerPost answerPost, Conversation conversation) {
+        if (!(conversation instanceof Channel channel)) {
+            return;
+        }
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (PostSearchableEntityDTO.isIndexable(channel)) {
+                service.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answerPost, channel));
+            }
+        });
     }
 }

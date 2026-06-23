@@ -1,19 +1,19 @@
 package de.tum.cit.aet.artemis.programming.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -23,16 +23,16 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.TestConstants;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -828,8 +828,8 @@ public class ProgrammingExerciseUtilService {
             var task = new ProgrammingExerciseTask();
             task.setTaskName("Task for " + testCase.getTestName());
             task.setExercise(programmingExercise);
-            task.setTestCases(Collections.singleton(testCase));
-            testCase.setTasks(Collections.singleton(task));
+            task.setTestCases(Set.of(testCase));
+            testCase.setTasks(Set.of(task));
             problemStatement.append("[task][").append(task.getTaskName()).append("](")
                     .append(task.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).collect(Collectors.joining(","))).append(")\n");
             return task;

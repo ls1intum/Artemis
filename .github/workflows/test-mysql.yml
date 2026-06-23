@@ -4,12 +4,14 @@ name: Test (MySQL)
 on:
   workflow_dispatch: # Manual trigger only for now
 
-# Limit the number of concurrent runs to one per PR
+# Manual-only workflow: dedupe repeated dispatches on the same ref (no PR context exists, so
+# keying on github.ref is what actually groups runs; the old pull_request.number fallback to
+# run_id was unique per run and never deduped).
 concurrency:
-  group: test-mysql-${{ github.head_ref || github.run_id }}
+  group: test-mysql-${{ github.ref }}
   cancel-in-progress: true
 
-# Keep in sync with test.yml
+# Keep in sync with ci-test.yml
 env:
   CI: true
   node: 24
@@ -31,7 +33,9 @@ jobs:
         java-version: |
           17
           ${{ env.java }}
-        cache: 'gradle'
+    - name: Setup Gradle
+      # Sole Gradle dependency-cache mechanism (prunes unused artifacts -> leaner cache, less eviction). See ci-build.yml.
+      uses: gradle/actions/setup-gradle@v6
     - name: Java Tests (module-affected)
       if: ${{ !env.RUN_ALL_TESTS }}
       run: |
@@ -60,28 +64,22 @@ jobs:
         set -o pipefail
         ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification -Dzonky.test.database.type=MYSQL | tee tests.log
     - name: Upload JUnit Test Results
-      if: success() || failure()
-      uses: actions/upload-artifact@v6
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v7
       with:
         name: JUnit Test Results (MySQL)
         path: build/test-results/test/*.xml
     - name: Print failed tests
       if: failure()
       run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
-    - name: Annotate Server Test Results
-      uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
-      if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
-      with:
-        access-token: ${{ secrets.GITHUB_TOKEN }}
-        path: build/test-results/test/*.xml
-        numFailures: 99
     - name: Test Report
-      uses: dorny/test-reporter@v2
-      if: success() || failure()
+      # Renders the JUnit report as a check-run AND annotates failing tests in the PR diff.
+      uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
+      if: ${{ !cancelled() }}
       with:
         name: MySQL Tests
         path: build/test-results/test/*.xml
         reporter: java-junit
     - name: Number of Server Starts
-      if: success() || failure()
+      if: ${{ !cancelled() }}
       run: bash supporting_scripts/extract_number_of_server_starts.sh

@@ -27,6 +27,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import io.jsonwebtoken.Claims;
@@ -38,7 +39,6 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import tech.jhipster.config.JHipsterProperties;
 
 @Profile(PROFILE_CORE)
 @Component
@@ -61,11 +61,11 @@ public class TokenProvider {
 
     private long tokenValidityInMillisecondsForRememberMe;
 
-    private final JHipsterProperties jHipsterProperties;
+    private final ArtemisProperties jHipsterProperties;
 
     private final SecurityMetersService securityMetersService;
 
-    public TokenProvider(JHipsterProperties jHipsterProperties, SecurityMetersService securityMetersService) {
+    public TokenProvider(ArtemisProperties jHipsterProperties, SecurityMetersService securityMetersService) {
         this.jHipsterProperties = jHipsterProperties;
         this.securityMetersService = securityMetersService;
     }

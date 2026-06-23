@@ -1,0 +1,169 @@
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { Subscription } from 'rxjs';
+import { faAngleDown, faAngleUp, faArrowDown19, faArrowUp19, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { SizeProp } from '@fortawesome/fontawesome-svg-core';
+import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
+import { CourseForArchiveDTO } from 'app/course/shared/entities/course-for-archive-dto';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CommonModule } from '@angular/common';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { addPublicFilePrefix } from 'app/app.constants';
+
+@Component({
+    selector: 'jhi-course-archive',
+    templateUrl: './course-archive.component.html',
+    styleUrls: ['./course-archive.component.scss'],
+    imports: [CourseCardHeaderComponent, SearchFilterComponent, SearchFilterPipe, TranslateDirective, ArtemisTranslatePipe, CommonModule, FontAwesomeModule, NgbTooltipModule],
+})
+export class CourseArchiveComponent implements OnInit, OnDestroy {
+    private archiveCourseSubscription: Subscription;
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+
+    readonly courses = signal<CourseForArchiveDTO[]>([]);
+    readonly semesters = signal<string[]>([]);
+    readonly fullFormOfSemesterStrings = signal<{ [key: string]: string }>({});
+    readonly semesterCollapsed = signal<{ [key: string]: boolean }>({});
+    readonly coursesBySemester = signal<{ [key: string]: Course[] }>({});
+    readonly searchCourseText = signal('');
+    readonly isSortAscending = signal(true);
+    iconSize: SizeProp = 'lg';
+
+    //Icons
+    readonly faAngleDown = faAngleDown;
+    readonly faAngleUp = faAngleUp;
+    readonly faArrowDown19 = faArrowDown19;
+    readonly faArrowUp19 = faArrowUp19;
+    readonly faQuestionCircle = faQuestionCircle;
+
+    ngOnInit(): void {
+        this.loadArchivedCourses();
+    }
+
+    /**
+     * Loads all courses that the student has been enrolled in from previous semesters
+     */
+    loadArchivedCourses(): void {
+        this.archiveCourseSubscription = this.courseService.getCoursesForArchive().subscribe({
+            next: (res: HttpResponse<CourseForArchiveDTO[]>) => {
+                if (res.body) {
+                    const courses = res.body;
+                    courses.forEach((courseDto: CourseForArchiveDTO) => {
+                        courseDto.icon = addPublicFilePrefix(courseDto.icon) || courseDto.icon;
+                    });
+                    this.courses.set(this.sortCoursesByTitle(courses));
+                    this.semesters.set(this.getUniqueSemesterNamesSorted(this.courses()));
+                    this.mapCoursesIntoSemesters();
+                }
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
+    }
+
+    /**
+     * maps existing courses to each semester
+     */
+    mapCoursesIntoSemesters(): void {
+        const semesterCollapsed: { [key: string]: boolean } = {};
+        const coursesBySemester: { [key: string]: Course[] } = {};
+        const fullFormOfSemesterStrings: { [key: string]: string } = {};
+        this.semesters().forEach((semester) => {
+            const stored = this.courseService.getSemesterCollapseStateFromStorage(semester);
+            semesterCollapsed[semester] = stored ?? false;
+            this.courseService.setSemesterCollapseState(semester, false);
+            coursesBySemester[semester] = this.courses().filter((course) => course.semester === semester);
+            fullFormOfSemesterStrings[semester] = semester.startsWith('WS') ? 'artemisApp.course.archive.winterSemester' : 'artemisApp.course.archive.summerSemester';
+        });
+        this.semesterCollapsed.set(semesterCollapsed);
+        this.coursesBySemester.set(coursesBySemester);
+        this.fullFormOfSemesterStrings.set(fullFormOfSemesterStrings);
+    }
+
+    ngOnDestroy(): void {
+        this.archiveCourseSubscription.unsubscribe();
+    }
+
+    setSearchValue(searchValue: string): void {
+        this.searchCourseText.set(searchValue);
+        if (searchValue !== '') {
+            this.expandOrCollapseBasedOnSearchValue();
+        } else {
+            this.getCollapseStateForSemesters();
+        }
+    }
+
+    onSort(): void {
+        if (this.semesters().length) {
+            this.semesters.set([...this.semesters()].reverse());
+            this.isSortAscending.update((value) => !value);
+        }
+    }
+    /**
+     * if the searched text is matched with a course title, expand the accordion, otherwise collapse
+     */
+    expandOrCollapseBasedOnSearchValue(): void {
+        const semesterCollapsed = { ...this.semesterCollapsed() };
+        for (const semester of this.semesters()) {
+            const hasMatchingCourse = this.coursesBySemester()[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText().toLowerCase()));
+            semesterCollapsed[semester] = !hasMatchingCourse;
+        }
+        this.semesterCollapsed.set(semesterCollapsed);
+    }
+
+    getCollapseStateForSemesters(): void {
+        const semesterCollapsed = { ...this.semesterCollapsed() };
+        for (const semester of this.semesters()) {
+            semesterCollapsed[semester] = this.courseService.getSemesterCollapseStateFromStorage(semester);
+        }
+        this.semesterCollapsed.set(semesterCollapsed);
+    }
+
+    toggleCollapseState(semester: string): void {
+        const newState = !this.semesterCollapsed()[semester];
+        this.semesterCollapsed.set({ ...this.semesterCollapsed(), [semester]: newState });
+        this.courseService.setSemesterCollapseState(semester, newState);
+    }
+
+    isCourseFoundInSemester(semester: string): boolean {
+        return this.coursesBySemester()[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText().toLowerCase()));
+    }
+
+    sortCoursesByTitle(courses: CourseForArchiveDTO[]): CourseForArchiveDTO[] {
+        return courses.sort((courseA, courseB) => (courseA.title ?? '').localeCompare(courseB.title ?? ''));
+    }
+
+    getUniqueSemesterNamesSorted(courses: CourseForArchiveDTO[]): string[] {
+        return (
+            courses
+                .map((course) => course.semester ?? '')
+                // filter down to unique values
+                .filter((course, index, courses) => courses.indexOf(course) === index)
+                .sort((semesterA, semesterB) => {
+                    // Parse years in base 10 by extracting the two digits after the WS or SS prefix
+                    const yearsCompared = parseInt(semesterB.slice(2, 4), 10) - parseInt(semesterA.slice(2, 4), 10);
+                    if (yearsCompared !== 0) {
+                        return yearsCompared;
+                    }
+
+                    // If years are the same, sort WS over SS
+                    const prefixA = semesterA.slice(0, 2);
+                    const prefixB = semesterB.slice(0, 2);
+
+                    if (prefixA === prefixB) {
+                        return 0; // Both semesters are the same (either both WS or both SS)
+                    }
+
+                    return prefixA === 'WS' ? -1 : 1; // WS should be placed above SS
+                })
+        );
+    }
+}

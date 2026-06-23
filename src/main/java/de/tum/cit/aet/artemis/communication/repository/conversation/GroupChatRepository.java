@@ -35,6 +35,8 @@ public interface GroupChatRepository extends ArtemisJpaRepository<GroupChat, Lon
                 LEFT JOIN FETCH groupChat.conversationParticipants conversationParticipants
                 LEFT JOIN FETCH conversationParticipants.user user
                 LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH groupChat.course
+                LEFT JOIN FETCH groupChat.creator
             WHERE groupChat.course.id = :courseId
                 AND conversationParticipant.user.id = :userId
             ORDER BY groupChat.lastMessageDate DESC

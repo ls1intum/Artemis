@@ -1,19 +1,19 @@
-import { Component, Input, OnDestroy, inject } from '@angular/core';
-import { AlertService } from 'app/shared/service/alert.service';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { getAsGroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Subject, takeUntil } from 'rxjs';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
 import { finalize } from 'rxjs/operators';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AddUsersFormData, ConversationAddUsersFormComponent } from './add-users-form/conversation-add-users-form.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
@@ -32,18 +32,19 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
 
     private ngUnsubscribe = new Subject<void>();
 
-    @Input() course: Course;
-    @Input() activeConversation: ConversationDTO;
+    course = signal<Course | undefined>(undefined);
+    activeConversation = signal<ConversationDTO | undefined>(undefined);
 
     isInitialized = false;
-    maxSelectable: number | undefined;
-    protected isLoading = false;
+    readonly maxSelectable = signal<number | undefined>(undefined);
+    protected readonly isLoading = signal(false);
 
     initialize() {
         super.initialize(['course', 'activeConversation']);
         if (this.isInitialized) {
-            if (isGroupChatDTO(this.activeConversation)) {
-                this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (this.activeConversation?.numberOfMembers ?? 0);
+            const activeConversation = this.activeConversation()!;
+            if (isGroupChatDTO(activeConversation)) {
+                this.maxSelectable.set(MAX_GROUP_CHAT_PARTICIPANTS - (activeConversation?.numberOfMembers ?? 0));
             }
         }
     }
@@ -63,38 +64,41 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
-        if (isChannelDTO(this.activeConversation)) {
+        const activeConversation = this.activeConversation()!;
+        if (isChannelDTO(activeConversation)) {
             this.channelService
-                .registerUsersToChannel(this.course.id!, this.activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
+                .registerUsersToChannel(this.course()!.id!, activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
                 .pipe(
-                    finalize(() => this.close()),
+                    finalize(() => {
+                        this.isLoading.set(false);
+                    }),
                     takeUntil(this.ngUnsubscribe),
                 )
                 .subscribe({
-                    next: () => {},
+                    next: () => {
+                        this.close(true);
+                    },
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
-                    },
-                    complete: () => {
-                        this.isLoading = false;
                     },
                 });
-        } else if (isGroupChatDTO(this.activeConversation)) {
+        } else if (isGroupChatDTO(activeConversation)) {
             this.groupChatService
-                .addUsersToGroupChat(this.course.id!, this.activeConversation.id!, userLogins)
+                .addUsersToGroupChat(this.course()!.id!, activeConversation.id!, userLogins)
                 .pipe(
-                    finalize(() => this.close()),
+                    finalize(() => {
+                        this.isLoading.set(false);
+                    }),
                     takeUntil(this.ngUnsubscribe),
                 )
                 .subscribe({
-                    next: () => {},
+                    next: () => {
+                        this.close(true);
+                    },
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
-                    },
-                    complete: () => {
-                        this.isLoading = false;
                     },
                 });
         } else {

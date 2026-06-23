@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import 'app/shared/util/map.extension';
+import 'app/foundation/util/map.extension';
 
 vi.mock('@sentry/angular', async (importOriginal) => {
     const originalModule = await importOriginal<typeof import('@sentry/angular')>();
@@ -14,9 +14,12 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
+import { User } from 'app/account/user/user.model';
 import * as Sentry from '@sentry/angular';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('EntityTitleService', () => {
     setupTestBed({ zoneless: true });
@@ -28,6 +31,7 @@ describe('EntityTitleService', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
                 // Override the service to get a fresh instance for each test
                 { provide: EntityTitleService, useClass: EntityTitleService },
             ],
@@ -50,7 +54,7 @@ describe('EntityTitleService', () => {
     it.each([
         { type: EntityType.EXERCISE, ids: [1], url: 'exercise/exercises/1' },
         { type: EntityType.LECTURE, ids: [1], url: 'lecture/lectures/1' },
-        { type: EntityType.COURSE, ids: [1], url: 'core/courses/1' },
+        { type: EntityType.COURSE, ids: [1], url: 'course/courses/1' },
         { type: EntityType.DIAGRAM, ids: [1], url: 'modeling/apollon-diagrams/1' },
         { type: EntityType.EXAM, ids: [1], url: 'exam/exams/1' },
         { type: EntityType.ORGANIZATION, ids: [1], url: 'core/organizations/1' },
@@ -169,5 +173,86 @@ describe('EntityTitleService', () => {
         const result = await firstValueFrom(service.getTitle(EntityType.EXERCISE, [1]));
 
         expect(result).toBe('Exercise Title');
+    });
+});
+
+describe('EntityTitleService - authentication state changes', () => {
+    setupTestBed({ zoneless: true });
+
+    let authState: BehaviorSubject<User | undefined>;
+    let scoped: EntityTitleService;
+
+    beforeEach(() => {
+        authState = new BehaviorSubject<User | undefined>({ id: 99 } as User);
+        const customAccountService = new MockAccountService();
+        customAccountService.userIdentity.set({ id: 99 } as User);
+        customAccountService.getAuthenticationState = () => authState.asObservable().pipe(distinctUntilChanged());
+
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useValue: customAccountService },
+                { provide: EntityTitleService, useClass: EntityTitleService },
+            ],
+        });
+        scoped = TestBed.inject(EntityTitleService);
+    });
+
+    it('should clear cached titles on logout', async () => {
+        scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
+        const before = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
+        expect(before).toBe('Course Title');
+
+        authState.next(undefined);
+
+        // After reset, getTitle returns a fresh subject that hasn't been populated.
+        const observable = scoped.getTitle(EntityType.COURSE, [1]);
+        let received: string | undefined;
+        const sub = observable.subscribe((title) => (received = title));
+        expect(received).toBeUndefined();
+        sub.unsubscribe();
+    });
+
+    it('should clear cached titles when a different user logs in', async () => {
+        scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
+
+        authState.next({ id: 42 } as User);
+
+        let received: string | undefined;
+        const sub = scoped.getTitle(EntityType.COURSE, [1]).subscribe((title) => (received = title));
+        expect(received).toBeUndefined();
+        sub.unsubscribe();
+    });
+
+    it('should not clear titles when the same user re-emits', async () => {
+        scoped.setTitle(EntityType.COURSE, [1], 'Course Title');
+
+        authState.next({ id: 99 } as User);
+
+        const result = await firstValueFrom(scoped.getTitle(EntityType.COURSE, [1]));
+        expect(result).toBe('Course Title');
+    });
+
+    it('should ignore in-flight title fetches that resolve after a logout', () => {
+        const http = TestBed.inject(HttpClient);
+        const inFlight = new Subject<HttpResponse<string>>();
+        vi.spyOn(http, 'get').mockReturnValue(inFlight.asObservable());
+
+        // Bypass the 3s fallback timer and exercise fetchTitle directly to keep the test
+        // synchronous and immune to injector teardown between tests.
+        (scoped as unknown as { fetchTitle: (type: EntityType, ids: number[]) => void }).fetchTitle(EntityType.COURSE, [1]);
+
+        authState.next(undefined);
+
+        // The HTTP response arrives after logout. The fetch handler must short-circuit so it does
+        // not seed a fresh subject (via setTitle's computeIfAbsent) with the previous user's title.
+        inFlight.next(new HttpResponse<string>({ body: 'Stale Title' }));
+        inFlight.complete();
+
+        let received: string | undefined;
+        const after = scoped.getTitle(EntityType.COURSE, [1]).subscribe((title) => (received = title));
+        expect(received).toBeUndefined();
+        after.unsubscribe();
     });
 });

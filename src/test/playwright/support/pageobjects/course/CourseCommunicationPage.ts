@@ -25,7 +25,7 @@ export class CourseCommunicationPage {
      * @returns The locator for the context selector.
      */
     getContextSelectorInModal() {
-        return this.page.locator('.modal-content #context');
+        return this.page.locator('.p-dialog-content #context');
     }
 
     /**
@@ -33,8 +33,8 @@ export class CourseCommunicationPage {
      * @param title - The title to be set.
      */
     async setTitleInModal(title: string) {
-        await this.page.locator('.modal-content').locator('#title').fill('');
-        await this.page.locator('.modal-content').locator('#title').fill(title);
+        await this.page.locator('.p-dialog-content').locator('#title').fill('');
+        await this.page.locator('.p-dialog-content').locator('#title').fill(title);
     }
 
     /**
@@ -42,7 +42,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInModal(content: string) {
-        const contentField = this.page.locator('.modal-content .markdown-editor .monaco-editor');
+        const contentField = this.page.locator('.p-dialog-content .markdown-editor .monaco-editor');
         await setMonacoEditorContentByLocator(this.page, contentField, content);
     }
 
@@ -309,5 +309,48 @@ export class CourseCommunicationPage {
      */
     async checkSingleExercisePost(postID: number, content: string) {
         await expect(this.getSinglePostContent(postID, content)).toBeVisible();
+    }
+
+    /**
+     * Returns the scrollable container of the discussion section that hosts the infinite-scroll directive.
+     */
+    getDiscussionScrollContainer() {
+        return this.page.locator('jhi-discussion-section [infinite-scroll]');
+    }
+
+    /**
+     * Scrolls the discussion section to the very top, bringing the infinite-scroll directive's top sentinel
+     * into view and triggering the load of the next (older) page of posts.
+     */
+    async scrollDiscussionToTop() {
+        const container = this.getDiscussionScrollContainer();
+        await container.waitFor({ state: 'visible', timeout: 30000 });
+        await container.evaluate((element) => element.scrollTo({ top: 0 }));
+    }
+
+    /**
+     * Returns the number of posts currently rendered in the discussion section.
+     */
+    async getRenderedDiscussionPostCount(): Promise<number> {
+        return this.page.locator('jhi-discussion-section [id^="item-"]').count();
+    }
+
+    /**
+     * Returns the locator for a single post in the discussion section by its ID.
+     * @param postID - The ID of the post.
+     */
+    getDiscussionPost(postID: number) {
+        return this.page.locator(`jhi-discussion-section #item-${postID}`);
+    }
+
+    /**
+     * Verifies that a post with the given ID and content is visible in the discussion section.
+     * @param postID - The ID of the post.
+     * @param content - The content expected to be visible in the post.
+     */
+    async checkDiscussionPost(postID: number, content: string) {
+        const post = this.getDiscussionPost(postID);
+        await expect(post).toBeVisible({ timeout: 30000 });
+        await expect(post.locator('.markdown-preview', { hasText: content })).toBeVisible({ timeout: 30000 });
     }
 }

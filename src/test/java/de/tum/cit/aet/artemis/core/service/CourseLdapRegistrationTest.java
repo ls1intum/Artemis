@@ -14,14 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
-import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.core.service.user.PasswordService;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -75,7 +75,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
         }
         StudentDTO dto2 = new StudentDTO(null, null, null, null, null);
 
-        var failures = request.postListWithResponseBody("/api/core/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class, HttpStatus.OK);
+        var failures = request.postListWithResponseBody("/api/course/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class, HttpStatus.OK);
         assertThat(failures).containsExactly(dto2);
     }
 
@@ -97,7 +97,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
         // the instructor searches for a registration number, so the user is not found in the database, but in the LDAP service, this should still work
         StudentDTO dto1 = new StudentDTO(null, null, null, registrationNumber, null);
         doReturn(Optional.of(ldapUser1Dto)).when(ldapUserService).findByRegistrationNumber(dto1.registrationNumber());
-        var failures = request.postListWithResponseBody("/api/core/courses/" + course1.getId() + "/students", List.of(dto1), StudentDTO.class, HttpStatus.OK);
+        var failures = request.postListWithResponseBody("/api/course/courses/" + course1.getId() + "/students", List.of(dto1), StudentDTO.class, HttpStatus.OK);
         assertThat(failures).isEmpty();
 
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("go42tum");

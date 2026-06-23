@@ -1,0 +1,490 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { provideRouter } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
+import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
+import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { ParticipationModeToggleComponent } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { UMLDiagramType } from '@tumaet/apollon';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
+import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
+import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import dayjs from 'dayjs/esm';
+
+describe('ExerciseHeaderComponent', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<ExerciseHeaderComponent>;
+
+    const submitCallback = vi.fn();
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ExerciseHeaderComponent],
+            providers: [
+                provideRouter([]),
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(QuizExerciseService),
+                MockProvider(AlertService),
+                MockProvider(CourseExerciseService),
+                MockProvider(ParticipationService),
+                MockProvider(ProfileService),
+            ],
+        });
+
+        // Mock child components of ExerciseHeaderComponent not under test
+        TestBed.overrideComponent(ExerciseHeaderComponent, {
+            remove: { imports: [ExerciseHeadersInformationComponent, ParticipationModeToggleComponent] },
+            add: { imports: [MockComponent(ExerciseHeadersInformationComponent), MockComponent(ParticipationModeToggleComponent)] },
+        });
+
+        // Mock complex child imports of ExerciseHeaderActionsComponent to avoid deep dependency chains
+        TestBed.overrideComponent(ExerciseHeaderActionsComponent, {
+            remove: {
+                imports: [TranslateDirective, ArtemisTranslatePipe, FeatureToggleDirective, RequestFeedbackButtonComponent, StartPracticeModeButtonComponent, CodeButtonComponent],
+            },
+            add: {
+                imports: [
+                    MockDirective(TranslateDirective),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockDirective(FeatureToggleDirective),
+                    MockComponent(RequestFeedbackButtonComponent),
+                    MockComponent(StartPracticeModeButtonComponent),
+                    MockComponent(CodeButtonComponent),
+                ],
+            },
+        });
+
+        fixture = TestBed.createComponent(ExerciseHeaderComponent);
+    });
+
+    it('should hide submit button when the due date has passed', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+        exercise.dueDate = dayjs().subtract(1, 'days');
+        const participation = new StudentParticipation();
+        participation.initializationDate = dayjs().subtract(2, 'days');
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('studentParticipation', participation);
+        fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#submit-exercise'))).toBeNull();
+    });
+
+    it('should show submit button when no due date is set', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#submit-exercise'))).not.toBeNull();
+    });
+
+    it('should show the sidebar collapse button before the exercise heading when enabled and collapsed', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+        exercise.title = 'Modeling Exercise';
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        const titleRow = fixture.debugElement.query(By.css('#exercise-header > div')).nativeElement as HTMLElement;
+        const sidebarToggle = titleRow.querySelector('.btn-sidebar-collapse');
+        const heading = titleRow.querySelector('h5');
+
+        expect(sidebarToggle).not.toBeNull();
+        expect(heading).not.toBeNull();
+        expect(Array.from(titleRow.querySelectorAll('button, h5')).indexOf(sidebarToggle!)).toBeLessThan(Array.from(titleRow.querySelectorAll('button, h5')).indexOf(heading!));
+    });
+
+    it('should hide the sidebar collapse button next to the exercise heading when the sidebar is expanded', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+    });
+
+    it('should emit toggleSidebar when the sidebar collapse button is clicked', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+        const emitSpy = vi.spyOn(fixture.componentInstance.toggleSidebar, 'emit');
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        fixture.debugElement.query(By.css('.btn-sidebar-collapse')).triggerEventHandler('click');
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should mark the sidebar collapse button as collapsed when the sidebar is collapsed', () => {
+        const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        exercise.id = 1;
+        exercise.type = ExerciseType.MODELING;
+
+        fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('courseId', 5);
+        fixture.componentRef.setInput('showSidebarToggle', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse')).classes['is-collapsed']).toBeTruthy();
+    });
+
+    describe('hasGradedSubmission', () => {
+        it('should be false when there is no student participation', () => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.type = ExerciseType.MODELING;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.hasGradedSubmission()).toBe(false);
+        });
+
+        it('should be false when student participation has no submitted submissions', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const participation = new StudentParticipation();
+            participation.submissions = [{ submitted: false }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.hasGradedSubmission()).toBe(false);
+        });
+
+        it('should be true when student participation has a submitted submission', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const participation = new StudentParticipation();
+            participation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.hasGradedSubmission()).toBe(true);
+        });
+
+        it('should be false for a quiz submission that was only collected automatically when the quiz ended', () => {
+            // The quiz evaluation marks unsubmitted submissions as submitted with type TIMEOUT —
+            // the student still missed the deadline and must not get a "Graded" badge.
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const participation = new StudentParticipation();
+            participation.submissions = [{ submitted: true, type: SubmissionType.TIMEOUT }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.hasGradedSubmission()).toBe(false);
+            expect(fixture.componentInstance.showGradedMode()).toBe(false);
+        });
+    });
+
+    describe('showPracticeMode', () => {
+        it('should be false when there is no practice participation and mode is graded', () => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.type = ExerciseType.MODELING;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(false);
+        });
+
+        it('should be true when a practice participation exists, regardless of its submissions', () => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.type = ExerciseType.MODELING;
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+        });
+
+        it('should be true when a practice participation without submissions exists and mode is graded', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.componentRef.setInput('participationMode', 'graded');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+        });
+
+        it('should be true when mode is practice even without a practice participation', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+        });
+    });
+
+    describe('showGradedMode', () => {
+        it('should be false for a graded participation without submissions when no practice participation exists', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: false }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showGradedMode()).toBe(false);
+        });
+
+        it('should be true for a graded participation without submissions when a practice participation exists', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should be true when the graded participation has a submitted submission', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should be true without any graded participation when a practice participation exists, so the student can see the missed graded mode', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should be true during a quiz practice run of a missed quiz (no submitted graded submission, practice participation not yet created)', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: false }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+    });
+
+    describe('onNewParticipation', () => {
+        it('should switch to practice mode and keep the practice option for a new practice participation', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.dueDate = dayjs().subtract(1, 'hours');
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.detectChanges();
+
+            const emitSpy = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.testRun = true;
+            fixture.componentInstance.onNewParticipation(practiceParticipation);
+
+            expect(emitSpy).toHaveBeenCalledWith(practiceParticipation);
+            expect(fixture.componentInstance.participationMode()).toBe('practice');
+            expect(fixture.componentInstance.effectivePracticeParticipation()).toBe(practiceParticipation);
+            expect(fixture.componentInstance.showPracticeMode()).toBe(true);
+            expect(fixture.componentInstance.showGradedMode()).toBe(true);
+        });
+
+        it('should keep the graded mode for a new graded participation', () => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.type = ExerciseType.PROGRAMMING;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.detectChanges();
+
+            const emitSpy = vi.spyOn(fixture.componentInstance.newParticipation, 'emit');
+            const gradedParticipation = new StudentParticipation();
+            fixture.componentInstance.onNewParticipation(gradedParticipation);
+
+            expect(emitSpy).toHaveBeenCalledWith(gradedParticipation);
+            expect(fixture.componentInstance.participationMode()).toBe('graded');
+            expect(fixture.componentInstance.showPracticeMode()).toBe(false);
+        });
+    });
+
+    describe('viewing a past submission', () => {
+        it('should hide the submit action and offer the continue action instead', () => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+            exercise.type = ExerciseType.MODELING;
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('onSubmitExercise', submitCallback);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBe(submitCallback);
+            expect(fixture.componentInstance.onContinueExercise()).toBeUndefined();
+
+            fixture.componentInstance.isViewingSubmission.set(true);
+
+            expect(fixture.componentInstance.effectiveOnSubmitExercise()).toBeUndefined();
+            expect(fixture.componentInstance.onContinueExercise()).toBeDefined();
+        });
+    });
+
+    describe('activeParticipation', () => {
+        it('should not fall back to the graded participation in practice mode (so the badge does not show the graded score)', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipation()).toBeUndefined();
+        });
+
+        it('should use the practice participation in practice mode when one exists', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+            const practiceParticipation = new StudentParticipation();
+            practiceParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.componentRef.setInput('practiceParticipation', practiceParticipation);
+            fixture.componentRef.setInput('participationMode', 'practice');
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipation()).toBe(practiceParticipation);
+        });
+
+        it('should use the graded participation in graded mode', () => {
+            const exercise = new QuizExercise(undefined, undefined);
+            exercise.type = ExerciseType.QUIZ;
+            const gradedParticipation = new StudentParticipation();
+            gradedParticipation.submissions = [{ submitted: true }];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', gradedParticipation);
+            fixture.detectChanges();
+
+            expect(fixture.componentInstance.activeParticipation()).toBe(gradedParticipation);
+        });
+    });
+});

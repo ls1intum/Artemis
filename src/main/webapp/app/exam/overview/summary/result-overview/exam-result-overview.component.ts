@@ -1,23 +1,23 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
+import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-key/grading-key-table.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 type ExerciseInfo = {
@@ -34,38 +34,41 @@ type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-ke
     templateUrl: './exam-result-overview.component.html',
     imports: [TranslateDirective, CollapsibleCardComponent, NgClass, FaIconComponent, NoDataComponent, GradingKeyTableComponent, ArtemisTranslatePipe],
 })
-export class ExamResultOverviewComponent implements OnInit, OnChanges {
+export class ExamResultOverviewComponent implements OnInit {
     private serverDateService = inject(ArtemisServerDateService);
     exerciseService = inject(ExerciseService);
-    private changeDetector = inject(ChangeDetectorRef);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
 
-    @Input() studentExamWithGrade: StudentExamWithGradeDTO;
-    @Input() isGradingKeyCollapsed = true;
-    @Input() isBonusGradingKeyCollapsed = true;
-    @Input() exerciseInfos: Record<number, ExerciseInfo>;
-    @Input() isTestRun = false;
+    readonly studentExamWithGrade = input<StudentExamWithGradeDTO>(undefined!);
+    readonly isGradingKeyCollapsed = input(true);
+    readonly isBonusGradingKeyCollapsed = input(true);
+    readonly exerciseInfos = input<Record<number, ExerciseInfo>>(undefined!);
+    readonly isTestRun = input(false);
 
-    gradingScaleExists = false;
-    isBonus = false;
-    hasPassed = false;
-    grade?: string;
+    // Derived from the (async) studentExamWithGrade input — computed so the grading-key card renders under zoneless
+    // once the grade DTO arrives (previously set only in ngOnInit via setExamGrade + a manual detectChanges).
+    readonly gradingScaleExists = computed(() => !!this.areResultsPublished() && this.studentExamWithGrade()?.studentResult?.overallGrade != undefined);
+    readonly grade = computed(() => this.studentExamWithGrade()?.studentResult?.overallGrade);
+    readonly isBonus = computed(() => this.studentExamWithGrade()?.gradeType === GradeType.BONUS);
+    // Gated on gradingScaleExists to preserve the previous behavior: without a grading scale
+    // (overallGrade undefined) the achieved-percentage badge must not switch to the passed color.
+    readonly hasPassed = computed(() => this.gradingScaleExists() && !!this.studentExamWithGrade()?.studentResult?.hasPassed);
 
     // Icons
     faClipboard = faClipboard;
     faAward = faAward;
     faChevronRight = faChevronRight;
 
-    showIncludedInScoreColumn = false;
+    readonly showIncludedInScoreColumn = signal(false);
     /**
      * the max. achievable (normal) points. It is possible to exceed this value if there are bonus points.
      */
-    maxPoints = 0;
-    overallAchievedPoints = 0;
-    overallAchievedPercentageRoundedByCourseSettings = 0;
-    isBonusGradingKeyDisplayed = false;
+    readonly maxPoints = signal(0);
+    readonly overallAchievedPoints = signal(0);
+    readonly overallAchievedPercentageRoundedByCourseSettings = signal(0);
+    readonly isBonusGradingKeyDisplayed = signal(false);
 
     /**
      * The points summary table will only be shown if:
@@ -74,7 +77,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * - at least one exercise has a result
      * - it is a test run (results are published immediately)
      */
-    showResultOverview = false;
+    readonly showResultOverview = signal(false);
 
     isCollapsed: Record<ResultOverviewSection, boolean> = {
         'grading-table': false,
@@ -82,44 +85,46 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         'bonus-grading-key': true,
     };
 
-    ngOnInit() {
-        if (this.areResultsPublished()) {
-            this.setExamGrade();
-        }
-
-        this.updateLocalVariables();
+    constructor() {
+        effect(() => {
+            // Re-run whenever any signal input changes
+            this.studentExamWithGrade();
+            this.exerciseInfos();
+            this.isTestRun();
+            this.updateLocalVariables();
+        });
     }
 
-    ngOnChanges() {
+    ngOnInit() {
         this.updateLocalVariables();
     }
 
     private areResultsPublished() {
-        return isExamResultPublished(this.isTestRun, this.studentExamWithGrade?.studentExam?.exam, this.serverDateService);
+        return isExamResultPublished(this.isTestRun(), this.studentExamWithGrade()?.studentExam?.exam, this.serverDateService);
     }
 
     private updateLocalVariables() {
-        this.showResultOverview = !!(this.areResultsPublished() && this.hasAtLeastOneResult());
-        this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
-        this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
-        this.isBonusGradingKeyDisplayed = this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
+        this.showResultOverview.set(!!(this.areResultsPublished() && this.hasAtLeastOneResult()));
+        this.showIncludedInScoreColumn.set(this.containsExerciseThatIsNotIncludedCompletely());
+        this.maxPoints.set(this.studentExamWithGrade()?.maxPoints ?? 0);
+        this.isBonusGradingKeyDisplayed.set(this.studentExamWithGrade().studentResult.gradeWithBonus?.bonusGrade != undefined);
 
-        this.overallAchievedPoints = this.getOverallAchievedPoints();
-        this.overallAchievedPercentageRoundedByCourseSettings = this.getOverallAchievedPercentageRoundedByCourseSettings();
+        this.overallAchievedPoints.set(this.getOverallAchievedPoints());
+        this.overallAchievedPercentageRoundedByCourseSettings.set(this.getOverallAchievedPercentageRoundedByCourseSettings());
     }
 
     /**
      * used as fallback if not pre-calculated by the server
      */
     private sumExerciseScores() {
-        return (this.studentExamWithGrade.studentExam?.exercises ?? []).reduce((exerciseScoreSum, exercise) => {
-            const achievedPoints = this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
+        return (this.studentExamWithGrade().studentExam?.exercises ?? []).reduce((exerciseScoreSum, exercise) => {
+            const achievedPoints = this.studentExamWithGrade()?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
             return exerciseScoreSum + achievedPoints;
         }, 0);
     }
 
     private getOverallAchievedPoints() {
-        const overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved;
+        const overallAchievedPoints = this.studentExamWithGrade()?.studentResult.overallPointsAchieved;
         if (overallAchievedPoints === undefined || overallAchievedPoints === 0) {
             return this.sumExerciseScores();
         }
@@ -128,12 +133,12 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     }
 
     private getOverallAchievedPercentageRoundedByCourseSettings() {
-        let overallScoreAchieved = this.studentExamWithGrade.studentResult.overallScoreAchieved;
+        let overallScoreAchieved = this.studentExamWithGrade().studentResult.overallScoreAchieved;
         if (overallScoreAchieved === undefined || overallScoreAchieved === 0) {
             overallScoreAchieved = this.summedAchievedExerciseScorePercentage();
         }
 
-        return roundScorePercentSpecifiedByCourseSettings(overallScoreAchieved / 100, this.studentExamWithGrade.studentExam?.exam?.course);
+        return roundScorePercentSpecifiedByCourseSettings(overallScoreAchieved / 100, this.studentExamWithGrade().studentExam?.exam?.course);
     }
 
     /**
@@ -143,7 +148,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         let summedPercentages = 0;
         let numberOfExercises = 0;
 
-        Object.entries(this.exerciseInfos).forEach(([, exerciseInfo]) => {
+        Object.entries(this.exerciseInfos()).forEach(([, exerciseInfo]) => {
             summedPercentages += exerciseInfo.achievedPercentage ?? 0;
             numberOfExercises++;
         });
@@ -160,7 +165,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * -> displayed if at least one exercise is not included in the overall score
      */
     containsExerciseThatIsNotIncludedCompletely(): boolean {
-        for (const exercise of this.studentExamWithGrade?.studentExam?.exercises ?? []) {
+        for (const exercise of this.studentExamWithGrade()?.studentExam?.exercises ?? []) {
             if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
                 return true;
             }
@@ -170,24 +175,11 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Sets the student's exam grade if a grading scale exists for the exam
-     */
-    setExamGrade() {
-        if (this.studentExamWithGrade?.studentResult?.overallGrade != undefined) {
-            this.gradingScaleExists = true;
-            this.grade = this.studentExamWithGrade.studentResult.overallGrade;
-            this.isBonus = this.studentExamWithGrade.gradeType === GradeType.BONUS;
-            this.hasPassed = !!this.studentExamWithGrade.studentResult.hasPassed;
-            this.changeDetector.detectChanges();
-        }
-    }
-
-    /**
      * Returns the sum of max. achievable normal and bonus points. It is not possible to exceed this value.
      */
     getMaxNormalAndBonusPointsSum(): number {
-        const maxAchievableBonusPoints = this.studentExamWithGrade?.maxBonusPoints ?? 0;
-        return this.maxPoints + maxAchievableBonusPoints;
+        const maxAchievableBonusPoints = this.studentExamWithGrade()?.maxBonusPoints ?? 0;
+        return this.maxPoints() + maxAchievableBonusPoints;
     }
 
     scrollToExercise(exerciseId?: number) {
@@ -217,7 +209,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     }
 
     private hasAtLeastOneResult(): boolean {
-        const exercises = this.studentExamWithGrade?.studentExam?.exercises;
+        const exercises = this.studentExamWithGrade()?.studentExam?.exercises;
         if (exercises?.length && exercises.length > 0) {
             return exercises!.some((exercise) => getAllResultsOfAllSubmissions(exercise.studentParticipations?.[0]?.submissions).length! > 0);
         }

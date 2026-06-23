@@ -18,7 +18,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request to refine a problem statement using targeted selection-based instructions")
 public record ProblemStatementTargetedRefinementRequestDTO(
-        @NotBlank @Size(max = 50000) @Schema(description = "Original problem statement text to be refined (max 50,000 chars)") String problemStatementText,
+        @NotBlank @Size(min = 1, max = 50000) @Schema(description = "Original problem statement text to be refined (max 50,000 chars)") String problemStatementText,
 
         @NotNull @Min(1) @Max(10000) @Schema(description = "Start line number (1-indexed)") Integer startLine,
 
@@ -28,7 +28,7 @@ public record ProblemStatementTargetedRefinementRequestDTO(
 
         @Min(1) @Max(10000) @Schema(description = "End column within end line (1-indexed, exclusive — points after the last selected character, optional for character-level targeting)") Integer endColumn,
 
-        @NotBlank @Size(max = 500) @Schema(description = "Instruction describing what should change") String instruction) {
+        @NotBlank @Size(min = 1, max = 500) @Schema(description = "Instruction describing what should change") String instruction) {
 
     /**
      * Validates cross-field constraints and trims instruction before the implicit field assignment.

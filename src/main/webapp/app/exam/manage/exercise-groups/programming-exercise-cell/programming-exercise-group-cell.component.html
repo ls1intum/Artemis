@@ -8,7 +8,7 @@
         <div>
             @if (exercise().templateParticipation?.buildPlanId) {
                 <span>
-                    @if (!localCIEnabled) {
+                    @if (!localCIEnabled()) {
                         <a target="_blank" rel="noreferrer" href="{{ exercise().templateParticipation!.buildPlanUrl }}">Template</a>
                     } @else {
                         {{ exercise().templateParticipation!.buildPlanId }}
@@ -18,7 +18,7 @@
             <br />
             @if (exercise().solutionParticipation?.buildPlanId) {
                 <span>
-                    @if (!localCIEnabled) {
+                    @if (!localCIEnabled()) {
                         <a target="_blank" rel="noreferrer" href="{{ exercise().solutionParticipation!.buildPlanUrl }}">Solution</a>
                     } @else {
                         {{ exercise().solutionParticipation!.buildPlanId }}
@@ -38,7 +38,7 @@
                 <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineEditor'"></span>
                 <span [jhiTranslate]="exercise().allowOnlineEditor ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
             </div>
-            @if (onlineIdeEnabled) {
+            @if (onlineIdeEnabled()) {
                 <div class="d-flex justify-content-between">
                     <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>
                     <span [jhiTranslate]="exercise().allowOnlineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>

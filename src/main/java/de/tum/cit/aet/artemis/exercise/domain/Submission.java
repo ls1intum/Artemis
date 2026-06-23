@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.domain;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -28,8 +27,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ConcreteProxy;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -57,7 +55,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "S")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@ConcreteProxy
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "submissionExerciseType")
 // Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
 // @formatter:off
@@ -85,9 +83,9 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @ManyToOne
     private Participation participation;
 
+    // No @Cache: appended on every save; NONSTRICT produced stale version lists for concurrent readers, same class of bug as #12574.
     @JsonIgnore
     @OneToMany(mappedBy = "submission", cascade = CascadeType.REMOVE)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
@@ -96,7 +94,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * are deleted in a transactional method.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn
+    @OrderColumn(name = "results_order")
     @JsonIgnoreProperties({ "submission", "participation" })
     private List<Result> results = new ArrayList<>();
 
@@ -132,7 +130,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
+        Result latestResult = Optional.ofNullable(results).orElse(List.of()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -151,7 +149,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestCompletedResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Collections.emptyList()).stream().filter(result -> result != null && result.getCompletionDate() != null)
+        Result latestResult = Optional.ofNullable(results).orElse(List.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
                 .max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
 
         if (latestResult != null) {

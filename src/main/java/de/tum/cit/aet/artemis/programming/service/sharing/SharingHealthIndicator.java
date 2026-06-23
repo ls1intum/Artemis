@@ -9,8 +9,8 @@ import java.util.Optional;
 
 import org.apache.commons.collections4.list.UnmodifiableList;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.health.contributor.Health;
+import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -61,7 +61,7 @@ public class SharingHealthIndicator implements HealthIndicator {
                 SharingConnectorService.HealthStatus hs = lastStati.get(i);
                 ZonedDateTime zonedTimestamp = hs.getTimeStamp().atZone(UTC);
                 String timeStamp = TIME_STAMP_FORMATTER.format(zonedTimestamp);
-                health.withDetail(String.format("%3d: %s", i + 1, timeStamp), hs.getStatusMessage());
+                health.withDetail("%3d: %s".formatted(i + 1, timeStamp), hs.getStatusMessage());
             }
 
         }

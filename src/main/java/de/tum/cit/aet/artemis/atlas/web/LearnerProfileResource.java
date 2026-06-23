@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 @Conditional(AtlasEnabled.class)
@@ -53,7 +53,7 @@ public class LearnerProfileResource {
      */
     private void validateProfileField(int value, String fieldName) {
         if (value < MIN_PROFILE_VALUE || value > MAX_PROFILE_VALUE) {
-            String message = String.format("%s (%d) is outside valid bounds [%d, %d]", fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
+            String message = "%s (%d) is outside valid bounds [%d, %d]".formatted(fieldName, value, MIN_PROFILE_VALUE, MAX_PROFILE_VALUE);
             throw new BadRequestAlertException(message, LearnerProfile.ENTITY_NAME, fieldName.toLowerCase() + "OutOfBounds", true);
         }
     }

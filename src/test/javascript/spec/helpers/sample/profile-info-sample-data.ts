@@ -1,7 +1,7 @@
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { PROFILE_APOLLON, PROFILE_ATHENA, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { MODULE_FEATURE_APOLLON, MODULE_FEATURE_ATHENA, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 const programmingLanguageFeatures: ProgrammingLanguageFeature[] = [
     {
@@ -80,8 +80,8 @@ const buildInformation = {
 
 export const expectedProfileInfo: ProfileInfo = {
     localLLMDeploymentEnabled: false,
-    activeModuleFeatures: [],
-    activeProfiles: [PROFILE_PROD, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_APOLLON],
+    activeModuleFeatures: [MODULE_FEATURE_ATHENA, MODULE_FEATURE_APOLLON],
+    activeProfiles: [PROFILE_PROD, PROFILE_JENKINS],
     allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
     allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
     build: buildInformation,
@@ -105,7 +105,7 @@ export const expectedProfileInfo: ProfileInfo = {
     operatorName: 'TUM',
     programmingLanguageFeatures: programmingLanguageFeatures,
     registrationEnabled: true,
-    repositoryAuthenticationMechanisms: ['ssh', 'token', 'password'],
+    repositoryAuthenticationMechanisms: ['token', 'ssh', 'password'],
     sentry: { dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.aet.cit.tum.de/2' },
     sshCloneURLTemplate: 'ssh://git@artemistest2.aet.cit.tum.de:2222/',
     studentExamStoreSessionData: false,

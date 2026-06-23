@@ -1,34 +1,50 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { round } from 'app/shared/util/utils';
+import { Component, computed, inject, signal } from '@angular/core';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { round } from 'app/foundation/util/utils';
 import { QuizStatistic } from 'app/quiz/shared/entities/quiz-statistic.model';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions } from 'app/shared-ui/chart/chart-options';
 
 @Component({
     template: '',
 })
 export abstract class AbstractQuizStatisticComponent {
     protected translateService = inject(TranslateService);
+    protected chartColorService = inject(ChartColorService);
+
     data: number[] = [];
     ratedData: number[] = [];
     unratedData: number[] = [];
     rated = true;
     participants: number;
 
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
-    ngxColor = {
-        name: 'quiz statistics',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
-    bindFormatting = this.formatDataLabel.bind(this);
-    xAxisLabel: string;
-    yAxisLabel: string;
-    maxScale: number;
     chartLabels: string[] = [];
     totalParticipants = 0;
+
+    /** The current bar entries; updated via {@link updateChartData}. */
+    protected chartEntries = signal<ChartSeriesEntry[]>([]);
+    /** The per-bar colors; quiz statistics use literal hex colors. */
+    protected chartColors = signal<string[]>([]);
+    protected maxScale = signal<number | undefined>(undefined);
+    protected xAxisLabel = signal('');
+    protected yAxisLabel = signal('');
+
+    private resolvedChartColors = this.chartColorService.resolvedColors(() => this.chartColors());
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedChartColors()));
+    readonly chartOptions = computed(() =>
+        barChartOptions({
+            xAxis: { label: this.xAxisLabel() },
+            yAxis: { label: this.yAxisLabel(), max: this.maxScale() },
+            tooltip: false,
+            dataLabels: { formatter: (value) => this.formatDataLabel(value) },
+        }),
+    );
+    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
+    readonly dataLabelsPlugin = [ChartDataLabels];
 
     /**
      * Depending on if the rated or unrated results should be displayed,
@@ -50,18 +66,12 @@ export abstract class AbstractQuizStatisticComponent {
     }
 
     /**
-     * Creates dedicated objects of type NgxChartsSingleSeriesDataEntry that can be processed by ngx-charts
-     * in order to visualize the scores and calculates the maximum value on the y-axis
-     * in order to ensure a shapely display.
+     * Publishes the current data and labels to the chart and calculates the maximum value
+     * on the y-axis in order to ensure a shapely display.
      */
-    protected pushDataToNgxEntry(changeDetector: ChangeDetectorRef): void {
-        this.ngxData = [];
-        this.data.forEach((score, index) => {
-            this.ngxData.push({ name: this.chartLabels[index], value: score });
-        });
-        this.maxScale = this.calculateHeightOfChartData(this.data);
-        this.ngxData = [...this.ngxData];
-        changeDetector.detectChanges();
+    protected updateChartData(): void {
+        this.chartEntries.set(this.data.map((score, index) => ({ name: this.chartLabels[index], value: score })));
+        this.maxScale.set(this.calculateHeightOfChartData(this.data));
     }
 
     /**
@@ -81,12 +91,10 @@ export abstract class AbstractQuizStatisticComponent {
      * @returns string of the following pattern: absolute value (relative value)
      */
     protected formatDataLabel(absoluteValue: number): string {
-        const relativeValue = (absoluteValue / this.totalParticipants) * 100;
-        if (isNaN(relativeValue)) {
+        if (!this.totalParticipants || !this.participants) {
             return absoluteValue + ' (0%)';
-        } else {
-            return absoluteValue + ' (' + round((absoluteValue / this.participants) * 100, 1) + '%)';
         }
+        return absoluteValue + ' (' + round((absoluteValue / this.participants) * 100, 1) + '%)';
     }
 
     /**
@@ -115,8 +123,8 @@ export abstract class AbstractQuizStatisticComponent {
      * @param yAxisLabel translation path for y-axis label
      */
     setAxisLabels(xAxisLabel: string, yAxisLabel: string): void {
-        this.xAxisLabel = this.translateService.instant(xAxisLabel);
-        this.yAxisLabel = this.translateService.instant(yAxisLabel);
+        this.xAxisLabel.set(this.translateService.instant(xAxisLabel));
+        this.yAxisLabel.set(this.translateService.instant(yAxisLabel));
     }
 
     /**

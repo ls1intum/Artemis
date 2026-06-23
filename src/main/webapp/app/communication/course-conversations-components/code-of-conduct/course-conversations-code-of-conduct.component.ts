@@ -1,11 +1,11 @@
-import { Component, OnInit, inject, input } from '@angular/core';
-import { User } from 'app/core/user/user.model';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { User } from 'app/account/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
 @Component({
@@ -19,14 +19,14 @@ export class CourseConversationsCodeOfConductComponent implements OnInit {
 
     course = input.required<Course>();
 
-    responsibleContacts: User[] = [];
+    readonly responsibleContacts = signal<User[]>([]);
 
     ngOnInit() {
         if (this.course().id) {
             this.conversationService.getResponsibleUsersForCodeOfConduct(this.course().id!).subscribe({
                 next: (res: HttpResponse<User[]>) => {
                     if (res.body) {
-                        this.responsibleContacts = res.body;
+                        this.responsibleContacts.set(res.body);
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

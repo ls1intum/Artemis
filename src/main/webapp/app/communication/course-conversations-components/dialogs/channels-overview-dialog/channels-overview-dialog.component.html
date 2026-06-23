@@ -1,19 +1,19 @@
-<jhi-loading-indicator-container [isLoading]="isLoading">
+<jhi-loading-indicator-container [isLoading]="isLoading()">
     @if (isInitialized) {
         <div class="channels-overview">
             <div class="modal-header">
                 <h4 class="modal-title">
-                    <span>{{ 'artemisApp.dialogs.channelOverview.title' | artemisTranslate: { courseTitle: course.title } }}</span>
+                    <span>{{ 'artemisApp.dialogs.channelOverview.title' | artemisTranslate: { courseTitle: course()?.title } }}</span>
                 </h4>
                 <button type="button" class="btn-close" (click)="clear()"></button>
             </div>
             <div class="modal-body">
                 <!-- Overview Table -->
-                @if (channels && channels.length > 0) {
+                @if (channels().length > 0) {
                     <div class="form-group mt-2">
                         <div class="table-wrapper-scroll-y scrollbar">
                             <ul class="list-group">
-                                @for (channel of channels; track channels.indexOf(channel)) {
+                                @for (channel of channels(); track channel.id) {
                                     <li [id]="'channel-' + channel.id" class="list-group-item">
                                         <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)" />
                                     </li>

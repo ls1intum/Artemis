@@ -26,5 +26,20 @@ public interface TutorialGroupTestRepository extends TutorialGroupRepository {
             """)
     Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(@Param("title") String title, @Param("courseId") Long courseId);
 
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+                LEFT JOIN FETCH tutorialGroup.teachingAssistant
+                LEFT JOIN FETCH tutorialGroup.registrations
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
+                LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
+            WHERE tutorialGroup.id = :id
+            """)
+    Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessions(@Param("id") Long id);
+
+    default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(Long tutorialGroupId) {
+        return getValueElseThrow(findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessions(tutorialGroupId), tutorialGroupId);
+    }
+
     boolean existsByTitleAndCourseId(String title, Long courseId);
 }

@@ -1,12 +1,12 @@
 <div class="question card">
-    <div class="card-header d-flex align-items-center justify-content-between" (click)="toggleCollapse()">
+    <div class="card-header d-flex align-items-center justify-content-between" (click)="toggleCollapse()()">
         <ng-content select=".header" />
-        <button class="btn rotate-icon" [class.rotated]="!isCardContentCollapsed" [attr.aria-expanded]="isCardContentCollapsed" [attr.aria-controls]="isCardContentCollapsed">
+        <button class="btn rotate-icon" [class.rotated]="!isCardContentCollapsed()" [attr.aria-expanded]="isCardContentCollapsed()" [attr.aria-controls]="isCardContentCollapsed()">
             <fa-icon size="2x" [icon]="faAngleRight" />
         </button>
     </div>
 
-    <div class="card-body question-card-body" [ngbCollapse]="isCardContentCollapsed">
+    <div class="card-body question-card-body" [ngbCollapse]="isCardContentCollapsed()">
         <ng-content select=".collapsible-content" />
     </div>
 </div>

@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
@@ -18,11 +18,11 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { QuizPointStatisticComponent } from 'app/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
 import dayjs from 'dayjs/esm';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
@@ -93,9 +93,9 @@ describe('QuizExercise Point Statistic Component', () => {
             const updateDisplayedTimesSpy = vi.spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
-            comp.quizExercise = quizExercise;
-            comp.quizExercise.quizPointStatistic = new QuizPointStatistic();
-            comp.quizExercise.quizPointStatistic.pointCounters = pointCounters;
+            comp.quizExercise.set(quizExercise);
+            comp.quizExercise().quizPointStatistic = new QuizPointStatistic();
+            comp.quizExercise().quizPointStatistic!.pointCounters = pointCounters;
 
             // call
             comp.ngOnInit();
@@ -127,26 +127,26 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should update remaining time', () => {
             // setup
             quizExercise.dueDate = dayjs();
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             // call
             comp.updateDisplayedTimes();
 
             // check
-            expect(comp.remainingTimeSeconds).toBe(-1);
-            expect(comp.remainingTimeText).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
+            expect(comp.remainingTimeSeconds()).toBe(-1);
+            expect(comp.remainingTimeText()).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
         });
 
         it('should show remaining time as zero if time unknown', () => {
             // setup
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             // call
             comp.updateDisplayedTimes();
 
             // check
-            expect(comp.remainingTimeSeconds).toBe(0);
-            expect(comp.remainingTimeText).toBe('?');
+            expect(comp.remainingTimeSeconds()).toBe(0);
+            expect(comp.remainingTimeText()).toBe('?');
         });
     });
 
@@ -188,7 +188,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             // check
             expect(routerSpy).not.toHaveBeenCalled();
-            expect(comp.quizExercise).toEqual(quizExercise);
+            expect(comp.quizExercise()).toEqual(quizExercise);
             expect(comp.waitingForQuizStart).toBe(false);
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
@@ -209,7 +209,7 @@ describe('QuizExercise Point Statistic Component', () => {
         // setup
         quizExercise.quizQuestions = undefined;
         quizExercise.maxPoints = 42;
-        comp.quizExercise = quizExercise;
+        comp.quizExercise.set(quizExercise);
         accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
 
         vi.spyOn(comp, 'loadData').mockImplementation(() => {});
@@ -218,7 +218,7 @@ describe('QuizExercise Point Statistic Component', () => {
         comp.loadQuizSuccess(quizExercise);
 
         // check
-        expect(comp.maxScore).toBe(42);
+        expect(comp.maxScore()).toBe(42);
     });
 
     describe('loadData', () => {
@@ -227,7 +227,7 @@ describe('QuizExercise Point Statistic Component', () => {
             const loadDataInDiagramSpy = vi.spyOn(comp, 'loadDataInDiagram');
             comp.quizPointStatistic = new QuizPointStatistic();
             comp.quizPointStatistic.pointCounters = pointCounters;
-            comp.maxScore = 4;
+            comp.maxScore.set(4);
 
             // call
             comp.loadData();
@@ -258,7 +258,7 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should recalculate', () => {
             const recalculateMock = vi.spyOn(quizService, 'recalculate').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             const loadQuizSucessMock = vi.spyOn(comp, 'loadQuizSuccess').mockImplementation(() => {});
-            comp.quizExercise = quizExercise;
+            comp.quizExercise.set(quizExercise);
 
             comp.recalculate();
 

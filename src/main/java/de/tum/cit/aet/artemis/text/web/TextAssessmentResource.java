@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.text.web;
 
 import static java.util.stream.Collectors.toSet;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +30,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -41,9 +44,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -185,7 +186,7 @@ public class TextAssessmentResource extends AssessmentResource {
         final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
         final Submission submission = result.getSubmission();
         final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
-        final List<Feedback> feedbacksWithIds = result.getFeedbacks();
+        final Set<Feedback> feedbacksWithIds = result.getFeedbacks();
         saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, feedbacksWithIds);
         return ResponseEntity.ok(result);
     }
@@ -412,7 +413,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // set result again as it was changed
         if (resultId != null) {
             result = textSubmission.getManualResultsById(resultId);
-            textSubmission.setResults(Collections.singletonList(result));
+            textSubmission.setResults(List.of(result));
         }
         else {
             textSubmission.getResultForCorrectionRound(correctionRound);
@@ -493,7 +494,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * @param textSubmission to associate blocks with
      * @param feedbacks      the feedbacks to associate with the blocks
      */
-    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+    private void saveTextBlocks(final Set<TextBlock> textBlocks, final TextSubmission textSubmission, final Collection<Feedback> feedbacks) {
         if (textBlocks == null) {
             return;
         }
@@ -521,9 +522,9 @@ public class TextAssessmentResource extends AssessmentResource {
     /**
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
-    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
+    private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final Collection<Feedback> feedbacks) {
         if (athenaFeedbackApi.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
-            athenaFeedbackApi.get().sendFeedback(exercise, textSubmission, feedbacks);
+            athenaFeedbackApi.get().sendFeedback(exercise, textSubmission, new ArrayList<>(feedbacks));
         }
     }
 }

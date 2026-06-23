@@ -12,7 +12,7 @@
         </div>
     </div>
     <div class="list-answer-post" [ngClass]="{ 'ms-4': !isThreadSidebar() }">
-        @for (group of groupedAnswerPosts; track trackGroupByFn($index, group)) {
+        @for (group of groupedAnswerPosts(); track trackGroupByFn($index, group)) {
             @for (answerPost of group.posts; track trackPostByFn($index, answerPost)) {
                 <jhi-answer-post
                     [lastReadDate]="lastReadDate()"
@@ -36,8 +36,8 @@
     <ng-container #createEditAnswerPostContainer />
     <jhi-answer-post-create-edit-modal
         #createAnswerPostModal
-        [posting]="createdAnswerPost"
-        [createEditAnswerPostContainerRef]="containerRef"
-        (onCreate)="createdAnswerPost = createEmptyAnswerPost(); showAnswers()"
+        [posting]="createdAnswerPost()"
+        [createEditAnswerPostContainerRef]="containerRef()"
+        (onCreate)="createdAnswerPost.set(createEmptyAnswerPost()); showAnswers()"
     />
 </div>

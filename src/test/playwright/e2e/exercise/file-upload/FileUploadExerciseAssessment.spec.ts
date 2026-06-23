@@ -31,9 +31,8 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
         exercise = await exerciseAPIRequests.createFileUploadExercise({ course });
         await Commands.login(page, studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         await courseOverview.startExercise(exercise.id!);
-        await courseOverview.openRunningExercise(exercise.id!);
         await fileUploadExerciseEditor.attachFile('pdf-test-file.pdf');
-        await fileUploadExerciseEditor.submit();
+        await courseOverview.submitExercise('api/fileupload/exercises/*/file-upload-submissions');
     });
 
     test.describe.serial('Feedback', () => {
@@ -67,7 +66,6 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
             await exerciseResult.shouldShowExerciseTitle(exercise.title!);
             await exerciseResult.shouldShowProblemStatement(exercise.problemStatement!);
             await exerciseResult.shouldShowScore(percentage);
-            await exerciseResult.clickOpenExercise(exercise.id!);
             await fileUploadExerciseFeedback.shouldShowAdditionalFeedback(tutorFeedbackPoints, tutorFeedback);
             await fileUploadExerciseFeedback.shouldShowScore(percentage);
             await fileUploadExerciseFeedback.complain(complaint);
@@ -75,7 +73,10 @@ test.describe('File upload exercise assessment', { tag: '@slow' }, () => {
 
         test('Instructor can see complaint and reject it', async ({ login, fileUploadExerciseAssessment }) => {
             await login(instructor, `/course-management/${course.id}/complaints`);
-            const response = await fileUploadExerciseAssessment.acceptComplaint('Makes sense', false);
+            // Open this exercise's own complaint row — the exerciseAssessment seed course is shared with other
+            // assessment tests (e.g. modeling), so the first complaint in the course-wide list may belong to a
+            // different, concurrently-running test.
+            const response = await fileUploadExerciseAssessment.acceptComplaint('Makes sense', false, exercise.title!);
             expect(response.status()).toBe(200);
         });
     });

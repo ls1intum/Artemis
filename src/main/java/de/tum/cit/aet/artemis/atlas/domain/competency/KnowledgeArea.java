@@ -12,9 +12,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -22,7 +19,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "knowledge_area")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class KnowledgeArea extends DomainObject {
 
     @JsonIgnore

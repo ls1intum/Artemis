@@ -1,8 +1,8 @@
-import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
+import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Routes } from '@angular/router';
 
-import { IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_STUDENT } from 'app/foundation/constants/authority.constants';
 
 export const routes: Routes = [
     {
@@ -17,6 +17,16 @@ export const routes: Routes = [
     },
     {
         path: 'participate/:participationId/submission/:submissionId',
+        loadComponent: () => import('./modeling-submission/modeling-submission.component').then((m) => m.ModelingSubmissionComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.modelingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: 'participate/:participationId/submission/:submissionId/result/:resultId',
         loadComponent: () => import('./modeling-submission/modeling-submission.component').then((m) => m.ModelingSubmissionComponent),
         data: {
             authorities: IS_AT_LEAST_STUDENT,

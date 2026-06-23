@@ -7,7 +7,7 @@ import { LoginService } from 'app/core/login/login.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 
 describe('AuthExpiredInterceptor', () => {
     setupTestBed({ zoneless: true });
@@ -60,7 +60,7 @@ describe('AuthExpiredInterceptor', () => {
         };
         const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
-        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
 
         expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).toHaveBeenCalledWith(false);
@@ -73,7 +73,7 @@ describe('AuthExpiredInterceptor', () => {
         };
         const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
 
-        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
 
         expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
         expect(loginServiceMock.logout).not.toHaveBeenCalled();
@@ -86,7 +86,7 @@ describe('AuthExpiredInterceptor', () => {
         };
         const isAuthenticatedSpy = vi.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(true);
 
-        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+        authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe({ error: () => {} });
 
         expect(isAuthenticatedSpy).not.toHaveBeenCalled();
         expect(loginServiceMock.logout).not.toHaveBeenCalled();

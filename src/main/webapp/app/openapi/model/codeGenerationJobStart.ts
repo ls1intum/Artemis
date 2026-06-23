@@ -11,5 +11,17 @@
 
 export interface CodeGenerationJobStart { 
     jobId?: string;
+    repositoryType?: CodeGenerationJobStart.RepositoryTypeEnum;
 }
+export namespace CodeGenerationJobStart {
+    export const RepositoryTypeEnum = {
+        Exercise: 'exercise',
+        Solution: 'solution',
+        Tests: 'tests',
+        Auxiliary: 'auxiliary',
+        User: 'user'
+    } as const;
+    export type RepositoryTypeEnum = typeof RepositoryTypeEnum[keyof typeof RepositoryTypeEnum];
+}
+
 

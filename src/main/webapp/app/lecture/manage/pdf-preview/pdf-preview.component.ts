@@ -4,27 +4,27 @@ import { AttachmentService } from 'app/lecture/manage/services/attachment.servic
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
+import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { PDFDocument } from 'pdf-lib';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbModule, NgbPopover, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { finalize } from 'rxjs/operators';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import * as PDFJS from 'pdfjs-dist';
 
@@ -93,7 +93,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     protected readonly Array = Array;
 
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
 
     // Signals
     attachment = signal<Attachment | undefined>(undefined);
@@ -155,7 +155,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isPdfLoading.set(true);
-        this.courseId = Number(this.route?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route?.parent?.snapshot.paramMap.get('courseId')));
         this.route.data.subscribe((data) => {
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
@@ -196,7 +196,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         if (fileType === 'attachment') {
             subscription = this.attachmentService
-                .getAttachmentFile(this.courseId, this.attachment()!.id!)
+                .getAttachmentFile(this.courseId(), this.attachment()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -206,7 +206,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentSub = subscription;
         } else {
             subscription = this.attachmentVideoUnitService
-                .getAttachmentFile(this.courseId, this.attachmentVideoUnit()!.id!)
+                .getAttachmentFile(this.courseId(), this.attachmentVideoUnit()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -250,7 +250,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const pdfDocument = await PDFDocument.load(arrayBuffer);
             const pageCount = pdfDocument.getPageCount();
 
-            const loadingTask = PDFJS.getDocument(fileUrl);
+            const loadingTask = PDFJS.getDocument({ url: fileUrl });
             const pdfJsDocument = await loadingTask.promise;
 
             this.sourcePDFs.update((sources) => {
@@ -1012,9 +1012,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     navigateToCourseManagement(): void {
         if (this.attachment()) {
-            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+            this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachment()!.lecture!.id, 'attachments']);
         } else {
-            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
+            this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
         }
     }
 }

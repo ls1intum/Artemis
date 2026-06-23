@@ -1,0 +1,76 @@
+<div>
+    <h5 *adminTitleBarTitle id="organization-detail-heading" class="mb-0">
+        <span jhiTranslate="artemisApp.organizationManagement.detail.title"></span> [<b>{{ organization().name }}</b
+        >]
+    </h5>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <dl class="row-md jh-entity-details">
+                    <dt><span jhiTranslate="global.field.id"></span></dt>
+                    <dd>{{ organization().id ?? '-' }}</dd>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.name"></span></dt>
+                    <dd>{{ organization().name ?? '-' }}</dd>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></dt>
+                    <dd>{{ organization().shortName ?? '-' }}</dd>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.url"></span></dt>
+                    <dd>{{ organization().url ?? '-' }}</dd>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.logoUrl"></span></dt>
+                    <dd>{{ organization().logoUrl ?? '-' }}</dd>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.description"></span></dt>
+                    <dd>{{ organization().description ?? '-' }}</dd>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></dt>
+                    <dd>{{ organization().emailPattern ?? '-' }}</dd>
+                </dl>
+            </div>
+        </div>
+        <div class="row">
+            <h3>
+                <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
+            </h3>
+            <jhi-table-view
+                [cols]="courseColumns()"
+                [vals]="courses()"
+                [totalRows]="coursesTotal()"
+                [loading]="coursesLoading()"
+                (onLazyLoad)="loadCourses($event)"
+                [options]="tableOptions"
+            />
+        </div>
+    </div>
+    <div class="container p-2">
+        <h3>
+            <span jhiTranslate="artemisApp.organizationManagement.users"></span>
+        </h3>
+        <jhi-table-view
+            [cols]="userColumns()"
+            [vals]="users()"
+            [totalRows]="usersTotal()"
+            [loading]="usersLoading()"
+            [rowActions]="userActions"
+            (onLazyLoad)="loadUsers($event)"
+            [options]="tableOptions"
+        />
+    </div>
+</div>
+
+<ng-template #userIdTemplate let-cell>
+    <a [routerLink]="['/admin/user-management', cell.data.login]">{{ cell.value }}</a>
+</ng-template>
+
+<ng-template #courseIdTemplate let-cell>
+    <a [routerLink]="['/course-management', cell.value]">{{ cell.value }}</a>
+</ng-template>
+
+<ng-template #userActions let-user>
+    <button
+        jhiDeleteButton
+        [actionType]="ActionType.Remove"
+        [entityTitle]="user.login || user.email || ''"
+        deleteQuestion="artemisApp.organizationManagement.userSearch.removeFromOrganization.modalQuestion"
+        (delete)="removeFromOrganization(user)"
+        [dialogError]="dialogError$"
+    >
+        <fa-icon [icon]="faUserSlash" class="me-1" />
+    </button>
+</ng-template>

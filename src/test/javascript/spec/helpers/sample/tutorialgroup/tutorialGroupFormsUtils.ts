@@ -6,20 +6,15 @@ import {
     TutorialGroupFreePeriodFormData,
 } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import {
-    TutorialGroupSessionFormComponent,
-    TutorialGroupSessionFormData,
-} from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
-import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
-import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
 } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { runOnPushChangeDetection } from '../../on-push-change-detection.helper';
 import { By } from '@angular/platform-browser';
 
-type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupSessionFormComponent | TutorialGroupsConfigurationFormComponent | TutorialGroupFormComponent;
+type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupsConfigurationFormComponent;
 type SupportedFixtures = ComponentFixture<SupportedForms>;
-type SupportedFormData = TutorialGroupFreePeriodFormData | TutorialGroupSessionFormData | TutorialGroupsConfigurationFormData | TutorialGroupFormData;
+type SupportedFormData = TutorialGroupFreePeriodFormData | TutorialGroupsConfigurationFormData;
 
 export const generateClickSubmitButton = (component: SupportedForms, fixture: SupportedFixtures, expectedEventFormData?: SupportedFormData) => {
     return (expectSubmitEvent: boolean) => {

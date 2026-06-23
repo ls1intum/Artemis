@@ -421,8 +421,10 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
                 var expectedKnowledgeAreas = Stream.of(knowledgeArea, knowledgeArea1).map(StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO::of).toList();
                 var expectedSources = Stream.of(source, source1, source2).map(SourceDTO::of).toList();
 
-                var actualCatalog = request.get("/api/atlas/admin/standardized-competencies/export", HttpStatus.OK, StandardizedCompetencyCatalogDTO.class);
+                var actualCatalogJson = request.get("/api/atlas/admin/standardized-competencies/export", HttpStatus.OK, String.class);
+                var actualCatalog = request.getObjectMapper().readValue(actualCatalogJson, StandardizedCompetencyCatalogDTO.class);
 
+                assertThat(actualCatalogJson).contains("\n  \"");
                 assertThat(actualCatalog.knowledgeAreas()).containsAll(expectedKnowledgeAreas);
                 assertThat(actualCatalog.sources()).containsAll(expectedSources);
             }
@@ -484,9 +486,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
             @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
             void shouldReturnSources() throws Exception {
                 var source1 = new Source("title", "author", "http://localhost:1");
-                source1.setId(1L);
                 var source2 = new Source("title2", "author2", "http://localhost:2");
-                source2.setId(2L);
                 var sources = sourceRepository.saveAll(List.of(source1, source2));
                 var expectedSources = sources.stream().map(SourceDTO::of).toList();
 

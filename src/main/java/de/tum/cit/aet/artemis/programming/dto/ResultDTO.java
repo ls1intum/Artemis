@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 
 import org.hibernate.Hibernate;
@@ -60,7 +61,7 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
      * @param filteredFeedback feedback that should get send to the client, will get converted into {@link FeedbackDTO} objects.
      * @return the converted DTO
      */
-    public static ResultDTO of(Result result, List<Feedback> filteredFeedback) {
+    public static ResultDTO of(Result result, Collection<Feedback> filteredFeedback) {
         SubmissionDTO submissionDTO = null;
         if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
             submissionDTO = SubmissionDTO.of(result.getSubmission(), false, null, null);

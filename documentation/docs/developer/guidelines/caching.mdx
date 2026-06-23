@@ -1,0 +1,206 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Caching
+
+This page documents the project policy for caching in Artemis: what is allowed, what is forbidden, why, and the canonical patterns to follow when caching is genuinely needed.
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Do not add Hibernate <code>@Cache</code> annotations on entities or associations.</strong> Hibernate second-level cache (L2) is intentionally disabled cluster-wide. An ArchUnit rule (<code>ArchitectureTest.testNoHibernateSecondLevelCacheAnnotation</code>) enforces this — adding a single <code>@Cache</code> annotation will fail CI.
+</Callout>
+
+## Overview
+
+Artemis runs in a multi-node Hazelcast cluster (3 production nodes behind nginx with round-robin load balancing and no sticky sessions), serving thousands of concurrent users. The two caching layers in use are:
+
+* **Spring `@Cacheable`** with the `HazelcastCacheManager` bean defined in `HazelcastConfiguration.cacheManager`. **Allowed**, but only with explicit eviction logic.
+* **Hibernate L2 (second-level) entity cache.** **Disabled cluster-wide.** No `@Cache` annotation on any entity or association.
+
+The default answer when you think you need a cache is: do not add one. Ask whether the problem can be solved by a fetch join, an `@EntityGraph`, a DTO projection, or an index — those address the root cause; caches paper over it and introduce coherence problems.
+
+## Why Hibernate L2 is disabled
+
+L2 caching looks attractive on paper — keep frequently-read entities in memory and skip the database — but four structural facts about Artemis make it unsafe and largely unhelpful in practice.
+
+### 1. No service-level `@Transactional`
+
+The project deliberately avoids `@Transactional` on services and controllers; the only acceptable place for transactional boundaries is inside repositories (typically `@Modifying` queries). This decision is documented in [Server Development Guidelines](/developer/guidelines/server-development) and reflects past performance and correctness issues caused by misused service-level transactions. The consequence for caching: there is no clean boundary inside a REST call to coordinate cache invalidation across multiple repository invocations. Any cache strategy that depends on commit-boundary eviction is structurally fragile in this architecture.
+
+### 2. `spring.jpa.open-in-view: false`
+
+Open Session In View is disabled (see `application.yml`). Each repository call gets its own short Hibernate session. Inside a session, the per-session `PersistenceContext` (L1) already returns the same instance for repeated lookups of the same id; L2 only saves the *first* DB roundtrip per id per session, not subsequent accesses within the same session. The realised speedup in practice is far less than the marketing claims for L2.
+
+### 3. Heavy use of `@Modifying @Query`
+
+Many repositories update columns via JPQL or native SQL (`@Modifying @Query`). These bulk DML statements bypass Hibernate's cache-invalidation hooks entirely. Both `NONSTRICT_READ_WRITE` and `READ_WRITE` strategies leak stale entries until the region timeout. There is no cache concurrency strategy that closes this gap; the only complete fix is "no cache".
+
+### 4. Multi-node Hazelcast cluster, no sticky sessions
+
+Cross-node cache invalidation propagates asynchronously through Hazelcast. Under load the staleness window is observable as user-visible bugs: a writer commits on node A while a reader on node B serves a still-cached, stale value. With round-robin load balancing the next request from the same user often hits a different node, so the inconsistency appears intermittent and is hard to reproduce in single-node testing.
+
+## What went wrong before
+
+The project removed L2 caches in stages after concrete production bugs:
+
+* **Issue [#12574](https://github.com/ls1intum/Artemis/issues/12574) — cross-node stale `selectedOptions` in multiple-choice quiz submissions.** A `@ManyToMany(fetch = EAGER)` collection cached with `NONSTRICT_READ_WRITE` returned partial subsets of options on different nodes during the async-invalidation window. Users saw their submitted answers "lose" selections on refresh.
+* **`ObjectNotFoundException` from stale entity-cache hits** during quiz-submission merge. Hibernate's `internalLoad` resolved a reference from the L2 region that pointed at an entity already deleted on another node. Both this and #12574 above were bundled and fixed in PR [#12578](https://github.com/ls1intum/Artemis/pull/12578).
+* **PR [#12579](https://github.com/ls1intum/Artemis/pull/12579) (`e5c547a6df`) — Remove non-strict-read-write cache on actively-mutated collections.** Stripped `@Cache` from collections that change at runtime (quiz options, submissions, build logs, gradings, exam student lists, course exercise lists, etc.).
+* **Extended sweep `0de9bdac67`, `a2fd873a38`.** Extended the removal to the rest of the quiz graph and a handful of additional grading / lecture / tutorial-group / build-plan collections that matched the same bug class.
+* **READ_WRITE experiments — both reverted.** Two attempts to *strengthen* the cache strategy instead of removing it (`Result.feedbacks` `99ac90a8ca` → `f571cfaa04`; `Lecture` entity `3ecde55e5c` → `0aeccb54d7`) were rolled back. The rollback rationale captured in `f571cfaa04`:
+
+> "There is no measured production regression from running without the cache on this collection, and the expected per-access gain (DB roundtrip vs Hazelcast cache roundtrip) is on the order of 1–2 ms with no hit-rate data to justify it."
+
+* **Final cleanup — disable L2 cluster-wide.** The remaining 116 `@Cache` annotations across 94 entity classes (Course, Exercise, Lecture, Exam, User, Authority, plagiarism, modeling, text, atlas, science, communication, iris, lti, programming reference data, etc.) were stripped, and `hibernate.cache.use_second_level_cache` was set to `false` in `application.yml`. The ArchUnit guardrail prevents reintroduction.
+
+## Why `READ_WRITE` was not adopted
+
+`READ_WRITE` uses soft locks around the write→commit window so concurrent readers on other nodes either see the fully-committed state or briefly block, rather than observing a partial collection. It closes the cross-node-staleness subset of the bug class in #12574. It does not, however:
+
+* fix the `@Modifying @Query` bypass (point 3 above);
+* save the per-access cost — every cached read pays a soft-lock round-trip to Hazelcast that is on the same order as a database lookup for an indexed entity, so the realised latency benefit on the read side is small;
+* solve Hibernate-7-specific brittleness (e.g. the `@OrderColumn` NULL-index crash on `Result.feedbacks`).
+
+Both attempts (Lecture, Result.feedbacks) showed no measured production regression when the cache was simply absent and were reverted. Reliability beats speculative caching.
+
+## What replaces L2: Spring `@Cacheable`
+
+Spring's caching abstraction backed by `HazelcastCacheManager` is permitted for DTOs and computed values that are read-heavy with low write throughput. Representative existing caches (not exhaustive — check `@Cacheable`/`@CacheConfig` references in the codebase for the current set):
+
+* Title caches: `courseTitle`, `exerciseTitle`, `lectureTitle`, `examTitle`, `tutorialGroupTitle`, `competencyTitle`, `diagramTitle`, `organizationTitle`. Used by breadcrumbs / navigation and called many times per page render.
+* `files` — file content cache for static assets served by `FileService.getFileForPath`.
+* `linkPreview` — Open Graph / OEmbed previews for posts in the communication module.
+* `plantUmlPng`, `plantUmlSvg` — rendered PlantUML diagrams.
+* `userCourseNotificationSettingPreset` and `userCourseNotificationSettingSpecification` — per-user/per-course notification settings, keyed by `setting_preset_<userId>_<courseId>` / `setting_specifications_<userId>_<courseId>`.
+* `courseNotification` (the constant `CourseNotificationCacheService.USER_COURSE_NOTIFICATION_CACHE`) — per-user/per-course notification counts and previews.
+* `savedPosts` — saved-post lookups, keyed by `saved_post_count_<userId>` / `saved_post_type_<type>_<userId>` / `saved_post_status_<status>_<userId>`.
+
+These caches use the same Hazelcast cluster as the rest of the application, so they are coherent across nodes via Hazelcast's IMap eventual consistency. Most of them ship with explicit eviction logic that runs on writes — `@CacheEvict` annotations on the writer repository or service for the notification / saved-post caches, and the Hibernate event listener pattern below for the title caches handled by `TitleCacheEvictionService` (currently `Course`, `Exercise`, `Lecture`, `Organization`, `ApollonDiagram`, `Exam`, `ExerciseGroup`).
+
+<Callout variant={CalloutVariant.warning}>
+  Eviction coverage is not yet uniform: some title caches (e.g. <code>tutorialGroupTitle</code>, <code>competencyTitle</code>) are populated by <code>@Cacheable</code> but are not yet wired into <code>TitleCacheEvictionService</code>. If you add or rely on a cache, verify the eviction path end-to-end and, if necessary, extend the listener.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  <strong>The Spring <code>CacheManager</code> bean is independent of <code>hibernate.cache.use_second_level_cache</code>.</strong> Disabling Hibernate L2 has no effect on Spring <code>@Cacheable</code> — they are two separate caching layers built on the same Hazelcast instance.
+</Callout>
+
+## The canonical eviction pattern: `TitleCacheEvictionService`
+
+For caches whose source of truth is an entity column (e.g. `Course.title`), the canonical eviction pattern is a Hibernate event listener that observes `POST_UPDATE` and `POST_DELETE` and evicts the corresponding entry from the Spring cache. The reference implementation is `TitleCacheEvictionService`:
+
+```java
+@Profile(PROFILE_CORE)
+@Lazy
+@Service
+public class TitleCacheEvictionService implements PostUpdateEventListener, PostDeleteEventListener {
+
+    private final CacheManager cacheManager;
+    private final EntityManagerFactory entityManagerFactory;
+
+    public TitleCacheEvictionService(EntityManagerFactory entityManagerFactory, CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
+        this.entityManagerFactory = entityManagerFactory;
+    }
+
+    @PostConstruct
+    public void applicationReady() {
+        var listeners = entityManagerFactory.unwrap(SessionFactoryImpl.class)
+                .getServiceRegistry().getService(EventListenerRegistry.class);
+        if (listeners != null) {
+            listeners.appendListeners(EventType.POST_UPDATE, this);
+            listeners.appendListeners(EventType.POST_DELETE, this);
+        }
+    }
+
+    @Override
+    public void onPostUpdate(PostUpdateEvent event) {
+        int titleIndex = ArrayUtils.indexOf(event.getPersister().getPropertyNames(), "title");
+        if (titleIndex >= 0 && ArrayUtils.contains(event.getDirtyProperties(), titleIndex)) {
+            evictEntityTitle(event.getEntity());
+        }
+    }
+
+    @Override
+    public void onPostDelete(PostDeleteEvent event) {
+        evictEntityTitle(event.getEntity());
+    }
+
+    private void evictEntityTitle(Object entity) {
+        if (entity instanceof Course course) {
+            evictIdFromCache("courseTitle", course.getId());
+        }
+        // … other entity types …
+    }
+}
+```
+
+Three properties to copy:
+
+1. **It does not depend on Hibernate L2 being enabled.** Hibernate event listeners (`POST_UPDATE`, `POST_DELETE`) are core ORM lifecycle events that fire whether L2 is on or off. The class is provably running with L2 disabled today (`TitleCacheEvictionServiceTest` covers this).
+2. **It scopes eviction to the actual change.** The dirty-property check (`event.getDirtyProperties()`) means an unrelated column update on `Course` does not pointlessly bust the title cache.
+3. **It is registered only on `PROFILE_CORE`.** Build agents do not load entities through Hibernate (they don't own user data), so registering listeners there would be wasted lifecycle.
+
+For caches whose key is not an entity column — e.g. derived DTO caches keyed by composite parameters — the alternative is `@CacheEvict` on the writer service method that mutates the underlying state. Either pattern is acceptable; what is *not* acceptable is `@Cacheable` without eviction.
+
+## Adding a new cache — the bar
+
+A new `@Cacheable` is justified only when *all three* of the following hold:
+
+1. **Measured.** A profiler trace, latency dashboard, or DB load metric shows a real bottleneck on the path you intend to cache. Speculation is not a justification.
+2. **Read-heavy with low write throughput.** Cache hit-rate has to be high enough to amortise the Hazelcast round-trip and the eviction maintenance burden. Endpoints that return DTOs assembled from a single indexed query rarely qualify.
+3. **Has explicit eviction.** Either a Hibernate event listener (preferred for entity-column-derived caches) or a `@CacheEvict` annotation on every writer that affects the underlying state. Code review must reject `@Cacheable` without an accompanying eviction strategy.
+
+Multi-node correctness is not optional. If you cannot articulate, in code review, exactly how every write that could change the cached value invalidates the cache on every cluster node, the cache is not ready to merge. Reproduce the eviction in `./run-e2e-tests-local-multinode.sh` if the cache is non-trivial.
+
+## What is *not* covered by this rule
+
+The L2 ban does **not** apply to:
+
+* **Local in-memory caches inside a single bean** for ephemeral per-node state (e.g. `HyperionPromptTemplateService`, `HyperionChecklistService`, `RateLimitService`, `AeolusTemplateService`, `BuildScriptProviderService`). These are single-node and do not have multi-node coherence concerns. They are typically `ConcurrentHashMap` instances populated lazily and either never invalidated or invalidated explicitly by their owner.
+* **Hazelcast distributed objects (`IMap`, `ISet`, `ICountDownLatch`) used for cross-node coordination** (`CourseNotificationCacheService`, `AtlasAgentSessionCacheService`, `PlagiarismCacheService`, rate-limit buckets via Bucket4j-Hazelcast). These are not "caches" in the Hibernate L2 sense; they are explicit distributed data structures with explicit semantics.
+* **Spring `@Cacheable`** as documented above.
+
+The rule is specifically about Hibernate's *entity / association* second-level cache.
+
+## Mixed-version cluster during rollout
+
+A rolling deployment that crosses an L2-on/L2-off boundary (e.g. one node still on the old build with `use_second_level_cache: true`, another on the new build with `false`) degrades gracefully:
+
+* Hibernate L2 is process-local per JVM even when JCache-bridged through Hazelcast — only invalidation events propagate across the cluster, not the cached values themselves. The new node has no L2 region populated and never reads stale data; the old node continues to use its own L2 until restart, scoped to writes that originate on its own JVM.
+* Spring `@Cacheable` paths use Hazelcast IMaps that are coherent across nodes regardless of L2 state, so the title/notification/file caches behave identically on both sides.
+
+This means the disable-L2 change can be rolled out as a normal canary deploy without a cluster-wide restart.
+
+## Multi-node testing
+
+Any change to caching — adding a `@Cacheable`, refactoring an eviction listener, modifying `HazelcastConfiguration` — must pass the multi-node E2E suite before merge:
+
+```bash
+./run-e2e-tests-local-multinode.sh
+```
+
+This boots the production-faithful stack (Postgres, JHipster Registry / Eureka, ActiveMQ, three Artemis nodes, nginx load balancer, containerised Playwright) and is the canonical reproduction surface for cache-coherence regressions. Issue #12574 was originally surfaced by this kind of multi-node exercise; do not skip it for cache-related changes.
+
+## Related guidelines
+
+* [Server Development Guidelines](/developer/guidelines/server-development) — `@Transactional` policy and constructor-injection patterns.
+* [Database Guidelines](/developer/guidelines/database) — entity relationships, fetch strategies, and `@EntityGraph`.
+* [Performance Guidelines](/developer/guidelines/performance) — DTO projections, paging, and database-level filtering as alternatives to caching.
+
+## Configuration reference
+
+Relevant configuration in `src/main/resources/config/application.yml`:
+
+```yaml
+spring:
+    jpa:
+        open-in-view: false
+        properties:
+            hibernate.cache.use_second_level_cache: false
+            hibernate.cache.use_query_cache: false
+            hibernate.cache.hazelcast.instance_name: Artemis
+```
+
+`hibernate.cache.hazelcast.instance_name` is retained because `HazelcastConfiguration` reads it via `@Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name:Artemis}")` to set the Hazelcast member name. It no longer participates in any Hibernate L2 path.
+
+Build-agent configuration (`application-buildagent.yml`) keeps an explicit `hibernate.cache.use_second_level_cache: false` as defense in depth, even though it is now redundant with the cluster-wide default.

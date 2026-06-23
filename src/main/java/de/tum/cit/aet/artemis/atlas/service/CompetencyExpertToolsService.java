@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyErrorDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencySaveResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 
 /**
  * Service providing LLM-callable tools for the Competency Expert Sub-Agent using Spring AI's function calling API.
@@ -363,11 +363,11 @@ public class CompetencyExpertToolsService {
             }
         }
 
-        // Store preview data in ThreadLocal so the interface can display cards for what was just saved
-        // This ensures the cards appear in the response showing what was created/updated
+        // Store preview data in ThreadLocal so the interface can display cards for what was just saved.
+        // viewOnly=true: these are confirmation cards — the save already happened, no action button needed.
         if (!successfulOperations.isEmpty()) {
             List<CompetencyPreviewDTO> previewResponses = successfulOperations.stream()
-                    .map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), comp.getCompetencyId(), false)).toList();
+                    .map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), comp.getCompetencyId(), true)).toList();
 
             currentPreviews.set(previewResponses);
         }

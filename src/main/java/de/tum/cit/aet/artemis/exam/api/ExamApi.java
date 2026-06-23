@@ -1,14 +1,16 @@
 package de.tum.cit.aet.artemis.exam.api;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
@@ -48,5 +50,15 @@ public class ExamApi extends AbstractExamApi {
      */
     public ExamScoresDTO calculateExamScoresForExport(Long examId) {
         return examService.calculateExamScores(examId);
+    }
+
+    /**
+     * Get one exam by an exercise id.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the exam
+     */
+    public Optional<Exam> findByExerciseId(Long exerciseId) {
+        return examService.findByExerciseId(exerciseId);
     }
 }

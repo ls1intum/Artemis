@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 
 /**
  * Pyris DTO for a post.
@@ -18,6 +19,12 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 public record PyrisPostDTO(Long id, String content, Set<PyrisAnswerPostDTO> answers, Long userID) {
 
     public PyrisPostDTO(Post post) {
-        this(post.getId(), post.getContent(), post.getAnswers().stream().map(PyrisAnswerPostDTO::new).collect(Collectors.toSet()), post.getAuthor().getId());
+        this(post.getId(), post.getContent(),
+                post.getAnswers().stream()
+                        .map(answer -> AiSelectionDecision.NO_AI.equals(answer.getAuthor() != null ? answer.getAuthor().getSelectedLLMUsage() : null)
+                                ? PyrisAnswerPostDTO.redacted(answer)
+                                : new PyrisAnswerPostDTO(answer))
+                        .collect(Collectors.toSet()),
+                post.getAuthor().getId());
     }
 }

@@ -1,10 +1,25 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type MockInstance } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+// Mock y-monaco so MonacoBinding does not require a real Monaco editor instance. Without this,
+// Vite tries to transform the real y-monaco.js, whose `monaco-editor/esm/...` deep import is not
+// covered by the bare `monaco-editor` -> mock alias and fails to resolve.
+vi.mock('y-monaco', () => {
+    // Use a real `function` (not an arrow) so the production code can invoke it with `new`.
+    const MockMonacoBinding = vi.fn(function (this: any) {
+        this.destroy = vi.fn();
+    });
+    return { MonacoBinding: MockMonacoBinding };
+});
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -14,7 +29,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { problemStatement } from 'test/helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
 import {
     CodeEditorBuildLogService,
@@ -37,7 +52,7 @@ import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
@@ -46,14 +61,14 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/progra
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
 import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
-import { KeysPipe } from 'app/shared/pipes/keys.pipe';
+import { KeysPipe } from 'app/foundation/pipes/keys.pipe';
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -61,8 +76,9 @@ import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programmi
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { mockCodeEditorMonacoViewChildren } from 'test/helpers/mocks/mock-instance.helper';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -72,19 +88,21 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CodeEditorInstructorIntegration', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let domainService: DomainService;
     let route: ActivatedRoute;
 
-    let checkIfRepositoryIsCleanStub: jest.SpyInstance;
-    let getRepositoryContentStub: jest.SpyInstance;
-    let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
-    let getFeedbackDetailsForResultStub: jest.SpyInstance;
-    let getBuildLogsStub: jest.SpyInstance;
-    let findWithParticipationsStub: jest.SpyInstance;
-    let getLatestResultWithFeedbacksStub: jest.SpyInstance;
-    let navigateSpy: jest.SpyInstance;
+    let checkIfRepositoryIsCleanStub: MockInstance;
+    let getRepositoryContentStub: MockInstance;
+    let subscribeForLatestResultOfParticipationStub: MockInstance;
+    let getFeedbackDetailsForResultStub: MockInstance;
+    let getBuildLogsStub: MockInstance;
+    let findWithParticipationsStub: MockInstance;
+    let getLatestResultWithFeedbacksStub: MockInstance;
+    let navigateSpy: MockInstance;
 
     let checkIfRepositoryIsCleanSubject: Subject<{ isClean: boolean }>;
     let getRepositoryContentSubject: Subject<{ [fileName: string]: FileType }>;
@@ -99,8 +117,10 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), MockModule(NgbTooltipModule), FaIconComponent],
-            declarations: [
+            imports: [
+                TranslateModule.forRoot(),
+                MockModule(NgbTooltipModule),
+                FaIconComponent,
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,
                 KeysPipe,
@@ -145,6 +165,8 @@ describe('CodeEditorInstructorIntegration', () => {
                 },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                // CodeEditorInstructorAndEditorContainerComponent now injects PrimeNG DialogService (not provided in root).
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
                 }),
@@ -171,16 +193,16 @@ describe('CodeEditorInstructorIntegration', () => {
         routeSubject = new Subject<Params>();
         // @ts-ignore
         (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
-        checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
-        getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
-        subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-        getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
-        getLatestResultWithFeedbacksStub = jest
+        checkIfRepositoryIsCleanStub = vi.spyOn(codeEditorRepositoryService, 'getStatus');
+        getRepositoryContentStub = vi.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
+        subscribeForLatestResultOfParticipationStub = vi.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+        getFeedbackDetailsForResultStub = vi.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getLatestResultWithFeedbacksStub = vi
             .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')
             .mockReturnValue(throwError(() => new Error('no result')));
-        getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
-        navigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
-        findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
+        getBuildLogsStub = vi.spyOn(buildLogService, 'getBuildLogs');
+        navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate');
+        findWithParticipationsStub = vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
         findWithParticipationsStub.mockReturnValue(findWithParticipationsSubject);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
         getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
@@ -188,7 +210,7 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
         subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
@@ -210,14 +232,14 @@ describe('CodeEditorInstructorIntegration', () => {
     const initContainer = (exercise: ProgrammingExercise, routeParams?: any) => {
         comp.ngOnInit();
         routeSubject.next({ exerciseId: 1, ...routeParams });
-        expect(comp.codeEditorContainer).toBeUndefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()).toBeUndefined(); // Have to use this as it's a component
         expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
-        expect(comp.loadingState).toBe(comp.LOADING_STATE.INITIALIZING);
+        expect(comp.loadingState()).toBe(comp.LOADING_STATE.INITIALIZING);
     };
 
     it('should load the exercise and select the template participation if no participation id is provided', () => {
-        jest.resetModules();
+        vi.resetModules();
         const result = { id: 9 } as Result;
         const submission = { id: 1, buildFailed: false, results: [result] } as Submission;
         result.submission = submission;
@@ -239,7 +261,7 @@ describe('CodeEditorInstructorIntegration', () => {
         exercise.solutionParticipation = { ...exercise.solutionParticipation, programmingExercise: exercise };
 
         getFeedbackDetailsForResultStub.mockReturnValue(of([]));
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
         // @ts-ignore
         (comp.router as MockRouter).setUrl('code-editor-instructor/1');
         initContainer(exercise);
@@ -252,11 +274,11 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(comp.exercise).toEqual(exercise);
         expect(comp.selectedRepository).toBe(RepositoryType.TEMPLATE);
         expect(comp.selectedParticipation).toEqual(comp.selectedParticipation);
-        expect(comp.loadingState).toBe(comp.LOADING_STATE.CLEAR);
+        expect(comp.loadingState()).toBe(comp.LOADING_STATE.CLEAR);
         expect(comp.domainChangeSubscription).toBeDefined(); // External complex object
 
         containerFixture.detectChanges();
-        expect(comp.codeEditorContainer.grid).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.grid()).toBeDefined(); // Have to use this as it's a component
 
         checkIfRepositoryIsCleanSubject.next({ isClean: true });
         getRepositoryContentSubject.next({ file: FileType.FILE, folder: FileType.FOLDER });
@@ -267,13 +289,13 @@ describe('CodeEditorInstructorIntegration', () => {
         // Once called by each build-output & instructions
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(2);
 
-        expect(comp.codeEditorContainer.grid).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.fileBrowser).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.actions).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.grid()).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.fileBrowser()).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.actions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()!.participation()).toEqual(exercise.templateParticipation);
         expect(comp.resultComp()).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.buildOutput()).toBeDefined(); // Have to use this as it's a component
 
         // Called once by each build-output, instructions, result and twice by instructor-exercise-status (=templateParticipation,solutionParticipation) &
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(5);
@@ -286,17 +308,17 @@ describe('CodeEditorInstructorIntegration', () => {
             templateParticipation: { id: 3 },
             solutionParticipation: { id: 4 },
         } as ProgrammingExercise;
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
         initContainer(exercise);
 
         findWithParticipationsSubject.error('fatal error');
 
         expect(setDomainSpy).not.toHaveBeenCalled();
-        expect(comp.loadingState).toBe(comp.LOADING_STATE.FETCHING_FAILED);
+        expect(comp.loadingState()).toBe(comp.LOADING_STATE.FETCHING_FAILED);
         expect(comp.selectedRepository).toBeUndefined();
 
         containerFixture.changeDetectorRef.detectChanges();
-        expect(comp.codeEditorContainer).toBeUndefined();
+        expect(comp.codeEditorContainer()).toBeUndefined();
     });
 
     it('should load test repository if specified in url', () => {
@@ -308,7 +330,7 @@ describe('CodeEditorInstructorIntegration', () => {
             solutionParticipation: { id: 4 },
             course: { id: 1 },
         } as ProgrammingExercise;
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
         // @ts-ignore
         (comp.router as MockRouter).setUrl(`code-editor/TESTS`);
         comp.ngOnDestroy();
@@ -325,21 +347,21 @@ describe('CodeEditorInstructorIntegration', () => {
 
         containerFixture.changeDetectorRef.detectChanges();
 
-        expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()!.participation()).toEqual(exercise.templateParticipation);
         expect(comp.resultComp()).toBeUndefined();
-        expect(comp.codeEditorContainer.buildOutput).toBeUndefined();
+        expect(comp.codeEditorContainer()!.buildOutput()).toBeUndefined();
     });
 
     const checkSolutionRepository = (exercise: ProgrammingExercise) => {
         expect(comp.selectedRepository).toBe(RepositoryType.SOLUTION);
         expect(comp.selectedParticipation).toEqual(exercise.solutionParticipation);
-        expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.resultComp()).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput.participation()).toEqual(exercise.solutionParticipation);
+        expect(comp.codeEditorContainer()!.buildOutput()).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.buildOutput()!.participation()).toEqual(exercise.solutionParticipation);
         expect(comp.editableInstructions()!.participation()).toEqual(exercise.solutionParticipation);
     };
 
@@ -369,7 +391,7 @@ describe('CodeEditorInstructorIntegration', () => {
             } as ProgrammingExerciseStudentParticipation,
         ];
 
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
 
         // Start with assignment repository
         // @ts-ignore
@@ -383,11 +405,11 @@ describe('CodeEditorInstructorIntegration', () => {
 
         expect(comp.selectedRepository).toBe(RepositoryType.ASSIGNMENT);
         expect(comp.selectedParticipation).toEqual(exercise.studentParticipations[0]);
-        expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions()).toBeDefined(); // Have to use this as it's a component
         expect(comp.resultComp()).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput).toBeDefined(); // Have to use this as it's a component
-        expect(comp.codeEditorContainer.buildOutput.participation()).toEqual(exercise.studentParticipations[0]);
+        expect(comp.codeEditorContainer()!.buildOutput()).toBeDefined(); // Have to use this as it's a component
+        expect(comp.codeEditorContainer()!.buildOutput()!.participation()).toEqual(exercise.studentParticipations[0]);
         expect(comp.editableInstructions()!.participation()).toEqual(exercise.studentParticipations[0]);
 
         // New select solution repository
@@ -431,7 +453,7 @@ describe('CodeEditorInstructorIntegration', () => {
             programmingExercise: exercise,
         } as SolutionProgrammingExerciseParticipation;
 
-        const setDomainSpy = jest.spyOn(domainService, 'setDomain');
+        const setDomainSpy = vi.spyOn(domainService, 'setDomain');
 
         // Start with assignment repository
         // @ts-ignore

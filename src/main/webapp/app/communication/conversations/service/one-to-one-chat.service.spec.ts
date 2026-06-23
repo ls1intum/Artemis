@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
@@ -7,13 +9,15 @@ import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
 describe('OneToOneChatService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: OneToOneChatService;
     let httpMock: HttpTestingController;
-    let conversationServiceMock: jest.Mocked<ConversationService>;
+    let conversationServiceMock: { convertDateFromServer: ReturnType<typeof vi.fn> };
 
     beforeEach(() => {
         conversationServiceMock = {
-            convertDateFromServer: jest.fn((response) => response),
+            convertDateFromServer: vi.fn((response) => response),
         } as any;
 
         TestBed.configureTestingModule({
@@ -26,6 +30,7 @@ describe('OneToOneChatService', () => {
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
     describe('create method', () => {
@@ -43,7 +48,7 @@ describe('OneToOneChatService', () => {
 
             const req = httpMock.expectOne(`/api/communication/courses/${courseId}/one-to-one-chats`);
             expect(req.request.method).toBe('POST');
-            expect(req.request.body).toEqual([loginOfChatPartner]);
+            expect(req.request.body).toEqual({ login: loginOfChatPartner });
             req.flush(mockResponse);
             expect(conversationServiceMock.convertDateFromServer).toHaveBeenCalled();
         });
@@ -62,9 +67,9 @@ describe('OneToOneChatService', () => {
                 expect(response.body).toEqual(mockResponse);
             });
 
-            const req = httpMock.expectOne(`/api/communication/courses/${courseId}/one-to-one-chats/${userIdOfChatPartner}`);
+            const req = httpMock.expectOne(`/api/communication/courses/${courseId}/one-to-one-chats`);
             expect(req.request.method).toBe('POST');
-            expect(req.request.body).toBeNull();
+            expect(req.request.body).toEqual({ userId: userIdOfChatPartner });
             req.flush(mockResponse);
 
             expect(conversationServiceMock.convertDateFromServer).toHaveBeenCalled();

@@ -12,14 +12,24 @@ export class CourseAssessmentDashboardPage {
         await this.page.locator('#open-complaints').click();
     }
 
-    async showTheComplaint() {
-        await this.page.locator('#show-complaint').first().click();
+    /**
+     * Opens a complaint from the course-wide complaints list.
+     *
+     * The list intermingles complaints from every assessment test that shares the seed course, so clicking the
+     * first #show-complaint races those other tests and can open an unrelated (possibly already-handled)
+     * complaint whose response editor never enables for this flow. When the exercise title is known, open that
+     * exercise's own complaint row instead of the first one to keep the selection deterministic.
+     * @param exerciseTitle - The title of the exercise whose complaint should be opened (optional).
+     */
+    async showTheComplaint(exerciseTitle?: string) {
+        const showComplaintButton = exerciseTitle ? this.page.locator('tr', { hasText: exerciseTitle }).locator('#show-complaint') : this.page.locator('#show-complaint').first();
+        await showComplaintButton.click();
     }
 
-    async clickExerciseDashboardButton(exerciseIndex: number = 0) {
+    async clickExerciseDashboardButton(exerciseIndex: number = 0, timeout?: number) {
         // Sometimes the page does not load properly, so we reload it if the button is not found
         const openExerciseDashboardLocator = this.page.locator('#open-exercise-dashboard').nth(exerciseIndex);
-        await Commands.reloadUntilFound(this.page, openExerciseDashboardLocator);
+        await Commands.reloadUntilFound(this.page, openExerciseDashboardLocator, 5000, timeout);
         await openExerciseDashboardLocator.click();
     }
 

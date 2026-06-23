@@ -1,19 +1,19 @@
-@if (exercise) {
+@if (exercise()) {
     <div class="row">
         <div class="col-12 col-lg-7 d-flex flex-column justify-content-between">
-            <h2 jhiTranslate="artemisApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
-                Example Modeling Submission for Exercise {{ exercise?.title }}
+            <h2 jhiTranslate="artemisApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise()?.title }">
+                Example Modeling Submission for Exercise {{ exercise()?.title }}
             </h2>
-            @if (toComplete) {
+            @if (toComplete()) {
                 <h5 class="fw-light" jhiTranslate="artemisApp.exampleSubmission.home.assessmentTraining"></h5>
             }
-            @if (assessmentMode) {
+            @if (assessmentMode()) {
                 <p jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction"></p>
             }
         </div>
-        @if (exercise.isAtLeastEditor && !readOnly && !toComplete) {
+        @if (exercise().isAtLeastEditor && !readOnly() && !toComplete()) {
             <div class="col-12 col-lg-4 text-end">
-                @if (!assessmentMode) {
+                @if (!assessmentMode()) {
                     <div class="d-flex justify-content-end flex-wrap align-items-center">
                         <div>
                             <div class="text-start">
@@ -45,32 +45,32 @@
                         </div>
                         <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary ms-2 button-resize">
                             <fa-icon [icon]="faSave" />
-                            @if (isNewSubmission) {
+                            @if (isNewSubmission()) {
                                 <span jhiTranslate="artemisApp.modelingExercise.createNewExampleSubmission" id="new-modeling-example-submission"
                                     >Create new example submission</span
                                 >
                             }
-                            @if (!isNewSubmission) {
+                            @if (!isNewSubmission()) {
                                 <span jhiTranslate="artemisApp.modelingExercise.saveExampleSubmission"></span>
                             }
                         </button>
                     </div>
                 }
-                @if (assessmentMode) {
+                @if (assessmentMode()) {
                     <button (click)="saveExampleAssessment()" class="btn btn-primary button-resize">
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="artemisApp.modelingExercise.saveExampleAssessment"></span>
                     </button>
                 }
-                @if (exampleSubmission && !isNewSubmission) {
+                @if (exampleSubmission() && !isNewSubmission()) {
                     <div class="mt-2 mb-3">
-                        @if (!assessmentMode) {
+                        @if (!assessmentMode()) {
                             <button class="btn btn-secondary button-resize" (click)="showAssessment()">
                                 <fa-icon [icon]="faChalkboardTeacher" />
                                 <span jhiTranslate="artemisApp.modelingExercise.showExampleAssessment" id="show-modeling-example-assessment"></span>
                             </button>
                         }
-                        @if (assessmentMode) {
+                        @if (assessmentMode()) {
                             <button class="btn btn-secondary button-resize" (click)="showSubmission()">
                                 <fa-icon [icon]="faCodeBranch" />
                                 <span jhiTranslate="artemisApp.modelingExercise.showExampleSubmission"></span>
@@ -96,7 +96,7 @@
                             </div>
                         }
                         <!-- Extra logic for displaying warning icon. It should only be shown for tutors that are assessing example submissions -->
-                        @if (toComplete) {
+                        @if (toComplete()) {
                             <div class="d-flex align-items-center pe-5">
                                 <span class="pe-2">{{ legend[3].text | artemisTranslate }}</span>
                                 <div class="d-flex justify-content-center align-items-center p-0 legend-icon-wrapper warning-icon-wrapper">
@@ -107,7 +107,7 @@
                     </div>
                 </div>
             </div>
-            @if (readOnly) {
+            @if (readOnly()) {
                 <div class="col-3 text-end mb-2">
                     <button (click)="readAndUnderstood()" class="btn btn-success">
                         <fa-icon [icon]="faSave" />
@@ -115,12 +115,12 @@
                     </button>
                 </div>
             }
-            @if (toComplete) {
+            @if (toComplete()) {
                 <div class="col-3 text-end mb-2">
                     <button
                         class="btn btn-primary px-5"
                         (click)="checkAssessment()"
-                        [disabled]="!assessments || !assessmentsAreValid"
+                        [disabled]="!assessments() || !assessmentsAreValid()"
                         jhiTranslate="artemisApp.exampleSubmission.submitAssessment"
                     ></button>
                 </div>
@@ -137,30 +137,31 @@
                         </div>
                     }
                     <div class="row editor-container-inner">
-                        @if (!assessmentMode && exercise.diagramType) {
+                        @if (!assessmentMode() && exercise().diagramType) {
                             <jhi-modeling-editor
                                 class="col-12"
-                                [umlModel]="umlModel"
-                                [diagramType]="exercise.diagramType!"
-                                [readOnly]="readOnly"
-                                [explanation]="explanationText"
+                                [umlModel]="umlModel()"
+                                [diagramType]="exercise().diagramType!"
+                                [readOnly]="readOnly()"
+                                [explanation]="explanationText()"
                                 (explanationChange)="explanationChanged($event)"
                                 [withExplanation]="true"
+                                [scrollLock]="true"
                             />
                         }
-                        @if (assessmentMode && exercise.diagramType) {
+                        @if (assessmentMode() && exercise().diagramType) {
                             <!-- we do not need to send ref.+unref feedback to the child component, since it filters out unreferenced feedbacks anyway-->
                             <jhi-modeling-assessment
                                 class="col-12"
-                                [umlModel]="umlModel"
-                                [resultFeedbacks]="result?.feedbacks || []"
-                                [diagramType]="exercise.diagramType!"
-                                [maxScore]="exercise.maxPoints || 0"
-                                [maxBonusPoints]="exercise.bonusPoints || 0"
-                                [totalScore]="totalScore"
-                                [readOnly]="readOnly"
-                                [course]="course"
-                                [explanation]="explanationText"
+                                [umlModel]="umlModel()"
+                                [resultFeedbacks]="result()?.feedbacks || []"
+                                [diagramType]="exercise().diagramType!"
+                                [maxScore]="exercise().maxPoints || 0"
+                                [maxBonusPoints]="exercise().bonusPoints || 0"
+                                [totalScore]="totalScore()"
+                                [readOnly]="readOnly()"
+                                [course]="course()"
+                                [explanation]="explanationText()"
                                 [highlightedElements]="highlightedElements()"
                                 (feedbackChanged)="onReferencedFeedbackChanged($event)"
                             />
@@ -168,7 +169,11 @@
                     </div>
                     <!--The explanation field is only visible a) in assessment mode, b) for example submissions in read and confirm mode and c) when in assessment dashboard (readonly = true)
             only if an explanation text is there-->
-                    @if (assessmentMode && selectedMode === ExampleSubmissionMode.READ_AND_CONFIRM && (!readOnly || (assessmentExplanation && assessmentExplanation.length > 0))) {
+                    @if (
+                        assessmentMode() &&
+                        selectedMode() === ExampleSubmissionMode.READ_AND_CONFIRM &&
+                        (!readOnly() || (assessmentExplanation() && assessmentExplanation().length > 0))
+                    ) {
                         <h3 class="mt-3">
                             {{ 'artemisApp.exampleSubmission.assessmentExplanation' | artemisTranslate }}
                             <sup>
@@ -180,29 +185,33 @@
                     }
                     <!--The explanation field is only visible a) in assessment mode, b) for example submissions in read and confirm mode and c) when in assessment dashboard (readonly = true)
             only if an explanation text is there-->
-                    @if (assessmentMode && selectedMode === ExampleSubmissionMode.READ_AND_CONFIRM && (!readOnly || (assessmentExplanation && assessmentExplanation.length > 0))) {
-                        <textarea class="form-control" rows="4" maxLength="2000" [(ngModel)]="assessmentExplanation" [disabled]="readOnly"></textarea>
+                    @if (
+                        assessmentMode() &&
+                        selectedMode() === ExampleSubmissionMode.READ_AND_CONFIRM &&
+                        (!readOnly() || (assessmentExplanation() && assessmentExplanation().length > 0))
+                    ) {
+                        <textarea class="form-control" rows="4" maxLength="2000" [(ngModel)]="assessmentExplanation" [disabled]="readOnly()"></textarea>
                     }
-                    @if (assessmentMode) {
-                        @if (result && result.id) {
+                    @if (assessmentMode()) {
+                        @if (result() && result().id) {
                             <jhi-unreferenced-feedback
                                 [feedbacks]="unreferencedFeedback()"
-                                [readOnly]="readOnly"
+                                [readOnly]="readOnly()"
                                 [addReferenceIdForExampleSubmission]="true"
                                 (feedbacksChange)="onUnReferencedFeedbackChanged($event)"
-                                [resultId]="result.id"
+                                [resultId]="result().id!"
                             />
                         }
                     }
                 </div>
-                @if (exercise) {
+                @if (exercise()) {
                     <jhi-collapsable-assessment-instructions
                         class="col-auto pe-2"
-                        [readOnly]="readOnly"
-                        [exercise]="exercise"
-                        [collapsed]="!readOnly && !toComplete"
-                        [isAssessmentTraining]="toComplete"
-                        [showAssessmentInstructions]="assessmentMode"
+                        [readOnly]="readOnly()"
+                        [exercise]="exercise()"
+                        [collapsed]="!readOnly() && !toComplete()"
+                        [isAssessmentTraining]="toComplete()"
+                        [showAssessmentInstructions]="assessmentMode()"
                     />
                 }
             </div>

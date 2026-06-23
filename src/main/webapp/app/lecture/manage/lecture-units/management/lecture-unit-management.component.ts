@@ -5,17 +5,18 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { concatMap, finalize, map } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
-import { Subject, from } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { Subject, Subscription, from } from 'rxjs';
 import { LectureUnitCombinedStatus, LectureUnitProcessingStatus, LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { faClock, faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
@@ -25,9 +26,9 @@ import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online
 import { CompetenciesPopoverComponent } from 'app/atlas/shared/competencies-popover/competencies-popover.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
 
 @Component({
@@ -73,6 +74,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     protected readonly lectureUnitService = inject(LectureUnitService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly websocketService = inject(WebsocketService);
 
     showCreationCard = input<boolean>(true);
     showCompetencies = input<boolean>(true);
@@ -102,6 +104,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     private resolvedLectureId: number | undefined;
     private retryProcessingTimeouts = new Map<number, ReturnType<typeof setTimeout>>();
+    private processingStateSubscription?: Subscription;
 
     ngOnInit(): void {
         this.resolvedLectureId = this.lectureId() ?? Number(this.activatedRoute?.parent?.snapshot.paramMap.get('lectureId'));
@@ -109,6 +112,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
             // ideally the router could load the details directly
             this.loadData();
+            this.subscribeToProcessingStateUpdates(this.resolvedLectureId);
         }
     }
 
@@ -117,6 +121,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             clearTimeout(timeoutId);
         }
         this.retryProcessingTimeouts.clear();
+        this.processingStateSubscription?.unsubscribe();
         this.dialogErrorSource.unsubscribe();
     }
 
@@ -314,6 +319,37 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             error: () => {
                 this.isStatusLoading.set(false);
             },
+        });
+    }
+
+    /**
+     * Subscribe to WebSocket updates for processing state changes.
+     * When Iris callbacks update the processing state, the server pushes the new state
+     * so the UI updates in real time without requiring a page refresh.
+     */
+    private subscribeToProcessingStateUpdates(lectureId: number): void {
+        const topic = `/topic/lectures/${lectureId}/unit-processing-state`;
+        this.processingStateSubscription = this.websocketService.subscribe<LectureUnitCombinedStatus>(topic).subscribe((status: LectureUnitCombinedStatus) => {
+            this.processingStatus.update((current) => {
+                const updated = Object.assign({}, current);
+                updated[status.lectureUnitId] = {
+                    lectureUnitId: status.lectureUnitId,
+                    phase: status.processingPhase,
+                    retryCount: status.retryCount,
+                    startedAt: status.startedAt,
+                    errorKey: status.processingErrorKey,
+                };
+                return updated;
+            });
+            this.transcriptionStatus.update((current) => {
+                const updated = Object.assign({}, current);
+                if (status.transcriptionStatus) {
+                    updated[status.lectureUnitId] = status.transcriptionStatus;
+                } else {
+                    delete updated[status.lectureUnitId];
+                }
+                return updated;
+            });
         });
     }
 

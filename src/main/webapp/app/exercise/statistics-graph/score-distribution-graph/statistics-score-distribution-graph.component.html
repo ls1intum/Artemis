@@ -1,0 +1,8 @@
+<div class="row mb-3">
+    <div class="col-xl-2">
+        <h3 jhiTranslate="statistics.score_distribution"></h3>
+    </div>
+    <div class="col-xl-9" style="height: 250px">
+        <p-chart type="bar" [data]="chartData()" [options]="chartOptions()" [plugins]="dataLabelsPlugin" (onDataSelect)="selectChartBar($event)" />
+    </div>
+</div>

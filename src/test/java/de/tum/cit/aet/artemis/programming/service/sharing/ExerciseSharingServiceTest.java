@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.io.IOUtils;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
@@ -28,12 +27,12 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.ResponseActions;
 import org.springframework.test.web.client.response.MockRestResponseCreators;
 
-import de.tum.cit.aet.artemis.core.authentication.AuthenticationFactory;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.account.authentication.AuthenticationFactory;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -265,7 +264,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     private void mockSampleBasketLoadingForToken(String basketToken) throws URISyntaxException, IOException {
         URI basketJSONURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + basketToken);
         try (InputStream in = Objects.requireNonNull(getClass().getResource("./basket/sampleBasket.json")).openStream()) {
-            String basketJSON = IOUtils.toString(in, StandardCharsets.UTF_8);
+            String basketJSON = new String(in.readAllBytes(), StandardCharsets.UTF_8);
             final ResponseActions responseActionsJSON = sharingPlatformMockProvider.getMockSharingServer().expect(ExpectedCount.once(), requestTo(basketJSONURI))
                     .andExpect(method(HttpMethod.GET));
             responseActionsJSON.andRespond(MockRestResponseCreators.withSuccess(basketJSON, MediaType.APPLICATION_JSON));

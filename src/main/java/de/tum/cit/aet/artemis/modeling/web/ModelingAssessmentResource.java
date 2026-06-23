@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
@@ -25,8 +27,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
@@ -72,14 +74,37 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     /**
      * Get the result of the modeling submission with the given id. See {@link AssessmentResource#getAssessmentBySubmissionId}.
+     * If a resultId is provided, retrieves that specific result with authorization and sensitive data filtering applied.
      *
      * @param submissionId the id of the submission that should be sent to the client
+     * @param resultId     optional id of a specific result to retrieve; if not provided, returns the latest result
      * @return the assessment of the given submission
      */
-    @Override
     @GetMapping("modeling-submissions/{submissionId}/result")
     @EnforceAtLeastStudent
-    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
+    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId, @RequestParam(value = "resultId", required = false) Long resultId) {
+        if (resultId != null) {
+            log.debug("REST request to get result {} for modeling submission {}", resultId, submissionId);
+            ModelingSubmission submission = modelingSubmissionRepository
+                    .findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteAndParticipationResultsElseThrow(submissionId);
+            Result result = submission.getResults().stream().filter(r -> r.getId().equals(resultId)).findFirst().orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+
+            if (!(submission.getParticipation() instanceof StudentParticipation participation)) {
+                throw new AccessForbiddenException();
+            }
+            ModelingExercise exercise = modelingExerciseRepository.findByIdElseThrow(participation.getExercise().getId());
+
+            if (!authCheckService.isUserAllowedToGetResult(exercise, participation, result)) {
+                throw new AccessForbiddenException();
+            }
+
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+                exercise.filterSensitiveInformation();
+                result.filterSensitiveInformation();
+            }
+
+            return ResponseEntity.ok(result);
+        }
         return super.getAssessmentBySubmissionId(submissionId);
     }
 
@@ -90,7 +115,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the example submission
      * @return the result linked to the example submission
      */
-    @GetMapping("exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment")
+    @GetMapping({ "exercises/{exerciseId}/modeling-submissions/{submissionId}/example-assessment", "exercise/{exerciseId}/modeling-submissions/{submissionId}/example-assessment" })
     @EnforceAtLeastTutor
     public ResponseEntity<Result> getModelingExampleAssessment(@PathVariable long exerciseId, @PathVariable long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
@@ -107,7 +132,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving/submitting modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("modeling-submissions/{submissionId}/result/{resultId}/assessment")
+    @PutMapping({ "modeling-submissions/{submissionId}/results/{resultId}/assessment", "modeling-submissions/{submissionId}/result/{resultId}/assessment" })
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
             @RequestParam(value = "submit", defaultValue = "false") boolean submit, @RequestBody ModelingAssessmentDTO modelingAssessment) {
@@ -123,9 +148,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving example modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @PutMapping("modeling-submissions/{exampleSubmissionId}/example-assessment")
+    @PutMapping("modeling-submissions/{submissionId}/example-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
+    public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable("submissionId") long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
         log.debug("REST request to save modeling example assessment : {}", exampleSubmissionId);
         Result result = saveExampleAssessment(exampleSubmissionId, feedbacks);
         return ResponseEntity.ok(result);

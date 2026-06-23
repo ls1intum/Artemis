@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 
 export const quizManagementDetailRoute: Routes = [
     {
@@ -54,7 +54,7 @@ export const quizManagementDetailRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/quiz-exercises/:exerciseId/sa-question-statistic/:questionId',
+        path: 'sa-question-statistic/:questionId',
         loadComponent: () =>
             import('app/quiz/manage/statistics/short-answer-question-statistic/short-answer-question-statistic.component').then((m) => m.ShortAnswerQuestionStatisticComponent),
         data: {

@@ -10,8 +10,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 class CourseTest {
 
@@ -161,6 +161,43 @@ class CourseTest {
         }
         else {
             assertThatCode(() -> course.validateUnenrollmentEndDate()).doesNotThrowAnyException();
+        }
+    }
+
+    private static Stream<Arguments> validateShortNameProvider() {
+        Course pattern = new Course();
+        pattern.setShortName("1invalid");
+
+        Course tooShort = new Course();
+        tooShort.setShortName("ab");
+
+        Course atMaxLength = new Course();
+        atMaxLength.setShortName("a".repeat(24));
+
+        Course tooLong = new Course();
+        tooLong.setShortName("a".repeat(25));
+
+        Course valid = new Course();
+        valid.setShortName("validShortName");
+
+        // The max-length check is gated on a missing id so the update path does not break legacy courses whose
+        // shortName predates the limit. A persisted course (id != null) with a 25-char shortName must still validate.
+        Course legacyTooLong = new Course();
+        legacyTooLong.setId(42L);
+        legacyTooLong.setShortName("a".repeat(25));
+
+        return Stream.of(Arguments.of(pattern, true), Arguments.of(tooShort, true), Arguments.of(atMaxLength, false), Arguments.of(tooLong, true), Arguments.of(valid, false),
+                Arguments.of(legacyTooLong, false));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("validateShortNameProvider")
+    void testValidateShortName(Course course, boolean expectException) {
+        if (expectException) {
+            assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> course.validateShortName());
+        }
+        else {
+            assertThatCode(() -> course.validateShortName()).doesNotThrowAnyException();
         }
     }
 }

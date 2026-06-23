@@ -54,4 +54,6 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
     void deleteAllByCourseId(Long courseId);
 
     long countByCourseId(Long courseId);
+
+    long countByCourseIdAndFaqState(Long courseId, FaqState faqState);
 }

@@ -12,8 +12,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.context.annotation.Conditional;
@@ -28,7 +26,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 @Conditional(ExamEnabled.class)
 @Entity
 @Table(name = "exam_room")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamRoom extends AbstractAuditingEntity {
 
@@ -80,7 +77,6 @@ public class ExamRoom extends AbstractAuditingEntity {
      * A layout strategy describes how students can be distributed throughout this exam room.
      */
     @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference
     private List<LayoutStrategy> layoutStrategies = new ArrayList<>();
 
@@ -88,7 +84,6 @@ public class ExamRoom extends AbstractAuditingEntity {
      * All exams this exam room is used in.
      */
     @OneToMany(mappedBy = "examRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonManagedReference("examRoomExamAssignments_room")
     private Set<ExamRoomExamAssignment> examRoomExamAssignments = new HashSet<>();
 

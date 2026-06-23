@@ -1,0 +1,93 @@
+---
+title: User Management
+sidebar_label: User Management
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# User Management
+
+Each course has four participant groups: **Students**, **Tutors**, **Editors**, and **Instructors**. Users can be added one at a time or imported in bulk from a CSV file. See [Access Rights](/admin/access-rights) for the permissions associated with each role.
+
+<Callout variant={CalloutVariant.info}>
+Only users with the **Instructor** role on the course can add or remove participants. Tutors and Editors can view the lists but not modify them.
+</Callout>
+
+---
+
+## Opening User Management
+
+Open the **Course Management** view and select your course. You can reach the user management screens in two ways:
+
+- **Quick Actions**: Use the **User Management** dropdown in the Quick Actions bar and select the role you want to manage (Add Student, Add Tutor, Add Editor, Add Instructor). Next to the dropdown, the participant counters (Students, Tutors, Editors, Instructors) link directly to the corresponding management page.
+- **Direct URL**: Navigate to `/course-management/<course-id>/groups/<group>`, where `<group>` is one of `students`, `tutors`, `editors`, or `instructors` (e.g. `/course-management/42/groups/students`).
+
+Each page lists the current members of the selected group together with their ID, profile picture, login, registration number, full name, and email address. You can search the list with the search field at the top and sort by any column header.
+
+---
+
+## Adding a Single User
+
+1. Open the management page for the role you want to assign (Students, Tutors, Editors, or Instructors).
+2. Type the user's **login** or **name** into the search field at the top of the participant table. Matching users are suggested as you type.
+3. Select the desired user from the suggestion list. The user is added to the group immediately and appears in the table.
+
+To assign multiple roles to the same user (for example, a teaching assistant who is also enrolled as a student), repeat the steps on the corresponding management pages.
+
+<Callout variant={CalloutVariant.info}>
+The user must already exist in Artemis. If they have never logged in, they need to be created first either through self-registration, single sign-on, or by an administrator. See [User Registration](/admin/user-registration) for details.
+</Callout>
+
+---
+
+## Importing Multiple Users via CSV
+
+To add many users at once, click the **Import Users** button at the top of any role's management page. A dialog opens where you can upload a CSV file.
+
+### CSV Format
+
+The first row of the file must contain headers. Each subsequent row must contain a value for **at least one** of `login`, `registration number`, or `email` &mdash; this is what Artemis uses to look up the existing user account. Additional columns are optional.
+
+| Column                | Accepted header names                                                  | Required |
+|-----------------------|------------------------------------------------------------------------|----------|
+| Login                 | `login`, `user`, `username`, `benutzer`, `benutzername`                | Yes\*    |
+| Registration number   | `registrationnumber`, `matriculationnumber`, `matrikelnummer`, `number`| Yes\*    |
+| Email                 | `email`, `e-mail`, `mail`                                              | Yes\*    |
+| First name            | `firstname`, `firstnameofstudent`, `givenname`, `forename`, `vorname`  | No       |
+| Last name             | `familyname`, `lastname`, `familynameofstudent`, `surname`, `nachname`, `familienname`, `name` | No |
+
+\* At least one of *Login*, *Registration number*, or *Email* must be present in each row. Headers are case-insensitive and ignore spaces and underscores.
+
+### Example
+
+```csv
+login,email,registrationnumber,firstname,lastname
+user_1,,,Alice,Smith
+,user_2@artemis.org,,Bob,Jones
+,,11712345,Carol,Müller
+```
+
+After selecting the CSV file, Artemis displays a preview of the parsed users. Click **Import** to add them to the selected role. The dialog reports how many users were imported successfully and how many were not found.
+
+<Callout variant={CalloutVariant.warning}>
+Registration numbers in spreadsheets are often interpreted as numbers, which strips leading zeros (e.g. `01234567` becomes `1234567`). Format the column as **text** in your spreadsheet application before exporting to CSV, otherwise lookups by registration number may fail.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+Users that cannot be matched to an existing Artemis account are reported under **Not found** at the end of the import. They are not created automatically. Verify their identifier (login, registration number, or email) and ensure they have an account before re-importing.
+</Callout>
+
+---
+
+## Removing a User
+
+On any role's management page, click the **Remove** button (trash icon) in the user's row. Confirm the action in the dialog. The user is removed from this group, but their existing submissions, results, and participations are preserved.
+
+Removing a user from one group does not affect their membership in other groups of the same course. For example, removing a user from *Tutors* does not remove them from *Students*.
+
+---
+
+## Exporting Participants
+
+To export the current list of a role, open its management page and click the **Export CSV** button at the top right. The download contains the displayed columns (ID, login, registration number, name, email) for every user currently in the group.

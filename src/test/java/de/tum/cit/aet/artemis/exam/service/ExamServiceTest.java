@@ -14,12 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -136,6 +136,18 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThatExceptionOfType(BadRequestAlertException.class).as("Expected to throw bad request alert exception, but it didn't")
                 .isThrownBy(() -> examService.validateForStudentExamGeneration(exam))
                 .withMessageContaining("All exercises in an exercise group must have the same meaning for the exam score");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void validateForStudentExamGeneration_emptyExerciseGroup_shouldThrowException() {
+        // An exercise group without any exercise (e.g. one whose only exercise failed to import and was left empty) must
+        // block student exam generation with a clear message, instead of later crashing the random exercise selection.
+        Exam exam = createExam(1, 1L, 10);
+        addExerciseGroupToExam(exam, 1L, true);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).as("an empty exercise group must be rejected before student exams are generated")
+                .isThrownBy(() -> examService.validateForStudentExamGeneration(exam)).withMessageContaining("All exercise groups must have at least one exercise");
     }
 
     @Test

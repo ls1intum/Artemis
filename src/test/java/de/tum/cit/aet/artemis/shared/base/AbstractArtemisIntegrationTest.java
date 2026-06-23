@@ -28,32 +28,26 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.account.util.UserFactory;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.HibernateQueryInterceptor;
@@ -62,12 +56,19 @@ import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.ThrowingProducer;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
+import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.ApplePushNotificationService;
+import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
@@ -157,6 +158,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @MockitoSpyBean
     protected ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    @MockitoSpyBean
+    protected ExerciseDateService exerciseDateService;
 
     @MockitoSpyBean
     protected UriService uriService;

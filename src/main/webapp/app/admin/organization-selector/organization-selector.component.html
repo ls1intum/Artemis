@@ -1,0 +1,31 @@
+<div class="p-1">
+    <jhi-table-view
+        [cols]="columns()"
+        [vals]="organizations()"
+        [totalRows]="totalCount()"
+        (onLazyLoad)="loadOrganizations($event)"
+        [rowActions]="selectorActions"
+        [loading]="isLoading()"
+        [options]="selectorTableOptions"
+    />
+
+    <div class="d-flex justify-content-end mt-3">
+        <button type="button" class="btn btn-secondary" (click)="closeModal(undefined)" jhiTranslate="entity.action.cancel"></button>
+    </div>
+</div>
+
+<ng-template #logoCell let-params>
+    @if (params.value) {
+        <img [height]="36" [src]="params.value" (error)="$event.target.style.display = 'none'" alt="" />
+    }
+</ng-template>
+
+<ng-template #selectorActions let-org>
+    <button
+        type="button"
+        class="btn btn-primary btn-sm"
+        [disabled]="isAlreadyAssigned()(org)"
+        (click)="selectOrganization(org); $event.stopPropagation()"
+        jhiTranslate="artemisApp.organizationManagement.modalSelector.select"
+    ></button>
+</ng-template>

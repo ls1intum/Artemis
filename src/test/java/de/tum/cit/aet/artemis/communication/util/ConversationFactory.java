@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.util;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
@@ -11,8 +12,7 @@ import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.SavedPostStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
  * Factory for creating objects related to Conversations.
@@ -43,8 +43,8 @@ public class ConversationFactory {
      */
     public static Post createBasicPost(int index, User author) {
         Post post = new Post();
-        post.setTitle(String.format("Title Post %s", (index + 1)));
-        post.setContent(String.format("Content Post %s", (index + 1)));
+        post.setTitle("Title Post %s".formatted((index + 1)));
+        post.setContent("Content Post %s".formatted((index + 1)));
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(author);

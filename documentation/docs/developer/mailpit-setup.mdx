@@ -1,0 +1,124 @@
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Mailpit Setup
+
+This guide explains how to set up Mailpit for local email testing during Artemis development.
+Mailpit captures all outgoing emails from Artemis and displays them in a web UI, making it easy to test email-related features such as password resets, notifications, and account activation.
+
+<Callout variant={CalloutVariant.info}>
+    Mailpit is only needed when developing or testing email-related features.
+    If you don't need email functionality, you can skip this setup.
+</Callout>
+
+---
+
+## Prerequisites
+
+- **Docker** and **Docker Compose** installed on your machine
+
+---
+
+## Quick Start
+
+### Starting Mailpit
+
+```bash
+docker compose -f docker/mailpit.yml up -d
+```
+
+This will start Mailpit with the following configuration:
+
+| Service  | Port | Description                   |
+|----------|------|-------------------------------|
+| SMTP     | 1025 | SMTP server for capturing emails |
+| Web UI   | 8025 | Web interface for viewing emails |
+
+### Verifying the Installation
+
+Open the Mailpit web UI in your browser:
+
+```
+http://localhost:8025
+```
+
+You should see an empty inbox. Any emails sent by Artemis will appear here.
+
+### Stopping Mailpit
+
+```bash
+docker compose -f docker/mailpit.yml down
+```
+
+---
+
+## Configuring Artemis (Non-Containerized)
+
+When running Artemis from IntelliJ or via `./gradlew bootRun`, add the following to your `src/main/resources/config/application-local.yml`:
+
+```yaml
+spring:
+    mail:
+        host: localhost
+        port: 1025
+        username:
+        password:
+jhipster:
+    mail:
+        from: artemis@mailpit.local
+```
+
+This overrides the default mail settings from `application-dev.yml` to route all emails to Mailpit's SMTP server.
+
+## Configuring Artemis (Containerized)
+
+When running Artemis as a Docker container, combine the Mailpit compose file with your Artemis compose file:
+
+```bash
+docker compose -f docker/artemis-dev-mysql.yml -f docker/mailpit.yml up
+```
+
+Then uncomment the `artemis-app` service section in `docker/mailpit.yml` to inject the mail settings into the Artemis container:
+
+```yaml
+artemis-app:
+    environment:
+        SPRING_MAIL_HOST: "mailpit"
+        SPRING_MAIL_PORT: "1025"
+        SPRING_MAIL_USERNAME:
+        SPRING_MAIL_PASSWORD:
+```
+
+<Callout variant={CalloutVariant.info}>
+    The containerized setup uses `mailpit` as the hostname (Docker's internal DNS) instead of `localhost`,
+    because the Artemis container communicates with the Mailpit container over the shared Docker network.
+</Callout>
+
+---
+
+## Testing
+
+1. Start Mailpit: `docker compose -f docker/mailpit.yml up -d`
+2. Start Artemis with the mail configuration above
+3. Trigger an email (e.g., request a password reset)
+4. Open `http://localhost:8025` — the email should appear in the inbox
+
+---
+
+## Troubleshooting
+
+### Port Conflicts
+
+If port 1025 or 8025 is already in use, stop the conflicting service or modify the ports in `docker/mailpit.yml`.
+
+### Emails Not Appearing
+
+- Verify Mailpit is running: `docker compose -f docker/mailpit.yml ps`
+- Check that your `application-local.yml` has `spring.mail.host: localhost` and `spring.mail.port: 1025`
+- Check the Artemis server logs for mail-related errors
+
+### Container Logs
+
+```bash
+docker compose -f docker/mailpit.yml logs mailpit
+```

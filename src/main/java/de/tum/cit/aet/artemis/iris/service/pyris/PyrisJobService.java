@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.security.SecureRandom;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -19,10 +18,10 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
@@ -53,8 +52,8 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
 
-    @Value("${artemis.iris.jobs.ingestion.timeout:3600}")
-    private int ingestionJobTimeout; // in seconds
+    @Value("${artemis.iris.jobs.ingestion.timeout:10800}")
+    private int ingestionJobTimeout; // in seconds (default 3h: covers transcription + ingestion of long lectures)
 
     public PyrisJobService(DistributedDataAccessService distributedDataAccessService) {
         this.distributedDataAccessService = distributedDataAccessService;
@@ -74,16 +73,9 @@ public class PyrisJobService {
         return token;
     }
 
-    public String addExerciseChatJob(Long courseId, Long exerciseId, Long sessionId) {
+    public String addChatJob(long courseId, long sessionId, Long entityId, Long userMessageId) {
         var token = generateJobIdToken();
-        var job = new ExerciseChatJob(token, courseId, exerciseId, sessionId, null, null, null);
-        storeJobWithTimeout(job);
-        return token;
-    }
-
-    public String addCourseChatJob(Long courseId, Long sessionId, Long userMessageId) {
-        var token = generateJobIdToken();
-        var job = new CourseChatJob(token, courseId, sessionId, null, userMessageId, null);
+        var job = new ChatJob(token, courseId, sessionId, entityId, null, userMessageId, null);
         storeJobWithTimeout(job);
         return token;
     }
@@ -103,11 +95,31 @@ public class PyrisJobService {
         return token;
     }
 
-    public String addLectureChatJob(Long courseId, Long lectureId, Long sessionId, Long userMessageId) {
+    /**
+     * Adds an autonomous tutor job to the job map.
+     * This job is used for the autonomous tutor pipeline that responds to student posts.
+     *
+     * @param postId   Id of the post being responded to
+     * @param courseId Id of the course the post belongs to
+     * @return the token of the job
+     */
+    public String addAutonomousTutorJob(Long postId, Long courseId) {
         var token = generateJobIdToken();
-        var job = new LectureChatJob(token, courseId, lectureId, sessionId, null, userMessageId, null);
+        var job = new AutonomousTutorJob(token, postId, courseId);
         storeJobWithTimeout(job);
         return token;
+    }
+
+    /**
+     * Adds a new global search answer job to the job map.
+     * The job stores the requesting user's login so that WebSocket status updates can be routed.
+     *
+     * @param userLogin the login of the user who initiated the search
+     * @param runId     the client-generated UUID that identifies this job and is echoed in WebSocket callbacks
+     */
+    public void addGlobalSearchAnswerJob(String userLogin, String runId) {
+        var job = new GlobalSearchAnswerJob(runId, userLogin);
+        getPyrisJobMap().put(runId, job);
     }
 
     /**
@@ -149,21 +161,13 @@ public class PyrisJobService {
     }
 
     /**
-     * Store a job in the job map.
+     * Store a job in the job map, preserving the appropriate TTL for the job type.
+     * Ingestion jobs use a longer TTL since pipelines can run for over an hour.
      *
      * @param job the job to store
      */
     public void updateJob(PyrisJob job) {
         storeJobWithTimeout(job);
-    }
-
-    /**
-     * Get all current jobs.
-     *
-     * @return the all current jobs
-     */
-    public Collection<PyrisJob> currentJobs() {
-        return getPyrisJobMap().values();
     }
 
     /**

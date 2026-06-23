@@ -1,5 +1,5 @@
 <p-dialog
-    [header]="'artemisApp.pages.createTutorialFreePeriod.title' | artemisTranslate"
+    [header]="'artemisApp.pages.createOrEditTutorialFreePeriodTitle.create' | artemisTranslate"
     [modal]="true"
     [visible]="dialogVisible()"
     [closable]="true"
@@ -7,7 +7,7 @@
     [style]="{ width: '40rem' }"
     appendTo="body"
 >
-    <jhi-loading-indicator-container [isLoading]="isLoading">
+    <jhi-loading-indicator-container [isLoading]="isLoading()">
         <jhi-tutorial-free-period-form [timeZone]="course()?.timeZone" [isEditMode]="false" (formSubmitted)="createTutorialGroupFreePeriod($event)" />
     </jhi-loading-indicator-container>
 </p-dialog>

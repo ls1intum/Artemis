@@ -4,9 +4,9 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faGear } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
-import { MAX_TAB_SIZE } from 'app/shared/monaco-editor/monaco-editor.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MAX_TAB_SIZE } from 'app/editor/monaco-editor/monaco-editor.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-code-editor-header',
@@ -18,6 +18,7 @@ export class CodeEditorHeaderComponent {
     readonly fileName = input<string>();
     readonly isLoading = input<boolean>(false);
     readonly showTabSizeSelector = input<boolean>(true);
+    readonly secondary = input<boolean>(false);
     readonly onValidateTabSize = output<number>();
 
     readonly tabSize = model<number>(4);

@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;

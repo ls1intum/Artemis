@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.repository.review;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -73,12 +74,43 @@ public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThr
     java.util.Optional<CommentThread> findWithCommentsById(long threadId);
 
     /**
+     * Find selected comment threads for a given exercise with their comments loaded.
+     *
+     * @param exerciseId the exercise id
+     * @param threadIds  the selected thread ids
+     * @return selected comment threads with comments
+     */
+    @Query("""
+            SELECT DISTINCT ct
+            FROM CommentThread ct
+                LEFT JOIN FETCH ct.comments c
+            WHERE ct.exercise.id = :exerciseId
+                AND ct.id IN :threadIds
+            """)
+    List<CommentThread> findWithCommentsByExerciseIdAndIdIn(@Param("exerciseId") long exerciseId, @Param("threadIds") Collection<Long> threadIds);
+
+    /**
      * Find all comment threads for a given group.
      *
      * @param groupId the group id
      * @return list of comment threads
      */
     List<CommentThread> findByGroupId(long groupId);
+
+    /**
+     * Find all comment threads for a given group with their comments loaded.
+     *
+     * @param groupId the group id
+     * @return list of comment threads with comments
+     */
+    @Query("""
+            SELECT ct
+            FROM CommentThread ct
+                LEFT JOIN FETCH ct.comments c
+                LEFT JOIN FETCH c.author
+            WHERE ct.group.id = :groupId
+            """)
+    List<CommentThread> findWithCommentsByGroupId(@Param("groupId") long groupId);
 
     /**
      * Count comment threads for a given group.

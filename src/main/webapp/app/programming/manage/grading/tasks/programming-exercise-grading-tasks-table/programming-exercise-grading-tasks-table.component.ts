@@ -1,21 +1,21 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleRight, faAsterisk, faMedal, faQuestionCircle, faScaleUnbalanced, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGradingStatistics } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTask } from '../programming-exercise-task';
 import { Observable, Subject } from 'rxjs';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
-import { isExamExercise } from 'app/shared/util/utils';
+import { isExamExercise } from 'app/foundation/util/utils';
 import { ProgrammingExerciseServerSideTask } from 'app/programming/shared/entities/programming-exercise-task.model';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseTaskComponent } from '../programming-exercise-task/programming-exercise-task.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';
@@ -33,9 +33,9 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
 export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     private taskService = inject(ProgrammingExerciseTaskService);
 
-    @Input() exercise: ProgrammingExercise;
-    @Input() course: Course;
-    @Input() gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly course = input.required<Course>();
+    readonly gradingStatisticsObservable = input.required<Observable<ProgrammingExerciseGradingStatistics>>();
 
     // Icons
     faAngleDown = faAngleDown;
@@ -45,22 +45,22 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     faMedal = faMedal;
     faAsterisk = faAsterisk;
 
-    isSaving = false;
-    tasks: ProgrammingExerciseTask[] = [];
-    allTasksExpandedSubject: Subject<boolean>;
+    readonly isSaving = signal(false);
+    readonly tasks = signal<ProgrammingExerciseTask[]>([]);
+    readonly allTasksExpandedSubject = signal<Subject<boolean>>(undefined!);
 
     currentSort: Sort | undefined;
 
-    isExamExercise = false;
+    readonly isExamExercise = signal(false);
 
     get ignoreInactive() {
         return this.taskService.ignoreInactive;
     }
 
     ngOnInit(): void {
-        this.allTasksExpandedSubject = new Subject();
-        this.gradingStatisticsObservable.subscribe((gradingStatistics) => {
-            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe(this.updateTasks);
+        this.allTasksExpandedSubject.set(new Subject());
+        this.gradingStatisticsObservable().subscribe((gradingStatistics) => {
+            this.taskService.configure(this.exercise(), this.course(), gradingStatistics).subscribe(this.updateTasks);
         });
 
         this.currentSort = {
@@ -68,11 +68,11 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             descending: true,
         };
 
-        this.isExamExercise = isExamExercise(this.exercise);
+        this.isExamExercise.set(isExamExercise(this.exercise()));
     }
 
     updateTasks = () => {
-        this.tasks = this.taskService.updateTasks();
+        this.tasks.set(this.taskService.updateTasks());
     };
 
     toggleShowInactiveTestsShown = () => {
@@ -81,20 +81,20 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     };
 
     saveTestCases = () => {
-        this.isSaving = true;
-        this.taskService.saveTestCases().subscribe(() => (this.isSaving = false));
+        this.isSaving.set(true);
+        this.taskService.saveTestCases().subscribe(() => this.isSaving.set(false));
     };
 
     resetTestCases = () => {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.taskService.resetTestCases().subscribe(() => {
-            this.isSaving = false;
+            this.isSaving.set(false);
             this.updateTasks();
         });
     };
 
     toggleAllTasksExpanded = (value: boolean) => {
-        this.allTasksExpandedSubject.next(value);
+        this.allTasksExpandedSubject().next(value);
     };
 
     changeSort = (by: Sort['by']) => {
@@ -134,7 +134,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             return this.currentSort?.descending ? order : -order;
         };
 
-        this.tasks = this.tasks.sort(comparator);
+        const sortedTasks = [...this.tasks()].sort(comparator);
 
         // the objects task and test have their name attribute named differently, making this necessary
         if (this.currentSort?.by === 'name') {
@@ -143,7 +143,8 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
                 return this.currentSort?.descending ? order : -order;
             };
         }
-        this.tasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
+        sortedTasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
+        this.tasks.set(sortedTasks);
     };
 
     private compareNumForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseTestCase>(attributeKey: keyof T): TaskComparator => {

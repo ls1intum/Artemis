@@ -1,16 +1,20 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { SortingOrder } from 'app/shared/table/pageable-table';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { take } from 'rxjs/operators';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Exam Import Paging Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ExamImportPagingService;
     let httpMock: HttpTestingController;
 
@@ -29,7 +33,7 @@ describe('Exam Import Paging Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
-    it('should find an exam', fakeAsync(() => {
+    it('should find an exam', async () => {
         const searchResult = { resultsOnPage: [exam], numberOfPages: 5 };
         const pageable = { pageSize: 2, page: 4, sortingOrder: SortingOrder.DESCENDING, searchTerm: 'ExamSearch', sortedColumn: 'testSortedColumn' };
         service
@@ -43,10 +47,11 @@ describe('Exam Import Paging Service', () => {
         expect(req.request.params.get('searchTerm')).toBe('ExamSearch');
         expect(req.request.params.get('sortedColumn')).toBe('testSortedColumn');
         req.flush(searchResult);
-        tick();
-    }));
+        await Promise.resolve();
+    });
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 });

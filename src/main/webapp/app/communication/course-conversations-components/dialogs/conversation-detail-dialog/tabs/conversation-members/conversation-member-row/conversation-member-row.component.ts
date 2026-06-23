@@ -1,26 +1,28 @@
-import { Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
 import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { EMPTY, Observable, Subject, from, takeUntil } from 'rxjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { Observable, Subject, takeUntil } from 'rxjs';
+import { DialogService } from 'primeng/dynamicdialog';
+import { Course } from 'app/course/shared/entities/course.model';
+import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
+import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { TranslateService } from '@ngx-translate/core';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getAsGroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { catchError } from 'rxjs/operators';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { filter } from 'rxjs/operators';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
@@ -31,6 +33,9 @@ import { addPublicFilePrefix } from 'app/app.constants';
     selector: '[jhi-conversation-member-row]',
     templateUrl: './conversation-member-row.component.html',
     styleUrls: ['./conversation-member-row.component.scss'],
+    host: {
+        '[class.active]': 'isCurrentUser()',
+    },
     imports: [
         ProfilePictureComponent,
         FaIconComponent,
@@ -58,24 +63,23 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     idOfLoggedInUser: number;
 
-    @HostBinding('class.active')
-    isCurrentUser = false;
+    readonly isCurrentUser = signal(false);
 
     isCreator = false;
 
-    canBeRemovedFromConversation = false;
+    readonly canBeRemovedFromConversation = signal(false);
 
-    canBeGrantedChannelModeratorRole = false;
+    readonly canBeGrantedChannelModeratorRole = signal(false);
 
-    canBeRevokedChannelModeratorRole = false;
+    readonly canBeRevokedChannelModeratorRole = signal(false);
 
-    userLabel: string;
-    userName: string | undefined;
-    userId: number | undefined;
-    userImageUrl: string | undefined;
+    readonly userLabel = signal<string>('');
+    readonly userName = signal<string | undefined>(undefined);
+    readonly userId = signal<number | undefined>(undefined);
+    readonly userImageUrl = signal<string | undefined>(undefined);
     // icons
-    userIcon: IconProp = faUser;
-    userTooltip = '';
+    readonly userIcon = signal<IconProp>(faUser);
+    readonly userTooltip = signal('');
 
     faEllipsis = faEllipsis;
     faUserGear = faUserGear;
@@ -87,7 +91,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     canRemoveUsersFromConversation = canRemoveUsersFromConversation;
 
     private accountService = inject(AccountService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private channelService = inject(ChannelService);
     private groupChatService = inject(GroupChatService);
@@ -98,26 +102,26 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             this.accountService.identity().then((loggedInUser: User) => {
                 this.idOfLoggedInUser = loggedInUser.id!;
                 if (this.conversationMember()?.id === this.idOfLoggedInUser) {
-                    this.isCurrentUser = true;
+                    this.isCurrentUser.set(true);
                 }
                 if (this.conversationMember()?.id === this.activeConversation()?.creator?.id) {
                     this.isCreator = true;
                 }
 
-                this.userImageUrl = this.conversationMember()?.imageUrl;
-                this.userId = this.conversationMember()?.id;
-                this.userName = this.conversationMember()?.name;
-                this.userLabel = getUserLabel(this.conversationMember()!);
+                this.userImageUrl.set(this.conversationMember()?.imageUrl);
+                this.userId.set(this.conversationMember()?.id);
+                this.userName.set(this.conversationMember()?.name);
+                this.userLabel.set(getUserLabel(this.conversationMember()!));
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
-                this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation()!);
+                this.canBeRemovedFromConversation.set(!this.isCurrentUser() && this.canRemoveUsersFromConversation(this.activeConversation()!));
                 if (isChannelDTO(this.activeConversation())) {
                     // the creator of a channel can not be removed from the channel
                     const channelDTO = this.activeConversation() as ChannelDTO;
-                    this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator && !channelDTO.isCourseWide;
-                    this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(channelDTO) && !this.conversationMember()?.isChannelModerator;
+                    this.canBeRemovedFromConversation.set(this.canBeRemovedFromConversation() && !this.isCreator && !channelDTO.isCourseWide);
+                    this.canBeGrantedChannelModeratorRole.set(this.canGrantChannelModeratorRole(channelDTO) && !this.conversationMember()?.isChannelModerator);
                     // the creator of a channel cannot be revoked the channel moderator role
-                    this.canBeRevokedChannelModeratorRole = this.canRevokeChannelModeratorRole(channelDTO) && !this.isCreator && !!this.conversationMember()?.isChannelModerator;
+                    this.canBeRevokedChannelModeratorRole.set(this.canRevokeChannelModeratorRole(channelDTO) && !this.isCreator && !!this.conversationMember()?.isChannelModerator);
                 }
             });
         }
@@ -142,7 +146,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
         const translationParams = {
             channelName: channel.name!,
-            userName: this.userLabel,
+            userName: this.userLabel(),
         };
         const confirmedCallback = () => {
             const courseId = this.course?.()?.id;
@@ -170,7 +174,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         };
         const translationParams = {
             channelName: channel.name!,
-            userName: this.userLabel,
+            userName: this.userLabel(),
         };
         const confirmedCallback = () => {
             const courseId = this.course?.()?.id;
@@ -208,7 +212,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         }
 
         const translationParams = {
-            userName: this.userLabel,
+            userName: this.userLabel(),
             channelName: channel.name!,
         };
         const confirmedCallback = () => {
@@ -236,7 +240,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             confirmButtonKey: 'artemisApp.dialogs.removeUserGroupChat.remove',
         };
         const translationParams = {
-            userName: this.userLabel,
+            userName: this.userLabel(),
         };
         const confirmedCallback = () => {
             const courseId = this.course?.()?.id;
@@ -255,16 +259,19 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         translationParams: { [key: string]: string },
         confirmedCallback: () => Observable<HttpResponse<void>>,
     ) {
-        const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = translationParams;
-        modalRef.componentInstance.translationKeys = translationKeys;
-        modalRef.componentInstance.canBeUndone = true;
-        modalRef.componentInstance.isDangerousAction = true;
-        modalRef.componentInstance.initialize();
+        const ref = this.dialogService.open(GenericConfirmationDialogComponent, {
+            ...defaultSecondLayerDialogOptions,
+            data: {
+                translationParameters: translationParams,
+                translationKeys,
+                canBeUndone: true,
+                isDangerousAction: true,
+            },
+        });
 
-        from(modalRef.result)
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {
@@ -293,14 +300,14 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         // highest authority is displayed
         if (this.conversationMember()?.isInstructor) {
-            this.userIcon = faUserGraduate;
-            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'instructor');
+            this.userIcon.set(faUserGraduate);
+            this.userTooltip.set(this.translateService.instant(toolTipTranslationPath + 'instructor'));
         } else if (this.conversationMember()?.isEditor || this.conversationMember()?.isTeachingAssistant) {
-            this.userIcon = faUserCheck;
-            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'tutor');
+            this.userIcon.set(faUserCheck);
+            this.userTooltip.set(this.translateService.instant(toolTipTranslationPath + 'tutor'));
         } else {
-            this.userIcon = faUser;
-            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'student');
+            this.userIcon.set(faUser);
+            this.userTooltip.set(this.translateService.instant(toolTipTranslationPath + 'student'));
         }
     }
 

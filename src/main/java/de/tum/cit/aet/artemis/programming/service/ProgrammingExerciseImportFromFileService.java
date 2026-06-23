@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -25,23 +26,24 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -128,15 +130,23 @@ public class ProgrammingExerciseImportFromFileService {
             checkDetailsJsonExists(importExerciseDir);
             checkRepositoriesExist(importExerciseDir);
 
+            originalProgrammingExercise.setCourse(course);
+            originalProgrammingExercise.setTestCasesChanged(false);
+
             programmingExerciseValidationService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
-            // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
-            newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise);
+            newProgrammingExercise = programmingExerciseCreationUpdateService.createProgrammingExercise(originalProgrammingExercise, false, true);
+
             if (Boolean.TRUE.equals(originalProgrammingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
             Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(exerciseFilePath.toString()));
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
             importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, user);
+
+            Optional<String> importedJenkinsBuildPlan = Optional.empty();
+            if (profileService.isJenkinsActive()) {
+                importedJenkinsBuildPlan = readBuildPlanIfExisting(pathToDirectoryWithImportedContent);
+            }
 
             try {
                 programmingExerciseRepositoryService.adjustProjectNames(getProgrammingExerciseFromDetailsFile(importExerciseDir).getTitle(), newProgrammingExercise);
@@ -145,12 +155,10 @@ public class ProgrammingExerciseImportFromFileService {
                 log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newProgrammingExercise.getTitle(), e);
             }
 
-            newProgrammingExercise.setCourse(course);
-            // It doesn't make sense to import a build plan on a local CI setup.
-            if (profileService.isJenkinsActive()) {
-                importBuildPlanIfExisting(newProgrammingExercise, pathToDirectoryWithImportedContent);
+            if (importedJenkinsBuildPlan.isPresent()) {
+                buildPlanRepository.setBuildPlanForExercise(importedJenkinsBuildPlan.orElseThrow(), newProgrammingExercise);
             }
-            // TODO: we need to create the build configuration
+            newProgrammingExercise = programmingExerciseCreationUpdateService.setupBuildPlansAndTriggerInitialBuilds(newProgrammingExercise);
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
@@ -160,22 +168,18 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
-     * Imports a build plan if it exists in the extracted zip file
-     * If the file cannot be read, the build plan is skipped
+     * Reads a build plan if it exists in the extracted zip file.
+     * If the file cannot be read, the build plan is skipped.
      *
-     * @param programmingExercise the programming exercise for which the build plan should be imported
-     * @param importExerciseDir   the directory where the extracted zip file is located
+     * @param importExerciseDir the directory where the extracted zip file is located
+     * @return the build plan content, if present and readable
      */
-    private void importBuildPlanIfExisting(ProgrammingExercise programmingExercise, Path importExerciseDir) {
+    private Optional<String> readBuildPlanIfExisting(Path importExerciseDir) throws IOException {
         Path buildPlanPath = importExerciseDir.resolve(BUILD_PLAN_FILE_NAME);
         if (Files.exists(buildPlanPath)) {
-            try {
-                buildPlanRepository.setBuildPlanForExercise(FileUtils.readFileToString(buildPlanPath.toFile(), StandardCharsets.UTF_8), programmingExercise);
-            }
-            catch (IOException e) {
-                log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);
-            }
+            return Optional.of(Files.readString(buildPlanPath, StandardCharsets.UTF_8));
         }
+        return Optional.empty();
     }
 
     /**
@@ -297,9 +301,7 @@ public class ProgrammingExerciseImportFromFileService {
      */
     private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
         var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
+        ObjectMapper objectMapper = JsonObjectMapper.get();
 
         try {
             return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);

@@ -1,25 +1,26 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { filter, take } from 'rxjs';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { onError } from 'app/shared/util/global.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { Course } from 'app/course/shared/entities/course.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
-import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -52,22 +53,22 @@ export class Lti13DeepLinkingComponent implements OnInit {
     protected readonly faWrench = faWrench;
 
     courseId: number;
-    exercises: Exercise[];
-    lectures: Lecture[];
+    readonly exercises = signal<Exercise[]>([]);
+    readonly lectures = signal<Lecture[]>([]);
     selectedExercises?: Set<number> = new Set();
     selectedLectures?: Set<number> = new Set();
-    isCompetencySelected = false;
-    isLearningPathSelected = false;
-    isIrisSelected = false;
-    course: Course;
+    readonly isCompetencySelected = signal(false);
+    readonly isLearningPathSelected = signal(false);
+    readonly isIrisSelected = signal(false);
+    readonly course = signal<Course | undefined>(undefined);
 
     predicate = 'type';
     reverse = false;
-    isLinking = true;
+    readonly isLinking = signal(true);
 
     //grouping
-    isExerciseGroupingActive = false;
-    isLectureGroupingActive = false;
+    readonly isExerciseGroupingActive = signal(false);
+    readonly isLectureGroupingActive = signal(false);
 
     /**
      * Initializes the component.
@@ -81,10 +82,10 @@ export class Lti13DeepLinkingComponent implements OnInit {
             this.courseId = Number(params['courseId']);
 
             if (!this.courseId) {
-                this.isLinking = false;
+                this.isLinking.set(false);
                 return;
             }
-            if (!this.isLinking) {
+            if (!this.isLinking()) {
                 return;
             }
 
@@ -92,12 +93,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 if (user) {
                     this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(this.courseId).subscribe((findWithExercisesResult) => {
                         if (findWithExercisesResult?.body) {
-                            this.course = findWithExercisesResult.body;
+                            this.course.set(findWithExercisesResult.body);
                             if (findWithExercisesResult?.body?.exercises) {
-                                this.exercises = findWithExercisesResult.body.exercises;
+                                this.exercises.set(findWithExercisesResult.body.exercises);
                             }
                             if (findWithExercisesResult?.body?.lectures) {
-                                this.lectures = findWithExercisesResult.body.lectures;
+                                this.lectures.set(findWithExercisesResult.body.lectures);
                             }
                         }
                     });
@@ -115,12 +116,13 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * @param currentLink The current URL to return to after login.
      */
     redirectUserToLoginThenTargetLink(currentLink: string): void {
-        this.router.navigate(['/']).then(() => {
-            this.accountService.getAuthenticationState().subscribe((user) => {
-                if (user) {
+        this.router.navigate(['/sign-in']).then(() => {
+            this.accountService
+                .getAuthenticationState()
+                .pipe(filter(Boolean), take(1))
+                .subscribe(() => {
                     window.location.replace(currentLink);
-                }
-            });
+                });
         });
     }
 
@@ -128,7 +130,9 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * Sorts the list of exercises based on the selected predicate and order.
      */
     sortRows() {
-        this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
+        const sortedExercises = [...this.exercises()];
+        this.sortService.sortByProperty(sortedExercises, this.predicate, this.reverse);
+        this.exercises.set(sortedExercises);
     }
 
     /**
@@ -160,11 +164,11 @@ export class Lti13DeepLinkingComponent implements OnInit {
     }
 
     activateExerciseGrouping() {
-        this.isExerciseGroupingActive = true;
+        this.isExerciseGroupingActive.set(true);
     }
 
     activateLectureGrouping() {
-        this.isLectureGroupingActive = true;
+        this.isLectureGroupingActive.set(true);
     }
 
     selectLecture(lectureId: number | undefined) {
@@ -182,26 +186,26 @@ export class Lti13DeepLinkingComponent implements OnInit {
     }
 
     enableCompetency() {
-        if (!this.isCompetencySelected) {
-            this.isCompetencySelected = true;
-            this.isIrisSelected = false;
-            this.isLearningPathSelected = false;
+        if (!this.isCompetencySelected()) {
+            this.isCompetencySelected.set(true);
+            this.isIrisSelected.set(false);
+            this.isLearningPathSelected.set(false);
         }
     }
 
     enableLearningPath() {
-        if (!this.isLearningPathSelected) {
-            this.isLearningPathSelected = true;
-            this.isIrisSelected = false;
-            this.isCompetencySelected = false;
+        if (!this.isLearningPathSelected()) {
+            this.isLearningPathSelected.set(true);
+            this.isIrisSelected.set(false);
+            this.isCompetencySelected.set(false);
         }
     }
 
     enableIris() {
-        if (!this.isIrisSelected) {
-            this.isIrisSelected = true;
-            this.isLearningPathSelected = false;
-            this.isCompetencySelected = false;
+        if (!this.isIrisSelected()) {
+            this.isIrisSelected.set(true);
+            this.isLearningPathSelected.set(false);
+            this.isCompetencySelected.set(false);
         }
     }
 
@@ -210,7 +214,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * If an exercise, lecture, competency, learning path or Iris is selected, it sends a POST request to initiate deep linking.
      */
     sendDeepLinkRequest() {
-        if (this.selectedExercises?.size || this.selectedLectures?.size || this.isCompetencySelected || this.isLearningPathSelected || this.isIrisSelected) {
+        if (this.selectedExercises?.size || this.selectedLectures?.size || this.isCompetencySelected() || this.isLearningPathSelected() || this.isIrisSelected()) {
             const ltiIdToken = this.sessionStorageService.retrieve<string>('ltiIdToken') ?? '';
             const clientRegistrationId = this.sessionStorageService.retrieve<string>('clientRegistrationId') ?? '';
 
@@ -222,24 +226,24 @@ export class Lti13DeepLinkingComponent implements OnInit {
             let contentIds: string | undefined = undefined;
 
             if (this.selectedExercises?.size) {
-                if (this.isExerciseGroupingActive) {
+                if (this.isExerciseGroupingActive()) {
                     resourceType = DeepLinkingType.GROUPED_EXERCISE;
                 } else {
                     resourceType = DeepLinkingType.EXERCISE;
                 }
                 contentIds = Array.from(this.selectedExercises).join(',');
             } else if (this.selectedLectures?.size) {
-                if (this.isLectureGroupingActive) {
+                if (this.isLectureGroupingActive()) {
                     resourceType = DeepLinkingType.GROUPED_LECTURE;
                 } else {
                     resourceType = DeepLinkingType.LECTURE;
                 }
                 contentIds = Array.from(this.selectedLectures).join(',');
-            } else if (this.isCompetencySelected) {
+            } else if (this.isCompetencySelected()) {
                 resourceType = DeepLinkingType.COMPETENCY;
-            } else if (this.isLearningPathSelected) {
+            } else if (this.isLearningPathSelected()) {
                 resourceType = DeepLinkingType.LEARNING_PATH;
-            } else if (this.isIrisSelected) {
+            } else if (this.isIrisSelected()) {
                 resourceType = DeepLinkingType.IRIS;
             } else {
                 this.alertService.error('artemisApp.lti13.deepLinking.selectToLink');
@@ -254,7 +258,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 .set('contentIds', contentIds || '');
 
             this.http
-                .post<DeepLinkingResponse>(`api/lti/lti13/deep-linking/${this.courseId}`, null, {
+                .post<DeepLinkingResponse>(`api/lti/lti13/courses/${this.courseId}/deep-linking`, null, {
                     observe: 'response',
                     params: httpParams,
                 })
@@ -263,12 +267,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
                         if (response.status === 200 && response.body) {
                             window.location.replace(response.body.targetLinkUri);
                         } else {
-                            this.isLinking = false;
+                            this.isLinking.set(false);
                             this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
                         }
                     },
                     error: (error) => {
-                        this.isLinking = false;
+                        this.isLinking.set(false);
                         onError(this.alertService, error);
                     },
                 });

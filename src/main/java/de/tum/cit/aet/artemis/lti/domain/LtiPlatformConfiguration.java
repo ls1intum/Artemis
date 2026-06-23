@@ -10,8 +10,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import org.hibernate.Hibernate;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -26,7 +24,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  */
 @Entity
 @Table(name = "lti_platform_configuration")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LtiPlatformConfiguration extends DomainObject {
 

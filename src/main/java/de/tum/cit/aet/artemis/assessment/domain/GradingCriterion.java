@@ -11,9 +11,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,13 +22,12 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  */
 @Entity
 @Table(name = "grading_criterion")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingCriterion extends DomainObject {
 
+    // No @Cache here on purpose: mutated while instructors edit grading criteria, same bug class as #12574 / #12584.
     @OneToMany(mappedBy = "gradingCriterion", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingCriterion", allowSetters = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<GradingInstruction> structuredGradingInstructions = new HashSet<>();
 
     @ManyToOne

@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { CourseTrainingQuizService } from 'app/quiz/overview/service/course-training-quiz.service';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
@@ -10,16 +10,16 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { EMPTY, filter, map, switchMap } from 'rxjs';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SubmittedAnswerAfterEvaluation } from 'app/quiz/overview/course-training/course-training-quiz/submitted-answer-after-evaluation';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { QuizQuestionTraining } from 'app/quiz/overview/course-training/course-training-quiz/quiz-question-training.model';
 import { DialogModule } from 'primeng/dialog';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
@@ -68,14 +68,14 @@ export class CourseTrainingQuizComponent {
     nextPage = computed(() => (this.currentIndex() + 2) % this.size === 0 && this.hasNext());
 
     submittedAnswer: SubmittedAnswer;
-    showingResult = false;
-    submitted = false;
-    questionScores: number = 0;
-    selectedAnswerOptions: AnswerOption[] = [];
-    dragAndDropMappings: DragAndDropMapping[] = [];
-    shortAnswerSubmittedTexts: ShortAnswerSubmittedText[] = [];
+    readonly showingResult = signal(false);
+    readonly submitted = signal(false);
+    readonly questionScores = signal<number>(0);
+    readonly selectedAnswerOptions = signal<AnswerOption[]>([]);
+    readonly dragAndDropMappings = signal<DragAndDropMapping[]>([]);
+    readonly shortAnswerSubmittedTexts = signal<ShortAnswerSubmittedText[]>([]);
     previousRatedStatus = true;
-    showUnratedConfirmation = false;
+    readonly showUnratedConfirmation = signal(false);
     questionIds: number[] = [];
     isNewSession = true;
 
@@ -190,7 +190,7 @@ export class CourseTrainingQuizComponent {
         const currentIsRated = this.isRated();
 
         if (this.previousRatedStatus && currentIsRated === false) {
-            this.showUnratedConfirmation = true;
+            this.showUnratedConfirmation.set(true);
         }
 
         this.previousRatedStatus = currentIsRated;
@@ -201,19 +201,19 @@ export class CourseTrainingQuizComponent {
      * @param question
      */
     initQuestion(question: QuizQuestion): void {
-        this.showingResult = false;
-        this.submitted = false;
+        this.showingResult.set(false);
+        this.submitted.set(false);
         this.checkRatingStatusChange();
         if (question) {
             switch (question.type) {
                 case QuizQuestionType.MULTIPLE_CHOICE:
-                    this.selectedAnswerOptions = [];
+                    this.selectedAnswerOptions.set([]);
                     break;
                 case QuizQuestionType.DRAG_AND_DROP:
-                    this.dragAndDropMappings = [];
+                    this.dragAndDropMappings.set([]);
                     break;
                 case QuizQuestionType.SHORT_ANSWER:
-                    this.shortAnswerSubmittedTexts = [];
+                    this.shortAnswerSubmittedTexts.set([]);
                     break;
             }
         }
@@ -230,7 +230,7 @@ export class CourseTrainingQuizComponent {
 
         switch (question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE: {
-                const answerOptions = this.selectedAnswerOptions;
+                const answerOptions = this.selectedAnswerOptions();
                 const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
                 mcSubmittedAnswer.quizQuestion = question;
                 mcSubmittedAnswer.selectedOptions = answerOptions;
@@ -238,7 +238,7 @@ export class CourseTrainingQuizComponent {
                 break;
             }
             case QuizQuestionType.DRAG_AND_DROP: {
-                const mappings = this.dragAndDropMappings;
+                const mappings = this.dragAndDropMappings();
                 const ddSubmittedAnswer = new DragAndDropSubmittedAnswer();
                 ddSubmittedAnswer.quizQuestion = question;
                 ddSubmittedAnswer.mappings = mappings;
@@ -246,7 +246,7 @@ export class CourseTrainingQuizComponent {
                 break;
             }
             case QuizQuestionType.SHORT_ANSWER: {
-                const submittedTexts = this.shortAnswerSubmittedTexts;
+                const submittedTexts = this.shortAnswerSubmittedTexts();
                 const saSubmittedAnswer = new ShortAnswerSubmittedAnswer();
                 saSubmittedAnswer.quizQuestion = question;
                 saSubmittedAnswer.submittedTexts = submittedTexts;
@@ -280,10 +280,10 @@ export class CourseTrainingQuizComponent {
     }
 
     onSubmitSuccess(evaluatedAnswer: SubmittedAnswerAfterEvaluation) {
-        this.submitted = true;
-        this.showingResult = true;
+        this.submitted.set(true);
+        this.showingResult.set(true);
 
-        this.questionScores = roundValueSpecifiedByCourseSettings(evaluatedAnswer.scoreInPoints || 0, this.course());
+        this.questionScores.set(roundValueSpecifiedByCourseSettings(evaluatedAnswer.scoreInPoints || 0, this.course()));
 
         // update UI with the evaluated answer
         this.applyEvaluatedAnswer(evaluatedAnswer);
@@ -310,13 +310,13 @@ export class CourseTrainingQuizComponent {
 
         switch (question.type) {
             case QuizQuestionType.MULTIPLE_CHOICE:
-                this.selectedAnswerOptions = evaluatedAnswer.selectedOptions || [];
+                this.selectedAnswerOptions.set(evaluatedAnswer.selectedOptions || []);
                 break;
             case QuizQuestionType.DRAG_AND_DROP:
-                this.dragAndDropMappings = evaluatedAnswer.mappings || [];
+                this.dragAndDropMappings.set(evaluatedAnswer.mappings || []);
                 break;
             case QuizQuestionType.SHORT_ANSWER:
-                this.shortAnswerSubmittedTexts = evaluatedAnswer.submittedTexts || [];
+                this.shortAnswerSubmittedTexts.set(evaluatedAnswer.submittedTexts || []);
                 break;
         }
     }
@@ -329,11 +329,11 @@ export class CourseTrainingQuizComponent {
     }
 
     confirmUnratedPractice(): void {
-        this.showUnratedConfirmation = false;
+        this.showUnratedConfirmation.set(false);
     }
 
     cancelUnratedPractice(): void {
-        this.showUnratedConfirmation = false;
+        this.showUnratedConfirmation.set(false);
         this.navigateToTraining();
     }
 }

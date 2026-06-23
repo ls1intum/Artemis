@@ -1,25 +1,28 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Subject, from, map } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { EMPTY, Subject, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ConversationMemberRowComponent } from './conversation-member-row/conversation-member-row.component';
-import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { canAddUsersToConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { SelectModule } from 'primeng/select';
+import { TranslateService } from '@ngx-translate/core';
 
 interface SearchQuery {
     searchTerm: string;
@@ -28,7 +31,8 @@ interface SearchQuery {
 @Component({
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
-    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, NgbPagination, ArtemisTranslatePipe],
+    styleUrls: ['./conversation-members.component.scss'],
+    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, NgbPagination, ArtemisTranslatePipe, SelectModule],
 })
 export class ConversationMembersComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -45,12 +49,12 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     getAsChannel = getAsChannelDTO;
     isChannel = isChannelDTO;
 
-    members: ConversationUserDTO[] = [];
+    readonly members = signal<ConversationUserDTO[]>([]);
     // page information
     page = 1;
     itemsPerPage = 10;
-    totalItems = 0;
-    isSearching = true;
+    readonly totalItems = signal<number>(0);
+    readonly isSearching = signal(true);
     searchTerm = '';
 
     // icons
@@ -69,8 +73,24 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     public conversationService = inject(ConversationService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
-    private cdr = inject(ChangeDetectorRef);
+    private dialogService = inject(DialogService);
+    private translateService = inject(TranslateService);
+
+    filterOptions = computed(() => {
+        const options = [
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.allFilter'), value: ConversationMemberSearchFilter.ALL },
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.instructorFilter'), value: ConversationMemberSearchFilter.INSTRUCTOR },
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.tutorFilter'), value: ConversationMemberSearchFilter.TUTOR },
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.studentFilter'), value: ConversationMemberSearchFilter.STUDENT },
+        ];
+        if (isChannelDTO(this.activeConversation()!)) {
+            options.push({
+                label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.channelModeratorFilter'),
+                value: ConversationMemberSearchFilter.CHANNEL_MODERATOR,
+            });
+        }
+        return options;
+    });
 
     trackIdentity(index: number, item: ConversationUserDTO) {
         return item.id;
@@ -78,13 +98,16 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
-        modalRef.componentInstance.activeConversation = this.activeConversation();
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
+        const ref = this.dialogService.open(ConversationAddUsersDialogComponent, {
+            ...defaultSecondLayerDialogOptions,
+            data: {
+                course: this.course(),
+                activeConversation: this.activeConversation(),
+            },
+        });
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {
@@ -111,13 +134,13 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                         return prev === curr;
                     }
                 }),
-                tap(() => (this.members = [])),
+                tap(() => this.members.set([])),
                 map((query) => {
                     const searchTerm = query.searchTerm !== null && query.searchTerm !== undefined ? query.searchTerm : '';
                     return searchTerm.trim().toLowerCase();
                 }),
                 tap((searchTerm) => {
-                    this.isSearching = true;
+                    this.isSearching.set(true);
                     this.searchTerm = searchTerm;
                 }),
                 switchMap(() => {
@@ -138,11 +161,11 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (res: HttpResponse<ConversationUserDTO[]>) => {
-                    this.isSearching = false;
+                    this.isSearching.set(false);
                     this.onSuccess(res.body, res.headers);
                 },
                 error: (errorResponse: HttpErrorResponse) => {
-                    this.isSearching = false;
+                    this.isSearching.set(false);
                     onError(this.alertService, errorResponse);
                 },
             });
@@ -188,20 +211,19 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     }
 
     private onSuccess(members: ConversationUserDTO[] | null, headers: HttpHeaders): void {
-        this.totalItems = Number(headers.get('X-Total-Count'));
+        this.totalItems.set(Number(headers.get('X-Total-Count')));
         if (this.activeConversation) {
             // might have changed because of user deletion or addition
             this.activeConversation.update((current) => {
                 if (current) {
                     return {
                         ...current,
-                        numberOfMembers: this.totalItems,
+                        numberOfMembers: this.totalItems(),
                     };
                 }
                 return current;
             });
         }
-        this.members = members || [];
-        this.cdr.detectChanges();
+        this.members.set(members || []);
     }
 }

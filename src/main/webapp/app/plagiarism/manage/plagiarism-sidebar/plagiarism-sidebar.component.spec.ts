@@ -1,19 +1,23 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { SimpleChange } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismSidebarComponent } from 'app/plagiarism/manage/plagiarism-sidebar/plagiarism-sidebar.component';
 
 describe('Plagiarism Sidebar Component', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: PlagiarismSidebarComponent;
     let fixture: ComponentFixture<PlagiarismSidebarComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [PlagiarismSidebarComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [PlagiarismSidebarComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -24,7 +28,7 @@ describe('Plagiarism Sidebar Component', () => {
     });
 
     it('displays the run details', () => {
-        jest.spyOn(comp.showRunDetailsChange, 'emit');
+        vi.spyOn(comp.showRunDetailsChange, 'emit');
 
         comp.displayRunDetails();
         expect(comp.showRunDetailsChange.emit).toHaveBeenCalledWith(true);
@@ -51,40 +55,40 @@ describe('Plagiarism Sidebar Component', () => {
     });
 
     it('computes the paged index', () => {
-        comp.currentPage = 2;
+        comp.currentPage.set(2);
         const pagedIndex = comp.getPagedIndex(1);
 
         expect(pagedIndex).toBe(21);
     });
 
     it('pages left', () => {
-        comp.currentPage = 2;
+        comp.currentPage.set(2);
         comp.handlePageLeft();
 
-        expect(comp.currentPage).toBe(1);
+        expect(comp.currentPage()).toBe(1);
     });
 
     it('does not page left', () => {
-        comp.currentPage = 0;
+        comp.currentPage.set(0);
         comp.handlePageLeft();
 
-        expect(comp.currentPage).toBe(0);
+        expect(comp.currentPage()).toBe(0);
     });
 
     it('pages right', () => {
-        comp.currentPage = 2;
-        comp.numberOfPages = 3;
+        comp.currentPage.set(2);
+        comp.numberOfPages.set(3);
         comp.handlePageRight();
 
-        expect(comp.currentPage).toBe(2);
+        expect(comp.currentPage()).toBe(2);
     });
 
     it('does not pages right', () => {
-        comp.currentPage = 3;
-        comp.numberOfPages = 3;
+        comp.currentPage.set(3);
+        comp.numberOfPages.set(3);
         comp.handlePageRight();
 
-        expect(comp.currentPage).toBe(3);
+        expect(comp.currentPage()).toBe(3);
     });
 
     it('should reset pagination on changes', () => {
@@ -107,8 +111,8 @@ describe('Plagiarism Sidebar Component', () => {
         comp.ngOnChanges({
             comparisons: new SimpleChange([], comparisons, true),
         });
-        expect(comp.currentPage).toBe(0);
-        expect(comp.numberOfPages).toBe(2);
-        expect(comp.pagedComparisons).toEqual(pagedComparisons);
+        expect(comp.currentPage()).toBe(0);
+        expect(comp.numberOfPages()).toBe(2);
+        expect(comp.pagedComparisons()).toEqual(pagedComparisons);
     });
 });

@@ -14,8 +14,8 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionErrorType } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -24,19 +24,20 @@ import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessm
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { State } from 'app/text/manage/example-text-submission/example-text-submission-state.model';
 import { ExampleTextSubmissionComponent } from 'app/text/manage/example-text-submission/example-text-submission.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { DialogService } from 'primeng/dynamicdialog';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { DebugElement } from '@angular/core';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -90,6 +91,8 @@ describe('ExampleTextSubmissionComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
+                // The component renders the real ConfirmAutofocusButtonComponent, which injects PrimeNG DialogService.
+                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: of(undefined) })) } },
                 {
                     provide: ActivatedRoute,
                     useValue: route,
@@ -237,8 +240,8 @@ describe('ExampleTextSubmissionComponent', () => {
         await comp.ngOnInit();
 
         // THEN
-        expect(comp.result).not.toBeNull();
-        expect(comp.result!.submission).toBe(comp.submission);
+        expect(comp.result()).not.toBeNull();
+        expect(comp.result()!.submission).toBe(comp.submission);
     });
 
     it('should only fetch exercise for new example submission and stay in new state', async () => {
@@ -306,7 +309,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         submission.blocks = [textBlock1, textBlock2];
         submission.text = '123456789';
-        comp.result = result;
+        comp.result.set(result);
         const feedback = Feedback.forText(textBlock1, 0, 'Test');
         result.feedbacks = [feedback];
         comp.state.edit();
@@ -346,7 +349,7 @@ describe('ExampleTextSubmissionComponent', () => {
         textBlock2.setTextFromSubmission(submission);
         submission.blocks = [textBlock1, textBlock2];
         submission.text = '123456789';
-        comp.result = result;
+        comp.result.set(result);
         const feedback = Feedback.forText(textBlock1, 0, 'Test');
         result.feedbacks = [feedback];
         comp.state = State.forExistingAssessmentWithContext(comp);
@@ -366,7 +369,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(comp.submission?.blocks).toBeUndefined();
         expect(comp.submission?.results).toBeUndefined();
         expect(comp.submission?.latestResult).toBeUndefined();
-        expect(comp.result).toBeUndefined();
+        expect(comp.result()).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     });
@@ -539,11 +542,11 @@ describe('ExampleTextSubmissionComponent', () => {
         // WHEN
         await comp.ngOnInit();
 
-        comp.toComplete = true;
+        comp.toComplete.set(true);
 
         await comp.back();
 
-        comp.toComplete = false;
+        comp.toComplete.set(false);
 
         await comp.back();
 
@@ -569,7 +572,7 @@ describe('ExampleTextSubmissionComponent', () => {
         const alertSuccessSpy = vi.spyOn(alertService, 'success');
         const exampleSubmissionServiceSpy = vi.spyOn(exampleSubmissionService, 'update');
         exampleSubmissionServiceSpy.mockReturnValue(httpResponse(exampleSubmission));
-        comp.unsavedSubmissionChanges = true;
+        comp.unsavedSubmissionChanges.set(true);
 
         // WHEN
         comp.updateExampleTextSubmission();
@@ -577,7 +580,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // THEN
         expect(exampleSubmissionServiceSpy).toHaveBeenCalledOnce();
         expect(comp.exampleSubmission).toEqual(exampleSubmission);
-        expect(comp.unsavedSubmissionChanges).toBe(false);
+        expect(comp.unsavedSubmissionChanges()).toBe(false);
         expect(alertSuccessSpy).toHaveBeenCalledOnce();
         expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.saveSuccessful');
     });

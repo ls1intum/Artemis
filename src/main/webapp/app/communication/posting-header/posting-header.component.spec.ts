@@ -1,14 +1,16 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement } from '@angular/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
@@ -17,7 +19,7 @@ import { UserRole } from 'app/communication/metis.util';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -26,20 +28,22 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('PostingHeaderComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PostingHeaderComponent;
     let fixture: ComponentFixture<PostingHeaderComponent>;
     let debugElement: DebugElement;
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), NgbTooltip],
-            providers: [
-                FormBuilder,
-                { provide: MetisService, useClass: MockMetisService },
-                { provide: AccountService, useClass: MockAccountService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
-            declarations: [
+            imports: [
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                NgbTooltip,
                 PostingHeaderComponent,
                 FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -49,15 +53,17 @@ describe('PostingHeaderComponent', () => {
                 ConfirmIconComponent,
                 ProfilePictureComponent,
             ],
-        }).compileComponents();
+            providers: [
+                FormBuilder,
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
 
         fixture = TestBed.createComponent(PostingHeaderComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
-    });
-
-    afterEach(() => {
-        jest.restoreAllMocks();
     });
 
     it('should set date information correctly for post of today', () => {
@@ -111,7 +117,7 @@ describe('PostingHeaderComponent', () => {
 
         const badge = getElement(debugElement, '#role-badge');
         expect(badge).not.toBeNull();
-        expect(badge.classList.contains(param.expectClass)).toBeTrue();
+        expect(badge.classList.contains(param.expectClass)).toBe(true);
     });
 
     it.each`
@@ -125,7 +131,7 @@ describe('PostingHeaderComponent', () => {
         fixture.detectChanges();
         component.ngOnInit();
 
-        expect(component.userAuthorityIcon).toEqual(param.expectedIcon);
+        expect(component.userAuthorityIcon()).toEqual(param.expectedIcon);
     });
 
     it.each`
@@ -139,16 +145,16 @@ describe('PostingHeaderComponent', () => {
         fixture.detectChanges();
         component.ngOnInit();
 
-        expect(component.userAuthorityTooltip).toEqual(param.expectedTooltip);
+        expect(component.userAuthorityTooltip()).toEqual(param.expectedTooltip);
     });
 
     it('should set isAuthorOfPosting correctly when user is the author', () => {
-        const authorPost = { ...metisPostLectureUser1, author: component.currentUser } as Post;
+        const authorPost = { ...metisPostLectureUser1, author: component.currentUser() } as Post;
         fixture.componentRef.setInput('posting', authorPost);
         fixture.detectChanges();
         component.ngOnInit();
 
-        expect(component.isAuthorOfPosting).toBeTrue();
+        expect(component.isAuthorOfPosting()).toBe(true);
     });
 
     it('should handle undefined posting gracefully', () => {
@@ -156,7 +162,7 @@ describe('PostingHeaderComponent', () => {
         fixture.detectChanges();
         component.ngOnInit();
 
-        expect(component.isPostResolved()).toBeFalse();
+        expect(component.isPostResolved()).toBe(false);
         expect(getElement(debugElement, '.resolved')).toBeNull();
     });
 

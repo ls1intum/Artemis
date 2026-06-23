@@ -1,9 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { faCheckCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * Two status indicators for the test case table:
@@ -14,16 +14,16 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-programming-exercise-configure-grading-status',
     template: `
         <div class="d-flex flex-column justify-content-between">
-            @if (hasUnsavedTestCaseChanges || hasUnsavedCategoryChanges) {
+            @if (hasUnsavedTestCaseChanges() || hasUnsavedCategoryChanges()) {
                 <div id="test-case-status-unsaved-changes" class="d-flex align-items-center badge bg-warning mb-1">
                     <fa-icon class="ms-2 text-white" [icon]="faExclamationTriangle" />
-                    @if (hasUnsavedTestCaseChanges && hasUnsavedCategoryChanges) {
+                    @if (hasUnsavedTestCaseChanges() && hasUnsavedCategoryChanges()) {
                         <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.status.unsavedChanges"></span>
                     }
-                    @if (hasUnsavedTestCaseChanges && !hasUnsavedCategoryChanges) {
+                    @if (hasUnsavedTestCaseChanges() && !hasUnsavedCategoryChanges()) {
                         <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.status.unsavedTestCaseChanges"></span>
                     }
-                    @if (!hasUnsavedTestCaseChanges && hasUnsavedCategoryChanges) {
+                    @if (!hasUnsavedTestCaseChanges() && hasUnsavedCategoryChanges()) {
                         <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.status.unsavedCategoryChanges"></span>
                     }
                 </div>
@@ -39,8 +39,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
                     <span class="ms-1" jhiTranslate="artemisApp.programmingExercise.configureGrading.status.noUnsavedChanges"></span>
                 </div>
             </ng-template>
-            @if (exerciseIsReleasedAndHasResults) {
-                @if (hasUpdatedGradingConfig) {
+            @if (exerciseIsReleasedAndHasResults()) {
+                @if (hasUpdatedGradingConfig()) {
                     <div id="test-case-status-updated" class="d-flex align-items-center badge bg-warning">
                         <fa-icon
                             class="ms-2 text-white"
@@ -86,10 +86,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, TranslateDirective, NgbTooltip, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseConfigureGradingStatusComponent {
-    @Input() exerciseIsReleasedAndHasResults: boolean;
-    @Input() hasUnsavedTestCaseChanges: boolean;
-    @Input() hasUnsavedCategoryChanges: boolean;
-    @Input() hasUpdatedGradingConfig: boolean;
+    readonly exerciseIsReleasedAndHasResults = input.required<boolean>();
+    readonly hasUnsavedTestCaseChanges = input.required<boolean>();
+    readonly hasUnsavedCategoryChanges = input.required<boolean>();
+    readonly hasUpdatedGradingConfig = input.required<boolean>();
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;

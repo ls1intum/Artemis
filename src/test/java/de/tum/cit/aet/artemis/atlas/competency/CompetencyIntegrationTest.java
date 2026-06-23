@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.atlas.competency;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.Collections;
 import java.util.List;
 
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,8 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -29,6 +27,7 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsRespon
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
 class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
@@ -48,7 +47,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             request.post("/api/atlas/courses/" + course.getId() + "/competencies", new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false),
                     HttpStatus.FORBIDDEN);
             request.delete("/api/atlas/courses/" + course.getId() + "/competencies/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk", List.of(), HttpStatus.FORBIDDEN);
             // import
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/import-all", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
                     HttpStatus.FORBIDDEN);
@@ -56,7 +55,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
                     HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/import/bulk", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
                     HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/competencies/import-standardized", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies/import-standardized", List.of(), HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -376,8 +375,10 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         @BeforeEach
         void setupNestedMocks() {
             // Reset mock server to clear any previous test's requests, then add expectations
-            atlasMLRequestMockProvider.reset();
-            atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+            atlasMLRequestMockProvider.ifPresent(provider -> {
+                provider.reset();
+                provider.mockSaveCompetenciesAny();
+            });
         }
 
         @Test
@@ -385,11 +386,13 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         void shouldAllowAtlasMLSuggestWhenFeatureEnabled() throws Exception {
             featureToggleService.enableFeature(Feature.AtlasML);
 
-            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
+            var requestBody = new SuggestCompetencyRequestDTO("test description", course.getId());
             var mockedResponse = new SuggestCompetencyResponseDTO(List.of(new AtlasMLCompetencyDTO(1L, "Mocked", "Desc", 1L)));
 
             // Add mock for this specific test (mockSaveCompetenciesAny is already set by @BeforeEach)
-            atlasMLRequestMockProvider.mockSuggestCompetencies(requestBody, mockedResponse);
+            Assumptions.assumeTrue(atlasMLRequestMockProvider.isPresent(), "AtlasML is disabled in this test profile");
+            var provider = atlasMLRequestMockProvider.get();
+            provider.mockSuggestCompetencies(requestBody, mockedResponse);
 
             var response = request.postWithResponseBody("/api/atlas/competencies/suggest", requestBody, SuggestCompetencyResponseDTO.class, HttpStatus.OK);
             // minimal assertion to ensure our mocked data is returned
@@ -397,13 +400,25 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         }
 
         @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+        void shouldForbidAtlasMLSuggestWhenNotEditorInTargetCourse() throws Exception {
+            // instructor42 is deliberately not a member of the course, so even with the general editor role the request
+            // for this specific course must be rejected (the feature is enabled so the 403 comes from the course check).
+            featureToggleService.enableFeature(Feature.AtlasML);
+
+            var requestBody = new SuggestCompetencyRequestDTO("test description", course.getId());
+            request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
+                    .content(JsonObjectMapper.get().writeValueAsString(requestBody))).andExpect(status().isForbidden());
+        }
+
+        @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldBlockAtlasMLSuggestWhenFeatureDisabled() throws Exception {
             featureToggleService.disableFeature(Feature.AtlasML);
 
-            var requestBody = new SuggestCompetencyRequestDTO("test description", 1L);
+            var requestBody = new SuggestCompetencyRequestDTO("test description", course.getId());
             request.performMvcRequest(MockMvcRequestBuilders.post("/api/atlas/competencies/suggest").contentType(MediaType.APPLICATION_JSON)
-                    .content(new ObjectMapper().writeValueAsString(requestBody))).andExpect(status().isForbidden());
+                    .content(JsonObjectMapper.get().writeValueAsString(requestBody))).andExpect(status().isForbidden());
         }
 
         @Test
@@ -415,7 +430,9 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
             var mockedRelations = new SuggestCompetencyRelationsResponseDTO(List.of(new AtlasMLCompetencyRelationDTO(1L, 2L, "ASSUMES")));
 
             // Add mock for this specific test (mockSaveCompetenciesAny is already set by @BeforeEach)
-            atlasMLRequestMockProvider.mockSuggestCompetencyRelations(courseId, mockedRelations);
+            Assumptions.assumeTrue(atlasMLRequestMockProvider.isPresent(), "AtlasML is disabled in this test profile");
+            var provider = atlasMLRequestMockProvider.get();
+            provider.mockSuggestCompetencyRelations(courseId, mockedRelations);
 
             var response = request.get("/api/atlas/courses/" + courseId + "/competencies/relations/suggest", HttpStatus.OK, SuggestCompetencyRelationsResponseDTO.class);
             assert response.relations() != null && response.relations().size() == 1;

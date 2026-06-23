@@ -1,6 +1,6 @@
 import { test } from '../../support/fixtures';
 import { admin } from '../../support/users';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';

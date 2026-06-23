@@ -36,7 +36,7 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await login(tutor, '/course-management');
             await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);
             await toggleSidebar();
-            await courseManagement.checkIfStudentSubmissionExists(studentOne.username);
+            await courseManagement.checkIfStudentSubmissionExists(studentOne.displayName!);
             await login(tutor, `/course-management/${course.id}/assessment-dashboard/${modelingExercise.id!}`);
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
@@ -60,7 +60,6 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
             await exerciseResult.shouldShowExerciseTitle(modelingExercise.title!);
             await exerciseResult.shouldShowScore(20);
-            await exerciseResult.clickOpenExerciseAndAwaitRatingResponse(modelingExercise.id!);
             await modelingExerciseFeedback.shouldShowScore(20);
             await modelingExerciseFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
             await modelingExerciseFeedback.shouldShowComponentFeedback(1, 2, 'Good');
@@ -69,7 +68,10 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
 
         test('Instructor can see complaint and reject it', async ({ login, courseAssessment, modelingExerciseAssessment }) => {
             await login(instructor, `/course-management/${course.id}/complaints`);
-            await courseAssessment.showTheComplaint();
+            // Open this modeling exercise's own complaint row: the shared seed course's complaint list also
+            // contains complaints from other assessment tests, so opening the first one races them and can open
+            // an already-handled complaint whose response editor stays disabled.
+            await courseAssessment.showTheComplaint(modelingExercise.title);
             await modelingExerciseAssessment.rejectComplaint('You are wrong.', false);
         });
     });

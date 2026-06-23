@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
-import { ImageComponent } from 'app/shared/image/image.component';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { QuizQuestion, RenderedQuizQuestionMarkDownElement } from 'app/quiz/shared/entities/quiz-question.model';
@@ -11,7 +11,7 @@ import { CdkDragDrop, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-dr
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { DragItemComponent } from './drag-item/drag-item.component';
@@ -77,14 +77,14 @@ export class DragAndDropQuestionComponent {
     mappingsChange = output<DragAndDropMapping[]>();
 
     showingSampleSolution = signal(false);
-    renderedQuestion: RenderedQuizQuestionMarkDownElement;
+    readonly renderedQuestion = signal<RenderedQuizQuestionMarkDownElement>(undefined!);
     sampleSolutionMappings = new Array<DragAndDropMapping>();
-    dropAllowed = false;
-    correctAnswer: number;
-    incorrectLocationMappings: number;
-    mappedLocations: number;
+    readonly dropAllowed = signal(false);
+    readonly correctAnswer = signal<number>(undefined!);
+    readonly incorrectLocationMappings = signal<number>(undefined!);
+    readonly mappedLocations = signal<number>(undefined!);
 
-    loadingState = 'loading';
+    readonly loadingState = signal('loading');
 
     constructor() {
         effect(() => {
@@ -122,24 +122,25 @@ export class DragAndDropQuestionComponent {
 
     watchCollection() {
         // update html for text, hint and explanation for the question
-        this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
-        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().text);
-        this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().hint);
-        this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().explanation);
+        const renderedQuestion = new RenderedQuizQuestionMarkDownElement();
+        renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().text);
+        renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().hint);
+        renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.dragAndDropQuestion().explanation);
+        this.renderedQuestion.set(renderedQuestion);
     }
 
     /**
      * Handles drag-available UI
      */
     drag() {
-        this.dropAllowed = true;
+        this.dropAllowed.set(true);
     }
 
     /**
      * Handles drag-available UI
      */
     drop() {
-        this.dropAllowed = false;
+        this.dropAllowed.set(false);
     }
 
     /** Sets the view displayed to the user
@@ -147,7 +148,7 @@ export class DragAndDropQuestionComponent {
      *                          success: background picture for drag and drop question was loaded
      *                          error: an error occurred during background download */
     changeLoading(value: string) {
-        this.loadingState = value;
+        this.loadingState.set(value);
     }
 
     /**
@@ -338,11 +339,13 @@ export class DragAndDropQuestionComponent {
      */
     evaluateDropLocations(): void {
         if (this.dragAndDropQuestion().dropLocations) {
-            this.correctAnswer = this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_CORRECT).length;
-            this.incorrectLocationMappings = this.dragAndDropQuestion().dropLocations!.filter(
-                (dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT,
-            ).length;
-            this.mappedLocations = this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isAssignedLocation(dropLocation)).length;
+            this.correctAnswer.set(
+                this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_CORRECT).length,
+            );
+            this.incorrectLocationMappings.set(
+                this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isLocationCorrect(dropLocation) === MappingResult.MAPPED_INCORRECT).length,
+            );
+            this.mappedLocations.set(this.dragAndDropQuestion().dropLocations!.filter((dropLocation) => this.isAssignedLocation(dropLocation)).length);
         }
     }
 }

@@ -1,7 +1,9 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -13,24 +15,26 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
-import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
-import { createProgrammingExerciseEntitySummary } from 'app/programming/shared/utils/programming-exercise.utils';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('ProgrammingExercise Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ProgrammingExerciseService;
     let httpMock: HttpTestingController;
 
     let defaultProgrammingExercise: ProgrammingExercise;
     const resourceUrl = 'api/programming/programming-exercises';
+    const localCIResourceUrl = 'api/localci/programming-exercises';
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -39,18 +43,16 @@ describe('ProgrammingExercise Service', () => {
                 LocalStorageService,
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(ProgrammingExerciseService);
-                httpMock = TestBed.inject(HttpTestingController);
+        }).compileComponents();
 
-                defaultProgrammingExercise = new ProgrammingExercise(undefined, undefined);
-            });
+        service = TestBed.inject(ProgrammingExerciseService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        defaultProgrammingExercise = new ProgrammingExercise(undefined, undefined);
     });
 
     describe('Service methods', () => {
-        it('should find an exercise', fakeAsync(() => {
+        it('should find an exercise', () => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
                 releaseDate: undefined,
@@ -66,10 +68,9 @@ describe('ProgrammingExercise Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should find with template and solution participation and results', fakeAsync(() => {
+        it('should find with template and solution participation and results', () => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
                 releaseDate: undefined,
@@ -85,10 +86,9 @@ describe('ProgrammingExercise Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should find with auxiliary repositories', fakeAsync(() => {
+        it('should find with auxiliary repositories', () => {
             const auxiliaryRepository: AuxiliaryRepository = { id: 5 };
             const returnedFromService = {
                 ...defaultProgrammingExercise,
@@ -106,10 +106,9 @@ describe('ProgrammingExercise Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should create a ProgrammingExercise', fakeAsync(() => {
+        it('should create a ProgrammingExercise', () => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
                 id: 0,
@@ -126,10 +125,9 @@ describe('ProgrammingExercise Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should reconnect template submission with result', fakeAsync(() => {
+        it('should reconnect template submission with result', () => {
             const templateParticipation = new TemplateProgrammingExerciseParticipation();
             const tempSubmission = new ProgrammingSubmission();
             const tempResult = new Result();
@@ -153,8 +151,7 @@ describe('ProgrammingExercise Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
         it('should not find a latest result if none exists', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
@@ -195,7 +192,7 @@ describe('ProgrammingExercise Service', () => {
             expect(service.getLatestResult(participation)).toEqual(result2);
         });
 
-        it('should update a ProgrammingExercise', fakeAsync(() => {
+        it('should update a ProgrammingExercise', () => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
                 templateRepositoryUri: 'BBBBBB',
@@ -217,10 +214,23 @@ describe('ProgrammingExercise Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should update the Timeline of a ProgrammingExercise', fakeAsync(() => {
+        it('should include assessmentType when updating', () => {
+            const exercise = new ProgrammingExercise(new Course(), undefined);
+            exercise.id = 1;
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+
+            service.update(exercise).subscribe();
+
+            const req = httpMock.expectOne({ method: 'PUT' });
+            // Check that dto assessmentType field has correct value
+            expect(req.request.body.assessmentType).toBe(AssessmentType.SEMI_AUTOMATIC);
+
+            req.flush(exercise);
+        });
+
+        it('should update the Timeline of a ProgrammingExercise', () => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
                 releaseDate: dayjs('2020-12-10 10:00:00'),
@@ -236,10 +246,9 @@ describe('ProgrammingExercise Service', () => {
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
             req.flush(returnedFromService);
-            tick();
-        }));
+        });
 
-        it('should return a list of ProgrammingExercise', fakeAsync(() => {
+        it('should return a list of ProgrammingExercise', () => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
                 templateRepositoryUri: 'BBBBBB',
@@ -257,45 +266,28 @@ describe('ProgrammingExercise Service', () => {
                 .query(expected)
                 .pipe(take(1))
                 .subscribe((resp) => {
-                    expect(resp.body).toIncludeAllMembers([expected]);
+                    expect(resp.body).toEqual(expect.arrayContaining([expected]));
                 });
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush([returnedFromService]);
-            tick();
-        }));
+        });
 
-        it('should delete a ProgrammingExercise', fakeAsync(() => {
-            service.delete(123, false, false).subscribe((resp) => expect(resp.ok).toBeTrue());
+        it('should delete a ProgrammingExercise', () => {
+            service.delete(123, false, false).subscribe((resp) => expect(resp.ok).toBe(true));
 
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            tick();
-        }));
+        });
 
-        it('should make get request for deletion summary', fakeAsync(() => {
-            const dtoResponse: ProgrammingExerciseDeletionSummaryDTO = {
-                numberOfStudentParticipations: 5,
-                numberOfBuilds: 10,
-                numberOfCommunicationPosts: 3,
-                numberOfAnswerPosts: 2,
-            };
-            const expectedEntitySummary = createProgrammingExerciseEntitySummary(dtoResponse);
-            service.getDeletionSummary(123).subscribe((resp) => expect(resp).toEqual(expectedEntitySummary));
-            const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/deletion-summary` });
-            req.flush(dtoResponse);
-            tick();
-        }));
-
-        it('should make get request', fakeAsync(() => {
+        it('should make get request', () => {
             const expectedBlob = new Blob(['abc', 'cfe']);
             service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).toEqual(expectedBlob));
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/export-instructor-exercise` });
             req.flush(expectedBlob);
-            tick();
-        }));
+        });
     });
 
-    it('should make post request for import from file', fakeAsync(() => {
+    it('should make post request for import from file', () => {
         const course = new Course();
         course.id = 1;
         const request = new ProgrammingExercise(course, undefined);
@@ -308,20 +300,18 @@ describe('ProgrammingExercise Service', () => {
         const url = `api/programming/courses/1/programming-exercises/import-from-file`;
         const req = httpMock.expectOne({ method: 'POST', url: url });
         req.flush(request);
-        tick();
-    }));
+    });
 
-    it('should generate Structure Oracle', fakeAsync(() => {
+    it('should generate Structure Oracle', () => {
         const exerciseId = 1;
         const expectedResult = 'oracle-structure';
         service.generateStructureOracle(exerciseId).subscribe((structure) => expect(structure).toEqual(expectedResult));
         const url = `${resourceUrl}/${exerciseId}/generate-tests`;
         const req = httpMock.expectOne({ method: 'PUT', url });
         req.flush(expectedResult);
-        tick();
-    }));
+    });
 
-    it('should reset Exercise', fakeAsync(() => {
+    it('should reset Exercise', () => {
         const exerciseId = 1;
         const options = {
             deleteParticipationsSubmissionsAndResults: true,
@@ -332,45 +322,40 @@ describe('ProgrammingExercise Service', () => {
         const url = `${resourceUrl}/${exerciseId}/reset`;
         const req = httpMock.expectOne({ method: 'PUT', url });
         req.flush(expectedResult);
-        tick();
-    }));
+    });
 
-    it('export instructor repository', fakeAsync(() => {
+    it('export instructor repository', () => {
         const exerciseId = 1;
         service.exportInstructorRepository(exerciseId, RepositoryType.AUXILIARY, undefined).subscribe();
         const url = `${resourceUrl}/${exerciseId}/export-instructor-repository/AUXILIARY`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());
-        tick();
-    }));
+    });
 
-    it('should export Student Requested Repository', fakeAsync(() => {
+    it('should export Student Requested Repository', () => {
         const exerciseId = 1;
         service.exportStudentRequestedRepository(exerciseId, true).subscribe();
         const url = `${resourceUrl}/${exerciseId}/export-student-requested-repository?includeTests=true`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());
-        tick();
-    }));
+    });
 
-    it('should export a student repository', fakeAsync(() => {
+    it('should export a student repository', () => {
         const exerciseId = 1;
         const participationId = 5;
         service.exportStudentRepository(exerciseId, participationId).subscribe();
-        const url = `${resourceUrl}/${exerciseId}/export-student-repository/${participationId}`;
+        const url = `${resourceUrl}/${exerciseId}/export-student-repository?participationId=${participationId}`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());
-        tick();
-    }));
+    });
 
-    it('should check plagiarism report', fakeAsync(() => {
+    it('should check plagiarism report', () => {
         const exerciseId = 1;
         service.checkPlagiarismJPlagReport(exerciseId).subscribe();
         const url = `${resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(new Blob());
-        tick();
-    }));
+    });
 
     it.each([
         { uri: 'template-files-content', method: 'getTemplateRepositoryTestFilesWithContent' },
@@ -379,29 +364,26 @@ describe('ProgrammingExercise Service', () => {
         { uri: 'check-plagiarism', method: 'checkPlagiarism' },
         { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
-    ])('should call correct exercise endpoint', (test) =>
-        fakeAsync(() => {
-            const exerciseId = 1;
-            const functionToCall = service[test.method as keyof ProgrammingExerciseService];
-            if (typeof functionToCall !== 'function') {
-                throw new Error(`Method ${test.method} does not exist on service`);
-            }
-            functionToCall.bind(service, exerciseId).apply().subscribe();
-            const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
+    ])('should call correct exercise endpoint', (test) => {
+        const exerciseId = 1;
+        const functionToCall = service[test.method as keyof ProgrammingExerciseService];
+        if (typeof functionToCall !== 'function') {
+            throw new Error(`Method ${test.method} does not exist on service`);
+        }
+        functionToCall.bind(service, exerciseId).apply().subscribe();
+        const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
 
-            // Custom matcher function
-            const urlMatcher = (reqUrl: string) => reqUrl.startsWith(url);
+        // Custom matcher function
+        const urlMatcher = (reqUrl: string) => reqUrl.startsWith(url);
 
-            const req = httpMock.expectOne((request) => {
-                return request.method === 'GET' && urlMatcher(request.url);
-            });
+        const req = httpMock.expectOne((request) => {
+            return request.method === 'GET' && urlMatcher(request.url);
+        });
 
-            req.flush({});
-            tick();
-        })(),
-    );
+        req.flush({});
+    });
 
-    it('should handle error when importing from file', fakeAsync(() => {
+    it('should handle error when importing from file', () => {
         const course = new Course();
         course.id = 1;
         const request = new ProgrammingExercise(course, undefined);
@@ -419,10 +401,9 @@ describe('ProgrammingExercise Service', () => {
         const url = `api/programming/courses/1/programming-exercises/import-from-file`;
         const req = httpMock.expectOne({ method: 'POST', url: url });
         req.flush('Import failed', errorResponse);
-        tick();
-    }));
+    });
 
-    it('should update problem statement', fakeAsync(() => {
+    it('should update problem statement', () => {
         const exerciseId = 123;
         const problemStatement = 'Updated problem statement';
         const expected = new ProgrammingExercise(undefined, undefined);
@@ -436,10 +417,9 @@ describe('ProgrammingExercise Service', () => {
         const url = `${resourceUrl}/${exerciseId}/problem-statement`;
         const req = httpMock.expectOne({ method: 'PATCH', url });
         req.flush(expected);
-        tick();
-    }));
+    });
 
-    it('should reevaluate and update exercise', fakeAsync(() => {
+    it('should reevaluate and update exercise', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.id = 123;
         const expected = { ...exercise, studentParticipations: [] };
@@ -451,10 +431,9 @@ describe('ProgrammingExercise Service', () => {
         const url = `${resourceUrl}/${exercise.id}/re-evaluate`;
         const req = httpMock.expectOne({ method: 'PUT', url });
         req.flush(expected);
-        tick();
-    }));
+    });
 
-    it('should get theia config', fakeAsync(() => {
+    it('should get theia config', () => {
         const exerciseId = 123;
         const expectedConfig = { dockerImage: 'theia:latest' };
 
@@ -465,10 +444,9 @@ describe('ProgrammingExercise Service', () => {
         const url = `${resourceUrl}/${exerciseId}/theia-config`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(expectedConfig);
-        tick();
-    }));
+    });
 
-    it('should get checkout directories for programming language', fakeAsync(() => {
+    it('should get checkout directories for programming language', () => {
         const programmingLanguage = 'JAVA';
         const checkoutSolution = true;
         const expectedDirectories = { directories: ['src', 'test'] };
@@ -480,8 +458,7 @@ describe('ProgrammingExercise Service', () => {
         const url = `${resourceUrl}/repository-checkout-directories?programmingLanguage=JAVA&checkoutSolution=true`;
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(expectedDirectories);
-        tick();
-    }));
+    });
 
     it('should test convertDataFromClient method', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
@@ -494,6 +471,39 @@ describe('ProgrammingExercise Service', () => {
         expect(convertedExercise).toBeDefined();
         expect(convertedExercise.templateParticipation).toBeDefined();
         expect(convertedExercise.solutionParticipation).toBeDefined();
+    });
+
+    it('should preview automatic after due date with a date response', () => {
+        const isoDate = '2026-06-01T12:15:00Z';
+        const request = {
+            programmingExerciseId: 42,
+            dueDate: '2026-06-01T12:00:00Z',
+            programmingLanguage: 'JAVA' as any,
+        };
+
+        service.previewAutomaticAfterDueDateDate(request).subscribe((result) => {
+            expect(result).toBeDefined();
+            expect(result!.toISOString()).toBe(dayjs(isoDate).toISOString());
+        });
+
+        const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
+        const req = httpMock.expectOne({ method: 'POST', url });
+        req.flush(isoDate);
+    });
+
+    it('should preview automatic after due date with null response', () => {
+        const request = {
+            programmingExerciseId: 42,
+            dueDate: '2026-06-01T12:00:00Z',
+        };
+
+        service.previewAutomaticAfterDueDateDate(request).subscribe((result) => {
+            expect(result).toBeUndefined();
+        });
+
+        const url = `${localCIResourceUrl}/timeline/automatic-after-due-date-preview`;
+        const req = httpMock.expectOne({ method: 'POST', url });
+        req.flush(null);
     });
 
     afterEach(() => {

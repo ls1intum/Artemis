@@ -4,30 +4,30 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { concatMap, filter, last, map } from 'rxjs/operators';
 import { LectureService } from '../services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faFile, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { Subject, from } from 'rxjs';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { SortService } from 'app/shared/service/sort.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { SortService } from 'app/foundation/service/sort.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
-import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
-import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { PdfUploadTarget, PdfUploadTargetDialogComponent } from '../pdf-upload-target-dialog/pdf-upload-target-dialog.component';
 import { AttachmentVideoUnitService } from '../lecture-units/services/attachment-video-unit.service';
@@ -72,9 +72,9 @@ export class LectureComponent implements OnInit, OnDestroy {
     private translateService = inject(TranslateService);
     private sortService = inject(SortService);
 
-    lectures: Lecture[];
+    readonly lectures = signal<Lecture[]>([]);
     isUploadingPdfs = signal(false);
-    filteredLectures: Lecture[];
+    readonly filteredLectures = signal<Lecture[]>([]);
     courseId: number;
 
     private dialogErrorSource = new Subject<string>();
@@ -134,7 +134,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     )
                     .subscribe({
                         next: (res: Lecture) => {
-                            this.lectures.push(res);
+                            this.lectures.set([...this.lectures(), res]);
                             this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -145,7 +145,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private deleteLectureFromDisplayedLectures(lectureId: number) {
         this.dialogErrorSource.next('');
-        this.lectures = this.lectures.filter((lecture) => lecture.id !== lectureId);
+        this.lectures.set(this.lectures().filter((lecture) => lecture.id !== lectureId));
         this.applyFilters();
     }
 
@@ -172,7 +172,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.filteredLectures, this.predicate, this.ascending);
+        this.sortService.sortByProperty(this.filteredLectures(), this.predicate, this.ascending);
     }
 
     private loadAll() {
@@ -184,11 +184,13 @@ export class LectureComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (res: Lecture[]) => {
-                    this.lectures = res.map((lectureData) => {
-                        const lecture = new Lecture();
-                        Object.assign(lecture, lectureData);
-                        return lecture;
-                    });
+                    this.lectures.set(
+                        res.map((lectureData) => {
+                            const lecture = new Lecture();
+                            Object.assign(lecture, lectureData);
+                            return lecture;
+                        }),
+                    );
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -201,7 +203,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     private applyFilters(): void {
         if (this.activeFilters.size === 0) {
             // If no filters selected, show all lectures
-            this.filteredLectures = this.lectures;
+            this.filteredLectures.set(this.lectures());
         } else {
             // Get the current system time
             const now = dayjs();
@@ -209,8 +211,8 @@ export class LectureComponent implements OnInit, OnDestroy {
             let filteredLectures: Array<Lecture> = [];
 
             // update filteredLectures based on the selected filter option checkboxes
-            const pastLectures = this.lectures.filter((lecture) => lecture.endDate?.isBefore(now));
-            const currentLectures = this.lectures.filter((lecture) => {
+            const pastLectures = this.lectures().filter((lecture) => lecture.endDate?.isBefore(now));
+            const currentLectures = this.lectures().filter((lecture) => {
                 if (lecture.startDate && lecture.endDate) {
                     return lecture.startDate.isSameOrBefore(now) && lecture.endDate.isSameOrAfter(now);
                 } else if (lecture.startDate) {
@@ -220,14 +222,14 @@ export class LectureComponent implements OnInit, OnDestroy {
                 }
                 return false;
             });
-            const futureLectures = this.lectures.filter((lecture) => lecture.startDate?.isAfter(now));
-            const unspecifiedDatesLectures = this.lectures.filter((lecture) => lecture.startDate === undefined && lecture.endDate === undefined);
+            const futureLectures = this.lectures().filter((lecture) => lecture.startDate?.isAfter(now));
+            const unspecifiedDatesLectures = this.lectures().filter((lecture) => lecture.startDate === undefined && lecture.endDate === undefined);
 
             filteredLectures = this.activeFilters.has(LectureDateFilter.PAST) ? filteredLectures.concat(pastLectures) : filteredLectures;
             filteredLectures = this.activeFilters.has(LectureDateFilter.CURRENT) ? filteredLectures.concat(currentLectures) : filteredLectures;
             filteredLectures = this.activeFilters.has(LectureDateFilter.FUTURE) ? filteredLectures.concat(futureLectures) : filteredLectures;
             filteredLectures = this.activeFilters.has(LectureDateFilter.UNSPECIFIED) ? filteredLectures.concat(unspecifiedDatesLectures) : filteredLectures;
-            this.filteredLectures = filteredLectures;
+            this.filteredLectures.set(filteredLectures);
         }
 
         this.sortRows();
@@ -235,7 +237,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     navigateToLectureCreationPage(): void {
         this.router.navigate(['course-management', this.courseId, 'lectures', 'new'], {
-            state: { existingLectures: this.lectures },
+            state: { existingLectures: this.lectures() },
         });
     }
 
@@ -253,7 +255,7 @@ export class LectureComponent implements OnInit, OnDestroy {
             dismissableMask: false,
             draggable: false,
             data: {
-                lectures: this.lectures,
+                lectures: this.lectures(),
                 uploadedFiles: files,
             },
         });
@@ -287,7 +289,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 map((res: HttpResponse<Lecture>) => res.body!),
                 concatMap((createdLecture: Lecture) => {
                     // Add the new lecture to the list
-                    this.lectures.push(createdLecture);
+                    this.lectures.set([...this.lectures(), createdLecture]);
                     this.applyFilters();
 
                     // Create attachment units sequentially to maintain order

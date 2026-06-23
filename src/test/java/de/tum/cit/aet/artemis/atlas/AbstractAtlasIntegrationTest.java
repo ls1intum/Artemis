@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -12,7 +14,6 @@ import de.tum.cit.aet.artemis.atlas.competency.util.StandardizedCompetencyUtilSe
 import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.learningpath.util.LearningPathUtilService;
 import de.tum.cit.aet.artemis.atlas.profile.util.LearnerProfileUtilService;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -44,10 +45,10 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     // Repositories
     @Autowired
@@ -82,9 +83,6 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected PrerequisiteTestRepository prerequisiteRepository;
-
-    @Autowired
-    protected CompetencyJolRepository competencyJolRepository;
 
     @Autowired
     protected CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
@@ -179,13 +177,15 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected TeamUtilService teamUtilService;
 
     @Autowired
-    protected AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+    protected Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
 
     @BeforeEach
     void setupAtlasMLMocks() {
-        atlasMLRequestMockProvider.reset();
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
+        atlasMLRequestMockProvider.ifPresent(provider -> {
+            provider.reset();
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
+        });
     }
 
 }

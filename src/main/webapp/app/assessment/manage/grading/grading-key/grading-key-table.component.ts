@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, model } from '@angular/core';
+import { Component, OnInit, inject, model, signal } from '@angular/core';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -7,15 +7,15 @@ import { GradeEditMode } from 'app/assessment/manage/grading/grading.component';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { ScoreType } from 'app/shared/constants/score-type.constants';
+import { ScoreType } from 'app/foundation/constants/score-type.constants';
 import { ActivatedRoute } from '@angular/router';
 import { loadGradingKeyUrlParams } from 'app/assessment/manage/grading/grading-key-overview/grading-key-helper';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
+import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 
 @Component({
     selector: 'jhi-grade-key-table',
@@ -36,19 +36,19 @@ export class GradingKeyTableComponent implements OnInit {
     studentGradeOrBonusPointsOrGradeBonus = model<string>();
     forBonus = model<boolean>();
 
-    plagiarismGrade: string;
-    noParticipationGrade: string;
+    readonly plagiarismGrade = signal<string | undefined>(undefined);
+    readonly noParticipationGrade = signal<string | undefined>(undefined);
 
     isExam = false;
 
     courseId?: number;
     examId?: number;
 
-    title?: string;
-    gradeSteps: GradeStep[] = [];
-    isBonus = false;
+    readonly title = signal<string | undefined>(undefined);
+    readonly gradeSteps = signal<GradeStep[]>([]);
+    readonly isBonus = signal(false);
 
-    hasPointsSet = false;
+    readonly hasPointsSet = signal(false);
 
     ngOnInit(): void {
         const { courseId, examId, forBonus, isExam, studentGradeOrBonusPointsOrGradeBonus } = loadGradingKeyUrlParams(this.route);
@@ -60,11 +60,11 @@ export class GradingKeyTableComponent implements OnInit {
 
         this.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
             if (gradeSteps) {
-                this.title = gradeSteps.title;
-                this.isBonus = gradeSteps.gradeType === GradeType.BONUS;
-                this.gradeSteps = this.gradingService.sortGradeSteps(gradeSteps.gradeSteps);
-                this.plagiarismGrade = gradeSteps.plagiarismGrade;
-                this.noParticipationGrade = gradeSteps.noParticipationGrade;
+                this.title.set(gradeSteps.title);
+                this.isBonus.set(gradeSteps.gradeType === GradeType.BONUS);
+                this.gradeSteps.set(this.gradingService.sortGradeSteps(gradeSteps.gradeSteps));
+                this.plagiarismGrade.set(gradeSteps.plagiarismGrade);
+                this.noParticipationGrade.set(gradeSteps.noParticipationGrade);
                 if (gradeSteps.maxPoints !== undefined) {
                     if (!this.isExam) {
                         let maxPoints = 0;
@@ -72,16 +72,17 @@ export class GradingKeyTableComponent implements OnInit {
                         if (totalScoresForCourse) {
                             maxPoints = totalScoresForCourse[ScoreType.REACHABLE_POINTS];
                         }
-                        this.gradingService.setGradePoints(this.gradeSteps, maxPoints);
+                        this.gradingService.setGradePoints(this.gradeSteps(), maxPoints);
                     } else {
                         // for exams the max points filed should equal the total max points (otherwise exams can't be started)
-                        this.gradingService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);
+                        this.gradingService.setGradePoints(this.gradeSteps(), gradeSteps.maxPoints!);
                     }
                 }
+                this.hasPointsSet.set(this.gradingService.hasPointsSet(this.gradeSteps()));
+            } else {
+                this.hasPointsSet.set(false);
             }
         });
-
-        this.hasPointsSet = this.gradingService.hasPointsSet(this.gradeSteps);
     }
 
     private findGradeSteps(courseId: number, examId?: number): Observable<GradeStepsDTO | undefined> {

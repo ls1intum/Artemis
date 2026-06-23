@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, ViewEncapsulation, inject, input, signal } from '@angular/core';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
@@ -9,12 +9,12 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { FileWithHasMatch } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { escape } from 'lodash-es';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { Subject } from 'rxjs';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
 import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -44,28 +44,28 @@ export class TextSubmissionViewerComponent implements OnChanges {
     /**
      * Name of the currently selected file.
      */
-    public currentFile: string;
+    readonly currentFile = signal<string | undefined>(undefined);
 
     /**
      * Content of the currently selected file.
      */
-    public fileContent: string;
+    readonly fileContent = signal<string | undefined>(undefined);
 
     /**
      * List of files the given submission consists of.
      * `null` for text exercises.
      */
-    public files: FileWithHasMatch[];
+    readonly files = signal<FileWithHasMatch[]>([]);
 
     /**
      * True, if the given exercise is of type 'programming'.
      */
-    public isProgrammingExercise: boolean;
+    readonly isProgrammingExercise = signal(false);
 
     /**
      * True, if the file content for the given submission is being loaded.
      */
-    public loading: boolean;
+    readonly loading = signal(false);
 
     /**
      * Token that marks the beginning of a highlighted match.
@@ -80,12 +80,12 @@ export class TextSubmissionViewerComponent implements OnChanges {
     /**
      * True if currently selected file is not a text file.
      */
-    binaryFile?: boolean;
+    readonly binaryFile = signal<boolean | undefined>(undefined);
 
     /**
      * True if fetching submission files resulted in an error.
      */
-    cannotLoadFiles = false;
+    readonly cannotLoadFiles = signal(false);
 
     faExclamationTriangle = faExclamationTriangle;
 
@@ -93,7 +93,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         if (changes.plagiarismSubmission) {
             const currentPlagiarismSubmission: PlagiarismSubmission = changes.plagiarismSubmission.currentValue;
             if (!this.hideContent()) {
-                this.loading = true;
+                this.loading.set(true);
 
                 if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
                     this.loadProgrammingExercise(currentPlagiarismSubmission);
@@ -113,14 +113,14 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
         this.repositoryService.getRepositoryContentForPlagiarismView(domain).subscribe({
             next: (files: FilesWithType) => {
-                this.cannotLoadFiles = false;
-                this.isProgrammingExercise = true;
-                this.loading = false;
-                this.files = this.programmingExerciseFilesWithMatches(files);
+                this.cannotLoadFiles.set(false);
+                this.isProgrammingExercise.set(true);
+                this.loading.set(false);
+                this.files.set(this.programmingExerciseFilesWithMatches(files));
             },
             error: () => {
-                this.cannotLoadFiles = true;
-                this.loading = false;
+                this.cannotLoadFiles.set(true);
+                this.loading.set(false);
             },
         });
     }
@@ -163,15 +163,15 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
      */
     private loadTextExercise(currentPlagiarismSubmission: PlagiarismSubmission) {
-        this.isProgrammingExercise = false;
+        this.isProgrammingExercise.set(false);
 
         this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe({
             next: (submission: TextSubmission) => {
-                this.loading = false;
-                this.fileContent = this.insertMatchTokens(submission.text || '');
+                this.loading.set(false);
+                this.fileContent.set(this.insertMatchTokens(submission.text || ''));
             },
             error: () => {
-                this.loading = false;
+                this.loading.set(false);
             },
         });
     }
@@ -181,26 +181,26 @@ export class TextSubmissionViewerComponent implements OnChanges {
     }
 
     handleFileSelect(file: string) {
-        this.currentFile = file;
-        this.loading = true;
+        this.currentFile.set(file);
+        this.loading.set(true);
 
         const fileExtension = file.split('.').last()!;
         if (TEXT_FILE_EXTENSIONS.includes(fileExtension)) {
-            this.binaryFile = false;
+            this.binaryFile.set(false);
 
             const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission()?.submissionId }];
             this.repositoryService.getFileForPlagiarismView(file, domain).subscribe({
                 next: ({ fileContent }) => {
-                    this.loading = false;
-                    this.fileContent = this.insertMatchTokens(fileContent);
+                    this.loading.set(false);
+                    this.fileContent.set(this.insertMatchTokens(fileContent));
                 },
                 error: () => {
-                    this.loading = false;
+                    this.loading.set(false);
                 },
             });
         } else {
-            this.binaryFile = true;
-            this.loading = false;
+            this.binaryFile.set(true);
+            this.loading.set(false);
         }
     }
 
@@ -208,11 +208,12 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * Downloads the currently selected file with a friendly name consisting of the exercises short name, the student login and the filename.
      */
     downloadCurrentFile() {
-        this.repositoryService.downloadFile(this.currentFile, this.exercise()?.shortName + '_' + this.plagiarismSubmission()?.studentLogin + '_' + this.currentFile);
+        const currentFile = this.currentFile();
+        this.repositoryService.downloadFile(currentFile!, this.exercise()?.shortName + '_' + this.plagiarismSubmission()?.studentLogin + '_' + currentFile);
     }
 
     getMatchesForCurrentFile() {
-        return this.matches()?.get(this.currentFile || 'none') || [];
+        return this.matches()?.get(this.currentFile() || 'none') || [];
     }
 
     private hasMatch(file: string): boolean {

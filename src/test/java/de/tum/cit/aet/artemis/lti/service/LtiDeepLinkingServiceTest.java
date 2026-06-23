@@ -35,9 +35,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
@@ -111,7 +112,7 @@ class LtiDeepLinkingServiceTest {
     void testEmptyReturnUrlBuildLtiDeepLinkResponse() throws JsonProcessingException, MalformedURLException, URISyntaxException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = JsonObjectMapper.get();
         String deepLinkingSettingsAsJsonString = """
                 {
                   "deep_link_return_url": "",

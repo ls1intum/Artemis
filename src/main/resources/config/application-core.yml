@@ -1,6 +1,8 @@
 artemis:
     atlas:
         enabled: true
+        atlasml:
+            enabled: false
     hyperion:
         enabled: false
     iris:
@@ -31,12 +33,22 @@ artemis:
         enabled: true
     lti:
         enabled: false
+    athena:
+        enabled: false # Set this to true to enable the Athena module for LLM-based feedback suggestions; requires the athena service to be reachable via artemis.athena.url
+    apollon:
+        enabled: false # Set this to true to enable the Apollon module for UML diagram PDF export; requires the apollon conversion service to be reachable via artemis.apollon.conversion-service-url
     user-management:
+        ldap:
+            enabled: false # Set this to true to enable LDAP-based user synchronization (artemis.user-management.ldap.url etc.)
+        saml2:
+            enabled: false # Set this to true to enable SAML2 single sign-on; requires the saml2 and spring.security.saml2 blocks (see application-saml2.yml.example)
         passkey:
             enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
             require-for-administrator-features: false # if true, administrators must authenticate with passkey to access admin features
             ask-users-to-setup: true # if true, users who have not set up a passkey will be asked to do so
             token-validity-in-seconds-for-passkey: 15552000 # jwtToken is valid for 180 days when using passkey authentication
+            # relying-party-id: ""  # Optional: override the WebAuthn Relying Party ID (defaults to the hostname from server.url). Needed when a reverse proxy serves a different hostname.
+            # additional-allowed-origins: []  # Optional: extra origins allowed for WebAuthn passkey authentication, e.g. when a reverse proxy serves a different URL than server.url.
 spring:
     liquibase:
         enabled: true
@@ -44,14 +56,12 @@ spring:
         # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
         # They can be included once they are processed
         exclude:
-          # Important: Make sure to keep the exclusions in sync with the `application-buildagent.yml` file, except for the build agent specific exclusions
-          - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
-          - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
-          - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
-          - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
-          - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
-          # We can exclude this autoconfiguration. Using standard SpringDocs https://springdoc.org/ is fine and when excluding this, we avoid coupling OpenAPI specs to a profile
-          - tech.jhipster.config.apidoc.JHipsterSpringDocAutoConfiguration
+          # Important: Keep in sync with application-buildagent.yml (except build agent specific exclusions)
+          - org.springframework.boot.data.autoconfigure.metrics.DataRepositoryMetricsAutoConfiguration
+          # Note: DataSourcePoolMetricsAutoConfiguration is NOT excluded — it registers hikaricp.connections.* gauges for the admin metrics page
+          - org.springframework.boot.micrometer.metrics.autoconfigure.startup.StartupTimeMetricsListenerAutoConfiguration
+          - org.springframework.boot.micrometer.metrics.autoconfigure.task.TaskExecutorMetricsAutoConfiguration
+          - org.springframework.boot.tomcat.autoconfigure.metrics.TomcatMetricsAutoConfiguration
     cloud:
         loadbalancer:
             cache:
@@ -64,7 +74,7 @@ management:
             roles: 'ROLE_ADMIN,ROLE_SUPER_ADMIN'
             probes:
                 enabled: true
-        jhimetrics:
+        artemismetrics:
             access: read_only
     metrics:
         enable:

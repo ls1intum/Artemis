@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -60,7 +60,7 @@ public class TutorialGroupsConfigurationService {
         for (TutorialGroupSchedule schedule : schedules) {
             var tutorialGroupConfiguration = new TutorialGroupsConfiguration();
             tutorialGroupConfiguration.setCourse(course);
-            newSessions.addAll(tutorialGroupScheduleService.generateSessions(tutorialGroupConfiguration, schedule));
+            newSessions.addAll(tutorialGroupScheduleService.generateSessionsForSchedule(course, schedule));
         }
         tutorialGroupSessionRepository.saveAll(newSessions);
     }

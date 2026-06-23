@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -16,6 +17,8 @@ import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -25,18 +28,17 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.PostBroadcastDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 
 public abstract class PostingService {
@@ -59,7 +61,14 @@ public abstract class PostingService {
 
     protected static final String METIS_POST_ENTITY_NAME = "metis.post";
 
-    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
+    private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/communication/";
+
+    // Legacy STOMP destination kept in parallel during the migration to /topic/communication/...
+    // Deployed mobile and external clients may still be subscribed here.
+    // TODO: Remove once external clients have migrated. Target sunset: 2026-09-30 — keep in sync with
+    // LegacyApiPathDeprecationInterceptor.SUNSET_DATE.
+    @Deprecated(forRemoval = true, since = "9.3")
+    private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
@@ -110,37 +119,45 @@ public abstract class PostingService {
     }
 
     /**
-     * Broadcasts a posting related event in a course under a specific topic via websockets
+     * Broadcasts a posting related event in a course under a specific topic via websockets.
+     * <p>
+     * The wire payload is a {@link PostBroadcastDTO}: a cycle-free projection that drops the
+     * {@code reactions → Reaction.user → User} and {@code answers → AnswerPost.post} cycles
+     * before the frame leaves the server. Sending the {@link Post} entity directly used to walk
+     * the same JSON cycle that fires Jackson's {@code DeserializerCache} race during integration
+     * test deserialization (see {@code JacksonDeserializerInitializationConfig}).
      *
      * @param postDTO    object including the affected post as well as the action
      * @param courseId   the id of the course the posting belongs to
      * @param recipients the recipients for this broadcast, can be null
      */
+    @SuppressWarnings("deprecation")
     public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
-        // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
-        Conversation postConversation = postDTO.post().getConversation();
-        if (postConversation != null) {
-            postConversation.hideDetails();
-            if (postDTO.post().getAnswers() != null) {
-                postDTO.post().getAnswers().forEach(answerPost -> answerPost.setPost(new Post(answerPost.getPost().getId())));
-            }
+        Post post = postDTO.post();
+        // Build the cycle-free wire payload before adjusting entity state — PostResponseDTO.from
+        // walks the entity exactly once.
+        PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(post, postDTO.action());
 
-            String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
+        Conversation postConversation = post.getConversation();
+        if (postConversation != null) {
+            String coursePathSuffix = "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(courseConversationTopic, postDTO);
+                websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
+                // Mirror to the legacy destination so older subscribers still receive updates during the migration window.
+                websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + coursePathSuffix, broadcastPayload);
             }
             else {
                 if (recipients == null) {
                     // send to all participants of the conversation
                     recipients = getConversationParticipantsAsSummaries(postConversation);
                 }
-                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations",
-                        new PostDTO(postDTO.post(), postDTO.action())));
+                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", broadcastPayload));
             }
         }
-        else if (postDTO.post().getPlagiarismCase() != null) {
-            String plagiarismCaseTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "plagiarismCase/" + postDTO.post().getPlagiarismCase().getId();
-            websocketMessagingService.sendMessage(plagiarismCaseTopic, postDTO);
+        else if (post.getPlagiarismCase() != null) {
+            String plagiarismCaseSuffix = "plagiarismCase/" + post.getPlagiarismCase().getId();
+            websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
+            websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
         }
     }
 
@@ -197,6 +214,24 @@ public abstract class PostingService {
 
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
             throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
+        }
+    }
+
+    /**
+     * Ensures that the given conversation belongs to the course identified by the (authoritative) path {@code courseId}.
+     * <p>
+     * The course context comes from the URL path and is used for authorization, while the target conversation is resolved
+     * from the request body / loaded entity. If the two diverge, a user authorized for one course could read or write in a
+     * conversation of another course (cross-course injection / broken access control). Reject such inconsistent requests.
+     *
+     * @param conversation the conversation the posting targets
+     * @param courseId     the id of the course taken from the API path
+     * @throws BadRequestAlertException if the conversation does not belong to the given course
+     */
+    protected void ensureConversationBelongsToCourseElseThrow(Conversation conversation, Long courseId) {
+        // Conversation#course is eagerly fetched, so this is a no-DB-cost id comparison
+        if (!Objects.equals(conversation.getCourse().getId(), courseId)) {
+            throw new BadRequestAlertException("The conversation does not belong to the specified course", getEntityName(), "conversationCourseMismatch");
         }
     }
 

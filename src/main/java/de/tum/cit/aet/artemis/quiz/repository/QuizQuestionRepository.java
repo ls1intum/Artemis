@@ -74,4 +74,25 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
         return getValueElseThrow(findDnDQuestionById(questionId), questionId);
     }
+
+    @Query("""
+            SELECT q
+            FROM QuizQuestion q
+            WHERE q.id = :questionId AND q.exercise.course.id = :courseId
+            """)
+    Optional<QuizQuestion> findByIdAndCourseId(@Param("questionId") long questionId, @Param("courseId") long courseId);
+
+    /**
+     * Find a quiz question by id, scoped to a specific course. Use this in training-mode endpoints to ensure
+     * a student cannot submit (and receive solutions for) a question from a course they are not enrolled in,
+     * even if they pass that course's id in the path.
+     *
+     * @param questionId the id of the quiz question
+     * @param courseId   the id of the course the question's exercise must belong to
+     * @return the quiz question
+     * @throws de.tum.cit.aet.artemis.core.exception.EntityNotFoundException if no question with the given id exists in the course
+     */
+    default QuizQuestion findByIdAndCourseIdElseThrow(long questionId, long courseId) {
+        return getValueElseThrow(findByIdAndCourseId(questionId, courseId), questionId);
+    }
 }

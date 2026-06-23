@@ -1,45 +1,55 @@
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-describe('External Submission Dialog', () => {
+describe('ExternalSubmissionButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExternalSubmissionButtonComponent>;
-    let component: ExternalSubmissionButtonComponent;
-    let modalService: NgbModal;
+    let dialogServiceOpenSpy: ReturnType<typeof vi.fn>;
 
-    beforeEach(() => {
-        modalService = { open: jest.fn() } as any as NgbModal;
-        TestBed.configureTestingModule({
-            providers: [{ provide: NgbModal, useValue: modalService }, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExternalSubmissionButtonComponent);
-                component = fixture.componentInstance;
-            });
+    beforeEach(async () => {
+        dialogServiceOpenSpy = vi.fn();
+
+        await TestBed.configureTestingModule({
+            imports: [ExternalSubmissionButtonComponent],
+            providers: [{ provide: DialogService, useValue: { open: dialogServiceOpenSpy } }, { provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(ExternalSubmissionButtonComponent);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should open external submission dialog on click', () => {
         const exercise = { id: 1 } as Exercise;
-        component.exercise = exercise;
-        const modalRefMock = { componentInstance: {} } as NgbModalRef;
-        const openMock = jest.spyOn(modalService, 'open').mockReturnValue(modalRefMock);
+        fixture.componentRef.setInput('exercise', exercise);
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         fixture.debugElement.query(By.css('.btn')).nativeElement.click();
 
-        expect(openMock).toHaveBeenCalledOnce();
-        expect(openMock).toHaveBeenCalledWith(ExternalSubmissionDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
-        expect(modalRefMock.componentInstance.exercise).toBe(exercise);
+        expect(dialogServiceOpenSpy).toHaveBeenCalledOnce();
+        expect(dialogServiceOpenSpy).toHaveBeenCalledWith(
+            ExternalSubmissionDialogComponent,
+            expect.objectContaining({
+                header: 'artemisApp.submission.createExternal',
+                width: '50rem',
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                dismissableMask: false,
+                inputValues: { exercise },
+            }),
+        );
     });
 });

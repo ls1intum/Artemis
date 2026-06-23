@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -7,22 +7,22 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { captureException } from '@sentry/angular';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
-import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
+import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { TestRunRibbonComponent } from '../../manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationCoverComponent } from '../exam-cover/exam-participation-cover.component';
@@ -34,11 +34,11 @@ import { FileUploadExamSubmissionComponent } from '../exercises/file-upload/file
 import { TextExamSubmissionComponent } from '../exercises/text/text-exam-submission.component';
 import { ModelingExamSubmissionComponent } from '../exercises/modeling/modeling-exam-submission.component';
 import { ProgrammingExamSubmissionComponent } from '../exercises/programming/programming-exam-submission.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamExerciseOverviewPageComponent } from '../exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import {
@@ -47,19 +47,19 @@ import {
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
 } from 'app/exam/overview/services/exam-participation-live-events.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
-import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
+import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -109,8 +109,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
 
-    @ViewChildren(ExamSubmissionComponent)
-    currentPageComponents: QueryList<ExamSubmissionComponent>;
+    readonly currentPageComponents = viewChildren(ExamSubmissionComponent);
 
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -121,38 +120,38 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // needed for recalculation of exam content height
     readonly EXAM_HEIGHT_OFFSET = 88;
 
-    courseId: number;
-    examId: number;
-    testRunId: number;
-    testExam = false;
-    studentExamId: number;
-    testStartTime?: dayjs.Dayjs;
+    readonly courseId = signal<number>(undefined!);
+    readonly examId = signal<number>(undefined!);
+    readonly testRunId = signal<number>(undefined!);
+    readonly testExam = signal(false);
+    readonly studentExamId = signal<number>(undefined!);
+    readonly testStartTime = signal<dayjs.Dayjs | undefined>(undefined);
 
     // determines if component was once drawn visited
-    pageComponentVisited: boolean[];
+    readonly pageComponentVisited = signal<boolean[]>(undefined!);
 
     // needed, because studentExam is downloaded only when exam is started
-    exam: Exam;
-    studentExam: StudentExam;
+    readonly exam = signal<Exam>(undefined!);
+    readonly studentExam = signal<StudentExam>(undefined!);
 
-    individualStudentEndDate: dayjs.Dayjs;
-    individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
+    readonly individualStudentEndDate = signal<dayjs.Dayjs>(undefined!);
+    readonly individualStudentEndDateWithGracePeriod = signal<dayjs.Dayjs>(undefined!);
 
-    activeExamPage = new ExamPage();
+    readonly activeExamPage = signal<ExamPage>(new ExamPage());
     unsavedChanges = false;
-    connected = true;
-    loggedOut = false;
+    readonly connected = signal(true);
+    readonly loggedOut = signal(false);
 
-    handInEarly = false;
-    handInPossible = true;
-    submitInProgress = false;
-    attendanceChecked = false;
+    readonly handInEarly = signal(false);
+    readonly handInPossible = signal(true);
+    readonly submitInProgress = signal(false);
+    readonly attendanceChecked = signal(false);
 
-    examSummaryButtonSecondsLeft = 10;
+    readonly examSummaryButtonSecondsLeft = signal(10);
     examSummaryButtonTimer: ReturnType<typeof setInterval>;
-    showExamSummary = false;
+    readonly showExamSummary = signal(false);
 
-    exerciseIndex = 0;
+    readonly exerciseIndex = signal(0);
 
     errorSubscription: Subscription;
     websocketSubscription?: Subscription;
@@ -160,34 +159,38 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     problemStatementUpdateEventsSubscription?: Subscription;
     studentExamSubscription?: Subscription;
 
-    sidebarData: SidebarData;
-    sidebarExercises: SidebarCardElement[] = [];
+    readonly sidebarData = signal<SidebarData>(undefined!);
+    readonly sidebarExercises = signal<SidebarCardElement[]>([]);
 
     isProgrammingExercise() {
-        return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
+        return !this.activeExamPage().isOverviewPage && this.activeExamPage().exercise!.type === ExerciseType.PROGRAMMING;
     }
 
     isProgrammingExerciseWithCodeEditor(): boolean {
-        return this.isProgrammingExercise() && (this.activeExamPage.exercise as ProgrammingExercise).allowOnlineEditor === true;
+        return this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOnlineEditor === true;
     }
 
     isProgrammingExerciseWithOfflineIDE(): boolean {
-        return this.isProgrammingExercise() && (this.activeExamPage.exercise as ProgrammingExercise).allowOfflineIde === true;
+        return this.isProgrammingExercise() && (this.activeExamPage().exercise as ProgrammingExercise).allowOfflineIde === true;
     }
 
-    examStartConfirmed = false;
+    readonly examStartConfirmed = signal(false);
 
     // autoTimerInterval in seconds
-    autoSaveTimer = 0;
+    readonly autoSaveTimer = signal(0);
     autoSaveInterval: number;
 
     private synchronizationAlert = new Subject<void>();
 
     private programmingSubmissionSubscriptions: Subscription[] = [];
 
-    loadingExam: boolean;
-    isAtLeastTutor?: boolean;
-    isAtLeastInstructor?: boolean;
+    readonly loadingExam = signal<boolean>(undefined!);
+    // Render-version signal read by the template-bound isOver()/isGracePeriodOver() getters. Bumped whenever
+    // state outside Angular's reactivity changes (wall-clock transitions, in-place submission sync mutations)
+    // so the exam view and its default-CD children (e.g. the navigation sidebar icons) re-render under zoneless.
+    private readonly wallClockVersion = signal(0);
+    readonly isAtLeastTutor = signal<boolean | undefined>(undefined);
+    readonly isAtLeastInstructor = signal<boolean | undefined>(undefined);
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
 
@@ -207,32 +210,34 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             currentParams: this.route.params,
         }).subscribe(({ parentParams, currentParams }) => {
             const courseId = currentParams['courseId'] || parentParams['courseId'];
-            this.courseId = parseInt(courseId, 10);
+            this.courseId.set(parseInt(courseId, 10));
         });
         this.route.params.subscribe((params) => {
-            this.examId = parseInt(params['examId'], 10);
-            this.testRunId = parseInt(params['testRunId'], 10);
+            this.examId.set(parseInt(params['examId'], 10));
+            this.testRunId.set(parseInt(params['testRunId'], 10));
             // As a student can have multiple test exams, the studentExamId is passed as a parameter.
             const studentExamId = this.route.firstChild?.snapshot.params['studentExamId'];
             if (studentExamId) {
-                this.testExam = true;
-                this.studentExamId = parseInt(studentExamId, 10);
+                this.testExam.set(true);
+                this.studentExamId.set(parseInt(studentExamId, 10));
             }
-            this.loadingExam = true;
-            if (this.testRunId) {
-                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
+            this.loadingExam.set(true);
+            if (this.testRunId()) {
+                this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
                     next: (studentExam) => {
-                        this.studentExam = studentExam;
-                        this.studentExam.exam!.course = new Course();
-                        this.studentExam.exam!.course.id = this.courseId;
-                        this.exam = studentExam.exam!;
-                        this.testExam = this.exam.testExam!;
-                        this.loadingExam = false;
+                        this.studentExam.set(studentExam);
+                        studentExam.exam!.course = new Course();
+                        studentExam.exam!.course.id = this.courseId();
+                        this.exam.set(studentExam.exam!);
+                        this.testExam.set(this.exam().testExam!);
+                        this.loadingExam.set(false);
                     },
-                    error: () => (this.loadingExam = false),
+                    error: () => {
+                        this.loadingExam.set(false);
+                    },
                 });
-            } else if (this.testExam && this.studentExamId) {
-                this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExamId).subscribe({
+            } else if (this.testExam() && this.studentExamId()) {
+                this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExamId()).subscribe({
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
@@ -241,7 +246,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     },
                 });
             } else {
-                this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
+                this.studentExamSubscription = this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
                     next: (studentExam) => {
                         this.handleStudentExam(studentExam);
                     },
@@ -254,7 +259,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // listen to connect / disconnect events
         this.websocketSubscription = this.websocketService.connectionState.subscribe((status) => {
-            this.connected = status.connected;
+            this.connected.set(status.connected);
         });
     }
 
@@ -265,7 +270,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     @HostListener('window:beforeunload', ['$event'])
     beforeUnloadHandler(event: BeforeUnloadEvent) {
-        if (this.examStartConfirmed && !this.isOver()) {
+        if (this.examStartConfirmed() && !this.isOver()) {
             event.preventDefault();
             return this.translateService.instant('artemisApp.examParticipation.reloadWarning');
         }
@@ -273,21 +278,23 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     loadAndDisplaySummary() {
-        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!).subscribe({
+        this.examParticipationService.loadStudentExamWithExercisesForSummary(this.courseId(), this.examId(), this.studentExam().id!).subscribe({
             next: (studentExamWithExercises: StudentExam) => {
-                this.studentExam = studentExamWithExercises;
-                this.showExamSummary = true;
-                this.loadingExam = false;
+                this.studentExam.set(studentExamWithExercises);
+                this.showExamSummary.set(true);
+                this.loadingExam.set(false);
             },
-            error: () => (this.loadingExam = false),
+            error: () => {
+                this.loadingExam.set(false);
+            },
         });
-        if (!this.testExam) {
+        if (!this.testExam()) {
             this.examParticipationService.resetExamLayout();
         }
     }
 
     canDeactivate() {
-        return this.loggedOut || this.isOver() || !this.studentExam || this.handInEarly || !this.examStartConfirmed;
+        return this.loggedOut() || this.isOver() || !this.studentExam() || this.handInEarly() || !this.examStartConfirmed();
     }
 
     get canDeactivateWarning() {
@@ -295,51 +302,63 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     get activePageIndex(): number {
-        if (!this.activeExamPage || this.activeExamPage.isOverviewPage) {
+        if (!this.activeExamPage() || this.activeExamPage().isOverviewPage) {
             return -1;
         }
-        return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.activeExamPage.exercise!.id);
+        return this.studentExam().exercises!.findIndex((examExercise) => examExercise.id === this.activeExamPage().exercise!.id);
     }
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
-        return this.currentPageComponents.find(
-            (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
+        return this.currentPageComponents().find(
+            (submissionComponent) =>
+                !this.activeExamPage().isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage().exercise!.id,
         );
     }
 
     /**
      * exam start text confirmed and name entered, start button clicked and exam active
+     *
+     * @param studentExam            the student exam to start
+     * @param resumedFromFailedSave  true when resuming from the locally cached exam after a failed save. In that case the
+     *                               locally cached sync state of each submission is kept (so not-yet-saved answers stay
+     *                               isSynced=false and are re-sent) instead of marking everything as synced.
      */
-    examStarted(studentExam: StudentExam) {
+    examStarted(studentExam: StudentExam, resumedFromFailedSave = false) {
         if (studentExam) {
             // Keep working time
-            studentExam.workingTime = this.studentExam?.workingTime ?? studentExam.workingTime;
-            this.studentExam = studentExam;
+            studentExam.workingTime = this.studentExam()?.workingTime ?? studentExam.workingTime;
+            this.studentExam.set(studentExam);
             // no need to change the whole page layout for test runs
-            if (this.testRunId) {
+            if (this.testRunId()) {
                 this.examParticipationService.setExamLayout(false, true);
             } else {
                 this.examParticipationService.setExamLayout();
             }
             // set endDate with workingTime
-            if (!!this.testRunId || this.testExam) {
-                this.testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
-                this.initIndividualEndDates(this.testStartTime);
+            if (!!this.testRunId() || this.testExam()) {
+                const testStartTime = studentExam.startedDate ? dayjs(studentExam.startedDate) : dayjs();
+                this.testStartTime.set(testStartTime);
+                this.initIndividualEndDates(testStartTime);
             } else {
-                this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
+                this.individualStudentEndDate.set(dayjs(this.exam().startDate).add(this.studentExam().workingTime!, 'seconds'));
             }
             // initializes array which manages submission component and exam overview initialization
-            this.pageComponentVisited = new Array(studentExam.exercises!.length).fill(false);
+            this.pageComponentVisited.set(new Array(studentExam.exercises!.length).fill(false));
             this.prepareSidebarData();
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
-            this.studentExam.exercises!.forEach((exercise) => {
+            this.studentExam().exercises!.forEach((exercise) => {
                 if (exercise.studentParticipations) {
                     exercise.studentParticipations!.forEach((participation) => {
                         if (participation.submissions && participation.submissions.length > 0) {
                             participation.submissions.forEach((submission) => {
-                                submission.isSynced = true;
+                                // When resuming from local storage after a failed save, keep the locally cached sync state:
+                                // a submission that was not yet saved to the server must stay isSynced=false so the autosave
+                                // re-sends it. Unconditionally marking everything synced here would silently drop those answers.
+                                if (!resumedFromFailedSave) {
+                                    submission.isSynced = true;
+                                }
                                 if (submission.submitted == undefined) {
                                     // only set submitted to false if the value was not specified before
                                     submission.submitted = false;
@@ -367,8 +386,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.subscribeToProblemStatementUpdates();
             this.initializeOverviewPage();
         }
-        this.examStartConfirmed = true;
+        this.examStartConfirmed.set(true);
         this.startAutoSaveTimer();
+        if (resumedFromFailedSave && studentExam) {
+            // Immediately re-send any answers that were restored from local storage but not yet saved to the server,
+            // instead of waiting for the next autosave cycle. Submissions that fail again stay isSynced=false and are
+            // retried by the autosave timer. Guarded by studentExam because triggerSave dereferences the current exam.
+            this.triggerSave(false);
+        }
     }
 
     /**
@@ -392,8 +417,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     public startAutoSaveTimer(): void {
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
-            this.autoSaveTimer++;
-            if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL && !this.isOver()) {
+            this.autoSaveTimer.update((v) => v + 1);
+            if (this.autoSaveTimer() >= AUTOSAVE_EXERCISE_INTERVAL && !this.isOver()) {
                 this.triggerSave(false);
             }
         }, AUTOSAVE_CHECK_INTERVAL);
@@ -404,8 +429,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     onExamEndConfirmed() {
         // temporary lock the submit button in order to protect against spam
-        this.handInPossible = false;
-        this.submitInProgress = true;
+        this.handInPossible.set(false);
+        this.submitInProgress.set(true);
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
@@ -413,7 +438,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // Submit the exam with a timeout of 20s = 20000ms
         // If we don't receive a response within that time throw an error the subscription can then handle
         this.examParticipationService
-            .submitStudentExam(this.courseId, this.examId, this.studentExam)
+            .submitStudentExam(this.courseId(), this.examId(), this.studentExam())
             .pipe(
                 timeout({
                     each: 20000,
@@ -422,29 +447,33 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe({
                 next: () => {
-                    this.submitInProgress = false;
+                    this.submitInProgress.set(false);
 
                     // As we don't get the student exam from the server, we need to set the submitted flag and the submission date manually
-                    this.studentExam.submitted = true;
-                    this.studentExam.submissionDate = dayjs();
+                    this.studentExam().submitted = true;
+                    this.studentExam().submissionDate = dayjs();
+
+                    // The exam is now submitted, so any earlier failed-save flag is obsolete. Clear it, otherwise a reload
+                    // before the exam ends would re-enter the restore path and re-send answers for an already-submitted exam.
+                    this.examParticipationService.setLastSaveFailed(false, this.courseId(), this.examId());
 
                     // Publish it so other components are aware of the change
-                    this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
+                    this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
 
-                    if (this.testRunId) {
+                    if (this.testRunId()) {
                         // If this is a test run, forward the user directly to the exam summary
-                        this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
+                        this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);
                     }
 
-                    if (this.testExam) {
+                    if (this.testExam()) {
                         this.examParticipationService.resetExamLayout();
-                        this.router.navigate(['courses', this.courseId, 'exams', this.examId, 'test-exam', this.studentExam.id]);
+                        this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam().id]);
                         this.examParticipationService.setShouldUpdateTestExams(true);
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {
-                        this.examSummaryButtonSecondsLeft -= 1;
-                        if (this.examSummaryButtonSecondsLeft === 0) {
+                        this.examSummaryButtonSecondsLeft.update((v) => v - 1);
+                        if (this.examSummaryButtonSecondsLeft() === 0) {
                             clearInterval(this.examSummaryButtonTimer);
                         }
                     }, 1000);
@@ -455,37 +484,37 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // When we have already submitted load the existing submission
                     if (alreadySubmitted) {
-                        if (this.testRunId) {
-                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
+                        if (this.testRunId()) {
+                            this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId(), this.examId(), this.testRunId()).subscribe({
                                 next: (studentExam: StudentExam) => {
-                                    this.studentExam = studentExam;
+                                    this.studentExam.set(studentExam);
                                 },
                                 error: (loadError: Error) => {
                                     this.alertService.error(loadError.message);
 
                                     // Allow the user to try to reload the exam from the server
-                                    this.submitInProgress = false;
-                                    this.handInPossible = true;
+                                    this.submitInProgress.set(false);
+                                    this.handInPossible.set(true);
                                 },
                             });
                         } else {
-                            this.examParticipationService.getOwnStudentExam(this.courseId, this.examId).subscribe({
+                            this.examParticipationService.getOwnStudentExam(this.courseId(), this.examId()).subscribe({
                                 next: (existingExam: StudentExam) => {
-                                    this.studentExam = existingExam;
+                                    this.studentExam.set(existingExam);
                                 },
                                 error: (loadError: Error) => {
                                     this.alertService.error(loadError.message);
 
                                     // Allow the user to try to reload the exam from the server
-                                    this.submitInProgress = false;
-                                    this.handInPossible = true;
+                                    this.submitInProgress.set(false);
+                                    this.handInPossible.set(true);
                                 },
                             });
                         }
                     } else {
                         this.alertService.error(error.message);
-                        this.submitInProgress = false;
-                        this.handInPossible = error.message !== 'artemisApp.studentExam.submissionNotInTime';
+                        this.submitInProgress.set(false);
+                        this.handInPossible.set(error.message !== 'artemisApp.studentExam.submissionNotInTime');
                     }
                 },
             });
@@ -500,6 +529,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         // update local studentExam for later sync with server
         this.updateLocalStudentExam();
+        // The end view is gated by the time-based isOver() getter. The exam timer fires this handler
+        // ~1s before the end and then stops ticking, so nothing else would re-evaluate isOver() once
+        // the time has actually elapsed. Bump the wall-clock version signal (read by isOver) now and
+        // again right after the remaining second so the hand-in/end cover reliably appears.
+        this.wallClockVersion.update((version) => version + 1);
+        setTimeout(() => this.wallClockVersion.update((version) => version + 1), 1500);
     }
 
     /**
@@ -507,12 +542,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     toggleHandInEarly() {
         // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
-        if (this.exam.testExam || !this.exam.examWithAttendanceCheck || this.handInEarly) {
+        if (this.exam().testExam || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
             this.handleHandInEarly();
         } else {
-            this.examManagementService.isAttendanceChecked(this.courseId, this.examId).subscribe((res) => {
+            this.examManagementService.isAttendanceChecked(this.courseId(), this.examId()).subscribe((res) => {
                 if (res.body) {
-                    this.attendanceChecked = res.body;
+                    this.attendanceChecked.set(res.body);
                 }
                 this.handleHandInEarly();
             });
@@ -520,8 +555,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     handleHandInEarly() {
-        this.handInEarly = !this.handInEarly;
-        if (this.handInEarly) {
+        this.handInEarly.set(!this.handInEarly());
+        if (this.handInEarly()) {
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
             try {
@@ -529,12 +564,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } catch (error) {
                 captureException(error);
             }
-        } else if (this.studentExam?.exercises && this.activeExamPage) {
-            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
-            this.exerciseIndex = index ? index : 0;
+        } else if (this.studentExam()?.exercises && this.activeExamPage()) {
+            const index = this.studentExam().exercises!.findIndex((exercise) => !this.activeExamPage().isOverviewPage && exercise.id === this.activeExamPage().exercise!.id);
+            this.exerciseIndex.set(index ? index : 0);
 
             // Reset the visited pages array so ngOnInit will be called for only the active page
-            this.resetPageComponentVisited(this.exerciseIndex);
+            this.resetPageComponentVisited(this.exerciseIndex());
         }
     }
 
@@ -542,68 +577,72 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * Returns whether the student failed to submit on time. In this case the end page is adapted.
      */
     get studentFailedToSubmit(): boolean {
-        if (this.testRunId) {
+        if (this.testRunId()) {
             return false;
         }
         let individualStudentEndDate;
-        if (this.exam.testExam) {
-            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
-                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
+        if (this.exam().testExam) {
+            if (!this.studentExam().submitted && this.studentExam().started && this.studentExam().startedDate) {
+                individualStudentEndDate = dayjs(this.studentExam().startedDate).add(this.studentExam().workingTime!, 'seconds');
             } else {
                 return false;
             }
         } else {
-            individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
+            individualStudentEndDate = dayjs(this.exam().startDate).add(this.studentExam().workingTime!, 'seconds');
         }
-        return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
+        return individualStudentEndDate.add(this.exam().gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam().submitted;
     }
 
     /**
      * check if exam is over
      */
     isOver(): boolean {
-        if (this.studentExam && this.studentExam.ended) {
+        this.wallClockVersion();
+        if (this.studentExam() && this.studentExam().ended) {
             // if this was calculated to true by the server, we can be sure the student exam has finished
             return true;
         }
-        if (this.handInEarly || this.studentExam?.submitted) {
+        if (this.handInEarly() || this.studentExam()?.submitted) {
             // implicitly the exam is over when the student wants to abort the exam or when the user has already submitted
             return true;
         }
-        return this.individualStudentEndDate && this.individualStudentEndDate.isBefore(this.serverDateService.now());
+        return this.individualStudentEndDate() && this.individualStudentEndDate().isBefore(this.serverDateService.now());
     }
 
     /**
      * check if the grace period has already passed
      */
     isGracePeriodOver() {
-        return this.individualStudentEndDateWithGracePeriod && this.individualStudentEndDateWithGracePeriod.isBefore(this.serverDateService.now());
+        this.wallClockVersion();
+        return this.individualStudentEndDateWithGracePeriod() && this.individualStudentEndDateWithGracePeriod().isBefore(this.serverDateService.now());
     }
 
     /**
      * check if exam is visible
      */
     isVisible(): boolean {
-        if (this.testRunId) {
+        if (this.testRunId()) {
             return true;
         }
-        if (!this.exam) {
+        if (!this.exam()) {
             return false;
         }
-        return this.exam.visibleDate ? this.exam.visibleDate.isBefore(this.serverDateService.now()) : false;
+        const visibleDate = this.exam().visibleDate;
+        return visibleDate ? visibleDate.isBefore(this.serverDateService.now()) : false;
     }
 
     /**
      * check if exam has started
      */
     isActive(): boolean {
-        if (this.testRunId) {
+        if (this.testRunId()) {
             return true;
         }
-        if (!this.exam) {
+        if (!this.exam()) {
             return false;
         }
-        return this.exam.startDate ? this.exam.startDate.isBefore(this.serverDateService.now()) : false;
+        const startDate = this.exam().startDate;
+        return startDate ? startDate.isBefore(this.serverDateService.now()) : false;
     }
 
     checkVerticalOverflow(): boolean {
@@ -632,30 +671,34 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (!studentExam) {
             return;
         }
-        this.studentExam = studentExam;
-        this.exam = studentExam.exam!;
-        this.testExam = this.exam.testExam!;
-        if (!this.exam.testExam) {
-            this.initIndividualEndDates(this.exam.startDate!);
+        this.studentExam.set(studentExam);
+        this.exam.set(studentExam.exam!);
+        this.testExam.set(this.exam().testExam!);
+        if (!this.exam().testExam) {
+            this.initIndividualEndDates(this.exam().startDate!);
         }
 
         // only show the summary if the student was able to submit on time.
-        if (this.isOver() && this.studentExam.submitted) {
+        if (this.isOver() && this.studentExam().submitted) {
             this.loadAndDisplaySummary();
         } else {
             // Directly start the exam when we continue from a failed save
-            if (this.examParticipationService.lastSaveFailed(this.courseId, this.examId)) {
-                this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId, this.examId).subscribe((localExam: StudentExam) => {
+            if (this.examParticipationService.lastSaveFailed(this.courseId(), this.examId())) {
+                this.examParticipationService.loadStudentExamWithExercisesForConductionFromLocalStorage(this.courseId(), this.examId()).subscribe((localExam: StudentExam) => {
                     if (localExam) {
                         // Keep the working time from the server
-                        localExam.workingTime = this.studentExam.workingTime ?? localExam.workingTime;
-                        this.studentExam = localExam;
-                        this.loadingExam = false;
-                        this.examStarted(this.studentExam);
+                        localExam.workingTime = this.studentExam().workingTime ?? localExam.workingTime;
+                        this.studentExam.set(localExam);
+                        this.loadingExam.set(false);
+                        // Resume from the locally cached exam: keep not-yet-saved answers (isSynced=false) and re-send them.
+                        this.examStarted(this.studentExam(), true);
+                        // Inform the student that their previously entered answers were restored and are being saved,
+                        // so it is clear that nothing was lost when the page was reloaded.
+                        this.alertService.info('artemisApp.examParticipation.answersRestoredFromLocalStorage');
                     }
                 });
             } else {
-                this.loadingExam = false;
+                this.loadingExam.set(false);
             }
         }
     }
@@ -665,17 +708,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * This check is not done in the normal case due to performance reasons of 2000 students sending additional requests
      */
     handleNoStudentExam() {
-        const course = this.courseStorageService.getCourse(this.courseId);
+        const course = this.courseStorageService.getCourse(this.courseId());
         if (!course) {
-            this.courseService.find(this.courseId).subscribe((courseResponse) => {
-                this.isAtLeastTutor = courseResponse.body?.isAtLeastTutor;
-                this.isAtLeastInstructor = courseResponse.body?.isAtLeastInstructor;
+            this.courseService.find(this.courseId()).subscribe((courseResponse) => {
+                this.isAtLeastTutor.set(courseResponse.body?.isAtLeastTutor);
+                this.isAtLeastInstructor.set(courseResponse.body?.isAtLeastInstructor);
             });
         } else {
-            this.isAtLeastTutor = course.isAtLeastTutor;
-            this.isAtLeastInstructor = course.isAtLeastInstructor;
+            this.isAtLeastTutor.set(course.isAtLeastTutor);
+            this.isAtLeastInstructor.set(course.isAtLeastInstructor);
         }
-        this.loadingExam = false;
+        this.loadingExam.set(false);
     }
 
     /**
@@ -683,8 +726,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param startDate the start date of the exam
      */
     initIndividualEndDates(startDate: dayjs.Dayjs) {
-        this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
-        this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+        this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
+        this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
 
         this.subscribeToWorkingTimeUpdates(startDate);
     }
@@ -697,10 +740,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE])
             .subscribe((event: WorkingTimeUpdateEvent) => {
                 // Create new object to make change detection work, otherwise the date will not update
-                this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
-                this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
-                this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
-                this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+                this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime! });
+                this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
+                this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
+                this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
                 this.liveEventsService.acknowledgeEvent(event, false);
             });
     }
@@ -745,10 +788,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exercise to initialize
      */
     private initializeExercise(exercise: Exercise) {
-        this.activeExamPage.isOverviewPage = false;
-        this.activeExamPage.exercise = exercise;
+        this.activeExamPage().isOverviewPage = false;
+        this.activeExamPage().exercise = exercise;
         // set current exercise Index
-        this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
+        this.exerciseIndex.set(this.studentExam().exercises!.findIndex((exercise1) => exercise1.id === exercise.id));
 
         // if we do not have a valid participation for the exercise -> initialize it
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
@@ -771,16 +814,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private initializeOverviewPage() {
-        this.activeExamPage.isOverviewPage = true;
-        this.activeExamPage.exercise = undefined;
-        this.exerciseIndex = -1;
+        this.activeExamPage().isOverviewPage = true;
+        this.activeExamPage().exercise = undefined;
+        this.exerciseIndex.set(-1);
     }
 
     /**
      * this will make sure that the component is displayed in the user interface
      */
     private activateActiveComponent() {
-        this.pageComponentVisited[this.activePageIndex] = true;
+        this.pageComponentVisited.update((visited) => {
+            const next = [...visited];
+            next[this.activePageIndex] = true;
+            return next;
+        });
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onActivate();
@@ -788,19 +835,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     updateSidebarData() {
-        this.sidebarData = {
+        this.sidebarData.set({
             groupByCategory: false,
             sidebarType: 'inExam',
-            ungroupedData: this.sidebarExercises,
-        };
+            ungroupedData: this.sidebarExercises(),
+        });
     }
 
     prepareSidebarData() {
-        if (!this.studentExam.exercises) {
+        if (!this.studentExam().exercises) {
             return;
         }
 
-        this.sidebarExercises = this.examParticipationService.mapExercisesToSidebarCardElements(this.studentExam.exercises!);
+        this.sidebarExercises.set(this.examParticipationService.mapExercisesToSidebarCardElements(this.studentExam().exercises!));
         this.updateSidebarData();
     }
 
@@ -811,10 +858,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param {number} activePageIndex - The index of the currently active exercise page in the pageComponentVisited array.
      */
     private resetPageComponentVisited(activePageIndex: number) {
-        this.pageComponentVisited.fill(false);
-        if (activePageIndex >= 0) {
-            this.pageComponentVisited[activePageIndex] = true;
-        }
+        this.pageComponentVisited.update((visited) => {
+            const next = visited.map(() => false);
+            if (activePageIndex >= 0) {
+                next[activePageIndex] = true;
+            }
+            return next;
+        });
     }
 
     /**
@@ -854,7 +904,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     triggerSave(forceSave: boolean) {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
-        this.autoSaveTimer = 0;
+        this.autoSaveTimer.set(0);
 
         const activeComponent = this.activePageComponent;
 
@@ -875,7 +925,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // go through ALL student exam exercises and check if there are unsynced submissions
         // we do this, because due to connectivity problems, other submissions than the currently active one might have not been saved to the server yet
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
-        this.studentExam.exercises!.forEach((exercise: Exercise) => {
+        this.studentExam().exercises!.forEach((exercise: Exercise) => {
             if (exercise.studentParticipations) {
                 exercise.studentParticipations!.forEach((participation) => {
                     if (participation.submissions) {
@@ -890,11 +940,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         });
 
         // save the studentExam in localStorage, so that we would be able to retrieve it later on, in case the student needs to reload the page while being offline
-        this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
+        this.examParticipationService.saveStudentExamToLocalStorage(this.courseId(), this.examId(), this.studentExam());
 
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions
-        if (forceSave || this.connected) {
+        if (forceSave || this.connected()) {
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
@@ -927,22 +977,47 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     private updateLocalStudentExam() {
-        this.currentPageComponents.filter((component) => component.hasUnsavedChanges()).forEach((component) => component.updateSubmissionFromView());
+        this.currentPageComponents()
+            .filter((component) => component.hasUnsavedChanges())
+            .forEach((component) => component.updateSubmissionFromView());
     }
 
     private onSaveSubmissionSuccess(submission: Submission) {
-        this.examParticipationService.setLastSaveFailed(false, this.courseId, this.examId);
         submission.isSynced = true;
         submission.submitted = true;
+        // Only clear the failed-save flag once every syncable answer (quiz/text/modeling) is actually synced. Clearing it
+        // after a single successful save while another exercise's answer is still unsynced would wrongly suppress the
+        // restore-on-reload path for that not-yet-saved answer (a partial re-send must keep the exam marked save-failed).
+        if (!this.hasUnsyncedSubmissions()) {
+            this.examParticipationService.setLastSaveFailed(false, this.courseId(), this.examId());
+        }
+        // In-place mutations above are invisible to signals; nudge the render-version so the
+        // navigation sidebar's save-state icons refresh under zoneless.
+        this.wallClockVersion.update((version) => version + 1);
+    }
+
+    /**
+     * Returns whether any syncable answer (quiz, text or modeling) of the current student exam is still unsynced.
+     * Programming and file-upload submissions are excluded because they are never auto-synced via {@link triggerSave},
+     * so they must not keep the failed-save flag set. The flag must stay set while a syncable answer is still pending,
+     * so a reload restores and re-sends it.
+     */
+    private hasUnsyncedSubmissions(): boolean {
+        const syncableExerciseTypes = [ExerciseType.QUIZ, ExerciseType.TEXT, ExerciseType.MODELING];
+        return (this.studentExam()?.exercises ?? []).some(
+            (exercise) =>
+                syncableExerciseTypes.includes(exercise.type!) &&
+                (exercise.studentParticipations ?? []).some((participation) => (participation.submissions ?? []).some((submission) => !submission.isSynced)),
+        );
     }
 
     private onSaveSubmissionError(error: HttpErrorResponse) {
-        this.examParticipationService.setLastSaveFailed(true, this.courseId, this.examId);
+        this.examParticipationService.setLastSaveFailed(true, this.courseId(), this.examId());
 
         if (error.status === 401) {
             // Unauthorized means the user needs to log in to resume
             // Therefore don't show errors because we are redirected to the login page
-            this.loggedOut = true;
+            this.loggedOut.set(true);
         } else {
             // show only one error for 5s - see constructor
             this.synchronizationAlert.next();
@@ -964,7 +1039,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 filter((submissionStateObj) => submissionStateObj != undefined),
                 distinctUntilChanged(),
                 tap((submissionStateObj) => {
-                    const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>
+                    const exerciseForSubmission = this.studentExam().exercises?.find((programmingExercise) =>
                         programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === submissionStateObj.participationId),
                     );
                     if (exerciseForSubmission?.studentParticipations && submissionStateObj.submission?.participation) {
@@ -977,7 +1052,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }),
             )
             .subscribe((programmingSubmissionObj) => {
-                const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>
+                const exerciseForSubmission = this.studentExam().exercises?.find((programmingExercise) =>
                     programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
                 );
                 if (
@@ -1015,12 +1090,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * For large exams, initializing all components at once could result in even 16,000 REST calls, potentially overloading the system.
      */
     private updateProblemStatement(event: ProblemStatementUpdateEvent): void {
-        const index = this.studentExam.exercises!.findIndex((exercise) => exercise.id === event.exerciseId);
-        const wasExerciseOpened = this.pageComponentVisited[index];
+        const index = this.studentExam().exercises!.findIndex((exercise) => exercise.id === event.exerciseId);
+        const wasExerciseOpened = this.pageComponentVisited()[index];
         if (wasExerciseOpened) {
             this.examExerciseUpdateService.updateLiveExamExercise(event.exerciseId, event.problemStatement);
         } else {
-            const exercise = this.studentExam.exercises![index];
+            const exercise = this.studentExam().exercises![index];
             exercise.problemStatement = event.problemStatement;
         }
     }

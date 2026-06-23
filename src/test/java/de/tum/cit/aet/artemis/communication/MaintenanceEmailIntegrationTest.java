@@ -30,16 +30,17 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import com.icegreen.greenmail.junit5.GreenMailExtension;
 import com.icegreen.greenmail.util.ServerSetupTest;
 
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationSetting;
-import de.tum.cit.aet.artemis.communication.domain.GlobalNotificationType;
-import de.tum.cit.aet.artemis.communication.repository.GlobalNotificationSettingRepository;
-import de.tum.cit.aet.artemis.communication.repository.MaintenanceEmailRecipientRepository;
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationSetting;
+import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
+import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.repository.MaintenanceEmailRecipientRepository;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * Integration tests that verify maintenance email notifications are delivered with correct content
@@ -85,7 +86,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         templateEngine.getTemplateResolvers().forEach(testTemplateEngine::addTemplateResolver);
         testTemplateEngine.setMessageSource(mainMessageSource);
 
-        var mailEnabledProperties = new JHipsterProperties();
+        var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
         testMailService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
@@ -114,7 +115,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(4);
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
                 Map.of("notificationTitle", "Server Update v2.0", "notificationText", "We will be updating the server to the latest version.", "formattedStart",
                         formatDate(notificationDate, "en"), "formattedEnd", formatDate(expireDate, "en")));
 
@@ -131,7 +132,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(2);
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
                 Map.of("notificationTitle", "Server-Aktualisierung", "notificationText", "Der Server wird aktualisiert.", "formattedStart", formatDate(notificationDate, "de"),
                         "formattedEnd", formatDate(expireDate, "de")));
 
@@ -145,7 +146,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var notificationDate = ZonedDateTime.now();
         var expireDate = ZonedDateTime.now().plusHours(1);
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
                 Map.of("notificationTitle", "Quick Maintenance", "formattedStart", formatDate(notificationDate, "en"), "formattedEnd", formatDate(expireDate, "en")));
 
         String body = getDeliveredEmailBody();
@@ -161,7 +162,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         String start = formatDate(notificationDate, "en");
         String end = formatDate(expireDate, "en");
 
-        testMailService.buildAndSendSync(recipient, "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
+        testMailService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.maintenance.title", "mail/notification/maintenanceEmail",
                 Map.of("notificationTitle", "Date Format Test", "formattedStart", start, "formattedEnd", end));
 
         String body = getDeliveredEmailBody();

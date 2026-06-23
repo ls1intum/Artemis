@@ -47,18 +47,18 @@
                     </div>
                 }
             </div>
-            @if (submittedFileName && studentSubmission()?.filePathUrl) {
+            @if (submittedFileName() && studentSubmission()?.filePathUrl) {
                 <div class="card-text">
-                    <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName }"></h6>
+                    <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></h6>
                     <a class="text-primary" (click)="downloadFile(studentSubmission()!.filePathUrl!)" jhiTranslate="artemisApp.fileUploadSubmission.download"></a>
-                    @if (submittedFileExtension) {
+                    @if (submittedFileExtension()) {
                         <span class="ms-2 badge bg-info">
-                            {{ submittedFileExtension | uppercase }}
+                            {{ submittedFileExtension() | uppercase }}
                         </span>
                     }
                 </div>
             }
-            @if (!submittedFileName && examTimeline()) {
+            @if (!submittedFileName() && examTimeline()) {
                 <div>
                     <h6 jhiTranslate="artemisApp.timeline.fileUploadNotSubmitted"></h6>
                 </div>
@@ -73,9 +73,9 @@
             @if (exercise()) {
                 <jhi-exam-exercise-update-highlighter [exercise]="exercise()" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
-            @if (problemStatementHtml) {
+            @if (problemStatementHtml()) {
                 <p class="mb-3 markdown-preview">
-                    <span [innerHTML]="problemStatementHtml"></span>
+                    <span [innerHTML]="problemStatementHtml()"></span>
                 </p>
             }
         </ng-container>

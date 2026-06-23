@@ -12,12 +12,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.CustomFeedback;
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 public final class CustomFeedbackParser {
 
     private static final Logger log = LoggerFactory.getLogger(CustomFeedbackParser.class);
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = JsonObjectMapper.get();
 
     // Default value, will be overridden when customized below in setMaxFeedbackLength
     private static int maxFeedbackLength = 20_000;
@@ -83,10 +84,10 @@ public final class CustomFeedbackParser {
      */
     private static void validateCustomFeedback(final String fileName, final CustomFeedback feedback) throws InvalidPropertiesFormatException {
         if (feedback.name() == null || feedback.name().trim().isEmpty()) {
-            throw new InvalidPropertiesFormatException(String.format("Custom feedback from file %s needs to have a name attribute.", fileName));
+            throw new InvalidPropertiesFormatException("Custom feedback from file %s needs to have a name attribute.".formatted(fileName));
         }
         if (!feedback.successful() && (feedback.message() == null || feedback.message().trim().isEmpty())) {
-            throw new InvalidPropertiesFormatException(String.format("Custom non-success feedback from file %s needs to have a message", fileName));
+            throw new InvalidPropertiesFormatException("Custom non-success feedback from file %s needs to have a message".formatted(fileName));
         }
     }
 }

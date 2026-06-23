@@ -42,10 +42,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResultQueueException;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
-import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 /**
@@ -930,7 +930,7 @@ public class SharedQueueProcessingService {
         var timingInfo = finishedJob.jobTimingInfo();
         if (timingInfo.buildStartDate() != null && timingInfo.buildCompletionDate() != null) {
             double durationSeconds = java.time.Duration.between(timingInfo.buildStartDate(), timingInfo.buildCompletionDate()).toMillis() / 1000.0;
-            log.info("Build finished for participation {} in {} s (name: {})", finishedJob.participationId(), String.format("%.1f", durationSeconds), finishedJob.name());
+            log.info("Build finished for participation {} in {} s (name: {})", finishedJob.participationId(), "%.1f".formatted(durationSeconds), finishedJob.name());
         }
         distributedDataAccessService.getDistributedBuildResultQueue().add(resultQueueItem);
     }

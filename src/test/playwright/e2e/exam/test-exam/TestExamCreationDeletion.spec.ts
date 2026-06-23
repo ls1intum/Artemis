@@ -50,9 +50,9 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
         expect(examResponse.status()).toBe(201);
         expect(exam.title).toBe(examData.title);
         expect(exam.testExam).toBe(true);
-        expect(trimDate(exam.visibleDate)).toBe(trimDate(dayjsToString(examData.visibleDate)));
-        expect(trimDate(exam.startDate)).toBe(trimDate(dayjsToString(examData.startDate)));
-        expect(trimDate(exam.endDate)).toBe(trimDate(dayjsToString(examData.endDate)));
+        expect(trimDate(String(exam.visibleDate))).toBe(trimDate(dayjsToString(examData.visibleDate)));
+        expect(trimDate(String(exam.startDate))).toBe(trimDate(dayjsToString(examData.startDate)));
+        expect(trimDate(String(exam.endDate))).toBe(trimDate(dayjsToString(examData.endDate)));
         expect(exam.workingTime).toBe(examData.workingTime * 60);
         expect(exam.numberOfExercisesInExam).toBe(examData.numberOfExercises);
         expect(exam.examMaxPoints).toBe(examData.maxPoints);

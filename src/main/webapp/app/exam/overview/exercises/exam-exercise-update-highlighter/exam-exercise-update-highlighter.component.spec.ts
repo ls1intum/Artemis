@@ -1,13 +1,19 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { BehaviorSubject } from 'rxjs';
 import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExamExerciseUpdateHighlighterComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ExamExerciseUpdateHighlighterComponent>;
     let component: ExamExerciseUpdateHighlighterComponent;
 
@@ -24,8 +30,11 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
-            providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
+            imports: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
+            providers: [
+                { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -39,6 +48,10 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
                 fixture.detectChanges();
                 examExerciseIdAndProblemStatementSourceMock.next(update);
             });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should update problem statement', () => {
@@ -55,7 +68,7 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
 
     it('should display different problem statement after toggle method is called', () => {
         const mouseEvent = new MouseEvent('click');
-        const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
+        const stopPropagationSpy = vi.spyOn(mouseEvent, 'stopPropagation');
         const problemStatementBeforeClick = htmlForMarkdown(component.exercise().problemStatement);
         expect((component.updatedProblemStatementHTML as any).changingThisBreaksApplicationSecurity).toEqual(problemStatementBeforeClick);
 
@@ -71,28 +84,29 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
     describe('ExamExerciseUpdateHighlighterComponent for programming exercises', () => {
         const programmingExerciseDummy = { id: 42, problemStatement: oldProblemStatement, type: ExerciseType.PROGRAMMING } as Exercise;
         beforeEach(async () => {
-            return TestBed.configureTestingModule({
-                declarations: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
-                providers: [{ provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService }],
-            })
-                .compileComponents()
-                .then(() => {
-                    fixture = TestBed.createComponent(ExamExerciseUpdateHighlighterComponent);
-                    component = fixture.componentInstance;
+            TestBed.resetTestingModule();
+            await TestBed.configureTestingModule({
+                imports: [MockPipe(ArtemisTranslatePipe), ExamExerciseUpdateHighlighterComponent],
+                providers: [
+                    { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                ],
+            }).compileComponents();
+            fixture = TestBed.createComponent(ExamExerciseUpdateHighlighterComponent);
+            component = fixture.componentInstance;
 
-                    fixture.componentRef.setInput('exercise', programmingExerciseDummy);
-                    const exerciseId = component.exercise().id!;
-                    const update = { exerciseId, problemStatement: updatedProblemStatement };
+            fixture.componentRef.setInput('exercise', programmingExerciseDummy);
+            const exerciseId = component.exercise().id!;
+            const update = { exerciseId, problemStatement: updatedProblemStatement };
 
-                    fixture.detectChanges();
-                    examExerciseIdAndProblemStatementSourceMock.next(update);
-                });
+            fixture.detectChanges();
+            examExerciseIdAndProblemStatementSourceMock.next(update);
         });
         it('should not highlight differences for programming exercise', () => {
             // For programming exercises, the highlighting of differences is handled in the programming-exercise-instruction.component.ts.
             // Therefore, the highlightProblemStatementDifferences method is not called and updatedProblemStatementWithHighlightedDifferencesHTML
             // and updatedProblemStatementHTML remain undefined
-            const highlightDifferencesSpy = jest.spyOn(component, 'highlightProblemStatementDifferences');
+            const highlightDifferencesSpy = vi.spyOn(component, 'highlightProblemStatementDifferences');
             expect(highlightDifferencesSpy).not.toHaveBeenCalled();
             expect(component.updatedProblemStatementWithHighlightedDifferencesHTML).toBeUndefined();
             expect(component.updatedProblemStatementHTML).toBeUndefined();

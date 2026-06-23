@@ -1,22 +1,23 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { UMLModel } from '@ls1intum/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { Subscription } from 'rxjs';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { Course } from 'app/course/shared/entities/course.model';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { MODULE_FEATURE_APOLLON } from 'app/app.constants';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -24,10 +25,10 @@ import {
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
 } from 'app/exercise/util/utils';
-import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -46,25 +47,24 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
-    modelingExercise: ModelingExercise;
-    course?: Course;
+    readonly modelingExercise = signal<ModelingExercise>(undefined!);
+    readonly course = signal<Course | undefined>(undefined);
     private subscription: Subscription;
     private eventSubscriber: Subscription;
     problemStatement: SafeHtml;
     gradingInstructions: SafeHtml;
     exampleSolution: SafeHtml;
     exampleSolutionUML: UMLModel;
-    detailOverviewSections: DetailOverviewSection[];
+    readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
 
-    doughnutStats: ExerciseManagementStatisticsDto;
-    isExamExercise: boolean;
+    readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
+    readonly isExamExercise = signal<boolean>(false);
 
-    isApollonProfileActive = false;
+    isApollonEnabled = false;
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
-            // Checks if the current environment includes "apollon" profile
-            this.isApollonProfileActive = this.profileService.isProfileActive('apollon');
+            this.isApollonEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_APOLLON);
             this.load(params['exerciseId']);
         });
         this.registerChangeInModelingExercises();
@@ -72,27 +72,27 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     load(exerciseId: number) {
         this.modelingExerciseService.find(exerciseId).subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
-            this.modelingExercise = modelingExerciseResponse.body!;
-            this.isExamExercise = this.modelingExercise.exerciseGroup !== undefined;
-            this.course = this.isExamExercise ? this.modelingExercise.exerciseGroup?.exam?.course : this.modelingExercise.course;
-            this.problemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.problemStatement);
-            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.gradingInstructions);
-            this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise.exampleSolutionExplanation);
-            if (this.modelingExercise.exampleSolutionModel && this.modelingExercise.exampleSolutionModel !== '') {
-                this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
+            this.modelingExercise.set(modelingExerciseResponse.body!);
+            this.isExamExercise.set(this.modelingExercise().exerciseGroup !== undefined);
+            this.course.set(this.isExamExercise() ? this.modelingExercise().exerciseGroup?.exam?.course : this.modelingExercise().course);
+            this.problemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise().problemStatement);
+            this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise().gradingInstructions);
+            this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise().exampleSolutionExplanation);
+            if (this.modelingExercise().exampleSolutionModel && this.modelingExercise().exampleSolutionModel !== '') {
+                this.exampleSolutionUML = importDiagram(JSON.parse(this.modelingExercise().exampleSolutionModel!));
             }
-            this.detailOverviewSections = this.getExerciseDetailSections();
+            this.detailOverviewSections.set(this.getExerciseDetailSections());
         });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
-            this.doughnutStats = statistics;
+            this.doughnutStats.set(statistics);
         });
     }
 
     getExerciseDetailSections(): DetailOverviewSection[] {
-        const exercise = this.modelingExercise;
+        const exercise = this.modelingExercise();
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
-        const problemSection = getExerciseProblemDetailSection(this.problemStatement, this.modelingExercise);
+        const problemSection = getExerciseProblemDetailSection(this.problemStatement, this.modelingExercise());
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.gradingInstructions);
         return [
@@ -105,7 +105,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
                     {
                         type: DetailType.ModelingEditor,
                         title: 'artemisApp.exercise.sections.solution',
-                        data: { umlModel: this.exampleSolutionUML, diagramType: exercise.diagramType, title: exercise.title, isApollonProfileActive: this.isApollonProfileActive },
+                        data: { umlModel: this.exampleSolutionUML, diagramType: exercise.diagramType, title: exercise.title, isApollonEnabled: this.isApollonEnabled },
                     },
                     {
                         title: 'artemisApp.modelingExercise.exampleSolutionExplanation',
@@ -137,7 +137,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
 
     registerChangeInModelingExercises() {
         this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => {
-            this.load(this.modelingExercise.id!);
+            this.load(this.modelingExercise().id!);
         });
     }
 }

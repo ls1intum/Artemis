@@ -10,7 +10,8 @@ jhi-iris-citation-text {
     --iris-citation-source-color: var(--iris-label-color);
     --iris-citation-lecture-color: var(--iris-label-color);
 
-    .iris-citation-group {
+    .iris-citation-group,
+    .iris-citation-single {
         display: inline-flex;
         align-items: center;
         position: relative;
@@ -37,6 +38,19 @@ jhi-iris-citation-text {
         text-overflow: ellipsis;
         position: relative;
         z-index: $citation-base-z-index; // Base layer for citation bubbles
+
+        &--clickable {
+            cursor: pointer;
+            transition: opacity 120ms ease;
+
+            &:hover {
+                opacity: 0.8;
+            }
+
+            &:active {
+                opacity: 0.6;
+            }
+        }
     }
 
     .iris-citation__count {
@@ -53,12 +67,12 @@ jhi-iris-citation-text {
         left: 50%;
         width: 280px;
         max-width: 70vw;
-        padding: 10px 10px 14px;
-        border-radius: 8px;
+        padding: 12px 16px;
+        border-radius: 16px;
         background-color: var(--iris-citation-summary-bg);
         line-height: 1.4;
         white-space: normal;
-        text-align: center;
+        text-align: left;
         z-index: $citation-base-z-index + 1; // Summary tooltip above citation bubble
         transform: translate(-50%, var(--iris-citation-vertical-offset)) translateX(var(--iris-citation-shift));
         opacity: 0;
@@ -69,8 +83,8 @@ jhi-iris-citation-text {
             visibility 120ms ease;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 8px;
+        align-items: flex-start;
+        gap: 2px;
 
         // When flipped to position below, reverse order to put navigation on top
         &--flipped {
@@ -78,12 +92,14 @@ jhi-iris-citation-text {
         }
     }
 
-    .iris-citation-group .iris-citation__summary {
+    .iris-citation-group .iris-citation__summary,
+    .iris-citation-single .iris-citation__summary {
         font-size: 0.85em;
     }
 
     .iris-citation--has-summary,
-    .iris-citation-group--has-summary {
+    .iris-citation-group--has-summary,
+    .iris-citation-single.iris-citation--has-summary {
         overflow: visible;
 
         &:hover,
@@ -98,38 +114,64 @@ jhi-iris-citation-text {
         }
     }
 
-    .iris-citation__summary-content {
+    .iris-citation__summary-content,
+    .iris-citation__summary-item.is-active {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 4px;
+        gap: 8px;
+    }
+
+    .iris-citation__summary-content {
         min-height: 1.2em;
+        width: 100%;
     }
 
     .iris-citation__summary-item {
         display: none;
 
-        &.is-active {
-            display: block;
+        &--clickable {
+            cursor: pointer;
+            transition: opacity 120ms ease;
+
+            &:hover {
+                opacity: 0.8;
+            }
+
+            &:active {
+                opacity: 0.6;
+            }
         }
     }
 
-    .iris-citation__summary-title {
+    .iris-citation__summary-text {
         display: block;
-        font-size: 1rem;
-        font-weight: 600;
+        font-size: 0.9rem;
     }
 
-    .iris-citation__summary-lecture {
-        display: block;
+    .iris-citation__summary-divider {
+        align-self: stretch;
+        height: 1px;
+        background-color: var(--iris-citation-icon-bg);
+        opacity: 0.35;
+    }
+
+    .iris-citation__summary-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
         font-size: 0.75rem;
         line-height: 1.2;
         color: var(--iris-citation-lecture-color);
     }
 
-    .iris-citation__summary-text {
-        display: block;
-        font-size: 0.85rem;
+    .iris-citation__summary-row {
+        display: flex;
+        gap: 4px;
+        align-items: baseline;
+    }
+
+    .iris-citation__summary-label {
+        font-weight: 600;
     }
 
     .iris-citation__nav {
@@ -139,6 +181,8 @@ jhi-iris-citation-text {
         gap: 8px;
         padding-top: 6px;
         font-size: 0.9em;
+        align-self: center;
+        transform: translateX(calc(0px - var(--iris-citation-shift, 0px)));
     }
 
     .iris-citation__nav-button {

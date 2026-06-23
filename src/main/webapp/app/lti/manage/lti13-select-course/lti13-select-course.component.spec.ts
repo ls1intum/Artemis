@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { LtiCoursesComponent } from 'app/lti/manage/lti13-select-course/lti13-select-course.component';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card/lti-course-card.component';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -70,8 +70,8 @@ describe('LtiCoursesComponent', () => {
         await fixture.whenStable();
 
         expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).toHaveBeenCalledWith('1');
-        expect(component.courses).toHaveLength(3);
-        expect(component.courses[0].title).toBe('Course A');
+        expect(component.courses()).toHaveLength(3);
+        expect(component.courses()[0].title).toBe('Course A');
     });
 
     it('should set courses to empty array when clientId is null', async () => {
@@ -81,7 +81,7 @@ describe('LtiCoursesComponent', () => {
         await fixture.whenStable();
 
         expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).not.toHaveBeenCalled();
-        expect(component.courses).toEqual([]);
+        expect(component.courses()).toEqual([]);
     });
 
     it('should handle error when loading courses fails', async () => {
@@ -114,6 +114,6 @@ describe('LtiCoursesComponent', () => {
         await fixture.whenStable();
 
         expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).toHaveBeenCalledWith('registration-123');
-        expect(component.courses).toEqual(mockCourses);
+        expect(component.courses()).toEqual(mockCourses);
     });
 });

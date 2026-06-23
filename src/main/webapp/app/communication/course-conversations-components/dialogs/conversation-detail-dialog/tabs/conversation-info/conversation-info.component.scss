@@ -1,40 +1,42 @@
 .conversation-info {
+    position: relative;
+
     .info-container {
         .info-section {
-            padding: 0.5rem;
+            padding: 0.25rem 0.5rem;
 
-            .action-button {
-                margin: 0.25rem;
-                text-decoration: none;
-
-                &:hover {
-                    text-decoration: underline;
-                }
-
-                &.right {
-                    position: absolute;
-                    top: 0;
-                    right: 0;
-                }
+            .info-label {
+                display: block;
+                font-weight: 600;
+                font-size: 0.85rem;
+                color: var(--bs-secondary-color);
+                margin-bottom: 0.25rem;
+                text-align: left;
             }
 
-            .wide-button {
-                width: 50%;
+            .readonly-text {
+                padding: 0.25rem 0;
+                text-align: left;
+                color: var(--bs-body-color);
             }
 
+            input,
             textarea {
-                min-height: 5rem;
-                resize: none;
-
-                &.large {
-                    min-height: 8rem;
-                }
-            }
-
-            .form-switch .form-check-input {
-                width: 3em;
-                height: 1.5em;
+                text-align: left;
+                font-size: 0.875rem;
             }
         }
+
+        .more-info-item {
+            font-size: 0.9rem;
+            color: var(--bs-secondary-color);
+        }
+    }
+
+    .save-status-indicator {
+        position: absolute;
+        bottom: 0.5rem;
+        right: 0.5rem;
+        font-size: 0.8rem;
     }
 }

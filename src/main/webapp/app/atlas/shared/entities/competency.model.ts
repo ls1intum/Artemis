@@ -1,11 +1,12 @@
 import dayjs from 'dayjs/esm';
-import { BaseEntity } from 'app/shared/model/base-entity';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { BaseEntity } from 'app/foundation/model/base-entity';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faPlusMinus, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
+import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
 
 /**
  * The available competency types (based on Bloom's Taxonomy)
@@ -42,6 +43,17 @@ export enum CourseCompetencyValidators {
 export enum CourseCompetencyType {
     COMPETENCY = 'competency',
     PREREQUISITE = 'prerequisite',
+}
+
+/** Node representation of a course competency in the relation graph. */
+export interface CourseCompetencyGraphNode {
+    id: string;
+    label?: string;
+    dimension?: GraphNodeDimension;
+    data: {
+        id: number;
+        type?: CourseCompetencyType;
+    };
 }
 
 export const DEFAULT_MASTERY_THRESHOLD = 100;
@@ -115,50 +127,6 @@ export class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     constructor(competency: CourseCompetency | undefined, lectureUnit: LectureUnit | undefined, weight: number) {
         super(competency, weight);
         this.lectureUnit = lectureUnit;
-    }
-}
-
-export class CompetencyJol {
-    competencyId: number;
-    jolValue: number;
-    judgementTime: string;
-    competencyProgress: number;
-    competencyConfidence: number;
-
-    static shouldPromptForJol(competency: Competency, progress: CompetencyProgress | undefined, courseCompetencies: Competency[]): boolean {
-        const currentDate = dayjs();
-        const softDueDateMinusOneDay = competency.softDueDate?.subtract(1, 'day');
-        const competencyProgress = progress?.progress ?? 0;
-
-        // Precondition: Student has at least some progress on the competency
-        if (competencyProgress === undefined || competencyProgress === 0) {
-            return false;
-        }
-
-        // Condition 1: Current Date >= Competency Soft Due Date - 1 Days && Competency Progress >= 20%
-        if (softDueDateMinusOneDay && currentDate.isAfter(softDueDateMinusOneDay) && competencyProgress >= 20) {
-            return true;
-        }
-
-        // Filter previous competencies (those with soft due date in the past)
-        const previousCompetencies = courseCompetencies.filter((c) => c.softDueDate && c.softDueDate.isBefore(currentDate));
-        if (previousCompetencies.length === 0) {
-            if (softDueDateMinusOneDay) {
-                return false;
-            } else {
-                return competencyProgress >= 20;
-            }
-        }
-
-        // Calculate the average progress of all previous competencies
-        const totalPreviousProgress = previousCompetencies.reduce((sum, c) => {
-            const progress = c.userProgress?.first()?.progress ?? 0;
-            return sum + progress;
-        }, 0);
-        const avgPreviousProgress = totalPreviousProgress / previousCompetencies.length;
-
-        // Condition 2: Competency Progress >= 0.8 * Avg. Progress of all previous competencies
-        return competencyProgress >= 0.8 * avgPreviousProgress;
     }
 }
 

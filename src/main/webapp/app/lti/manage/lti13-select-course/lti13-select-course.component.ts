@@ -1,10 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { LtiCourseCardComponent } from '../lti-course-card/lti-course-card.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-lti-courses-overview',
@@ -16,7 +16,7 @@ export class LtiCoursesComponent implements OnInit {
     private sessionStorageService = inject(SessionStorageService);
     private alertService = inject(AlertService);
 
-    public courses: OnlineCourseDtoModel[];
+    public readonly courses = signal<OnlineCourseDtoModel[]>([]);
 
     async ngOnInit() {
         this.loadAndFilterCourses();
@@ -27,7 +27,7 @@ export class LtiCoursesComponent implements OnInit {
         if (clientId) {
             this.courseService.findAllOnlineCoursesWithRegistrationId(clientId).subscribe({
                 next: (courseResponse: OnlineCourseDtoModel[]) => {
-                    this.courses = courseResponse;
+                    this.courses.set(courseResponse);
                 },
                 error: (error) => {
                     this.alertService.error('error.unexpectedError', {
@@ -36,7 +36,7 @@ export class LtiCoursesComponent implements OnInit {
                 },
             });
         } else {
-            this.courses = [];
+            this.courses.set([]);
         }
     }
 }

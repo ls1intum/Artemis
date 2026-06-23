@@ -3,18 +3,18 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import { downloadFile, downloadZipFromFilePromises } from 'app/shared/util/download.util';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
-import JSZip from 'jszip';
-import { FileService } from 'app/shared/service/file.service';
+import { downloadFile, downloadZipFromFilePromises } from 'app/foundation/util/download.util';
+import { objectToJsonBlob } from 'app/foundation/util/blob-util';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
+import { FileService } from 'app/foundation/service/file.service';
 import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -104,7 +104,7 @@ export class QuizExerciseService {
         });
 
         return this.http
-            .patch<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
+            .put<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -197,7 +197,7 @@ export class QuizExerciseService {
      * @param quizBatchId the id of the quiz batch that should be started
      */
     startBatch(quizBatchId: number): Observable<HttpResponse<QuizBatch>> {
-        return this.http.put<QuizBatch>(`${this.resourceUrl}/${quizBatchId}/start-batch`, null, { observe: 'response' });
+        return this.http.put<QuizBatch>(`api/quiz/quiz-batches/${quizBatchId}/start-batch`, null, { observe: 'response' });
     }
 
     /**
@@ -258,7 +258,7 @@ export class QuizExerciseService {
      * @param fileName name of the output zip file
      */
     exportAssetsFromAllQuestions(questions: QuizQuestion[], fileName: string) {
-        const zip: JSZip = new JSZip();
+        const zip: ZipBuilder = new ZipBuilder();
         const filePromises: Promise<void | File>[] = [];
         const quizJson = JSON.stringify(questions);
         const blob = new Blob([quizJson], { type: 'application/json' });
@@ -300,10 +300,10 @@ export class QuizExerciseService {
     /**
      * This method fetches a file through the file Service, zips it and pushes it to the provided list of file Promises
      * @param fileName the name of the file to be zipped
-     * @param zip a JSZip instance
+     * @param zip a ZipBuilder instance
      * @param filePath the internal path of the file to be fetched
      */
-    async fetchFilePromise(fileName: string, zip: JSZip, filePath: string) {
+    async fetchFilePromise(fileName: string, zip: ZipBuilder, filePath: string) {
         return this.fileService
             .getFile(filePath)
             .then((fileResult) => {

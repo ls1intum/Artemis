@@ -69,11 +69,16 @@ Use Angular's signal-based APIs instead. An ESLint rule (`enforce-signal-apis-in
 
 **UI Component Library: PrimeNG**
 
+<Callout variant={CalloutVariant.danger}>
+**`@ng-bootstrap/ng-bootstrap` is deprecated.** Do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, or any other ng-bootstrap component in new code. ng-bootstrap is incompatible with Angular signal inputs (`input()`/`input.required()`) — assigning to a signal input via `modalRef.componentInstance.X = Y` silently fails. We are removing the dependency entirely; existing usages are being migrated to PrimeNG incrementally.
+</Callout>
+
 <Callout variant={CalloutVariant.info}>
 **We are migrating from Bootstrap to PrimeNG.** All new UI elements must be implemented using [PrimeNG](https://primeng.org/) components. Do not introduce new Bootstrap components. Existing Bootstrap usage will be migrated incrementally.
 </Callout>
 
 * Use PrimeNG components (buttons, tables, dialogs, inputs, etc.) for all new UI development.
+* For modals/dialogs, use PrimeNG's `DialogService` (`primeng/dynamicdialog`) — see `src/main/webapp/app/exam/manage/exam-management/exam-management.component.ts` for a reference implementation.
 * Refer to the PrimeNG documentation for available components and usage: https://primeng.org/
 * Bootstrap CSS utility classes (e.g. `d-flex`, `ms-2`) may still be used for layout until the migration is complete, but prefer PrimeNG's built-in layout capabilities where available.
 
@@ -84,6 +89,180 @@ This also includes getter functions. The only exception is the use of [signals](
 
 If you need more information/examples or methods to avoid function calls, have a look at this [article](https://dev.to/sandrocagara/angular-avoid-function-calls-in-templates-1mfa).
 </Callout>
+
+### Zoneless change detection & signal-based state
+
+The Artemis client runs **zoneless** ([`provideZonelessChangeDetection()`](https://angular.dev/guide/zoneless)). `zone.js` has been removed from the build, and `NgZone` is **banned** (a `no-restricted-imports` ESLint rule fails the build on any `import { NgZone } from '@angular/core'`). This changes the single most important rule about how you write components.
+
+<Callout variant={CalloutVariant.danger}>
+**Core rule: a component/directive member must be a signal (`signal` / `computed` / `input` / `model` / `viewChild` / `contentChild`). The _only_ exceptions are:**
+
+1. a **constant** — a field that is never reassigned (icons, enum references, configuration literals);
+2. an **injected service** (`inject(...)`);
+3. a value a framework API forces to stay plain — most notably a `[(ngModel)]` / `[(x)]` two-way target a signal cannot back. Even then, prefer a **getter/setter-over-signal facade**; reach for a raw plain field only for the rare directive two-way (e.g. `jhiSort`'s `[(predicate)]` / `[(ascending)]`).
+
+Everything else — any member you reassign that the template reads — must be signal-backed, so the view re-renders automatically when it changes. **Prefer too many signals over too few:** a signal whose value never changes is harmless, a missing one is a silent render bug. A field that the template never reads (a `Subscription`, a timer handle, an internal cache) may stay plain — it cannot cause a render bug.
+
+This is enforced by the `localRules/prefer-signal-template-state` ESLint rule (a mutable, template-read field that is not a signal is an error). Suppress it on a line only for a genuine case (3), with a justification:
+
+```ts
+// eslint-disable-next-line localRules/prefer-signal-template-state -- [(ascending)] two-way to jhiSort; a signal cannot back [(x)]
+reverse = true;
+```
+</Callout>
+
+**Why.** With zone.js, Angular re-ran change detection after _every_ async event (any `setTimeout`, XHR, event, promise) and re-checked the whole component tree. Without it, Angular only schedules a re-render when something it can actually observe changes: a **signal read in a template updates**, an `async` pipe emits, a template event handler `(click)` runs, or code explicitly calls `markForCheck()`. A plain field that you reassign inside an async callback changes _nothing Angular is watching_, so the template keeps showing the old value. Background: [Angular zoneless guide](https://angular.dev/guide/zoneless), [Angular signals guide](https://angular.dev/guide/signals).
+
+**The bug class to avoid.** A plain, template-bound field mutated inside an async callback (HTTP `subscribe`, WebSocket, `setTimeout`/`setInterval`, promise `then`, an observer) will silently **not** re-render under zoneless:
+
+```ts
+// Don't - plain field set in an async callback never triggers a re-render under zoneless
+@Component({ template: `<span>{{ title }}</span>` })
+export class ExampleComponent implements OnInit {
+    title = '';
+    ngOnInit() {
+        this.service.getTitle().subscribe((t) => (this.title = t)); // view stays empty
+    }
+}
+
+// Do - a signal write schedules change detection automatically
+@Component({ template: `<span>{{ title() }}</span>` })
+export class ExampleComponent implements OnInit {
+    readonly title = signal('');
+    ngOnInit() {
+        this.service.getTitle().subscribe((t) => this.title.set(t)); // view updates
+    }
+}
+```
+
+This bug is invisible to unit tests — they call `fixture.detectChanges()` manually — so **passing Vitest does not prove zoneless-correctness**. The AOT build (`pnpm run webapp:build`) type-checks templates and catches most signal-vs-value slips (e.g. binding the signal `title` where a `string` input is expected), but it cannot catch every missing `()`; the **E2E (Playwright) suite is the real arbiter** for "does it actually re-render in the running app".
+
+**Prefer `toSignal()` for Observable-backed state.** When a value comes straight from an `Observable` (an HTTP call, a store selector, a service stream) and the template only reads it, convert the stream to a signal with [`toSignal()`](https://angular.dev/api/core/rxjs-interop/toSignal) instead of subscribing and calling `.set()` by hand — it wires up change detection and unsubscribes automatically:
+
+```ts
+// instead of: subscribe + this.title.set(...) in ngOnInit
+readonly title = toSignal(this.service.getTitle(), { initialValue: '' });
+```
+
+**Derive, don't recompute — use `computed`.** Any value that is a pure function of other signals must be a `computed`, never a field you keep in sync by hand. It is lazy, memoised, and can never go stale:
+
+```ts
+readonly exercise = input.required<Exercise>();
+readonly isProgramming = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
+readonly maxPoints = computed(() => this.exercise().maxPoints ?? 0);
+```
+
+**Update collections and objects immutably.** A signal only notifies when its reference changes. Mutating an array/`Map`/object held in a signal **in place** changes nothing Angular observes — always write a fresh reference:
+
+```ts
+// Don't - in-place mutation; the signal reference is unchanged, no re-render
+this.items().push(newItem);
+this.lookup().set(key, value);
+
+// Do - replace with a new reference
+this.items.update((items) => [...items, newItem]);
+this.lookup.update((map) => new Map(map).set(key, value));
+```
+
+**Two-way binding to deep entity objects (`[(ngModel)]`).** A signal cannot back a `[(ngModel)]` on a nested object property directly. Use a **getter/setter facade over a backing signal** — the setter publishes through the signal (scheduling change detection) while the getter keeps the plain API the template and `ngModel` expect:
+
+```ts
+private readonly _course = signal<Course>(new Course());
+get course(): Course {
+    return this._course();
+}
+set course(course: Course) {
+    this._course.set(course); // async assignment routes through the setter → re-render
+}
+```
+
+**Inputs, model, two-way state, and view queries are signals too.** Use `input()` / `input.required()`, [`model()`](https://angular.dev/api/core/model) for two-way bindings, [`viewChild()` / `viewChildren()` / `contentChild()`](https://angular.dev/guide/components/queries), and [`linkedSignal()`](https://angular.dev/guide/signals/linked-signal) for a derived value that can also be set locally (see the decorator rules above).
+
+**Reach for `effect()` last.** [Effects](https://angular.dev/guide/signals/effect) are for syncing signal state _out_ to non-reactive APIs (imperative third-party libraries, the DOM, logging) — not for deriving state (use `computed`) and not for general reactivity. An `effect` that reads a signal and also writes another signal it reads will re-trigger itself forever; if an effect must both read and write, read its triggers explicitly and wrap the writes in [`untracked()`](https://angular.dev/api/core/untracked). To run code once **after** the view has rendered (e.g. measuring the DOM), use [`afterNextRender()`](https://angular.dev/api/core/afterNextRender) rather than `setTimeout` — it self-schedules a change-detection tick under zoneless.
+
+**Never navigate, and avoid writing template-bound signals, from an `effect()` — it can crash the client.** Both are imperative side effects that feed back into change detection and can form an infinite loop:
+
+- **`Router.navigate()` / `navigateByUrl()` inside an effect is the most dangerous.** Navigation destroys and re-creates components and rewrites their signals, which re-triggers the effect, which navigates again. This crashed the online code editor: an incoming result replaced a participation object (same id, new reference), re-running a navigation `effect`, which re-navigated and re-created the whole subtree — flooding the server with thousands of requests until the tab ran out of memory ([PR #12976](https://github.com/ls1intum/Artemis/pull/12976)). Drive navigation from explicit user actions, route guards/resolvers, or `ngOnChanges`. If reactive navigation is genuinely unavoidable, depend on a **stable `computed()` key** (so a replaced object with an unchanged id does not re-run the effect) and wrap the `navigate(...)` call in `untracked()`. The `localRules/no-navigation-in-effect` ESLint rule enforces this — navigation in an effect that is not wrapped in `untracked()` is an error.
+- **Writing a signal in an effect** carries the same loop risk (an effect that writes a signal it also reads re-triggers itself forever). Prefer `computed()` for derived state; if a write is truly necessary, never write a signal the effect reads and wrap the write in `untracked()`. This case cannot be linted reliably (`.set()` / `.update()` are indistinguishable from `Map`/`Set` mutations at the syntax level), so it is on the author and reviewer to avoid it.
+
+```ts
+// Don't - navigate directly in an effect: object-reference churn re-runs it → infinite re-navigation
+effect(() => {
+    const participation = this.studentParticipation();
+    this.router.navigate(['code-editor', participation.id]);
+});
+
+// Do - depend on a stable identity key; navigate untracked so only the key re-runs the effect
+private readonly targetKey = computed(() => `${this.exercise().id}:${this.studentParticipation()?.id}`);
+constructor() {
+    effect(() => {
+        if (!this.targetKey()) return;
+        untracked(() => this.router.navigate(['code-editor', this.studentParticipation()!.id]));
+    });
+}
+```
+
+**The handful of legitimate non-signal cases** (an impure self-updating pipe such as a time-ago pipe; CD on dynamically injected components living outside the template tree) require an explicit, commented justification. If you ever think you need `NgZone`, you don't — it is a no-op under zoneless and is banned.
+
+| Member                                          | Signal API                                          |
+| ----------------------------------------------- | --------------------------------------------------- |
+| Local mutable state read by the template        | `signal()` + `.set()` / `.update()`                 |
+| Value derived from other signals/inputs         | `computed()`                                        |
+| Component input                                 | `input()` / `input.required()`                      |
+| Two-way bound input                             | `model()`                                           |
+| Derived value that is also locally settable     | `linkedSignal()`                                    |
+| `@ViewChild` / `@ViewChildren` / `@ContentChild` | `viewChild()` / `viewChildren()` / `contentChild()` |
+| Sync state to a non-reactive API (rare)         | `effect()`                                          |
+| Constant (icon, enum, injected service)         | plain `readonly` field — no signal needed           |
+
+Reference migration: [PR #12872 (zoneless migration)](https://github.com/ls1intum/Artemis/pull/12872). Further reading: [Angular signals](https://angular.dev/guide/signals), [zoneless](https://angular.dev/guide/zoneless), [signal queries](https://angular.dev/guide/components/queries), [linkedSignal](https://angular.dev/guide/signals/linked-signal), [signal-input migration](https://angular.dev/reference/migrations/signal-inputs).
+
+### Reacting to input changes & lifecycle hooks
+
+Prefer reactive primitives over the `ngOnChanges` lifecycle hook in signal-based components.
+
+<Callout variant={CalloutVariant.info}>
+**`ngOnChanges` is _not_ dead code in Angular 21 — but `computed()` / `effect()` are the preferred, more consistent choice.**
+
+A belief carried over from Angular 17–18 holds that `ngOnChanges` is never called for signal inputs. **That is no longer true.** In Angular 21, `ngOnChanges` **does** fire for signal inputs (`input()` / `input.required()` / `model()`) with a full `SimpleChanges` record, and the first `ngOnChanges` still runs before `ngOnInit`. (Internally, signal-input writes are routed through `NgOnChangesFeature` → `ngOnChangesSetInput`, which records a `SimpleChange` and applies the value to the input signal; `ngOnChanges` is registered as a per-change-detection pre-order check hook. See [`OnChanges`](https://angular.dev/api/core/OnChanges).)
+
+So `ngOnChanges` is functional and not a correctness bug — but the Angular docs still recommend `computed`/`effect`, and a signal-first code base avoids a whole class of "I forgot to keep the derived field in sync" bugs.
+</Callout>
+
+**Pick the right reactive primitive.** Angular's guidance is `computed` first, `effect` last — [effects are for syncing signals to non-reactive APIs](https://angular.dev/guide/signals/effect), not for general reactivity:
+
+| Old `ngOnChanges` shape | Idiomatic signal replacement |
+| --- | --- |
+| Recompute a value derived from inputs/state | `computed()` — lazy, memoised, cannot go stale |
+| Derived value that can also be set locally | `linkedSignal()` |
+| Genuine side effect (subscribe, imperative / 3rd-party API, DOM) | `effect()` — use sparingly; it is the *last* API to reach for |
+| Need `SimpleChanges.previousValue` or `isFirstChange()` | keep `ngOnChanges` for now — signals don't expose these directly; document why with a comment (still a future-removal target) |
+| Logic that must run **before** child components initialise | keep `ngOnChanges` for now — it runs before `ngOnInit`, an `effect()` runs afterwards; document why with a comment (still a future-removal target) |
+
+```ts
+// Don't - derive state imperatively in ngOnChanges (has to be kept in sync by hand)
+@Component({ /* ... */ })
+export class ExampleComponent implements OnChanges {
+    value = input.required<number>();
+    doubled = 0;
+    ngOnChanges() {
+        this.doubled = this.value() * 2;
+    }
+}
+
+// Do - derive declaratively; it can never go stale
+@Component({ /* ... */ })
+export class ExampleComponent {
+    value = input.required<number>();
+    doubled = computed(() => this.value() * 2);
+}
+```
+
+An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **warns** on `ngOnChanges` in `@Component` / `@Directive` classes across Angular client files that have a clean baseline. Known migration-backlog files are temporarily excluded in `eslint.config.mjs` so `pnpm run lint` stays warning-clean for unchanged code; remove an entry as soon as its hook is migrated or explicitly justified. The rule is intentionally a warning, not an error.
+
+The goal is to **remove `ngOnChanges` entirely**: migrate every usage to `computed()` (derived state) or `effect()` (genuine side effects). For the rare cases that still genuinely need `ngOnChanges` (the bottom two rows above — `SimpleChanges.previousValue` / `isFirstChange()`, or logic that must run before child components initialise), add a **detailed comment** explaining why a signal-based replacement is not yet possible. If a covered file must keep `ngOnChanges`, use a narrowly scoped `eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges` with a justification that references why `computed()` or `effect()` would change the behavior; do not blanket-disable the rule for a file.
+
+`ngOnInit` and `ngOnDestroy` are **not** affected by signals — they fire regardless of the input mechanism and remain valid. For teardown, prefer `DestroyRef` + `takeUntilDestroyed()` or an `effect()` (which cleans itself up) over manual `ngOnDestroy` bookkeeping where practical; the `localRules/enforce-cleanup-on-destroy` rule already guards subscription cleanup.
 
 ### Naming Conventions
 
@@ -307,51 +486,8 @@ https://auth0.com/blog/four-types-of-leaks-in-your-javascript-code-and-how-to-ge
 *  Out of DOM references
 *  Closures
 
-Mocks not being restored after the end of a test, especially when it involves global objects: https://making.close.com/posts/finding-the-cause-of-a-memory-leak-in-jest
-
 RXJS subscriptions not being unsubscribed: https://www.twilio.com/blog/prevent-memory-leaks-angular-observable-ngondestroy
 
-
-**What are ways to identify memory leaks?**
-
-**Number 1:** Manually checking the heap usage and identifying heap dumps for causes of memory leaks
-https://chanind.github.io/javascript/2019/10/12/jest-tests-memory-leak.html
-
-Corresponding commands from the article for our project (enter in the root directory of the project):
-
-```text
-node --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./jest.config.js --env=jsdom
-```
-
-```text
-node --inspect-brk --expose-gc ./node_modules/.bin/jest --runInBand --logHeapUsage --config ./jest.config.js --env=jsdom
-```
-
-A live demonstration of this technique to find the reason for memory leaks in the repository: https://www.youtube.com/watch?v=GOYmouFrGrE
-
-**Number 2:** Using the experimental leak detection feature from jest
-
-
-```text
---detectLeaks **EXPERIMENTAL**: Detect memory leaks in tests.
-                               After executing a test, it will try to garbage collect the global object used,
-                               and fail if it was leaked [boolean] [default: false]
-
---runInBand, -i Run all tests serially in the current process
-(rather than creating a worker pool of child processes that run tests). This is sometimes useful for debugging, but such use cases are pretty rare.
-```
-
-Navigate into src/test/javascript and run either
-
-```text
-jest --detectLeaks --runInBand
-```
-
-or
-
-```text
-jest --detectLeaks
-```
 
 ## UI/UX & Layout
 

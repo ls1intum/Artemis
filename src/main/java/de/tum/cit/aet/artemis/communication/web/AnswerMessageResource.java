@@ -5,12 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,9 +23,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -41,8 +46,14 @@ public class AnswerMessageResource {
 
     private final AnswerMessageService answerMessageService;
 
-    public AnswerMessageResource(AnswerMessageService answerMessageService) {
+    private final UserRepository userRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
+    public AnswerMessageResource(AnswerMessageService answerMessageService, UserRepository userRepository, AnswerPostRepository answerPostRepository) {
         this.answerMessageService = answerMessageService;
+        this.userRepository = userRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -55,13 +66,14 @@ public class AnswerMessageResource {
      */
     @PostMapping("courses/{courseId}/answer-messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> createAnswerMessage(@PathVariable Long courseId, @RequestBody CreateAnswerPostDTO answerMessage) throws URISyntaxException {
+    public ResponseEntity<AnswerPostResponseDTO> createAnswerMessage(@PathVariable Long courseId, @RequestBody CreateAnswerPostDTO answerMessage) throws URISyntaxException {
         log.debug("POST createAnswerMessage invoked for course {} with message {}", courseId, answerMessage.content());
         long start = System.nanoTime();
         AnswerPost createdAnswerMessage = answerMessageService.createAnswerMessage(courseId, answerMessage);
         // creation of answerMessage should not trigger alert
         log.debug("createAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/communication/courses" + courseId + "/answer-messages/" + createdAnswerMessage.getId())).body(createdAnswerMessage);
+        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/answer-messages/" + createdAnswerMessage.getId()))
+                .body(AnswerPostResponseDTO.from(createdAnswerMessage));
     }
 
     /**
@@ -75,12 +87,12 @@ public class AnswerMessageResource {
      */
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody UpdatePostingDTO updatedAnswer) {
+    public ResponseEntity<AnswerPostResponseDTO> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody UpdatePostingDTO updatedAnswer) {
         log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, updatedAnswer.content());
         long start = System.nanoTime();
         AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, updatedAnswer);
         log.debug("updateAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(updatedAnswerMessage, null, HttpStatus.OK);
+        return ResponseEntity.ok(AnswerPostResponseDTO.from(updatedAnswerMessage));
     }
 
     /**
@@ -114,12 +126,16 @@ public class AnswerMessageResource {
      */
     @GetMapping("courses/{courseId}/answer-messages-source-posts")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<AnswerPost>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
+    public ResponseEntity<List<AnswerPostResponseDTO>> getSourceAnswerPostsByIds(@PathVariable Long courseId, @RequestParam List<Long> answerPostIds) {
         log.debug("GET getSourceAnswerPostsByIds invoked for course {} with {} posts", courseId, answerPostIds == null ? 0 : answerPostIds.size());
         long start = System.nanoTime();
 
         if (answerPostIds == null || answerPostIds.isEmpty()) {
             throw new BadRequestAlertException("AnswerPost IDs cannot be null or empty", answerMessageService.getEntityName(), "invalidAnswerPostIds");
+        }
+
+        if (answerPostIds.stream().anyMatch(id -> id <= 0)) {
+            throw new BadRequestAlertException("Invalid answer post ID found", answerMessageService.getEntityName(), "invalidAnswerPostId");
         }
 
         List<AnswerPost> answerPosts = answerMessageService.findByIdIn(answerPostIds);
@@ -128,11 +144,18 @@ public class AnswerMessageResource {
             return ResponseEntity.notFound().build();
         }
 
+        // authorization: the caller may only retrieve answer posts they can access (course-wide channel or participant of the conversation).
+        // We check access against the posts that were actually found (not the requested IDs) so that non-existent IDs yield 404, not 403.
+        User user = userRepository.getUser();
+        Set<Long> foundAnswerPostIds = answerPosts.stream().map(AnswerPost::getId).collect(Collectors.toSet());
+        answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(foundAnswerPostIds, user.getId());
+
         if (answerPosts.stream().anyMatch(post -> !post.getPost().getConversation().getCourse().getId().equals(courseId))) {
             throw new BadRequestAlertException("Some answer posts do not belong to the specified course", answerMessageService.getEntityName(), "invalidCourse");
         }
 
         log.debug("getSourceAnswerPostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok().body(answerPosts);
+        List<AnswerPostResponseDTO> body = answerPosts.stream().map(AnswerPostResponseDTO::from).toList();
+        return ResponseEntity.ok().body(body);
     }
 }

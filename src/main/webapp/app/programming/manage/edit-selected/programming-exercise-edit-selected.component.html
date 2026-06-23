@@ -4,13 +4,13 @@
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        @if (failureOccurred) {
+        @if (failureOccurred()) {
             <div class="row justify-content-center">
                 <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred"></span>
                 <div class="table-responsive m-2 p-1">
                     <table class="table table-striped">
                         <tbody>
-                            @for (failedExercise of failedExercises; track failedExercise) {
+                            @for (failedExercise of failedExercises(); track failedExercise) {
                                 <tr>
                                     <td>{{ failedExercise }}</td>
                                 </tr>
@@ -21,7 +21,7 @@
                 <button type="button" class="btn ms-2 btn-primary" (click)="closeModal()" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorReadButton"></button>
             </div>
         }
-        @if (!failureOccurred) {
+        @if (!failureOccurred()) {
             <div class="row justify-content-center">
                 <div class="col-lg-8 col-sm-12">
                     <span style="font-weight: bold" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.currentlyEdited"></span>
@@ -42,12 +42,28 @@
                     </div>
                     <form name="editForm" role="form" novalidate (ngSubmit)="saveAll()">
                         <div class="form-group-narrow mt-2">
-                            <div>
-                                <label class="label-narrow label-timeline" jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"></label>
-                                <jhi-help-icon text="artemisApp.programmingExercise.timeline.timelineTooltip" />
-                            </div>
-                            <jhi-programming-exercise-lifecycle id="timeline" [exercise]="newProgrammingExercise" [isExamMode]="false" />
-                            <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving">
+                            @let exampleSolutionPublicationDateSet =
+                                !!newProgrammingExercise.exampleSolutionPublicationDate || !!newProgrammingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
+                            <jhi-programming-exercise-update-timeline
+                                id="timeline"
+                                [isExamMode]="false"
+                                [exampleSolutionPublicationDateSet]="exampleSolutionPublicationDateSet"
+                                [skipAutomaticAfterDueDatePreview]="true"
+                                [exercise]="newProgrammingExercise"
+                                [(releaseDate)]="newProgrammingExercise.releaseDate"
+                                [(startDate)]="newProgrammingExercise.startDate"
+                                [(dueDate)]="newProgrammingExercise.dueDate"
+                                [(buildAndTestStudentSubmissionsAfterDueDate)]="newProgrammingExercise.buildAndTestStudentSubmissionsAfterDueDate"
+                                [(assessmentDueDate)]="newProgrammingExercise.assessmentDueDate"
+                                [(exampleSolutionPublicationDate)]="newProgrammingExercise.exampleSolutionPublicationDate"
+                                [(assessmentType)]="newProgrammingExercise.assessmentType"
+                                [(allowFeedbackRequests)]="newProgrammingExercise.allowFeedbackRequests"
+                                [(allowComplaintsForAutomaticAssessments)]="newProgrammingExercise.allowComplaintsForAutomaticAssessments"
+                                [(releaseTestsWithExampleSolution)]="newProgrammingExercise.releaseTestsWithExampleSolution"
+                                [(feedbackSuggestionModule)]="newProgrammingExercise.feedbackSuggestionModule"
+                                [(showTestNamesToStudents)]="newProgrammingExercise.showTestNamesToStudents"
+                            />
+                            <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving()">
                                 <fa-icon [icon]="faSave" />
                                 <span jhiTranslate="entity.action.save"></span>
                             </jhi-button>

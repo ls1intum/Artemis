@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -31,6 +31,16 @@ public class ExamAccessApi extends AbstractExamApi {
      */
     public void checkCourseAndExamAccessForStudentElseThrow(Long courseId, Long examId) {
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
+    }
+
+    /**
+     * Checks if the current user is allowed to access the course as an editor and the exam.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
+    public void checkCourseAndExamAccessForEditorElseThrow(Long courseId, Long examId) {
+        examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
     }
 
     /**

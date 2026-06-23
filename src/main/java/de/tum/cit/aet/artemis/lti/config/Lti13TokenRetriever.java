@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.lti.config;
 import java.net.URI;
 import java.security.KeyPair;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -26,7 +26,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -36,6 +35,7 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 
 /**
@@ -82,7 +82,7 @@ public class Lti13TokenRetriever {
 
         MultiValueMap<String, String> formData = buildFormData(signedJWT, scopes);
         HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        headers.setAccept(List.of(MediaType.APPLICATION_JSON));
         try {
             URI url = URI.create(clientRegistration.getProviderDetails().getTokenUri());
             RequestEntity<MultiValueMap<String, String>> requestEntity = new RequestEntity<>(formData, headers, HttpMethod.POST, url);
@@ -90,7 +90,7 @@ public class Lti13TokenRetriever {
             if (exchange.getBody() == null) {
                 return null;
             }
-            return new ObjectMapper().readTree(exchange.getBody()).get("access_token").asText();
+            return JsonObjectMapper.get().readTree(exchange.getBody()).get("access_token").asText();
         }
         catch (HttpClientErrorException | JsonProcessingException e) {
             log.error("Could not retrieve access token for client {}: {}", clientRegistration.getClientId(), e.getMessage());

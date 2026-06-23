@@ -1,39 +1,31 @@
 <form id="userImportDialogForm" name="importForm" role="form" novalidate>
-    <div class="modal-header">
-        <h4 class="modal-title">
-            <span [jhiTranslate]="'artemisApp.exam.examUsers.dialogTitle'"> Upload images for registered students: </span>
-        </h4>
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    <div class="form-group">
+        <p class="intro-text" jhiTranslate="artemisApp.exam.examUsers.introText"></p>
+        <p class="intro-text" jhiTranslate="artemisApp.exam.examUsers.pdfExampleText"></p>
     </div>
-    <div class="modal-body">
-        <div class="form-group">
-            <p class="intro-text" jhiTranslate="artemisApp.exam.examUsers.introText"></p>
-            <p class="intro-text" jhiTranslate="artemisApp.exam.examUsers.pdfExampleText"></p>
-        </div>
-        <div class="d-flex justify-content-center align-items-center">
-            <img class="border" width="300" src="/content/images/upload_student_images_pdf_example_img.png" />
-        </div>
-        <div class="form-group">
-            <div class="d-flex align-items-end">
-                <div>
-                    <label for="importPDF" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.exam.examUsers.pdfFile.label"></label>
-                    <jhi-help-icon text="artemisApp.exam.examUsers.pdfFile.tooltip" class="me-1" />
-                </div>
-                @if (isParsing) {
-                    <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" animation="spin" />
-                }
+    <div class="d-flex justify-content-center align-items-center">
+        <img class="border" width="300" src="/content/images/upload_student_images_pdf_example_img.png" />
+    </div>
+    <div class="form-group">
+        <div class="d-flex align-items-end">
+            <div>
+                <label for="importPDF" class="label-narrow font-weight-bold" jhiTranslate="artemisApp.exam.examUsers.pdfFile.label"></label>
+                <jhi-help-icon text="artemisApp.exam.examUsers.pdfFile.tooltip" class="me-1" />
             </div>
-            <div class="mt-2">
-                <input id="importPDF" type="file" accept=".pdf" (change)="onPDFFileSelect($event)" />
-            </div>
+            @if (isParsing()) {
+                <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" animation="spin" />
+            }
+        </div>
+        <div class="mt-2">
+            <input id="importPDF" type="file" accept=".pdf" (change)="onPDFFileSelect($event)" />
         </div>
     </div>
-    <div class="modal-footer justify-content-between">
-        @let usersNotFound = notFoundUsers?.numberOfUsersNotFound ?? 0;
-        @let imagesSaved = notFoundUsers?.numberOfImagesSaved ?? 0;
+    <div class="d-flex justify-content-between mt-4">
+        @let usersNotFound = notFoundUsers()?.numberOfUsersNotFound ?? 0;
+        @let imagesSaved = notFoundUsers()?.numberOfImagesSaved ?? 0;
         @if (usersNotFound > 0 || imagesSaved === 0) {
             <div class="flex-shrink-0 me-2 d-flex">
-                @if (hasParsed) {
+                @if (hasParsed()) {
                     <div>
                         <div class="ms-2">
                             <strong jhiTranslate="artemisApp.importUsers.numberOfUsersNotImported"></strong>
@@ -53,7 +45,7 @@
         }
         @if (imagesSaved > 0 && usersNotFound === 0) {
             <div class="flex-shrink-0 me-2 d-flex">
-                @if (hasParsed) {
+                @if (hasParsed()) {
                     <div>
                         <div class="ms-2">
                             <strong style="color: green" jhiTranslate="artemisApp.exam.examUsers.allImagesSaved"></strong>
@@ -63,19 +55,19 @@
             </div>
         }
         <div class="flex-grow-1 d-flex justify-content-end">
-            @if (!hasParsed) {
-                <button type="button" class="btn btn-secondary cancel me-2" data-dismiss="modal" (click)="clear()">
+            @if (!hasParsed()) {
+                <button type="button" class="btn btn-secondary cancel me-2" (click)="clear()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
             }
-            @if (!hasParsed) {
-                <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="!file || isParsing" (click)="parsePDFFile()">
+            @if (!hasParsed()) {
+                <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="!file() || isParsing()" (click)="parsePDFFile()">
                     <fa-icon [icon]="faUpload" class="me-2" />
                     <span jhiTranslate="artemisApp.exam.examUsers.saveImages"></span>
-                    <fa-icon class="ms-1" [hidden]="!isParsing" animation="spin" [icon]="faCircleNotch" />
+                    <fa-icon class="ms-1" [hidden]="!isParsing()" animation="spin" [icon]="faCircleNotch" />
                 </button>
             } @else {
-                <button [ngClass]="hasParsed && usersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
+                <button [ngClass]="hasParsed() && usersNotFound === 0 ? 'btn btn-success' : 'btn btn-danger'" id="finish-button" (click)="onFinish()">
                     <fa-icon [icon]="faCheck" class="me-2" />
                     <span jhiTranslate="entity.action.finish"></span>
                 </button>

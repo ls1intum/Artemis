@@ -26,8 +26,11 @@ public class PlagiarismWebsocketService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public PlagiarismWebsocketService(WebsocketMessagingService websocketMessagingService) {
+    private final ObjectMapper objectMapper;
+
+    public PlagiarismWebsocketService(WebsocketMessagingService websocketMessagingService, ObjectMapper objectMapper) {
         this.websocketMessagingService = websocketMessagingService;
+        this.objectMapper = objectMapper;
     }
 
     /***
@@ -42,9 +45,8 @@ public class PlagiarismWebsocketService {
         payload.put("state", plagiarismCheckState.toString());
         payload.put("messages", String.join("\n", messages));
 
-        ObjectMapper mapper = new ObjectMapper();
         try {
-            websocketMessagingService.sendMessage(topic, mapper.writeValueAsString(payload));
+            websocketMessagingService.sendMessage(topic, objectMapper.writeValueAsString(payload));
         }
         catch (IOException e) {
             log.info("Couldn't notify the user about the plagiarism state for topic {}: {}", topic, e.getMessage());

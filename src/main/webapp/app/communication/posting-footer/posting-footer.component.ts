@@ -1,14 +1,14 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ViewContainerRef, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import dayjs from 'dayjs/esm';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPostComponent } from '../answer-post/answer-post.component';
-import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
 
 interface PostGroup {
@@ -21,11 +21,21 @@ interface PostGroup {
     templateUrl: './posting-footer.component.html',
     imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe, NgClass],
 })
-export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
+export class PostingFooterComponent implements OnInit, OnDestroy {
+    constructor() {
+        effect(() => {
+            // Track sortedAnswerPosts signal input (replaces ngOnChanges)
+            this.sortedAnswerPosts();
+            untracked(() => {
+                this.groupAnswerPosts();
+            });
+        });
+    }
+
     lastReadDate = input<dayjs.Dayjs | undefined>();
     readOnlyMode = input<boolean>(false);
     previewMode = input<boolean>(false);
-    modalRef = input<NgbModalRef | undefined>();
+    modalRef = input<DynamicDialogRef | undefined>();
     hasChannelModerationRights = input<boolean>(false);
     showAnswers = input<boolean>(false);
     isCommunicationPage = input<boolean>(false);
@@ -38,42 +48,29 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     userReferenceClicked = output<string>();
     channelReferenceClicked = output<number>();
 
-    @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
-    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef!: ViewContainerRef;
-    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent!: AnswerPostCreateEditModalComponent;
+    readonly answerPostCreateEditModal = viewChild(AnswerPostCreateEditModalComponent);
+    readonly containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
+    readonly createAnswerPostModalComponent = viewChild.required<AnswerPostCreateEditModalComponent>('createAnswerPostModal');
 
-    createdAnswerPost: AnswerPost;
+    readonly createdAnswerPost = signal<AnswerPost>(undefined!);
     isAtLeastTutorInCourse = false;
     courseId!: number;
-    groupedAnswerPosts: PostGroup[] = [];
+    readonly groupedAnswerPosts = signal<PostGroup[]>([]);
 
     private metisService = inject(MetisService);
-    private changeDetector = inject(ChangeDetectorRef);
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        this.createdAnswerPost = this.createEmptyAnswerPost();
+        this.createdAnswerPost.set(this.createEmptyAnswerPost());
         this.groupAnswerPosts();
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['sortedAnswerPosts']) {
-            this.groupAnswerPosts();
-            this.changeDetector.detectChanges();
-        }
-    }
-
     ngOnDestroy(): void {
-        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef()?.clear();
-    }
-
-    /**
-     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the tag-selector
-     * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
-     */
-    ngAfterContentChecked() {
-        this.changeDetector.detectChanges();
+        const modal = this.answerPostCreateEditModal();
+        if (modal && typeof modal.createEditAnswerPostContainerRef === 'function') {
+            modal.createEditAnswerPostContainerRef()?.clear();
+        }
     }
 
     /**
@@ -90,7 +87,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
 
     groupAnswerPosts(): void {
         if (!this.sortedAnswerPosts() || this.sortedAnswerPosts().length === 0) {
-            this.groupedAnswerPosts = [];
+            this.groupedAnswerPosts.set([]);
             return;
         }
 
@@ -127,8 +124,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
         }
 
         groups.push(currentGroup);
-        this.groupedAnswerPosts = groups;
-        this.changeDetector.detectChanges();
+        this.groupedAnswerPosts.set(groups);
     }
 
     trackGroupByFn(_: number, group: PostGroup): number {
@@ -148,14 +144,14 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
      * Open create answer modal
      */
     openCreateAnswerPostModal() {
-        this.createAnswerPostModalComponent?.open();
+        this.createAnswerPostModalComponent()?.open();
     }
 
     /**
      * Close create answer modal
      */
     closeCreateAnswerPostModal() {
-        this.createAnswerPostModalComponent?.close();
+        this.createAnswerPostModalComponent()?.close();
     }
 
     protected postsTrackByFn(_index: number, post: Post): number {

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,15 +25,14 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevWalk;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 
 /**
  * Shared helpers for LocalVC-backed repository export tests.
@@ -398,6 +396,36 @@ public final class RepositoryExportTestUtil {
     }
 
     /**
+     * Waits until the given commit hash is resolvable in the bare repository. Used in concert with
+     * {@link #waitForBareRepositoryReady(LocalRepository)} when callers need a specific commit (not
+     * just HEAD) to be visible — for example, controllers that look up files by commit hash.
+     *
+     * @param repo       the local repository whose bare repo should be verified
+     * @param commitHash the commit hash that must be resolvable
+     */
+    public static void waitForBareRepositoryToContainCommit(LocalRepository repo, String commitHash) {
+        if (commitHash == null || commitHash.length() != 40) {
+            throw new IllegalArgumentException("Expected a full 40-character commit hash but got: " + commitHash);
+        }
+        ObjectId commitId = ObjectId.fromString(commitHash);
+        Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+            // A local JGit push writes the commit into a pack file (not a loose object) on JGit 7.6+, so the former
+            // loose-object fast-path was always false and every poll fell through to resolve() + parseCommit().
+            // Parsing reads the commit object data and memory-maps the pack through JGit's process-wide WindowCache,
+            // which is heavily contended under parallel CI (it holds pack locks until a GC runs, see JGitConfig) and
+            // could make the poll time out. ObjectDatabase.has(...) inspects loose objects and pack indexes only, so
+            // it confirms the commit landed without mapping the pack data.
+            try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+                return git.getRepository().getObjectDatabase().has(commitId);
+            }
+            catch (Exception e) {
+                log.debug("Bare repository does not yet contain commit {}: {}", commitHash, e.getMessage());
+                return false;
+            }
+        });
+    }
+
+    /**
      * Waits for a bare repository to be fully ready for cloning operations.
      * This addresses flaky test failures caused by race conditions where other services
      * try to clone a repository immediately after a push, but the repository files
@@ -406,22 +434,18 @@ public final class RepositoryExportTestUtil {
      * @param repo the local repository whose bare repo should be verified
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
-            try {
-                // Try to open the bare repository and resolve HEAD
-                // This verifies the repo is accessible and has a valid HEAD reference
-                try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
-                    var headRef = git.getRepository().resolve("HEAD");
-                    if (headRef == null) {
-                        log.debug("Bare repository HEAD is null, waiting...");
-                        return false;
-                    }
-                    // Verify we can read the commit object
-                    try (RevWalk revWalk = new RevWalk(git.getRepository())) {
-                        revWalk.parseCommit(headRef);
-                    }
-                    return true;
+        Awaitility.await().atMost(60, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+            try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
+                // Resolve HEAD (a cheap ref read) and confirm the referenced commit object is present via
+                // ObjectDatabase.has(...). We deliberately avoid RevWalk.parseCommit here: parsing reads the commit
+                // object data and memory-maps the pack through JGit's contended process-wide WindowCache (see
+                // waitForBareRepositoryToContainCommit), which made this wait flaky under parallel CI.
+                var headRef = git.getRepository().resolve("HEAD");
+                if (headRef == null) {
+                    log.debug("Bare repository HEAD is null, waiting...");
+                    return false;
                 }
+                return git.getRepository().getObjectDatabase().has(headRef);
             }
             catch (Exception e) {
                 log.debug("Bare repository not ready yet: {}", e.getMessage());
@@ -444,18 +468,6 @@ public final class RepositoryExportTestUtil {
         return commits.next().getId();
     }
 
-    /**
-     * Creates and returns a working copy repository handle for the template repo of the given exercise.
-     * Assumes base repos have been wired already (use createAndWireBaseRepositories beforehand if needed).
-     * The returned repository is automatically tracked for cleanup - call {@link #cleanupTrackedRepositories()} in @AfterEach.
-     */
-    public static LocalRepository createTemplateWorkingCopy(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExercise exercise)
-            throws GitAPIException, IOException, URISyntaxException {
-        String projectKey = exercise.getProjectKey();
-        String templateSlug = projectKey.toLowerCase() + "-exercise";
-        return trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug));
-    }
-
     // ===========================================================================
     // Utilities for reducing code duplication across test suites
     // ===========================================================================
@@ -471,7 +483,7 @@ public final class RepositoryExportTestUtil {
      */
     public static void deleteStudentBareRepo(ProgrammingExercise exercise, String username, Path localVCBasePath) throws IOException {
         String projectKey = exercise.getProjectKey().toUpperCase();
-        String slug = (exercise.getShortName() + "-" + username).toLowerCase();
+        String slug = (exercise.getProjectKey() + "-" + username).toLowerCase();
         Path bareRepoPath = localVCBasePath.resolve(projectKey).resolve(slug + ".git");
         if (Files.exists(bareRepoPath)) {
             FileUtils.deleteDirectory(bareRepoPath.toFile());

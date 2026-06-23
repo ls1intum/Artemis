@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.config.migration;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -27,8 +27,8 @@ import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.core.domain.MigrationChangelog;
-import de.tum.cit.aet.artemis.core.repository.MigrationChangeRepository;
+import de.tum.cit.aet.artemis.admin.domain.MigrationChangelog;
+import de.tum.cit.aet.artemis.admin.repository.MigrationChangeRepository;
 
 /**
  * This service contains utility functionality that verifies a changelog to prevent corruption and executes a given changelog.

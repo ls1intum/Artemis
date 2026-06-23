@@ -207,13 +207,19 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     long countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("complaintType") ComplaintType complaintType);
 
     /**
-     * Delete all complaints that belong to the given result
+     * Delete all complaints that belong to the given result.
+     * <p>
+     * Bulk JPQL delete (rather than a Spring Data derived {@code deleteBy...}) so that no {@link Complaint} entity is
+     * loaded into the session during exercise/result deletion; see the matching note on
+     * {@code ComplaintResponseRepository#deleteByComplaint_Result_Id}. Complaint responses must already have been
+     * removed (the response holds the FK to the complaint), which the caller guarantees by deleting them first.
      *
      * @param resultId the id of the result where the complaints should be deleted
      */
     @Transactional // ok because of delete
     @Modifying
-    void deleteByResult_Id(long resultId);
+    @Query("DELETE FROM Complaint c WHERE c.result.id = :resultId")
+    void deleteByResult_Id(@Param("resultId") long resultId);
 
     /**
      * Given a course id, retrieve all complaints related to assessments related to that course.
@@ -222,7 +228,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param exerciseIds - the ids of the exercises in the course
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation", "result.submission", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor", "complaintResponse.reviewer" })
     List<Complaint> findAllByResult_ExerciseIdIn(Set<Long> exerciseIds);
 
     /**
@@ -233,7 +239,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param exerciseId - the id of the exercise
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation", "result.submission", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor", "complaintResponse.reviewer" })
     List<Complaint> findAllByResult_Assessor_IdAndResult_ExerciseId(Long assessorId, Long exerciseId);
 
     /**
@@ -244,7 +250,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @param exerciseIds - the ids of the exercises (e.g., from a course)
      * @return a list of complaints
      */
-    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation", "result.submission", "result.assessor" })
+    @EntityGraph(type = LOAD, attributePaths = { "result.submission.participation.exercise", "result.assessor", "complaintResponse.reviewer" })
     List<Complaint> findAllByResult_Assessor_IdAndResult_ExerciseIdIn(Long assessorId, Set<Long> exerciseIds);
 
     /**

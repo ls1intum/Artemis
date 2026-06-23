@@ -14,7 +14,9 @@ export default [
             "/public/",
             "/.well-known/",
             "/webauthn/",
-            "/login/webauthn"
+            "/login/webauthn",
+            "/saml2/",
+            "/login/saml2/"
         ],
         target: `http://localhost:8080`,
         secure: false

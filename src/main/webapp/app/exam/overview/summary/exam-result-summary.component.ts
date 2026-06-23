@@ -1,9 +1,9 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
@@ -13,7 +13,7 @@ import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiaris
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -21,12 +21,12 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamGeneralInformationComponent } from '../general-information/exam-general-information.component';
 import { ExamResultOverviewComponent } from './result-overview/exam-result-overview.component';
 import { CollapsibleCardComponent } from './collapsible-card/collapsible-card.component';
@@ -40,9 +40,10 @@ import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/qu
 import { FileUploadExamSummaryComponent } from 'app/exam/overview/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
+import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -67,7 +68,7 @@ type StateBeforeResetting = {
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
-    styleUrls: ['../../../core/course/manage/course-exercise-card/course-exercise-card.component.scss', '../../../quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
+    styleUrls: ['../../../course/manage/course-exercise-card/course-exercise-card.component.scss', '../../../quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -88,6 +89,7 @@ type StateBeforeResetting = {
         ProgrammingExamSummaryComponent,
         ArtemisTranslatePipe,
         TestRunRibbonComponent,
+        ExamRequestAiFeedbackButtonComponent,
     ],
 })
 export class ExamResultSummaryComponent implements OnInit {
@@ -118,136 +120,136 @@ export class ExamResultSummaryComponent implements OnInit {
     /**
      * Current student's exam.
      */
-    private _studentExam: StudentExam;
+    readonly studentExam = input.required<StudentExam>();
 
-    plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
-    exampleSolutionPublished = false;
+    readonly plagiarismCaseInfos = signal<{ [exerciseId: number]: PlagiarismCaseInfo }>({});
+    readonly exampleSolutionPublished = signal(false);
 
-    get studentExam(): StudentExam {
-        return this._studentExam;
-    }
-
-    @Input()
-    set studentExam(studentExam: StudentExam) {
-        this._studentExam = studentExam;
-        if (this.studentExamGradeInfoDTO) {
-            this.studentExamGradeInfoDTO.studentExam = studentExam;
-        }
-        this.tryLoadPlagiarismCaseInfosForStudent();
+    constructor() {
+        effect(() => {
+            const se = this.studentExam();
+            const gradeInfo = this.studentExamGradeInfoDTO();
+            if (gradeInfo) {
+                gradeInfo.studentExam = se;
+            }
+            this.tryLoadPlagiarismCaseInfosForStudent();
+        });
     }
 
     /**
      * Grade info for current student's exam.
      */
-    studentExamGradeInfoDTO: StudentExamWithGradeDTO;
+    readonly studentExamGradeInfoDTO = signal<StudentExamWithGradeDTO | undefined>(undefined);
 
-    isGradingKeyCollapsed = true;
-    isBonusGradingKeyCollapsed = true;
+    readonly isGradingKeyCollapsed = signal(true);
+    readonly isBonusGradingKeyCollapsed = signal(true);
 
-    @Input()
-    instructorView = false;
+    readonly instructorView = input(false);
 
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
 
-    isTestRun = false;
+    readonly isTestRun = signal(false);
     isTestExam = false;
 
     testRunConduction = false;
-    testExamConduction = false;
+    readonly testExamConduction = signal(false);
 
-    examWithOnlyIdAndStudentReviewPeriod: Exam;
+    readonly examWithOnlyIdAndStudentReviewPeriod = signal<Exam>(undefined!);
 
-    isBeforeStudentReviewEnd = false;
+    readonly isBeforeStudentReviewEnd = signal(false);
     /**
      * Used to decide whether to instantiate the ComplaintInteractionComponent. We always instantiate the component if
      * the review dates are set and the review start date has passed.
      */
-    isAfterStudentReviewStart = false;
+    readonly isAfterStudentReviewStart = signal(false);
 
-    exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
+    readonly exerciseInfos = signal<Record<number, ResultSummaryExerciseInfo>>({});
 
     /**
      * Passed to components with overlapping elements to ensure that the overlapping
      * elements are displayed in a different order for printing.
      */
-    isPrinting = false;
+    readonly isPrinting = signal(false);
 
     /**
      * Passed to components where the problem statement might be expanded or collapsed to ensure that
      * the problem statement is expanded while printing
      */
-    expandProblemStatement = false;
+    readonly expandProblemStatement = signal(false);
 
     /**
      * Initialise the courseId from the current url
      */
     ngOnInit(): void {
+        const studentExam = this.studentExam();
         // flags required to display test runs correctly
-        this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
-        this.isTestExam = this.studentExam.exam!.testExam!;
-        this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
-        this.testExamConduction = this.isTestExam && !this.studentExam.submitted;
-        this.courseId = Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId'));
-        if (!this.studentExam?.id) {
+        this.isTestRun.set(this.route.snapshot.url[1]?.toString() === 'test-runs');
+        this.isTestExam = studentExam.exam!.testExam!;
+        this.testRunConduction = this.isTestRun() && this.route.snapshot.url[3]?.toString() === 'conduction';
+        this.testExamConduction.set(this.isTestExam && !studentExam.submitted);
+        this.courseId.set(Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId')));
+        if (!studentExam?.id) {
             throw new Error('studentExam.id should be present to fetch grade info');
         }
-        if (!this.studentExam?.exam?.id) {
+        if (!studentExam?.exam?.id) {
             throw new Error('studentExam.exam.id should be present to fetch grade info');
         }
-        if (!this.studentExam?.user?.id) {
+        if (!studentExam?.user?.id) {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
 
-        if (isExamResultPublished(this.isTestRun, this.studentExam.exam, this.serverDateService)) {
+        if (isExamResultPublished(this.isTestRun(), studentExam.exam, this.serverDateService)) {
             this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.id, this.studentExam.user.id)
+                .loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam.id, studentExam.id, studentExam.user.id)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
-                    studentExamWithGrade.studentExam = this.studentExam;
-                    this.studentExamGradeInfoDTO = studentExamWithGrade;
-                    this.exerciseInfos = this.getExerciseInfos(studentExamWithGrade);
+                    studentExamWithGrade.studentExam = this.studentExam();
+                    this.studentExamGradeInfoDTO.set(studentExamWithGrade);
+                    this.exerciseInfos.set(this.getExerciseInfos(studentExamWithGrade));
                 });
         }
 
-        this.exampleSolutionPublished = !!this.studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(this.studentExam.exam.exampleSolutionPublicationDate);
+        this.exampleSolutionPublished.set(!!studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(studentExam.exam.exampleSolutionPublicationDate));
 
-        this.exerciseInfos = this.getExerciseInfos();
+        this.exerciseInfos.set(this.getExerciseInfos());
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
 
-        this.isBeforeStudentReviewEnd = this.getIsBeforeStudentReviewEnd();
-        this.isAfterStudentReviewStart = this.getIsAfterStudentReviewStart();
+        this.isBeforeStudentReviewEnd.set(this.getIsBeforeStudentReviewEnd());
+        this.isAfterStudentReviewStart.set(this.getIsAfterStudentReviewStart());
     }
 
     get resultsArePublished(): boolean | any {
-        if (this.isTestRun || this.isTestExam) {
+        if (this.isTestRun() || this.isTestExam) {
             return true;
         }
 
-        if (this.testRunConduction || this.testExamConduction) {
+        if (this.testRunConduction || this.testExamConduction()) {
             return false;
         }
 
-        if (this.studentExam?.exam?.publishResultsDate) {
-            return dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
+        const studentExam = this.studentExam();
+        if (studentExam?.exam?.publishResultsDate) {
+            return dayjs(studentExam.exam.publishResultsDate).isBefore(dayjs());
         }
 
         return false;
     }
 
     private tryLoadPlagiarismCaseInfosForStudent() {
+        const studentExam = this.studentExam();
         // If the exam has not yet ended, or we're only a few minutes after the end, we can assume that there are no plagiarism cases yet.
         // We should avoid trying to load them to reduce server load.
-        if (this.studentExam?.exam?.endDate) {
-            const endDateWithTimeExtension = dayjs(this.studentExam.exam.endDate).add(2, 'hours');
+        if (studentExam?.exam?.endDate) {
+            const endDateWithTimeExtension = dayjs(studentExam.exam.endDate).add(2, 'hours');
             if (dayjs().isBefore(endDateWithTimeExtension)) {
                 return;
             }
         }
 
-        const exerciseIds = this.studentExam?.exercises?.map((exercise) => exercise.id!);
-        if (exerciseIds?.length && this.courseId) {
-            this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId, exerciseIds).subscribe((res) => {
-                this.plagiarismCaseInfos = res.body ?? {};
+        const exerciseIds = studentExam?.exercises?.map((exercise) => exercise.id!);
+        if (exerciseIds?.length && this.courseId()) {
+            this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId(), exerciseIds).subscribe((res) => {
+                this.plagiarismCaseInfos.set(res.body ?? {});
             });
         }
     }
@@ -258,13 +260,13 @@ export class ExamResultSummaryComponent implements OnInit {
     async printPDF() {
         const stateBeforeResetting = this.expandExercisesAndGradingKeysBeforePrinting();
 
-        this.isPrinting = true;
-        this.expandProblemStatement = true;
+        this.isPrinting.set(true);
+        this.expandProblemStatement.set(true);
 
         await this.themeService.print();
 
-        this.isPrinting = false;
-        this.expandProblemStatement = false;
+        this.isPrinting.set(false);
+        this.expandProblemStatement.set(false);
 
         this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
     }
@@ -285,34 +287,34 @@ export class ExamResultSummaryComponent implements OnInit {
 
     private expandExercisesAndGradingKeysBeforePrinting() {
         const stateBeforeResetting = {
-            exerciseInfos: cloneDeep(this.exerciseInfos),
-            isGradingKeyCollapsed: cloneDeep(this.isGradingKeyCollapsed),
-            isBonusGradingKeyCollapsed: cloneDeep(this.isBonusGradingKeyCollapsed),
+            exerciseInfos: cloneDeep(this.exerciseInfos()),
+            isGradingKeyCollapsed: cloneDeep(this.isGradingKeyCollapsed()),
+            isBonusGradingKeyCollapsed: cloneDeep(this.isBonusGradingKeyCollapsed()),
         };
 
         this.expandExercises();
 
-        this.isGradingKeyCollapsed = false;
-        this.isBonusGradingKeyCollapsed = false;
+        this.isGradingKeyCollapsed.set(false);
+        this.isBonusGradingKeyCollapsed.set(false);
 
         return stateBeforeResetting;
     }
 
     private resetExpandingExercisesAndGradingKeys(stateBeforeResetting: StateBeforeResetting) {
-        this.exerciseInfos = stateBeforeResetting.exerciseInfos;
-        this.isGradingKeyCollapsed = stateBeforeResetting.isGradingKeyCollapsed;
-        this.isBonusGradingKeyCollapsed = stateBeforeResetting.isBonusGradingKeyCollapsed;
+        this.exerciseInfos.set(stateBeforeResetting.exerciseInfos);
+        this.isGradingKeyCollapsed.set(stateBeforeResetting.isGradingKeyCollapsed);
+        this.isBonusGradingKeyCollapsed.set(stateBeforeResetting.isBonusGradingKeyCollapsed);
     }
 
     private expandExercises() {
-        Object.entries(this.exerciseInfos).forEach((exerciseInfo: [string, ResultSummaryExerciseInfo]) => {
+        Object.entries(this.exerciseInfos()).forEach((exerciseInfo: [string, ResultSummaryExerciseInfo]) => {
             exerciseInfo[1].isCollapsed = false;
         });
     }
 
     public generateLink(exercise: Exercise) {
         if (exercise?.studentParticipations?.length) {
-            return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
+            return ['/courses', this.courseId(), `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
         return undefined;
     }
@@ -337,37 +339,40 @@ export class ExamResultSummaryComponent implements OnInit {
      * We only need to pass these values to the ComplaintInteractionComponent
      */
     setExamWithOnlyIdAndStudentReviewPeriod() {
+        const studentExam = this.studentExam();
         const exam = new Exam();
-        exam.id = this.studentExam?.exam?.id;
-        exam.examStudentReviewStart = this.studentExam?.exam?.examStudentReviewStart;
-        exam.examStudentReviewEnd = this.studentExam?.exam?.examStudentReviewEnd;
-        exam.course = this.studentExam?.exam?.course;
-        this.examWithOnlyIdAndStudentReviewPeriod = exam;
+        exam.id = studentExam?.exam?.id;
+        exam.examStudentReviewStart = studentExam?.exam?.examStudentReviewStart;
+        exam.examStudentReviewEnd = studentExam?.exam?.examStudentReviewEnd;
+        exam.course = studentExam?.exam?.course;
+        this.examWithOnlyIdAndStudentReviewPeriod.set(exam);
     }
 
     private getIsAfterStudentReviewStart() {
-        if (this.isTestRun || this.isTestExam) {
+        if (this.isTestRun() || this.isTestExam) {
             return true;
         }
-        if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
-            return this.serverDateService.now().isAfter(this.studentExam.exam.examStudentReviewStart);
+        const studentExam = this.studentExam();
+        if (studentExam?.exam?.examStudentReviewStart && studentExam.exam.examStudentReviewEnd) {
+            return this.serverDateService.now().isAfter(studentExam.exam.examStudentReviewStart);
         }
         return false;
     }
 
     private getIsBeforeStudentReviewEnd() {
-        if (this.isTestRun || this.isTestExam) {
+        if (this.isTestRun() || this.isTestExam) {
             return true;
         }
-        if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
-            return this.serverDateService.now().isBefore(this.studentExam.exam.examStudentReviewEnd);
+        const studentExam = this.studentExam();
+        if (studentExam?.exam?.examStudentReviewStart && studentExam.exam.examStudentReviewEnd) {
+            return this.serverDateService.now().isBefore(studentExam.exam.examStudentReviewEnd);
         }
         return false;
     }
 
     private getExerciseInfos(studentExamWithGrade?: StudentExamWithGradeDTO): Record<number, ResultSummaryExerciseInfo> {
         const exerciseInfos: Record<number, ResultSummaryExerciseInfo> = {};
-        for (const exercise of this.studentExam?.exercises ?? []) {
+        for (const exercise of this.studentExam()?.exercises ?? []) {
             if (exercise.id === undefined) {
                 this.alertService.error('artemisApp.exam.error.cannotDisplayExerciseDetails', { exerciseGroupTitle: exercise.exerciseGroup?.title });
                 const errorMessage = 'Cannot getExerciseInfos as exerciseId is undefined';
@@ -403,9 +408,10 @@ export class ExamResultSummaryComponent implements OnInit {
             return undefined;
         }
 
-        for (const achievedPointsPerExerciseKey in this.studentExamGradeInfoDTO?.achievedPointsPerExercise) {
+        const studentExamGradeInfoDTO = this.studentExamGradeInfoDTO();
+        for (const achievedPointsPerExerciseKey in studentExamGradeInfoDTO?.achievedPointsPerExercise) {
             if (Number(achievedPointsPerExerciseKey) === exerciseId) {
-                return this.studentExamGradeInfoDTO.achievedPointsPerExercise[achievedPointsPerExerciseKey];
+                return studentExamGradeInfoDTO.achievedPointsPerExercise[Number(achievedPointsPerExerciseKey)];
             }
         }
 
@@ -417,12 +423,12 @@ export class ExamResultSummaryComponent implements OnInit {
             return undefined;
         }
 
-        const exerciseGroupResultMapping = this.studentExamGradeInfoDTO?.studentResult?.exerciseGroupIdToExerciseResult;
+        const exerciseGroupResultMapping = this.studentExamGradeInfoDTO()?.studentResult?.exerciseGroupIdToExerciseResult;
         let exerciseResult = undefined;
 
         for (const key in exerciseGroupResultMapping) {
-            if (key in exerciseGroupResultMapping && exerciseGroupResultMapping[key].exerciseId === exerciseId) {
-                exerciseResult = exerciseGroupResultMapping[key];
+            if (key in exerciseGroupResultMapping && exerciseGroupResultMapping[Number(key)].exerciseId === exerciseId) {
+                exerciseResult = exerciseGroupResultMapping[Number(key)];
                 break;
             }
         }
@@ -443,7 +449,8 @@ export class ExamResultSummaryComponent implements OnInit {
             return;
         }
 
-        this.exerciseInfos[exerciseId].displayExampleSolution = !this.exerciseInfos[exerciseId].displayExampleSolution;
+        const exerciseInfos = this.exerciseInfos();
+        exerciseInfos[exerciseId].displayExampleSolution = !exerciseInfos[exerciseId].displayExampleSolution;
     }
 
     private calculateAchievedPercentageFromScoreAndMaxPoints(achievedPoints?: number, maxScore?: number, course?: Course) {
@@ -479,7 +486,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
     getAchievedPercentageByExerciseId(exerciseId?: number, studentExamWithGrade?: StudentExamWithGradeDTO | undefined): number | undefined {
         const result = this.getExerciseResultByExerciseId(exerciseId);
-        const course = this.studentExamGradeInfoDTO?.studentExam?.exam?.course;
+        const course = this.studentExamGradeInfoDTO()?.studentExam?.exam?.course;
 
         if (result === undefined) {
             return this.getAchievedPercentageFromExamResults(exerciseId, studentExamWithGrade, course);

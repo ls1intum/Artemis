@@ -22,7 +22,7 @@ const sidebars: SidebarsConfig = {
                 {
                     type: 'category',
                     label: 'Server Guidelines',
-                    items: ['guidelines/server-development', 'guidelines/rest-api', 'guidelines/server-tests', 'guidelines/database', 'guidelines/performance', 'guidelines/criteria-builder'],
+                    items: ['guidelines/server-development', 'guidelines/rest-api', 'guidelines/server-tests', 'guidelines/database', 'guidelines/caching', 'guidelines/performance', 'guidelines/criteria-builder'],
                 },
                 {
                     type: 'category',
@@ -41,10 +41,17 @@ const sidebars: SidebarsConfig = {
         'aeolus',
         'openapi',
         'docker-compose',
+        'mailpit-setup',
+        'keycloak-saml2-setup',
         'docker-debugging',
         'local-database-tests',
         'local-moodle-setup-for-lti',
         'weaviate-setup',
+        {
+            type: 'category',
+            label: 'Hyperion',
+            items: ['hyperion/consistency-check'],
+        },
     ],
 };
 

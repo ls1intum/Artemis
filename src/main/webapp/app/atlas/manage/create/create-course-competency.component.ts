@@ -1,8 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 
 @Component({
     template: '',
@@ -15,7 +15,7 @@ export abstract class CreateCourseCompetencyComponent implements OnInit {
 
     readonly documentationType: DocumentationType = 'Competencies';
 
-    isLoading: boolean;
+    readonly isLoading = signal(false);
     courseId: number;
 
     ngOnInit(): void {

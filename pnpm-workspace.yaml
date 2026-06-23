@@ -1,0 +1,130 @@
+# pnpm 11+ moved install/resolution settings out of `.npmrc` (which it now
+# ignores for everything except registry/auth/Node settings like node-options)
+# and into this file. Settings here govern the install behaviour in this
+# project root.
+
+# No hoist shim: rely on pnpm's default isolated layout. Every package the
+# project imports is declared as a direct dependency in package.json; patches
+# go through pnpm.patchedDependencies (which works on the .pnpm symlink store
+# directly, without requiring transitive deps at top-level node_modules).
+
+# Auto-install peer dependencies (default in pnpm 10, opt-in in pnpm 11).
+# Without this, peer deps are not installed, and the Angular esbuild bundle
+# fails with "Could not resolve ..." errors.
+autoInstallPeers: true
+
+# Treat the lockfile as authoritative; never silently update it during install.
+preferFrozenLockfile: true
+
+# Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
+enablePrePostScripts: true
+
+# Tell pnpm that Angular 21 is an acceptable peer for packages whose published
+# peerDependencies range still lists only "18.x || 19.x || 20.x".
+# We already pin every relevant @angular/* dep under ng-mocks
+# to ^21.2.0 via the `overrides:` block below; this block just suppresses
+# the cosmetic peer-range warning that overrides do not silence on their own.
+# When ng-mocks publishes a release that declares Angular 21 in its
+# peer range, this block (and the matching overrides) can be removed.
+peerDependencyRules:
+    allowedVersions:
+        '@angular/animations': '21'
+        '@angular/cdk': '21'
+        '@angular/common': '21'
+        '@angular/compiler': '21'
+        '@angular/core': '21'
+        '@angular/forms': '21'
+        '@angular/platform-browser': '21'
+        '@angular/platform-browser-dynamic': '21'
+        '@angular/router': '21'
+
+# Dependency overrides. pnpm 11 reads overrides from this file in preference to
+# the legacy `pnpm.overrides` block in package.json. We pin a handful of
+# transitive packages to CVE-patched versions and force Angular 21 across the
+# ng-mocks subtree (still on an older peer range).
+overrides:
+    'ng-mocks>@angular/common': '^21.2.0'
+    'ng-mocks>@angular/core': '^21.2.0'
+    'ng-mocks>@angular/forms': '^21.2.0'
+    'ng-mocks>@angular/platform-browser': '^21.2.0'
+    'ng-mocks>@angular/platform-browser-dynamic': '^21.2.0'
+    'ng-mocks>@angular/router': '^21.2.0'
+    'ng-mocks>rxjs': '^7.8.2'
+    'babel-plugin-istanbul>test-exclude': '8.0.0'
+    '@babel/core': '7.29.7'
+    '@babel/runtime': '7.29.2'
+    '@babel/plugin-transform-modules-systemjs': '7.29.4'
+    '@primeuix/styled': '0.7.4'
+    '@sinonjs/fake-timers': '15.4.0'
+    ajv: '8.20.0'
+    braces: '3.0.3'
+    cookie: '1.1.1'
+    debug: '4.4.3'
+    diff: '9.0.0'
+    dompurify: '3.4.11'
+    esbuild: '0.28.1'
+    express: '5.2.1'
+    fast-uri: '3.1.2'
+    globals: '17.6.0'
+    hono: '4.12.25'
+    '@hono/node-server': '1.19.13'
+    http-proxy-middleware: '3.0.7'
+    ip-address: '10.2.0'
+    js-yaml: '4.2.0'
+    jsdom: '29.1.1'
+    katex: '0.17.0'
+    minimatch: '10.2.5'
+    piscina: '5.2.0'
+    postcss: '8.5.14'
+    punycode: '2.3.1'
+    # @tumaet/apollon 4.7.0 requires react/react-dom ^19 as peers. Artemis embeds
+    # Apollon but has no direct React code, so force the whole React subtree to 19
+    # (matches the version used in the documentation/ project).
+    react: '19.2.7'
+    react-dom: '19.2.7'
+    semver: '7.8.0'
+    serialize-javascript: '7.0.5'
+    tmp: '0.2.5'
+    tough-cookie: '6.0.1'
+    undici: '7.28.0'
+    uuid: '14.0.0'
+    vite: '7.3.5'
+    webpack: '5.106.2'
+    webpack-dev-middleware: '7.4.5'
+    webpack-dev-server: '5.2.5'
+    word-wrap: '1.2.5'
+    ws: '8.21.0'
+    yargs-parser: '22.0.0'
+
+# Patch files applied by pnpm to specific transitive dependencies during install
+# (the pnpm-native replacement for the old patch-package/postinstall flow).
+patchedDependencies:
+    'eslint@10.5.0': 'patches/eslint+10.5.0.patch'
+
+# Allowlist of dependencies permitted to run install-time build / lifecycle scripts.
+# pnpm 11 blocks build scripts by default; these are needed for native bindings
+# (@swc/core, esbuild, @parcel/watcher, lmdb, msgpackr-extract, unrs-resolver),
+# polyfill setup (core-js), or our own dev-time hooks (husky).
+allowBuilds:
+    '@parcel/watcher': true
+    '@swc/core': true
+    core-js: true
+    esbuild: true
+    husky: true
+    lmdb: true
+    msgpackr-extract: true
+    unrs-resolver: true
+
+# Acknowledged audit advisories that `pnpm audit` should not flag.
+# GHSA-8988-4f7v-96qf (@opentelemetry/core < 2.8.0, moderate: unbounded memory
+# allocation in W3C Baggage propagation) reaches us only through the dev-only
+# chain lighthouse > @sentry/node@9 > @opentelemetry/core@1.30.1. It is never
+# bundled into the production WAR and processes no untrusted baggage in our usage.
+# The fix exists only in @opentelemetry/core >= 2.8.0 (the OTel 2.x train), which
+# requires @sentry/node >= 10; lighthouse (latest 13.4.0) still pins @sentry/node@^9,
+# so there is no in-range upgrade. Revisit when lighthouse moves to @sentry/node 10.
+# (The server-side Java equivalent, GHSA-rcgg-9c38-7xpx, is already handled via
+# opentelemetry_version=1.62.0 in gradle.properties.)
+auditConfig:
+    ignoreGhsas:
+        - 'GHSA-8988-4f7v-96qf'

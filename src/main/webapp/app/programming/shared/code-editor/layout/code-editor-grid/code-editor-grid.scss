@@ -7,8 +7,9 @@
     grid-template-rows: min-content auto auto;
     row-gap: 10px;
 
-    // In assessment context, the wrapper is inside assessment-layout which handles scrolling
-    // In non-assessment context (e.g., student code editor), constrain to viewport
+    /* In assessment context, the wrapper is inside assessment-layout which handles scrolling */
+
+    /* In non-assessment context (e.g., student code editor), constrain to viewport */
     &:not(.assessment-wrapper) {
         max-height: 100vh;
         overflow: hidden;
@@ -99,9 +100,30 @@
         }
     }
 
-    // In non-assessment mode, constrain the bottom section to fit in the viewport
+    /* In non-assessment mode, constrain the bottom section to fit in the viewport */
     &:not(.assessment-wrapper) .editor-bottom {
         max-height: calc(100vh - 550px);
+    }
+}
+
+/* ==========================================================================
+   Shared secondary header (used by file browser, Monaco editor, and build output)
+   ========================================================================== */
+
+.card-second-header {
+    display: flex;
+    align-items: center;
+    min-height: 38px;
+    padding: 0 0.25rem;
+    background-color: var(--code-editor-file-browser-header-background);
+    border-bottom: 1px solid var(--code-editor-file-browser-header-border);
+
+    /* Normalize heading elements used as panel titles so all secondary headers match the button height */
+    h3,
+    h4 {
+        font-size: 1rem;
+        font-weight: 500;
+        margin: 0;
     }
 }
 

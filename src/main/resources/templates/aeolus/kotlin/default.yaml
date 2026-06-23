@@ -1,9 +1,0 @@
-api: v0.0.1
-actions:
-  - name: maven
-    script: mvn clean test
-    runAlways: false
-    results:
-      - name: junit
-        path: '**/target/surefire-reports/*.xml'
-        type: junit

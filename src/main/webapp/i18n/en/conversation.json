@@ -172,7 +172,12 @@
                     "muteChannel": "Mute Channel",
                     "notificationsDisabled": "Course-wide notifications are disabled.",
                     "seeSettingsPrefix": " See",
-                    "seeSettingsLink": "notification settings."
+                    "seeSettingsLink": "notification settings.",
+                    "muted": "Muted",
+                    "unmuted": "Unmuted",
+                    "saving": "Saving...",
+                    "saved": "Saved",
+                    "unsaved": "Unsaved"
                 }
             },
             "addUsers": {

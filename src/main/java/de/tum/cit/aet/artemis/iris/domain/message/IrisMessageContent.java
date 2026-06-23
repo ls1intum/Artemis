@@ -8,8 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ConcreteProxy;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -23,7 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @Table(name = "iris_message_content")
 @Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "discriminator")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@ConcreteProxy
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off
 @JsonSubTypes({

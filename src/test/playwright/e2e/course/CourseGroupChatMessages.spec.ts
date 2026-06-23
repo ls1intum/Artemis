@@ -19,7 +19,8 @@ const studentTwoName = 'Student Two';
  * Deletes a specific group chat from the database.
  * Group chats have no REST delete API, so we use SQL via docker exec.
  */
-function deleteGroupChatFromDB(conversationId: number) {
+function deleteGroupChatFromDB(conversationId: number | undefined) {
+    if (conversationId === undefined) return;
     try {
         const sql = `DELETE FROM conversation_participant WHERE conversation_id = ${conversationId}; DELETE FROM post WHERE conversation_id = ${conversationId}; DELETE FROM conversation WHERE id = ${conversationId};`;
         execSync(`docker exec artemis-postgres psql -U Artemis -d Artemis -c "${sql}"`, { timeout: 5000, encoding: 'utf-8' });
@@ -87,7 +88,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             groupChat = await communicationAPIRequests.createCourseMessageGroupChat(course2, [studentTwo.username, tutor.username]);
         });
 
-        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id!));
+        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id));
 
         test('Tutors should be able to add a user to group chat', async ({ login, courseMessages, page }) => {
             await login(tutor);
@@ -127,7 +128,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await communicationAPIRequests.updateCourseMessageGroupChatName(course2, groupChat, groupChatName);
         });
 
-        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id!));
+        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id));
 
         test('Tutors should be able to leave a group chat', async ({ login, courseMessages, page }) => {
             await login(tutor);
@@ -163,7 +164,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             groupChat = await communicationAPIRequests.createCourseMessageGroupChat(course2, [studentOne.username, tutor.username]);
         });
 
-        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id!));
+        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id));
 
         test('Students should be able to write a message in group chat', async ({ login, courseMessages }) => {
             await login(studentOne);
@@ -178,7 +179,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await login(studentOne);
             const messageText = 'Student Edit Test Message';
             const message = await communicationAPIRequests.createCourseMessage(course2, groupChat.id!, 'groupChat', messageText);
-            await courseMessages.openConversation(course2.id!, groupChat.id!);
+            await courseMessages.openConversationAndWaitForPost(course2.id!, groupChat.id!, message.id!);
             await courseMessages.checkMessage(message.id!, messageText);
             const newMessage = 'Edited Text';
             await courseMessages.editMessage(message.id!, newMessage);
@@ -190,7 +191,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await login(studentOne);
             const messageText = 'Student Delete Test Message';
             const message = await communicationAPIRequests.createCourseMessage(course2, groupChat.id!, 'groupChat', messageText);
-            await courseMessages.openConversation(course2.id!, groupChat.id!);
+            await courseMessages.openConversationAndWaitForPost(course2.id!, groupChat.id!, message.id!);
             await courseMessages.checkMessage(message.id!, messageText);
             await courseMessages.deleteMessage(message.id!);
             await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible({ timeout: 20000 });

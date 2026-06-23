@@ -1,12 +1,12 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, input, output } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, input, output, signal } from '@angular/core';
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Subject, Subscription } from 'rxjs';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
 import { NgbDropdown, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**
  * A file name that additionally stores if a plagiarism match has been found for it.
@@ -32,7 +32,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
     readonly selectFile = output<string>();
 
-    public showFiles = false;
+    readonly showFiles = signal(false);
     public activeFileIndex = 0;
 
     private fileSelectSubscription?: Subscription;
@@ -41,7 +41,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
 
     // Icons
     faChevronDown = faChevronDown;
-    hoveredFileIndex: number;
+    readonly hoveredFileIndex = signal<number>(undefined!);
 
     ngOnInit(): void {
         this.subscribeToFileSelection();
@@ -67,7 +67,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
         if (index >= 0) {
             this.handleFileSelect(file, index, false);
         } else {
-            this.showFiles = false;
+            this.showFiles.set(false);
         }
     }
 
@@ -98,7 +98,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
     private handleDropdownHover(file: FileWithHasMatch, idx: number): void {
         const index = this.files()[idx]?.file === file.file ? idx : this.getIndexOf(file);
 
-        this.hoveredFileIndex = index >= 0 ? index : -1;
+        this.hoveredFileIndex.set(index >= 0 ? index : -1);
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -139,7 +139,7 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
             file.hasMatch = true;
         }
         this.activeFileIndex = idx;
-        this.showFiles = false;
+        this.showFiles.set(false);
         this.selectFile.emit(file.file);
     }
 
@@ -154,10 +154,10 @@ export class SplitPaneHeaderComponent implements OnChanges, OnInit, OnDestroy {
      */
     toggleShowFiles(propagateChanges: boolean, showFiles?: boolean): void {
         if (this.hasFiles()) {
-            this.showFiles = showFiles !== undefined ? showFiles : !this.showFiles;
+            this.showFiles.set(showFiles !== undefined ? showFiles : !this.showFiles());
 
             if (propagateChanges) {
-                this.showFilesSubject()!.next(this.showFiles);
+                this.showFilesSubject()!.next(this.showFiles());
             }
         }
     }

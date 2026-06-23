@@ -1,26 +1,5 @@
-@if (displayHeader() && fileUploadExercise() && participation()) {
-    <jhi-header-participation-page class="d-block mb-4" [exercise]="$any(fileUploadExercise())" [participation]="$any(participation())">
-        <span pagetitle>
-            {{ 'artemisApp.fileUploadSubmission.fileUpload' | artemisTranslate }}:
-            <span class="font-weight-normal">{{ examMode() ? fileUploadExercise()?.exerciseGroup?.title : fileUploadExercise()?.title }}</span>
-        </span>
-        <ng-container submitbutton>
-            @if (isOwnerOfParticipation()) {
-                <jhi-button
-                    id="submit"
-                    [disabled]="(!isActive() && !isLate()) || !submission() || !submissionFile() || !!result()"
-                    [title]="!isLate() ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                    (onClick)="submitExercise()"
-                    [btnType]="!isLate() ? ButtonType.PRIMARY : ButtonType.WARNING"
-                    [tooltip]="submitButtonTooltip()"
-                    [isLoading]="isSaving()"
-                />
-            }
-        </ng-container>
-    </jhi-header-participation-page>
-}
 @if (fileUploadExercise()) {
-    <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()">
+    <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()" [showRightPanel]="showProblemStatement() && examMode()">
         <!--region Left Panel-->
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">
@@ -86,7 +65,16 @@
                     <div class="row">
                         @if (unreferencedFeedback(); as feedback) {
                             @if (feedback.length) {
-                                <jhi-additional-feedback class="col-xl-8 alert unreferencedFeedback" [feedback]="feedback" [additional]="false" [course]="course()" />
+                                <div id="additional-feedback" class="col-xl-8">
+                                    @for (f of feedback; track f.id) {
+                                        <jhi-unified-feedback
+                                            [feedback]="f"
+                                            [feedbackContent]="buildFeedbackTextForReview(f)"
+                                            [points]="f.credits || 0"
+                                            [scoreAccuracy]="course()?.accuracyOfScores"
+                                        />
+                                    }
+                                </div>
                             }
                         }
                     </div>

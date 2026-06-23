@@ -1,0 +1,26 @@
+<div class="video-wrapper" #videoWrapper [class.is-resizing]="isResizing()">
+    <div class="video-column" #videoColumn>
+        <youtube-player
+            [videoId]="videoId()"
+            [disableCookies]="true"
+            [disablePlaceholder]="true"
+            [playerVars]="playerVars"
+            [startSeconds]="startSeconds()"
+            (ready)="onPlayerReady($event)"
+            (stateChange)="onStateChange($event)"
+            (error)="onPlayerError($event)"
+        />
+    </div>
+    <button
+        type="button"
+        class="resizer-handle"
+        #resizerHandle
+        (dblclick)="resetSplitRatio()"
+        (keydown.enter)="resetSplitRatio()"
+        (keydown.space)="resetSplitRatio(); $event.preventDefault()"
+        [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
+    >
+        <fa-icon [icon]="faGripLinesVertical" [attr.aria-hidden]="true" />
+    </button>
+    <jhi-transcript-viewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
+</div>

@@ -1,0 +1,34 @@
+- name: compile
+  script: |-
+    # Artemis replaces the variable on the right hand side with a concrete value
+    export studentParentWorkingDirectoryName="${studentParentWorkingDirectoryName}"
+    export solutionWorkingDirectory="${solutionWorkingDirectory}"
+
+    # the build process is specified in `run.sh` in the test repository
+    # -s enables the safe testing mode
+    chmod +x run.sh
+    ./run.sh -s --only compile
+- name: run_structural_tests
+  script: |-
+    # Artemis replaces the variable on the right hand side with a concrete value
+    export studentParentWorkingDirectoryName="${studentParentWorkingDirectoryName}"
+    export solutionWorkingDirectory="${solutionWorkingDirectory}"
+
+    # the build process is specified in `run.sh` in the test repository
+    # -s enables the safe testing mode
+    chmod +x run.sh
+    ./run.sh -s
+  resultPaths:
+    - 'test-reports/results.xml'
+- name: run_behavior_tests
+  script: |-
+    # Artemis replaces the variable on the right hand side with a concrete value
+    export studentParentWorkingDirectoryName="${studentParentWorkingDirectoryName}"
+    export solutionWorkingDirectory="${solutionWorkingDirectory}"
+
+    # the build process is specified in `run.sh` in the test repository
+    # -s enables the safe testing mode
+    chmod +x run.sh
+    ./run.sh -s
+  resultPaths:
+    - 'test-reports/results.xml'

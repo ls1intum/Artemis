@@ -153,6 +153,14 @@ Template: public class ClientRecord { ... }
 Analysis: Same entity with different names - students cannot map requirements to implementation
 ```
 
+## ✅ TRUE POSITIVE (FLAG THIS):
+```
+Problem/Solution/File path imply "BubbleSort"
+Template file: src/.../BubbleSort.java
+Template declaration: public class QuickSort { ... }
+Analysis: Public type identifier conflicts with file/entity naming; classify as IDENTIFIER_NAMING_INCONSISTENCY.
+```
+
 # SEVERITY GUIDELINES
 - **HIGH**: Completely different names for same concept, making requirement mapping impossible
 - **MEDIUM**: Similar but inconsistent names that require cognitive effort to map
@@ -167,6 +175,16 @@ Analysis: Same entity with different names - students cannot map requirements to
 - For problem statement locations, use `problem_statement.md`.
 - If you cannot identify a valid existing file path from the context, do not emit that repository location.
 
+# LINE RANGE + INLINE FIX RULES (MANDATORY)
+- `relatedLocations[].startLine` and `relatedLocations[].endLine` must cover the smallest possible contiguous range needed for the inconsistency.
+- Prefer single-line ranges whenever possible, especially for simple renames.
+- Do not include surrounding unchanged lines for extra context.
+- Extend each location with `relatedLocations[].inlineFixOperation`: `NONE`, `REPLACE`, or `DELETE`.
+- Use `REPLACE` only if that location needs a direct replacement and the fix is simple/local (e.g., rename, method/parameter identifier alignment). Then set `suggestedInlineFix` to the exact replacement.
+- Use `DELETE` only if the correct fix is deleting the selected lines. Then set `suggestedInlineFix` to an empty string.
+- Use `NONE` when the location does not need a direct replacement, or the fix is complex/non-local. Then set `suggestedInlineFix` to `null`.
+- When present, `relatedLocations[].suggestedInlineFix` must be the exact replacement code for lines `startLine..endLine` only (no explanations, no markdown).
+
 # OUTPUT FORMAT
 Use real paths from the provided context. The file paths in this JSON snippet are illustrative examples only.
 ```json
@@ -176,27 +194,33 @@ Use real paths from the provided context. The file paths in this JSON snippet ar
       "description": "Precise explanation of the naming inconsistency and how it affects student conceptual mapping",
       "severity": "HIGH" | "MEDIUM" | "LOW",
       "category": "IDENTIFIER_NAMING_INCONSISTENCY",
-    "relatedLocations": [
+      "relatedLocations": [
         {
           "type": "TEMPLATE_REPOSITORY",
-      "filePath": "src/etc/BubbleSort.java",
-      "startLine": 1,
-      "endLine": 10
+          "filePath": "src/etc/BubbleSort.java",
+          "startLine": 18,
+          "endLine": 18,
+          "inlineFixOperation": "REPLACE",
+          "suggestedInlineFix": "public double calculateTotal() {"
         },
         {
           "type": "TESTS_REPOSITORY",
-      "filePath": "test/etc/MethodTest.java",
-      "startLine": 12,
-      "endLine": 20
+          "filePath": "test/etc/MethodTest.java",
+          "startLine": 24,
+          "endLine": 24,
+          "inlineFixOperation": "REPLACE",
+          "suggestedInlineFix": "assertEquals(42.0, order.calculateTotal());"
         },
         {
           "type": "PROBLEM_STATEMENT",
-      "filePath": "problem_statement.md",
-      "startLine": 5,
-      "endLine": 8
+          "filePath": "problem_statement.md",
+          "startLine": 5,
+          "endLine": 5,
+          "inlineFixOperation": "NONE",
+          "suggestedInlineFix": null
         }
       ],
-    "suggestedFix": "Specific naming correction that aligns conceptual entities while preserving educational intent"
+      "suggestedFix": "High-level naming alignment summary that matches the per-location inline replacements."
     }
   ]
 }

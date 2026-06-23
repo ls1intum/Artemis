@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -6,14 +6,14 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
 import { PostComponent } from 'app/communication/post/post.component';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 @Component({
@@ -22,34 +22,45 @@ import { ConversationSelectionState } from 'app/communication/shared/course-conv
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
     imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
 })
-export class ConversationThreadSidebarComponent implements AfterViewInit {
-    @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
+export class ConversationThreadSidebarComponent implements AfterViewInit, OnDestroy {
+    readonly scrollBody = viewChild<ElementRef<HTMLDivElement>>('scrollBody');
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
     threadContainer = viewChild<ElementRef>('threadContainer');
 
-    @Input()
-    readOnlyMode = false;
-    @Input()
-    set activeConversation(conversation: ConversationDTO | Conversation) {
-        this.conversation = conversation as ConversationDTO;
-        this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
-    }
-    @Input()
-    set activePost(activePost: Post) {
-        this.post = activePost;
-        this.createdAnswerPost = this.createEmptyAnswerPost();
-    }
+    readonly readOnlyMode = input(false);
+    readonly activeConversation = input<ConversationDTO | Conversation>();
+    readonly activePost = input<Post>();
 
     course = input<Course>();
 
-    @Output()
-    closePostThread = new EventEmitter<void>();
+    readonly closePostThread = output<void>();
     private readonly conversationSelectionState = inject(ConversationSelectionState);
 
-    post?: Post;
-    createdAnswerPost: AnswerPost;
-    conversation: ConversationDTO;
-    hasChannelModerationRights = false;
+    constructor() {
+        effect(() => {
+            const conversation = this.activeConversation();
+            untracked(() => {
+                if (conversation) {
+                    this.conversation.set(conversation as ConversationDTO);
+                    this.hasChannelModerationRights.set(getAsChannelDTO(this.conversation())?.hasChannelModerationRights ?? false);
+                }
+            });
+        });
+        effect(() => {
+            const activePost = this.activePost();
+            untracked(() => {
+                if (activePost) {
+                    this.post.set(activePost);
+                    this.createdAnswerPost.set(this.createEmptyAnswerPost());
+                }
+            });
+        });
+    }
+
+    readonly post = signal<Post | undefined>(undefined);
+    readonly createdAnswerPost = signal<AnswerPost>(undefined!);
+    readonly conversation = signal<ConversationDTO>(undefined!);
+    readonly hasChannelModerationRights = signal(false);
 
     // Icons
     faXmark = faXmark;
@@ -59,7 +70,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     readonly faExpand = faExpand;
     readonly faCompress = faCompress;
 
-    isExpanded = false;
+    readonly isExpanded = signal(false);
 
     /**
      * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
@@ -68,7 +79,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     createEmptyAnswerPost(): AnswerPost {
         const answerPost = new AnswerPost();
         answerPost.content = '';
-        answerPost.post = this.post;
+        answerPost.post = this.post();
         return answerPost;
     }
 
@@ -82,7 +93,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         if (this.threadContainer()) {
             this.threadContainer()!.nativeElement.style.width = '';
         }
-        this.isExpanded = !this.isExpanded;
+        this.isExpanded.update((expanded) => !expanded);
         this.expandTooltip()?.close();
     }
 
@@ -94,11 +105,13 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         this.conversationSelectionState.setOpenPostId(undefined);
     }
 
+    private interactable: ReturnType<typeof interact> | undefined;
+
     /**
      * makes message thread section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
-        interact('.expanded-thread')
+        this.interactable = interact('.expanded-thread')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
@@ -122,9 +135,13 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
             });
     }
 
+    ngOnDestroy(): void {
+        this.interactable?.unset();
+    }
+
     scrollEditorIntoView(): void {
-        this.scrollBody?.nativeElement?.scrollTo({
-            top: this.scrollBody.nativeElement.scrollHeight,
+        this.scrollBody()?.nativeElement?.scrollTo({
+            top: this.scrollBody()?.nativeElement.scrollHeight,
             behavior: 'instant',
         });
     }

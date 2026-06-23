@@ -4,7 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,9 +20,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
+import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.service.AtlasAgentSessionCacheService.MessagePreviewData;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 
 @ExtendWith(MockitoExtension.class)
@@ -31,13 +42,16 @@ class AtlasAgentSessionCacheServiceTest {
     @Mock
     private Cache relationsCache;
 
+    @Mock
+    private HazelcastInstance mockHazelcastInstance;
+
     private AtlasAgentSessionCacheService service;
 
     private static final String SESSION_ID = "course_1_user_1";
 
     @BeforeEach
     void setUp() {
-        service = new AtlasAgentSessionCacheService(cacheManager);
+        service = new AtlasAgentSessionCacheService(cacheManager, mockHazelcastInstance);
     }
 
     @Test
@@ -94,6 +108,38 @@ class AtlasAgentSessionCacheServiceTest {
         service.clearCachedRelationOperations(SESSION_ID);
 
         verify(relationsCache).evict(SESSION_ID);
+    }
+
+    @Test
+    void shouldNotLoseEntriesUnderConcurrentStoreCalls() throws Exception {
+        // Use a real local Hazelcast instance so the distributed IMap.lock() contract is actually exercised.
+        HazelcastInstance hazelcast = Hazelcast.newHazelcastInstance(new Config().setClusterName("atlas-session-cache-test-" + System.nanoTime()));
+        try {
+            AtlasAgentSessionCacheService realService = new AtlasAgentSessionCacheService(cacheManager, hazelcast);
+
+            int threads = 32;
+            ExecutorService pool = Executors.newFixedThreadPool(threads);
+            CountDownLatch start = new CountDownLatch(1);
+            List<Future<?>> futures = new ArrayList<>();
+            for (int i = 0; i < threads; i++) {
+                int idx = i;
+                futures.add(pool.submit(() -> {
+                    start.await();
+                    realService.storePreviewForMessage(SESSION_ID, idx, new MessagePreviewData(null, null, null, null));
+                    return null;
+                }));
+            }
+            start.countDown();
+            for (Future<?> f : futures) {
+                f.get(10, TimeUnit.SECONDS);
+            }
+            pool.shutdown();
+
+            assertThat(realService.getPreviewHistory(SESSION_ID)).hasSize(threads);
+        }
+        finally {
+            hazelcast.shutdown();
+        }
     }
 
     @Test

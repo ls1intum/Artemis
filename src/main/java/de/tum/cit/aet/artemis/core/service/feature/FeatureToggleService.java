@@ -13,10 +13,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.core.service.RateLimitConfigurationService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 @Profile(PROFILE_CORE)
@@ -30,6 +30,9 @@ public class FeatureToggleService {
 
     @Value("${artemis.science.event-logging.enable:false}")
     private boolean scienceEnabledOnStart;
+
+    @Value("${artemis.iris.lecture-content-processing.enabled:false}")
+    private boolean lectureContentProcessingEnabledOnStart;
 
     private final boolean globalSearchEnabledOnStart;
 
@@ -77,10 +80,11 @@ public class FeatureToggleService {
         DistributedMap<Feature, Boolean> features = distributedDataAccessService.getDistributedFeatures();
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except the Science API, TutorSuggestions, AtlasML, AtlasAgent, and RateLimit) are enabled once the system starts up
+        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, GlobalSearch, and AutonomousTutor) are
+        // enabled once the system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
-                    && feature != Feature.RateLimit && feature != Feature.GlobalSearch) {
+                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor) {
                 features.put(feature, true);
             }
         }
@@ -101,12 +105,19 @@ public class FeatureToggleService {
             features.put(Feature.AtlasML, false);
         }
 
+        if (!features.containsKey(Feature.Memiris)) {
+            features.put(Feature.Memiris, false);
+        }
+
         if (!features.containsKey(Feature.GlobalSearch)) {
             features.put(Feature.GlobalSearch, globalSearchEnabledOnStart);
         }
 
+        if (!features.containsKey(Feature.AutonomousTutor)) {
+            features.put(Feature.AutonomousTutor, false);
+        }
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
-        if (profileService.isDevActive()) {
+        if (profileService.isDevActive() && !lectureContentProcessingEnabledOnStart) {
             features.put(Feature.LectureContentProcessing, false);
         }
 

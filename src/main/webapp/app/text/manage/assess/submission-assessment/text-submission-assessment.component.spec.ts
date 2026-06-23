@@ -11,8 +11,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
@@ -31,22 +31,22 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
-import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
+import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -56,7 +56,7 @@ import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-b
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -216,7 +216,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should create and set parameters correctly', async () => {
         expect(component).not.toBeNull();
         await component.ngOnInit();
-        expect(component.isTestRun).toBe(false);
+        expect(component.isTestRun()).toBe(false);
         expect(component.exerciseId).toBe(1);
         expect(component.examId).toBe(2);
     });
@@ -246,7 +246,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         // Call validateFeedback which updates the total score
         component.validateFeedback();
 
-        expect(component.totalScore).toBe(42);
+        expect(component.totalScore()).toBe(42);
     });
 
     it('should save the assessment with correct parameters', async () => {
@@ -282,7 +282,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const errorStub = vi.spyOn(alertService, 'error');
 
-        component.assessmentsAreValid = false;
+        component.assessmentsAreValid.set(false);
         component.submit();
 
         expect(errorStub).toHaveBeenCalledOnce();
@@ -303,7 +303,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const errorStub = vi.spyOn(alertService, 'error');
 
         // add an unreferenced feedback to make the assessment invalid
-        component.unreferencedFeedback = [new Feedback()];
+        component.unreferencedFeedback.set([new Feedback()]);
 
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
 
@@ -319,7 +319,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         unreferencedFeedback.detailText = 'gj';
         unreferencedFeedback.type = FeedbackType.MANUAL_UNREFERENCED;
         unreferencedFeedback.id = 1;
-        component.unreferencedFeedback = [unreferencedFeedback];
+        component.unreferencedFeedback.set([unreferencedFeedback]);
 
         const updateAssessmentAfterComplaintStub = vi.spyOn(textAssessmentService, 'updateAssessmentAfterComplaint');
         const serverResponse = serverReturnsError ? throwError(() => new HttpErrorResponse({ status: 400 })) : of(new HttpResponse({ body: new Result() }));
@@ -368,14 +368,14 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should not submit if result was not saved', () => {
         const submitSpy = vi.spyOn(textAssessmentService, 'submit');
-        component.result!.id = undefined;
+        component.result()!.id = undefined;
         component.submit();
         expect(submitSpy).not.toHaveBeenCalled();
     });
 
     it('should handle error if saving fails', async () => {
         component['setPropertiesFromServerResponse'](participation);
-        component.assessmentsAreValid = true;
+        component.assessmentsAreValid.set(true);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -385,7 +385,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.save();
 
         expect(errorStub).toHaveBeenCalledOnce();
-        expect(component.saveBusy).toBe(false);
+        expect(component.saveBusy()).toBe(false);
     });
 
     it('should invoke import example submission', () => {
@@ -454,7 +454,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should not allow tutors to override after the assessment due date', () => {
         component.exercise!.isAtLeastInstructor = false;
         component.exercise!.assessmentDueDate = dayjs().subtract(1, 'day');
-        component.complaint = undefined;
+        component.complaint.set(undefined);
         expect(component.canOverride).toBe(false);
     });
 
@@ -515,7 +515,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should load feedback suggestions', async () => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
-        component.unreferencedFeedback = [];
+        component.unreferencedFeedback.set([]);
         const feedbackSuggestionTextBlockRef = createTextBlockRefWithFeedbackFromTo(0, 10);
         feedbackSuggestionTextBlockRef.feedback!.text = "I'm a feedback suggestion";
         const athenaServiceFeedbackSuggestionsStub = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([feedbackSuggestionTextBlockRef]));
@@ -655,7 +655,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     ])('should never create overlapping blocks even with overlapping feedback suggestions', ({ input, output }: { input: number[][]; output: number[][] }) => {
         // preparation already added an assessment, but we need to remove it to test the loading
         component.textBlockRefs = [];
-        component.unreferencedFeedback = [];
+        component.unreferencedFeedback.set([]);
 
         // Set up initial state with an existing text block that doesn't overlap
         const feedbackSuggestions = input.map(([start, end]) => createTextBlockRefWithFeedbackFromTo(start, end));
@@ -690,19 +690,19 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     it('should validate assessments on component init', async () => {
-        component.assessmentsAreValid = false;
+        component.assessmentsAreValid.set(false);
         await component.ngOnInit();
-        expect(component.assessmentsAreValid).toBe(true);
+        expect(component.assessmentsAreValid()).toBe(true);
     });
 
     it('should allow overriding directly after submitting', async () => {
-        component.isAssessor = true;
+        component.isAssessor.set(true);
         component.submit();
         expect(component.canOverride).toBe(true);
     });
 
     it('should not invalidate assessment after saving', async () => {
         component.save();
-        expect(component.assessmentsAreValid).toBe(true);
+        expect(component.assessmentsAreValid()).toBe(true);
     });
 });

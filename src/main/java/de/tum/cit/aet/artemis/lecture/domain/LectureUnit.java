@@ -22,8 +22,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ConcreteProxy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -32,17 +31,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 @Table(name = "lecture_unit")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("L")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@ConcreteProxy
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
@@ -79,12 +78,11 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "lecture_id", nullable = false)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Lecture lecture;
 
+    // No @Cache here on purpose: mutated whenever competencies are linked / unlinked. See #12574 / #12584.
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("lectureUnit")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     protected Set<CompetencyLectureUnitLink> competencyLinks = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
@@ -146,18 +144,12 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
 
     /**
      * Checks if the lecture unit is visible to the students.
-     * A lecture unit is visible to the students if the lecture is visible to the students and the release date is null or in the past.
+     * A lecture unit is visible to the students if the release date is null or in the past.
      *
      * @return true if the lecture unit is visible to the students, false otherwise
      */
     @JsonProperty("visibleToStudents")
     public boolean isVisibleToStudents() {
-        /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
-        /* TODO: #11479 - remove the commented out code OR comment back in */
-        // if (lecture == null || !lecture.isVisibleToStudents()) {
-        // return false;
-        // }
-
         if (releaseDate == null) {
             return true;
         }

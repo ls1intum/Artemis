@@ -1,25 +1,27 @@
-import { Component, inject, model } from '@angular/core';
+import { Component, inject, model, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ExerciseComponent } from 'app/exercise/exercise.component';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { ExerciseComponent } from 'app/exercise/exercise.component';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { SortService } from 'app/foundation/service/sort.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exercise-manage-buttons.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
@@ -37,21 +39,20 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
         QuizExerciseManageButtonsComponent,
         DeleteButtonDirective,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class QuizExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService); // needed in html code
     protected quizExerciseService = inject(QuizExerciseService); // needed in html code
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
 
     readonly ActionType = ActionType;
-    readonly QuizStatus = QuizStatus;
     readonly QuizMode = QuizMode;
 
     readonly quizExercises = model<QuizExercise[]>([]);
-    filteredQuizExercises: QuizExercise[] = [];
+    readonly filteredQuizExercises = signal<QuizExercise[]>([]);
 
     // Icons
     faSort = faSort;
@@ -62,12 +63,13 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     protected loadExercises(): void {
-        this.quizExerciseService.findForCourse(this.courseId).subscribe({
+        this.quizExerciseService.findForCourse(this.courseId()).subscribe({
             next: (res: HttpResponse<QuizExercise[]>) => {
                 const quizExercises = res.body!;
                 // reconnect exercise with course
                 quizExercises.forEach((exercise) => {
-                    exercise.course = this.course;
+                    exercise.type = ExerciseType.QUIZ;
+                    exercise.course = this.courseContext();
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
@@ -81,7 +83,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                             exercise.startDate = exercise.quizBatches[0].startTime;
                         }
                     }
-                    this.selectedExercises = [];
+                    this.selectedExercises.set([]);
                 });
                 this.quizExercises.set(quizExercises);
                 this.emitExerciseCount(quizExercises.length);
@@ -92,8 +94,8 @@ export class QuizExerciseComponent extends ExerciseComponent {
     }
 
     protected applyFilter(): void {
-        this.filteredQuizExercises = this.quizExercises().filter((exercise) => this.filter.matchesExercise(exercise));
-        this.emitFilteredExerciseCount(this.filteredQuizExercises.length);
+        this.filteredQuizExercises.set(this.quizExercises().filter((exercise) => this.filter.matchesExercise(exercise)));
+        this.emitFilteredExerciseCount(this.filteredQuizExercises().length);
     }
 
     /**
@@ -135,6 +137,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     handleNewQuizExercise(newQuizExercise: QuizExercise) {
         const index = this.quizExercises().findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
+        newQuizExercise.type = ExerciseType.QUIZ;
         newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course);
         newQuizExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(newQuizExercise.course);
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course);

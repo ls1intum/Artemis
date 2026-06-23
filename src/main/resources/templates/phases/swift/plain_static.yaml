@@ -1,0 +1,34 @@
+- name: setup
+  script: |-
+    cp -R Sources ${studentParentWorkingDirectoryName}
+    # copy test files
+    cp -R Tests ${studentParentWorkingDirectoryName}
+    cp Package.swift ${studentParentWorkingDirectoryName}
+- name: compile
+  script: |-
+    # In order to get the correct console output we need to execute the command within the ${studentParentWorkingDirectoryName} directory
+    # swift build
+    cd ${studentParentWorkingDirectoryName}
+    swift build
+- name: test
+  script: |-
+    cd ${studentParentWorkingDirectoryName}
+    swift test
+  resultPaths:
+    - '${studentParentWorkingDirectoryName}/tests.xml'
+- name: finalize
+  script: |-
+    chmod -R 777 .
+  forceRun: true
+- name: static_code_analysis
+  script: |-
+    # Copy SwiftLint rules
+    cp .swiftlint.yml ${studentParentWorkingDirectoryName} || true
+    # create target directory for SCA Parser
+    mkdir target
+    cd ${studentParentWorkingDirectoryName}
+    # Execute static code analysis
+    swiftlint > ../target/swiftlint-result.xml
+  forceRun: true
+  resultPaths:
+    - 'target/swiftlint-result.xml'

@@ -1,12 +1,13 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
+import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -21,9 +22,13 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 })
 export class ExamExerciseImportComponent implements OnInit {
     private profileService = inject(ProfileService);
+    private exerciseService = inject(ExerciseService);
 
     exam = input.required<Exam>();
     importInSameCourse = input(false);
+    // Id of the course the exam / exercise groups are imported into. Used to fetch the already taken programming exercise
+    // titles and short names so clashes can be flagged live (as the user types) instead of only after the server rejects.
+    targetCourseId = input<number>();
     // Map to determine, which exercises the user has selected and therefore should be imported alongside an exam
     selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
     // Map / Blocklist with the title and shortName of the programming exercises, that have been either rejected by the server
@@ -36,6 +41,12 @@ export class ExamExerciseImportComponent implements OnInit {
     // Map of programming exercise ids with duplicated short names and their corresponding short name
     exercisesWithDuplicatedShortNames = new Map<number, string>();
 
+    // Titles / short names of the programming exercises that already exist in the target course, fetched once from the
+    // server. Signals (not plain Sets) so that the late-arriving HTTP response re-runs change detection under zoneless and
+    // the per-field error messages update live. Used to flag clashes as the user types instead of only after a rejected import.
+    private alreadyUsedProgrammingTitles = signal<Set<string>>(new Set());
+    private alreadyUsedProgrammingShortNames = signal<Set<string>>(new Set());
+
     // Expose enums to the template
     exerciseType = ExerciseType;
     // Map to determine, if an exercise group contains at least one programming exercise.
@@ -45,6 +56,9 @@ export class ExamExerciseImportComponent implements OnInit {
     // Patterns
     // length of < 3 is also accepted in order to provide more accurate validation error messages
     readonly SHORT_NAME_REGEX = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
+
+    // Prefix for the per-field validation error translation keys shown below the title / short name inputs
+    private static readonly IMPORT_ERROR_PREFIX = 'artemisApp.examManagement.exerciseGroup.importModal.error.';
 
     // Icons
     faCheckDouble = faCheckDouble;
@@ -62,6 +76,25 @@ export class ExamExerciseImportComponent implements OnInit {
         if (this.importInSameCourse()) {
             this.initializeTitleAndShortNameMap();
         }
+        this.fetchAlreadyUsedProgrammingTitlesAndShortNames();
+    }
+
+    /**
+     * Fetches the titles and short names of the programming exercises that already exist in the target course so clashes
+     * can be flagged live (while the user is still typing) instead of only after the server rejects the import. Best
+     * effort: if the target course is unknown or the request fails, the per-field validation falls back to the
+     * post-import server response (the previous behaviour).
+     */
+    private fetchAlreadyUsedProgrammingTitlesAndShortNames(): void {
+        const courseId = this.targetCourseId();
+        const hasProgrammingExercises = this.exam().exerciseGroups?.some((group) => group.exercises?.some((exercise) => exercise.type === ExerciseType.PROGRAMMING));
+        if (!courseId || !hasProgrammingExercises) {
+            return;
+        }
+        this.exerciseService.getExistingExerciseDetailsInCourse(courseId, ExerciseType.PROGRAMMING).subscribe((details: CourseExistingExerciseDetailsType) => {
+            this.alreadyUsedProgrammingTitles.set(details.exerciseTitles ?? new Set());
+            this.alreadyUsedProgrammingShortNames.set(details.shortNames ?? new Set());
+        });
     }
 
     /**
@@ -231,26 +264,88 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exercise the exercise to be checked
      */
     validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
-        return (
-            !!exercise.title?.length &&
-            EXERCISE_TITLE_NAME_REGEX.test(exercise.title!) &&
-            !this.exercisesWithDuplicatedTitles.has(exercise.id!) &&
-            (exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!) || this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) === '')
-        );
+        return this.getProgrammingExerciseTitleError(exercise) === undefined;
     }
 
     /**
-     * Validates the Title for Programming Exercises based on the user's input
+     * Validates the Short Name for Programming Exercises based on the user's input
      * @param exercise the exercise to be checked
      */
     validateShortNameOfProgrammingExercise(exercise: Exercise): boolean {
-        return (
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            exercise.shortName?.length! > 2 &&
-            this.SHORT_NAME_REGEX.test(exercise.shortName!) &&
-            !this.exercisesWithDuplicatedShortNames.has(exercise.id!) &&
-            exercise.shortName !== this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)
-        );
+        return this.getProgrammingExerciseShortNameError(exercise) === undefined;
+    }
+
+    /**
+     * Returns the translation key of the specific reason why the programming exercise title is invalid, or {@code undefined}
+     * if it is valid. Used to show a precise, actionable error below the title field instead of only a red border.
+     * @param exercise the exercise to be checked
+     */
+    getProgrammingExerciseTitleError(exercise: Exercise): string | undefined {
+        if (!exercise.title?.length) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleRequired';
+        }
+        if (!EXERCISE_TITLE_NAME_REGEX.test(exercise.title)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titlePattern';
+        }
+        if (this.exercisesWithDuplicatedTitles.has(exercise.id!)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleDuplicate';
+        }
+        // The title is already taken by another programming exercise in the target course (live check) or still equals the
+        // one rejected by the server / blocked because of a same-course import.
+        const blockedByServer =
+            exercise.title === this.getBlocklistTitleOfProgrammingExercise(exercise.id!) && this.getBlocklistShortNameOfProgrammingExercise(exercise.id!) !== '';
+        if (this.alreadyUsedProgrammingTitles().has(exercise.title) || blockedByServer) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleAlreadyExists';
+        }
+        return undefined;
+    }
+
+    /**
+     * Returns the translation key of the specific reason why the programming exercise short name is invalid, or
+     * {@code undefined} if it is valid. Used to show a precise, actionable error below the short name field.
+     * @param exercise the exercise to be checked
+     */
+    getProgrammingExerciseShortNameError(exercise: Exercise): string | undefined {
+        const shortName = exercise.shortName;
+        if (!shortName || shortName.length <= 2) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNameLength';
+        }
+        if (!this.SHORT_NAME_REGEX.test(shortName)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNamePattern';
+        }
+        if (this.exercisesWithDuplicatedShortNames.has(exercise.id!)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNameDuplicate';
+        }
+        // The short name is already taken by another programming exercise in the target course (live check) or still equals
+        // the one rejected by the server / blocked because of a same-course import.
+        if (this.alreadyUsedProgrammingShortNames().has(shortName) || shortName === this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'shortNameAlreadyExists';
+        }
+        return undefined;
+    }
+
+    /**
+     * Returns the translation key explaining why the exercise group title is invalid, or {@code undefined} if it is valid.
+     * Shown directly below the group title field so the concrete reason is visible, not only a red border.
+     * @param exerciseGroup the exercise group to be checked
+     */
+    getExerciseGroupTitleError(exerciseGroup: ExerciseGroup): string | undefined {
+        if (!exerciseGroup.title?.length) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'groupTitleRequired';
+        }
+        return undefined;
+    }
+
+    /**
+     * Returns the translation key explaining why a non-programming exercise title is invalid, or {@code undefined} if it is
+     * valid. Shown directly below the title field so the concrete reason is visible, not only a red border.
+     * @param exercise the exercise to be checked
+     */
+    getNonProgrammingExerciseTitleError(exercise: Exercise): string | undefined {
+        if (!exercise.title?.length) {
+            return ExamExerciseImportComponent.IMPORT_ERROR_PREFIX + 'titleRequired';
+        }
+        return undefined;
     }
 
     /**
@@ -310,8 +405,7 @@ export class ExamExerciseImportComponent implements OnInit {
     public validateUserInput(): boolean {
         let validConfiguration = true;
         this.selectedExercises?.forEach((value, key) => {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            if (!(key.title?.length! > 0)) {
+            if (this.getExerciseGroupTitleError(key) !== undefined) {
                 validConfiguration = false;
             }
             if (value.size > 0) {
@@ -322,8 +416,7 @@ export class ExamExerciseImportComponent implements OnInit {
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         validConfiguration = this.validateTitleOfProgrammingExercise(exercise) && this.validateShortNameOfProgrammingExercise(exercise);
                     } else {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                        validConfiguration = exercise.title?.length! > 0;
+                        validConfiguration = this.getNonProgrammingExerciseTitleError(exercise) === undefined;
                     }
                 });
             }

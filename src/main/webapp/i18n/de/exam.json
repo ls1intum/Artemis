@@ -35,7 +35,7 @@
                 "notFound": "Klausurteilnehmer:in konnte nicht gefunden werden",
                 "rooms": {
                     "dialogTitle": "Verteile Klausurteilnehmer",
-                    "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen. Artemis verteilt Studenten in der Reihenfolge der angegebenen Räume.",
+                    "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen. Artemis verteilt Studenten in der Reihenfolge der angegebenen Räume. Falls ein angegebener Raum nicht gefunden werden kann, kannst du ihn über die Prüfungsraumverwaltung hinzufügen.",
                     "reserveFactor": "Reservierte Sitze %",
                     "reserveFactorTooltip": "Der Prozentsatz der Sitze, die reserviert werden sollten, d. h. nicht verteilt werden sollten; gilt für jeden Raum einzeln",
                     "allowNarrowLayouts": "Engere Layouts zulassen?",
@@ -47,7 +47,8 @@
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
-                    "noRoomSelected": "Es ist kein Raum ausgewählt"
+                    "noRoomSelected": "Es ist kein Raum ausgewählt",
+                    "cantFindRoom": "Raum kann nicht gefunden werden? Lade ihn hier hoch: "
                 },
                 "export": {
                     "buttonTitle": "Nutzer Exportieren",
@@ -109,6 +110,11 @@
                 "generalInformation": "Allgemeine Informationen",
                 "youAreViewingAnUnsubmittedExam": "Du betrachtest eine nicht eingereichte Klausur",
                 "exportPDF": "Als PDF exportieren",
+                "requestAIFeedback": "KI-Feedback anfordern",
+                "feedbackRequested": "KI-Feedback angefordert",
+                "feedbackRequestSent": "KI-Feedback wurde für alle Text- und Modellierungsaufgaben angefordert. Die Ergebnisse erscheinen in Kürze.",
+                "feedbackUsageLoadFailed": "Die verbleibenden KI-Feedback-Anfragen konnten nicht geladen werden. Bitte lade die Seite neu, um es erneut zu versuchen.",
+                "noFeedbackSuggestionModuleConfigured": "Für keine der Aufgaben in dieser Prüfung ist KI-Feedback konfiguriert.",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "submissionLinkedToCommit": "Die abgegebene Lösung ist mit folgendem Commit verknüpft: ",
                 "noCommitHash": "Es hat kein Commit stattgefunden",
@@ -217,6 +223,7 @@
                 "relative": "Änderung relativ zur normalen Bearbeitungszeit"
             },
             "events": {
+                "title": "Klausur Benachrichtigungen",
                 "button": "Benachrichtigungen",
                 "type": {
                     "examWideAnnouncement": "Klausurweite Ankündigung",
@@ -359,6 +366,7 @@
             "notSubmitted": "Aufgabe nicht eingereicht",
             "notSavedOrSubmitted": "Du hast Änderungen, die nicht abgesendet sind.",
             "saveSubmissionError": "Die Änderungen konnten nicht gespeichert werden! Bitte stelle sicher, dass du online bist und speichere nochmal.",
+            "answersRestoredFromLocalStorage": "Deine zuvor eingegebenen Antworten wurden von diesem Gerät wiederhergestellt und werden erneut gespeichert. Bitte überprüfe, ob deine Antworten vollständig sind.",
             "pendingChanges": "Alle ungespeicherten Änderungen gehen beim Verlassen der Klausur verloren. Bist du sicher, dass du fortfahren möchtest?",
             "handInEarly": "Vorzeitig Abgeben",
             "continueAfterHandInEarly": "Zurück",
@@ -398,8 +406,11 @@
         "studentExams": {
             "title": "Klausuren",
             "generateStudentExams": "Individuelle Klausuren erstellen",
+            "generateStudentExamsTooltip": "Individuelle Klausuren für alle aktuell angemeldeten Studierenden erstellen und bestehende individuelle Klausuren überschreiben",
             "generateMissingStudentExams": "Fehlende individuelle Klausuren erstellen",
+            "generateMissingStudentExamsTooltip": "Individuelle Klausuren nur für angemeldete Studierende ohne bestehende Klausur erstellen",
             "startExercises": "Aufgabenstart vorbereiten",
+            "startExercisesTooltip": "Klausuraufgaben für alle generierten individuellen Klausuren vorbereiten",
             "evaluateQuizExercises": "Quizzes auswerten",
             "assessUnsubmittedStudentExams": "Nicht eingereichte Klausuren bewerten",
             "searchForStudents": "Suche nach Studierenden-Logins oder Namen (Komma getrennt)",
@@ -439,6 +450,9 @@
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
             "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur startet",
+            "individualExamsStatus": "Status der individuellen Klausuren",
+            "allExercisesPrepared": "Alle Aufgaben sind für alle individuellen Klausuren vorbereitet",
+            "notAllExercisesPrepared": "Nicht alle Aufgaben sind für alle individuellen Klausuren vorbereitet",
             "setWorkingTime": "Absolut:",
             "usedWorkingTime": "Genutzte Bearbeitungszeit",
             "setWorkingTimeRelative": "Verlängerung relativ zur normalen Bearbeitungszeit:",
@@ -458,7 +472,7 @@
                 "unsubmit": "Abgabe entfernen"
             },
             "exercisePreparationProgress": {
-                "label": "Aufgabenvorbereitungsfortschritt:",
+                "label": "Aufgabenvorbereitungsfortschritt",
                 "failed": "fehlgeschlagen",
                 "remaining": "verbleibend",
                 "finished": "Fertig",
@@ -519,7 +533,6 @@
             "confirmationStartText": "Bestätigungstext bei Klausurbeginn",
             "confirmationEndText": "Bestätigungstext zum Klausurende",
             "assessmentDashboard": "Bewertung",
-            "examChecklist": "Klausurcheckliste",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
             "gradingSystem": "Notenschlüssel",
@@ -534,7 +547,18 @@
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
             },
             "import": {
-                "search": "Suche nach einer Klausur"
+                "search": "Suche nach einer Klausur",
+                "progress": {
+                    "title": "Klausur wird importiert",
+                    "preparing": "Import wird vorbereitet…",
+                    "importing": "{{ title }} wird importiert…",
+                    "counter": "{{ processed }} von {{ total }} Aufgaben",
+                    "success": "Alle {{ count }} Aufgaben wurden erfolgreich importiert.",
+                    "summary": "{{ imported }} von {{ total }} Aufgaben wurden importiert.",
+                    "incompleteHeader": "Konnten nicht vollständig importiert werden. Bitte überprüfe diese Aufgaben und entferne sie gegebenenfalls:",
+                    "skippedHeader": "Übersprungen (nicht importiert):",
+                    "dismiss": "Verstanden"
+                }
             },
             "testRun": {
                 "testRun": "Testlauf",
@@ -588,6 +612,67 @@
                 "verifyAttendanceBtn": "Anwesenheitskontrolle bestätigen",
                 "examNotStarted": "Die Prüfung hat noch nicht begonnen",
                 "verifyChecks": "Anwesenheitskontrollen überprüfen",
+                "table": {
+                    "currentPageReport": "{first} bis {last} von {totalRecords} Studierenden werden angezeigt",
+                    "searchPlaceholder": "Angemeldete Studierende suchen",
+                    "studentDetails": "Studierendendetails",
+                    "matriculationNumber": "Matrikelnummer",
+                    "room": "Raum",
+                    "seat": "Sitzplatz",
+                    "status": "Status",
+                    "progress": "Fortschritt",
+                    "sessions": "Sitzungen",
+                    "actions": "Aktionen",
+                    "progressSubmittedOn": "Abgegeben am",
+                    "progressInconsistent": "Inkonsistent",
+                    "progressInconsistentTooltip": "hat Klausur: {{hasExam}}, gestartet: {{started}}, abgegeben: {{submitted}}",
+                    "progressSubmitted": "Abgegeben",
+                    "progressStarted": "Gestartet",
+                    "progressNotStarted": "Nicht gestartet",
+                    "progressExamMissing": "Klausur fehlt",
+                    "viewExam": "Klausur anzeigen",
+                    "remove": "Deregistrieren"
+                },
+                "filter": {
+                    "All": "Alle",
+                    "ExamMissing": "Prüfung fehlt",
+                    "NotStarted": "Nicht gestartet",
+                    "Started": "Gestartet",
+                    "Submitted": "Eingereicht",
+                    "DidNotAttend": "Nicht teilgenommen",
+                    "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
+                    "AttendanceChecked": "Anwesenheitsprüfung bestanden"
+                },
+                "filterGroup": {
+                    "progress": "Fortschritt",
+                    "attendance": "Anwesenheit"
+                },
+                "menu": {
+                    "manageStudents": "Studierende registrieren",
+                    "examLogistics": "Klausurlogistik",
+                    "manageStudentExams": "Individuelle Klausuren verwalten",
+                    "addStudents": "Hinzufügen",
+                    "importUsers": "Importieren aus CSV",
+                    "exportUsers": "Exportieren als CSV",
+                    "registerCourseStudents": "Alle Studierenden des Kurses anmelden",
+                    "removeAllStudents": "Alle Studierenden abmelden",
+                    "uploadImages": "Bilder hochladen",
+                    "distribute": "Studierende verteilen",
+                    "verifyAttendance": "Anwesenheit prüfen"
+                },
+                "addDialog": {
+                    "title": "Studierende hinzufügen",
+                    "description": "Suche nach Kursteilnehmenden per Name, Matrikelnummer, Login oder E-Mail. Bereits angemeldete Studierende sind markiert und können nicht erneut angemeldet werden.",
+                    "searchPlaceholder": "Studierende suchen",
+                    "loadingStudents": "Studierende werden geladen...",
+                    "noUnregisteredStudents": "Keine Studierenden gefunden.",
+                    "registering": "Wird angemeldet",
+                    "registered": "Angemeldet",
+                    "register": "Anmelden",
+                    "close": "Schließen",
+                    "errorRegisterStudent": "Fehler beim Anmelden der Person zur Klausur",
+                    "errorSearchStudents": "Fehler bei der Suche nach Studierenden."
+                },
                 "removeFromExam": {
                     "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Ihre individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Zusätzlich die Teilnahme und Abgaben in der zugehörigen Klausur löschen? Diese Aktion kann NICHT rückgängig gemacht werden!",
@@ -625,7 +710,18 @@
                     "invalidKey": "Der eingegebene Kurzname und Titel von {{ number }} Programmieraufgabe(n) existiert bereits. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen und Titel",
                     "duplicatedProgrammingExerciseShortName": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Kurznamen. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen",
                     "duplicatedProgrammingExerciseTitle": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Titel. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Titel",
-                    "invalidExerciseConfiguration": "Ein oder mehrere eingegebene Werte liegen außerhalb des zulässigen Bereiches. Bitte passe diese vor dem Import an",
+                    "invalidExerciseConfiguration": "Einige Titel oder Kurznamen fehlen, sind ungültig oder bereits vergeben. Bitte korrigiere die unten rot markierten Felder vor dem Import.",
+                    "error": {
+                        "groupTitleRequired": "Bitte gib einen Titel für die Aufgabengruppe ein.",
+                        "titleRequired": "Bitte gib einen Titel ein.",
+                        "titlePattern": "Der Titel enthält ungültige Zeichen.",
+                        "titleDuplicate": "Eine andere ausgewählte Aufgabe verwendet diesen Titel bereits. Jeder Titel muss eindeutig sein.",
+                        "titleAlreadyExists": "Eine Aufgabe mit diesem Titel existiert bereits im Zielkurs. Bitte wähle einen anderen Titel.",
+                        "shortNameLength": "Der Kurzname muss mindestens 3 Zeichen lang sein.",
+                        "shortNamePattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf nur Buchstaben und Ziffern enthalten.",
+                        "shortNameDuplicate": "Eine andere ausgewählte Aufgabe verwendet diesen Kurznamen bereits. Jeder Kurzname muss eindeutig sein.",
+                        "shortNameAlreadyExists": "Eine Aufgabe mit diesem Kurznamen existiert bereits im Zielkurs. Bitte wähle einen anderen Kurznamen."
+                    },
                     "isImporting": "Der Import der Aufgabengruppen und der Aufgaben wird derzeit auf dem Server durchgeführt. Dies kann etwas Zeit in Anspruch nehmen.",
                     "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtlinie, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu Erstellen der Build-Pläne kann diese Importfunktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
                 },

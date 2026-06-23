@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_DEVELOPMENT;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_DEVELOPMENT;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

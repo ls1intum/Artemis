@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.lecture.dto;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -11,9 +13,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
+import de.tum.cit.aet.artemis.videosource.domain.VideoSourceType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LectureDetailsDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate, ZonedDateTime visibleDate,
+public record LectureDetailsDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
         @JsonProperty("isTutorialLecture") boolean isTutorialLecture, CourseDTO course, List<LectureUnitDetailsDTO> lectureUnits, List<AttachmentDTO> attachments)
         implements LectureDTO {
 
@@ -47,11 +50,17 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record AttachmentUnitDTO(Long id, LectureReferenceDTO lecture, String name, ZonedDateTime releaseDate, boolean completed, boolean visibleToStudents,
-            List<CompetencyLinkDTO> competencyLinks, AttachmentDTO attachment, String description, String videoSource, @JsonProperty("type") String type)
-            implements LectureUnitDetailsDTO {
+            List<CompetencyLinkDTO> competencyLinks, AttachmentDTO attachment, String description, String videoSource, @Nullable VideoSourceType videoSourceType,
+            @Nullable String youtubeVideoId, @JsonProperty("type") String type) implements LectureUnitDetailsDTO {
 
         public AttachmentUnitDTO {
             type = "attachment";
+            if (videoSourceType == VideoSourceType.YOUTUBE && (youtubeVideoId == null || youtubeVideoId.isBlank())) {
+                throw new IllegalArgumentException("YOUTUBE videoSourceType requires non-blank youtubeVideoId");
+            }
+            if (videoSourceType != VideoSourceType.YOUTUBE && youtubeVideoId != null) {
+                throw new IllegalArgumentException("youtubeVideoId must be null when videoSourceType != YOUTUBE");
+            }
         }
     }
 

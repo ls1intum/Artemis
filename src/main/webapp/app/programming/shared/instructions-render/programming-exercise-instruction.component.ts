@@ -1,20 +1,21 @@
 import {
     ApplicationRef,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
     ComponentRef,
     EnvironmentInjector,
-    EventEmitter,
-    Input,
-    OnChanges,
     OnDestroy,
-    Output,
-    SimpleChanges,
-    ViewChild,
+    OnInit,
     ViewContainerRef,
+    afterNextRender,
     createComponent,
+    effect,
     inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
@@ -22,32 +23,30 @@ import { ProgrammingExerciseGradingService } from 'app/programming/manage/servic
 import type { PluginSimple } from 'markdown-it';
 import { catchError, debounceTime, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subject, Subscription, merge, of } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { TaskArray } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ResultService } from 'app/exercise/result/result.service';
-import { problemStatementHasChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { findLatestResult } from 'app/shared/util/utils';
+import { findLatestResult } from 'app/foundation/util/utils';
 import { faFileAlt, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
-import { escapeStringForUseInRegex } from 'app/shared/util/string-pure.utils';
+import { escapeStringForUseInRegex } from 'app/foundation/util/string-pure.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProgrammingExerciseInstructionStepWizardComponent } from './step-wizard/programming-exercise-instruction-step-wizard.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -56,7 +55,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestroy {
     private viewContainerRef = inject(ViewContainerRef);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
@@ -69,44 +68,47 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private appRef = inject(ApplicationRef);
     private injector = inject(EnvironmentInjector);
     private themeService = inject(ThemeService);
-    private cdr = inject(ChangeDetectorRef);
 
-    @Input() public exercise: ProgrammingExercise;
-    @Input() public participation: Participation;
-    @Input() generateHtmlEvents: Observable<void>;
-    @Input() personalParticipation: boolean;
+    readonly exercise = input<ProgrammingExercise | undefined>(undefined);
+    readonly participation = input<Participation | undefined>(undefined);
+    readonly generateHtmlEvents = input<Observable<void>>();
+    readonly personalParticipation = input.required<boolean>();
 
-    // Emits an event if the instructions are not available via the problemStatement
-    @Output() public onNoInstructionsAvailable = new EventEmitter();
+    readonly onNoInstructionsAvailable = output();
 
-    @ViewChild(ExamExerciseUpdateHighlighterComponent) examExerciseUpdateHighlighterComponent: ExamExerciseUpdateHighlighterComponent;
+    readonly examExerciseUpdateHighlighterComponent = viewChild(ExamExerciseUpdateHighlighterComponent);
+
+    // Icons
+    faSpinner = faSpinner;
+    faFileAlt = faFileAlt;
 
     private problemStatement: string | undefined;
     private participationSubscription?: Subscription;
     private testCasesSubscription?: Subscription;
 
-    public isInitial = true;
-    public isLoading: boolean;
-    latestResultValue?: Result;
-    // unique index, even if multiple tasks are shown from different problem statements on the same page (in different tabs)
+    protected isInitial = true;
+    // Backs the template's root @if. Must be a signal: it is flipped inside async subscribe
+    // callbacks, and while the loading branch is shown no other tracked signal is live in the
+    // template — a plain field write would never schedule the render that swaps the branches.
+    protected readonly isLoading = signal(false);
+    readonly latestResultValue = signal<Result | undefined>(undefined);
+    // Page-scoped so multiple problem statements (e.g. across exam exercise tabs) don't collide.
     private taskIndex = 0;
-    public tasks: TaskArray;
-    // Track dynamically created task components for proper cleanup
+    protected readonly tasks = signal<TaskArray>(undefined!);
     private taskComponentRefs: ComponentRef<ProgrammingExerciseInstructionTaskStatusComponent>[] = [];
-    // Cache to skip re-rendering when content hasn't changed
     private lastRenderedProblemStatement?: string;
 
     get latestResult() {
-        return this.latestResultValue;
+        return this.latestResultValue();
     }
 
     set latestResult(result: Result | undefined) {
-        this.latestResultValue = result;
-        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResultValue);
+        this.latestResultValue.set(result);
+        this.programmingExercisePlantUmlWrapper.setLatestResult(this.latestResultValue());
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
-    public renderedMarkdown: SafeHtml | undefined;
+    protected readonly renderedMarkdown = signal<SafeHtml | undefined>(undefined);
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
     markdownExtensions: PluginSimple[];
@@ -114,44 +116,67 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private generateHtmlSubscription: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
 
-    // Subject for debouncing problem statement changes to avoid excessive re-renders during rapid editing
     private problemStatementUpdateSubject = new Subject<void>();
+
+    private lastSeenParticipation?: Participation;
+    private lastSeenProblemStatement?: string;
+    private lastSeenGenerateHtmlEvents?: Observable<void>;
 
     constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
 
-        // Use takeUntilDestroyed for automatic cleanup of class-level subscriptions
-        toObservable(this.themeService.currentTheme)
-            .pipe(takeUntilDestroyed())
-            .subscribe(() => {
-                if (!this.isInitial) {
-                    // Invalidate the render cache since the theme changed (PlantUML diagrams need re-rendering with new colors)
-                    this.lastRenderedProblemStatement = undefined;
-                    this.updateMarkdown();
-                }
-            });
+        // Skip the initial synchronous run so ngOnInit owns the first render.
+        let firstThemeRun = true;
+        effect(() => {
+            this.themeService.currentTheme();
+            if (firstThemeRun) {
+                firstThemeRun = false;
+                return;
+            }
+            if (this.isInitial) return;
+            this.lastRenderedProblemStatement = undefined;
+            untracked(() => this.updateMarkdown());
+        });
 
         this.problemStatementUpdateSubject.pipe(debounceTime(150), takeUntilDestroyed()).subscribe(() => {
             this.updateMarkdown();
         });
+
+        let initialized = false;
+        effect(() => {
+            const participation = this.participation();
+            this.exercise();
+            const generateHtmlEvents = this.generateHtmlEvents();
+
+            if (!initialized) {
+                initialized = true;
+                this.lastSeenParticipation = participation;
+                this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
+                return;
+            }
+
+            const participationChanged = participation !== this.lastSeenParticipation;
+            const generateHtmlEventsChanged = generateHtmlEvents !== this.lastSeenGenerateHtmlEvents;
+            this.lastSeenParticipation = participation;
+            this.lastSeenGenerateHtmlEvents = generateHtmlEvents;
+            this.processInputChanges({ participationChanged, generateHtmlEventsChanged });
+        });
     }
 
-    // Icons
-    faSpinner = faSpinner;
-    faFileAlt = faFileAlt;
+    ngOnInit(): void {
+        if (this.exercise()) {
+            this.processInputChanges();
+        }
+    }
 
-    /**
-     * If the participation changes, the participation's instructions need to be loaded and the
-     * subscription for the participation's result needs to be set up.
-     * @param changes
-     */
-    ngOnChanges(changes: SimpleChanges) {
-        if (this.exercise?.isAtLeastTutor) {
+    private processInputChanges({ participationChanged = true, generateHtmlEventsChanged = true }: { participationChanged?: boolean; generateHtmlEventsChanged?: boolean } = {}) {
+        const exercise = this.exercise();
+        if (exercise?.isAtLeastTutor) {
             if (this.testCasesSubscription) {
                 this.testCasesSubscription.unsubscribe();
             }
             this.testCasesSubscription = this.programmingExerciseGradingService
-                .getTestCases(this.exercise.id!)
+                .getTestCases(exercise.id!)
                 .pipe(
                     tap((testCases) => {
                         this.testCases = testCases;
@@ -159,37 +184,50 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 )
                 .subscribe();
         }
+        // (Re-)subscribe to generateHtmlEvents whenever the input observable identity changes,
+        // not only when the participation changes — otherwise a parent-pushed replacement
+        // observable is silently ignored.
+        if (participationChanged || generateHtmlEventsChanged) {
+            if (this.generateHtmlSubscription) {
+                this.generateHtmlSubscription.unsubscribe();
+                this.generateHtmlSubscription = undefined!;
+            }
+            const generateHtmlEvents = this.generateHtmlEvents();
+            if (generateHtmlEvents) {
+                this.generateHtmlSubscription = generateHtmlEvents.subscribe(() => {
+                    this.lastRenderedProblemStatement = undefined;
+                    this.updateMarkdown();
+                });
+            }
+        }
         of(!!this.markdownExtensions)
             .pipe(
-                // Set up the markdown extensions if they are not set up yet so that tasks, UMLs, etc. can be parsed.
                 tap((markdownExtensionsInitialized: boolean) => !markdownExtensionsInitialized && this.setupMarkdownSubscriptions()),
-                // If the participation has changed, set up the websocket subscriptions.
-                map(() => hasParticipationChanged(changes)),
+                map(() => participationChanged),
                 tap((participationHasChanged: boolean) => {
                     if (participationHasChanged) {
                         this.isInitial = true;
-                        if (this.generateHtmlSubscription) {
-                            this.generateHtmlSubscription.unsubscribe();
+                        // Always tear down the previous result websocket when the participation
+                        // changes — including when the new participation is undefined — otherwise
+                        // the stale subscription leaks and continues delivering results for the
+                        // previous participation.
+                        if (this.participationSubscription) {
+                            this.participationSubscription.unsubscribe();
+                            this.participationSubscription = undefined;
                         }
-                        if (this.generateHtmlEvents) {
-                            this.generateHtmlSubscription = this.generateHtmlEvents.subscribe(() => {
-                                // Invalidate the render cache since we are explicitly asked to regenerate HTML
-                                this.lastRenderedProblemStatement = undefined;
-                                this.updateMarkdown();
-                            });
+                        if (this.participation() && this.exercise()) {
+                            this.setupResultWebsocket();
                         }
-                        this.setupResultWebsocket();
                     }
                 }),
                 switchMap((participationHasChanged: boolean) => {
-                    // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
-                    if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
-                        this.isLoading = true;
-                        return of(this.exercise.problemStatement).pipe(
+                    const currentExercise = this.exercise();
+                    if (!this.isLoading() && currentExercise && this.participation() && (this.isInitial || participationHasChanged)) {
+                        this.isLoading.set(true);
+                        return of(currentExercise.problemStatement).pipe(
                             tap((problemStatement) => {
-                                // Set to undefined for null/empty values to preserve empty-state sentinel
-                                // Otherwise set the actual string value
                                 this.problemStatement = problemStatement?.trim() || undefined;
+                                this.lastSeenProblemStatement = currentExercise.problemStatement;
                             }),
                             switchMap(() => this.loadInitialResult()),
                             tap((latestResult) => {
@@ -198,21 +236,20 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                             tap(() => {
                                 this.updateMarkdown();
                                 this.isInitial = false;
-                                this.isLoading = false;
+                                this.isLoading.set(false);
                             }),
                         );
-                    } else if (problemStatementHasChanged(changes) && !this.problemStatement) {
-                        // Refreshes the state in the singleton task and uml extension service
-                        this.latestResult = this.latestResultValue;
-                        this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
-                        // Use debounced update to avoid excessive re-renders during rapid editing
+                    } else if (this.problemStatementHasChangedFromLast() && !this.problemStatement) {
+                        // Re-assign latestResult to refresh singleton task/UML extension state.
+                        this.latestResult = this.latestResultValue();
+                        this.problemStatement = currentExercise?.problemStatement?.trim() || undefined;
+                        this.lastSeenProblemStatement = currentExercise?.problemStatement;
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
-                    } else if (this.exercise && problemStatementHasChanged(changes)) {
-                        // Refreshes the state in the singleton task and uml extension service
-                        this.latestResult = this.latestResultValue;
-                        this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
-                        // Use debounced update to avoid excessive re-renders during rapid editing
+                    } else if (currentExercise && this.problemStatementHasChangedFromLast()) {
+                        this.latestResult = this.latestResultValue();
+                        this.problemStatement = currentExercise.problemStatement?.trim() || undefined;
+                        this.lastSeenProblemStatement = currentExercise.problemStatement;
                         this.problemStatementUpdateSubject.next();
                         return of(undefined);
                     } else {
@@ -221,6 +258,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 }),
             )
             .subscribe();
+    }
+
+    private problemStatementHasChangedFromLast(): boolean {
+        return this.lastSeenProblemStatement !== this.exercise()?.problemStatement;
     }
 
     /**
@@ -245,7 +286,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.participationSubscription.unsubscribe();
         }
         this.participationSubscription = this.participationWebsocketService
-            .subscribeForLatestResultOfParticipation(this.participation.id!, this.personalParticipation, this.exercise.id!)
+            .subscribeForLatestResultOfParticipation(this.participation()!.id!, this.personalParticipation(), this.exercise()!.id!)
             .pipe(filter((result) => !!result))
             .subscribe((result: Result) => {
                 this.latestResult = result;
@@ -258,11 +299,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     /**
      * Render the markdown into html.
+     *
+     * @param force when true, re-render even if the problem statement is unchanged (bypasses the live-preview
+     *     optimization). Used when the rendered output must be rebuilt regardless of the problem statement, e.g. when an
+     *     exam exercise becomes visible again and its asynchronously injected PlantUML diagrams must be re-injected.
      */
-    updateMarkdown() {
+    updateMarkdown(force = false) {
+        const exercise = this.exercise();
         // Skip re-render if problem statement hasn't changed (optimization for live preview)
-        const currentProblemStatement = this.exercise?.problemStatement?.trim();
-        if (currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
+        const currentProblemStatement = exercise?.problemStatement?.trim();
+        if (!force && currentProblemStatement === this.lastRenderedProblemStatement && !this.isInitial) {
             return;
         }
         this.lastRenderedProblemStatement = currentProblemStatement;
@@ -272,13 +318,31 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.taskIndex = 0;
         // Set the exercise ID so PlantUML container IDs are scoped per exercise.
         // This prevents cross-contamination when multiple exercises are on the same page (e.g. in exams).
-        this.programmingExercisePlantUmlWrapper.setExerciseId(this.exercise?.id);
+        this.programmingExercisePlantUmlWrapper.setExerciseId(exercise?.id);
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
-        this.latestResult = this.latestResultValue;
+        this.latestResult = this.latestResultValue();
 
         this.injectableContentForMarkdownCallbacks = [];
         this.renderMarkdown();
+    }
+
+    /**
+     * Forces a re-render of the problem statement, bypassing the "unchanged problem statement" optimization in
+     * {@link updateMarkdown}.
+     *
+     * In exam mode an exercise's change detection is detached while it is hidden. If a render runs during that time
+     * (for example because the student rapidly switches between exercises before the asynchronous PlantUML/task
+     * injection has settled), the injection can target stale or detached DOM and the rendered diagram is lost. Calling
+     * this once the exercise becomes visible again re-runs the render and injection against the live DOM, reliably
+     * restoring the PlantUML diagrams.
+     *
+     * Uses the explicit force flag rather than resetting {@link lastRenderedProblemStatement}, so it re-renders even
+     * when the problem statement is undefined/empty (in that case resetting to undefined would still equal the current
+     * value and the optimization would wrongly skip the re-render).
+     */
+    forceReRenderProblemStatement() {
+        this.updateMarkdown(true);
     }
 
     /**
@@ -303,15 +367,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
     loadInitialResult(): Observable<Result | undefined> {
-        const results = getAllResultsOfAllSubmissions(this.participation.submissions);
-        if (this.participation?.id && results.length) {
+        const participation = this.participation();
+        const results = getAllResultsOfAllSubmissions(participation?.submissions);
+        if (participation?.id && results.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = findLatestResult(results);
             if (!latestResult) {
                 return of(undefined);
             }
             return latestResult.feedbacks ? of(latestResult) : this.loadAndAttachResultDetails(latestResult);
-        } else if (this.participation && this.participation.id) {
+        } else if (participation && participation.id) {
             // Only load results if the exercise already is in our database, otherwise there can be no build result anyway
             return this.loadLatestResult();
         } else {
@@ -324,7 +389,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return undefined.
      */
     loadLatestResult(): Observable<Result | undefined> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation()!.id!).pipe(
             catchError(() => of(undefined)),
             mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
@@ -336,8 +401,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @param result - result to which instructions will be attached.
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
-        const currentParticipation = this.participation;
-        return this.resultService.getFeedbackDetailsForResult(currentParticipation.id!, result).pipe(
+        const currentParticipation = this.participation();
+        return this.resultService.getFeedbackDetailsForResult(currentParticipation!.id!, result).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;
@@ -349,53 +414,57 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     private renderMarkdown(): void {
         // Highlight differences between previous and current markdown
+        const examExerciseUpdateHighlighterComponent = this.examExerciseUpdateHighlighterComponent();
         if (
-            this.examExerciseUpdateHighlighterComponent?.showHighlightedDifferences &&
-            this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
-            this.examExerciseUpdateHighlighterComponent.updatedProblemStatement
+            examExerciseUpdateHighlighterComponent?.showHighlightedDifferences() &&
+            examExerciseUpdateHighlighterComponent.outdatedProblemStatement &&
+            examExerciseUpdateHighlighterComponent.updatedProblemStatement
         ) {
-            const outdatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions);
-            const updatedMarkdown = htmlForMarkdown(this.examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
+            const outdatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.outdatedProblemStatement, this.markdownExtensions);
+            const updatedMarkdown = htmlForMarkdown(examExerciseUpdateHighlighterComponent.updatedProblemStatement, this.markdownExtensions);
             const diffedMarkdown = diff(outdatedMarkdown, updatedMarkdown);
             const markdownWithoutTasks = this.prepareTasks(diffedMarkdown);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
-            this.cdr.markForCheck();
+            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
             // Differences between UMLs are ignored, and we only inject the current one (last callback)
             this.scheduleContentInjection(true);
-        } else if (this.exercise?.problemStatement?.trim()) {
+        } else if (this.exercise()?.problemStatement?.trim()) {
             this.injectableContentForMarkdownCallbacks = [];
-            const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
+            const renderedProblemStatement = htmlForMarkdown(this.exercise()!.problemStatement!, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
             const markdownWithTableStyles = this.addStylesForTables(markdownWithoutTasks);
-            this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks);
-            this.cdr.markForCheck();
+            this.renderedMarkdown.set(this.sanitizer.bypassSecurityTrustHtml(markdownWithTableStyles ?? markdownWithoutTasks));
             this.scheduleContentInjection(false);
         } else {
             // Clear the rendered markdown when problem statement is empty or whitespace-only
-            this.renderedMarkdown = undefined;
+            this.renderedMarkdown.set(undefined);
             this.injectableContentForMarkdownCallbacks = [];
-            this.cdr.markForCheck();
         }
     }
 
     /**
      * Schedules the injection of dynamic content (UML diagrams, task components) into the DOM.
-     * Uses setTimeout to ensure the DOM has been updated before injection.
+     * Uses afterNextRender so the injection runs only after the render pass triggered by the
+     * renderedMarkdown signal write has put the markdown into the DOM. A setTimeout(0) is NOT
+     * sufficient under zoneless: its ordering against the change-detection scheduler is undefined,
+     * so the callbacks could query for the task/UML container elements before they exist.
      * @param onlyLastCallback If true, only invokes the last callback (for diff mode where only current UML matters)
      */
     private scheduleContentInjection(onlyLastCallback: boolean): void {
-        setTimeout(() => {
-            if (onlyLastCallback) {
-                const lastCallback = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
-                if (lastCallback) {
-                    lastCallback();
+        afterNextRender(
+            () => {
+                if (onlyLastCallback) {
+                    const lastCallback = this.injectableContentForMarkdownCallbacks[this.injectableContentForMarkdownCallbacks.length - 1];
+                    if (lastCallback) {
+                        lastCallback();
+                    }
+                } else {
+                    this.injectableContentForMarkdownCallbacks.forEach((callback) => callback());
                 }
-            } else {
-                this.injectableContentForMarkdownCallbacks.forEach((callback) => callback());
-            }
-            this.injectTasksIntoDocument();
-        }, 0);
+                this.injectTasksIntoDocument();
+            },
+            { injector: this.injector },
+        );
     }
 
     addStylesForTables(markdownWithoutTasks: string): string | undefined {
@@ -421,41 +490,45 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             return problemStatementHtml;
         }
 
-        this.tasks = tasks
-            // check that all groups (full match, name, tests) are present
-            .filter((testMatch) => testMatch?.length === 3)
-            .map((testMatch: RegExpMatchArray | null) => {
-                const nextIndex = this.taskIndex;
-                this.taskIndex++;
-                return {
-                    id: nextIndex,
-                    completeString: testMatch![0],
-                    taskName: testMatch![1],
-                    testIds: testMatch![2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch![2], this.testCases) : [],
-                };
-            });
+        this.tasks.set(
+            tasks
+                // check that all groups (full match, name, tests) are present
+                .filter((testMatch) => testMatch?.length === 3)
+                .map((testMatch: RegExpMatchArray | null) => {
+                    const nextIndex = this.taskIndex;
+                    this.taskIndex++;
+                    return {
+                        id: nextIndex,
+                        completeString: testMatch![0],
+                        taskName: testMatch![1],
+                        testIds: testMatch![2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch![2], this.testCases) : [],
+                    };
+                }),
+        );
 
-        return this.tasks.reduce(
+        return this.tasks().reduce(
             (acc: string, { completeString: task, id }): string =>
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
                 // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise.id}-task-${id.toString()} d-flex">&#8203;</div>`),
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise()?.id}-task-${id.toString()} d-flex">&#8203;</div>`),
             problemStatementHtml,
         );
     }
 
     private injectTasksIntoDocument = () => {
-        this.tasks.forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise.id}-task-${id}`);
+        this.tasks().forEach(({ id, taskName, testIds }) => {
+            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise()?.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const taskHtmlContainer = taskHtmlContainers[i];
                 this.createTaskComponent(taskHtmlContainer, taskName, testIds);
             }
         });
-        // Batch change detection: trigger once after all task components are created
-        // instead of calling detectChanges() for each component individually
+        // Genuinely-unavoidable synchronous detectChanges: these task components live in markdown
+        // HTML injected via [innerHTML], outside any template tree. appRef.attachView() registers
+        // them for FUTURE app ticks but does NOT schedule an initial change-detection pass, and
+        // under zoneless nothing else does — without this, the step wizard never renders.
         this.taskComponentRefs.forEach((ref) => ref.changeDetectorRef.detectChanges());
     };
 
@@ -464,22 +537,18 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             hostElement: taskHtmlContainer,
             environmentInjector: this.injector,
         });
-        componentRef.instance.exercise = this.exercise;
-        componentRef.instance.participation = this.participation;
-        componentRef.instance.taskName = taskName;
-        componentRef.instance.latestResult = this.latestResult;
-        componentRef.instance.testIds = testIds;
+        componentRef.setInput('exercise', this.exercise());
+        componentRef.setInput('participation', this.participation());
+        componentRef.setInput('taskName', taskName);
+        componentRef.setInput('latestResult', this.latestResult);
+        componentRef.setInput('testIds', testIds);
         // Track component ref for cleanup
         this.taskComponentRefs.push(componentRef);
         this.appRef.attachView(componentRef.hostView);
-        // Note: detectChanges() is called in batch after all components are created
     }
 
-    /**
-     * Unsubscribes from all subscriptions.
-     * Note: themeChange and problemStatementUpdate subscriptions use takeUntilDestroyed()
-     * for automatic cleanup.
-     */
+    // Effects and problemStatementUpdateSubject clean themselves up via DestroyRef / takeUntilDestroyed;
+    // only manual rxjs subscriptions are unsubscribed below.
     ngOnDestroy() {
         // Destroy dynamically created task components
         this.destroyTaskComponents();

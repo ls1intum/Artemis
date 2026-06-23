@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasAgent;
 
+import java.io.Serializable;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -12,5 +14,5 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyRelationPreviewDTO(@Nullable Long relationId, long headCompetencyId, String headCompetencyTitle, long tailCompetencyId, String tailCompetencyTitle,
-        RelationType relationType, @Nullable Boolean viewOnly) {
+        RelationType relationType, @Nullable Boolean viewOnly) implements Serializable {
 }

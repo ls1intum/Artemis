@@ -1,0 +1,11 @@
+- name: compile
+  script: 'python3 -m compileall . -q'
+- name: test
+  script: 'pytest --junitxml=test-reports/results.xml'
+  resultPaths:
+    - 'test-reports/*results.xml'
+- name: static_code_analysis
+  script: 'ruff check --config=ruff-student.toml --output-format=sarif --output-file=ruff.sarif --exit-zero "${studentParentWorkingDirectoryName}"'
+  forceRun: true
+  resultPaths:
+    - ruff.sarif

@@ -23,9 +23,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationJenkinsLocalVCTest;
 
 class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
@@ -56,14 +56,16 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
         var request = mockHttpRequestWithHeaders();
 
         // Create the json returned by the response
-        var objectMapper = new ObjectMapper();
+        var objectMapper = JsonObjectMapper.get();
         ObjectNode crumbJson = objectMapper.createObjectNode();
         crumbJson.put("crumb", "some-crumb");
         var responseBody = objectMapper.writeValueAsString(crumbJson);
 
         mockGetCrumb(responseBody, HttpStatus.OK);
         try (var response = jenkinsAuthorizationInterceptor.intercept(request, new byte[] {}, mock(ClientHttpRequestExecution.class))) {
-            assertThat(request.getHeaders()).containsKeys("some-header", "Jenkins-Crumb", "Cookie");
+            assertThat(request.getHeaders().containsHeader("some-header")).isTrue();
+            assertThat(request.getHeaders().containsHeader("Jenkins-Crumb")).isTrue();
+            assertThat(request.getHeaders().containsHeader("Cookie")).isTrue();
             assertThat(request.getHeaders().get("some-header")).contains("true");
             assertThat(request.getHeaders().get("Jenkins-Crumb")).contains("some-crumb");
             assertThat(request.getHeaders().get("Cookie")).contains("some-session");
@@ -81,10 +83,11 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
         try (var response = jenkinsAuthorizationInterceptor.intercept(request, new byte[] {}, mock(ClientHttpRequestExecution.class))) {
             ReflectionTestUtils.setField(jenkinsAuthorizationInterceptor, "useCrumb", true);
 
-            assertThat(request.getHeaders()).containsKey("some-header");
+            assertThat(request.getHeaders().containsHeader("some-header")).isTrue();
             assertThat(request.getHeaders().get("some-header")).contains("true");
 
-            assertThat(request.getHeaders()).doesNotContainKeys("Jenkins-Crumb", "Cookie");
+            assertThat(request.getHeaders().containsHeader("Jenkins-Crumb")).isFalse();
+            assertThat(request.getHeaders().containsHeader("Cookie")).isFalse();
         }
     }
 
@@ -97,10 +100,11 @@ class JenkinsAuthorizationInterceptorTest extends AbstractProgrammingIntegration
         mockGetCrumb("", HttpStatus.NOT_FOUND);
         try (var response = jenkinsAuthorizationInterceptor.intercept(request, new byte[] {}, mock(ClientHttpRequestExecution.class))) {
 
-            assertThat(request.getHeaders()).containsKey("some-header");
+            assertThat(request.getHeaders().containsHeader("some-header")).isTrue();
             assertThat(request.getHeaders().get("some-header")).contains("true");
 
-            assertThat(request.getHeaders()).doesNotContainKeys("Jenkins-Crumb", "Cookie");
+            assertThat(request.getHeaders().containsHeader("Jenkins-Crumb")).isFalse();
+            assertThat(request.getHeaders().containsHeader("Cookie")).isFalse();
         }
 
     }

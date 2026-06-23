@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
@@ -9,9 +9,9 @@ import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-subm
     imports: [ModelingSubmissionComponent],
 })
 export class ModelingExamSummaryComponent {
-    @Input() exercise: ModelingExercise;
-    @Input() submission: ModelingSubmission;
-    @Input() isPrinting = false;
-    @Input() expandProblemStatement = false;
-    @Input() isAfterResultsArePublished = false;
+    readonly exercise = input<ModelingExercise>(undefined!);
+    readonly submission = input<ModelingSubmission>(undefined!);
+    readonly isPrinting = input(false);
+    readonly expandProblemStatement = input(false);
+    readonly isAfterResultsArePublished = input(false);
 }

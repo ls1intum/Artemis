@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -64,7 +64,7 @@ public class HazelcastClusterManager {
 
     private final Instant startupTime = Instant.now();
 
-    @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
+    @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name:Artemis}")
     private String instanceName;
 
     public HazelcastClusterManager(EurekaInstanceHelper eurekaInstanceHelper, Environment env) {

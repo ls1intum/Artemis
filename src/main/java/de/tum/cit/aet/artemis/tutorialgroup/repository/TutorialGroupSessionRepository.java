@@ -12,9 +12,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -46,9 +46,9 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
     Set<TutorialGroupSession> findAllByTutorialGroupId(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
-                SELECT new de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO(
+                SELECT new de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO(
                     CONCAT('tutorialStartAndEndEvent-', CAST(session.id AS string)),
-                    de.tum.cit.aet.artemis.core.util.CalendarEventType.TUTORIAL,
+                    de.tum.cit.aet.artemis.calendar.util.CalendarEventType.TUTORIAL,
                     tutorialGroup.title,
                     session.start,
                     session.end,
@@ -70,14 +70,25 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO(
+                session.id,
                 session.start,
                 session.end,
                 session.location,
-                session.status,
+                CASE
+                    WHEN session.status = de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus.CANCELLED
+                    THEN TRUE
+                    ELSE FALSE
+                END,
+                CASE
+                    WHEN session.tutorialGroupFreePeriod IS NOT NULL
+                    THEN TRUE
+                    ELSE FALSE
+                END,
                 session.attendanceCount
             )
             FROM TutorialGroupSession session
                 JOIN session.tutorialGroup tutorialGroup
+                LEFT JOIN session.tutorialGroupFreePeriod
             WHERE tutorialGroup.id = :tutorialGroupId
             ORDER BY session.start ASC
             """)
@@ -98,17 +109,6 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
                 AND session.tutorialGroup = :tutorialGroup
             """)
     Set<TutorialGroupSession> findOverlappingInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
-            @Param("end") ZonedDateTime end);
-
-    @Query("""
-            SELECT session
-            FROM TutorialGroupSession session
-            WHERE session.start <= :end
-                AND session.end >= :start
-                AND session.tutorialGroupSchedule IS NULL
-                AND session.tutorialGroup = :tutorialGroup
-            """)
-    Set<TutorialGroupSession> findOverlappingIndividualSessionsInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
             @Param("end") ZonedDateTime end);
 
     @Query("""

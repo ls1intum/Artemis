@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.athena.dto;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -11,7 +13,7 @@ import de.tum.cit.aet.artemis.text.domain.TextBlock;
  * A DTO representing a Feedback on a TextExercise, for transferring data to Athena and receiving suggestions from Athena
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
+public record TextFeedbackDTO(@Nullable Long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
         Integer indexStart, Integer indexEnd) implements FeedbackBaseDTO {
 
     /**

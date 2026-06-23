@@ -1,30 +1,30 @@
-import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subject, Subscription } from 'rxjs';
 import { captureException } from '@sentry/angular';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ChecklistCheckComponent } from 'app/shared-ui/components/checklist-check/checklist-check.component';
 import { ExamChecklistExerciseGroupTableComponent } from './exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
+import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { ExamEditWorkingTimeComponent } from './exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from './exam-announcement-dialog/exam-live-announcement-create-button.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -43,7 +43,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
         HelpIconComponent,
     ],
 })
-export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
+export class ExamChecklistComponent implements OnInit, OnDestroy {
     private examChecklistService = inject(ExamChecklistService);
     private websocketService = inject(WebsocketService);
     private examManagementService = inject(ExamManagementService);
@@ -53,29 +53,35 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     exam = input.required<Exam>();
     getExamRoutesByIdentifier = input.required<(identifier: string) => (string | number | undefined)[]>();
+
+    constructor() {
+        effect(() => {
+            this.updateChecklistState();
+        });
+    }
     private longestWorkingTimeSub: Subscription | undefined = undefined;
 
-    examChecklist: ExamChecklist;
+    readonly examChecklist = signal<ExamChecklist | undefined>(undefined);
     isLoading = false;
-    pointsExercisesEqual = false;
-    allExamsGenerated = false;
-    allGroupsContainExercise = false;
-    totalPoints = false;
-    hasOptionalExercises = false;
-    countMandatoryExercises = 0;
-    isTestExam: boolean;
-    isEvaluatingQuizExercises: boolean;
-    isAssessingUnsubmittedExams: boolean;
-    existsUnfinishedAssessments = false;
-    existsUnassessedQuizzes = false;
-    existsUnsubmittedExercises = false;
-    isExamOver = false;
+    readonly pointsExercisesEqual = signal(false);
+    readonly allExamsGenerated = signal(false);
+    readonly allGroupsContainExercise = signal(false);
+    readonly totalPoints = signal(false);
+    readonly hasOptionalExercises = signal(false);
+    readonly countMandatoryExercises = signal(0);
+    readonly isTestExam = signal<boolean>(undefined!);
+    readonly isEvaluatingQuizExercises = signal(false);
+    readonly isAssessingUnsubmittedExams = signal(false);
+    readonly existsUnfinishedAssessments = signal(false);
+    readonly existsUnassessedQuizzes = signal(false);
+    readonly existsUnsubmittedExercises = signal(false);
+    readonly isExamOver = signal(false);
     longestWorkingTime?: number;
 
-    numberOfSubmitted = 0;
-    numberOfStarted = 0;
+    readonly numberOfSubmitted = signal(0);
+    readonly numberOfStarted = signal(0);
 
-    disabledExercises: Exercise[] = [];
+    readonly disabledExercises = signal<Exercise[]>([]);
 
     // Icons
     faEye = faEye;
@@ -92,9 +98,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
-        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
+        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => this.numberOfSubmitted.update((value) => value + 1));
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => (this.numberOfStarted += 1));
+        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => this.numberOfStarted.update((value) => value + 1));
         const exam = this.exam();
         if (exam?.course?.id && exam?.id) {
             this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(exam.course.id, exam.id).subscribe((res) => {
@@ -103,34 +109,35 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
             });
         }
         const profileInfo = this.profileService.getProfileInfo();
-        this.disabledExercises =
+        this.disabledExercises.set(
             this.exam()
                 .exerciseGroups?.flatMap((group) => group.exercises)
                 .filter((exercise) => exercise !== undefined)
-                .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [];
+                .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [],
+        );
     }
 
-    ngOnChanges() {
-        this.isTestExam = this.exam().testExam!;
-        this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
-        this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam());
-        this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam());
-        this.countMandatoryExercises = this.exam().exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
-        this.hasOptionalExercises = this.countMandatoryExercises < (this.exam().exerciseGroups?.length ?? 0);
+    private updateChecklistState() {
+        this.isTestExam.set(this.exam().testExam!);
+        this.pointsExercisesEqual.set(this.examChecklistService.checkPointsExercisesEqual(this.exam()));
+        this.totalPoints.set(this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual(), this.exam()));
+        this.allGroupsContainExercise.set(this.examChecklistService.checkEachGroupContainsExercise(this.exam()));
+        this.countMandatoryExercises.set(this.exam().exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0);
+        this.hasOptionalExercises.set(this.countMandatoryExercises() < (this.exam().exerciseGroups?.length ?? 0));
         this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
-            this.examChecklist = examStats;
+            this.examChecklist.set(examStats);
             const exam = this.exam();
-            this.allExamsGenerated = !!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, this.examChecklist);
-            this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
-            this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
-            if (this.isExamOver) {
-                if (this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {
-                    const lastAssessmentFinished = this.examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
-                    this.existsUnfinishedAssessments = lastAssessmentFinished !== this.examChecklist.numberOfTotalParticipationsForAssessment;
+            this.allExamsGenerated.set(!!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, examStats));
+            this.numberOfStarted.set(examStats.numberOfExamsStarted);
+            this.numberOfSubmitted.set(examStats.numberOfExamsSubmitted);
+            if (this.isExamOver()) {
+                if (examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== undefined) {
+                    const lastAssessmentFinished = examStats.numberOfTotalExamAssessmentsFinishedByCorrectionRound.last();
+                    this.existsUnfinishedAssessments.set(lastAssessmentFinished !== examStats.numberOfTotalParticipationsForAssessment);
                 }
             }
-            this.existsUnassessedQuizzes = this.examChecklist.existsUnassessedQuizzes;
-            this.existsUnsubmittedExercises = this.examChecklist.existsUnsubmittedExercises;
+            this.existsUnassessedQuizzes.set(examStats.existsUnassessedQuizzes);
+            this.existsUnsubmittedExercises.set(examStats.existsUnsubmittedExercises);
         });
     }
 
@@ -146,19 +153,19 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
      * Evaluates all the quiz exercises that belong to the exam
      */
     evaluateQuizExercises() {
-        this.isEvaluatingQuizExercises = true;
+        this.isEvaluatingQuizExercises.set(true);
         const exam = this.exam();
         if (exam.course?.id && exam.id) {
             this.examManagementService.evaluateQuizExercises(exam.course.id, exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
-                    this.existsUnassessedQuizzes = false;
-                    this.isEvaluatingQuizExercises = false;
+                    this.existsUnassessedQuizzes.set(false);
+                    this.isEvaluatingQuizExercises.set(false);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.dialogErrorSource.next(error.message);
                     this.alertService.error('artemisApp.studentExams.evaluateQuizExerciseFailure');
-                    this.isEvaluatingQuizExercises = false;
+                    this.isEvaluatingQuizExercises.set(false);
                 },
             });
         } else {
@@ -170,19 +177,19 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
      * Evaluates all the unsubmitted Text and Modelling submissions to 0
      */
     assessUnsubmittedExamModelingAndTextParticipations() {
-        this.isAssessingUnsubmittedExams = true;
+        this.isAssessingUnsubmittedExams.set(true);
         const exam = this.exam();
         if (exam.course?.id && exam.id) {
             this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(exam.course.id, exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
-                    this.existsUnsubmittedExercises = false;
-                    this.isAssessingUnsubmittedExams = false;
+                    this.existsUnsubmittedExercises.set(false);
+                    this.isAssessingUnsubmittedExams.set(false);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.dialogErrorSource.next(error.message);
                     this.alertService.error('artemisApp.studentExams.assessUnsubmittedStudentExamsFailure');
-                    this.isAssessingUnsubmittedExams = false;
+                    this.isAssessingUnsubmittedExams.set(false);
                 },
             });
         } else {
@@ -197,7 +204,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
             if (this.exam().gracePeriod) {
                 endDate = endDate.add(this.exam().gracePeriod!, 'seconds');
             }
-            this.isExamOver = endDate.isBefore(dayjs());
+            this.isExamOver.set(endDate.isBefore(dayjs()));
         }
     }
 

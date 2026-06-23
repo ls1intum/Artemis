@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import * as globalUtils from 'app/shared/util/global.utils';
+import * as globalUtils from 'app/foundation/util/global.utils';
 import { LectureSeriesDraftEditModalComponent } from './lecture-series-draft-edit-modal.component';
 import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import { LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';

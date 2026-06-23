@@ -19,8 +19,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
@@ -36,9 +36,9 @@ import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamRoomZipFiles;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "roomdistributionintegration";
 
@@ -120,12 +120,12 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDistributeRegisteredStudentsTooFewSeats() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
+        request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
 
         var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
         request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.BAD_REQUEST);
@@ -159,27 +159,13 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDistributeRegisteredStudentsEnoughSeats() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
+        request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
 
-        var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
-        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
-
-        verifyAllUsersAreDistributedAcrossExactly(exam, "5602.EG.001", "0101.02.179");
-    }
-
-    @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-    void testDistributeRegisteredStudentsAsInstructorValidRequest() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        Exam exam = examUtilService.addExam(course);
-        examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
-
-        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
         var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
         request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
 

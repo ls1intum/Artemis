@@ -17,7 +17,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,19 +40,19 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -153,7 +152,7 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
-        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
         jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
         prepareForPerformExerciseLaunch(result.courseId(), result.exerciseId(), true);
@@ -245,7 +244,7 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
-        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
         jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
         prepareForPerformCompetencyLaunch(1L, true);
@@ -261,7 +260,7 @@ class Lti13ServiceTest {
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
-        ObjectNode jsonObject = new ObjectMapper().createObjectNode();
+        ObjectNode jsonObject = JsonObjectMapper.get().createObjectNode();
         jsonObject.put("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
         prepareForPerformCompetencyLaunch(1L, false);
@@ -354,7 +353,7 @@ class Lti13ServiceTest {
 
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(mock(ClientRegistration.class)).when(onlineCourseConfigurationService).getClientRegistration(any());
-        doReturn(Collections.emptyList()).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(List.of()).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
         lti13Service.onNewResult(participation);
@@ -379,7 +378,7 @@ class Lti13ServiceTest {
 
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
-        doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.empty()).when(resultRepository).findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
@@ -412,7 +411,7 @@ class Lti13ServiceTest {
 
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
-        doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
 
@@ -441,7 +440,7 @@ class Lti13ServiceTest {
 
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
-        doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(null).when(tokenRetriever).getToken(eq(clientRegistration), eq(Scopes.AGS_SCORE));
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(any());
@@ -475,7 +474,7 @@ class Lti13ServiceTest {
         course.setOnlineCourse(true);
         ClientRegistration clientRegistration = state.clientRegistration();
 
-        doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
+        doReturn(List.of(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(Optional.of(ltiPlatformConfiguration)).when(ltiPlatformConfigurationRepository).findByRegistrationId(clientRegistrationId);
@@ -500,7 +499,7 @@ class Lti13ServiceTest {
         assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
         assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains(Constants.BEARER_PREFIX + accessToken);
 
-        JsonNode body = new ObjectMapper().readTree(Objects.requireNonNull(httpEntity.getBody()));
+        JsonNode body = JsonObjectMapper.get().readTree(Objects.requireNonNull(httpEntity.getBody()));
         assertThat(body.get("userId").asText()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
         assertThat(body.get("timestamp").asText()).as("Parameter missing in score publish request: timestamp").isNotNull();
         assertThat(body.get("activityProgress").asText()).as("Parameter missing in score publish request: activityProgress").isNotNull();

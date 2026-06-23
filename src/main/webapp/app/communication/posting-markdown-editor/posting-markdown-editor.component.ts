@@ -1,14 +1,8 @@
 import {
-    AfterContentChecked,
     AfterViewInit,
     ChangeDetectionStrategy,
-    ChangeDetectorRef,
     Component,
-    EventEmitter,
-    Input,
     OnInit,
-    Output,
-    ViewChild,
     ViewContainerRef,
     ViewEncapsulation,
     computed,
@@ -16,39 +10,41 @@ import {
     inject,
     input,
     output,
+    signal,
+    viewChild,
 } from '@angular/core';
 import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { Course, isCommunicationEnabled, isFaqEnabled } from 'app/core/course/shared/entities/course.model';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
-import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
-import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
-import { QuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
-import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
-import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
-import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
-import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
-import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
-import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
-import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
-import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
+import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
+import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
+import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/editor/monaco-editor/model/actions/underline.action';
+import { QuoteAction } from 'app/editor/monaco-editor/model/actions/quote.action';
+import { CodeAction } from 'app/editor/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/editor/monaco-editor/model/actions/code-block.action';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ChannelReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/channel-reference.action';
+import { UserMentionAction } from 'app/editor/monaco-editor/model/actions/communication/user-mention.action';
+import { ExerciseReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/exercise-reference.action';
+import { LectureAttachmentReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
+import { FaqReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/faq-reference.action';
+import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/editor/monaco-editor/model/actions/attachment.action';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
+import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action';
 import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
-import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
-import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
+import { BulletedListAction } from 'app/editor/monaco-editor/model/actions/bulleted-list.action';
+import { OrderedListAction } from 'app/editor/monaco-editor/model/actions/ordered-list.action';
+import { StrikethroughAction } from 'app/editor/monaco-editor/model/actions/strikethrough.action';
 import { PostingContentComponent } from '../posting-content/posting-content.components';
 import { NgStyle } from '@angular/common';
 import { PostingEditType } from '../metis.util';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { FileService } from 'app/shared/service/file.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { FileService } from 'app/foundation/service/file.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -64,8 +60,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MarkdownEditorMonacoComponent, PostingContentComponent, NgStyle],
 })
-export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked, AfterViewInit {
-    private cdref = inject(ChangeDetectorRef);
+export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit {
     private metisService = inject(MetisService);
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
@@ -74,12 +69,12 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     viewContainerRef = inject(ViewContainerRef);
     private positionBuilder = inject(OverlayPositionBuilder);
 
-    @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
+    readonly markdownEditor = viewChild.required(MarkdownEditorMonacoComponent);
 
-    @Input() maxContentLength: number;
-    @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
-    @Input() isInputLengthDisplayed = true;
-    @Input() suppressNewlineOnEnter = true;
+    readonly maxContentLength = input<number>();
+    readonly editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
+    readonly isInputLengthDisplayed = input(true);
+    readonly suppressNewlineOnEnter = input(true);
 
     showCloseButton = input<boolean>(false);
     closeEditor = output<void>();
@@ -94,10 +89,10 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * In this case, file uploads have to rely on the parent post to determine the course.
      */
     readonly activeConversation = input<ConversationDTO>();
-    @Output() valueChange = new EventEmitter();
-    lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
-    defaultActions: TextEditorAction[];
-    content?: string;
+    readonly valueChange = output();
+    readonly lectureAttachmentReferenceAction = signal<LectureAttachmentReferenceAction>(undefined!);
+    readonly defaultActions = signal<TextEditorAction[]>(undefined!);
+    readonly content = signal<string | undefined>(undefined);
     previewMode = false;
     fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
@@ -112,9 +107,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             ? [new UserMentionAction(this.courseManagementService, this.metisService), new ChannelReferenceAction(this.metisService, this.channelService)]
             : [];
 
-        const faqAction = isFaqEnabled(this.metisService.getCourse()) ? [new FaqReferenceAction(this.metisService)] : [];
-
-        this.defaultActions = [
+        this.defaultActions.set([
             new BoldAction(),
             new ItalicAction(),
             new UnderlineAction(),
@@ -129,16 +122,16 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new AttachmentAction(),
             ...messagingOnlyActions,
             new ExerciseReferenceAction(this.metisService),
-            ...faqAction,
-        ];
+            new FaqReferenceAction(this.metisService),
+        ]);
 
-        this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService, this.fileService);
+        this.lectureAttachmentReferenceAction.set(new LectureAttachmentReferenceAction(this.metisService, this.lectureService, this.fileService));
     }
 
     ngAfterViewInit(): void {
-        this.markdownEditor.enableTextFieldMode();
+        this.markdownEditor().enableTextFieldMode();
 
-        const editor = this.markdownEditor.monacoEditor;
+        const editor = this.markdownEditor().monacoEditor?.();
         if (editor) {
             editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
                 const position = editor.getPosition();
@@ -168,18 +161,10 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         const lineContent = model.getLineContent(lineNumber).trimStart();
 
         if (lineContent.startsWith('- ')) {
-            this.markdownEditor.handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof BulletedListAction)!);
+            this.markdownEditor().handleActionClick(new MouseEvent('click'), this.defaultActions().find((action) => action instanceof BulletedListAction)!);
         } else if (/^\d+\. /.test(lineContent)) {
-            this.markdownEditor.handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof OrderedListAction)!);
+            this.markdownEditor().handleActionClick(new MouseEvent('click'), this.defaultActions().find((action) => action instanceof OrderedListAction)!);
         }
-    }
-
-    /**
-     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the markdown editor
-     * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
-     */
-    ngAfterContentChecked() {
-        this.cdref.detectChanges();
     }
 
     /**
@@ -200,7 +185,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * @param value
      */
     writeValue(value: any): void {
-        this.content = value ?? '';
+        this.content.set(value ?? '');
     }
 
     /**
@@ -221,14 +206,14 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * @param newValue
      */
     updateField(newValue: string) {
-        this.content = newValue;
-        this.onChange(this.content);
+        this.content.set(newValue);
+        this.onChange(newValue);
         this.valueChanged();
     }
 
     onKeyDown(event: KeyboardEvent) {
         // Prevent a newline from being added to the text when pressing enter
-        if (this.suppressNewlineOnEnter && event.key === 'Enter' && !event.shiftKey) {
+        if (this.suppressNewlineOnEnter() && event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
         }
     }

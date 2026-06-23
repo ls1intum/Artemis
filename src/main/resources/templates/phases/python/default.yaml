@@ -1,0 +1,6 @@
+- name: compile
+  script: 'python3 -m compileall . -q'
+- name: test
+  script: 'pytest --junitxml=test-reports/results.xml'
+  resultPaths:
+    - 'test-reports/*results.xml'

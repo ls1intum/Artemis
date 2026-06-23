@@ -1,9 +1,13 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 describe('Quiz Exercise Group Cell Component', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<QuizExerciseGroupCellComponent>;
 
     beforeEach(() => {
@@ -12,6 +16,10 @@ describe('Quiz Exercise Group Cell Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(QuizExerciseGroupCellComponent);
             });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should display number of quiz questions', () => {

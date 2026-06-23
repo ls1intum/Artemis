@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
@@ -11,19 +11,25 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
+import { of } from 'rxjs';
 
 type DuplicateType = keyof Pick<ExamExerciseImportComponent, 'exercisesWithDuplicatedTitles' | 'exercisesWithDuplicatedShortNames'>;
 
 describe('Exam Exercise Import Component', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamExerciseImportComponent;
     let fixture: ComponentFixture<ExamExerciseImportComponent>;
 
@@ -68,27 +74,30 @@ describe('Exam Exercise Import Component', () => {
         exerciseGroups: [exerciseGroup1, exerciseGroup2, exerciseGroup3, exerciseGroup4, exerciseGroup5],
     } as Exam;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), FontAwesomeTestingModule],
-            declarations: [MockPipe(ArtemisTranslatePipe)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MockModule(FormsModule), FontAwesomeTestingModule, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: ExerciseService,
+                    useValue: {
+                        getExistingExerciseDetailsInCourse: () => of({ exerciseTitles: new Set<string>(), shortNames: new Set<string>() } as CourseExistingExerciseDetailsType),
+                    },
+                },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExamExerciseImportComponent);
-                component = fixture.componentInstance;
+        }).compileComponents();
 
-                const profileService = TestBed.inject(ProfileService);
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] } as ProfileInfo);
-            });
+        fixture = TestBed.createComponent(ExamExerciseImportComponent);
+        component = fixture.componentInstance;
+
+        const profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] } as ProfileInfo);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize ngOnInit without titleAndShortNameOfProgrammingExercises', () => {
@@ -104,11 +113,11 @@ describe('Exam Exercise Import Component', () => {
         expect(component.selectedExercises.get(exerciseGroup5)).toEqual(new Set<Exercise>().add(fileUploadExercise));
 
         expect(component.containsProgrammingExercises.size).toBe(5);
-        expect(component.containsProgrammingExercises.get(exerciseGroup3)).toBeTrue();
-        expect(component.containsProgrammingExercises.get(exerciseGroup1)).toBeFalse();
-        expect(component.containsProgrammingExercises.get(exerciseGroup2)).toBeFalse();
-        expect(component.containsProgrammingExercises.get(exerciseGroup4)).toBeFalse();
-        expect(component.containsProgrammingExercises.get(exerciseGroup5)).toBeFalse();
+        expect(component.containsProgrammingExercises.get(exerciseGroup3)).toBe(true);
+        expect(component.containsProgrammingExercises.get(exerciseGroup1)).toBe(false);
+        expect(component.containsProgrammingExercises.get(exerciseGroup2)).toBe(false);
+        expect(component.containsProgrammingExercises.get(exerciseGroup4)).toBe(false);
+        expect(component.containsProgrammingExercises.get(exerciseGroup5)).toBe(false);
 
         // For importInSameCourse = false, this should be preliminary empty
         expect(component.titleAndShortNameOfProgrammingExercises.size).toBe(0);
@@ -127,11 +136,11 @@ describe('Exam Exercise Import Component', () => {
         expect(component.selectedExercises.get(exerciseGroup5)).toEqual(new Set<Exercise>().add(fileUploadExercise));
 
         expect(component.containsProgrammingExercises.size).toBe(5);
-        expect(component.containsProgrammingExercises.get(exerciseGroup3)).toBeTrue();
-        expect(component.containsProgrammingExercises.get(exerciseGroup1)).toBeFalse();
-        expect(component.containsProgrammingExercises.get(exerciseGroup2)).toBeFalse();
-        expect(component.containsProgrammingExercises.get(exerciseGroup4)).toBeFalse();
-        expect(component.containsProgrammingExercises.get(exerciseGroup5)).toBeFalse();
+        expect(component.containsProgrammingExercises.get(exerciseGroup3)).toBe(true);
+        expect(component.containsProgrammingExercises.get(exerciseGroup1)).toBe(false);
+        expect(component.containsProgrammingExercises.get(exerciseGroup2)).toBe(false);
+        expect(component.containsProgrammingExercises.get(exerciseGroup4)).toBe(false);
+        expect(component.containsProgrammingExercises.get(exerciseGroup5)).toBe(false);
 
         // For importInSameCourse = true, this should be initialized
         expect(component.titleAndShortNameOfProgrammingExercises.size).toBe(1);
@@ -181,11 +190,11 @@ describe('Exam Exercise Import Component', () => {
         expect(component.selectedExercises.get(exerciseGroup5)).toEqual(new Set<Exercise>().add(fileUploadExercise));
 
         expect(component.containsProgrammingExercises.size).toBe(5);
-        expect(component.containsProgrammingExercises.get(exerciseGroup3Rejected)).toBeTrue();
-        expect(component.containsProgrammingExercises.get(exerciseGroup1)).toBeFalse();
-        expect(component.containsProgrammingExercises.get(exerciseGroup2)).toBeFalse();
-        expect(component.containsProgrammingExercises.get(exerciseGroup4)).toBeFalse();
-        expect(component.containsProgrammingExercises.get(exerciseGroup5)).toBeFalse();
+        expect(component.containsProgrammingExercises.get(exerciseGroup3Rejected)).toBe(true);
+        expect(component.containsProgrammingExercises.get(exerciseGroup1)).toBe(false);
+        expect(component.containsProgrammingExercises.get(exerciseGroup2)).toBe(false);
+        expect(component.containsProgrammingExercises.get(exerciseGroup4)).toBe(false);
+        expect(component.containsProgrammingExercises.get(exerciseGroup5)).toBe(false);
     });
 
     it('should correctly process the selection of a modellingExercise', () => {
@@ -193,21 +202,21 @@ describe('Exam Exercise Import Component', () => {
         component.ngOnInit();
 
         // Step 1 ( after initialization): Modelling Exercise is selected
-        expect(component.exerciseGroupContainsExercises(exerciseGroup1)).toBeTrue();
-        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup1)).toBeFalse();
-        expect(component.exerciseIsSelected(modelingExercise, exerciseGroup1)).toBeTrue();
+        expect(component.exerciseGroupContainsExercises(exerciseGroup1)).toBe(true);
+        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup1)).toBe(false);
+        expect(component.exerciseIsSelected(modelingExercise, exerciseGroup1)).toBe(true);
 
         // Step 2: Unselect the Modelling Exercise
         component.onSelectExercise(modelingExercise, exerciseGroup1);
-        expect(component.exerciseGroupContainsExercises(exerciseGroup1)).toBeFalse();
-        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup1)).toBeFalse();
-        expect(component.exerciseIsSelected(modelingExercise, exerciseGroup1)).toBeFalse();
+        expect(component.exerciseGroupContainsExercises(exerciseGroup1)).toBe(false);
+        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup1)).toBe(false);
+        expect(component.exerciseIsSelected(modelingExercise, exerciseGroup1)).toBe(false);
 
         // Step 3: Select the Modelling Exercise again
         component.onSelectExercise(modelingExercise, exerciseGroup1);
-        expect(component.exerciseGroupContainsExercises(exerciseGroup1)).toBeTrue();
-        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup1)).toBeFalse();
-        expect(component.exerciseIsSelected(modelingExercise, exerciseGroup1)).toBeTrue();
+        expect(component.exerciseGroupContainsExercises(exerciseGroup1)).toBe(true);
+        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup1)).toBe(false);
+        expect(component.exerciseIsSelected(modelingExercise, exerciseGroup1)).toBe(true);
     });
 
     it('should correctly process the selection of a programmingExercise', () => {
@@ -215,21 +224,21 @@ describe('Exam Exercise Import Component', () => {
         component.ngOnInit();
 
         // Step 1 ( after initialization): Programming Exercise is selected
-        expect(component.exerciseGroupContainsExercises(exerciseGroup3)).toBeTrue();
-        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup3)).toBeTrue();
-        expect(component.exerciseIsSelected(programmingExercise, exerciseGroup3)).toBeTrue();
+        expect(component.exerciseGroupContainsExercises(exerciseGroup3)).toBe(true);
+        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup3)).toBe(true);
+        expect(component.exerciseIsSelected(programmingExercise, exerciseGroup3)).toBe(true);
 
         // Step 2: Unselect the Programming Exercise
         component.onSelectExercise(programmingExercise, exerciseGroup3);
-        expect(component.exerciseGroupContainsExercises(exerciseGroup3)).toBeFalse();
-        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup3)).toBeTrue();
-        expect(component.exerciseIsSelected(programmingExercise, exerciseGroup3)).toBeFalse();
+        expect(component.exerciseGroupContainsExercises(exerciseGroup3)).toBe(false);
+        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup3)).toBe(true);
+        expect(component.exerciseIsSelected(programmingExercise, exerciseGroup3)).toBe(false);
 
         // Step 3: Select the Programming Exercise again
         component.onSelectExercise(programmingExercise, exerciseGroup3);
-        expect(component.exerciseGroupContainsExercises(exerciseGroup3)).toBeTrue();
-        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup3)).toBeTrue();
-        expect(component.exerciseIsSelected(programmingExercise, exerciseGroup3)).toBeTrue();
+        expect(component.exerciseGroupContainsExercises(exerciseGroup3)).toBe(true);
+        expect(component.exerciseGroupContainsProgrammingExercises(exerciseGroup3)).toBe(true);
+        expect(component.exerciseIsSelected(programmingExercise, exerciseGroup3)).toBe(true);
     });
 
     it('should correctly return an empty string when titleAndShortNameOfProgrammingExercises do not contain exercise', () => {
@@ -275,38 +284,152 @@ describe('Exam Exercise Import Component', () => {
         // Programming Exercises with this title and short name should not be accepted
         component.titleAndShortNameOfProgrammingExercises.set(programmingExercise.id!, ['rejectedTitle', 'rejectedShortName']);
 
-        expect(component.validateUserInput()).toBeTrue();
+        expect(component.validateUserInput()).toBe(true);
 
         exerciseGroup1.title = undefined;
-        expect(component.validateUserInput()).toBeFalse();
+        expect(component.validateUserInput()).toBe(false);
         exerciseGroup1.title = 'exerciseGroup1';
 
         modelingExercise.title = undefined;
-        expect(component.validateUserInput()).toBeFalse();
+        expect(component.validateUserInput()).toBe(false);
         modelingExercise.title = 'ModelingExercise';
 
         programmingExercise.title = undefined;
-        expect(component.validateUserInput()).toBeFalse();
+        expect(component.validateUserInput()).toBe(false);
         // Title Pattern mismatch
         programmingExercise.title = '//';
-        expect(component.validateUserInput()).toBeFalse();
+        expect(component.validateUserInput()).toBe(false);
         programmingExercise.title = 'rejectedTitle';
-        expect(component.validateUserInput()).toBeFalse();
+        expect(component.validateUserInput()).toBe(false);
         programmingExercise.title = 'ProgrammingExercise';
 
         programmingExercise.shortName = undefined;
-        expect(component.validateUserInput()).toBeFalse();
+        expect(component.validateUserInput()).toBe(false);
         // Too short ( >= 3)
         programmingExercise.shortName = 'AA';
-        expect(component.validateUserInput()).toBeFalse();
+        expect(component.validateUserInput()).toBe(false);
         // ShortName Pattern mismatch (no leading number)
         programmingExercise.shortName = '9AAA';
-        expect(component.validateUserInput()).toBeFalse();
+        expect(component.validateUserInput()).toBe(false);
         programmingExercise.shortName = 'rejectedShortName';
-        expect(component.validateUserInput()).toBeFalse();
+        expect(component.validateUserInput()).toBe(false);
         programmingExercise.shortName = 'prog3';
 
-        expect(component.validateUserInput()).toBeTrue();
+        expect(component.validateUserInput()).toBe(true);
+    });
+
+    it('should return a specific error key for each invalid programming exercise title and short name', () => {
+        fixture.componentRef.setInput('exam', exam1);
+        component.ngOnInit();
+        const prefix = 'artemisApp.examManagement.exerciseGroup.importModal.error.';
+        // A programming exercise with this title and short name is blocked (rejected by the server / same-course import)
+        component.titleAndShortNameOfProgrammingExercises.set(programmingExercise.id!, ['rejectedTitle', 'rejectedShortName']);
+
+        // Valid baseline -> no error
+        programmingExercise.title = 'ProgrammingExercise';
+        programmingExercise.shortName = 'prog3';
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBeUndefined();
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBeUndefined();
+
+        // Title errors
+        programmingExercise.title = undefined;
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBe(prefix + 'titleRequired');
+        programmingExercise.title = '//';
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBe(prefix + 'titlePattern');
+        programmingExercise.title = 'ProgrammingExercise';
+        component.exercisesWithDuplicatedTitles.set(programmingExercise.id!, 'ProgrammingExercise');
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBe(prefix + 'titleDuplicate');
+        component.exercisesWithDuplicatedTitles.delete(programmingExercise.id!);
+        programmingExercise.title = 'rejectedTitle';
+        expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBe(prefix + 'titleAlreadyExists');
+        programmingExercise.title = 'ProgrammingExercise';
+
+        // Short name errors
+        programmingExercise.shortName = 'AA';
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBe(prefix + 'shortNameLength');
+        programmingExercise.shortName = '9AAA';
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBe(prefix + 'shortNamePattern');
+        programmingExercise.shortName = 'prog3';
+        component.exercisesWithDuplicatedShortNames.set(programmingExercise.id!, 'prog3');
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBe(prefix + 'shortNameDuplicate');
+        component.exercisesWithDuplicatedShortNames.delete(programmingExercise.id!);
+        programmingExercise.shortName = 'rejectedShortName';
+        expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBe(prefix + 'shortNameAlreadyExists');
+    });
+
+    it('should return a specific error key for an invalid exercise group title', () => {
+        fixture.componentRef.setInput('exam', exam1);
+        component.ngOnInit();
+        const prefix = 'artemisApp.examManagement.exerciseGroup.importModal.error.';
+
+        expect(component.getExerciseGroupTitleError(exerciseGroup1)).toBeUndefined();
+        exerciseGroup1.title = undefined;
+        expect(component.getExerciseGroupTitleError(exerciseGroup1)).toBe(prefix + 'groupTitleRequired');
+        exerciseGroup1.title = '';
+        expect(component.getExerciseGroupTitleError(exerciseGroup1)).toBe(prefix + 'groupTitleRequired');
+        // restore for the other (shared) tests
+        exerciseGroup1.title = 'exerciseGroup1';
+    });
+
+    it('should return a specific error key for an invalid non-programming exercise title', () => {
+        fixture.componentRef.setInput('exam', exam1);
+        component.ngOnInit();
+        const prefix = 'artemisApp.examManagement.exerciseGroup.importModal.error.';
+
+        expect(component.getNonProgrammingExerciseTitleError(modelingExercise)).toBeUndefined();
+        modelingExercise.title = undefined;
+        expect(component.getNonProgrammingExerciseTitleError(modelingExercise)).toBe(prefix + 'titleRequired');
+        // restore for the other (shared) tests
+        modelingExercise.title = 'ModelingExercise';
+    });
+
+    describe('live validation against the target course', () => {
+        it('should flag programming exercise titles and short names already used in the target course', () => {
+            // Set explicit values rather than relying on the shared programmingExercise mutated by earlier tests
+            programmingExercise.title = 'ProgrammingExercise';
+            programmingExercise.shortName = 'progEx';
+            const exerciseService = TestBed.inject(ExerciseService);
+            const spy = vi
+                .spyOn(exerciseService, 'getExistingExerciseDetailsInCourse')
+                .mockReturnValue(of({ exerciseTitles: new Set(['ProgrammingExercise']), shortNames: new Set(['progEx']) }));
+            fixture.componentRef.setInput('exam', exam1);
+            fixture.componentRef.setInput('targetCourseId', 42);
+            component.ngOnInit();
+
+            expect(spy).toHaveBeenCalledWith(42, ExerciseType.PROGRAMMING);
+            const prefix = 'artemisApp.examManagement.exerciseGroup.importModal.error.';
+            // The source title / short name already exist in the target course -> flagged live, before any submit
+            expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBe(prefix + 'titleAlreadyExists');
+            expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBe(prefix + 'shortNameAlreadyExists');
+
+            // Renaming to values not used in the target course clears the errors
+            programmingExercise.title = 'A brand new title';
+            programmingExercise.shortName = 'brandNewShort';
+            expect(component.getProgrammingExerciseTitleError(programmingExercise)).toBeUndefined();
+            expect(component.getProgrammingExerciseShortNameError(programmingExercise)).toBeUndefined();
+
+            // restore for the other (shared) tests
+            programmingExercise.title = 'ProgrammingExercise';
+            programmingExercise.shortName = 'progEx';
+        });
+
+        it('should not fetch existing exercise details when no target course is set', () => {
+            const exerciseService = TestBed.inject(ExerciseService);
+            const spy = vi.spyOn(exerciseService, 'getExistingExerciseDetailsInCourse');
+            fixture.componentRef.setInput('exam', exam1);
+            component.ngOnInit();
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should not fetch existing exercise details when the exam contains no programming exercises', () => {
+            const exerciseService = TestBed.inject(ExerciseService);
+            const spy = vi.spyOn(exerciseService, 'getExistingExerciseDetailsInCourse');
+            const examWithoutProgramming = { id: 11, exerciseGroups: [exerciseGroup1, exerciseGroup2] } as Exam;
+            fixture.componentRef.setInput('exam', examWithoutProgramming);
+            fixture.componentRef.setInput('targetCourseId', 42);
+            component.ngOnInit();
+            expect(spy).not.toHaveBeenCalled();
+        });
     });
 
     it('should correctly return the Exercise Icon', () => {
@@ -372,9 +495,9 @@ describe('Exam Exercise Import Component', () => {
                 component.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(programmingExercise, exerciseGroup3, duplicatedTitles);
 
                 expect(duplicatesToCheck.size).toBe(3);
-                expect(duplicatesToCheck.has(programmingExercise.id!)).toBeTrue();
-                expect(duplicatesToCheck.has(programmingExercise2.id!)).toBeTrue();
-                expect(duplicatesToCheck.has(programmingExercise3.id!)).toBeTrue();
+                expect(duplicatesToCheck.has(programmingExercise.id!)).toBe(true);
+                expect(duplicatesToCheck.has(programmingExercise2.id!)).toBe(true);
+                expect(duplicatesToCheck.has(programmingExercise3.id!)).toBe(true);
             },
         );
 
@@ -424,8 +547,8 @@ describe('Exam Exercise Import Component', () => {
 
                 component.onSelectExercise(programmingExercise2, exerciseGroup6);
                 expect(duplicatesToCheck.size).toBe(2);
-                expect(duplicatesToCheck.has(programmingExercise.id!)).toBeTrue();
-                expect(duplicatesToCheck.has(programmingExercise2.id!)).toBeTrue();
+                expect(duplicatesToCheck.has(programmingExercise.id!)).toBe(true);
+                expect(duplicatesToCheck.has(programmingExercise2.id!)).toBe(true);
             },
         );
 

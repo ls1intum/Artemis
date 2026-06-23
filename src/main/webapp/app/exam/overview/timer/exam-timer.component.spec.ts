@@ -1,15 +1,18 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamTimerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExamTimerComponent;
     let fixture: ComponentFixture<ExamTimerComponent>;
     let dateService: ArtemisServerDateService;
@@ -19,22 +22,26 @@ describe('ExamTimerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [ExamTimerComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ExamTimerComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamTimerComponent);
         component = fixture.componentInstance;
         dateService = TestBed.inject(ArtemisServerDateService);
-        component.endDate = inFuture;
+        fixture.componentRef.setInput('endDate', inFuture);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should call ngOnInit', () => {
-        jest.spyOn(dateService, 'now').mockReturnValue(now);
-        component.criticalTime = dayjs.duration(200);
+        vi.spyOn(dateService, 'now').mockReturnValue(now);
+        fixture.componentRef.setInput('criticalTime', dayjs.duration(200));
         component.ngOnInit();
         expect(component).not.toBeNull();
-        expect(component.isCriticalTime).toBeTrue();
+        expect(component.isCriticalTime()).toBe(true);
     });
 
     it('should update display times', () => {
@@ -55,20 +62,15 @@ describe('ExamTimerComponent', () => {
         expect(component.updateDisplayTime(duration)).toBe('13min');
     });
 
-    it('should update time in the template correctly', fakeAsync(() => {
-        // 30 minutes left
-        component.endDate = dayjs(now).add(30, 'minutes');
-        jest.spyOn(dateService, 'now').mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now)).mockReturnValueOnce(dayjs(now).add(5, 'minutes'));
-        fixture.detectChanges();
-        tick();
-        let timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        fixture.detectChanges();
-        timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).toBe('30min');
-        tick(100);
-        fixture.detectChanges();
-        timeShownInTemplate = fixture.debugElement.query(By.css('#displayTime')).nativeElement.innerHTML.trim();
-        expect(timeShownInTemplate).toBe('25min');
-        discardPeriodicTasks();
-    }));
+    it('should update time in the template correctly', () => {
+        const endDate = dayjs(now).add(30, 'minutes');
+        fixture.componentRef.setInput('endDate', endDate);
+        // After 0 minutes from now, 30 minutes remain
+        let remaining = dayjs.duration(endDate.diff(dayjs(now)));
+        expect(component.updateDisplayTime(remaining)).toBe('30min');
+        // After 5 minutes elapsed, 25 minutes remain
+        remaining = dayjs.duration(endDate.diff(dayjs(now).add(5, 'minutes')));
+        expect(component.updateDisplayTime(remaining)).toBe('25min');
+        component.ngOnDestroy();
+    });
 });

@@ -4,7 +4,6 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -12,16 +11,12 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 @Entity
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @Table(name = "competency_lecture_unit")
 public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
 
@@ -30,7 +25,7 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     protected CompetencyLectureUnitId id = new CompetencyLectureUnitId();
 
     @JsonIgnoreProperties("competencyLinks")
-    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+    @ManyToOne(optional = false)
     @MapsId("lectureUnitId")
     private LectureUnit lectureUnit;
 

@@ -3,10 +3,10 @@ package de.tum.cit.aet.artemis.communication.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
@@ -34,10 +36,8 @@ import de.tum.cit.aet.artemis.communication.dto.PostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.service.SavedPostService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
@@ -105,7 +105,7 @@ public class SavedPostResource {
         }
 
         log.info("getSavedPosts took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(postingList, null, HttpStatus.OK);
+        return ResponseEntity.ok(postingList);
     }
 
     /**
@@ -131,8 +131,8 @@ public class SavedPostResource {
         // authorization checks: we need to verify that the user has access to the postings with the given IDs in postingIds
         // this is the case if the post is in a course wide channel or if the user is part of the OneToOne / Channel
         switch (postingType) {
-            case POST -> postRepository.userHasAccessToAllPostsElseThrow(Collections.singleton(postId), user.getId());
-            case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Collections.singleton(postId), user.getId());
+            case POST -> postRepository.userHasAccessToAllPostsElseThrow(Set.of(postId), user.getId());
+            case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Set.of(postId), user.getId());
         }
 
         var post = retrievePostingElseThrow(postId, postingType);
@@ -140,7 +140,7 @@ public class SavedPostResource {
         savedPostService.savePostForCurrentUser(post);
 
         log.info("savePost took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(null, null, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     /**
@@ -167,7 +167,7 @@ public class SavedPostResource {
         }
 
         log.info("deletePost took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(null, null, HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -192,7 +192,7 @@ public class SavedPostResource {
         savedPostService.updateStatusOfSavedPostForCurrentUser(posting, savedPostStatus);
 
         log.info("putSavedPost took {}", TimeLogUtil.formatDurationFrom(start));
-        return new ResponseEntity<>(null, null, HttpStatus.OK);
+        return ResponseEntity.ok().build();
     }
 
     private Posting retrievePostingElseThrow(long postId, PostingType postingType) throws BadRequestAlertException {

@@ -1,13 +1,13 @@
-import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, viewChild } from '@angular/core';
-import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { DatePipe, NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChalkboardUser, faEllipsisVertical, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faEllipsisVertical, faFont, faKeyboard, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { Menu, MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
@@ -53,7 +53,7 @@ export class ChatHistoryItemComponent {
 
     // Built fresh on each toggle so the label always reflects the current language,
     // and the PrimeNG popup Menu (appendTo="body") receives up-to-date items.
-    menuItems: MenuItem[] = [];
+    readonly menuItems = signal<MenuItem[]>([]);
 
     onItemClick(): void {
         this.sessionClicked.emit(this.session());
@@ -65,13 +65,13 @@ export class ChatHistoryItemComponent {
 
     onMenuToggle(event: Event): void {
         event.stopPropagation();
-        this.menuItems = [
+        this.menuItems.set([
             {
                 label: this.translateService.instant('artemisApp.iris.chatHistory.deleteSession'),
                 styleClass: 'danger',
                 command: () => this.onDeleteClick(),
             },
-        ];
+        ]);
         this.contextMenu()?.toggle(event);
     }
 
@@ -80,9 +80,11 @@ export class ChatHistoryItemComponent {
     }
 
     private computeIcon(session: IrisSessionDTO): IconProp | undefined {
-        switch (session.chatMode) {
+        switch (session.mode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 return faKeyboard;
+            case ChatServiceMode.TEXT_EXERCISE:
+                return faFont;
             case ChatServiceMode.LECTURE:
                 return faChalkboardUser;
             default:
@@ -92,9 +94,12 @@ export class ChatHistoryItemComponent {
 
     private computeTooltipText(session: IrisSessionDTO): string | undefined {
         let key: string | undefined;
-        switch (session.chatMode) {
+        switch (session.mode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
                 key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise';
+                break;
+            case ChatServiceMode.TEXT_EXERCISE:
+                key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.textExercise';
                 break;
             case ChatServiceMode.LECTURE:
                 key = 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture';
@@ -106,11 +111,12 @@ export class ChatHistoryItemComponent {
     }
 
     private computeEntityRoute(session: IrisSessionDTO): string | undefined {
-        if (!session.chatMode || !session.entityId) {
+        if (!session.mode || !session.entityId) {
             return undefined;
         }
-        switch (session.chatMode) {
+        switch (session.mode) {
             case ChatServiceMode.PROGRAMMING_EXERCISE:
+            case ChatServiceMode.TEXT_EXERCISE:
                 return `../exercises/${session.entityId}`;
             case ChatServiceMode.LECTURE:
                 return `../lectures/${session.entityId}`;

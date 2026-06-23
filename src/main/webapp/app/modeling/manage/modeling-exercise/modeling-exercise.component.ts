@@ -1,41 +1,55 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
-import { onError } from 'app/shared/util/global.utils';
-import { SortService } from 'app/shared/service/sort.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { SortService } from 'app/foundation/service/sort.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { faBook, faPlus, faSort, faTable, faTimes, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-modeling-exercise',
     templateUrl: './modeling-exercise.component.html',
-    imports: [SortDirective, FormsModule, SortByDirective, TranslateDirective, FaIconComponent, RouterLink, ExerciseCategoriesComponent, DeleteButtonDirective, ArtemisDatePipe],
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        ExerciseCategoriesComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
-    protected exerciseService = inject(ExerciseService); // needed in html code
+    protected exerciseService = inject(ExerciseService);
     protected modelingExerciseService = inject(ModelingExerciseService); // needed in html code
     private courseExerciseService = inject(CourseExerciseService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
     private sortService = inject(SortService);
 
-    modelingExercises: ModelingExercise[] = [];
-    filteredModelingExercises: ModelingExercise[];
+    readonly modelingExercises = signal<ModelingExercise[]>([]);
+    readonly filteredModelingExercises = signal<ModelingExercise[]>([]);
     // Icons
     faPlus = faPlus;
     faSort = faSort;
@@ -48,29 +62,30 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     faTrash = faTrash;
 
     protected get exercises() {
-        return this.modelingExercises;
+        return this.modelingExercises();
     }
 
     protected loadExercises(): void {
-        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe({
+        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId()).subscribe({
             next: (res: HttpResponse<ModelingExercise[]>) => {
-                this.modelingExercises = res.body!;
+                const modelingExercises = res.body!;
                 // reconnect exercise with course
-                this.modelingExercises.forEach((exercise) => {
-                    exercise.course = this.course;
+                modelingExercises.forEach((exercise) => {
+                    exercise.course = this.courseContext();
                     this.accountService.setAccessRightsForExercise(exercise);
-                    this.selectedExercises = [];
                 });
+                this.modelingExercises.set(modelingExercises);
+                this.selectedExercises.set([]);
                 this.applyFilter();
-                this.emitExerciseCount(this.modelingExercises.length);
+                this.emitExerciseCount(modelingExercises.length);
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
     }
 
     protected applyFilter(): void {
-        this.filteredModelingExercises = this.modelingExercises.filter((exercise) => this.filter.matchesExercise(exercise));
-        this.emitFilteredExerciseCount(this.filteredModelingExercises.length);
+        this.filteredModelingExercises.set(this.modelingExercises().filter((exercise) => this.filter.matchesExercise(exercise)));
+        this.emitFilteredExerciseCount(this.filteredModelingExercises().length);
     }
 
     /**
@@ -104,8 +119,18 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.modelingExercises, this.predicate, this.reverse);
+        const sortedModelingExercises = [...this.modelingExercises()];
+        this.sortService.sortByProperty(sortedModelingExercises, this.predicate, this.reverse);
+        this.modelingExercises.set(sortedModelingExercises);
         this.applyFilter();
+    }
+
+    /**
+     * Fetches the deletion summary for a modeling exercise.
+     * @param exercise the exercise
+     */
+    fetchExerciseDeletionSummary(exercise: ModelingExercise): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(exercise);
     }
 
     /**

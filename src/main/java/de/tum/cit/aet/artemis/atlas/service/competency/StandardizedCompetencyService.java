@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 import static de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency.FIRST_VERSION;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -11,14 +10,9 @@ import java.util.Map;
 
 import jakarta.ws.rs.BadRequestException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
@@ -33,7 +27,6 @@ import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service for managing {@link StandardizedCompetency} entities.
@@ -42,10 +35,6 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 @Lazy
 @Service
 public class StandardizedCompetencyService {
-
-    private static final ObjectMapper mapper = new ObjectMapper();
-
-    private static final Logger log = LoggerFactory.getLogger(StandardizedCompetencyService.class);
 
     private final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
@@ -166,8 +155,8 @@ public class StandardizedCompetencyService {
      */
     public void importStandardizedCompetencyCatalog(StandardizedCompetencyCatalogDTO standardizedCompetencyCatalogDTO) {
         List<KnowledgeAreaForCatalogDTO> topLevelKnowledgeAreas = standardizedCompetencyCatalogDTO.knowledgeAreas() != null ? standardizedCompetencyCatalogDTO.knowledgeAreas()
-                : Collections.emptyList();
-        List<SourceDTO> sourceDTOs = standardizedCompetencyCatalogDTO.sources() != null ? standardizedCompetencyCatalogDTO.sources() : Collections.emptyList();
+                : List.of();
+        List<SourceDTO> sourceDTOs = standardizedCompetencyCatalogDTO.sources() != null ? standardizedCompetencyCatalogDTO.sources() : List.of();
         var sourceIds = sourceDTOs.stream().map(SourceDTO::id).toList();
 
         for (var knowledgeAreaDTO : topLevelKnowledgeAreas) {
@@ -187,24 +176,15 @@ public class StandardizedCompetencyService {
     }
 
     /**
-     * Returns a pretty-printed JSON string containing the catalog of knowledge areas, standardized competencies and sources of this Artemis instance.
+     * Returns the catalog of knowledge areas, standardized competencies and sources of this Artemis instance.
      *
-     * @return the JSON string containing the catalog to export
+     * @return the catalog to export
      */
-    public String exportStandardizedCompetencyCatalog() {
+    public StandardizedCompetencyCatalogDTO exportStandardizedCompetencyCatalog() {
         List<KnowledgeArea> knowledgeAreas = getAllForTreeView();
         // TODO: we should avoid using findAll() here, as it might return a huge amount of data
         List<Source> sources = sourceRepository.findAll();
-        var catalog = StandardizedCompetencyCatalogDTO.of(knowledgeAreas, sources);
-
-        try {
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(catalog);
-        }
-        catch (JsonProcessingException e) {
-            var error = "Error pretty printing JSON";
-            log.error(error, e);
-            throw new InternalServerErrorException(error);
-        }
+        return StandardizedCompetencyCatalogDTO.of(knowledgeAreas, sources);
     }
 
     /**
@@ -215,8 +195,8 @@ public class StandardizedCompetencyService {
      * @param sourceIds     the list of valid source ids
      */
     private void verifySourcesForSelfAndDescendants(KnowledgeAreaForCatalogDTO knowledgeArea, List<Long> sourceIds) {
-        List<KnowledgeAreaForCatalogDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : Collections.emptyList();
-        List<StandardizedCompetencyForCatalogDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : Collections.emptyList();
+        List<KnowledgeAreaForCatalogDTO> children = knowledgeArea.children() != null ? knowledgeArea.children() : List.of();
+        List<StandardizedCompetencyForCatalogDTO> competencies = knowledgeArea.competencies() != null ? knowledgeArea.competencies() : List.of();
 
         for (var competency : competencies) {
             var sourceId = competency.sourceId();

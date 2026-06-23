@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
-import java.util.Objects;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -19,6 +19,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 
 /**
  * A service to handle participation filtering.
@@ -35,8 +37,8 @@ public class ParticipationFilterService {
     }
 
     /**
-     * Finds all participations of a student in the given exercise. For non-programming exercises, there should only be
-     * at most one participation. For programming exercises, an additional practice participation can exist.
+     * Finds all participations of a student in the given exercise. For file upload exercises, there should only be
+     * at most one participation. For programming, quiz, text, and modeling exercises, an additional practice participation can exist.
      *
      * @param participationsAcrossAllExercises all participations of the student in all exercises of the course
      * @param exercise                         the exercise for which we want the participations
@@ -47,13 +49,18 @@ public class ParticipationFilterService {
         if (participationsAcrossAllExercises == null || participationsAcrossAllExercises.isEmpty()) {
             return Set.of();
         }
-        var participationsInExercise = participationsAcrossAllExercises.stream().filter(p -> Objects.equals(p.getExercise(), exercise)).collect(Collectors.toSet());
+        // Compare by ID to avoid Hibernate 7 lazy proxy initialization (with @ConcreteProxy, equals() triggers entity loading).
+        // Fall back to reference equality for unpersisted entities (null IDs) in unit tests.
+        var participationsInExercise = participationsAcrossAllExercises.stream()
+                .filter(p -> p.getExercise() != null && (exercise.getId() != null ? exercise.getId().equals(p.getExercise().getId()) : p.getExercise() == exercise))
+                .collect(Collectors.toSet());
 
         if (participationsInExercise.isEmpty()) {
             return Set.of();
         }
 
-        if (ExerciseType.PROGRAMMING.equals(exercise.getExerciseType()) || ExerciseType.QUIZ.equals(exercise.getExerciseType())) {
+        if (ExerciseType.PROGRAMMING.equals(exercise.getExerciseType()) || ExerciseType.QUIZ.equals(exercise.getExerciseType())
+                || ExerciseType.TEXT.equals(exercise.getExerciseType()) || ExerciseType.MODELING.equals(exercise.getExerciseType())) {
             return findStudentParticipationsForMultipleParticipationExercises(participationsInExercise);
         }
         else {
@@ -77,6 +84,8 @@ public class ParticipationFilterService {
 
         Set<Result> results = Set.of();
 
+        Optional<Submission> submissionForDashboard = optionalSubmission;
+
         if (optionalSubmission.isPresent()) {
             Submission submission = optionalSubmission.get();
             Result latestResult = submission.getLatestResult();
@@ -88,16 +97,46 @@ public class ParticipationFilterService {
             }
             submission.setResults(new ArrayList<>(results));
         }
+        else {
+            // A quiz that has not ended yet intentionally exposes neither its submission's answers nor its result (see
+            // SubmissionFilterService). The student dashboard still needs to know whether the student already submitted
+            // ("Submitted, waiting for due date"), so expose a sanitized submission carrying only the submitted flag and
+            // submission date (no answers, no results).
+            submissionForDashboard = getSanitizedSubmittedQuizSubmission(participation);
+        }
 
         // add submission to participation or set it to empty set if no submission is available
-        participation.setSubmissions(optionalSubmission.map(Set::of).orElse(Set.of()));
+        participation.setSubmissions(submissionForDashboard.map(Set::of).orElse(Set.of()));
 
         // remove inner exercise from participation
         participation.setExercise(null);
     }
 
     /**
-     * Validates and returns the student participations for exercises that allow multiple participations (programming and quiz),
+     * Builds a sanitized copy of the student's latest submitted quiz submission for the course dashboard, exposing only
+     * the submitted flag and submission date, so the dashboard can show the
+     * "Submitted, waiting for due date" status without leaking quiz answers or scores before the quiz has ended.
+     *
+     * @param participation the quiz participation whose submissions should be inspected
+     * @return a sanitized submitted submission, or empty if the participation is not a quiz or has no submitted submission
+     */
+    private Optional<Submission> getSanitizedSubmittedQuizSubmission(StudentParticipation participation) {
+        if (!(participation.getExercise() instanceof QuizExercise) || participation.getSubmissions() == null) {
+            return Optional.empty();
+        }
+        return participation.getSubmissions().stream().filter(submission -> submission instanceof QuizSubmission && submission.isSubmitted())
+                .max(Comparator.comparing(Submission::getSubmissionDate, Comparator.nullsFirst(Comparator.naturalOrder()))).map(submission -> {
+                    QuizSubmission sanitizedSubmission = new QuizSubmission();
+                    sanitizedSubmission.setId(submission.getId());
+                    sanitizedSubmission.setSubmitted(true);
+                    sanitizedSubmission.setSubmissionDate(submission.getSubmissionDate());
+                    sanitizedSubmission.setResults(new ArrayList<>());
+                    return sanitizedSubmission;
+                });
+    }
+
+    /**
+     * Validates and returns the student participations for exercises that allow multiple participations (programming, quiz, text, and modeling),
      * which may include at most one graded and one practice participation.
      *
      * @param participations the set of participations in the exercise to validate
@@ -107,18 +146,18 @@ public class ParticipationFilterService {
     private Set<StudentParticipation> findStudentParticipationsForMultipleParticipationExercises(Set<StudentParticipation> participations) {
         var gradedParticipations = participations.stream().filter(p -> !p.isPracticeMode()).collect(Collectors.toSet());
         if (gradedParticipations.size() > 1) {
-            throw new IllegalArgumentException("There cannot be more than one graded participation per student for programming or quiz exercises");
+            throw new IllegalArgumentException("There cannot be more than one graded participation per student for programming, quiz, text, or modeling exercises");
         }
         var practiceParticipations = participations.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
         if (practiceParticipations.size() > 1) {
-            throw new IllegalArgumentException("There cannot be more than one practice participation per student for programming or quiz exercises");
+            throw new IllegalArgumentException("There cannot be more than one practice participation per student for programming, quiz, text, or modeling exercises");
         }
 
         return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).collect(Collectors.toSet());
     }
 
     /**
-     * Validates and returns the student participations for exercises that allow only a single participation (non-programming and non-quiz).
+     * Validates and returns the student participations for exercises that allow only a single participation (non-programming, non-quiz, non-text, and non-modeling).
      *
      * @param participations the set of participations in the exercise to validate
      * @return the valid set of participations (empty or singleton set)
@@ -126,7 +165,7 @@ public class ParticipationFilterService {
      */
     private StudentParticipation findStudentParticipationForSingleParticipationExercises(Set<StudentParticipation> participations) {
         if (participations.size() > 1) {
-            throw new IllegalArgumentException("Only one participation per student is allowed for exercises other than programming or quiz.");
+            throw new IllegalArgumentException("Only one participation per student is allowed for exercises other than programming, quiz, text or modeling.");
         }
         return participations.iterator().next();
     }

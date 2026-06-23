@@ -28,8 +28,4 @@ export class ProgrammingExerciseFeedbackPage extends AbstractExerciseFeedback {
         await expect(feedbackElement).toBeVisible();
         return feedbackElement;
     }
-
-    async shouldShowRepositoryLockedWarning() {
-        await expect(this.page.locator('#repository-locked-warning')).toBeVisible();
-    }
 }

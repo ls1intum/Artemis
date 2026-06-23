@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -17,7 +18,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -361,6 +361,20 @@ public class ParticipationFactory {
         studentParticipation.setExercise(exercise);
         studentParticipation.setParticipant(user);
         return studentParticipation;
+    }
+
+    /**
+     * Generates a practice mode StudentParticipation with testRun=true and attempt=1.
+     *
+     * @param exercise The Exercise the StudentParticipation belongs to
+     * @param user     The User the StudentParticipation belongs to
+     * @return The generated practice StudentParticipation
+     */
+    public static StudentParticipation generatePracticeStudentParticipation(Exercise exercise, User user) {
+        StudentParticipation participation = generateStudentParticipation(InitializationState.FINISHED, exercise, user);
+        participation.setPracticeMode(true);
+        participation.setAttempt(1);
+        return participation;
     }
 
     /**

@@ -25,19 +25,20 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -100,24 +101,10 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
-     * @throws IOException     If setting up the base template files fails due to file I/O.
-     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
-     */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws IOException, GitAPIException {
-        setupExerciseTemplate(programmingExercise, exerciseCreator, false);
-    }
-
-    /**
-     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
-     * exercise.
-     *
-     * @param programmingExercise the programming exercise that should be set up
-     * @param exerciseCreator     the User that performed the action (used as Git commit author)
      * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
-     * @throws IOException     If setting up the base template files fails due to file I/O.
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws IOException, GitAPIException {
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
         if (programmingExercise == null) {
             throw new IllegalArgumentException("ProgrammingExercise must not be null");
         }

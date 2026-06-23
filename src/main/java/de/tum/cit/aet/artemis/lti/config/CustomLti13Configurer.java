@@ -14,6 +14,8 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcLaunchFlowAuthenticationProvider;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.HttpSessionOAuth2AuthorizationRequestRepository;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.Lti13InitiatingLoginRequestResolver;
+import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2AuthorizationRequestRedirectFilter;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorizationRequestRepository;
 
@@ -85,6 +87,31 @@ public class CustomLti13Configurer extends Lti13Configurer {
         OAuth2LoginAuthenticationFilter defaultLoginFilter = configureLoginFilter(clientRegistrationRepository(http), oidcLaunchFlowAuthenticationProvider,
                 authorizationRequestRepository);
         http.addFilterAfter(new Lti13LaunchFilter(defaultLoginFilter, LTI13_LOGIN_PATH, lti13Service(http)), JWTFilter.class);
+    }
+
+    /**
+     * Override the library's initiation filter configuration to use Spring 7-compatible replacements
+     * for two upstream classes that depend on APIs removed in Spring Framework 7 / Spring Security 7:
+     * <ul>
+     * <li>{@link Lti13PathRegistrationResolver} replaces the library's {@code PathOIDCInitiationRegistrationResolver},
+     * which used the removed {@code AntPathRequestMatcher}.</li>
+     * <li>{@link Lti13InitiatingLoginRequestResolver} replaces the library's
+     * {@code OIDCInitiatingLoginRequestResolver}, which called the removed
+     * {@code UriComponentsBuilder.fromHttpUrl(String)} and crashed Step 1 of the LTI 1.3 login flow
+     * with {@link NoSuchMethodError} (issue #12739).</li>
+     * </ul>
+     * Both replacements can be deleted and the upstream classes restored once
+     * {@code uk.ac.ox.ctl:spring-security-lti13} releases a Spring 7-compatible version
+     * (tracked upstream in <a href="https://github.com/oxctl/spring-security-lti13/pull/60">oxctl/spring-security-lti13#60</a>).
+     */
+    @Override
+    protected OAuth2AuthorizationRequestRedirectFilter configureInitiationFilter(ClientRegistrationRepository clientRegistrationRepository,
+            OptimisticAuthorizationRequestRepository authorizationRequestRepository) {
+        var registrationResolver = new Lti13PathRegistrationResolver(ltiPath + loginInitiationPath);
+        var resolver = new Lti13InitiatingLoginRequestResolver(clientRegistrationRepository, registrationResolver);
+        var filter = new OAuth2AuthorizationRequestRedirectFilter(resolver);
+        filter.setAuthorizationRequestRepository(authorizationRequestRepository);
+        return filter;
     }
 
     protected Lti13Service lti13Service(HttpSecurity http) {

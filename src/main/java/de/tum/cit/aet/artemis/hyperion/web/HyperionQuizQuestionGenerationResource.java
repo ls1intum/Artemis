@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.util.Optional;
+
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -13,12 +15,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionBulkRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionBulkRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionGenerationService;
 
 /**
@@ -36,13 +44,20 @@ public class HyperionQuizQuestionGenerationResource {
 
     private final HyperionQuizQuestionGenerationService quizQuestionGenerationService;
 
-    public HyperionQuizQuestionGenerationResource(CourseRepository courseRepository, HyperionQuizQuestionGenerationService quizQuestionGenerationService) {
+    private final Optional<CourseCompetencyApi> courseCompetencyApi;
+
+    public HyperionQuizQuestionGenerationResource(CourseRepository courseRepository, HyperionQuizQuestionGenerationService quizQuestionGenerationService,
+            Optional<CourseCompetencyApi> courseCompetencyApi) {
         this.courseRepository = courseRepository;
         this.quizQuestionGenerationService = quizQuestionGenerationService;
+        this.courseCompetencyApi = courseCompetencyApi;
     }
 
     /**
      * POST /courses/{courseId}/quiz-exercises/generate-questions : Generate quiz questions from a configuration.
+     * Accepts two modes:
+     * - Free-topic mode: {@code topic} must be provided.
+     * - Competency-graph mode: {@code competencyIds} must be provided; requires the Atlas module and the course to have competencies.
      *
      * @param courseId the id of the course
      * @param request  generation configuration
@@ -52,8 +67,52 @@ public class HyperionQuizQuestionGenerationResource {
     @PostMapping("courses/{courseId}/quiz-exercises/generate-questions")
     public ResponseEntity<QuizQuestionGenerationResponseDTO> generateQuizQuestions(@PathVariable long courseId, @Valid @RequestBody QuizQuestionGenerationRequestDTO request) {
         log.debug("REST request to Hyperion generate quiz questions for course [{}]", courseId);
+
+        boolean isCompetencyMode = request.competencyIds() != null && !request.competencyIds().isEmpty();
+        if (isCompetencyMode) {
+            if (courseCompetencyApi.isEmpty()) {
+                throw new BadRequestAlertException("Competency-graph mode requires the Atlas module to be enabled", "QuizQuestionGeneration", "atlasNotEnabled");
+            }
+            if (!courseCompetencyApi.get().courseHasCompetencies(courseId)) {
+                throw new BadRequestAlertException("This course has no competencies configured", "QuizQuestionGeneration", "noCompetencies");
+            }
+        }
+
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = quizQuestionGenerationService.generateQuizQuestions(course, request);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST /courses/{courseId}/quiz-exercises/refine-question : Refine an existing quiz question based on user instructions.
+     *
+     * @param courseId the id of the course
+     * @param request  the original question and user refinement instructions
+     * @return the refined question and an explanation of the changes
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/quiz-exercises/refine-question")
+    public ResponseEntity<QuizQuestionRefinementResponseDTO> refineQuizQuestion(@PathVariable long courseId, @Valid @RequestBody QuizQuestionRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion refine quiz question for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var result = quizQuestionGenerationService.refineQuizQuestion(course, request);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST /courses/{courseId}/quiz-exercises/refine-all-questions : Refine all provided quiz questions using a single prompt.
+     *
+     * @param courseId the id of the course
+     * @param request  the questions and user refinement instructions
+     * @return one refinement result per input question, in the same order
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/quiz-exercises/refine-all-questions")
+    public ResponseEntity<QuizQuestionBulkRefinementResponseDTO> refineAllQuizQuestions(@PathVariable long courseId,
+            @Valid @RequestBody QuizQuestionBulkRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion bulk-refine quiz questions for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var result = quizQuestionGenerationService.refineAllQuizQuestions(course, request);
         return ResponseEntity.ok(result);
     }
 }

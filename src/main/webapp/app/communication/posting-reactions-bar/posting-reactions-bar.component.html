@@ -49,7 +49,7 @@
         </div>
     }
 
-    @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData.key) {
+    @for (reactionMetaData of reactionMetaDataMap() | keyvalue; track reactionMetaData.key) {
         @if (isEmojiCount()) {
             <div>
                 <button
@@ -74,10 +74,10 @@
         <!-- Emoji picker -->
         @if ((isAnyReactionCountAboveZero() && isEmojiCount()) || !isEmojiCount()) {
             <ng-container>
-                <button class="reaction-button clickable px-2 fs-small" (click)="showReactionSelector = !showReactionSelector" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
+                <button class="reaction-button clickable px-2 fs-small" (click)="showReactionSelector.set(!showReactionSelector())" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
                     <fa-icon
                         [icon]="getPostingType() === 'post' ? faSmile : faSmile"
-                        [class.open-selector]="showReactionSelector"
+                        [class.open-selector]="showReactionSelector()"
                         [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
                     />
                 </button>
@@ -87,7 +87,7 @@
                     [cdkConnectedOverlayHasBackdrop]="true"
                     [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
                     [cdkConnectedOverlayOrigin]="trigger"
-                    [cdkConnectedOverlayOpen]="showReactionSelector"
+                    [cdkConnectedOverlayOpen]="showReactionSelector()"
                     (backdropClick)="toggleEmojiSelect()"
                 >
                     <jhi-emoji-picker
@@ -101,31 +101,31 @@
         }
 
         <!-- Edit button -->
-        @if (!isEmojiCount() && mayEdit) {
+        @if (!isEmojiCount() && mayEdit()) {
             <button class="reaction-button clickable px-2 fs-small edit" (click)="editPosting()" [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate">
                 <fa-icon [icon]="faPencilAlt" />
             </button>
         }
         <jhi-post-create-edit-modal #createEditModal [posting]="posting()!" [isCommunicationPage]="isCommunicationPage()!" (isModalOpen)="isModalOpen.emit()" />
         <!-- Delete button -->
-        @if (!isEmojiCount() && mayDelete) {
+        @if (!isEmojiCount() && mayDelete()) {
             <button class="reaction-button clickable fs-small">
                 <jhi-confirm-icon
                     iconSize="sm"
                     (confirmEvent)="deletePosting()"
-                    [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
-                    [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
+                    [initialTooltip]="'artemisApp.metis.delete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
+                    [confirmTooltip]="'artemisApp.metis.confirmDelete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
                 />
             </button>
         }
 
         <!-- Resolve post button -->
         @if (getPostingType() === 'answerPost' && !isEmojiCount()) {
-            @if (!isAnswerOfAnnouncement && (isAtLeastTutorInCourse || isAuthorOfOriginalPost)) {
+            @if (!isAnswerOfAnnouncement() && (isAtLeastTutorInCourse() || isAuthorOfOriginalPost())) {
                 <button
                     class="reaction-button clickable px-2 fs-small resolve"
                     id="toggleElement"
-                    [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''"
+                    [ngClass]="isAtLeastTutorInCourse() || isAuthorOfOriginalPost() ? 'clickable' : ''"
                     (click)="toggleResolvesPost()"
                 >
                     @if (getResolvesPost()) {
@@ -133,13 +133,13 @@
                             class="resolved"
                             [icon]="faCheck"
                             [ngbTooltip]="
-                                isAtLeastTutorInCourse || isAuthorOfOriginalPost
+                                isAtLeastTutorInCourse() || isAuthorOfOriginalPost()
                                     ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
                                     : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
                             "
                         />
                     } @else {
-                        @if (isAtLeastTutorInCourse || isAuthorOfOriginalPost) {
+                        @if (isAtLeastTutorInCourse() || isAuthorOfOriginalPost()) {
                             <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate" />
                         }
                     }
@@ -148,15 +148,15 @@
         }
 
         <!-- Pin button -->
-        @if (getPostingType() === 'post' && !isEmojiCount() && (displayPriority === DisplayPriority.PINNED || canPin)) {
+        @if (getPostingType() === 'post' && !isEmojiCount() && (displayPriority() === DisplayPriority.PINNED || canPin())) {
             <button
                 class="reaction-button pin clickable fs-small"
-                [class.reaction-button--not-hoverable]="!canPin"
-                [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && canPin"
-                [disabled]="!canPin || isReadOnlyMode()"
-                (click)="canPin && togglePin()"
+                [class.reaction-button--not-hoverable]="!canPin()"
+                [class.reaction-button--reacted]="displayPriority() === DisplayPriority.PINNED && canPin()"
+                [disabled]="!canPin() || isReadOnlyMode()"
+                (click)="canPin() && togglePin()"
             >
-                <jhi-emoji class="fs-x-small" [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" />
+                <jhi-emoji class="fs-x-small" [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip() | artemisTranslate" />
             </button>
         }
 
@@ -180,7 +180,7 @@
             </button>
         }
         <!-- Mark as unread button -->
-        @if (canMarkAsUnread && !isEmojiCount()) {
+        @if (canMarkAsUnread() && !isEmojiCount()) {
             <button
                 class="reaction-button clickable px-2 fs-small"
                 [disabled]="isReadOnlyMode()"

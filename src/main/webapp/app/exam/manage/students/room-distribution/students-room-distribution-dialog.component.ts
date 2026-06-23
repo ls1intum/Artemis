@@ -20,21 +20,23 @@ import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-students-room-distribution-dialog',
     standalone: true,
     templateUrl: './students-room-distribution-dialog.component.html',
+    styleUrl: './students-room-distribution-dialog.component.scss',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule, RouterLink],
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;

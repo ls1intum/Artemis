@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.plagiarism;
 
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -19,8 +17,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -89,7 +87,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new PlagiarismResult();
-        textPlagiarismResult.setComparisons(singleton(new PlagiarismComparison()));
+        textPlagiarismResult.setComparisons(Set.of(new PlagiarismComparison()));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenReturn(textPlagiarismResult);
         var programmingPlagiarismResult = new PlagiarismResult();
         when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);
@@ -119,12 +117,12 @@ class ContinuousPlagiarismControlServiceTest {
         var participations = Set.of(participationText1, participationText2, participationText3);
         exercise.setStudentParticipations(participations);
 
-        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(exercise));
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(exercise));
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new PlagiarismResult();
         var plagiarismComparison = createPlagiarismComparison(12, 1, 2);
-        textPlagiarismResult.setComparisons(singleton(plagiarismComparison));
+        textPlagiarismResult.setComparisons(Set.of(plagiarismComparison));
         when(plagiarismChecksService.checkTextExercise(exercise)).thenReturn(textPlagiarismResult);
 
         // and: plagiarism cases created implicitly
@@ -149,16 +147,16 @@ class ContinuousPlagiarismControlServiceTest {
         // given: text exercise with cpc enabled
         var exercise = new TextExercise();
         exercise.setId(99L);
-        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(exercise));
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(exercise));
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new PlagiarismResult();
-        textPlagiarismResult.setComparisons(emptySet());
+        textPlagiarismResult.setComparisons(Set.of());
         when(plagiarismChecksService.checkTextExercise(exercise)).thenReturn(textPlagiarismResult);
 
         // and: stale plagiarism case
         var plagiarismCase = createPlagiarismCase(exercise);
-        plagiarismCase.setPlagiarismSubmissions(emptySet());
+        plagiarismCase.setPlagiarismSubmissions(Set.of());
         when(plagiarismCaseRepository.findAllCreatedByContinuousPlagiarismControlByExerciseIdWithPlagiarismSubmissions(99L)).thenReturn(List.of(plagiarismCase));
 
         // when
@@ -177,7 +175,7 @@ class ContinuousPlagiarismControlServiceTest {
         exercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         exercise.getPlagiarismDetectionConfig().setContinuousPlagiarismControlPostDueDateChecksEnabled(false);
 
-        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(exercise));
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(exercise));
 
         // when
         service.executeChecks();
@@ -208,7 +206,7 @@ class ContinuousPlagiarismControlServiceTest {
         // given
         var textExercise = new TextExercise();
         textExercise.setId(123L);
-        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(textExercise));
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new NullPointerException("null"));
 
         // then
@@ -221,7 +219,7 @@ class ContinuousPlagiarismControlServiceTest {
         // given
         var textExercise = new TextExercise();
         textExercise.setId(101L);
-        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(textExercise));
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException());
 
         // then
@@ -233,7 +231,7 @@ class ContinuousPlagiarismControlServiceTest {
         var participation = new StudentParticipation();
         var submission = new TextSubmission();
         submission.setId(submissionId);
-        participation.setSubmissions(singleton(submission));
+        participation.setSubmissions(Set.of(submission));
         return participation;
     }
 

@@ -16,11 +16,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Strings;
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +29,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -50,21 +51,17 @@ import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
+import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.calendar.NonQuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -79,6 +76,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -721,12 +719,12 @@ public class ExerciseService {
         // re-calculate the results after updating the feedback
         for (Result result : results) {
             if (!feedbackToBeDeleted.isEmpty()) {
-                List<Feedback> existingFeedback = result.getFeedbacks();
+                Set<Feedback> existingFeedback = result.getFeedbacks();
                 if (!existingFeedback.isEmpty()) {
                     existingFeedback.removeAll(feedbackToBeDeleted);
                 }
                 // first save the feedback (that is not yet in the database) to prevent null index exception
-                List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(existingFeedback);
+                List<Feedback> savedFeedback = feedbackRepository.saveFeedbacks(new ArrayList<>(existingFeedback));
                 result.updateAllFeedbackItems(savedFeedback, exercise instanceof ProgrammingExercise);
             }
 
@@ -827,39 +825,6 @@ public class ExerciseService {
     }
 
     /**
-     * Saves the exercise and links it to the competencies.
-     *
-     * @param exercise     exercise to save
-     * @param saveFunction function to save the exercise
-     * @param <T>          type of the exercise
-     * @return saved exercise
-     */
-    public <T extends Exercise> T saveWithCompetencyLinks(T exercise, Function<T, T> saveFunction) {
-        // persist exercise before linking it to the competency
-        Set<CompetencyExerciseLink> links = exercise.getCompetencyLinks();
-        exercise.setCompetencyLinks(new HashSet<>());
-
-        T savedExercise = saveFunction.apply(exercise);
-
-        if (Hibernate.isInitialized(links) && !links.isEmpty()) {
-            savedExercise.setCompetencyLinks(links);
-            reconnectCompetencyExerciseLinks(savedExercise);
-            competencyRelationApi.ifPresent(api -> savedExercise.setCompetencyLinks(new HashSet<>(api.saveAllExerciseLinks(links))));
-        }
-
-        return savedExercise;
-    }
-
-    /**
-     * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
-     *
-     * @param exercise exercise to reconnect the links
-     */
-    public void reconnectCompetencyExerciseLinks(Exercise exercise) {
-        exercise.getCompetencyLinks().forEach(link -> link.setExercise(exercise));
-    }
-
-    /**
      * Retrieves a {@link NonQuizExerciseCalendarEventDTO} for each {@link FileUploadExercise}, {@link TextExercise}, {@link ModelingExercise}
      * and {@link ProgrammingExercise} associated to the given courseId. Each DTO encapsulates the releaseDate, startDate, dueDate and assessmentDueDate
      * of the respective exercise.
@@ -928,4 +893,5 @@ public class ExerciseService {
         }
         return events;
     }
+
 }

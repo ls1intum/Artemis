@@ -2,16 +2,16 @@ import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, s
 import { TutorialGroupFreePeriodFormData } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Subject } from 'rxjs';
 import { captureException } from '@sentry/angular';
-import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
 import { DialogModule } from 'primeng/dialog';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
@@ -29,7 +29,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     readonly freePeriodCreated = output<void>();
 
     tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
-    isLoading = false;
+    readonly isLoading = signal(false);
 
     readonly tutorialGroupConfigurationId = input.required<number>();
     readonly course = input.required<Course>();
@@ -50,12 +50,12 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
         this.tutorialGroupFreePeriodToCreate.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate);
         this.tutorialGroupFreePeriodToCreate.reason = reason;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.tutorialGroupFreePeriodService
             .create(this.course().id!, this.tutorialGroupConfigurationId(), this.tutorialGroupFreePeriodToCreate)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )

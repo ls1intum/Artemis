@@ -7,14 +7,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "ide")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Ide extends DomainObject {
 
     @Column(name = "name", nullable = false)

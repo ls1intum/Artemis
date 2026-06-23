@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.util;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -20,17 +20,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -380,7 +381,7 @@ public class ModelingExerciseUtilService {
      * @param sentModel   The model that should have been stored
      */
     public void checkModelsAreEqual(String storedModel, String sentModel) throws JsonProcessingException {
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = JsonObjectMapper.get();
         JsonNode sentModelNode = objectMapper.readTree(sentModel);
         JsonNode storedModelNode = objectMapper.readTree(storedModel);
         assertThat(storedModelNode).as("model correctly stored").isEqualTo(sentModelNode);

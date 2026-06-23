@@ -1,16 +1,15 @@
-import { Color, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Injectable } from '@angular/core';
-import { ChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
+import { FeedbackChartData } from 'app/exercise/feedback/chart/feedback-chart-data';
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackChartService {
-    create = (feedbackNodes: FeedbackNode[], exercise: Exercise): ChartData => {
+    create = (feedbackNodes: FeedbackNode[], exercise: Exercise): FeedbackChartData => {
         const summarizedNodes = this.summarizePoints(feedbackNodes);
-        const results: NgxChartsMultiSeriesDataEntry[] = [
+        const results: ChartMultiSeriesEntry[] = [
             {
                 name: 'scores',
                 series: summarizedNodes.map((node: FeedbackNode) => ({
@@ -19,17 +18,12 @@ export class FeedbackChartService {
                 })),
             },
         ];
-        const scheme: Color = {
-            name: 'Feedback Detail',
-            selectable: true,
-            group: ScaleType.Ordinal,
-            domain: summarizedNodes.map((node) => `var(--bs-${node.color})`),
-        };
+        const colors = summarizedNodes.map((node) => `var(--bs-${node.color})`);
 
         return {
             xScaleMax: 100,
             results,
-            scheme,
+            colors,
         };
     };
 

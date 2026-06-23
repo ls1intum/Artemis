@@ -1,15 +1,15 @@
 import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 import { PagingService } from 'app/exercise/services/paging.service';
-import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { lastValueFrom } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
+import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -71,6 +71,14 @@ export class ImportTableComponent<T extends BaseEntity> {
         });
     }
 
+    /**
+     * Runs the current paginated search and applies its result to the table.
+     *
+     * Several searches can be in flight simultaneously (the initial unfiltered load plus debounced loads
+     * issued while typing) and their responses may return out of order. A response is therefore only applied
+     * when the search state it was issued with still matches the current state; otherwise a newer request has
+     * superseded it and the stale response is discarded so the table never shows results for an old query.
+     */
     private async loadData(): Promise<void> {
         try {
             this.isLoading.set(true);
@@ -82,6 +90,15 @@ export class ImportTableComponent<T extends BaseEntity> {
                 pageSize: this.pageSize(),
             };
             const result = await lastValueFrom(this.pagingService.search(searchState));
+            // A newer request has superseded this one; discard its (now stale) response.
+            if (
+                searchState.searchTerm !== this.searchTerm() ||
+                searchState.page !== this.page() ||
+                searchState.sortedColumn !== this.sortedColumn() ||
+                searchState.sortingOrder !== this.sortingOrder()
+            ) {
+                return;
+            }
             const filteredResults = this.filterSearchResult(result);
             this.searchResult.set(filteredResults);
         } catch (error) {

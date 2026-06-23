@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.dto.atlasAgent;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -17,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Uses unified array-based approach for both competencies and relations.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasAgentChatResponseDTO(@NotBlank @Size(max = 10000) String message, @NotNull ZonedDateTime timestamp, boolean competenciesModified,
+public record AtlasAgentChatResponseDTO(@Size(max = 10000) String message, @NotNull ZonedDateTime timestamp, boolean competenciesModified,
         @Nullable List<CompetencyPreviewDTO> competencyPreviews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
-        @Nullable RelationGraphPreviewDTO relationGraphPreview) {
+        @Nullable RelationGraphPreviewDTO relationGraphPreview, @Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) {
 }

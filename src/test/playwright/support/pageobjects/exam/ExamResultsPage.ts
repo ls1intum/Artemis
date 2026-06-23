@@ -11,18 +11,21 @@ export class ExamResultsPage {
 
     async checkGradeSummary(gradeSummary: any) {
         const examSummary = this.page.locator('#exam-summary-result-overview .exam-points-summary-container');
+        // Wait for the summary container to be visible before checking rows
+        await expect(examSummary).toBeVisible({ timeout: 30000 });
         for (const exercise of gradeSummary.studentExam.exercises) {
             const exerciseGroup = exercise.exerciseGroup;
             const exerciseRow = examSummary.locator('tr', { hasText: exerciseGroup.title });
+            await expect(exerciseRow).toBeVisible({ timeout: 15000 });
 
             const exerciseResult = gradeSummary.studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id];
             const achievedPoints = Math.floor(exerciseResult.achievedPoints).toString();
             const achievablePoints = Math.floor(exerciseResult.maxScore).toString();
             const achievedPercentage = exerciseResult.achievedScore.toString();
 
-            await expect(exerciseRow.locator('td').nth(1).getByText(achievedPoints)).toBeVisible();
-            await expect(exerciseRow.locator('td').nth(2).getByText(achievablePoints)).toBeVisible();
-            await expect(exerciseRow.locator('td').nth(3).getByText(`${achievedPercentage} %`)).toBeVisible();
+            await expect(exerciseRow.locator('td').nth(1).getByText(achievedPoints)).toBeVisible({ timeout: 10000 });
+            await expect(exerciseRow.locator('td').nth(2).getByText(achievablePoints)).toBeVisible({ timeout: 10000 });
+            await expect(exerciseRow.locator('td').nth(3).getByText(`${achievedPercentage} %`)).toBeVisible({ timeout: 10000 });
         }
     }
 
@@ -35,8 +38,8 @@ export class ExamResultsPage {
     async checkAdditionalFeedback(exerciseId: number, points: number, feedback: string) {
         const exercise = getExercise(this.page, exerciseId);
         const feedbackElement = exercise.locator(`#additional-feedback`);
-        await expect(feedbackElement.locator('.feedback-points', { hasText: points.toString() })).toBeVisible();
-        await expect(feedbackElement.locator('span', { hasText: feedback })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-points', { hasText: points.toString() })).toBeVisible();
+        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
     }
 
     async checkProgrammingExerciseAssessments(exerciseId: number, resultType: string, count: number) {
@@ -92,11 +95,12 @@ export class ExamResultsPage {
     async checkModellingExerciseAssessment(exerciseId: number, element: string, feedback: string, points: number) {
         const exercise = getExercise(this.page, exerciseId);
         const componentFeedbacks = exercise.locator('#component-feedback-table');
-        // Wait for async assessment data load before checking rows
-        await expect(componentFeedbacks).toBeVisible({ timeout: 30000 });
-        const assessmentRow = componentFeedbacks.locator('tr', { hasText: element }).filter({ hasText: `Feedback: ${feedback}` });
-        await expect(assessmentRow).toBeVisible({ timeout: 10000 });
-        await expect(assessmentRow.getByText(`${points}`)).toBeVisible();
+        const feedbackElement = componentFeedbacks
+            .locator('.unified-feedback')
+            .filter({ has: this.page.locator('.unified-feedback-reference-text', { hasText: element }) })
+            .filter({ has: this.page.locator('.unified-feedback-points', { hasText: points.toString() }) });
+        await expect(feedbackElement).toBeVisible({ timeout: 30000 });
+        await expect(feedbackElement.locator('.unified-feedback-text', { hasText: feedback })).toBeVisible();
     }
 }
 

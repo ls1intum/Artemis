@@ -1,0 +1,21 @@
+<div class="border rounded-4">
+    @for (phase of phases(); track $index) {
+        <jhi-build-phase
+            [phase]="phase"
+            [index]="$index"
+            [phaseNames]="phaseNames()"
+            [isLast]="$index === phaseCount() - 1"
+            [readonly]="readonly()"
+            [isExamMode]="isExamMode()"
+            (phaseChange)="updatePhase($index, $event)"
+            (delete)="deletePhase($index)"
+            (moveUp)="moveUp($index)"
+            (moveDown)="moveDown($index)"
+        />
+    }
+
+    <button id="add-phase-button" class="m-1" pButton [text]="true" size="small" severity="secondary" [hidden]="readonly()" (click)="addPhase()">
+        <fa-icon [icon]="faPlus" pButtonIcon />
+        <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.addPhase"></span>
+    </button>
+</div>

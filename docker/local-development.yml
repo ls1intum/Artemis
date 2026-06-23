@@ -1,0 +1,15 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Local development services for testing SAML2 and email
+#
+# This file can be run standalone (e.g. when running Artemis from IntelliJ):
+#   All services:     docker compose -f docker/local-development.yml up
+#   SAML2 only:       docker compose -f docker/local-development.yml up keycloak
+#   Email only:       docker compose -f docker/local-development.yml up mailpit
+#
+# See the developer documentation for the required application-local.yml configuration:
+#   https://docs.artemis.tum.de/developer/docker-compose
+# ----------------------------------------------------------------------------------------------------------------------
+
+include:
+    - saml-test.yml
+    - mailpit.yml

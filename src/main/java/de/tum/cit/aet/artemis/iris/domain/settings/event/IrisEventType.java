@@ -5,5 +5,5 @@ package de.tum.cit.aet.artemis.iris.domain.settings.event;
  */
 public enum IrisEventType {
 
-    BUILD_FAILED, PROGRESS_STALLED, JOL
+    BUILD_FAILED, PROGRESS_STALLED
 }

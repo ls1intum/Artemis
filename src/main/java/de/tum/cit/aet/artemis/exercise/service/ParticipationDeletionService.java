@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -29,16 +28,16 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Service
 @Profile(PROFILE_CORE)
@@ -205,7 +204,7 @@ public class ParticipationDeletionService {
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
             // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-            submission.setResults(Collections.emptyList());
+            submission.setResults(List.of());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
             }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, ViewChild, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -16,18 +16,18 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { KeysPipe } from 'app/foundation/pipes/keys.pipe';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { editor } from 'monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
@@ -61,18 +61,25 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
-    private changeDetector = inject(ChangeDetectorRef);
     private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
-    @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
-    @ViewChild(CodeEditorFileBrowserComponent, { static: false }) fileBrowser: CodeEditorFileBrowserComponent;
-    @ViewChild(CodeEditorActionsComponent, { static: false }) actions: CodeEditorActionsComponent;
-    @ViewChild(CodeEditorBuildOutputComponent, { static: false }) buildOutput: CodeEditorBuildOutputComponent;
-    @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor: CodeEditorMonacoComponent;
-    @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
+    // grid is the root layout element and is always rendered, so it is required and safe to dereference.
+    readonly grid = viewChild.required(CodeEditorGridComponent);
+    // fileBrowser, actions, buildOutput and monacoEditor are optional viewChildren:
+    // - actions is behind `@if (!isTutorAssessment() || commitState === CommitState.CONFLICT)`
+    // - buildOutput is behind `@if (buildable())`
+    // - fileBrowser may be absent for remote sync events that arrive before the view is initialized
+    //   (see handleRemoteFileTreeEvent), so it must not throw on early access.
+    // - monacoEditor is always in the DOM but is read defensively (`?.`) everywhere, so optional keeps
+    //   pre-view-init access from throwing.
+    readonly fileBrowser = viewChild(CodeEditorFileBrowserComponent);
+    readonly actions = viewChild(CodeEditorActionsComponent);
+    readonly buildOutput = viewChild(CodeEditorBuildOutputComponent);
+    readonly monacoEditor = viewChild(CodeEditorMonacoComponent);
+    readonly instructions = viewChild(CodeEditorInstructionsComponent);
 
     editable = input<boolean>(true);
     forRepositoryView = input<boolean>(false);
@@ -87,6 +94,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
     isProblemStatementVisible = input<boolean>(true);
+    showNavbar = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
     fileSyncService = input<CodeEditorFileSyncService | undefined>();
@@ -111,16 +119,15 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     /** END WIP */
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
-    private selectedFileValue?: string;
+    private readonly selectedFileValue = signal<string | undefined>(undefined);
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
-    fileBadges: { [fileName: string]: FileBadge[] };
+    readonly fileBadges = signal<{ [fileName: string]: FileBadge[] }>({});
     get selectedFile(): string | undefined {
-        return this.selectedFileValue;
+        return this.selectedFileValue();
     }
 
     set selectedFile(file: string | undefined) {
-        this.selectedFileValue = file;
-        this.changeDetector.markForCheck();
+        this.selectedFileValue.set(file);
     }
 
     get problemStatementIdentifier(): string {
@@ -135,8 +142,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     editorState: EditorState;
     commitState: CommitState;
 
-    errorFiles: string[] = [];
-    annotations: Array<Annotation> = [];
+    readonly errorFiles = signal<string[]>([]);
+    readonly annotations = signal<Array<Annotation>>([]);
 
     private fileTreeChangeSubscription?: Subscription;
 
@@ -196,11 +203,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         this.collectFeedbackSuggestionBadges(fileBadgesByType);
         this.collectReviewThreadBadges(fileBadgesByType);
 
-        this.fileBadges = {};
+        const fileBadges: { [fileName: string]: FileBadge[] } = {};
         for (const [filePath, badgeCountsByType] of fileBadgesByType.entries()) {
-            this.fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
+            fileBadges[filePath] = Array.from(badgeCountsByType.entries()).map(([type, count]) => new FileBadge(type, count));
         }
-        this.changeDetector.markForCheck();
+        this.fileBadges.set(fileBadges);
     }
 
     private collectFeedbackSuggestionBadges(fileBadgesByType: Map<string, Map<FileBadgeType, number>>): void {
@@ -265,7 +272,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
-        this.fileBadges = {};
+        this.fileBadges.set({});
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
     };
@@ -297,7 +304,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
             this.editorState = EditorState.CLEAN;
         }
-        this.monacoEditor?.onFileChange(fileChange);
+        this.monacoEditor()?.onFileChange(fileChange);
 
         this.onFileChanged.emit();
     }
@@ -320,13 +327,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
             case ExerciseEditorSyncEventType.FILE_CREATED:
                 // isRemote=true: prevents the container from auto-selecting the new file,
                 // which would hijack the local user's current editor selection.
-                this.fileBrowser?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                this.fileBrowser()?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath), true);
                 break;
             case ExerciseEditorSyncEventType.FILE_DELETED:
-                this.fileBrowser?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                this.fileBrowser()?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath), true);
                 break;
             case ExerciseEditorSyncEventType.FILE_RENAMED:
-                this.fileBrowser?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath), true);
+                this.fileBrowser()?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath), true);
                 break;
         }
     }
@@ -353,7 +360,17 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         if (errorFiles.length) {
             this.onError('saveFailed');
         }
-        this.monacoEditor?.storeAnnotations(savedFiles);
+        this.monacoEditor()?.storeAnnotations(savedFiles);
+    }
+
+    /**
+     * Applies commit-state transitions after a successful inline-fix apply commit.
+     * Keeps UNCOMMITTED_CHANGES if new edits appeared while the commit request was in flight.
+     */
+    onInlineFixCommitted(): void {
+        this.commitState = _isEmpty(this.unsavedFiles) ? CommitState.CLEAN : CommitState.UNCOMMITTED_CHANGES;
+        this.onCommitStateChange.emit(this.commitState);
+        this.onCommit.emit();
     }
 
     /**
@@ -397,11 +414,15 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     }
 
     getText(): string {
-        return this.monacoEditor?.getText() ?? '';
+        return this.monacoEditor()?.getText() ?? '';
+    }
+
+    commit(): void {
+        this.actions()?.commit();
     }
 
     getNumberOfLines(): number {
-        return this.monacoEditor?.getNumberOfLines() ?? 0;
+        return this.monacoEditor()?.getNumberOfLines() ?? 0;
     }
 
     /**
@@ -410,11 +431,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * @param endLine The last line to highlight.
      */
     highlightLines(startLine: number, endLine: number): void {
-        this.monacoEditor?.highlightLines(startLine, endLine);
+        this.monacoEditor()?.highlightLines(startLine, endLine);
     }
 
     onToggleCollapse(event: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
-        this.grid.toggleCollapse(event, collapsableElement);
+        this.grid().toggleCollapse(event, collapsableElement);
     }
 
     /**
@@ -422,8 +443,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * @param annotations The new annotations array
      */
     onAnnotations(annotations: Array<Annotation>) {
-        this.annotations = annotations;
-        this.errorFiles = uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName));
+        this.annotations.set(annotations);
+        this.errorFiles.set(uniq(annotations.filter((a) => a.type === 'error').map((a) => a.fileName)));
     }
 
     /**
@@ -449,7 +470,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      *        The line to reveal in the editor.
      */
     jumpToLine(lineNumber: number) {
-        this.monacoEditor.editor().revealLine(lineNumber, editor.ScrollType.Immediate);
+        this.monacoEditor()?.editor().revealLine(lineNumber, editor.ScrollType.Immediate);
     }
 
     /**

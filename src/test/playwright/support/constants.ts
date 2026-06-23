@@ -6,7 +6,7 @@ import { ProgrammingExerciseSubmission } from './pageobjects/exercises/programmi
 // Requests
 export const BASE_API = 'api';
 
-export const COURSE_ADMIN_BASE = `${BASE_API}/core/admin/courses`;
+export const COURSE_ADMIN_BASE = `${BASE_API}/admin/courses`;
 
 export const PROGRAMMING_EXERCISE_BASE = `${BASE_API}/programming/programming-exercises`;
 export const QUIZ_EXERCISE_BASE = `${BASE_API}/quiz/quiz-exercises`;
@@ -14,9 +14,6 @@ export const QUIZ_EXERCISE_BASE_CREATION = new RegExp(`${BASE_API}/quiz/(courses
 export const TEXT_EXERCISE_BASE = `${BASE_API}/text/text-exercises`;
 export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
 export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;
-
-// Constants
-export const MODELING_EDITOR_CANVAS = '#modeling-editor-canvas';
 
 // Timeformat
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';

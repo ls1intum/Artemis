@@ -24,8 +24,9 @@ concurrency: ${{ github.event.inputs.environment_name }}
 
 env:
   CI: true
-  # Keep filename in sync with the workflow responsible for automatic builds on PRs
-  PR_AUTO_BUILD_FILE_NAME: "build.yml"
+  # The single CI entry point that publishes the docker-tag artifact (via ci-build.yml).
+  # When ci.yml is renamed, update this constant.
+  CI_WORKFLOW_FILE_NAME: "ci.yml"
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.inputs.branch_name }}
 
 # ------------------------------------------------------------------------------
@@ -47,7 +48,7 @@ jobs:
   # Log the inputs for debugging
   log-inputs:
     name: Log Inputs
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, artemis-test-deployment]
     steps:
       - name: Print Inputs
         run: |
@@ -58,7 +59,7 @@ jobs:
 
   determine-build-context:
     name: Determine Build Context
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, artemis-test-deployment]
     needs: log-inputs
     outputs:
       pr_number: ${{ steps.get_pr.outputs.pr_number }}
@@ -119,57 +120,72 @@ jobs:
   conditional-build:
     if: ${{ needs.determine-build-context.outputs.pr_number == '' && needs.determine-build-context.outputs.is_main_or_develop == 'false' }}
     needs: determine-build-context
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.1.1
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
     with:
       ref: ${{ github.event.inputs.branch_name }}
       image-name: ls1intum/artemis
       docker-file: ./docker/artemis/Dockerfile
       tags: ${{ needs.determine-build-context.outputs.tag }}
 
-  # Check if the build has run successfully (PR)
+  # Gate on the IMAGE build, not the whole CI run: the deployable prerequisite is that the
+  # Docker image was pushed (proved by the `docker-tag` artifact), which lands at ~6-7 min —
+  # decoupled from the slow, advisory E2E suite. Mirrors prod-like-deployment's artifact check.
   check-existing-build-for-pull-request:
     name: Check Existing Build of Pull Request
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     needs: determine-build-context
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, artemis-test-deployment]
     steps:
-      - name: Get latest successful build for branch
-        id: check_build
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
+      - name: Verify the image build succeeded (docker-tag artifact present)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Fail if no successful build found
-        if: ${{ steps.check_build.conclusion == 'success' && fromJSON(steps.check_build.outputs.data).total_count == 0 }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ needs.determine-build-context.outputs.head_sha }}
+          BRANCH: ${{ github.event.inputs.branch_name }}
         run: |
-          echo "::error::No successful build found for branch '${{ github.event.inputs.branch_name }}' with SHA '${{ needs.determine-build-context.outputs.head_sha }}'."
-          exit 1
+          set -Eeuo pipefail
+          RUN_ID=$(gh api "repos/${{ github.repository }}/actions/workflows/${{ env.CI_WORKFLOW_FILE_NAME }}/runs?event=pull_request&head_sha=$HEAD_SHA" --jq '.workflow_runs[0].id // empty')
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::No CI run found for branch '$BRANCH' with SHA '$HEAD_SHA'."
+            exit 1
+          fi
+          COUNT=$(gh api "repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts?name=docker-tag" --jq '.total_count')
+          if [ "$COUNT" -gt 0 ]; then
+            echo "Image build succeeded (docker-tag artifact present) for SHA '$HEAD_SHA'."
+          else
+            echo "::error::No successful image build found for branch '$BRANCH' with SHA '$HEAD_SHA'."
+            exit 1
+          fi
 
-  # Check if the build has run successfully (main or develop)
+  # Same gate for develop/main pushes — image build (docker-tag artifact), not whole-run success.
   check-existing-build-for-branch:
     name: Check Existing Build of main or develop branch
     if: ${{ needs.determine-build-context.outputs.is_main_or_develop == 'true' }}
     needs: determine-build-context
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, artemis-test-deployment]
     steps:
-      - name: Get latest successful build for main or develop branch
-        id: check_main_build
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=push&status=success&branch=${{ github.event.inputs.branch_name }}&head_sha=${{ needs.determine-build-context.outputs.head_sha }}
+      - name: Verify the image build succeeded (docker-tag artifact present)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Fail if no successful build found
-        if: ${{ steps.check_main_build.conclusion == 'success' && fromJSON(steps.check_main_build.outputs.data).total_count == 0 }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ needs.determine-build-context.outputs.head_sha }}
+          BRANCH: ${{ github.event.inputs.branch_name }}
         run: |
-          echo "::error::No successful build found for branch '${{ github.event.inputs.branch_name }}'."
-          exit 1
+          set -Eeuo pipefail
+          RUN_ID=$(gh api "repos/${{ github.repository }}/actions/workflows/${{ env.CI_WORKFLOW_FILE_NAME }}/runs?event=push&branch=$BRANCH&head_sha=$HEAD_SHA" --jq '.workflow_runs[0].id // empty')
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::No CI run found for branch '$BRANCH' with SHA '$HEAD_SHA'."
+            exit 1
+          fi
+          COUNT=$(gh api "repos/${{ github.repository }}/actions/runs/$RUN_ID/artifacts?name=docker-tag" --jq '.total_count')
+          if [ "$COUNT" -gt 0 ]; then
+            echo "Image build succeeded (docker-tag artifact present) for branch '$BRANCH'."
+          else
+            echo "::error::No successful image build found for branch '$BRANCH'."
+            exit 1
+          fi
 
   check-database-migration-approval:
     name: Check Database Migration Approval
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, artemis-test-deployment]
     needs: [determine-build-context]
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     steps:
@@ -203,15 +219,15 @@ jobs:
     # Use always() since one of the jobs will always skip
     if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build-for-pull-request.result == 'success' || needs.check-existing-build-for-branch.result == 'success') && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
     name: Deploy to Test-Server
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, artemis-test-deployment]
     environment:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
 
     env:
       GATEWAY_USER: "jump"
-      GATEWAY_HOST: "gateway.artemis.in.tum.de:2010"
-      GATEWAY_HOST_PUBLIC_KEY: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
+      GATEWAY_HOST: "gateway2.aet.cit.tum.de:2010"
+      GATEWAY_HOST_PUBLIC_KEY: "[gateway2.aet.cit.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
 
     steps:
       # Download artemis-server-cli from GH without cloning the Repo
@@ -228,6 +244,7 @@ jobs:
           DEPLOYMENT_SSH_KEY: "${{ secrets.DEPLOYMENT_SSH_KEY }}"
         run: |
           mkdir -p ~/.ssh
+          rm -f $SSH_AUTH_SOCK
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add - <<< $GATEWAY_SSH_KEY
           ssh-add - <<< $DEPLOYMENT_SSH_KEY
@@ -243,3 +260,8 @@ jobs:
           DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
         run: |
           ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $BRANCH_NAME -d $DEPLOYMENT_FOLDER -y
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/ssh_agent.sock

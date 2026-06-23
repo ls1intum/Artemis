@@ -1,0 +1,52 @@
+/* Dark-mode overrides. Applied when the server marks the container with --dark
+   or when the modal carries .artemis-modal--dark (propagated from the owning container). */
+
+.artemis-problem-statement--dark {
+    --body-color: #e0e0e0;
+    --border-color: #444;
+    --link-color: #58a6ff;
+    --artemis-pre-background: #2d2d2d;
+    --artemis-pre-color: #e0e0e0;
+    --artemis-pre-border: #444;
+    --markdown-preview-blockquote: #999;
+    --markdown-preview-blockquote-border: #555;
+    --success: #28a745;
+    --danger: #dc3545;
+    --secondary: #999;
+    --info: #58a6ff;
+
+    /* No container background; the body rule below paints the standalone backdrop. */
+    color: var(--body-color, #e0e0e0);
+}
+
+.artemis-problem-statement--dark :not(pre) > code {
+    background: #2d2d2d;
+}
+
+/* Dark body backdrop for standalone SSR output. Layout lives in embedded.css
+ * so light and dark share identical padding/margin. Consumers that embed our
+ * fragments in their own page are unaffected (this rule only matches when the
+ * server emits <body class="... artemis-ssr-body--dark">). */
+body.artemis-ssr-body--dark {
+    background: var(--body-bg, #1e1e1e);
+    color: var(--body-color, #e0e0e0);
+}
+
+/* Modal dark theme — modal lives at document.body, so variables are re-declared here. */
+.artemis-modal--dark {
+    --artemis-modal-bg: #1e1e1e;
+    --artemis-modal-color: #e0e0e0;
+    --artemis-modal-border: #444;
+    --artemis-modal-secondary: #999;
+    --artemis-modal-success-bg: rgba(40, 167, 69, 0.15);
+    --artemis-modal-success-color: #81c784;
+    --artemis-modal-success-border: rgba(40, 167, 69, 0.25);
+    --artemis-modal-success-item-bg: rgba(40, 167, 69, 0.08);
+    --artemis-modal-danger-bg: rgba(220, 53, 69, 0.15);
+    --artemis-modal-danger-color: #e57373;
+    --artemis-modal-danger-border: rgba(220, 53, 69, 0.25);
+    --artemis-modal-danger-item-bg: rgba(220, 53, 69, 0.08);
+    --artemis-modal-subtle-bg: rgba(255, 255, 255, 0.05);
+    --artemis-modal-subtle-border: rgba(255, 255, 255, 0.1);
+    --artemis-modal-bar-track: rgba(255, 255, 255, 0.1);
+}

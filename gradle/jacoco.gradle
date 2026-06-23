@@ -1,30 +1,34 @@
 ext {
-    // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    //This also needs to be lowered if we merge nebula PRs
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.840, "CLASS": 152]
-    // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
+    // TODO: aggregated coverage and each module's coverage should become 90% for INSTRUCTION and 0 for CLASS
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.850, "CLASS": 142]
     ModuleCoverageThresholds = [
-        "assessment"    :          ["INSTRUCTION": 0.916, "CLASS":  0],
-        "athena"        :          ["INSTRUCTION": 0.851, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.875, "CLASS":  6],
-        // Lowered to accommodate PostgreSQL/MySQL testcontainer configuration classes
-        "buildagent"    :          ["INSTRUCTION": 0.750, "CLASS":  3],
-        "communication" :          ["INSTRUCTION": 0.861, "CLASS":  7],
-        "core"          :          ["INSTRUCTION": 0.785, "CLASS": 67],
-        "exam"          :          ["INSTRUCTION": 0.902, "CLASS":  2],
-        "exercise"      :          ["INSTRUCTION": 0.906, "CLASS":  2],
+        "account"       :          ["INSTRUCTION": 0.890, "CLASS":  3],
+        "admin"         :          ["INSTRUCTION": 0.757, "CLASS":  7],
+        "assessment"    :          ["INSTRUCTION": 0.913, "CLASS":  0],
+        "athena"        :          ["INSTRUCTION": 0.887, "CLASS":  2],
+        "atlas"         :          ["INSTRUCTION": 0.842, "CLASS": 13],
+        "buildagent"    :          ["INSTRUCTION": 0.770, "CLASS":  1],
+        "communication" :          ["INSTRUCTION": 0.890, "CLASS":  0],
+        "core"          :          ["INSTRUCTION": 0.730, "CLASS": 49],
+        "course"        :          ["INSTRUCTION": 0.880, "CLASS":  2],
+        "exam"          :          ["INSTRUCTION": 0.901, "CLASS":  2],
+        "exercise"      :          ["INSTRUCTION": 0.874, "CLASS":  1],
         "fileupload"    :          ["INSTRUCTION": 0.924, "CLASS":  1],
-        "hyperion"      :          ["INSTRUCTION": 0.646, "CLASS":  9],
-        "iris"          :          ["INSTRUCTION": 0.811, "CLASS": 21],
-        "lecture"       :          ["INSTRUCTION": 0.891, "CLASS":  1],
-        "lti"           :          ["INSTRUCTION": 0.860, "CLASS":  2],
-        "modeling"      :          ["INSTRUCTION": 0.907, "CLASS":  1],
-        "nebula"        :          ["INSTRUCTION": 0.836, "CLASS":  0],
-        "plagiarism"    :          ["INSTRUCTION": 0.908, "CLASS":  2],
-        "programming"   :          ["INSTRUCTION": 0.819, "CLASS": 28],
-        "quiz"          :          ["INSTRUCTION": 0.865, "CLASS":  3],
-        "text"          :          ["INSTRUCTION": 0.942, "CLASS":  1],
-        "tutorialgroup" :          ["INSTRUCTION": 0.917, "CLASS":  1],
+        "hyperion"      :          ["INSTRUCTION": 0.854, "CLASS":  3],
+        "iris"          :          ["INSTRUCTION": 0.856, "CLASS": 17],
+        "jenkins"       :          ["INSTRUCTION": 0.888, "CLASS":  3],
+        "lecture"       :          ["INSTRUCTION": 0.900, "CLASS":  1],
+        "localci"       :          ["INSTRUCTION": 0.860, "CLASS":  3],
+        "localvc"       :          ["INSTRUCTION": 0.840, "CLASS":  2],
+        "lti"           :          ["INSTRUCTION": 0.880, "CLASS":  2],
+        "modeling"      :          ["INSTRUCTION": 0.917, "CLASS":  1],
+        "notification"  :          ["INSTRUCTION": 0.760, "CLASS":  6],
+        "plagiarism"    :          ["INSTRUCTION": 0.914, "CLASS":  1],
+        "programming"   :          ["INSTRUCTION": 0.832, "CLASS":  7],
+        "quiz"          :          ["INSTRUCTION": 0.855, "CLASS":  5],
+        "text"          :          ["INSTRUCTION": 0.922, "CLASS":  1],
+        "tutorialgroup" :          ["INSTRUCTION": 0.880, "CLASS":  3],
+        "videosource"   :          ["INSTRUCTION": 0.890, "CLASS":  0],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
     reportedModules = includedModules.size() == 0
@@ -40,7 +44,7 @@ ext {
 }
 
 jacoco {
-    toolVersion = "0.8.14"
+    toolVersion = "0.8.15"
 }
 
 jacocoTestReport {

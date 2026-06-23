@@ -1,0 +1,92 @@
+<form [formGroup]="onlineCourseConfigurationForm" (ngSubmit)="save()" #formDir="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.edit.configurationForCourse" [translateValues]="{ title: course()?.title }">
+            LTI Configuration for course {{ course()?.title }}
+        </h4>
+    </div>
+    <h4 class="modal-title mt-4" id="generalConfiguration" jhiTranslate="artemisApp.lti.generalConfiguration"></h4>
+    <div class="form-group mt-2">
+        <label class="form-control-label" jhiTranslate="artemisApp.lti.userPrefix" for="field_userPrefix"></label>
+        <jhi-help-icon text="artemisApp.lti.edit.userPrefixTooltip" />
+        <input required type="text" class="form-control" name="userPrefix" id="field_userPrefix" formControlName="userPrefix" />
+        @if (userPrefix.invalid && (userPrefix.dirty || userPrefix.touched)) {
+            @if ((userPrefix.errors! | keyvalue | removekeys: ['required']).length > 0) {
+                <div class="alert alert-danger">
+                    @for (e of userPrefix.errors! | keyvalue | removekeys: ['required']; track e) {
+                        <div>
+                            <div [jhiTranslate]="'artemisApp.lti.edit.form.userPrefix' + '.' + e.key"></div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+    <div class="form-group">
+        <input
+            type="checkbox"
+            class="form-check-input"
+            name="requireExistingUser"
+            id="field_requireExistingUser"
+            [checked]="course().onlineCourseConfiguration?.requireExistingUser"
+            formControlName="requireExistingUser"
+        />
+        <label class="form-control-label" jhiTranslate="artemisApp.lti.requireExistingUser" for="field_requireExistingUser"></label>
+        <jhi-help-icon text="artemisApp.lti.edit.requireExistingUserTooltip" />
+    </div>
+    <div *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
+        <h4 class="modal-title mt-4" id="lti13" jhiTranslate="artemisApp.lti.version13"></h4>
+        <div class="form-group mt-2">
+            <span jhiTranslate="artemisApp.lti13.externalToolSettings"></span>
+            <jhi-help-icon text="artemisApp.lti13.editExternalToolSettingsTooltip" />
+            <div class="form-group">
+                <div ngbDropdown class="d-inline-block me-2">
+                    <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
+                        {{
+                            onlineCourseConfiguration().ltiPlatformConfiguration
+                                ? getLtiPlatform(onlineCourseConfiguration().ltiPlatformConfiguration!)
+                                : ('artemisApp.lti13.selectExternalTool' | artemisTranslate)
+                        }}
+                    </button>
+                    <div ngbDropdownMenu>
+                        @for (platform of ltiConfiguredPlatforms(); track platform) {
+                            <button
+                                type="button"
+                                (click)="setPlatform(platform)"
+                                [class.selected]="platform.id === onlineCourseConfiguration().ltiPlatformConfiguration?.id"
+                                [ngbTooltip]="platform.customName"
+                                ngbDropdownItem
+                            >
+                                {{ getLtiPlatform(platform) }}
+                            </button>
+                        }
+                        <div>
+                            <div class="row justify-content-center">
+                                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage() }" />
+                            </div>
+                            <div class="row justify-content-center">
+                                <ngb-pagination
+                                    [collectionSize]="totalItems()"
+                                    [(page)]="page"
+                                    [pageSize]="itemsPerPage()"
+                                    [maxSize]="5"
+                                    [rotate]="true"
+                                    [boundaryLinks]="true"
+                                    (pageChange)="transition()"
+                                    [disabled]="false"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="mt-3 d-flex">
+        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="navigateToLtiConfigurationPage()">
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+        </button>
+        <button type="submit" id="save-entity" [disabled]="onlineCourseConfigurationForm.invalid || isSaving()" class="btn btn-primary ms-2">
+            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+        </button>
+    </div>
+</form>

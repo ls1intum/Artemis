@@ -129,7 +129,7 @@ theia:
             C: "c-latest"
 
 artemis:
-    push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
+    push-notification-relay: https://hermes-staging.artemis.cit.tum.de
     # Telemetry service: disabled for development
     telemetry:
         enabled: false # Disable sending any telemetry information to the telemetry service by setting this to false
@@ -152,7 +152,14 @@ artemis:
         grpc-port: 50051                  # Weaviate gRPC port for better performance
         scheme: http                      # http scheme for development (https should be used in production environments)
         collection-prefix: Artemis_       # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
-        vectorizer-module: none           # Vectorizer module: "none" (docker/weaviate.yml) or "text2vec-transformers" (docker/weaviate-embeddings.yml)
+        vectorizer-module: none           # Vectorizer module: "none" (docker/weaviate.yml), "text2vec-transformers" (docker/weaviate-embeddings.yml), or "text2vec-openai" (for OpenAI-compatible APIs like Ollama)
+        # Weaviate server authentication (optional). When set, the client authenticates using API key auth.
+        # The Weaviate server must have API key authentication enabled (see docker/weaviate/*.env).
+        # api-key: admin-key                                         # API key matching AUTHENTICATION_APIKEY_ALLOWED_KEYS in the Weaviate server config
+        # The following properties are only required when using vectorizer-module: text2vec-openai
+        # open-ai-embedding-model: qwen3-embedding:8b                # Embedding model name served by the OpenAI-compatible API
+        # open-ai-base-url: http://host.docker.internal:11434        # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix; use https://gpu.aet.cit.tum.de/ for the GPU server
+        # gpu-api-key: yourApiKey                                    # API key for GPU server (use any non-empty value for Ollama)
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
@@ -162,7 +169,3 @@ sentry:
 helios:
   status:
     enabled: false
-
-atlas:
-    atlasml:
-        base-url: https://atlasml.aet.cit.tum.de

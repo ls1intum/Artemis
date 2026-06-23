@@ -5,9 +5,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/overview/lti13-exercise-launch/lti13-exercise-launch.component';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -72,7 +72,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.isLaunching).toBe(false);
+        expect(comp.isLaunching()).toBe(false);
         expect(httpStub).not.toHaveBeenCalled();
     });
 
@@ -83,21 +83,21 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
         comp.ngOnInit();
 
-        expect(comp.isLaunching).toBe(false);
+        expect(comp.isLaunching()).toBe(false);
         expect(httpStub).not.toHaveBeenCalled();
     });
 
     it('onInit no targetLinkUri', () => {
         const httpStub = vi.spyOn(http, 'post').mockReturnValue(of({ ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
 
-        expect(comp.isLaunching).toBe(true);
+        expect(comp.isLaunching()).toBe(true);
 
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
 
-        expect(comp.isLaunching).toBe(false);
+        expect(comp.isLaunching()).toBe(false);
     });
 
     it('onInit success to call launch endpoint', () => {
@@ -105,7 +105,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         const targetLink = window.location.host + '/targetLink';
         const httpStub = vi.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: targetLink, ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
 
-        expect(comp.isLaunching).toBe(true);
+        expect(comp.isLaunching()).toBe(true);
 
         comp.ngOnInit();
 
@@ -121,7 +121,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/lti/public/lti13/auth-login', expect.anything(), expect.anything());
 
-        expect(comp.isLaunching).toBe(false);
+        expect(comp.isLaunching()).toBe(false);
     });
 
     it('should redirect user to login when 401 error occurs', async () => {
@@ -140,7 +140,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         expect(comp.authenticateUserThenRedirect).toHaveBeenCalled();
         expect(identitySpy).toHaveBeenCalled();
         expect(comp.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
-        expect(navigateSpy).toHaveBeenCalledWith(['/']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/sign-in']);
         expect(authStateSpy).toHaveBeenCalled();
     });
 
@@ -278,7 +278,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
         comp.handleLtiLaunchError();
 
         expect(removeSpy).toHaveBeenCalledWith('state');
-        expect(comp.isLaunching).toBe(false);
+        expect(comp.isLaunching()).toBe(false);
     });
 
     it('should send request with proper parameters', () => {

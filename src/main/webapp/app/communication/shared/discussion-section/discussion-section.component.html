@@ -1,14 +1,14 @@
 <!-- expanded posts -->
-@if (course) {
-    <div class="h-100">
-        @if (!collapsed) {
-            <div class="postings-container expanded-discussion">
-                <div class="draggable-left">
+@if (course()) {
+    <div [class]="embedded() ? 'd-flex flex-column h-100' : 'h-100'">
+        @if (!collapsed()) {
+            <div [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden' : 'postings-container expanded-discussion'">
+                <div class="draggable-left" [hidden]="embedded()">
                     <fa-icon [icon]="faGripLinesVertical" />
                 </div>
-                <div class="card">
+                <div [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden' : 'card'">
                     <!-- header -->
-                    <div class="card-header" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed = true">
+                    <div class="card-header" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed.set(true)" [hidden]="embedded()">
                         <div class="row flex-grow-1">
                             <div class="col">
                                 <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.communication.label"></h5>
@@ -19,31 +19,20 @@
                         </div>
                     </div>
                     <!-- body -->
-                    @if (noChannelAvailable) {
+                    @if (noChannelAvailable()) {
                         <div class="card-body" jhiTranslate="artemisApp.metis.channel.noChannel"></div>
                     } @else {
-                        <div class="card-body pt-0">
-                            @if (currentPost !== undefined) {
+                        <div [class]="embedded() ? 'd-flex flex-column flex-grow-1 overflow-hidden pt-0 container' : 'card-body pt-0'">
+                            @if (currentPost(); as selectedPost) {
                                 <div class="my-2">
                                     <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable" />
                                     <span class="back-instruction" jhiTranslate="artemisApp.metis.post.showAllPosts"></span>
-                                    <jhi-posting-thread [post]="currentPost" [showAnswers]="true" [id]="'item-' + currentPost?.id" [showChannelReference]="false" />
+                                    <jhi-posting-thread [post]="selectedPost" [showAnswers]="true" [id]="'item-' + selectedPost.id" [showChannelReference]="false" />
                                 </div>
                             } @else {
                                 <div class="row ps-0">
                                     <!-- search bar -->
-                                    <div class="input-group px-0 my-2">
-                                        <input
-                                            id="search"
-                                            name="searchText"
-                                            [(ngModel)]="searchText"
-                                            class="form-control"
-                                            (keyup.enter)="onSelectContext()"
-                                            placeholder="{{ 'artemisApp.metis.discussionSection.searchBarDefault' | artemisTranslate }}"
-                                        />
-                                        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()" />
-                                        <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()" />
-                                    </div>
+                                    <jhi-search-filter class="px-0 my-2" (newSearchEvent)="onSearch($event)" />
                                 </div>
                                 <form [formGroup]="formGroup">
                                     <!-- filter and sort controls -->
@@ -100,7 +89,7 @@
                                                 <div class="col-auto pe-1">
                                                     <span jhiTranslate="artemisApp.metis.discussionSection.sortByDate"></span>
                                                 </div>
-                                                @if (!currentSortDirection) {
+                                                @if (!currentSortDirection()) {
                                                     <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
                                                         <fa-icon
                                                             [icon]="faLongArrowRight"
@@ -108,12 +97,12 @@
                                                         />
                                                     </div>
                                                 }
-                                                @if (currentSortDirection) {
+                                                @if (currentSortDirection()) {
                                                     <div class="col-auto p-0 clickable" (click)="onChangeSortDir()">
                                                         <fa-icon
-                                                            [icon]="currentSortDirection === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
+                                                            [icon]="currentSortDirection() === SortDirection.ASCENDING ? faLongArrowAltUp : faLongArrowAltDown"
                                                             [ngbTooltip]="
-                                                                currentSortDirection === SortDirection.ASCENDING
+                                                                currentSortDirection() === SortDirection.ASCENDING
                                                                     ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
                                                                     : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
                                                             "
@@ -125,14 +114,20 @@
                                     </div>
                                 </form>
                                 <div class="bold-line row mt-1 mb-2"></div>
-                                <div #itemsContainer class="items-container" infinite-scroll [scrollWindow]="false" (scrolledUp)="fetchNextPage()">
-                                    @for (post of posts; track post.id) {
+                                <div
+                                    #itemsContainer
+                                    [class]="embedded() ? 'overflow-y-auto flex-grow-1' : 'items-container'"
+                                    infinite-scroll
+                                    [scrollWindow]="false"
+                                    (scrolledUp)="fetchNextPage()"
+                                >
+                                    @for (post of posts(); track post.id) {
                                         <jhi-posting-thread
                                             #postingThread
                                             [id]="'item-' + post.id"
                                             class="item"
                                             [post]="post"
-                                            [showAnswers]="posts.length === 1"
+                                            [showAnswers]="posts().length === 1"
                                             [showChannelReference]="false"
                                             [isCommunicationPage]="false"
                                         />
@@ -140,37 +135,37 @@
                                 </div>
                             }
                             <!-- loading posts -->
-                            @if (isLoading) {
+                            @if (isLoading()) {
                                 <div class="post-result-information row mt-2">
                                     <div class="col-12" jhiTranslate="artemisApp.metis.discussionSection.loadingMessages"></div>
                                 </div>
                             }
                             <!-- no posts -->
-                            @if (!isLoading && posts.length === 0) {
+                            @if (!isLoading() && posts().length === 0) {
                                 <div class="post-result-information row mt-2">
                                     <div class="col-12" jhiTranslate="artemisApp.metis.discussionSection.noMessages"></div>
                                 </div>
                             }
                             <!-- new post button -->
-                            @if (createdPost && !isLoading && !channel.isArchived) {
+                            @if (createdPost() && !isLoading() && !channel()?.isArchived) {
                                 <div class="row mt-2">
                                     <div class="col-12">
                                         <button id="new-post" class="btn btn-sm btn-primary" (click)="toggleSendMessage()">
-                                            @if (!shouldSendMessage) {
+                                            @if (!shouldSendMessage()) {
                                                 <fa-icon [icon]="faPlus" />
                                             }
-                                            @if (shouldSendMessage) {
+                                            @if (shouldSendMessage()) {
                                                 <fa-icon [icon]="faTimes" />
                                             }
-                                            @if (!shouldSendMessage) {
+                                            @if (!shouldSendMessage()) {
                                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.metis.newMessage"></span>
                                             }
-                                            @if (shouldSendMessage) {
+                                            @if (shouldSendMessage()) {
                                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.metis.collapseNewMessage"></span>
                                             }
                                         </button>
-                                        @if (shouldSendMessage) {
-                                            <jhi-message-inline-input class="message-input" [posting]="createdPost" (onCreate)="createEmptyPost()" />
+                                        @if (shouldSendMessage()) {
+                                            <jhi-message-inline-input class="message-input" [posting]="createdPost()" (onCreate)="createEmptyPost()" />
                                         }
                                     </div>
                                 </div>
@@ -180,7 +175,7 @@
                 </div>
             </div>
         } @else {
-            <div class="postings-container collapsed-discussion" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate">
+            <div class="postings-container collapsed-discussion" (click)="collapsed.set(false)" [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate">
                 <fa-icon class="expand-postings-icon" [icon]="faChevronLeft" />
                 <span class="h5" jhiTranslate="artemisApp.metis.communication.label"></span>
                 <div class="spacer"></div>

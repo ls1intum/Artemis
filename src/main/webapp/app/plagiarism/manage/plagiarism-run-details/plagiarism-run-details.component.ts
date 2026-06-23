@@ -1,15 +1,20 @@
-import { Component, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, computed, inject, input, output } from '@angular/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { Range, round } from 'app/shared/util/utils';
+import { Range, round } from 'app/foundation/util/utils';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ChartModule } from 'primeng/chart';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
 import { DatePipe } from '@angular/common';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';
@@ -22,12 +27,14 @@ interface SimilarityRangeComparisonStateDTO {
 
 @Component({
     selector: 'jhi-plagiarism-run-details',
-    styleUrls: ['./plagiarism-run-details.component.scss', '../../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['./plagiarism-run-details.component.scss'],
     templateUrl: './plagiarism-run-details.component.html',
-    imports: [TranslateDirective, HelpIconComponent, BarChartModule, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
+    imports: [TranslateDirective, HelpIconComponent, ChartModule, DatePipe, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirective implements OnChanges {
     private inspectorService = inject(PlagiarismInspectorService);
+    private translateService = inject(TranslateService);
+    private chartColorService = inject(ChartColorService);
 
     /**
      * Result of the automated plagiarism detection
@@ -45,13 +52,46 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
 
     readonly round = round;
 
+    private readonly resolvedColors = this.chartColorService.resolvedColors(() => this.chartColors());
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
+    readonly chartOptions = computed(() =>
+        barChartOptions({
+            yAxis: { max: this.yScaleMax, tickFormatter: this.yAxisTickFormatting },
+            tooltip: {
+                title: (items) => {
+                    const item = items[0];
+                    if (!item) {
+                        return '';
+                    }
+                    return this.translateService.instant('artemisApp.plagiarism.numberIdentifiedPairs', { amount: item.parsed.y });
+                },
+                label: (item) => {
+                    const label = item.label ?? '';
+                    const bucketDTO = this.getBucketDTO(label);
+                    const percentage = this.totalDetectedPlagiarisms > 0 ? round(((item.parsed.y ?? 0) * 100) / this.totalDetectedPlagiarisms, 2) : 0;
+                    return [
+                        this.translateService.instant('artemisApp.plagiarism.confirmed', { amount: bucketDTO?.confirmed ?? 0 }),
+                        this.translateService.instant('artemisApp.plagiarism.denied', { amount: bucketDTO?.denied ?? 0 }),
+                        this.translateService.instant('artemisApp.plagiarism.open', { amount: bucketDTO?.open ?? 0 }),
+                        this.translateService.instant('artemisApp.plagiarism.withSimilarity', { range: label }),
+                        this.translateService.instant('artemisApp.plagiarism.portionOfAllCases', { percentage }),
+                    ];
+                },
+            },
+            dataLabels: { formatter: (value) => `${value}` },
+        }),
+    );
+    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
+    readonly dataLabelsPlugin = [ChartDataLabels];
+
     constructor() {
         super();
         /**
          * The labels of the chart are fixed and represent the 10 intervals we group the similarities into.
          */
-        this.ngxChartLabels = ['[0%-10%)', '[10%-20%)', '[20%-30%)', '[30%-40%)', '[40%-50%)', '[50%-60%)', '[60%-70%)', '[70%-80%)', '[80%-90%)', '[90%-100%]'];
-        this.ngxColor.domain = [...Array(8).fill(GraphColors.LIGHT_BLUE), ...Array(2).fill(GraphColors.RED)];
+        this.chartLabels = ['[0%-10%)', '[10%-20%)', '[20%-30%)', '[30%-40%)', '[40%-50%)', '[50%-60%)', '[60%-70%)', '[70%-80%)', '[80%-90%)', '[90%-100%]'];
+        this.chartColors.set([...Array(8).fill(GraphColors.LIGHT_BLUE), ...Array(2).fill(GraphColors.RED)]);
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -67,17 +107,8 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * @param data  - the updated data array
      */
     updateChartDataSet(data: number[]) {
-        let ngxDataEntity;
-        this.ngxData = [];
-        data.forEach((value, position) => {
-            ngxDataEntity = {
-                name: this.ngxChartLabels[position],
-                value,
-            };
-            this.ngxData.push(ngxDataEntity);
-        });
+        this.chartEntries.set(data.map((value, position) => ({ name: this.chartLabels[position], value })));
         this.totalDetectedPlagiarisms = data.reduce((number1, number2) => number1 + number2, 0);
-        this.ngxData = [...this.ngxData];
     }
 
     /**
@@ -107,17 +138,21 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
      * @param label the bar label the DTO should be returned for
      */
     getBucketDTO(label: string): SimilarityRangeComparisonStateDTO {
-        const index = this.ngxChartLabels.indexOf(label);
+        const index = this.chartLabels.indexOf(label);
         return this.bucketDTOs[index];
     }
 
     /**
      * Handles the click on a specific chart bar
      * Emits the selected range to {@link PlagiarismInspectorComponent#filterByChart} so that the comparisons shown in the sidebar can be filtered accordingly
-     * @param event the event that is passed by ngx-charts
+     * @param event the event that is passed by p-chart
      */
     onSelect(event: any): void {
-        const interval = event.name as string;
+        const selected = toChartSelectEvent(event, this.chartData());
+        const interval = selected?.label;
+        if (!interval) {
+            return;
+        }
         const separatorIndex = interval.indexOf('-');
         const lowerBound = parseInt(interval.slice(1, separatorIndex), 10);
         const upperBound = parseInt(interval.slice(separatorIndex + 1, interval.length - 2), 10);

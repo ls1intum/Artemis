@@ -7,7 +7,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('AssessmentWarningComponent', () => {
@@ -35,8 +35,8 @@ describe('AssessmentWarningComponent', () => {
 
         await fixture.whenStable();
 
-        expect(component.isBeforeExerciseDueDate).toBe(false);
-        expect(component.showWarning).toBe(false);
+        expect(component.isBeforeExerciseDueDate()).toBe(false);
+        expect(component.showWarning()).toBe(false);
     });
 
     it('should be before the exercise due date if the exercise due date is in the future', async () => {
@@ -46,8 +46,8 @@ describe('AssessmentWarningComponent', () => {
 
         await fixture.whenStable();
 
-        expect(component.isBeforeExerciseDueDate).toBe(true);
-        expect(component.showWarning).toBe(true);
+        expect(component.isBeforeExerciseDueDate()).toBe(true);
+        expect(component.showWarning()).toBe(true);
     });
 
     it('should be before the latest due date if the exercise due date is in the past but individual due dates in the future', async () => {
@@ -76,7 +76,7 @@ describe('AssessmentWarningComponent', () => {
         fixture.componentRef.setInput('submissions', [submission2, submission4, submission3, submission1]);
         await fixture.whenStable();
 
-        expect(component.isBeforeExerciseDueDate).toBe(false);
-        expect(component.showWarning).toBe(true);
+        expect(component.isBeforeExerciseDueDate()).toBe(false);
+        expect(component.showWarning()).toBe(true);
     });
 });

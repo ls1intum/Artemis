@@ -1,11 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { OWL_DATE_TIME_FORMATS, OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
 
 export const MY_NATIVE_FORMATS = {
@@ -63,7 +63,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
 
     form: FormGroup;
     // TimeFrame to store the current time frame of the form.
-    protected timeFrame = TimeFrame.Day;
+    protected readonly timeFrame = signal(TimeFrame.Day);
 
     // Enum Object to be used for Comparing different TimeFrames in the template.
     protected readonly TimeFrame = TimeFrame;
@@ -92,7 +92,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
                 this.resetDateControl(control);
             }
         });
-        this.timeFrame = timeFrame;
+        this.timeFrame.set(timeFrame);
     }
 
     /**
@@ -112,11 +112,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
      * @returns {boolean} - Returns true if the start time/date is before the end time/date, otherwise returns true.
      */
     get isStartBeforeEnd(): boolean {
-        if (this.timeFrame === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
+        if (this.timeFrame() === TimeFrame.PeriodWithinDay && this.endTimeControl?.value && this.startTimeControl?.value) {
             return this.normalizeAndCompare(this.startTimeControl.value, this.endTimeControl.value, 'minute');
         }
 
-        if (this.timeFrame === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
+        if (this.timeFrame() === TimeFrame.Period && this.endDateControl?.value && this.startDateControl?.value) {
             return this.normalizeAndCompare(this.startDateControl.value, this.endDateControl.value, 'day');
         }
 
@@ -134,7 +134,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
     }
 
     get timeFrameControl(): TimeFrame {
-        return this.timeFrame;
+        return this.timeFrame();
     }
 
     get startDateControl() {
@@ -165,11 +165,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
         if (!this.startDateControl?.value || !this.startDateControl?.valid) {
             return false;
         }
-        if (this.timeFrame === TimeFrame.Day) {
+        if (this.timeFrame() === TimeFrame.Day) {
             return true;
-        } else if (this.timeFrame === TimeFrame.Period) {
+        } else if (this.timeFrame() === TimeFrame.Period) {
             return !!this.endDateControl?.value && !!this.endDateControl?.valid && this.isStartBeforeEnd;
-        } else if (this.timeFrame === TimeFrame.PeriodWithinDay) {
+        } else if (this.timeFrame() === TimeFrame.PeriodWithinDay) {
             return (
                 !!this.startTimeControl?.value &&
                 !!this.startTimeControl?.valid &&

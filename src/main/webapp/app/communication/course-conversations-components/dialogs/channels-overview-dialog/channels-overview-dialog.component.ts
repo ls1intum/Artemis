@@ -1,15 +1,15 @@
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
-import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
-import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
+import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { ChannelItemComponent } from './channel-item/channel-item.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 
@@ -32,16 +32,18 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     canCreateChannel = canCreateChannel;
 
-    @Input() createChannelFn?: (channel: ChannelDTO) => Observable<never>;
-    @Input() course: Course;
-    @Input() channelSubType: ChannelSubType;
+    createChannelFn = signal<((channel: ChannelDTO) => Observable<never>) | undefined>(undefined);
+    course = signal<Course | undefined>(undefined);
+    channelSubType = signal<ChannelSubType | undefined>(undefined);
 
     channelActions$ = new Subject<ChannelAction>();
 
     noOfChannels = 0;
     channelModificationPerformed = false;
-    isLoading = false;
-    channels: ChannelDTO[] = [];
+    // Signal-backed: set inside the async getChannelsOfCourse() subscribe/finalize, so they must
+    // schedule change detection under zoneless CD for the channel list/spinner to render.
+    readonly isLoading = signal(false);
+    readonly channels = signal<ChannelDTO[]>([]);
 
     isInitialized = false;
 
@@ -54,7 +56,8 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         }
     }
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
+        super.ngOnInit();
         this.channelActions$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((channelAction) => {
             this.performChannelAction(channelAction);
         });
@@ -81,7 +84,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         switch (channelAction.action) {
             case 'register':
                 this.channelService
-                    .registerUsersToChannel(this.course.id!, channelAction.channel.id!)
+                    .registerUsersToChannel(this.course()!.id!, channelAction.channel.id!)
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe(() => {
                         this.loadChannelsOfCourse();
@@ -90,7 +93,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                 break;
             case 'deregister':
                 this.channelService
-                    .deregisterUsersFromChannel(this.course.id!, channelAction.channel.id!)
+                    .deregisterUsersFromChannel(this.course()!.id!, channelAction.channel.id!)
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe(() => {
                         this.loadChannelsOfCourse();
@@ -104,20 +107,20 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     }
 
     loadChannelsOfCourse() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.channelService
-            .getChannelsOfCourse(this.course.id!)
+            .getChannelsOfCourse(this.course()!.id!)
             .pipe(
                 map((res: HttpResponse<ChannelDTO[]>) => res.body),
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 }),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (channels: ChannelDTO[]) => {
-                    this.channels = channels;
-                    this.noOfChannels = this.channels.length;
+                    this.channels.set(channels);
+                    this.noOfChannels = channels.length;
                 },
                 error: (errorResponse: HttpErrorResponse) => {
                     onError(this.alertService, errorResponse);

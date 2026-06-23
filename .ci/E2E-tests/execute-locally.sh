@@ -9,6 +9,10 @@
 #   configuration: postgres-localci (default), postgres, multi-node
 #   test-filter: optional grep pattern to filter tests (e.g., "Quiz")
 #
+# Environment:
+#   E2E_DEBUG=true    Show all Docker container output (default: only Playwright)
+#   E2E_LOG_DIR=path  Directory to store logs (default: .e2e-local)
+#
 # Prerequisites:
 #   - WAR file must exist in build/libs/
 #   - Docker must be running
@@ -20,6 +24,8 @@ set -e
 CONFIGURATION=${1:-postgres-localci}
 TEST_FILTER=$2
 DB="postgres"
+DEBUG="${E2E_DEBUG:-false}"
+LOG_DIR="${E2E_LOG_DIR:-.e2e-local}"
 
 echo "========================================"
 echo "  Artemis E2E Local Test Runner"
@@ -31,10 +37,13 @@ echo ""
 # Determine compose file based on configuration
 if [ "$CONFIGURATION" = "postgres" ]; then
     COMPOSE_FILE="playwright-E2E-tests-postgres.yml"
+    BUILD_SERVICES=("artemis-app")
 elif [ "$CONFIGURATION" = "postgres-localci" ]; then
     COMPOSE_FILE="playwright-E2E-tests-postgres-localci.yml"
+    BUILD_SERVICES=("artemis-app")
 elif [ "$CONFIGURATION" = "multi-node" ]; then
     COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
+    BUILD_SERVICES=("artemis-app-node-1" "artemis-app-node-2" "artemis-app-node-3")
 else
     echo "Invalid configuration. Choose: postgres, postgres-localci, or multi-node"
     exit 1
@@ -51,6 +60,16 @@ export HOST_HOSTNAME="nginx"
 
 # Set Docker tag (required by compose file, but we build locally so value doesn't matter)
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
+# Admin credentials configure the Artemis server (via docker/artemis/config/playwright.env)
+# and are passed to the Playwright container (via docker/playwright.yml).
+# Playwright test code uses matching hardcoded defaults in support/users.ts.
+export ARTEMIS_ADMIN_USERNAME="${ARTEMIS_ADMIN_USERNAME:-artemis_admin}"
+export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-artemis_admin}"
+export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-360}"
+export TEST_RETRIES="${TEST_RETRIES:-1}"
+export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-4}"
+export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-180}"
+export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-75}"
 
 # Set platform for ARM64 Macs (Apple Silicon)
 # Build the Artemis app natively on ARM and tell LocalCI to use arm64 exercise images.
@@ -70,7 +89,7 @@ rm -f ../src/test/playwright/test-reports/results*.xml
 # Create override file for local test execution.
 echo "Creating local test override..."
 if [ -n "$TEST_FILTER" ]; then
-    # With a filter, use a single npx command (--grep works across all projects)
+    # With a filter, use a single pnpm exec command (--grep works across all projects)
     cat > playwright-local-override.yml << EOF
 # AUTO-GENERATED - DO NOT COMMIT
 services:
@@ -80,9 +99,10 @@ services:
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             rm -f test-reports/results*.xml &&
-            npm ci &&
-            npm run playwright:setup &&
-            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml npx playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
+            corepack enable &&
+            pnpm install --frozen-lockfile &&
+            pnpm run playwright:setup &&
+            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml pnpm exec playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
     OVERRIDE_ARGS="-f playwright-local-override.yml"
@@ -109,7 +129,10 @@ docker compose --env-file ../.env -f $COMPOSE_FILE build \
     --build-arg WAR_FILE_STAGE=external_builder \
     --no-cache \
     --pull \
-    artemis-app
+    "${BUILD_SERVICES[@]}"
+
+# Ensure log directory exists (relative to project root)
+mkdir -p "../$LOG_DIR"
 
 # Run the tests
 echo ""
@@ -119,9 +142,17 @@ echo ""
 
 # Disable exit on error to capture exit code
 set +e
-docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
+if [ "$DEBUG" = true ]; then
+    docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
+else
+    # Only show Playwright output; other service logs are saved to the log directory
+    docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --attach artemis-playwright --exit-code-from artemis-playwright
+fi
 EXIT_CODE=$?
 set -e
+
+# Save all container logs for later inspection
+docker compose --env-file ../.env -f $COMPOSE_FILE logs --no-color > "../$LOG_DIR/docker-compose.log" 2>&1 || true
 
 # Test reports are in the mounted volume (no need to copy from container)
 REPORT_DIR="../src/test/playwright/test-reports"
@@ -137,17 +168,13 @@ TOTAL_FAILURES=0
 TOTAL_ERRORS=0
 TOTAL_SKIPPED=0
 
-# Determine which XML files to parse to avoid double-counting.
-# The test runner generates results-parallel.xml + results-sequential.xml,
-# then merges them into results.xml. If the merged file exists, use only that.
-# Otherwise fall back to individual files.
+# The test runner moves results-parallel.xml to results.xml after the run.
+# Fall back to results-parallel.xml if the rename didn't happen.
 XML_FILES=()
 if [ -f "$REPORT_DIR/results.xml" ]; then
     XML_FILES=("$REPORT_DIR/results.xml")
-else
-    for f in "$REPORT_DIR"/results-parallel.xml "$REPORT_DIR"/results-sequential.xml; do
-        [ -f "$f" ] && XML_FILES+=("$f")
-    done
+elif [ -f "$REPORT_DIR/results-parallel.xml" ]; then
+    XML_FILES=("$REPORT_DIR/results-parallel.xml")
 fi
 
 for xml_file in "${XML_FILES[@]}"; do
@@ -200,8 +227,11 @@ if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -eq 0 ] && [ $EXIT_CODE -eq 0 ]; then
     echo "All tests passed!"
 else
     echo "Tests failed! View HTML report:"
-    echo "  cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
+    echo "  cd src/test/playwright && pnpm exec playwright show-report test-reports/monocart-report"
 fi
+
+echo ""
+echo "Full Docker logs: $LOG_DIR/docker-compose.log"
 
 # Exit with failure if any tests failed
 if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -gt 0 ]; then

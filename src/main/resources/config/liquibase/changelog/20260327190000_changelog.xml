@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add composite index on user_groups(user_groups, user_id) for efficient batch group counting.
+         This enables covering index scans on PostgreSQL when counting users per group,
+         avoiding table lookups and improving performance of the countUsersInGroups batch query. -->
+    <changeSet id="20260327-01-add-composite-index-user-groups" author="benjaminschmitz">
+        <createIndex indexName="idx_user_groups_group_user" tableName="user_groups">
+            <column name="user_groups"/>
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

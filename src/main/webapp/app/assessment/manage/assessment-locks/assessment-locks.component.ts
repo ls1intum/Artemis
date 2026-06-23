@@ -1,24 +1,24 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { HttpResponse } from '@angular/common/http';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { combineLatest } from 'rxjs';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-assessment-locks',
@@ -38,13 +38,14 @@ export class AssessmentLocksComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
 
     course: Course;
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
     tutorId: number;
     examId?: number;
-    showAll = false;
+    readonly showAll = signal(false);
     exercises: Exercise[] = [];
 
-    submissions: Submission[] = [];
+    // Locked submissions load asynchronously and the exam branch flips showAll — signals so they render under zoneless.
+    readonly submissions = signal<Submission[]>([]);
 
     private cancelConfirmationText: string;
 
@@ -62,7 +63,7 @@ export class AssessmentLocksComponent implements OnInit {
 
     public ngOnInit() {
         combineLatest([this.route.params, this.route.queryParams]).subscribe(([params, queryParams]) => {
-            this.courseId = Number(params['courseId']);
+            this.courseId.set(Number(params['courseId']));
             this.examId = Number(params['examId']);
             this.tutorId = Number(queryParams['tutorId']);
 
@@ -76,14 +77,14 @@ export class AssessmentLocksComponent implements OnInit {
     getAllLockedSubmissions() {
         let lockedSubmissionsObservable;
         if (this.examId) {
-            lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId, this.examId);
-            this.showAll = true;
+            lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId(), this.examId);
+            this.showAll.set(true);
         } else {
-            lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId);
+            lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId());
         }
         lockedSubmissionsObservable.subscribe({
             next: (response: HttpResponse<Submission[]>) => {
-                this.submissions.push(...(response.body ?? []));
+                this.submissions.update((submissions) => [...submissions, ...(response.body ?? [])]);
             },
             error: (response: string) => this.onError(response),
         });
@@ -114,7 +115,7 @@ export class AssessmentLocksComponent implements OnInit {
                 default:
                     break;
             }
-            this.submissions = this.submissions.filter((submission) => submission !== canceledSubmission);
+            this.submissions.set(this.submissions().filter((submission) => submission !== canceledSubmission));
         }
     }
 

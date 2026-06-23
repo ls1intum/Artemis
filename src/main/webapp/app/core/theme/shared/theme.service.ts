@@ -1,6 +1,6 @@
 import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';
 export const THEME_OVERRIDE_ID = 'artemis-theme-override';
@@ -63,6 +63,17 @@ export class ThemeService {
      * The currently applied theme as Signal.
      */
     public currentTheme = computed(() => this.userPreference() ?? this.systemPreference());
+
+    /**
+     * Revision counter that is bumped once a theme's CSS variables are actually in effect.
+     * Unlike {@link currentTheme}, which switches as soon as the user toggles the theme, this signal only
+     * changes after the dark theme stylesheet finished loading (or the override was removed for the light
+     * theme). Consumers that resolve CSS custom properties via getComputedStyle (e.g. canvas-based charts)
+     * must depend on this signal instead of {@link currentTheme} to avoid reading stale variable values.
+     */
+    private _appliedThemeRevision = signal(0);
+
+    public readonly appliedThemeRevision = this._appliedThemeRevision.asReadonly();
 
     private localStorageService = inject(LocalStorageService);
 
@@ -182,6 +193,7 @@ export class ThemeService {
             // The default theme is always injected by Angular; therefore, we just need to remove
             // our theme override, if present
             overrideTag?.remove();
+            this._appliedThemeRevision.update((revision) => revision + 1);
         } else {
             // If the theme is not the default theme, we need to add a theme override stylesheet to the page header
 
@@ -198,6 +210,7 @@ export class ThemeService {
             // As soon as the new style sheet loaded, remove the old override (if present)
             newTag.onload = () => {
                 overrideTag?.remove();
+                this._appliedThemeRevision.update((revision) => revision + 1);
             };
 
             // Insert the new stylesheet link tag after the last existing link tag

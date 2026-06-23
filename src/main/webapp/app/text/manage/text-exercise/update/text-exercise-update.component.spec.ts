@@ -47,35 +47,35 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TextExerciseUpdateComponent } from 'app/text/manage/text-exercise/update/text-exercise-update.component';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
-import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
+import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
@@ -296,7 +296,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.update).toHaveBeenCalledWith(exercise, {});
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
             });
 
@@ -338,7 +338,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.create).toHaveBeenCalledWith(exercise);
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
             });
         });
@@ -360,7 +360,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.import).toHaveBeenCalledWith(exercise);
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
             });
         });
     });
@@ -377,7 +377,7 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isExamMode).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise).toEqual(exercise);
         });
 
@@ -412,7 +412,7 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isExamMode).toBe(false);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise).toEqual(exercise);
         });
 
@@ -429,7 +429,7 @@ describe('TextExercise Management Update Component', () => {
             // Verify component is properly initialized
             expect(component.textExercise).toBeDefined();
             expect(component.backupExercise).toBeDefined();
-            expect(component.isSaving).toBe(false);
+            expect(component.isSaving()).toBe(false);
         });
     });
 
@@ -449,8 +449,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(false);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
@@ -496,8 +496,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(false);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
@@ -520,8 +520,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(true);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise.course).toBeUndefined();
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
@@ -547,8 +547,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(true);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
@@ -565,12 +565,12 @@ describe('TextExercise Management Update Component', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        component.exerciseCategories = [];
+        component.exerciseCategories.set([]);
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
         component.updateCategories(newCategories);
 
         expect(component.textExercise.categories).toEqual(newCategories);
-        expect(component.exerciseCategories).toEqual(newCategories);
+        expect(component.exerciseCategories()).toEqual(newCategories);
     });
 });

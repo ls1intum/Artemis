@@ -1,15 +1,17 @@
 import { ChangeDetectorRef, Component, input, model } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
-import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Stub for ModelingEditorComponent to avoid Apollon editor initialization issues
 @Component({
@@ -30,7 +32,7 @@ class StubModelingEditorComponent {
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -38,10 +40,12 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
 describe('ModelingExamSubmissionComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
     let comp: ModelingExamSubmissionComponent;
 
@@ -50,7 +54,18 @@ describe('ModelingExamSubmissionComponent', () => {
 
     const resetComponent = () => {
         if (comp) {
-            mockSubmission = { explanationText: 'Test Explanation', model: JSON.stringify({ version: '2.0.0', model: true }) } as ModelingSubmission;
+            mockSubmission = {
+                explanationText: 'Test Explanation',
+                model: JSON.stringify({
+                    version: '3.0.0',
+                    type: 'ClassDiagram',
+                    size: { width: 200, height: 200 },
+                    interactive: { elements: {}, relationships: {} },
+                    elements: {},
+                    relationships: {},
+                    assessments: {},
+                }),
+            } as ModelingSubmission;
             const course = new Course();
             course.isAtLeastInstructor = true;
             mockExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
@@ -62,8 +77,9 @@ describe('ModelingExamSubmissionComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [FaIconComponent, StubModelingEditorComponent],
-            declarations: [
+            imports: [
+                FaIconComponent,
+                StubModelingEditorComponent,
                 ModelingExamSubmissionComponent,
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
@@ -92,7 +108,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     afterEach(() => {
         fixture.destroy();
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('With exercise', () => {
@@ -114,8 +130,8 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(el).not.toBeNull();
 
             const directiveInstance = el.injector.get(TranslateDirective);
-            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.points');
-            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: 0 });
+            expect(directiveInstance.jhiTranslate()).toBe('artemisApp.examParticipation.points');
+            expect(directiveInstance.translateValues()).toEqual({ points: maxScore, bonusPoints: 0 });
         });
 
         it('should show exercise bonus score if any', () => {
@@ -128,13 +144,13 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(el).not.toBeNull();
 
             const directiveInstance = el.injector.get(TranslateDirective);
-            expect(directiveInstance.jhiTranslate).toBe('artemisApp.examParticipation.bonus');
-            expect(directiveInstance.translateValues).toEqual({ points: maxScore, bonusPoints: bonusPoints });
+            expect(directiveInstance.jhiTranslate()).toBe('artemisApp.examParticipation.bonus');
+            expect(directiveInstance.translateValues()).toEqual({ points: maxScore, bonusPoints: bonusPoints });
         });
 
         it('should call triggerSave if save exercise button is clicked', () => {
             fixture.detectChanges();
-            const saveExerciseSpy = jest.spyOn(comp, 'notifyTriggerSave');
+            const saveExerciseSpy = vi.spyOn(comp, 'notifyTriggerSave');
             const saveButton = fixture.debugElement.query(By.directive(ExerciseSaveButtonComponent));
             saveButton.triggerEventHandler('save', null);
             expect(saveExerciseSpy).toHaveBeenCalledOnce();
@@ -144,8 +160,11 @@ describe('ModelingExamSubmissionComponent', () => {
             fixture.detectChanges();
             const modelingEditor = fixture.debugElement.query(By.directive(StubModelingEditorComponent));
             expect(modelingEditor).not.toBeNull();
-            expect(modelingEditor.componentInstance.umlModel()).toEqual({ version: '2.0.0', model: true });
-            expect(modelingEditor.componentInstance.withExplanation()).toBeTrue();
+            const umlModel = modelingEditor.componentInstance.umlModel();
+            expect(umlModel).toBeDefined();
+            expect(umlModel.version).toBe('4.0.0');
+            expect(umlModel.type).toBe('ClassDiagram');
+            expect(modelingEditor.componentInstance.withExplanation()).toBe(true);
             expect(modelingEditor.componentInstance.explanation()).toEqual(mockSubmission.explanationText);
             expect(modelingEditor.componentInstance.diagramType()).toEqual(UMLDiagramType.ClassDiagram);
         });
@@ -159,7 +178,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     describe('ngOnInit', () => {
         it('should call updateViewFromSubmission', () => {
-            const updateViewStub = jest.spyOn(comp, 'updateViewFromSubmission');
+            const updateViewStub = vi.spyOn(comp, 'updateViewFromSubmission');
             comp.ngOnInit();
             expect(updateViewStub).toHaveBeenCalledOnce();
         });
@@ -181,7 +200,7 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should update problem statement', () => {
             const newProblemStatement = 'new problem statement';
             comp.updateProblemStatement(TestBed.inject(ArtemisMarkdownService).safeHtmlForMarkdown(newProblemStatement));
-            expect((comp.problemStatementHtml as any).changingThisBreaksApplicationSecurity).toEqual(htmlForMarkdown(newProblemStatement));
+            expect((comp.problemStatementHtml() as any).changingThisBreaksApplicationSecurity).toEqual(htmlForMarkdown(newProblemStatement));
         });
     });
 
@@ -191,11 +210,11 @@ describe('ModelingExamSubmissionComponent', () => {
             const modelingEditorElement = fixture.debugElement.query(By.directive(StubModelingEditorComponent));
             const stubModelingEditor = modelingEditorElement.componentInstance as StubModelingEditorComponent;
             const newModel = { newModel: true };
-            const currentModelStub = jest.spyOn(stubModelingEditor, 'getCurrentModel').mockReturnValue(newModel as unknown as UMLModel);
+            const currentModelStub = vi.spyOn(stubModelingEditor, 'getCurrentModel').mockReturnValue(newModel as unknown as UMLModel);
             // Mock the viewChild to return the stub
-            jest.spyOn(comp, 'modelingEditor').mockReturnValue(stubModelingEditor as unknown as ModelingEditorComponent);
+            vi.spyOn(comp, 'modelingEditor').mockReturnValue(stubModelingEditor as unknown as ModelingEditorComponent);
             const explanationText = 'New explanation text';
-            comp.explanationText = explanationText;
+            comp.explanationText.set(explanationText);
             comp.updateSubmissionFromView();
             expect(comp.studentSubmission().model).toEqual(JSON.stringify(newModel));
             expect(currentModelStub).toHaveBeenCalledTimes(2);
@@ -206,11 +225,11 @@ describe('ModelingExamSubmissionComponent', () => {
     describe('hasUnsavedChanges', () => {
         it('should return true if isSynced false', () => {
             comp.studentSubmission().isSynced = false;
-            expect(comp.hasUnsavedChanges()).toBeTrue();
+            expect(comp.hasUnsavedChanges()).toBe(true);
         });
         it('should return false if isSynced true', () => {
             comp.studentSubmission().isSynced = true;
-            expect(comp.hasUnsavedChanges()).toBeFalse();
+            expect(comp.hasUnsavedChanges()).toBe(false);
         });
     });
 
@@ -218,7 +237,7 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should set isSynced to false', () => {
             comp.studentSubmission().isSynced = true;
             comp.modelChanged({} as UMLModel);
-            expect(comp.studentSubmission().isSynced).toBeFalse();
+            expect(comp.studentSubmission().isSynced).toBe(false);
         });
     });
 
@@ -227,24 +246,14 @@ describe('ModelingExamSubmissionComponent', () => {
             const explanationText = 'New Explanation Text';
             comp.studentSubmission().isSynced = true;
             comp.explanationChanged(explanationText);
-            expect(comp.studentSubmission().isSynced).toBeFalse();
-            expect(comp.explanationText).toEqual(explanationText);
+            expect(comp.studentSubmission().isSynced).toBe(false);
+            expect(comp.explanationText()).toEqual(explanationText);
         });
     });
 
     it('should update the model on submission version change', async () => {
-        const parsedModel = {
-            version: '3.0.0',
-            type: 'ClassDiagram',
-            size: { width: 220, height: 420 },
-            interactive: { elements: {}, relationships: {} },
-            elements: {},
-            relationships: {},
-            assessments: {},
-        } as UMLModel;
-
-        jest.spyOn(comp, 'modelingEditor').mockReturnValue({
-            apollonEditor: { nextRender: Promise.resolve(), model: parsedModel } as unknown as ApollonEditor,
+        vi.spyOn(comp, 'modelingEditor').mockReturnValue({
+            apollonEditor: { nextRender: Promise.resolve(), model: {} } as unknown as ApollonEditor,
         } as unknown as ModelingEditorComponent);
         const submissionVersion = {
             content:
@@ -253,7 +262,9 @@ describe('ModelingExamSubmissionComponent', () => {
         await comp.setSubmissionVersion(submissionVersion);
 
         expect(comp.submissionVersion).toEqual(submissionVersion);
-        expect(comp.umlModel).toEqual(parsedModel);
-        expect(comp.explanationText).toBe('explanation');
+        expect(comp.umlModel()).toBeDefined();
+        expect(comp.umlModel()!.version).toBe('4.0.0');
+        expect(comp.umlModel()!.type).toBe('ClassDiagram');
+        expect(comp.explanationText()).toBe('explanation');
     });
 });

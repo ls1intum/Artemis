@@ -20,16 +20,23 @@ export class GitExerciseParticipation {
         sshAlgorithm: SshEncryptionAlgorithm = SshEncryptionAlgorithm.ed25519,
     ) {
         await programmingExerciseOverview.openCloneMenu(cloneMethod);
-        let repoUrl = await programmingExerciseOverview.copyCloneUrl();
+        let repoUrl = await programmingExerciseOverview.copyCloneUrl(cloneMethod);
         await programmingExerciseOverview.getCodeButton().click();
 
         if (cloneMethod === GitCloneMethod.https) {
-            repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
-        } else if (cloneMethod === GitCloneMethod.ssh) {
-            // Docker SSH URL uses internal hostname (e.g. nginx:7921), replace with localhost for host access
-            repoUrl = repoUrl.replace(/ssh:\/\/git@[^:]+:(\d+)/, 'ssh://git@localhost:$1');
+            // Force username + password into the URL userinfo deterministically. The scraped clone URL may
+            // already carry a VCS-access-token userinfo: the code button embeds `login:token@` whenever the
+            // "with token" toggle is (or was) active, and under the popover's async re-render the plain-HTTPS
+            // URL is occasionally read mid-toggle. A naive `replace(username, username:password)` would then
+            // mangle the credential into `login:password:token@`, so the password clone sends a token, which
+            // LocalVC rejects as "Invalid password". Overwriting the whole userinfo guarantees password auth.
+            const parsedUrl = new URL(repoUrl);
+            parsedUrl.username = student.username!;
+            parsedUrl.password = student.password!;
+            repoUrl = parsedUrl.toString();
         }
-        console.log(`Cloning repository from ${repoUrl}`);
+        // Mask the embedded credentials when logging the clone URL.
+        console.log(`Cloning repository from ${repoUrl.replace(/\/\/[^@/]*@/, '//<credentials>@')}`);
         const urlParts = repoUrl.split('/');
         const repoName = urlParts[urlParts.length - 1];
         let exerciseRepo;
@@ -55,7 +62,7 @@ export class GitExerciseParticipation {
         await page.goto('user-settings/ssh');
         await page.getByTestId('addNewSshKeyButton').click();
         await page.getByTestId('sshKeyField').fill(sshKey!);
-        const responsePromise = page.waitForResponse(`${BASE_API}/programming/ssh-settings/public-key`);
+        const responsePromise = page.waitForResponse(`${BASE_API}/programming/ssh-settings/public-keys`);
         await page.getByTestId('saveSshKeyButton').click();
         await responsePromise;
         await page.close();

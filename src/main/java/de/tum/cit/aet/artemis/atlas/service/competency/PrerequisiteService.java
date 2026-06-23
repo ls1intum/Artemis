@@ -22,9 +22,9 @@ import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectImportService;
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 
@@ -42,7 +42,7 @@ public class PrerequisiteService extends CourseCompetencyService {
             LearningPathService learningPathService, CompetencyProgressService competencyProgressService, CompetencyProgressRepository competencyProgressRepository,
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, StandardizedCompetencyRepository standardizedCompetencyRepository,
             CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService, LearningObjectImportService learningObjectImportService,
-            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository, AtlasMLService atlasMLService) {
+            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository, Optional<AtlasMLService> atlasMLService) {
         super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, learningPathService,
                 authCheckService, standardizedCompetencyRepository, lectureUnitRepositoryApi, learningObjectImportService, courseRepository, competencyLectureUnitLinkRepository,
                 atlasMLService);

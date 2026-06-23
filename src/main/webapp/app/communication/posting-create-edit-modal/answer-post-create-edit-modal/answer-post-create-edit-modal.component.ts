@@ -1,10 +1,11 @@
-import { Component, ViewContainerRef, ViewEncapsulation, input, output } from '@angular/core';
+import { Component, ViewContainerRef, ViewEncapsulation, input, output, signal } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
@@ -16,15 +17,15 @@ import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdo
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     createEditAnswerPostContainerRef = input<ViewContainerRef>();
     postingUpdated = output<Posting>();
-    isInputOpen = false;
+    readonly isInputOpen = signal(false);
 
     /**
      * renders the ng-template to edit or create an answerPost
      */
     open(): void {
         this.close();
-        this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor);
-        this.isInputOpen = true;
+        this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor()!);
+        this.isInputOpen.set(true);
     }
 
     /**
@@ -33,17 +34,19 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     close(): void {
         this.createEditAnswerPostContainerRef()?.clear();
         this.resetFormGroup();
-        this.isInputOpen = false;
+        this.isInputOpen.set(false);
     }
 
     /**
      * resets the answer post content
      */
     resetFormGroup(): void {
-        this.posting = this.posting || { content: '' };
+        if (!this.posting()) {
+            this.posting.set({ content: '' } as AnswerPost);
+        }
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            content: [this.posting()!.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
     }
 
@@ -52,16 +55,22 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(this.posting).subscribe({
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading.set(false);
+            return;
+        }
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        this.metisService.createAnswerPost(payload).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.onCreate.emit(answerPost);
                 this.createEditAnswerPostContainerRef()?.clear();
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }
@@ -71,16 +80,22 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.updateAnswerPost(this.posting).subscribe({
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading.set(false);
+            return;
+        }
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        this.metisService.updateAnswerPost(payload).subscribe({
             next: (updatedPost: AnswerPost) => {
                 this.postingUpdated.emit(updatedPost);
-                this.isLoading = false;
-                this.isInputOpen = false;
+                this.isLoading.set(false);
+                this.isInputOpen.set(false);
                 this.createEditAnswerPostContainerRef()?.clear();
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }

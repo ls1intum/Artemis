@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class FaqImportServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -35,11 +35,9 @@ class FaqImportServiceTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
         sourceCourse = courseUtilService.createCourse();
-        sourceCourse.setFaqEnabled(true);
         sourceCourse = courseRepository.save(sourceCourse);
 
         targetCourse = courseUtilService.createCourse();
-        targetCourse.setFaqEnabled(true);
         targetCourse = courseRepository.save(targetCourse);
     }
 

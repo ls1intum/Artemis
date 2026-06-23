@@ -5,15 +5,17 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { omit as _omit } from 'lodash-es';
 
-import { createRequestOption } from 'app/shared/util/request.util';
+import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
+import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/services/programming-exercise-timeline-update-dto.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { SortService } from 'app/shared/service/sort.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { SortService } from 'app/foundation/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
@@ -21,9 +23,6 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ProgrammingExerciseDeletionSummaryDTO } from 'app/programming/shared/entities/programming-exercise-deletion-summary.model';
-import { createProgrammingExerciseEntitySummary } from 'app/programming/shared/utils/programming-exercise.utils';
-import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -33,6 +32,17 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     hasStudentResult: boolean;
     testCasesChanged: boolean;
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
+};
+
+export type AutomaticAfterDueDatePreviewRequest = {
+    programmingExerciseId?: number;
+    examId?: number;
+    dueDate?: string;
+    hasAfterDueDateBuildPhase?: boolean;
+    programmingLanguage?: ProgrammingLanguage;
+    projectType?: ProjectType;
+    staticCodeAnalysisEnabled?: boolean;
+    sequentialTestRuns?: boolean;
 };
 
 export type ProgrammingExerciseResetOptions = {
@@ -47,6 +57,7 @@ export class ProgrammingExerciseService {
     private sortService = inject(SortService);
 
     public resourceUrl = 'api/programming/programming-exercises';
+    public localCIResourceUrl = 'api/localci/programming-exercises';
 
     /**
      * Sets a new programming exercise up.
@@ -76,7 +87,7 @@ export class ProgrammingExerciseService {
      * Resets a programming exercise with the given exerciseId by performing a set of operations
      * as specified in the ProgrammingExerciseResetOptions. The available operations include:
      * 1. `deleteParticipationsSubmissionsAndResults`: Deleting all participations, submissions, and results (also deletes repositories and build plans).
-     * 2. `recreateBuildPlans`: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
+     * 2. `recreateBuildPlans`: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI, this will reset the customized build plans).
      *
      * @param exerciseId - of the programming exercise that should be reset.
      * @param options - Configuration options specifying which operations to perform during the exercise reset.
@@ -147,7 +158,7 @@ export class ProgrammingExerciseService {
 
         exercise.categories = ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import/${adaptedSourceProgrammingExercise.id}`, exercise, {
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
                 observe: 'response',
             })
@@ -161,11 +172,9 @@ export class ProgrammingExerciseService {
      */
     update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = this.convertDataFromClient(programmingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
-            .put<ProgrammingExercise>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .put<ProgrammingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 
@@ -176,10 +185,16 @@ export class ProgrammingExerciseService {
      */
     updateTimeline(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        const copy = this.convertDataFromClient(programmingExercise);
+        const dto = toProgrammingExerciseTimelineUpdateDTO(programmingExercise);
         return this.http
-            .put<ProgrammingExercise>(`${this.resourceUrl}/timeline`, copy, { params: options, observe: 'response' })
+            .put<ProgrammingExercise>(`${this.resourceUrl}/timeline`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
+    }
+
+    previewAutomaticAfterDueDateDate(requestData: AutomaticAfterDueDatePreviewRequest): Observable<dayjs.Dayjs | undefined> {
+        return this.http
+            .post<string | undefined>(`${this.localCIResourceUrl}/timeline/automatic-after-due-date-preview`, requestData, { observe: 'response' })
+            .pipe(map((res) => (res.body ? dayjs(res.body) : undefined)));
     }
 
     /**
@@ -416,7 +431,7 @@ export class ProgrammingExerciseService {
      */
     exportInstructorRepository(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId: number | undefined): Observable<HttpResponse<Blob>> {
         if (repositoryType === RepositoryType.AUXILIARY && auxiliaryRepositoryId !== undefined) {
-            return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository/${auxiliaryRepositoryId}`, {
+            return this.http.get(`${this.resourceUrl}/${exerciseId}/export-instructor-auxiliary-repository?repositoryId=${auxiliaryRepositoryId}`, {
                 observe: 'response',
                 responseType: 'blob',
             });
@@ -434,7 +449,7 @@ export class ProgrammingExerciseService {
      * @param participationId The ID of the (student) participation
      */
     exportStudentRepository(exerciseId: number, participationId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository/${participationId}`, {
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-repository?participationId=${participationId}`, {
             observe: 'response',
             responseType: 'blob',
         });
@@ -474,11 +489,9 @@ export class ProgrammingExerciseService {
      */
     reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = this.convertDataFromClient(programmingExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
-            .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, copy, {
+            .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, dto, {
                 params: options,
                 observe: 'response',
             })
@@ -552,18 +565,5 @@ export class ProgrammingExerciseService {
                 checkoutSolution: checkoutSolution,
             },
         });
-    }
-
-    /**
-     * Get a summary of the deletion of a programming exercise.
-     * @param exerciseId the id of the programming exercise
-     */
-    getDeletionSummary(exerciseId: number): Observable<EntitySummary> {
-        return this.http.get<ProgrammingExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exerciseId}/deletion-summary`, { observe: 'response' }).pipe(
-            map((response) => {
-                const summary = response.body;
-                return summary ? createProgrammingExerciseEntitySummary(summary) : {};
-            }),
-        );
     }
 }

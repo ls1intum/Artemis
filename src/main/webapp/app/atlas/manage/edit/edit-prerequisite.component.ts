@@ -1,5 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { onError } from 'app/shared/util/global.utils';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { onError } from 'app/foundation/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { combineLatest, forkJoin } from 'rxjs';
@@ -9,7 +9,7 @@ import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/p
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-edit-prerequisite',
@@ -19,13 +19,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class EditPrerequisiteComponent extends EditCourseCompetencyComponent implements OnInit {
     private prerequisiteService = inject(PrerequisiteService);
 
-    prerequisite: Prerequisite;
-    formData: CourseCompetencyFormData;
+    readonly prerequisite = signal<Prerequisite>(undefined!);
+    readonly formData = signal<CourseCompetencyFormData>(undefined!);
 
     ngOnInit(): void {
         super.ngOnInit();
 
-        this.isLoading = true;
+        this.isLoading.set(true);
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(
                 take(1),
@@ -37,26 +37,26 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
                     const prerequisiteCourseProgressObservable = this.prerequisiteService.getCourseProgress(prerequisiteId, this.courseId);
                     return forkJoin([prerequisiteObservable, prerequisiteCourseProgressObservable]);
                 }),
-                finalize(() => (this.isLoading = false)),
+                finalize(() => this.isLoading.set(false)),
             )
             .subscribe({
                 next: ([prerequisiteResult, courseProgressResult]) => {
                     if (prerequisiteResult.body) {
-                        this.prerequisite = prerequisiteResult.body;
+                        this.prerequisite.set(prerequisiteResult.body);
                         if (courseProgressResult.body) {
-                            this.prerequisite.courseProgress = courseProgressResult.body;
+                            this.prerequisite().courseProgress = courseProgressResult.body;
                         }
                     }
 
-                    this.formData = {
-                        id: this.prerequisite.id,
-                        title: this.prerequisite.title,
-                        description: this.prerequisite.description,
-                        softDueDate: this.prerequisite.softDueDate,
-                        taxonomy: this.prerequisite.taxonomy,
-                        masteryThreshold: this.prerequisite.masteryThreshold,
-                        optional: this.prerequisite.optional,
-                    };
+                    this.formData.set({
+                        id: this.prerequisite().id,
+                        title: this.prerequisite().title,
+                        description: this.prerequisite().description,
+                        softDueDate: this.prerequisite().softDueDate,
+                        taxonomy: this.prerequisite().taxonomy,
+                        masteryThreshold: this.prerequisite().masteryThreshold,
+                        optional: this.prerequisite().optional,
+                    });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -65,20 +65,20 @@ export class EditPrerequisiteComponent extends EditCourseCompetencyComponent imp
     updateCompetency(formData: CourseCompetencyFormData) {
         const { title, description, softDueDate, taxonomy, masteryThreshold, optional } = formData;
 
-        this.prerequisite.title = title;
-        this.prerequisite.description = description;
-        this.prerequisite.softDueDate = softDueDate;
-        this.prerequisite.taxonomy = taxonomy;
-        this.prerequisite.masteryThreshold = masteryThreshold;
-        this.prerequisite.optional = optional;
+        this.prerequisite().title = title;
+        this.prerequisite().description = description;
+        this.prerequisite().softDueDate = softDueDate;
+        this.prerequisite().taxonomy = taxonomy;
+        this.prerequisite().masteryThreshold = masteryThreshold;
+        this.prerequisite().optional = optional;
 
-        this.isLoading = true;
+        this.isLoading.set(true);
 
         this.prerequisiteService
-            .update(this.prerequisite, this.courseId)
+            .update(this.prerequisite(), this.courseId)
             .pipe(
                 finalize(() => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     // currently at /course-management/{courseId}/prerequisite-management/{competencyId}/edit, going to /course-management/{courseId}/competency-management/
                     this.router.navigate(['../../../competency-management/'], { relativeTo: this.activatedRoute });
                 }),

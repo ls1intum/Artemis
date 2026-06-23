@@ -7,17 +7,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ListOfComplaintsComponent } from 'app/assessment/manage/list-of-complaints/list-of-complaints.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { User } from 'app/core/user/user.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { User } from 'app/account/user/user.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { SortService } from 'app/shared/service/sort.service';
+import { SortService } from 'app/foundation/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -27,7 +27,7 @@ import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 describe('ListOfComplaintsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -163,19 +163,19 @@ describe('ListOfComplaintsComponent', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toEqual([complaint3]);
+            expect(comp.complaintsToShow()).toEqual([complaint3]);
         });
 
         it('process complaints with student information', () => {
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint4] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toEqual([complaint3, complaint4]);
+            expect(comp.complaintsToShow()).toEqual([complaint3, complaint4]);
 
             findAllByCourseIdStub.mockReturnValue(of({ body: [complaint1, complaint2, complaint3, complaint5] } as EntityResponseTypeArray));
             comp.loadComplaints();
 
-            expect(comp.complaintsToShow).toEqual([complaint3]);
+            expect(comp.complaintsToShow()).toEqual([complaint3]);
         });
     });
 
@@ -184,18 +184,18 @@ describe('ListOfComplaintsComponent', () => {
         const freeComplaints = [complaint3, complaint4];
         findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
         comp.loadComplaints();
-        expect(comp.showAddressedComplaints).toBe(false);
-        expect(comp.complaintsToShow).toEqual(freeComplaints);
+        expect(comp.showAddressedComplaints()).toBe(false);
+        expect(comp.complaintsToShow()).toEqual(freeComplaints);
 
         comp.triggerAddressedComplaints();
 
-        expect(comp.showAddressedComplaints).toBe(true);
-        expect(comp.complaintsToShow).toEqual(complaints);
+        expect(comp.showAddressedComplaints()).toBe(true);
+        expect(comp.complaintsToShow()).toEqual(complaints);
 
         comp.triggerAddressedComplaints();
 
-        expect(comp.showAddressedComplaints).toBe(false);
-        expect(comp.complaintsToShow).toEqual(freeComplaints);
+        expect(comp.showAddressedComplaints()).toBe(false);
+        expect(comp.complaintsToShow()).toEqual(freeComplaints);
     });
 
     describe('calculateComplaintLockStatus', () => {
@@ -323,28 +323,28 @@ describe('ListOfComplaintsComponent', () => {
 
         const complaints = [complaint1, complaint2, complaint3, complaint4, complaint5];
         findAllByCourseIdStub.mockReturnValue(of({ body: complaints } as EntityResponseTypeArray));
-        comp.filterOption = Number(filterOption);
+        comp.filterOption.set(Number(filterOption));
         comp.loadComplaints();
 
         switch (Number(filterOption)) {
             case 4:
                 // This filter option indicates that the user selected the part of the pie representing the number of addressed complaints
                 // -> Only addressed complaints should be shown
-                expect(comp.complaintsToShow).toEqual(addressedComplaints);
-                expect(comp.showAddressedComplaints).toBe(true);
+                expect(comp.complaintsToShow()).toEqual(addressedComplaints);
+                expect(comp.showAddressedComplaints()).toBe(true);
                 break;
             case 5:
                 // This filter option indicates that the user selected the part of the pie representing the number of open complaints
                 // -> Only open complaints should be shown
-                expect(comp.complaintsToShow).toEqual(openComplaints);
-                expect(comp.showAddressedComplaints).toBe(false);
+                expect(comp.complaintsToShow()).toEqual(openComplaints);
+                expect(comp.showAddressedComplaints()).toBe(false);
                 break;
         }
 
         comp.resetFilterOptions();
 
-        expect(comp.complaintsToShow).toEqual(openComplaints);
-        expect(comp.filterOption).toBeUndefined();
+        expect(comp.complaintsToShow()).toEqual(openComplaints);
+        expect(comp.filterOption()).toBeUndefined();
     });
 
     function verifyNotCalled(...instances: MockInstance[]) {

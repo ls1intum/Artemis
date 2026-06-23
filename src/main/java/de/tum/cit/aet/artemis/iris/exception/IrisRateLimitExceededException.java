@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.iris.exception;
 
 import java.util.Map;
 
-import org.zalando.problem.Status;
+import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 
@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 public class IrisRateLimitExceededException extends IrisException {
 
     public IrisRateLimitExceededException(int currentMessageCount, int rateLimit) {
-        super("You have exceeded the rate limit of Iris", Status.TOO_MANY_REQUESTS, "Iris", "artemisApp.exerciseChatbot.errors.rateLimitExceeded",
+        super("You have exceeded the rate limit of Iris", HttpStatus.TOO_MANY_REQUESTS, "Iris", "artemisApp.exerciseChatbot.errors.rateLimitExceeded",
                 Map.of("currentMessageCount", currentMessageCount, "rateLimit", rateLimit));
     }
 

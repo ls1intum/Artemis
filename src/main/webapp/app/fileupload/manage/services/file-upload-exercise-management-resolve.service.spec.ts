@@ -13,9 +13,9 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FileUploadExerciseManagementResolve } from './file-upload-exercise-management-resolve.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 describe('FileUploadExerciseManagementResolve', () => {

@@ -8,11 +8,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -27,15 +30,19 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -43,14 +50,13 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.structureoraclegenerator.OracleGenerator;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Service
 @Profile(PROFILE_CORE)
@@ -96,7 +102,11 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final ParticipationRepository participationRepository;
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
+    private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
+
+    private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
@@ -105,7 +115,8 @@ public class ProgrammingExerciseCreationUpdateService {
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseAtlasIrisService programmingExerciseAtlasIrisService,
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService) {
+            Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -122,34 +133,9 @@ public class ProgrammingExerciseCreationUpdateService {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.versionControlService = versionControlService;
-        this.participationRepository = participationRepository;
         this.gitService = gitService;
-    }
-
-    /**
-     * Setups the context of a new programming exercise. This includes:
-     * <ul>
-     * <li>The VCS project</li>
-     * <li>All repositories (test, exercise, solution)</li>
-     * <li>The template and solution participation</li>
-     * <li>VCS webhooks</li>
-     * </ul>
-     * The exercise gets set up in the following order:
-     * <ol>
-     * <li>Create all repositories for the new exercise</li>
-     * <li>Setup template and push it to the repositories</li>
-     * <li>Setup new build plans for exercise</li>
-     * <li>Add all webhooks</li>
-     * <li>Init scheduled jobs for exercise maintenance</li>
-     * </ol>
-     *
-     * @param programmingExercise The programmingExercise that should be setup
-     * @return The new setup exercise
-     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
-     * @throws IOException     If the template files couldn't be read
-     */
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
-        return createProgrammingExercise(programmingExercise, false);
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.automaticAfterDueDateService = automaticAfterDueDateService;
     }
 
     /**
@@ -162,12 +148,28 @@ public class ProgrammingExerciseCreationUpdateService {
      * @throws IOException     If the template files couldn't be read
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories) throws GitAPIException, IOException {
+        return createProgrammingExercise(programmingExercise, emptyRepositories, false);
+    }
+
+    /**
+     * Setups the context of a new programming exercise with optional repository cleanup for AI generation.
+     *
+     * @param programmingExercise           The programmingExercise that should be setup
+     * @param emptyRepositories             if true, clear sources in template, solution, and test repositories after setup
+     * @param skipRepositoryAndBuildTrigger if true, skip repository setups, initial submissions, and build plan setup
+     * @return The new setup exercise
+     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
+     * @throws IOException     If the template files couldn't be read
+     */
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories, boolean skipRepositoryAndBuildTrigger)
+            throws GitAPIException, IOException {
         if (programmingExercise == null) {
             throw new BadRequestAlertException("ProgrammingExercise must not be null", "ProgrammingExercise", "programmingExerciseNull");
         }
         if (programmingExercise.getBuildConfig() == null) {
             throw new BadRequestAlertException("ProgrammingExercise build config must not be null", "ProgrammingExercise", "buildConfigMissing");
         }
+        validateProblemStatementLength(programmingExercise.getProblemStatement());
         if (emptyRepositories) {
             validateAiGenerationPreconditions(programmingExercise);
         }
@@ -181,11 +183,14 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
 
+        // Extract competency links before first save - they require the exercise ID which doesn't exist yet
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
+
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
 
-        var savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(programmingExercise, programmingExerciseRepository::saveForCreation);
+        var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
@@ -204,10 +209,6 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
-        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, emptyRepositories);
-
-        programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
-
         // Make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
@@ -215,15 +216,42 @@ public class ProgrammingExerciseCreationUpdateService {
 
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
-        programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(savedProgrammingExercise);
-        savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
+        if (!skipRepositoryAndBuildTrigger) {
+            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, emptyRepositories);
+            savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
+        }
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
+
+        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        if (automaticAfterDueDateService.isPresent()) {
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(savedProgrammingExercise);
+            final boolean buildAndTestDateChanged = !Objects.equals(savedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);
+            final boolean feedbackRequestsChanged = setBuildAndTestDateAndEnforceFeedbackRequestInvariant(savedProgrammingExercise, computedBuildAndTestDate);
+            if (buildAndTestDateChanged || feedbackRequestsChanged) {
+                savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+            }
+        }
 
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
+        // Restore competency links with proper exercise reference before final save
+        competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
+
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+    }
+
+    /**
+     * Creates initial submissions and build plans for an exercise whose repositories were initialized outside the regular creation flow.
+     *
+     * @param programmingExercise the programming exercise with initialized repositories
+     * @return the programming exercise with build plans created
+     */
+    public ProgrammingExercise setupBuildPlansAndTriggerInitialBuilds(ProgrammingExercise programmingExercise) {
+        programmingSubmissionService.createInitialSubmissions(programmingExercise);
+        programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(programmingExercise);
+        return programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
     }
 
     private void validateAiGenerationPreconditions(ProgrammingExercise programmingExercise) {
@@ -289,39 +317,48 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
-     * @param updatedProgrammingExercise      the changed programming exercise with its new values
-     * @param notificationText                optional text about the changes for a notification
-     * @return the updates programming exercise from the database
+     * @param updatedProgrammingExercise     the changed programming exercise with its new values
+     * @param notificationText               optional text about the changes for a notification
+     * @param originalCompetencyIds          the IDs of competencies originally linked to the exercise before the update
+     * @param originalBuildPlanConfiguration the build plan configuration before the update (for change detection)
+     * @param originalReleaseDate            the release date before the update (for notification change detection)
+     * @param originalAssessmentDueDate      the assessment due date before the update (for notification change detection)
+     * @param buildAndTestOffset             how much the build and test date should be set after, can be left null if the build and test already set or not in localCI
+     * @param originalProblemStatement       the problem statement before the update (for notification change detection)
+     * @return the updated programming exercise from the database
      */
-    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
-            @Nullable String notificationText) throws JsonProcessingException {
+    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
+            @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
+            @Nullable Duration buildAndTestOffset, @Nullable String originalProblemStatement) throws JsonProcessingException {
+        validateProblemStatementLength(updatedProgrammingExercise.getProblemStatement());
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        programmingExerciseBuildPlanService.updateBuildPlanForExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
+        if (automaticAfterDueDateService.isPresent()) {
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(updatedProgrammingExercise, buildAndTestOffset);
+            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(updatedProgrammingExercise, computedBuildAndTestDate);
+        }
 
-        channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
 
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
 
-        ProgrammingExercise savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(updatedProgrammingExercise, programmingExerciseRepository::save);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        if (programmingExerciseBeforeUpdate.isCourseExercise()) {
-            programmingExerciseCreationScheduleService.scheduleOperations(updatedProgrammingExercise.getId());
-        }
+        programmingExerciseCreationScheduleService.scheduleOperations(updatedProgrammingExercise.getId());
 
-        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
+        // Use scalar-based overload since the "before" entity is the same L1-cached object
+        exerciseService.notifyAboutExerciseChanges(originalReleaseDate, originalAssessmentDueDate, originalProblemStatement, updatedProgrammingExercise, notificationText);
 
-        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(originalCompetencyIds, savedProgrammingExercise);
 
         return savedProgrammingExercise;
     }
@@ -352,32 +389,33 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * Updates the timeline attributes of the given programming exercise
+     * Updates the timeline attributes of the given programming exercise with the values from the DTO.
      *
-     * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText           optional text for a notification to all students about the update
+     * @param timelineUpdateDTO containing the timeline changes that have to be saved
+     * @param notificationText  optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      */
-    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+    public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(timelineUpdateDTO.id());
 
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
         programmingExerciseBeforeUpdate.setStartDate(programmingExercise.getStartDate());
         programmingExerciseBeforeUpdate.setAssessmentDueDate(programmingExercise.getAssessmentDueDate());
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
 
-        programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
-        programmingExercise.setStartDate(updatedProgrammingExercise.getStartDate());
-        programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
-        programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
-        programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
-        programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
+        // Apply the DTO values to the existing exercise
+        timelineUpdateDTO.applyTo(programmingExercise);
 
         programmingExercise.validateDates();
+        if (automaticAfterDueDateService.isPresent()) {
+            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
+            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+        }
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseCreationScheduleService.scheduleOperations(savedProgrammingExercise.getId());
         programmingExerciseCreationScheduleService.createNotificationsOnUpdate(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
@@ -393,7 +431,7 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException {
-
+        validateProblemStatementLength(problemStatement);
         String oldProblemStatement = programmingExercise.getProblemStatement();
         // Trim the problem statement and convert whitespace-only strings to null
         String trimmedProblemStatement = problemStatement != null ? problemStatement.trim() : null;
@@ -483,5 +521,30 @@ public class ProgrammingExerciseCreationUpdateService {
                 }
             }
         }
+    }
+
+    private void validateProblemStatementLength(@Nullable String problemStatement) {
+        if (problemStatement != null && problemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+            throw new BadRequestAlertException("The problem statement must not exceed " + MAX_PROBLEM_STATEMENT_LENGTH + " characters", "ProgrammingExercise",
+                    "problemStatementTooLong");
+        }
+    }
+
+    /**
+     * Sets computed build and test date and adjusts the feedback request to false if necessary
+     *
+     * @param programmingExercise      the exercise to potentially adjust
+     * @param computedBuildAndTestDate the newly computed build and test date for the exercise
+     *
+     * @return true if the allow feedback requests changed else false
+     */
+    private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, @Nullable ZonedDateTime computedBuildAndTestDate) {
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
+            return false;
+        }
+
+        programmingExercise.setAllowFeedbackRequests(false);
+        return true;
     }
 }

@@ -32,7 +32,7 @@ import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 
 import de.tum.cit.aet.artemis.buildagent.service.DockerUtil;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
-import de.tum.cit.aet.artemis.core.exception.LocalCIException;
+import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 
 /**
  * Creates beans needed for the local CI system.
@@ -160,7 +160,7 @@ public class BuildAgentConfiguration {
             return (bytes / (1024 * 1024)) + " MB";
         }
         else {
-            return String.format("%.1f GB", bytes / (1024.0 * 1024.0 * 1024.0));
+            return "%.1f GB".formatted(bytes / (1024.0 * 1024.0 * 1024.0));
         }
     }
 

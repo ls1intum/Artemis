@@ -1,8 +1,16 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { Link, LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 describe('LinkifyService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: LinkifyService;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({

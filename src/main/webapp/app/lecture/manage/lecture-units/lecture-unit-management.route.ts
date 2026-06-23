@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { AttachmentVideoUnitResolve } from 'app/lecture/manage/lecture-units/services/lecture-unit-management-resolve.service';
 

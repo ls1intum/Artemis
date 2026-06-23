@@ -70,7 +70,7 @@
                 "loadingMessages": "Nachrichten laden..."
             },
             "globalSearch": {
-                "searchBarDefault": "Suche nach einer Nachrichten in allen Kanälen, Direktnachrichten und Gruppen (Strg/Cmd + K)",
+                "searchBarDefault": "Suche nach einer Nachricht in allen Kanälen, Direktnachrichten und Gruppen (Strg/Cmd + S)",
                 "searchBarWithConversationSelected": "Suche nach einer Nachricht in den ausgewählten Unterhaltungen",
                 "noConversationFound": "Keine Unterhaltung für '{{ search }}' gefunden",
                 "noUserFound": "Kein Benutzer für '{{ search }}' gefunden",
@@ -165,18 +165,21 @@
             },
             "answerPost": {
                 "created": "Antwort erfolgreich erstellt",
-                "deleted": "Antwort erfolgreich gelöscht"
+                "deleted": "Antwort erfolgreich gelöscht",
+                "deleteAnswer": "Antwort löschen"
             },
             "userRoles": {
                 "instructor": "Instruktor",
                 "tutor": "Tutor",
                 "student": "Student",
+                "bot": "Bot",
                 "deleted": "Gelöscht"
             },
             "userAuthorityTooltips": {
                 "instructor": "Lehrkraft: Verantwortlich für die Kursdurchführung.",
                 "tutor": "Tutor:in: Verantwortlich für die Unterstützung der Studierenden bei ihren Fragen zum Kurs und zu den Übungen.",
                 "student": "Studierende:r: Nimmt an Kursen und Übungen teil und stellt Fragen.",
+                "bot": "Bot: Ein automatisierter Assistent.",
                 "deleted": "Gelöscht: Nutzer:in wurde gelöscht."
             },
             "forward": {

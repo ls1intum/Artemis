@@ -39,6 +39,9 @@
             "updated": "Organization updated!",
             "deleted": "Organization deleted!",
             "created": "Organization created!"
+        },
+        "organizationUser": {
+            "deleted": "User removed from organization!"
         }
     }
 }

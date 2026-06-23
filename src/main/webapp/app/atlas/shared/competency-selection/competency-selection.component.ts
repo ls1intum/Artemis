@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, forwardRef, inject, input, output } from '@angular/core';
+import { Component, OnInit, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faLightbulb, faQuestionCircle, faStar } from '@fortawesome/free-solid-svg-icons';
 import { HttpClient } from '@angular/common/http';
@@ -13,19 +13,22 @@ import {
     getIcon,
 } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
+/**
+ * @deprecated Use {@link CompetencySelectionPrimengComponent} instead.
+ */
 @Component({
     selector: 'jhi-competency-selection',
     templateUrl: './competency-selection.component.html',
@@ -53,7 +56,6 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
-    private changeDetector = inject(ChangeDetectorRef);
     private profileService = inject(ProfileService);
     private http = inject(HttpClient);
 
@@ -63,15 +65,15 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
 
-    disabled: boolean;
+    readonly disabled = signal(false);
     // selected competencies
     selectedCompetencyLinks?: CompetencyLearningObjectLink[];
     // all course competencies
-    competencyLinks?: CompetencyLearningObjectLink[];
+    readonly competencyLinks = signal<CompetencyLearningObjectLink[] | undefined>(undefined);
 
-    isLoading = false;
-    isSuggesting = false;
-    checkboxStates: Record<number, boolean>;
+    readonly isLoading = signal(false);
+    readonly isSuggesting = signal(false);
+    readonly checkboxStates = signal<Record<number, boolean>>(undefined!);
     suggestedCompetencyIds = new Set<number>();
     /** Pending links received via refreshWithLinks before competency loading finished. */
     private pendingRefreshLinks?: CompetencyLearningObjectLink[];
@@ -104,22 +106,18 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
     initialize(): void {
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        if (!this.competencyLinks && courseId) {
+        if (!this.competencyLinks() && courseId) {
             const course = this.courseStorageService.getCourse(courseId);
             // an empty array is used as fallback, if a course is cached, where no competencies have been queried
             if (course?.competencies?.length || course?.prerequisites?.length) {
                 this.setCompetencyLinks([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
             } else {
-                this.isLoading = true;
+                this.isLoading.set(true);
                 this.courseCompetencyService
                     .getAllForCourse(courseId)
                     .pipe(
                         finalize(() => {
-                            this.isLoading = false;
-
-                            // trigger change detection manually
-                            // necessary because quiz exercises use ChangeDetectionStrategy.OnPush
-                            this.changeDetector.detectChanges();
+                            this.isLoading.set(false);
                         }),
                     )
                     .subscribe({
@@ -134,7 +132,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
                             }
                         },
                         error: () => {
-                            this.disabled = true;
+                            this.disabled.set(true);
                         },
                     });
             }
@@ -146,32 +144,36 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
      * @param competencies The competencies of the course
      */
     setCompetencyLinks(competencies: CourseCompetency[]) {
-        this.competencyLinks = competencies.map((competency) => {
+        const competencyLinks = competencies.map((competency) => {
             // Remove unnecessary properties
             competency.course = undefined;
             competency.userProgress = undefined;
             return new CompetencyLearningObjectLink(competency, MEDIUM_COMPETENCY_LINK_WEIGHT);
         });
-        this.checkboxStates = this.competencyLinks.reduce(
-            (states, competencyLink) => {
-                if (competencyLink.competency?.id) {
-                    states[competencyLink.competency.id] = !!this.selectedCompetencyLinks?.find((value) => value.competency?.id === competencyLink.competency?.id);
-                }
-                return states;
-            },
-            {} as Record<number, boolean>,
+        this.competencyLinks.set(competencyLinks);
+        this.checkboxStates.set(
+            competencyLinks.reduce(
+                (states, competencyLink) => {
+                    if (competencyLink.competency?.id) {
+                        states[competencyLink.competency.id] = !!this.selectedCompetencyLinks?.find((value) => value.competency?.id === competencyLink.competency?.id);
+                    }
+                    return states;
+                },
+                {} as Record<number, boolean>,
+            ),
         );
     }
 
     toggleCompetency(newValue: CompetencyLearningObjectLink) {
         if (newValue.competency?.id) {
-            if (this.checkboxStates[newValue.competency.id]) {
+            if (this.checkboxStates()[newValue.competency.id]) {
                 this.selectedCompetencyLinks = this.selectedCompetencyLinks?.filter((value) => value.competency?.id !== newValue.competency?.id);
             } else {
                 this.selectedCompetencyLinks = [...(this.selectedCompetencyLinks ?? []), newValue];
             }
 
-            this.checkboxStates[newValue.competency.id] = !this.checkboxStates[newValue.competency.id];
+            const competencyId = newValue.competency.id;
+            this.checkboxStates.update((states) => ({ ...states, [competencyId]: !states[competencyId] }));
 
             // make sure to do not send an empty list to server
             if (!this.selectedCompetencyLinks?.length) {
@@ -191,15 +193,20 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     }
 
     writeValue(value?: CompetencyLearningObjectLink[]): void {
-        this.competencyLinks?.forEach((link) => {
+        const competencyLinks = this.competencyLinks();
+        competencyLinks?.forEach((link) => {
             const selectedLink = value?.find((value) => value.competency?.id === link.competency?.id);
             link.weight = selectedLink?.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT;
         });
+        // Rebuild as a fresh reference so the template re-renders the updated weights under zoneless.
+        if (competencyLinks) {
+            this.competencyLinks.set([...competencyLinks]);
+        }
 
-        if (value && this.competencyLinks) {
+        if (value && competencyLinks) {
             // Compare the ids of the competencies instead of the whole objects
             const ids = value.map((el) => el.competency?.id);
-            this.selectedCompetencyLinks = this.competencyLinks.filter((competencyLink) => ids.includes(competencyLink.competency?.id));
+            this.selectedCompetencyLinks = competencyLinks.filter((competencyLink) => ids.includes(competencyLink.competency?.id));
         } else {
             this.selectedCompetencyLinks = value ?? [];
         }
@@ -210,18 +217,22 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         if (!links) return;
 
         // If competencies haven't loaded yet, store the links so they can be applied once loading finishes
-        if (!this.competencyLinks) {
+        if (!this.competencyLinks()) {
             this.pendingRefreshLinks = links;
             return;
         }
 
         // Add any new competencies to the available list that aren't there yet
-        const availableIds = new Set(this.competencyLinks.map((l) => l.competency?.id).filter(Boolean));
+        const availableIds = new Set(
+            this.competencyLinks()!
+                .map((l) => l.competency?.id)
+                .filter(Boolean),
+        );
         const newLinks = links
             .filter((link) => link.competency?.id && !availableIds.has(link.competency.id))
             .map((link) => new CompetencyLearningObjectLink(link.competency, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
         if (newLinks.length > 0) {
-            this.competencyLinks = [...this.competencyLinks, ...newLinks];
+            this.competencyLinks.set([...this.competencyLinks()!, ...newLinks]);
         }
 
         // Update selection state
@@ -235,14 +246,16 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
         // Rebuild checkbox states to match the current selection
         const selectedIds = new Set((this.selectedCompetencyLinks ?? []).map((l) => l.competency?.id).filter(Boolean));
-        this.checkboxStates = this.competencyLinks.reduce(
-            (states, cl) => {
-                if (cl.competency?.id) {
-                    states[cl.competency.id] = selectedIds.has(cl.competency.id);
-                }
-                return states;
-            },
-            {} as Record<number, boolean>,
+        this.checkboxStates.set(
+            this.competencyLinks()!.reduce(
+                (states, cl) => {
+                    if (cl.competency?.id) {
+                        states[cl.competency.id] = selectedIds.has(cl.competency.id);
+                    }
+                    return states;
+                },
+                {} as Record<number, boolean>,
+            ),
         );
     }
 
@@ -257,7 +270,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             return;
         }
 
-        this.isSuggesting = true;
+        this.isSuggesting.set(true);
         this.suggestedCompetencyIds.clear();
 
         const courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -267,14 +280,13 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             .post<{ competencies: any[] }>('/api/atlas/competencies/suggest', requestBody)
             .pipe(
                 finalize(() => {
-                    this.isSuggesting = false;
-                    this.changeDetector.detectChanges();
+                    this.isSuggesting.set(false);
                 }),
             )
             .subscribe({
                 next: (response) => {
                     response.competencies.forEach((suggestion) => {
-                        const matchingLink = this.competencyLinks?.find((link) => link.competency?.id === Number(suggestion.id));
+                        const matchingLink = this.competencyLinks()?.find((link) => link.competency?.id === Number(suggestion.id));
                         if (matchingLink?.competency?.id) {
                             this.suggestedCompetencyIds.add(matchingLink.competency.id);
                         }
@@ -292,8 +304,10 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     }
 
     sortCompetenciesBySuggestion(): void {
-        if (this.competencyLinks) {
-            this.competencyLinks.sort((a, b) => {
+        const competencyLinks = this.competencyLinks();
+        if (competencyLinks) {
+            // Sort a fresh copy and set it back so the template re-renders the new order under zoneless.
+            const sorted = [...competencyLinks].sort((a, b) => {
                 const aIsSuggested = a.competency?.id ? this.isSuggested(a.competency.id) : false;
                 const bIsSuggested = b.competency?.id ? this.isSuggested(b.competency.id) : false;
 
@@ -304,10 +318,11 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
                 // Keep original order for items with same suggestion status
                 return 0;
             });
+            this.competencyLinks.set(sorted);
         }
     }
 
     setDisabledState?(isDisabled: boolean): void {
-        this.disabled = isDisabled;
+        this.disabled.set(isDisabled);
     }
 }

@@ -1,24 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise/modeling-exercise.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
-import { SortService } from 'app/shared/service/sort.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
+import { SortService } from 'app/foundation/service/sort.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -62,7 +62,7 @@ describe('ModelingExercise Management Component', () => {
 
         eventManager = TestBed.inject(EventManager);
 
-        comp.modelingExercises = [modelingExercise];
+        comp.modelingExercises.set([modelingExercise]);
     });
 
     afterEach(() => {
@@ -82,18 +82,18 @@ describe('ModelingExercise Management Component', () => {
         );
 
         // WHEN
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
 
         // THEN
         expect(findStub).toHaveBeenCalledOnce();
-        expect(comp.modelingExercises[0]).toEqual(modelingExercise);
+        expect(comp.modelingExercises()[0]).toEqual(modelingExercise);
     });
 
     it('should delete exercise', () => {
         vi.spyOn(modelingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
-        comp.course = course;
+        fixture.componentRef.setInput('course', course);
         comp.ngOnInit();
         comp.deleteModelingExercise(456);
         expect(modelingExerciseService.delete).toHaveBeenCalledWith(456);
@@ -107,20 +107,22 @@ describe('ModelingExercise Management Component', () => {
     describe('ModelingExercise Search Exercises', () => {
         it('should show all exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('UML', '', 'modeling');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('UML', '', 'modeling'));
+            fixture.detectChanges();
 
             // THEN
-            expect(comp.modelingExercises).toHaveLength(1);
-            expect(comp.filteredModelingExercises).toHaveLength(1);
+            expect(comp.modelingExercises()).toHaveLength(1);
+            expect(comp.filteredModelingExercises()).toHaveLength(1);
         });
 
         it('should show no exercises', () => {
             // WHEN
-            comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+            fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter('Prog', '', 'all'));
+            fixture.detectChanges();
 
             // THEN
-            expect(comp.modelingExercises).toHaveLength(1);
-            expect(comp.filteredModelingExercises).toHaveLength(0);
+            expect(comp.modelingExercises()).toHaveLength(1);
+            expect(comp.filteredModelingExercises()).toHaveLength(0);
         });
     });
 
@@ -146,12 +148,13 @@ describe('ModelingExercise Management Component', () => {
 
     it('should sort rows', () => {
         const sortSpy = vi.spyOn(sortService, 'sortByProperty');
-        comp.modelingExercises = [new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)];
+        comp.modelingExercises.set([new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined)]);
         comp.predicate = 'testPredicate';
         comp.reverse = true;
-        comp.exerciseFilter = new ExerciseFilter();
+        fixture.componentRef.setInput('exerciseFilter', new ExerciseFilter());
+        fixture.detectChanges();
         comp.sortRows();
-        expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
+        expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises(), comp.predicate, comp.reverse);
         expect(sortSpy).toHaveBeenCalledOnce();
     });
 
@@ -160,7 +163,7 @@ describe('ModelingExercise Management Component', () => {
         comp.toggleExercise(modelingExercise);
 
         // THEN
-        expect(comp.selectedExercises[0]).toMatchObject({ id: modelingExercise.id });
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.modelingExercises.length);
+        expect(comp.selectedExercises()[0]).toMatchObject({ id: modelingExercise.id });
+        expect(comp.allChecked()).toEqual(comp.selectedExercises().length === comp.modelingExercises().length);
     });
 });

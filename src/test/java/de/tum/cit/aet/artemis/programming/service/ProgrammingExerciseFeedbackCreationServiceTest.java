@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -13,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -225,7 +224,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
 
     @Test
     void shouldSetAllTestCasesToInactiveIfFeedbackListIsEmpty() {
-        var result = generateResult(Collections.emptyList(), Collections.emptyList());
+        var result = generateResult(List.of(), List.of());
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -253,7 +252,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         // We do not want to use the test cases generated in the setup
         testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
-        var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
+        var result = generateResult(List.of("test1", "test2"), List.of());
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -282,7 +281,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         // We do not want to use the test cases generated in the setup
         testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
-        var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
+        var result = generateResult(List.of("test1", "test2"), List.of());
         feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());

@@ -10,22 +10,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update/lecture-update.component';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-title-channel-name/lecture-title-channel-name.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
@@ -35,12 +35,14 @@ import { signal } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('LectureUpdateComponent', () => {
     setupTestBed({ zoneless: true });
@@ -96,6 +98,7 @@ describe('LectureUpdateComponent', () => {
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         });
     });
@@ -203,11 +206,11 @@ describe('LectureUpdateComponent', () => {
 
     it('should select process units checkbox', async () => {
         await configureActiveRouteMockAndCompileComponents();
-        lectureUpdateComponent.processUnitMode = false;
+        lectureUpdateComponent.processUnitMode.set(false);
         const selectProcessUnit = vi.spyOn(lectureUpdateComponent, 'onSelectProcessUnit');
         lectureUpdateComponent.onSelectProcessUnit();
         expect(selectProcessUnit).toHaveBeenCalledTimes(1);
-        expect(lectureUpdateComponent.processUnitMode).toBe(true);
+        expect(lectureUpdateComponent.processUnitMode()).toBe(true);
     });
 
     it('should navigate to previous state', async () => {
@@ -233,9 +236,9 @@ describe('LectureUpdateComponent', () => {
         await lectureUpdateComponentFixture.whenStable();
 
         lectureUpdateComponent.file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
-        lectureUpdateComponent.fileName = 'testFile';
+        lectureUpdateComponent.fileName.set('testFile');
         // Set processUnitMode after initialization to prevent ngOnInit from resetting it
-        lectureUpdateComponent.processUnitMode = true;
+        lectureUpdateComponent.processUnitMode.set(true);
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1', isTutorialLecture: false } as Lecture);
         const navigateSpy = vi.spyOn(router, 'navigate');
 
@@ -260,15 +263,15 @@ describe('LectureUpdateComponent', () => {
         expect(createSpy).toHaveBeenCalledTimes(1);
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1', isTutorialLecture: false });
         expect(proceedToUnitSplitSpy).toHaveBeenCalledTimes(1);
-        expect(lectureUpdateComponent.processUnitMode).toBe(true);
+        expect(lectureUpdateComponent.processUnitMode()).toBe(true);
 
         const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-video-units', 'process'];
-        expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
+        expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName() } });
     });
 
     it('should call onFileChange on changed file', async () => {
         await configureActiveRouteMockAndCompileComponents();
-        lectureUpdateComponent.processUnitMode = false;
+        lectureUpdateComponent.processUnitMode.set(false);
         await lectureUpdateComponentFixture.whenStable();
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
 
@@ -278,7 +281,7 @@ describe('LectureUpdateComponent', () => {
         processUnit.checked = true;
         processUnit.dispatchEvent(new Event('change'));
         lectureUpdateComponentFixture.detectChanges();
-        lectureUpdateComponent.processUnitMode = true;
+        lectureUpdateComponent.processUnitMode.set(true);
         lectureUpdateComponentFixture.autoDetectChanges();
         const fileInput = lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
@@ -286,7 +289,7 @@ describe('LectureUpdateComponent', () => {
         expect(onFileChangeStub).toHaveBeenCalledTimes(1);
     });
 
-    it('should set lecture visible date, start date and end date correctly', async () => {
+    it('should set lecture start date and end date correctly', async () => {
         await configureActiveRouteMockAndCompileComponents({ course: { id: 1 }, lecture: { id: 6 } });
 
         await lectureUpdateComponentFixture.whenStable();
@@ -294,44 +297,34 @@ describe('LectureUpdateComponent', () => {
 
         const setDatesSpy = vi.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
 
-        lectureUpdateComponent.lecture().visibleDate = dayjs().year(2022).month(3).date(7);
         lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(3).date(5);
         lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(3).date(1);
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(1);
-        expect(lectureUpdateComponent.lecture().startDate).toEqual(lectureUpdateComponent.lecture().endDate);
-        expect(lectureUpdateComponent.lecture().startDate).toEqual(lectureUpdateComponent.lecture().visibleDate);
+        // endDate was before startDate, so endDate gets corrected to equal startDate
+        expect(lectureUpdateComponent.lecture().endDate).toEqual(lectureUpdateComponent.lecture().startDate);
 
         await lectureUpdateComponentFixture.whenStable();
 
         lectureUpdateComponent.lecture().startDate = undefined;
         lectureUpdateComponent.lecture().endDate = undefined;
-        lectureUpdateComponent.lecture().visibleDate = undefined;
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(2);
         expect(lectureUpdateComponent.lecture().startDate).toBeUndefined();
         expect(lectureUpdateComponent.lecture().endDate).toBeUndefined();
-        expect(lectureUpdateComponent.lecture().visibleDate).toBeUndefined();
 
         await lectureUpdateComponentFixture.whenStable();
 
-        lectureUpdateComponent.lecture().visibleDate = dayjs().year(2022).month(1).date(1);
         lectureUpdateComponent.lecture().startDate = dayjs().year(2022).month(1).date(2);
         lectureUpdateComponent.lecture().endDate = dayjs().year(2022).month(1).date(3);
 
         lectureUpdateComponent.onDatesValuesChanged();
 
         expect(setDatesSpy).toHaveBeenCalledTimes(3);
-        if (lectureUpdateComponent.lecture().visibleDate && lectureUpdateComponent.lecture().startDate) {
-            expect(lectureUpdateComponent.lecture().visibleDate!.toDate() < lectureUpdateComponent.lecture().startDate!.toDate()).toBe(true);
-        } else {
-            throw new Error('visibleDate and startDate should not be undefined');
-        }
-
         if (lectureUpdateComponent.lecture().startDate && lectureUpdateComponent.lecture().endDate) {
             expect(lectureUpdateComponent.lecture().startDate!.toDate() < lectureUpdateComponent.lecture().endDate!.toDate()).toBe(true);
         } else {
@@ -372,12 +365,11 @@ describe('LectureUpdateComponent', () => {
     describe('isChangeMadeToPeriodSection', () => {
         it('should detect changes made to the period section', async () => {
             await configureActiveRouteMockAndCompileComponents();
-            lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
-            lectureUpdateComponent.lectureOnInit = { visibleDate: dayjs(), startDate: dayjs(), endDate: dayjs() } as Lecture;
+            lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { startDate: dayjs(), endDate: dayjs() } as Lecture;
             expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBe(true);
 
             lectureUpdateComponent.lecture.set({
-                visibleDate: lectureUpdateComponent.lectureOnInit.visibleDate,
                 startDate: lectureUpdateComponent.lectureOnInit.startDate,
                 endDate: lectureUpdateComponent.lectureOnInit.endDate,
             } as Lecture);
@@ -386,12 +378,11 @@ describe('LectureUpdateComponent', () => {
 
         it('should not consider resetting an undefined date as a change', async () => {
             await configureActiveRouteMockAndCompileComponents();
-            lectureUpdateComponent.lecture.set({ visibleDate: dayjs().add(1, 'day'), startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
-            lectureUpdateComponent.lectureOnInit = { visibleDate: undefined, startDate: undefined, endDate: undefined } as Lecture;
+            lectureUpdateComponent.lecture.set({ startDate: dayjs().add(2, 'day'), endDate: dayjs().add(3, 'day') } as Lecture);
+            lectureUpdateComponent.lectureOnInit = { startDate: undefined, endDate: undefined } as Lecture;
             expect(lectureUpdateComponent.isChangeMadeToPeriodSection()).toBe(true);
 
             lectureUpdateComponent.lecture.set({
-                visibleDate: dayjs('undefined'),
                 startDate: dayjs('undefined'),
                 endDate: dayjs('undefined'),
             } as Lecture);
@@ -417,7 +408,7 @@ describe('LectureUpdateComponent', () => {
 
             lectureUpdateComponent.updateFormStatusBar();
 
-            expect(lectureUpdateComponent.formStatusSections).toEqual([
+            expect(lectureUpdateComponent.formStatusSections()).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: true },
                 { title: 'artemisApp.lecture.sections.period', valid: true },
                 { title: 'artemisApp.lecture.sections.units', valid: true },
@@ -438,7 +429,7 @@ describe('LectureUpdateComponent', () => {
 
             lectureUpdateComponent.updateFormStatusBar();
 
-            expect(lectureUpdateComponent.formStatusSections).toEqual([
+            expect(lectureUpdateComponent.formStatusSections()).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: false },
                 { title: 'artemisApp.lecture.sections.period', valid: true },
             ]);
@@ -461,7 +452,7 @@ describe('LectureUpdateComponent', () => {
 
             lectureUpdateComponent.updateFormStatusBar();
 
-            expect(lectureUpdateComponent.formStatusSections).toEqual([
+            expect(lectureUpdateComponent.formStatusSections()).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: false },
                 { title: 'artemisApp.lecture.sections.period', valid: false },
                 { title: 'artemisApp.lecture.sections.units', valid: false },

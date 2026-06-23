@@ -1,6 +1,6 @@
 import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, map, of, throwError } from 'rxjs';
+import { EMPTY, Observable, catchError, map, of, throwError } from 'rxjs';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO, SeatsOfExamRoomDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 
 @Injectable({ providedIn: 'root' })
@@ -32,9 +32,9 @@ export class StudentsRoomDistributionService {
                 map((rooms: RoomForDistributionDTO[]) => {
                     this.availableRoomsInternal.set(rooms);
                 }),
-                catchError((error) => {
+                catchError(() => {
                     this.availableRoomsInternal.set(undefined);
-                    return throwError(() => error);
+                    return EMPTY;
                 }),
             )
             .subscribe();
@@ -61,9 +61,9 @@ export class StudentsRoomDistributionService {
                 map((capacityData: ExamDistributionCapacityDTO) => {
                     this.capacityDataInternal.set(capacityData);
                 }),
-                catchError((error) => {
+                catchError(() => {
                     this.capacityDataInternal.set(undefined);
-                    return throwError(() => error);
+                    return EMPTY;
                 }),
             )
             .subscribe();

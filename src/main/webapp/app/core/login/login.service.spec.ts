@@ -5,11 +5,11 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockAuthServerProviderService } from 'test/helpers/mocks/service/mock-auth-server-provider.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { LoginService } from 'app/core/login/login.service';
 import { TestBed } from '@angular/core/testing';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
@@ -158,7 +158,7 @@ describe('LoginService', () => {
         expect(alertServiceClearStub).toHaveBeenCalledOnce();
         expect(alertServiceClearStub).toHaveBeenCalledWith();
         expect(navigateByUrlStub).toHaveBeenCalledOnce();
-        expect(navigateByUrlStub).toHaveBeenCalledWith('/');
+        expect(navigateByUrlStub).toHaveBeenCalledWith('/sign-in');
         expect(authServerProviderClearStub).toHaveBeenCalledOnce();
     }
 });

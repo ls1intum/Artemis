@@ -1,9 +1,10 @@
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { convertToHtmlLinebreaks, escapeString } from 'app/shared/util/text.utils';
-import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { convertToHtmlLinebreaks, escapeString } from 'app/foundation/util/text.utils';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { GradingInstructionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -239,8 +240,11 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo?.instruction?.id) {
-            that.gradingInstruction = dropInfo.instruction;
+        // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
+        // Support both: dropInfo.instruction.id (expected shape) and dropInfo.id (actual Apollon shape)
+        const instruction = dropInfo?.instruction ?? ((dropInfo as any)?.id ? (dropInfo as any) : undefined);
+        if (instruction?.id) {
+            that.gradingInstruction = instruction;
         }
         if (referenceType && referenceId) {
             that.reference = referenceType + ':' + referenceId;
@@ -313,24 +317,76 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
  * @param feedbacks the list of feedbacks
  */
 export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
-    const gradingInstructions: { [key: number]: number } = {}; // { instructionId: number of encounters }
+    const encounteredInstructions = new Map<number, number>(); // instructionId -> number of encounters
     for (const feedback of feedbacks) {
-        if (feedback.gradingInstruction && feedback.gradingInstruction.credits !== 0) {
-            if (gradingInstructions[feedback.gradingInstruction!.id!]) {
-                // this grading instruction is counted before
-                const maxCount = feedback.gradingInstruction.usageCount;
-                const encounters = gradingInstructions[feedback.gradingInstruction!.id!];
-                if (maxCount && maxCount > 0) {
-                    if (encounters >= maxCount) {
-                        // usage limit is exceeded, mark the feedback as subsequent
-                        feedback.isSubsequent = true;
-                    }
-                    gradingInstructions[feedback.gradingInstruction!.id!] = encounters + 1;
-                }
-            } else {
-                // the grading instruction is encountered for the first time
-                gradingInstructions[feedback.gradingInstruction!.id!] = 1;
+        if (feedback.gradingInstruction) {
+            const instructionId = feedback.gradingInstruction.id!;
+            const maxCount = feedback.gradingInstruction.usageCount ?? 0; // 0 means unlimited
+            const encounters = encounteredInstructions.get(instructionId) ?? 0;
+
+            encounteredInstructions.set(instructionId, encounters + 1);
+
+            if (maxCount > 0 && encounters >= maxCount) {
+                feedback.isSubsequent = true;
             }
         }
     }
 };
+
+/**
+ * DTO representing feedback returned by the server.
+ */
+export class FeedbackDTO {
+    public id?: number;
+    public text?: string;
+    public detailText?: string;
+    public hasLongFeedbackText?: boolean;
+    public reference?: string;
+    public credits?: number;
+    public positive?: boolean;
+    public type?: FeedbackType;
+    public visibility?: Visibility;
+    public testCaseName?: string;
+    public gradingInstruction?: GradingInstructionDTO;
+}
+
+export function convertFeedbackFromServer(dto: FeedbackDTO): Feedback {
+    const feedback = new Feedback();
+
+    feedback.id = dto.id;
+    feedback.text = dto.text;
+    feedback.detailText = dto.detailText;
+    feedback.hasLongFeedbackText = dto.hasLongFeedbackText;
+    feedback.reference = dto.reference;
+    feedback.credits = dto.credits;
+    feedback.positive = dto.positive;
+    feedback.type = dto.type;
+    feedback.testCase = dto.testCaseName
+        ? ({
+              testName: dto.testCaseName,
+              visibility: dto.visibility,
+          } as ProgrammingExerciseTestCase)
+        : undefined;
+    if (dto.reference) {
+        const split = dto.reference.split(':');
+        if (split.length === 2) {
+            feedback.referenceType = split[0];
+            feedback.referenceId = split[1];
+        }
+    }
+    if (dto.gradingInstruction) {
+        feedback.gradingInstruction = {
+            id: dto.gradingInstruction.id,
+            feedback: dto.gradingInstruction.feedback,
+            credits: dto.gradingInstruction.credits,
+            usageCount: dto.gradingInstruction.usageCount,
+            instructionDescription: dto.gradingInstruction.instructionDescription,
+            gradingScale: dto.gradingInstruction.gradingScale,
+        } as GradingInstruction;
+    }
+    return feedback;
+}
+
+export function convertFeedbacksFromServer(dtos?: FeedbackDTO[]): Feedback[] {
+    return dtos?.map((dto) => convertFeedbackFromServer(dto)) ?? [];
+}

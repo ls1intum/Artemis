@@ -5,7 +5,7 @@ import { MockDirective } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PROFILE_DEV, PROFILE_TEST } from 'app/app.constants';
 
@@ -57,7 +57,7 @@ describe('PageRibbonComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.ribbonEnv).toBe(PROFILE_DEV);
+        expect(component.ribbonEnv()).toBe(PROFILE_DEV);
     });
 
     it('should set ribbonEnv to test when in production mode and on test server', () => {
@@ -67,7 +67,7 @@ describe('PageRibbonComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.ribbonEnv).toBe(PROFILE_TEST);
+        expect(component.ribbonEnv()).toBe(PROFILE_TEST);
     });
 
     it('should not set ribbonEnv when in production mode but not on test server', () => {
@@ -77,7 +77,7 @@ describe('PageRibbonComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.ribbonEnv).toBeUndefined();
+        expect(component.ribbonEnv()).toBeUndefined();
     });
 
     it('should not set ribbonEnv when not in development and not in production', () => {
@@ -87,7 +87,7 @@ describe('PageRibbonComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.ribbonEnv).toBeUndefined();
+        expect(component.ribbonEnv()).toBeUndefined();
     });
 
     it('should set ribbonEnv to test when both development and production+testServer conditions are met', () => {
@@ -99,7 +99,7 @@ describe('PageRibbonComponent', () => {
         fixture.detectChanges();
 
         // The component first sets dev, then overwrites with test
-        expect(component.ribbonEnv).toBe(PROFILE_TEST);
+        expect(component.ribbonEnv()).toBe(PROFILE_TEST);
     });
 
     it('should display the ribbon when ribbonEnv is set', () => {

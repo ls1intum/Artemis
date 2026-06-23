@@ -1,5 +1,5 @@
-import { UMLDiagramType } from '@ls1intum/apollon';
-import { BaseEntity } from 'app/shared/model/base-entity';
+import { UMLDiagramType } from '@tumaet/apollon';
+import { BaseEntity } from 'app/foundation/model/base-entity';
 
 export class ApollonDiagram implements BaseEntity {
     public id?: number;

@@ -9,19 +9,19 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { of } from 'rxjs';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { BonusService } from 'app/assessment/manage/grading/bonus/bonus.service';
-import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
+import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
+import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MockComponent } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
 import { Bonus, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
+import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 describe('GradingKeyTableComponent', () => {
     setupTestBed({ zoneless: true });
@@ -141,11 +141,11 @@ describe('GradingKeyTableComponent', () => {
             fixture.detectChanges();
 
             expect(gradingService.findGradeSteps).toHaveBeenCalledWith(courseId, examId);
-            expect(component.title).toBe('Test Exam');
-            expect(component.gradeSteps).toHaveLength(2);
-            expect(component.isBonus).toBe(false);
-            expect(component.plagiarismGrade).toBe('5.0');
-            expect(component.noParticipationGrade).toBe('5.0');
+            expect(component.title()).toBe('Test Exam');
+            expect(component.gradeSteps()).toHaveLength(2);
+            expect(component.isBonus()).toBe(false);
+            expect(component.plagiarismGrade()).toBe('5.0');
+            expect(component.noParticipationGrade()).toBe('5.0');
         });
 
         it('should set grade points for exam', () => {
@@ -331,7 +331,7 @@ describe('GradingKeyTableComponent', () => {
 
             expect(bonusService.findBonusForExam).toHaveBeenCalledWith(courseId, examId, true);
             expect(component.forBonus()).toBe(true);
-            expect(component.isBonus).toBe(true);
+            expect(component.isBonus()).toBe(true);
         });
     });
 
@@ -396,8 +396,8 @@ describe('GradingKeyTableComponent', () => {
         it('should handle undefined grade steps gracefully', () => {
             fixture.detectChanges();
 
-            expect(component.gradeSteps).toHaveLength(0);
-            expect(component.title).toBeUndefined();
+            expect(component.gradeSteps()).toHaveLength(0);
+            expect(component.title()).toBeUndefined();
         });
     });
 });

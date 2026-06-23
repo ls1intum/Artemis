@@ -1,9 +1,8 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
     Competency,
-    CompetencyJol,
     CompetencyLectureUnitLink,
     CompetencyProgress,
     ConfidenceReason,
@@ -13,20 +12,19 @@ import {
     getMastery,
     getProgress,
 } from 'app/atlas/shared/entities/competency.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { onError } from 'app/foundation/util/global.utils';
+import { HttpErrorResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-import { Observable, Subscription, combineLatest, forkJoin } from 'rxjs';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Subscription, combineLatest } from 'rxjs';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
@@ -35,19 +33,19 @@ import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectur
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
-import { ScienceEventType } from 'app/shared/science/science.model';
-import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/foundation/science/science.model';
+import { ScienceService } from 'app/foundation/science/science.service';
 
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
-    styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
     imports: [
         FireworksComponent,
         TranslateDirective,
@@ -68,7 +66,6 @@ import { ScienceService } from 'app/shared/science/science.service';
     ],
 })
 export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
-    private featureToggleService = inject(FeatureToggleService);
     private courseStorageService = inject(CourseStorageService);
     private alertService = inject(AlertService);
     private activatedRoute = inject(ActivatedRoute);
@@ -78,14 +75,11 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     competencyId?: number;
     course?: Course;
-    courseId?: number;
-    isLoading = false;
-    competency: Competency;
-    competencyProgress: CompetencyProgress;
-    judgementOfLearning: CompetencyJol | undefined;
-    promptForJolRating = false;
-    showFireworks = false;
-    dashboardFeatureActive = false;
+    readonly courseId = signal<number | undefined>(undefined);
+    readonly isLoading = signal(false);
+    readonly competency = signal<Competency | undefined>(undefined);
+    readonly competencyProgress = signal<CompetencyProgress | undefined>(undefined);
+    readonly showFireworks = signal(false);
     paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
@@ -98,22 +92,18 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         // example route looks like: /courses/1/competencies/10
         const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
         const competencyIdParams$ = this.activatedRoute.params;
-        const dashboardFeatureToggleActive$ = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard);
 
         if (courseIdParams$) {
-            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$, dashboardFeatureToggleActive$]).subscribe(
-                ([courseIdParams, competencyIdParams, dashboardFeatureActive]) => {
-                    this.competencyId = Number(competencyIdParams.competencyId);
-                    this.courseId = Number(courseIdParams.courseId);
-                    this.dashboardFeatureActive = dashboardFeatureActive;
-                    this.course = this.courseStorageService.getCourse(this.courseId);
-                    if (this.competencyId && this.courseId) {
-                        this.loadData();
-                    }
+            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$]).subscribe(([courseIdParams, competencyIdParams]) => {
+                this.competencyId = Number(competencyIdParams.competencyId);
+                this.courseId.set(Number(courseIdParams.courseId));
+                this.course = this.courseStorageService.getCourse(this.courseId()!);
+                if (this.competencyId && this.courseId()) {
+                    this.loadData();
+                }
 
-                    this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId);
-                },
-            );
+                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId);
+            });
         }
     }
 
@@ -122,43 +112,21 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     }
 
     private loadData() {
-        this.isLoading = true;
+        this.isLoading.set(true);
 
-        const observables = [this.courseCompetencyService.findById(this.competencyId!, this.courseId!)] as Observable<
-            HttpResponse<Competency | Competency[] | { current: CompetencyJol; prior?: CompetencyJol }>
-        >[];
-
-        if (this.judgementOfLearningEnabled) {
-            observables.push(this.courseCompetencyService.getAllForCourse(this.courseId!));
-            observables.push(this.courseCompetencyService.getJoL(this.courseId!, this.competencyId!));
-        }
-
-        forkJoin(observables).subscribe({
-            next: ([competencyResp, courseCompetenciesResp, judgementOfLearningResp]) => {
-                this.competency = competencyResp.body! as Competency;
-                this.competencyProgress = this.getUserProgress();
-
-                if (this.judgementOfLearningEnabled) {
-                    const competencies = courseCompetenciesResp.body! as Competency[];
-                    const progress = this.competency.userProgress?.first();
-                    this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
-                    const judgementOfLearning = (judgementOfLearningResp?.body ?? undefined) as { current: CompetencyJol; prior?: CompetencyJol } | undefined;
-                    if (
-                        !judgementOfLearning?.current ||
-                        judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
-                        judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 1)
-                    ) {
-                        this.judgementOfLearning = undefined;
-                    } else {
-                        this.judgementOfLearning = judgementOfLearning?.current;
-                    }
-                }
+        this.courseCompetencyService.findById(this.competencyId!, this.courseId()!).subscribe({
+            next: (competencyResp) => {
+                this.competency.set(competencyResp.body!);
+                this.competencyProgress.set(this.getUserProgress());
 
                 this.handleExerciseLinks();
 
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
-            error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            error: (errorResponse: HttpErrorResponse) => {
+                this.isLoading.set(false);
+                onError(this.alertService, errorResponse);
+            },
         });
     }
 
@@ -167,43 +135,45 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
      * @private
      */
     private handleExerciseLinks() {
-        if (this.competency.exerciseLinks) {
-            this.competency.lectureUnitLinks = this.competency.lectureUnitLinks ?? [];
-            this.competency.lectureUnitLinks.push(
-                ...this.competency.exerciseLinks.map((exerciseLink) => {
+        const competency = this.competency();
+        if (competency?.exerciseLinks) {
+            competency.lectureUnitLinks = competency.lectureUnitLinks ?? [];
+            competency.lectureUnitLinks.push(
+                ...competency.exerciseLinks.map((exerciseLink) => {
                     const exerciseUnit = new ExerciseUnit();
                     exerciseUnit.id = exerciseLink.exercise?.id;
                     exerciseUnit.exercise = exerciseLink.exercise;
-                    return new CompetencyLectureUnitLink(this.competency, exerciseUnit as LectureUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
+                    return new CompetencyLectureUnitLink(competency, exerciseUnit as LectureUnit, MEDIUM_COMPETENCY_LINK_WEIGHT);
                 }),
             );
         }
     }
 
     showFireworksIfMastered() {
-        if (this.mastery >= 100 && !this.showFireworks) {
-            setTimeout(() => (this.showFireworks = true), 1000);
-            setTimeout(() => (this.showFireworks = false), 6000);
+        if (this.mastery >= 100 && !this.showFireworks()) {
+            setTimeout(() => this.showFireworks.set(true), 1000);
+            setTimeout(() => this.showFireworks.set(false), 6000);
         }
     }
 
     getUserProgress(): CompetencyProgress {
-        if (this.competency.userProgress?.length) {
-            return this.competency.userProgress.first()!;
+        const userProgress = this.competency()?.userProgress;
+        if (userProgress?.length) {
+            return userProgress.first()!;
         }
         return { progress: 0, confidence: 1 } as CompetencyProgress;
     }
 
     get progress(): number {
-        return getProgress(this.competencyProgress);
+        return getProgress(this.competencyProgress());
     }
 
     get confidence(): number {
-        return getConfidence(this.competencyProgress);
+        return getConfidence(this.competencyProgress());
     }
 
     get mastery(): number {
-        return getMastery(this.competencyProgress);
+        return getMastery(this.competencyProgress());
     }
 
     get isMastered(): boolean {
@@ -219,9 +189,15 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
             next: () => {
                 event.lectureUnit.completed = event.completed;
 
-                this.courseCompetencyService.getProgress(this.competencyId!, this.courseId!, true).subscribe({
+                this.courseCompetencyService.getProgress(this.competencyId!, this.courseId()!, true).subscribe({
                     next: (resp) => {
-                        this.competency.userProgress = [resp.body!];
+                        this.competencyProgress.set(resp.body!);
+                        this.competency.update((competency) => {
+                            if (competency) {
+                                competency.userProgress = [resp.body!];
+                            }
+                            return competency;
+                        });
                         this.showFireworksIfMastered();
                     },
                 });
@@ -231,10 +207,6 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     }
 
     get softDueDatePassed(): boolean {
-        return dayjs().isAfter(this.competency.softDueDate);
-    }
-
-    get judgementOfLearningEnabled() {
-        return (this.course?.studentCourseAnalyticsDashboardEnabled ?? false) && this.dashboardFeatureActive;
+        return dayjs().isAfter(this.competency()?.softDueDate);
     }
 }

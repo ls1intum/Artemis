@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
-import java.util.Collections;
+import java.util.List;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -8,7 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -45,7 +45,7 @@ public class ModelingExerciseService {
     public SearchResultPageDTO<ModelingExercise> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
         if (!isCourseFilter && !isExamFilter) {
-            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+            return new SearchResultPageDTO<>(List.of(), 0);
         }
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.EXERCISE);
         final var searchTerm = search.getSearchTerm();

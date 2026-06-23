@@ -2,15 +2,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { of } from 'rxjs';
 import { LectureDetailComponent } from 'app/lecture/manage/lecture-detail/lecture-detail.component';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,7 +21,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 const mockLecture = {
     title: 'Test Lecture',
     description: 'Test Description',
-    visibleDate: dayjs(),
     startDate: dayjs(),
     endDate: dayjs(),
     course: {
@@ -70,9 +69,9 @@ describe('LectureDetailComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.lecture).toEqual(mockLecture);
-        expect(component.detailSections).toBeDefined();
-        for (const detail of component.detailSections[0].details) {
+        expect(component.lecture()).toEqual(mockLecture);
+        expect(component.detailSections()).toBeDefined();
+        for (const detail of component.detailSections()[0].details) {
             expect(detail).toBeDefined();
         }
     });
@@ -84,9 +83,9 @@ describe('LectureDetailComponent', () => {
     });
 
     it('should have correct lecture-details', () => {
-        component.lecture = mockLecture;
+        component.lecture.set(mockLecture);
         component.getLectureDetailSections();
-        for (const section of component.detailSections) {
+        for (const section of component.detailSections()) {
             expect(section.headline).toBeTruthy();
             for (const detail of section.details) {
                 expect(detail).toBeTruthy();

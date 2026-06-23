@@ -26,4 +26,29 @@
     &.big {
         max-height: 100px;
     }
+
+    &.spinning {
+        margin-left: 4px;
+        animation: iris-pulse 1.5s ease-in-out infinite;
+        filter: none;
+    }
+}
+
+@keyframes iris-pulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.15);
+        opacity: 0.85;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .iris-logo.spinning {
+        animation: none;
+    }
 }

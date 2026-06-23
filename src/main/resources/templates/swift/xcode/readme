@@ -1,5 +1,3 @@
-# Sorting with the Strategy Pattern using a SwiftUI App.
-
 In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables, which means that the user is able to select different sorting algorithms at runtime of the app.
 
 

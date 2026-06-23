@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import org.springframework.boot.actuate.autoconfigure.metrics.MetricsAutoConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.micrometer.metrics.autoconfigure.MetricsAutoConfiguration;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;

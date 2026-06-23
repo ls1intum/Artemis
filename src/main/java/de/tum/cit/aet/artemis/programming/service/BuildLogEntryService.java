@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,17 +25,17 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.localci.domain.BuildJob;
+import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
-import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -99,8 +98,7 @@ public class BuildLogEntryService {
      * @return the build log entries
      */
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries)
-                .orElseGet(Collections::emptyList);
+        return programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId()).map(ProgrammingSubmission::getBuildLogEntries).orElseGet(List::of);
     }
 
     private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "Illegal reflective access by",
@@ -291,7 +289,7 @@ public class BuildLogEntryService {
      * @param programmingSubmission the programming submission for which the build logs should be deleted
      */
     public void deleteBuildLogEntriesForProgrammingSubmission(ProgrammingSubmission programmingSubmission) {
-        programmingSubmission.setBuildLogEntries(Collections.emptyList());
+        programmingSubmission.setBuildLogEntries(List.of());
         programmingSubmissionRepository.save(programmingSubmission);
         buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
     }

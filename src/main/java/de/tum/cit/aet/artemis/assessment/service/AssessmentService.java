@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
@@ -20,11 +22,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -36,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.notification.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
 
@@ -180,6 +180,11 @@ public class AssessmentService {
     /**
      * Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
      * again.
+     * <p>
+     * The result being canceled is a non-submitted draft assessment (the tutor started grading but did not submit).
+     * Because it was never submitted, participant scores were never updated to reference this result.
+     * Therefore, no explicit {@code sendParticipantScoreSchedule()} call is needed here, even though
+     * {@link ResultService#deleteResult} may take the JPQL path that skips the {@code @PreRemove} callback.
      *
      * @param submission the submission for which the current assessment should be canceled
      */
@@ -344,10 +349,26 @@ public class AssessmentService {
     }
 
     /**
-     * Deletes the result of a submission.
+     * Deletes the result of a submission. Called from {@code AssessmentResource.deleteAssessment} when an instructor
+     * manually deletes a single assessment result.
+     * <p>
+     * This method uses a different deletion strategy than {@link ResultService#deleteResult}: instead of explicitly
+     * deleting the result, it removes the result from the submission's results list and saves the submission, relying
+     * on JPA orphan removal ({@code @OneToMany(orphanRemoval = true)} on {@code Submission.results}) to cascade-delete
+     * the result entity. This approach works safely here because:
+     * <ul>
+     * <li>The caller ({@code AssessmentResource.deleteAssessment}) loads the result via
+     * {@code findByIdWithEagerFeedbacksElseThrow}, so feedbacks are eagerly initialized.</li>
+     * <li>{@link ResultService#deleteResultReferences} bulk-deletes feedbacks, but since the feedbacks collection
+     * is initialized, Hibernate can reconcile the in-memory state during the orphan removal cascade.</li>
+     * <li>The JPA delete triggered by orphan removal fires the {@code @PreRemove} callback in {@link ResultListener},
+     * ensuring participant score recalculation is scheduled automatically.</li>
+     * </ul>
+     * <b>DO NOT CHANGE</b> the caller to load the result without eager feedbacks, as this would cause the same
+     * {@code EntityNotFoundException} that is documented in {@link ResultService#deleteResult}.
      *
-     * @param submission - the submission which the result belongs to
-     * @param result     - the result that should get deleted
+     * @param submission the submission which the result belongs to (must have results loaded)
+     * @param result     the result that should get deleted (must have feedbacks eagerly loaded)
      */
     public void deleteAssessment(Submission submission, Result result) {
 
@@ -356,7 +377,8 @@ public class AssessmentService {
         }
         submission.getResults().remove(result);
         resultService.deleteResultReferences(result.getId(), true);
-        // this keeps the result order intact and automatically deletes the result
+        // This saves the submission with the result removed from its list. JPA orphan removal
+        // will cascade-delete the result entity, firing @PreRemove in ResultListener.
         submissionRepository.save(submission);
     }
 }

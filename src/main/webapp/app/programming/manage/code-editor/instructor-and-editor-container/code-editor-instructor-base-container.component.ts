@@ -1,13 +1,13 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -16,9 +16,9 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { isExamExercise } from 'app/shared/util/utils';
+import { isExamExercise } from 'app/foundation/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,7 +41,7 @@ export enum LOADING_STATE {
     template: '',
 })
 export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
 
     private router = inject(Router);
     private exerciseService = inject(ProgrammingExerciseService);
@@ -87,8 +87,12 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // This can either be a participation (solution, template, assignment) or the test repository.
     domainChangeSubscription: Subscription;
 
-    // State variables
-    loadingState = LOADING_STATE.CLEAR;
+    // State variables.
+    // Signal-backed so its async transitions (set inside the participation-fetch subscribe and the
+    // create/delete-assignment-repo flows) schedule change detection under zoneless. As a plain field the
+    // INITIALIZING -> CLEAR flip never re-rendered, leaving the whole template (gated on `@if (loadingState() ...)`)
+    // stuck and the editor page blank.
+    readonly loadingState = signal(LOADING_STATE.CLEAR);
 
     protected isCreateAssignmentRepoDisabled: boolean;
     /** Debounced tick stream consumed by the sidebar preview */
@@ -114,7 +118,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             const exerciseId = Number(params['exerciseId']);
             const repositoryType = params['repositoryType'];
             const repositoryId = Number(params['repositoryId']);
-            this.loadingState = LOADING_STATE.INITIALIZING;
+            this.loadingState.set(LOADING_STATE.INITIALIZING);
             this.loadExercise(exerciseId)
                 .pipe(
                     catchError(() => throwError(() => new Error('exerciseNotFound'))),
@@ -162,11 +166,11 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                 )
                 .subscribe({
                     next: () => {
-                        this.loadingState = LOADING_STATE.CLEAR;
-                        this.isCreateAssignmentRepoDisabled = this.loadingState !== this.LOADING_STATE.CLEAR || isExamExercise(this.exercise);
+                        this.loadingState.set(LOADING_STATE.CLEAR);
+                        this.isCreateAssignmentRepoDisabled = this.loadingState() !== this.LOADING_STATE.CLEAR || isExamExercise(this.exercise);
                     },
                     error: (err: Error) => {
-                        this.loadingState = LOADING_STATE.FETCHING_FAILED;
+                        this.loadingState.set(LOADING_STATE.FETCHING_FAILED);
                         this.onError(err.message);
                     },
                 });
@@ -193,6 +197,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.teardownFileBinding();
         this.fileSyncService.reset();
         this.exerciseEditorSyncService.disconnect();
+    }
+
+    /**
+     * Connects the shared exercise synchronization channel for the given exercise.
+     *
+     * @param exerciseId the exercise id for the synchronization topic
+     */
+    protected connectExerciseEditorSync(exerciseId: number): void {
+        this.exerciseEditorSyncService.connect(exerciseId);
     }
 
     /**
@@ -230,8 +243,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
 
     protected applyDomainChange(domainType: any, domainValue: any) {
-        if (this.codeEditorContainer != undefined) {
-            this.codeEditorContainer.initializeProperties();
+        if (this.codeEditorContainer() != undefined) {
+            this.codeEditorContainer()!.initializeProperties();
         }
         this.teardownFileBinding();
         this.fileSyncService.reset();
@@ -317,8 +330,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Always use this method for changing the editor content to save file modifications.
      */
     saveChangesAndSelectDomain(domain: DomainChange) {
-        if (this.codeEditorContainer != undefined) {
-            this.codeEditorContainer.actions.onSave();
+        if (this.codeEditorContainer() != undefined) {
+            // Save before switching domains. Use a non-null assertion (not optional chaining) so a missing
+            // actions component throws instead of silently skipping the save and losing unsaved edits.
+            this.codeEditorContainer()!.actions()!.onSave();
         }
         this.domainService.setDomain(domain);
     }
@@ -363,14 +378,14 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Creates an assignment participation for this user for this exercise.
      */
     createAssignmentParticipation() {
-        this.loadingState = LOADING_STATE.CREATING_ASSIGNMENT_REPO;
+        this.loadingState.set(LOADING_STATE.CREATING_ASSIGNMENT_REPO);
         return this.courseExerciseService
             .startExercise(this.exercise.id!)
             .pipe(
                 catchError(() => throwError(() => new Error('participationCouldNotBeCreated'))),
                 tap((participation) => {
                     this.exercise.studentParticipations = [participation];
-                    this.loadingState = LOADING_STATE.CLEAR;
+                    this.loadingState.set(LOADING_STATE.CLEAR);
                 }),
             )
             .subscribe({
@@ -383,7 +398,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * This deletes all build plans, database information, etc. and copies the current version of the template repository.
      */
     deleteAssignmentParticipation() {
-        this.loadingState = LOADING_STATE.DELETING_ASSIGNMENT_REPO;
+        this.loadingState.set(LOADING_STATE.DELETING_ASSIGNMENT_REPO);
         if (this.selectedRepository === RepositoryType.ASSIGNMENT) {
             this.selectTemplateParticipation();
         }
@@ -393,7 +408,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .pipe(
                 catchError(() => throwError(() => new Error('participationCouldNotBeDeleted'))),
                 tap(() => {
-                    this.loadingState = LOADING_STATE.CLEAR;
+                    this.loadingState.set(LOADING_STATE.CLEAR);
                 }),
             )
             .subscribe({
@@ -416,7 +431,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             return;
         }
 
-        const monacoComponent = this.codeEditorContainer?.monacoEditor;
+        const monacoComponent = this.codeEditorContainer()?.monacoEditor?.();
         if (!monacoComponent || monacoComponent.binaryFileSelected()) {
             return;
         }

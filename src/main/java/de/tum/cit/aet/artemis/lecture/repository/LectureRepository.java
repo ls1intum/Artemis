@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -14,7 +13,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.LectureCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
@@ -43,10 +42,9 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Set<Long> findLectureIdsByCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.LectureCalendarEventDTO(
+            SELECT new de.tum.cit.aet.artemis.calendar.dto.LectureCalendarEventDTO(
                 lecture.id,
                 lecture.title,
-                lecture.visibleDate,
                 lecture.startDate,
                 lecture.endDate
             )
@@ -54,14 +52,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.course.id = :courseId AND (lecture.startDate IS NOT NULL OR lecture.endDate IS NOT NULL) AND NOT lecture.isTutorialLecture
             """)
     Set<LectureCalendarEventDTO> getLectureCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
-
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-            LEFT JOIN FETCH lecture.lectureUnits
-            WHERE lecture.course.id = :courseId AND (lecture.visibleDate IS NULL OR lecture.visibleDate <= :now)
-            """)
-    Set<Lecture> findAllVisibleByCourseIdWithEagerLectureUnits(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT lecture

@@ -17,13 +17,14 @@
             [showPreviewButton]="showPreview()"
             [showEditButton]="showPreview()"
             [enableExerciseReviewComments]="enableExerciseReviewComments()"
-            [showLocationWarning]="unsavedChangesValue"
+            [showLocationWarning]="unsavedChangesValue()"
             [isReadOnly]="isGeneratingOrRefining()"
             [isAiLoading]="isAiApplying()"
             [renderSideBySide]="renderSideBySide()"
             (diffLineChange)="diffLineChange.emit($event)"
             (markdownChange)="updateProblemStatement($event)"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation.emit($event)"
+            (onApplyInlineFix)="onApplyInlineFix($event)"
             (onSelectionChange)="onEditorSelectionChange($event)"
         >
             <!-- Custom preview using ProgrammingExerciseInstructionComponent for proper rendering
@@ -62,19 +63,19 @@
     @if (editMode()) {
         <button
             id="save-instructions-button"
-            [disabled]="savingInstructions || !unsavedChangesValue"
+            [disabled]="savingInstructions() || !unsavedChangesValue()"
             (click)="saveInstructions($event)"
             class="btn editable-instruction-container__save"
             [ngClass]="{
-                'btn-light': savingInstructions || !unsavedChangesValue,
-                'btn-primary': !(savingInstructions || !unsavedChangesValue),
+                'btn-light': savingInstructions() || !unsavedChangesValue(),
+                'btn-primary': !(savingInstructions() || !unsavedChangesValue()),
                 'btn-sm': externalHeight(),
             }"
         >
-            @if (!savingInstructions) {
+            @if (!savingInstructions()) {
                 <fa-icon [icon]="faSave" class="me-2" />
             }
-            @if (savingInstructions) {
+            @if (savingInstructions()) {
                 <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
             }
             <span jhiTranslate="entity.action.save"></span>
@@ -83,13 +84,13 @@
     @if (showStatus()) {
         <div class="card-footer text-nowrap editable-instruction-container__status">
             <div class="instructions-status">
-                @if (!unsavedChangesValue && !savingInstructions) {
+                @if (!unsavedChangesValue() && !savingInstructions()) {
                     <div>
                         <fa-icon [icon]="faCheckCircle" class="text-success me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savedTooltip' | artemisTranslate }}" />
                         <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saved"></span>
                     </div>
                 }
-                @if (unsavedChangesValue && !savingInstructions) {
+                @if (unsavedChangesValue() && !savingInstructions()) {
                     <div>
                         <fa-icon
                             [icon]="faExclamationTriangle"
@@ -99,7 +100,7 @@
                         <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.unsaved"></span>
                     </div>
                 }
-                @if (savingInstructions) {
+                @if (savingInstructions()) {
                     <div>
                         <fa-icon [icon]="faCircleNotch" class="me-1" ngbTooltip="{{ 'artemisApp.programmingExercise.editable.savingTooltip' | artemisTranslate }}" />
                         <span class="text-info" jhiTranslate="artemisApp.programmingExercise.editable.saving"></span>
@@ -108,7 +109,7 @@
             </div>
             @if (exercise()?.id) {
                 <jhi-programming-exercise-instruction-instructor-analysis
-                    [exerciseTestCases]="exerciseTestCases"
+                    [exerciseTestCases]="exerciseTestCases()"
                     [problemStatement]="exercise().problemStatement || ''"
                     [taskRegex]="taskRegex"
                     (problemStatementAnalysis)="onAnalysisUpdate($event)"

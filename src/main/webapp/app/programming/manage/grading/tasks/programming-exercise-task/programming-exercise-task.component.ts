@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -7,7 +7,7 @@ import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/grading/charts/test-case-passed-builds-chart.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-task',
@@ -18,66 +18,67 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class ProgrammingExerciseTaskComponent implements OnInit {
     private programmingExerciseTaskService = inject(ProgrammingExerciseTaskService);
 
-    @Input() index: number;
-    @Input() task: ProgrammingExerciseTask;
-    @Input() openSubject: Subject<boolean>;
-    @Input() isExamExercise: boolean;
+    readonly index = input.required<number>();
+    readonly task = input.required<ProgrammingExerciseTask>();
+    readonly openSubject = input.required<Subject<boolean>>();
+    readonly isExamExercise = input<boolean>();
 
-    @Output() updateTasksEvent = new EventEmitter<void>();
+    readonly updateTasksEvent = output<void>();
 
     // Icons
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
 
     readonly NOT_ASSIGNED_TO_TASK_NAME = 'Not assigned to task';
-    open: boolean;
-    onlyViewTestCases: boolean;
-    testCaseVisibilityList: { value: Visibility; name: string }[] = [];
+    readonly open = signal(false);
+    readonly onlyViewTestCases = signal(false);
+    readonly testCaseVisibilityList = signal<{ value: Visibility; name: string }[]>([]);
 
     get numParticipations(): number {
         return this.programmingExerciseTaskService?.gradingStatistics?.numParticipations ?? 0;
     }
 
     ngOnInit(): void {
-        this.openSubject.subscribe((open) => (this.open = open));
+        this.openSubject().subscribe((open) => this.open.set(open));
 
         // If this is the only task have it open by default and hide the task
         if (this.programmingExerciseTaskService.currentTasks.length == 1) {
-            this.onlyViewTestCases = true;
-            this.open = true;
+            this.onlyViewTestCases.set(true);
+            this.open.set(true);
         }
 
         this.updateTestCaseVisibilityList();
     }
 
     testUpdateHandler(test: ProgrammingExerciseTestCase) {
-        this.programmingExerciseTaskService.initializeTask(this.task);
+        this.programmingExerciseTaskService.initializeTask(this.task());
         test.changed = true;
-        this.updateTasksEvent.emit();
+        this.updateTasksEvent.emit(undefined);
     }
 
     taskUpdateHandler() {
-        const testCasesAmount = this.task.testCases.length;
-        const testCasesWeightSum = this.task.testCases.reduce((acc, { weight }) => acc + (weight ?? 0), 0);
+        const task = this.task();
+        const testCasesAmount = task.testCases.length;
+        const testCasesWeightSum = task.testCases.reduce((acc, { weight }) => acc + (weight ?? 0), 0);
 
-        this.task.testCases.forEach((testCase) => {
+        task.testCases.forEach((testCase) => {
             testCase.changed = true;
 
-            if (this.task.weight !== undefined && testCasesWeightSum !== 0) {
-                testCase.weight = ((testCase.weight ?? 0) / testCasesWeightSum) * this.task.weight;
+            if (task.weight !== undefined && testCasesWeightSum !== 0) {
+                testCase.weight = ((testCase.weight ?? 0) / testCasesWeightSum) * task.weight;
             }
-            if (this.task.bonusMultiplier !== undefined) {
-                testCase.bonusMultiplier = this.task.bonusMultiplier;
+            if (task.bonusMultiplier !== undefined) {
+                testCase.bonusMultiplier = task.bonusMultiplier;
             }
-            if (this.task.bonusPoints !== undefined) {
-                testCase.bonusPoints = this.task.bonusPoints / testCasesAmount;
+            if (task.bonusPoints !== undefined) {
+                testCase.bonusPoints = task.bonusPoints / testCasesAmount;
             }
-            if (this.task.visibility !== undefined) {
-                testCase.visibility = this.task.visibility;
+            if (task.visibility !== undefined) {
+                testCase.visibility = task.visibility;
             }
         });
 
-        this.updateTasksEvent.emit();
+        this.updateTasksEvent.emit(undefined);
     }
 
     formatTestIndex(i: number, j: number): string {
@@ -85,17 +86,19 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     }
 
     private updateTestCaseVisibilityList() {
-        this.testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => {
-            let displayName = name;
+        this.testCaseVisibilityList.set(
+            Object.entries(Visibility).map(([name, value]) => {
+                let displayName = name;
 
-            if (this.isExamExercise && value === Visibility.AfterDueDate) {
-                displayName = 'AfterReleaseDateOfResults';
-            }
+                if (this.isExamExercise() && value === Visibility.AfterDueDate) {
+                    displayName = 'AfterReleaseDateOfResults';
+                }
 
-            return {
-                value,
-                name: displayName,
-            };
-        });
+                return {
+                    value,
+                    name: displayName,
+                };
+            }),
+        );
     }
 }

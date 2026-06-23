@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -22,7 +23,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,15 +50,18 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRe
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
+import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -73,6 +79,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
@@ -85,6 +92,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
@@ -146,7 +154,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private ConversationUtilService conversationUtilService;
 
     @Autowired
-    private AtlasMLRequestMockProvider atlasMLRequestMockProvider;
+    private Optional<AtlasMLRequestMockProvider> atlasMLRequestMockProvider;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
 
     @Autowired(required = false)
     private WeaviateService weaviateService;
@@ -340,23 +351,30 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
-        atlasMLRequestMockProvider.reset();
-        atlasMLRequestMockProvider.enableMockingOfRequests();
-        atlasMLRequestMockProvider.mockSaveCompetenciesAny();
-        // Create
-        courseUtilService.enableMessagingForCourse(course);
-        textExercise.setId(null);
-        textExercise.setTitle("AtlasML Create");
-        textExercise.setChannelName("atlasml-create");
-        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        var provider = atlasMLRequestMockProvider.orElseThrow(() -> new IllegalStateException("AtlasMLRequestMockProvider must be available for AtlasML tests"));
+        featureToggleService.enableFeature(Feature.AtlasML);
+        try {
+            provider.reset();
+            provider.enableMockingOfRequests();
+            provider.mockSaveCompetenciesAny();
+            // Create
+            courseUtilService.enableMessagingForCourse(course);
+            textExercise.setId(null);
+            textExercise.setTitle("AtlasML Create");
+            textExercise.setChannelName("atlasml-create");
+            request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
 
-        // Update
-        textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
-        textExercise.setTitle("AtlasML Update");
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+            // Update
+            textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
+            textExercise.setTitle("AtlasML Update");
+            request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
 
-        // Delete
-        request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+            // Delete
+            request.delete("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK);
+        }
+        finally {
+            featureToggleService.disableFeature(Feature.AtlasML);
+        }
     }
 
     @Test
@@ -394,7 +412,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateTextExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+    void updateTextExercise_invalidPlagiarismDetectionConfig_doesNotAffectUpdate() throws Exception {
+        // With the DTO approach, PlagiarismDetectionConfig is not included in the UpdateTextExerciseDTO.
+        // Invalid config set on the local object is never sent to the server, so the update succeeds.
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
 
@@ -405,12 +425,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         textExercise.setPlagiarismDetectionConfig(config);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
-
-        // Test invalid response period lower bound
-        config.setSimilarityThreshold(50);
-        config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(6); // invalid: below 7
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        // The DTO does not include plagiarism config, so the server validates the stored (valid) config
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -443,7 +459,19 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateTextExercise_InvalidMaxScore() throws Exception {
         textExercise.setMaxPoints(0.0);
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_withUnicodeLettersInTitle_succeeds() throws Exception {
+        // Regression test for "Lärche": editing an exercise to a title containing umlauts / other Unicode letters must
+        // succeed. The shared title validation (Exercise#validateTitle, also used by the programming edit path that the
+        // bug was reported on) previously rejected such titles with an ASCII-only pattern.
+        textExercise.setTitle("Lärche Übung");
+        TextExercise updated = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class,
+                HttpStatus.OK);
+        assertThat(updated.getTitle()).isEqualTo("Lärche Übung");
     }
 
     @Test
@@ -452,7 +480,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -461,7 +489,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(1.0);
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -479,7 +507,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         criterion.addStructuredGradingInstruction(gradingInstruction);
         textExercise.setGradingCriteria(Set.of(criterion));
-        TextExercise actualExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise actualExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExercise.class, HttpStatus.OK);
 
         assertThat(actualExercise.getGradingCriteria()).hasSize(1);
         GradingCriterion testCriterion = GradingCriterionUtil.findGradingCriterionByTitle(actualExercise, "Test");
@@ -512,9 +541,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exampleSubmissionRepo.save(exampleSubmission);
         textExercise.addExampleSubmission(exampleSubmission);
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
-        textExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(title);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(difficulty);
@@ -523,7 +552,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("courseId was not updated").isEqualTo(course.getId());
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
-        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textExercise), eq(Optional.of(textExercise)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
         assertExerciseExistsInWeaviate(weaviateService, updatedTextExercise);
     }
 
@@ -546,7 +575,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         }
 
         textExercise.setDueDate(ZonedDateTime.now().plusHours(12));
-        request.put("/api/text/text-exercises", textExercise, HttpStatus.OK);
+        request.put("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), HttpStatus.OK);
 
         {
             final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
@@ -564,7 +593,74 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void updateTextExercise_setExerciseIdNull_created() throws Exception {
         textExercise.setId(null);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_setExerciseIdNullWithMalformedCompetencyLink_badRequest() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        UpdateTextExerciseDTO malformedCreateDto = new UpdateTextExerciseDTO(null, "text-create-" + suffix, "channel-" + suffix, "short-" + suffix,
+                textExercise.getProblemStatement(), textExercise.getCategories(), textExercise.getDifficulty(), textExercise.getMaxPoints(), textExercise.getBonusPoints(),
+                textExercise.getIncludedInOverallScore(), textExercise.getAllowComplaintsForAutomaticAssessments(), textExercise.getAllowFeedbackRequests(),
+                textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(), textExercise.getFeedbackSuggestionModule(),
+                textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(), textExercise.getDueDate(), textExercise.getAssessmentDueDate(),
+                textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(), null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
+
+        request.putWithResponseBody("/api/text/text-exercises", malformedCreateDto, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_withMalformedCompetencyLink_badRequest() throws Exception {
+        UpdateTextExerciseDTO malformedUpdateDto = new UpdateTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), textExercise.getChannelName(),
+                textExercise.getShortName(), textExercise.getProblemStatement(), textExercise.getCategories(), textExercise.getDifficulty(), textExercise.getMaxPoints(),
+                textExercise.getBonusPoints(), textExercise.getIncludedInOverallScore(), textExercise.getAllowComplaintsForAutomaticAssessments(),
+                textExercise.getAllowFeedbackRequests(), textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(),
+                textExercise.getFeedbackSuggestionModule(), textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(),
+                textExercise.getDueDate(), textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(),
+                null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
+
+        request.putWithResponseBody("/api/text/text-exercises", malformedUpdateDto, TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_withCompetencyFromDifferentCourse_badRequest() throws Exception {
+        Course otherCourse = courseUtilService.addEmptyCourse();
+        Competency foreignCompetency = competencyUtilService.createCompetency(otherCourse);
+
+        textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(foreignCompetency, textExercise, 1)));
+
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_usesOriginalCompetenciesForProgressUpdate() throws Exception {
+        Competency replacementCompetency = competencyUtilService.createCompetency(course);
+        textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
+        textExerciseRepository.saveAndFlush(textExercise);
+
+        AtomicReference<Set<Long>> originalCompetencyIds = new AtomicReference<>();
+        AtomicReference<Set<Long>> updatedCompetencyIds = new AtomicReference<>();
+        doAnswer(invocation -> {
+            @SuppressWarnings("unchecked")
+            Set<Long> originalIds = invocation.getArgument(0);
+            LearningObject updatedLearningObject = invocation.getArgument(1);
+
+            originalCompetencyIds.set(Set.copyOf(originalIds));
+            updatedCompetencyIds.set(updatedLearningObject.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet()));
+            return null;
+        }).when(competencyProgressApi).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(any(), any());
+
+        textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(replacementCompetency, textExercise, 1)));
+
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
+
+        assertThat(originalCompetencyIds.get()).containsExactly(competency.getId());
+        assertThat(updatedCompetencyIds.get()).containsExactly(replacementCompetency.getId());
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(any(), any());
     }
 
     @Test
@@ -580,7 +676,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         existingTextExercise.setCourse(newCourse);
 
         // Text exercise update with the new course should fail.
-        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text/text-exercises", existingTextExercise, TextExercise.class, HttpStatus.CONFLICT);
+        TextExercise returnedTextExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(existingTextExercise),
+                TextExercise.class, HttpStatus.CONFLICT);
         assertThat(returnedTextExercise).isNull();
     }
 
@@ -590,7 +687,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -609,7 +706,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // update problem statement
         textExercise.setProblemStatement("New problem statement");
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(updateTitle);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(updateDifficulty);
@@ -628,16 +726,19 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
-        request.putWithResponseBody("/api/text/text-exercises", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(invalidDates.applyTo(textExercise)), TextExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateTextExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
+    void updateTextExercise_setCourseAndExerciseGroup_conflict() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         textExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        // With DTO approach, setting an exercise group from a different course results in CONFLICT
+        // because the courseId from the DTO doesn't match the stored exercise's courseId
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -645,17 +746,18 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void updateTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         textExercise.setCourse(null);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateTextExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
+    void updateTextExercise_convertFromCourseToExamExercise_conflict() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
 
         textExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        // With DTO approach, converting from course to exam exercise through a different course results in CONFLICT
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -667,7 +769,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textExercise.setExerciseGroup(null);
 
-        request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -684,7 +786,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
         textExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class,
+                HttpStatus.CREATED);
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(newTextExercise));
@@ -712,7 +815,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(manualTextBlock, automaticTextBlock), (TextSubmission) exampleSubmission.getSubmission());
 
         participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
-        TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class,
                 HttpStatus.CREATED);
         assertThat(newTextExercise.getExampleSubmissions()).hasSize(1);
         ExampleSubmission newExampleSubmission = newTextExercise.getExampleSubmissions().iterator().next();
@@ -749,7 +852,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setReleaseDate(null);
         textExercise.setExerciseGroup(exerciseGroup1);
 
-        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class,
+                HttpStatus.CREATED);
 
         // There should not be created a channel for the imported exam exercise
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
@@ -767,7 +871,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCourse(null);
         textExercise.setExerciseGroup(exerciseGroup1);
 
-        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -780,7 +884,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCourse(course1);
         textExercise.setExerciseGroup(null);
         textExercise.setChannelName("test" + textExercise.getId());
-        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -793,7 +897,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setCourse(course1);
         textExercise.setExerciseGroup(null);
 
-        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -805,7 +909,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseRepository.save(textExercise);
         textExercise.setExerciseGroup(exerciseGroup2);
 
-        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -817,7 +921,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseRepository.save(textExercise);
         textExercise.setCourse(null);
 
-        request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -833,7 +937,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise = textExerciseRepository.save(textExercise);
         textExercise.setCourse(course2);
         textExercise.setChannelName("test-" + textExercise.getId());
-        TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class,
                 HttpStatus.CREATED);
         assertThat(newTextExercise.getExampleSolutionPublicationDate()).as("text example solution publication date was correctly set to null in the response").isNull();
 
@@ -1077,7 +1181,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exerciseToBeImported.setMaxPoints(1.0);
         exerciseToBeImported.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 3));
 
-        exerciseToBeImported = request.postWithResponseBody("/api/text/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class,
+        exerciseToBeImported = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class,
                 HttpStatus.CREATED);
 
         assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
@@ -1119,7 +1223,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exerciseToBeImported.setMaxPoints(1.0);
         exerciseToBeImported.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 3));
 
-        exerciseToBeImported = request.postWithResponseBody("/api/text/text-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class,
+        exerciseToBeImported = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + sourceExercise.getId(), exerciseToBeImported, TextExercise.class,
                 HttpStatus.CREATED);
 
         assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
@@ -1271,12 +1375,12 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradingCriteria.removeIf(criterion -> criterion != toUpdate);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", textExercise,
-                TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false",
+                de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedTextExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(updatedTextExercise.getGradingCriteria(), instruction -> instruction.getCredits() == 3)).isPresent();
         assertThat(updatedResults.getFirst().getScore()).isEqualTo(60);
-        assertThat(updatedResults.getFirst().getFeedbacks().getFirst().getCredits()).isEqualTo(3);
+        assertThat(updatedResults.getFirst().getFeedbacks()).extracting(Feedback::getCredits).containsExactly(3.0);
     }
 
     @Test
@@ -1300,7 +1404,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exampleSubmissionSet.add(exampleSubmission);
         textExercise.setExampleSubmissions(exampleSubmissionSet);
 
-        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false", textExercise, TextExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=false",
+                de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
     }
 
     @Test
@@ -1315,8 +1420,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         gradingCriteria.removeIf(criterion -> criterion.getTitle() == null);
         textExercise.setGradingCriteria(gradingCriteria);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=true", textExercise,
-                TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate" + "?deleteFeedback=true",
+                de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedTextExercise);
         assertThat(updatedTextExercise.getGradingCriteria()).hasSize(2);
         assertThat(updatedResults.getFirst().getScore()).isZero();
@@ -1329,7 +1434,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
-        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -1338,13 +1444,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         TextExercise textExerciseToBeConflicted = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExerciseToBeConflicted.setId(123456789L);
 
-        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate", textExerciseToBeConflicted, TextExercise.class, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate",
+                de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExerciseToBeConflicted), TextExercise.class, HttpStatus.CONFLICT);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExercise_notFound() throws Exception {
-        request.putWithResponseBody("/api/text/text-exercises/" + 123456789 + "/re-evaluate", textExercise, TextExercise.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody("/api/text/text-exercises/" + 123456789 + "/re-evaluate", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExercise.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -1432,12 +1540,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textExercise.setCourse(course2);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        var importedTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        var importedTextExercise = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), textExercise, TextExercise.class,
+                HttpStatus.CREATED);
 
         assertThat(textExerciseRepository.findById(importedTextExercise.getId())).isPresent();
 
         var importedExampleSubmission = importedTextExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
-        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getGradingInstruction();
+        var importedFeedbacks = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks();
+        assertThat(importedFeedbacks).hasSize(1);
+        GradingInstruction importedFeedbackGradingInstruction = importedFeedbacks.iterator().next().getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
@@ -1450,8 +1561,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
 
         var importedTextExerciseFromDB = textExerciseRepository.findWithExampleSubmissionsAndResultsById(importedTextExercise.getId()).orElseThrow();
-        var importedFeedbackGradingInstructionFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
-                .getFeedbacks().getFirst().getGradingInstruction();
+        var importedFeedbacksFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult().getFeedbacks();
+        assertThat(importedFeedbacksFromDb).hasSize(1);
+        var importedFeedbackGradingInstructionFromDb = importedFeedbacksFromDb.iterator().next().getGradingInstruction();
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());
 
@@ -1472,7 +1584,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setExampleSolutionPublicationDate(null);
         textExerciseRepository.save(textExercise);
 
-        CourseForDashboardDTO courseForDashboard = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+        CourseForDashboardDTO courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
                 HttpStatus.OK, CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         TextExercise textExerciseFromApi = textExerciseGetter.apply(course);
@@ -1488,7 +1600,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         textExerciseRepository.save(textExercise);
 
-        courseForDashboard = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         textExerciseFromApi = textExerciseGetter.apply(course);
@@ -1499,7 +1611,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         textExerciseRepository.save(textExercise);
 
-        courseForDashboard = request.get("/api/core/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+        courseForDashboard = request.get("/api/course/courses/" + textExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
                 CourseForDashboardDTO.class);
         course = courseForDashboard.course();
         textExerciseFromApi = textExerciseGetter.apply(course);

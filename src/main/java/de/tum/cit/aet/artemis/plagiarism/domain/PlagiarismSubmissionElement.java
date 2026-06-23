@@ -7,9 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.jplag.Token;
@@ -19,7 +16,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Entity
 @Table(name = "plagiarism_submission_element")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PlagiarismSubmissionElement extends DomainObject {
 
@@ -47,8 +43,8 @@ public class PlagiarismSubmissionElement extends DomainObject {
     public static PlagiarismSubmissionElement fromJPlagToken(Token token, PlagiarismSubmission plagiarismSubmission, Exercise exercise, File submissionDirectory) {
         PlagiarismSubmissionElement textSubmissionElement = new PlagiarismSubmissionElement();
 
-        textSubmissionElement.setColumn(token.getColumn());
-        textSubmissionElement.setLine(token.getLine());
+        textSubmissionElement.setColumn(token.getStartColumn());
+        textSubmissionElement.setLine(token.getStartLine());
         if (exercise instanceof ProgrammingExercise) {
             // Note: for text submissions 'file' must be null
             // Note: we want to get the relative path within the repository and not the absolute path

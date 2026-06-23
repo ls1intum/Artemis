@@ -1,6 +1,6 @@
 @if (course()?.isAtLeastEditor) {
-    <div class="d-flex flex-wrap justify-content-end">
-        <jhi-exercise-create-button [course]="course()" [exerciseType]="exerciseType()" [featureToggle]="featureToggle()" />
+    <div class="d-flex flex-wrap justify-content-end gap-2">
         <jhi-exercise-import-button [course]="course()" [exerciseType]="exerciseType()" [featureToggle]="featureToggle()" />
+        <jhi-exercise-create-button [course]="course()" [exerciseType]="exerciseType()" [featureToggle]="featureToggle()" />
     </div>
 }

@@ -1,3 +1,5 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SplitPaneHeaderComponent } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
@@ -7,6 +9,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('SplitPaneHeaderComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp1: SplitPaneHeaderComponent;
     let comp2: SplitPaneHeaderComponent;
     let fixture1: ComponentFixture<SplitPaneHeaderComponent>;
@@ -44,7 +48,7 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('selects the first file on change', () => {
-        const emitSpy = jest.spyOn(comp1.selectFile, 'emit');
+        const emitSpy = vi.spyOn(comp1.selectFile, 'emit');
         fixture1.detectChanges();
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(files[0].file);
@@ -55,7 +59,7 @@ describe('SplitPaneHeaderComponent', () => {
         fixture2.detectChanges();
         const activeFile = comp2.hasActiveFile();
 
-        expect(activeFile).toBeFalse();
+        expect(activeFile).toBe(false);
     });
 
     it('returns the active file', () => {
@@ -66,40 +70,41 @@ describe('SplitPaneHeaderComponent', () => {
 
     it('handles selection of a file', () => {
         const idx = 1;
-        comp1.showFiles = true;
-        jest.spyOn(comp1.selectFile, 'emit');
+        comp1.showFiles.set(true);
+        vi.spyOn(comp1.selectFile, 'emit');
 
         comp1.handleFileSelect(files[idx], idx, true);
 
         expect(comp1.activeFileIndex).toBe(idx);
-        expect(comp1.showFiles).toBeFalse();
+        expect(comp1.showFiles()).toBe(false);
         expect(comp1.selectFile.emit).toHaveBeenCalledOnce();
         expect(comp1.selectFile.emit).toHaveBeenCalledWith(files[idx].file);
     });
 
     it('has no files', () => {
         fixture2.componentRef.setInput('files', []);
-        expect(comp2.hasFiles()).toBeFalse();
+        expect(comp2.hasFiles()).toBe(false);
     });
 
     it('has files', () => {
-        expect(comp1.hasFiles()).toBeTrue();
+        expect(comp1.hasFiles()).toBe(true);
     });
 
     it('toggles "show files"', () => {
-        comp1.showFiles = false;
+        comp1.showFiles.set(false);
 
         comp1.toggleShowFiles(false);
 
-        expect(comp1.showFiles).toBeTrue();
+        expect(comp1.showFiles()).toBe(true);
     });
 
     it('does not toggle "show files"', () => {
-        comp2.showFiles = false;
+        fixture2.componentRef.setInput('files', []);
+        comp2.showFiles.set(false);
 
         comp2.toggleShowFiles(false);
 
-        expect(comp1.showFiles).toBeFalse();
+        expect(comp2.showFiles()).toBe(false);
     });
 
     it('should emit selected file through fileSelectedSubject', () => {
@@ -119,15 +124,15 @@ describe('SplitPaneHeaderComponent', () => {
         const idx = 0;
         const selectedFile = { idx: idx, file: files[idx] };
         const lockFilesEnabled = true;
-        comp1.showFiles = true;
-        comp2.showFiles = true;
+        comp1.showFiles.set(true);
+        comp2.showFiles.set(true);
         fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
         fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
 
         fixture1.changeDetectorRef.detectChanges();
         fixture2.changeDetectorRef.detectChanges();
 
-        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
+        const handleFileSelectWithoutPropagationSpy = vi.spyOn(comp2, 'handleFileSelect');
 
         comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
 
@@ -145,8 +150,8 @@ describe('SplitPaneHeaderComponent', () => {
         fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
         fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
 
-        const handleFileSelect = jest.spyOn(comp1, 'handleFileSelect');
-        const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
+        const handleFileSelect = vi.spyOn(comp1, 'handleFileSelect');
+        const handleFileSelectWithoutPropagationSpy = vi.spyOn(comp2, 'handleFileSelect');
         comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
         fixture1.changeDetectorRef.detectChanges();
         fixture2.changeDetectorRef.detectChanges();
@@ -156,7 +161,7 @@ describe('SplitPaneHeaderComponent', () => {
     });
 
     it('should trigger dropdown hover subject on mouseenter on the first file element', () => {
-        comp1.showFiles = true;
+        comp1.showFiles.set(true);
         fixture1.changeDetectorRef.detectChanges();
 
         const fileList = fixture1.debugElement.query(By.css('.split-pane-header-files'));
@@ -166,7 +171,7 @@ describe('SplitPaneHeaderComponent', () => {
         expect(fileItems.length).toBeGreaterThan(0);
 
         const firstFileItem = fileItems[0];
-        const triggerMouseEnterSpy = jest.spyOn(comp1 as any, 'triggerMouseEnter');
+        const triggerMouseEnterSpy = vi.spyOn(comp1 as any, 'triggerMouseEnter');
 
         firstFileItem.triggerEventHandler('mouseenter', null);
         expect(triggerMouseEnterSpy).toHaveBeenCalledWith(comp1.files()[0], 0);
@@ -178,41 +183,41 @@ describe('SplitPaneHeaderComponent', () => {
         const mockIdx = 0;
 
         fixture1.componentRef.setInput('isLockFilesEnabled', true);
-        jest.spyOn(comp1 as any, 'handleDropdownHover');
+        vi.spyOn(comp1 as any, 'handleDropdownHover');
 
         comp1.ngOnInit();
         comp1.dropdownHoverSubject()!.next({ file: mockFile, idx: mockIdx });
 
         expect(comp1['handleDropdownHover']).toHaveBeenCalledWith(mockFile, mockIdx);
-        expect(comp1.hoveredFileIndex).toBe(mockIdx);
+        expect(comp1.hoveredFileIndex()).toBe(mockIdx);
     });
 
     it('should update showFiles when hasFiles returns true', () => {
-        comp1.hasFiles = jest.fn().mockReturnValue(true);
-        const initialShowFiles = comp1.showFiles;
+        comp1.hasFiles = vi.fn().mockReturnValue(true);
+        const initialShowFiles = comp1.showFiles();
 
         comp1.toggleShowFiles(false);
 
-        expect(comp1.showFiles).not.toBe(initialShowFiles);
+        expect(comp1.showFiles()).not.toBe(initialShowFiles);
     });
 
     it('should not update showFiles when hasFiles returns false', () => {
-        comp1.hasFiles = jest.fn().mockReturnValue(false);
-        const initialShowFiles = comp1.showFiles;
+        comp1.hasFiles = vi.fn().mockReturnValue(false);
+        const initialShowFiles = comp1.showFiles();
 
         comp1.toggleShowFiles(false);
 
-        expect(comp1.showFiles).toBe(initialShowFiles);
+        expect(comp1.showFiles()).toBe(initialShowFiles);
     });
 
     it('should set hoveredFileIdx to -1 if file does not match and getIndexOf returns -1', () => {
         const mockFile = { file: 'testFile', hasMatch: true };
         const mockIdx = files.length;
 
-        jest.spyOn(comp1 as any, 'getIndexOf').mockReturnValue(-1);
+        vi.spyOn(comp1 as any, 'getIndexOf').mockReturnValue(-1);
 
         (comp1 as any).handleDropdownHover(mockFile, mockIdx);
 
-        expect(comp1.hoveredFileIndex).toBe(-1);
+        expect(comp1.hoveredFileIndex()).toBe(-1);
     });
 });

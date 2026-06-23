@@ -25,6 +25,7 @@ import com.vdurmont.semver4j.Semver;
 import com.vdurmont.semver4j.SemverException;
 
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.core.util.ArtemisVersionUtil;
 
 /**
  * Service for checking the latest Artemis version from GitHub releases.
@@ -195,15 +196,16 @@ public class ArtemisVersionService {
 
         try {
             String normalizedCurrent = normalizeVersion(current);
-            Semver currentSemver = new Semver(normalizedCurrent, Semver.SemverType.NPM);
-            Semver latestSemver = new Semver(latest, Semver.SemverType.NPM);
+            Semver currentSemver = ArtemisVersionUtil.parseForComparison(normalizedCurrent);
+            Semver latestSemver = ArtemisVersionUtil.parseForComparison(latest);
 
             return latestSemver.isGreaterThan(currentSemver);
         }
         catch (SemverException e) {
             log.debug("Failed to compare versions '{}' and '{}': {}", current, latest, e.getMessage());
-            // Fall back to string comparison if semver parsing fails
-            return !normalizeVersion(current).equals(latest);
+            // Malformed inputs must not falsely report "update available"; surface unparseable
+            // versions as "no update" rather than guessing via string comparison.
+            return false;
         }
     }
 

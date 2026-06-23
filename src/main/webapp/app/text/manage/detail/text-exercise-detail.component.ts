@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -7,16 +7,16 @@ import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exerc
 import { Subscription } from 'rxjs';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextExerciseService } from '../text-exercise/service/text-exercise.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
+import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import { EventManager } from 'app/foundation/service/event-manager.service';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -25,9 +25,9 @@ import {
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
 } from 'app/exercise/util/utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -47,15 +47,15 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly dayjs = dayjs;
 
-    textExercise: TextExercise;
-    course?: Course;
-    isExamExercise: boolean;
+    readonly textExercise = signal<TextExercise>(undefined!);
+    readonly course = signal<Course | undefined>(undefined);
+    readonly isExamExercise = signal<boolean>(false);
     formattedProblemStatement: SafeHtml | null;
     formattedExampleSolution: SafeHtml | null;
     formattedGradingInstructions: SafeHtml | null;
 
-    doughnutStats: ExerciseManagementStatisticsDto;
-    detailOverviewSections: DetailOverviewSection[];
+    readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
+    readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
 
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -78,25 +78,25 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     load(exerciseId: number) {
         // TODO: Use a separate find method for exam exercises containing course, exam, exerciseGroup and exercise exerciseId
         this.textExerciseService.find(exerciseId).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
-            this.textExercise = textExerciseResponse.body!;
-            this.isExamExercise = !!this.textExercise.exerciseGroup;
-            this.course = this.isExamExercise ? this.textExercise.exerciseGroup?.exam?.course : this.textExercise.course;
+            this.textExercise.set(textExerciseResponse.body!);
+            this.isExamExercise.set(!!this.textExercise().exerciseGroup);
+            this.course.set(this.isExamExercise() ? this.textExercise().exerciseGroup?.exam?.course : this.textExercise().course);
 
-            this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise.gradingInstructions);
-            this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise.problemStatement);
-            this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise.exampleSolution);
-            this.detailOverviewSections = this.getExerciseDetailSections();
+            this.formattedGradingInstructions = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().gradingInstructions);
+            this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().problemStatement);
+            this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.textExercise().exampleSolution);
+            this.detailOverviewSections.set(this.getExerciseDetailSections());
         });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
-            this.doughnutStats = statistics;
+            this.doughnutStats.set(statistics);
         });
     }
 
     getExerciseDetailSections(): DetailOverviewSection[] {
-        const exercise = this.textExercise;
+        const exercise = this.textExercise();
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
-        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, this.textExercise);
+        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, this.textExercise());
         const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
@@ -131,6 +131,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
      * Subscribe to changes of the text exercise.
      */
     registerChangeInTextExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise.id!));
+        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise().id!));
     }
 }

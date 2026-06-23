@@ -6,16 +6,16 @@ import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { Component, input, output } from '@angular/core';
 
@@ -92,7 +92,7 @@ describe('AssessmentInstructionsComponent', () => {
     it('should initialize exercise input for modeling exercise', () => {
         const modelingExercise = {
             id: 1,
-            exampleSolutionModel: '{"elements": [{"id": 1}]}',
+            exampleSolutionModel: '{"version": "3.0.0", "elements": {}, "relationships": {}}',
             diagramType: UMLDiagramType.ClassDiagram,
             exampleSolutionExplanation: 'explanation',
             type: ExerciseType.MODELING,

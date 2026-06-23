@@ -4,8 +4,7 @@ export class IrisSessionDTO {
     id: number;
     title?: string;
     creationDate: Date;
-    lastActivityDate?: Date;
-    chatMode: ChatServiceMode;
+    mode: ChatServiceMode;
     entityId: number;
-    entityName: string;
+    entityName?: string;
 }

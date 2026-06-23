@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +55,7 @@ class OAuth2JWKSServiceTest {
 
         clientRegistration = mock(ClientRegistration.class);
         when(clientRegistration.getRegistrationId()).thenReturn(clientRegistrationId);
-        when(onlineCourseConfigurationService.getAllClientRegistrations()).thenReturn(Collections.singletonList(clientRegistration));
+        when(onlineCourseConfigurationService.getAllClientRegistrations()).thenReturn(List.of(clientRegistration));
 
         when(distributedDataAccessService.getDistributedClientRegistrationIdToJwk()).thenReturn(clientRegistrationIdToJwk);
         when(distributedDataAccessService.getClientRegistrationIdToJwk()).thenReturn(Collections.emptyMap());

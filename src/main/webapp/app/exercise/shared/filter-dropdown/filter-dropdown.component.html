@@ -1,0 +1,55 @@
+@if (groupedFilters()) {
+    <!-- Grouped mode -->
+    <p-select
+        size="small"
+        appendTo="self"
+        [group]="true"
+        [options]="groupedFilters()!"
+        optionGroupLabel="labelKey"
+        optionGroupChildren="items"
+        [ngModel]="isFiltered() ? activeFilter() : null"
+        [showClear]="isFiltered()"
+        [placeholder]="filterLabelKey() | artemisTranslate"
+        (onChange)="filterChange.emit($event.value ?? allValue())"
+        [class]="isFiltered() ? 'filter-dropdown-active' : 'filter-dropdown-default'"
+        aria-label="Filter Dropdown"
+    >
+        <ng-template #selectedItem>
+            <div class="d-flex align-items-center">
+                <i class="pi pi-filter"></i>
+                <span class="ms-2">{{ filterLabelKey() | artemisTranslate }}: {{ translationPrefix() + activeFilter() | artemisTranslate }}</span>
+            </div>
+        </ng-template>
+        <ng-template #group let-group>
+            @if (group.labelKey) {
+                <span>{{ group.labelKey | artemisTranslate }}</span>
+            }
+        </ng-template>
+        <ng-template #item let-filter>
+            {{ translationPrefix() + filter | artemisTranslate }}
+        </ng-template>
+    </p-select>
+} @else {
+    <!-- Flat mode -->
+    <p-select
+        size="small"
+        appendTo="self"
+        [options]="filters()"
+        [ngModel]="isFiltered() ? activeFilter() : null"
+        [showClear]="isFiltered()"
+        [placeholder]="filterLabelKey() | artemisTranslate"
+        (onChange)="filterChange.emit($event.value ?? allValue())"
+        [class]="isFiltered() ? 'filter-dropdown-active' : 'filter-dropdown-default'"
+        aria-label="Filter Dropdown"
+    >
+        <ng-template #selectedItem>
+            <div class="d-flex align-items-center">
+                <i class="pi pi-filter"></i>
+                <span class="ms-2">{{ filterLabelKey() | artemisTranslate }}: {{ translationPrefix() + activeFilter() | artemisTranslate }}</span>
+            </div>
+        </ng-template>
+        <ng-template #item let-filter>
+            {{ translationPrefix() + filter | artemisTranslate }}
+        </ng-template>
+    </p-select>
+}

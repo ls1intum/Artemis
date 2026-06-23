@@ -24,8 +24,11 @@ public abstract class AbstractModuleTestArchitectureTest extends AbstractArchite
 
     @Test
     void integrationTestsShouldExtendAbstractModuleIntegrationTest() {
+        // allowEmptyShould(true): the rule is "if there are IntegrationTest classes, they must extend X" —
+        // a module with no integration tests yet (a freshly extracted module before its tests are added)
+        // is still allowed.
         classesOfThisModuleThat().haveSimpleNameEndingWith("IntegrationTest").should().beAssignableTo(isAssignableToAnyAllowedClass(getAbstractModuleIntegrationTestClasses()))
-                .because("All integration tests should extend any of %s".formatted(getAbstractModuleIntegrationTestClasses())).check(testClasses);
+                .allowEmptyShould(true).because("All integration tests should extend any of %s".formatted(getAbstractModuleIntegrationTestClasses())).check(testClasses);
     }
 
     // TODO: Many integration tests across multiple modules still use @Autowired fields.
@@ -63,14 +66,14 @@ public abstract class AbstractModuleTestArchitectureTest extends AbstractArchite
                 // Check fields for @Autowired
                 for (JavaField field : javaClass.getFields()) {
                     if (field.isAnnotatedWith(Autowired.class)) {
-                        String message = String.format("%s has a field %s annotated with @Autowired", javaClass.getName(), field.getName());
+                        String message = "%s has a field %s annotated with @Autowired".formatted(javaClass.getName(), field.getName());
                         events.add(SimpleConditionEvent.violated(field, message));
                     }
                 }
 
                 // Check methods for @Autowired
                 javaClass.getMethods().stream().filter(method -> method.isAnnotatedWith(Autowired.class)).forEach(method -> {
-                    String message = String.format("%s has a method %s annotated with @Autowired", javaClass.getName(), method.getName());
+                    String message = "%s has a method %s annotated with @Autowired".formatted(javaClass.getName(), method.getName());
                     events.add(SimpleConditionEvent.violated(method, message));
                 });
             }

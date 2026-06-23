@@ -1,9 +1,9 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 @Component({
     selector: 'jhi-expandable-section',
@@ -17,7 +17,7 @@ export class ExpandableSectionComponent implements OnInit {
     readonly hasTranslation = input(true);
     readonly isSubHeader = input(false);
 
-    isCollapsed: boolean;
+    readonly isCollapsed = signal<boolean>(undefined!);
     // Icons
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
@@ -25,16 +25,16 @@ export class ExpandableSectionComponent implements OnInit {
     readonly PREFIX = 'collapsed.';
 
     ngOnInit(): void {
-        this.isCollapsed = !!this.localStorageService.retrieve(this.storageKey);
-        this.localStorageService.store(this.storageKey, this.isCollapsed);
+        this.isCollapsed.set(!!this.localStorageService.retrieve(this.storageKey));
+        this.localStorageService.store(this.storageKey, this.isCollapsed());
     }
 
     /**
      * Toggle the state of the instruction block and store the updated state in the local storage.
      */
     toggleCollapsed() {
-        this.isCollapsed = !this.isCollapsed;
-        this.localStorageService.store(this.storageKey, this.isCollapsed);
+        this.isCollapsed.update((collapsed) => !collapsed);
+        this.localStorageService.store(this.storageKey, this.isCollapsed());
     }
 
     /**

@@ -5,7 +5,7 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 export type EntityResponseType = HttpResponse<Result>;
 type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
@@ -24,7 +24,7 @@ export class ModelingAssessmentService {
             params = params.set('submit', 'true');
         }
         const body: ModelingAssessmentDTO = { feedbacks, assessmentNote };
-        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/result/${resultId}/assessment`;
+        const url = `${this.resourceUrl}/modeling-submissions/${submissionId}/results/${resultId}/assessment`;
         return this.http.put<Result>(url, body, { params }).pipe(map((res: Result) => this.convertResult(res)));
     }
 
@@ -43,12 +43,19 @@ export class ModelingAssessmentService {
         return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
-    getAssessment(submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).pipe(map((res) => this.convertResult(res)));
+    /**
+     * Retrieves the assessment result for a modeling submission.
+     * @param submissionId - The ID of the submission
+     * @param resultId - Optional ID of a specific result to retrieve; if not provided, returns the latest result
+     * @returns Observable of the assessment result
+     */
+    getAssessment(submissionId: number, resultId?: number): Observable<Result> {
+        const params = resultId ? { resultId: resultId.toString() } : undefined;
+        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`, { params }).pipe(map((res) => this.convertResult(res)));
     }
 
     getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
-        const url = `${this.resourceUrl}/exercise/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`;
+        const url = `${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions/${submissionId}/example-assessment`;
         return this.http.get<Result>(url).pipe(map((res) => this.convertResult(res)));
     }
 

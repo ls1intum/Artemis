@@ -40,9 +40,9 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
-class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "attachmentunitsintegrationtest";
 
@@ -75,7 +75,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
-        this.invalidLecture = lectureUtilService.createLecture(null, null);
+        this.invalidLecture = lectureUtilService.createLecture(null);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
         this.lectureUnitSplits = new LectureUnitSplitInformationDTO(units, 1, "Break");
         // Add users that are not in the course
@@ -300,7 +300,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(attachmentVideoUnitList).isEqualTo(attachmentVideoUnits);
 
         // first unit
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnitList.getFirst().getAttachment().getLink());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnitList.getFirst().getAttachment().getLink());
         byte[] fileBytesFirst = request.get(requestUrl, HttpStatus.OK, byte[].class);
 
         try (PDDocument document = Loader.loadPDF(fileBytesFirst)) {
@@ -310,7 +310,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
         // second unit
         String attachmentPathSecondUnit = attachmentVideoUnitList.get(1).getAttachment().getLink();
-        String attachmentRequestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentPathSecondUnit);
+        String attachmentRequestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, attachmentPathSecondUnit);
         byte[] fileBytesSecond = request.get(attachmentRequestUrl, HttpStatus.OK, byte[].class);
 
         try (PDDocument document = Loader.loadPDF(fileBytesSecond)) {

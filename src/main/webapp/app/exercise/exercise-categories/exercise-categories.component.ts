@@ -1,14 +1,15 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { NgClass, NgStyle } from '@angular/common';
+import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IncludedInScoreBadgeComponent } from '../exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { DifficultyBadgeComponent } from '../exercise-headers/difficulty-badge/difficulty-badge.component';
-import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
-import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/not-released-tag.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
+import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 interface ShowTagsConfig {
     notReleased?: boolean;
@@ -28,17 +29,15 @@ export class ExerciseCategoriesComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
 
-    @Input() exercise: Exercise;
-    @Input() isSmall = false;
-
-    @Input()
-    showTags: ShowTagsConfig = {
+    readonly exercise = input.required<Exercise>();
+    readonly isSmall = input(false);
+    readonly showTags = input<ShowTagsConfig>({
         notReleased: false,
         quizLive: false,
         difficulty: false,
         difficultyIfNoLevel: false,
         includedInScore: false,
-    };
+    });
 
     asQuizExercise(exercise: Exercise): QuizExercise {
         return exercise as QuizExercise;

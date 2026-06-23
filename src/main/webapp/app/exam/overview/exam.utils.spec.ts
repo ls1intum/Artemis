@@ -1,13 +1,17 @@
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { TestBed } from '@angular/core/testing';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 
+import { beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 let artemisServerDateService: ArtemisServerDateService;
 
 describe('ExamUtils', () => {
+    setupTestBed({ zoneless: true });
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             providers: [{ provide: ArtemisServerDateService, useClass: MockArtemisServerDateService }],
@@ -24,7 +28,7 @@ describe('ExamUtils', () => {
             const exam = undefined;
 
             const resultsArePublished = isExamResultPublished(isTestRun, exam, artemisServerDateService);
-            expect(resultsArePublished).toBeTrue();
+            expect(resultsArePublished).toBe(true);
         });
 
         it('should be false if publishReleaseDate is in the future', () => {
@@ -33,7 +37,7 @@ describe('ExamUtils', () => {
             const exam = { publishResultsDate: dateInFuture } as Exam;
 
             const resultsArePublished = isExamResultPublished(isTestRun, exam, artemisServerDateService);
-            expect(resultsArePublished).toBeFalse();
+            expect(resultsArePublished).toBe(false);
         });
 
         it('should be true if publishReleaseDate is in the past', () => {
@@ -42,7 +46,7 @@ describe('ExamUtils', () => {
             const exam = { publishResultsDate: dateInPast } as Exam;
 
             const resultsArePublished = isExamResultPublished(isTestRun, exam, artemisServerDateService);
-            expect(resultsArePublished).toBeTrue();
+            expect(resultsArePublished).toBe(true);
         });
     });
 });

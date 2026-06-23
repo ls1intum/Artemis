@@ -1,6 +1,6 @@
-import { Component, Input, inject, output } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -8,12 +8,12 @@ import { AbstractDialogComponent } from 'app/communication/course-conversations-
 import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { ConversationMembersComponent } from './tabs/conversation-members/conversation-members.component';
 import { ConversationInfoComponent } from './tabs/conversation-info/conversation-info.component';
 import { ConversationSettingsComponent } from './tabs/conversation-settings/conversation-settings.component';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
@@ -27,6 +27,7 @@ export enum ConversationDetailTabs {
 @Component({
     selector: 'jhi-conversation-detail-dialog',
     templateUrl: './conversation-detail-dialog.component.html',
+    styleUrls: ['./conversation-detail-dialog.component.scss'],
     imports: [
         ChannelIconComponent,
         FaIconComponent,
@@ -41,23 +42,24 @@ export enum ConversationDetailTabs {
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     conversationService = inject(ConversationService);
 
-    @Input() public activeConversation: ConversationDTO;
-    @Input() course: Course;
-    @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
+    activeConversation = signal<ConversationDTO | undefined>(undefined);
+    course = signal<Course | undefined>(undefined);
+    selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
     isInitialized = false;
-    isOneToOneChat = false;
-    otherUser?: ConversationUserDTO;
+    readonly isOneToOneChat = signal(false);
+    readonly otherUser = signal<ConversationUserDTO | undefined>(undefined);
     readonly faPeopleGroup = faPeopleGroup;
     readonly userNameClicked = output<number>();
 
     initialize() {
         super.initialize(['course', 'activeConversation', 'selectedTab']);
-        if (this.activeConversation) {
-            const conversation = getAsOneToOneChatDTO(this.activeConversation);
+        const activeConversation = this.activeConversation();
+        if (activeConversation) {
+            const conversation = getAsOneToOneChatDTO(activeConversation);
             if (conversation) {
-                this.isOneToOneChat = true;
-                this.otherUser = conversation.members?.find((user) => !user.isRequestingUser);
+                this.isOneToOneChat.set(true);
+                this.otherUser.set(conversation.members?.find((user) => !user.isRequestingUser));
             }
         }
     }
@@ -65,13 +67,13 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     getAsChannel = getAsChannelDTO;
     getAsGroupChat = getAsGroupChatDTO;
 
-    changesWerePerformed = false;
+    readonly changesWerePerformed = signal(false);
 
     Tabs = ConversationDetailTabs;
 
     clear() {
-        if (this.changesWerePerformed) {
-            this.close();
+        if (this.changesWerePerformed()) {
+            this.close(true);
         } else {
             this.dismiss();
         }
@@ -97,7 +99,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     }
 
     private markAsChangedAndClose() {
-        this.changesWerePerformed = true;
+        this.changesWerePerformed.set(true);
         this.clear();
     }
 
@@ -106,6 +108,11 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
      */
     onUserNameClicked(userId: number) {
         this.userNameClicked.emit(userId);
+        // Also invoke callback passed via dialog data (for DynamicDialog callers)
+        const callback = this.dialogConfig?.data?.onUserNameClicked;
+        if (callback) {
+            callback(userId);
+        }
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

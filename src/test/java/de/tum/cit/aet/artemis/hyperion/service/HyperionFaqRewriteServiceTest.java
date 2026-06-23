@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,13 +19,13 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.dto.RewriteFaqResponseDTO;
 import io.micrometer.observation.ObservationRegistry;
 
@@ -43,10 +44,13 @@ class HyperionFaqRewriteServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
+        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
         var observationRegistry = ObservationRegistry.create();
-        var objectMapper = new ObjectMapper();
+        var objectMapper = JsonObjectMapper.get();
         this.hyperionFaqRewriteService = new HyperionFaqRewriteService(faqRepository, chatClient, templateService, observationRegistry, objectMapper);
 
         existingFaq = new Faq();

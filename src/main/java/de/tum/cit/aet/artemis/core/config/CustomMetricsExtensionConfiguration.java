@@ -13,9 +13,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 
+import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint;
+import de.tum.cit.aet.artemis.core.config.metric.NodeMetricsCollector;
 import de.tum.cit.aet.artemis.core.web.CustomMetricsExtension;
 import io.micrometer.core.annotation.Timed;
-import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
 
 /**
  * CustomMetricsExtensionConfiguration.
@@ -27,23 +28,23 @@ public class CustomMetricsExtensionConfiguration {
     @Configuration
     @Lazy
     @ConditionalOnClass(Timed.class)
-    @AutoConfigureAfter(JHipsterMetricsEndpointConfiguration.class)
-    public static class JHipsterMetricsEndpointConfiguration {
+    @AutoConfigureAfter(ArtemisMetricsEndpointConfiguration.class)
+    public static class ArtemisMetricsEndpointConfiguration {
 
         /**
-         * customMetricsExtension.
+         * Creates the CustomMetricsExtension that adds multi-node aggregation and active user counts.
          *
-         * @param jHipsterMetricsEndpoint Default JHI Metrics
-         * @param simpUserRegistry        Registry used to retrieve the number of active users.
-         * @return CustomMetricsExtension object.
+         * @param nodeMetricsCollector collector for multi-node metrics aggregation
+         * @param simpUserRegistry     registry used to retrieve the number of active WebSocket users
+         * @return CustomMetricsExtension object
          */
         @Bean
         @Lazy
-        @ConditionalOnBean({ JHipsterMetricsEndpoint.class, SimpUserRegistry.class })
+        @ConditionalOnBean({ ArtemisMetricsEndpoint.class, NodeMetricsCollector.class, SimpUserRegistry.class })
         @ConditionalOnMissingBean
         @ConditionalOnAvailableEndpoint
-        public CustomMetricsExtension customMetricsExtension(JHipsterMetricsEndpoint jHipsterMetricsEndpoint, SimpUserRegistry simpUserRegistry) {
-            return new CustomMetricsExtension(jHipsterMetricsEndpoint, simpUserRegistry);
+        public CustomMetricsExtension customMetricsExtension(NodeMetricsCollector nodeMetricsCollector, SimpUserRegistry simpUserRegistry) {
+            return new CustomMetricsExtension(nodeMetricsCollector, simpUserRegistry);
         }
     }
 }

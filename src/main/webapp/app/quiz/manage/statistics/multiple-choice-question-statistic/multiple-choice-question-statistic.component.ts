@@ -1,29 +1,29 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { MultipleChoiceQuestionStatistic } from 'app/quiz/shared/entities/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuestionStatisticComponent, blueColor, greenColor, redColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
     templateUrl: './multiple-choice-question-statistic.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
     providers: [QuizStatisticUtil],
-    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
+    imports: [TranslateDirective, ChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticComponent {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     declare question: MultipleChoiceQuestion;
 
-    answerTextRendered: SafeHtml[];
+    readonly answerTextRendered = signal<SafeHtml[]>(undefined!);
 
     // Icons
     faSync = faSync;
@@ -40,7 +40,7 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
         if (!refresh) {
             // render Markdown-text
             this.questionTextRendered = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
-            this.answerTextRendered = this.question.answerOptions!.map((answer) => this.artemisMarkdown.safeHtmlForMarkdown(answer.text));
+            this.answerTextRendered.set(this.question.answerOptions!.map((answer) => this.artemisMarkdown.safeHtmlForMarkdown(answer.text)));
             this.loadLayout();
         }
         this.loadData();

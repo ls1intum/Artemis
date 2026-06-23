@@ -1,12 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslatePipe } from '@ngx-translate/core';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StarRatingComponent } from '../star-rating/star-rating.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -23,8 +23,8 @@ export class RatingListComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
 
-    public ratings: RatingListItem[] = [];
-    public totalElements = 0;
+    readonly ratings = signal<RatingListItem[]>([]);
+    readonly totalElements = signal(0);
     public page = 1; // ngb-pagination is 1-indexed
     public pageSize = 20;
 
@@ -49,8 +49,8 @@ export class RatingListComponent implements OnInit {
         const sortDirection = this.ratingsReverseOrder ? 'asc' : 'desc';
         const sort = `${this.ratingsSortingPredicate},${sortDirection}`;
         this.ratingService.getRatingsForDashboard(this.courseId, this.page - 1, this.pageSize, sort).subscribe((pageResult) => {
-            this.ratings = pageResult.content;
-            this.totalElements = pageResult.totalElements;
+            this.ratings.set(pageResult.content);
+            this.totalElements.set(pageResult.totalElements);
         });
     }
 

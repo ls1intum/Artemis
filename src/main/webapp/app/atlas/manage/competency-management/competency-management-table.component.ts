@@ -1,13 +1,15 @@
-import { Component, DestroyRef, effect, inject, input, output } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
-import { onError } from 'app/shared/util/global.utils';
+import { onError } from 'app/foundation/util/global.utils';
 import { Subject } from 'rxjs';
-import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { faFileImport, faMagnifyingGlass, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import {
     ImportAllCompetenciesComponent,
     ImportAllCompetenciesDialogData,
@@ -16,19 +18,24 @@ import {
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { InputTextModule } from 'primeng/inputtext';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
+import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 
 @Component({
     selector: 'jhi-competency-management-table',
     templateUrl: './competency-management-table.component.html',
+    styleUrl: './competency-management-table.component.scss',
     imports: [
-        NgbProgressbar,
         NgbDropdown,
         NgbDropdownMenu,
         NgbDropdownToggle,
@@ -39,6 +46,11 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
         ArtemisTranslatePipe,
         RouterModule,
         ArtemisDatePipe,
+        InputTextModule,
+        IconFieldModule,
+        InputIconModule,
+        SortDirective,
+        SortByDirective,
     ],
 })
 export class CompetencyManagementTableComponent {
@@ -61,23 +73,97 @@ export class CompetencyManagementTableComponent {
     private readonly translateService = inject(TranslateService);
 
     readonly faFileImport = faFileImport;
+    readonly faMagnifyingGlass = faMagnifyingGlass;
     readonly faPlus = faPlus;
     readonly faPencilAlt = faPencilAlt;
     readonly faTrash = faTrash;
+    readonly faSort = faSort;
 
     readonly getIcon = getIcon;
+
+    readonly filterText = signal<string>('');
+    readonly searchPlaceholder = signal<string>('');
+    private readonly _sortPredicate = signal<string>('title');
+    private readonly _sortAscending = signal<boolean>(true);
+
+    // Getter and setter pairs for jhiSort
+    get sortPredicate(): string {
+        return this._sortPredicate();
+    }
+    set sortPredicate(val: string) {
+        this._sortPredicate.set(val);
+    }
+
+    get sortAscending(): boolean {
+        return this._sortAscending();
+    }
+    set sortAscending(val: boolean) {
+        this._sortAscending.set(val);
+    }
+
+    readonly filteredAndSortedCompetencies = computed(() => {
+        const text = this.filterText().trim().toLowerCase();
+        const predicate = this._sortPredicate();
+        const ascending = this._sortAscending();
+
+        let result = this.courseCompetencies();
+
+        if (text) {
+            result = result.filter((c) => (c.title ?? '').toLowerCase().includes(text));
+        }
+
+        result = [...result].sort((a, b) => {
+            let valA: number | string;
+            let valB: number | string;
+
+            switch (predicate) {
+                case 'taxonomy':
+                    valA = a.taxonomy ?? '';
+                    valB = b.taxonomy ?? '';
+                    break;
+                case 'softDueDate':
+                    valA = a.softDueDate ? dayjs(a.softDueDate).valueOf() : 0;
+                    valB = b.softDueDate ? dayjs(b.softDueDate).valueOf() : 0;
+                    break;
+                case 'masteredStudents': {
+                    const totalA = a.courseProgress?.numberOfStudents ?? 0;
+                    const totalB = b.courseProgress?.numberOfStudents ?? 0;
+                    valA = totalA > 0 ? (a.courseProgress?.numberOfMasteredStudents ?? 0) / totalA : 0;
+                    valB = totalB > 0 ? (b.courseProgress?.numberOfMasteredStudents ?? 0) / totalB : 0;
+                    break;
+                }
+                default:
+                    valA = a.title ?? '';
+                    valB = b.title ?? '';
+            }
+
+            if (valA < valB) return ascending ? -1 : 1;
+            if (valA > valB) return ascending ? 1 : -1;
+            return 0;
+        });
+
+        return result;
+    });
 
     constructor() {
         // Keep service in sync with competency type
         effect(() => {
             const type = this.competencyType();
             this.service = type === CourseCompetencyType.COMPETENCY ? this.competencyService : this.prerequisiteService;
+            this.searchPlaceholder.set(this.translateService.instant(`artemisApp.${type}.manage.search`));
+        });
+
+        this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
+            this.searchPlaceholder.set(this.translateService.instant(`artemisApp.${this.competencyType()}.manage.search`));
         });
 
         inject(DestroyRef).onDestroy(() => {
             this.dialogErrorSource.complete();
         });
     }
+
+    // Required by jhiSort (sortChange) event. Sorting is handled reactively via signals.
+    sortRows(): void {}
 
     /**
      * Opens a modal for selecting a course to import all competencies from.
@@ -90,7 +176,7 @@ export class CompetencyManagementTableComponent {
         };
         const dialogRef = this.dialogService.open(ImportAllCompetenciesComponent, {
             header: this.translateService.instant(`artemisApp.${this.competencyType()}.importAll.title`),
-            style: { width: '60rem', height: '85vh' },
+            style: { width: '90vw', maxWidth: '60rem', height: '85vh' },
             contentStyle: { height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
             modal: true,
             closable: true,

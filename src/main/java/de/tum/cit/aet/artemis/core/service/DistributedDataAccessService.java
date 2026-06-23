@@ -21,11 +21,11 @@ import org.springframework.stereotype.Service;
 
 import com.nimbusds.jose.jwk.JWK;
 
+import de.tum.cit.aet.artemis.account.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
-import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;

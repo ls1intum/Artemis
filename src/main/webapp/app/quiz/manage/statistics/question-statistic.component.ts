@@ -3,11 +3,11 @@ import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-st
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { WebsocketService } from 'app/shared/service/websocket.service';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 
@@ -26,7 +26,6 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     protected accountService = inject(AccountService);
     protected quizExerciseService = inject(QuizExerciseService);
     protected websocketService = inject(WebsocketService);
-    protected changeDetector = inject(ChangeDetectorRef);
 
     question: QuizQuestion;
     questionStatistic: QuizQuestionStatistic;
@@ -188,11 +187,10 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
      * check if the rated or unrated, then load the rated or unrated data into the diagram
      */
     loadDataInDiagram() {
-        this.ngxColor.domain = [];
         // if show Solution is true use the label, backgroundColor and Data, which show the solution
         if (this.showSolution) {
             // show Solution: use the backgroundColor which shows the solution
-            this.ngxColor.domain = this.backgroundSolutionColors;
+            this.chartColors.set([...this.backgroundSolutionColors]);
 
             this.setData(this.questionStatistic);
             const additionalData = this.rated ? this.ratedCorrectData : this.unratedCorrectData;
@@ -201,14 +199,14 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             this.chartLabels = this.solutionLabels;
         } else {
             // don't show Solution: use the backgroundColor which doesn't show the solution
-            this.ngxColor.domain = this.backgroundColors;
+            this.chartColors.set([...this.backgroundColors]);
 
             this.setData(this.questionStatistic);
             // don't show Solution
             this.chartLabels = this.labels;
         }
 
-        this.pushDataToNgxEntry(this.changeDetector);
+        this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.questionStatistic.xAxes', 'artemisApp.showStatistic.questionStatistic.yAxes');
     }
 }

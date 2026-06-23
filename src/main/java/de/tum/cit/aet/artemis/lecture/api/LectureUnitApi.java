@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.jspecify.annotations.NonNull;
@@ -7,7 +8,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -58,5 +59,15 @@ public class LectureUnitApi extends AbstractLectureApi {
 
     public LectureUnit importLectureUnit(LectureUnit sourceLectureUnit, Lecture newLecture) {
         return lectureUnitImportService.importLectureUnit(sourceLectureUnit, newLecture);
+    }
+
+    /**
+     * Finds all lecture units for the given IDs.
+     *
+     * @param ids the lecture unit IDs to fetch
+     * @return list of lecture units
+     */
+    public List<LectureUnit> findAllByIds(Collection<Long> ids) {
+        return lectureUnitRepository.findAllByIdsWithLecture(ids);
     }
 }

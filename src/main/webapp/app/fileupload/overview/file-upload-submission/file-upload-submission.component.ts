@@ -3,53 +3,48 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { UpperCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/shared/service/alert.service';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
-import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { omit } from 'lodash-es';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
+import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { addParticipationToResult, getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
-import { checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
-import { onError } from 'app/shared/util/global.utils';
+import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
+import { buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
+import { onError } from 'app/foundation/util/global.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { FileService } from 'app/shared/service/file.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { FileService } from 'app/foundation/service/file.service';
 import { firstValueFrom, map } from 'rxjs';
 
 @Component({
     selector: 'jhi-file-upload-submission',
     templateUrl: './file-upload-submission.component.html',
     imports: [
-        HeaderParticipationPageComponent,
-        ButtonComponent,
         ResizeableContainerComponent,
         TranslateDirective,
         ExerciseActionButtonComponent,
-        AdditionalFeedbackComponent,
+        UnifiedFeedbackComponent,
         RatingComponent,
         ComplaintsStudentViewComponent,
         FaIconComponent,
@@ -69,12 +64,12 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     private fileUploadAssessmentService = inject(FileUploadAssessmentService);
     private accountService = inject(AccountService);
 
-    readonly addParticipationToResult = addParticipationToResult;
+    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
     readonly participationId = input<number>();
-    readonly displayHeader = input(true);
     readonly expandProblemStatement = input(true);
+    readonly showProblemStatement = input(true);
     readonly displayedInExamSummary = input(false);
 
     readonly inputExercise = input<FileUploadExercise>();
@@ -146,28 +141,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         return !this.examMode() && !!exercise && !!participation && !hasExerciseDueDatePassed(exercise, participation);
     });
 
-    submitButtonTooltip = computed(() => {
-        if (!this.submissionFile()) {
-            return 'artemisApp.fileUploadSubmission.selectFile';
-        }
-
-        if (!this.isLate()) {
-            const exercise = this.fileUploadExercise();
-            // Using isActive() computed value
-            if (this.isActive() && exercise && !exercise.dueDate) {
-                return 'entity.action.submitNoDueDateTooltip';
-            } else if (this.isActive()) {
-                return 'entity.action.submitTooltip';
-            } else {
-                return 'entity.action.dueDateMissedTooltip';
-            }
-        }
-
-        return 'entity.action.submitDueDateMissedTooltip';
-    });
-
     faDownload = faDownload;
-    readonly ButtonType = ButtonType;
 
     // Icons
     farListAlt = faListAlt;

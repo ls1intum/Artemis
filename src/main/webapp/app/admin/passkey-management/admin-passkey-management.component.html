@@ -1,0 +1,33 @@
+<div class="container-fluid">
+    <h2 jhiTranslate="artemisApp.adminPasskeyManagement.title"></h2>
+
+    <jhi-table-view [cols]="columns()" [vals]="passkeys()" [loading]="isLoading()" [options]="tableOptions" />
+
+    <ng-template #userNameCellTemplate let-cell>{{ cell.value || '-' }}</ng-template>
+
+    <ng-template #labelCellTemplate let-cell>{{ cell.value || '-' }}</ng-template>
+
+    <ng-template #createdCellTemplate let-cell>{{ cell.value | artemisDate }}</ng-template>
+
+    <ng-template #lastUsedCellTemplate let-cell>{{ cell.value ? (cell.value | artemisDate) : '-' }}</ng-template>
+
+    <ng-template #approvedCellTemplate let-cell>
+        <div class="form-check form-switch">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                [id]="'approval-' + cell.data.credentialId"
+                [checked]="cell.data.isSuperAdminApproved"
+                (change)="onApprovalToggle(cell.data)"
+                [attr.aria-label]="'artemisApp.adminPasskeyManagement.toggleApproval' | artemisTranslate"
+            />
+            <label class="form-check-label" [for]="'approval-' + cell.data.credentialId">
+                @if (cell.data.isSuperAdminApproved) {
+                    <span jhiTranslate="artemisApp.adminPasskeyManagement.yes"></span>
+                } @else {
+                    <span jhiTranslate="artemisApp.adminPasskeyManagement.no"></span>
+                }
+            </label>
+        </div>
+    </ng-template>
+</div>

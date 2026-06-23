@@ -192,9 +192,9 @@ public class ExamRoomDistributionResource {
      * @param examRoomId The id of the exam room
      * @return 200 (OK) All seats of the room, if the retrieval was successful
      */
-    @GetMapping("rooms/{examRoomId}/seats")
+    @GetMapping("rooms/{roomId}/seats")
     @EnforceAtLeastInstructor
-    public ResponseEntity<SeatsOfExamRoomDTO> getSeatsOfExamRoom(@PathVariable long examRoomId) {
+    public ResponseEntity<SeatsOfExamRoomDTO> getSeatsOfExamRoom(@PathVariable("roomId") long examRoomId) {
         log.debug("REST request to get seats of exam room : {}", examRoomId);
 
         var seats = examRoomDistributionService.getSeatsOfExamRoom(examRoomId);

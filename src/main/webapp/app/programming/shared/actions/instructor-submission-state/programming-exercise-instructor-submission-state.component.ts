@@ -1,19 +1,18 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
-import { debounceTime, map, tap } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Component, DestroyRef, OnInit, effect, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, finalize, map, tap } from 'rxjs/operators';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
 import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ProgrammingExerciseTriggerAllButtonComponent } from '../trigger-all-button/programming-exercise-trigger-all-button.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DurationPipe } from 'app/shared/pipes/duration.pipe';
+import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
-import { hasExerciseChanged } from 'app/exercise/util/exercise.utils';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:
@@ -27,66 +26,73 @@ import { hasExerciseChanged } from 'app/exercise/util/exercise.utils';
     templateUrl: './programming-exercise-instructor-submission-state.component.html',
     imports: [FaIconComponent, NgbTooltip, NgClass, ProgrammingExerciseTriggerAllButtonComponent, ButtonComponent, ArtemisTranslatePipe, DurationPipe],
 })
-export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
+export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnInit {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private destroyRef = inject(DestroyRef);
 
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
+    TooltipPlacement = TooltipPlacement;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
-    @Input() exercise: ProgrammingExercise;
+    readonly exercise = input.required<ProgrammingExercise>();
+    readonly shouldToggle = input(false);
+    readonly toggleBreakpoint = input<'md' | 'xl'>('xl');
 
-    hasFailedSubmissions = false;
-    hasBuildingSubmissions = false;
-    buildingSummary: { [submissionState: string]: number };
-    isBuildingFailedSubmissions = false;
+    readonly hasFailedSubmissions = signal(false);
+    readonly hasBuildingSubmissions = signal(false);
+    readonly buildingSummary = signal<{ [submissionState: string]: number } | undefined>(undefined);
+    readonly isBuildingFailedSubmissions = signal(false);
 
-    resultEtaInMs: number;
-
-    submissionStateSubscription: Subscription;
-    resultEtaSubscription: Subscription;
+    readonly resultEtaInMs = signal<number | undefined>(undefined);
 
     // Icons
     faClock = faClock;
     faCircleNotch = faCircleNotch;
     faRedo = faRedo;
 
-    ngOnInit(): void {
-        this.resultEtaSubscription = this.programmingSubmissionService.getResultEtaInMs().subscribe((resultEta) => (this.resultEtaInMs = resultEta));
-    }
-
-    /**
-     * When the selected exercise changes, create a subscription to the complete submission state of the exercise.
-     *
-     * @param changes only relevant for change of exerciseId.
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (hasExerciseChanged(changes)) {
-            this.submissionStateSubscription = this.programmingSubmissionService
-                .getSubmissionStateOfExercise(this.exercise.id!)
+    constructor() {
+        effect((onCleanup) => {
+            const exerciseId = this.exercise().id;
+            if (exerciseId === undefined) {
+                return;
+            }
+            const subscription = this.programmingSubmissionService
+                .getSubmissionStateOfExercise(exerciseId)
                 .pipe(
                     map(this.sumSubmissionStates),
                     // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
                     debounceTime(500),
                     tap((buildingSummary: { [submissionState: string]: number }) => {
-                        this.buildingSummary = buildingSummary;
-                        this.hasFailedSubmissions = this.buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] > 0;
-                        this.hasBuildingSubmissions = this.buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] > 0;
+                        this.buildingSummary.set(buildingSummary);
+                        this.hasFailedSubmissions.set((buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0);
+                        this.hasBuildingSubmissions.set((buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0) > 0);
                     }),
+                    takeUntilDestroyed(this.destroyRef),
                 )
                 .subscribe();
-        }
+            onCleanup(() => subscription.unsubscribe());
+        });
+    }
+
+    ngOnInit(): void {
+        this.programmingSubmissionService
+            .getResultEtaInMs()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((resultEta) => this.resultEtaInMs.set(resultEta));
     }
 
     /**
      * Retrieve the participation ids that have a failed submission and retry their build.
      */
     triggerBuildOfFailedSubmissions() {
-        this.isBuildingFailedSubmissions = true;
-        const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise.id!, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
+        this.isBuildingFailedSubmissions.set(true);
+        const failedSubmissionParticipations = this.programmingSubmissionService.getSubmissionCountByType(this.exercise().id!, ProgrammingSubmissionState.HAS_FAILED_SUBMISSION);
         this.programmingSubmissionService
-            .triggerInstructorBuildForParticipationsOfExercise(this.exercise.id!, failedSubmissionParticipations)
-            .subscribe(() => (this.isBuildingFailedSubmissions = false));
+            .triggerInstructorBuildForParticipationsOfExercise(this.exercise().id!, failedSubmissionParticipations)
+            .pipe(finalize(() => this.isBuildingFailedSubmissions.set(false)))
+            .subscribe();
     }
 
     private sumSubmissionStates = (buildState: ExerciseSubmissionState) =>

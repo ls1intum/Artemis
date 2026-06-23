@@ -2,15 +2,19 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
-import { facSaveSuccess } from 'app/shared/icons/icons';
+import { facSaveSuccess } from 'app/foundation/icons/icons';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExerciseSaveButtonComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ExerciseSaveButtonComponent;
     let fixture: ComponentFixture<ExerciseSaveButtonComponent>;
 
@@ -25,7 +29,7 @@ describe('ExerciseSaveButtonComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create the component', () => {
@@ -38,7 +42,7 @@ describe('ExerciseSaveButtonComponent', () => {
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('#save-exam'));
-        expect(button.nativeElement.disabled).toBeTrue();
+        expect(button.nativeElement.disabled).toBe(true);
     });
 
     it('should enable the button if submission is not synced', () => {
@@ -46,7 +50,7 @@ describe('ExerciseSaveButtonComponent', () => {
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('#save-exam'));
-        expect(button.nativeElement.disabled).toBeFalse();
+        expect(button.nativeElement.disabled).toBe(false);
     });
 
     it('should display facSaveSuccess icon if submission is synced and submitted', () => {
@@ -69,7 +73,7 @@ describe('ExerciseSaveButtonComponent', () => {
         fixture.componentRef.setInput('submission', { isSynced: false, submitted: false } as Submission);
         fixture.detectChanges();
 
-        const onSaveSpy = jest.spyOn(component, 'onSave');
+        const onSaveSpy = vi.spyOn(component, 'onSave');
 
         const button = fixture.debugElement.query(By.css('#save-exam'));
         button.nativeElement.click();

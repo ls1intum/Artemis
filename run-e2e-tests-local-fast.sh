@@ -20,6 +20,7 @@ set -e
 #   --ui                Open Playwright UI mode
 #   --video             Enable video recording (off by default to save CPU)
 #   --coverage          Enable coverage collection (off by default, requires extra memory)
+#   --debug             Show server and client output inline (normally only in log files)
 #   --help              Show this help message
 # =============================================================================
 
@@ -35,6 +36,7 @@ STOP=false
 SKIP_SERVER=false
 SKIP_CLIENT=false
 SKIP_DB=false
+DEBUG=false
 TEST_FILTER=""
 PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
@@ -50,6 +52,7 @@ while [[ $# -gt 0 ]]; do
         --ui) PLAYWRIGHT_EXTRA_ARGS+=("--ui"); shift ;;
         --video) unset PLAYWRIGHT_VIDEO_MODE; shift ;;
         --coverage) unset PLAYWRIGHT_COVERAGE; export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=8192"; shift ;;
+        --debug) DEBUG=true; shift ;;
         --filter)
             if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
                 echo -e "${RED}ERROR: --filter requires a non-empty pattern argument${NC}"
@@ -60,7 +63,7 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -20 "$0" | tail -16; exit 0 ;;
+        --help) head -25 "$0" | tail -21; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -79,13 +82,47 @@ kill_tree() {
     kill "$pid" 2>/dev/null || true
 }
 
+# Ensures a required port is available before starting a service.
+# If a leftover process (e.g. from a previous crashed run) occupies the port,
+# it is automatically killed so the script can proceed without manual intervention.
+# This is intentional: developers and CI agents should not have to manually hunt
+# down stale processes every time they re-run E2E tests. Do NOT replace this with
+# a simple "error and exit" — that was tried and reverted because it broke the
+# hands-free workflow that this script is designed to provide.
+check_port_available() {
+    local port=$1
+    local service_name=$2
+    local listeners
+
+    listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+    if [ -n "$listeners" ]; then
+        echo -e "${YELLOW}Port ${port} (${service_name}) is in use — killing existing process...${NC}"
+        # Extract PIDs from lsof output (skip header line) and kill them
+        local pids
+        pids=$(echo "$listeners" | awk 'NR>1 {print $2}' | sort -u)
+        for pid in $pids; do
+            echo "  Killing PID $pid..."
+            kill_tree "$pid"
+        done
+        sleep 2
+        # Verify port is now free after killing
+        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+        if [ -n "$listeners" ]; then
+            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes. Cannot start ${service_name}.${NC}"
+            echo "$listeners"
+            exit 1
+        fi
+        echo -e "${GREEN}Port ${port} is now free.${NC}"
+    fi
+}
+
 # =============================================================================
 # --stop: Tear everything down
 # =============================================================================
 if [ "$STOP" = true ]; then
     echo -e "${BLUE}Stopping all E2E services...${NC}"
 
-    # Kill server
+    # Kill server (PID file first, then any remaining process on port 8080)
     if [ -f "$LOCAL_DIR/server.pid" ]; then
         SERVER_PID=$(cat "$LOCAL_DIR/server.pid")
         if kill -0 "$SERVER_PID" 2>/dev/null; then
@@ -93,8 +130,9 @@ if [ "$STOP" = true ]; then
             kill_tree "$SERVER_PID"
         fi
     fi
+    check_port_available 8080 "Artemis server"
 
-    # Kill client
+    # Kill client (PID file first, then any remaining process on port 9000)
     if [ -f "$LOCAL_DIR/client.pid" ]; then
         CLIENT_PID=$(cat "$LOCAL_DIR/client.pid")
         if kill -0 "$CLIENT_PID" 2>/dev/null; then
@@ -102,6 +140,7 @@ if [ "$STOP" = true ]; then
             kill_tree "$CLIENT_PID"
         fi
     fi
+    check_port_available 9000 "Angular client"
 
     # Stop Postgres
     echo "Stopping Postgres..."
@@ -129,10 +168,20 @@ MISSING=""
 command -v docker >/dev/null 2>&1 || MISSING="$MISSING docker"
 command -v java >/dev/null 2>&1   || MISSING="$MISSING java"
 command -v node >/dev/null 2>&1   || MISSING="$MISSING node"
-command -v npm >/dev/null 2>&1    || MISSING="$MISSING npm"
+
+# Activate the pnpm version pinned in package.json via Corepack (shipped with
+# Node 24). Idempotent and quick; ensures `pnpm` is on PATH on fresh setups.
+if command -v corepack >/dev/null 2>&1; then
+    corepack enable >/dev/null 2>&1 || true
+fi
+command -v pnpm >/dev/null 2>&1   || MISSING="$MISSING pnpm"
 
 if [ -n "$MISSING" ]; then
     echo -e "${RED}ERROR: Missing required commands:$MISSING${NC}"
+    if [[ "$MISSING" == *pnpm* ]]; then
+        echo -e "${RED}Activate the pnpm version pinned in package.json once via:${NC}"
+        echo -e "${RED}    corepack enable${NC}"
+    fi
     exit 1
 fi
 
@@ -196,6 +245,9 @@ if [ "$SKIP_SERVER" = false ]; then
         fi
     fi
 
+    check_port_available 8080 "Artemis server"
+    check_port_available 7921 "local VC SSH server"
+
     # Server environment variables
     export SPRING_PROFILES_ACTIVE="artemis,scheduling,localvc,localci,buildagent,core,dev"
     export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/Artemis?sslmode=disable"
@@ -206,6 +258,7 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_USERMANAGEMENT_INTERNALADMIN_USERNAME="artemis_admin"
     export ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="artemis_admin"
     export ARTEMIS_USERMANAGEMENT_USEEXTERNAL="false"
+    export ARTEMIS_USERMANAGEMENT_PASSKEY_ENABLED="true"
     export ARTEMIS_VERSIONCONTROL_URL="http://localhost:8080"
     export ARTEMIS_VERSIONCONTROL_USER="artemis_admin"
     export ARTEMIS_VERSIONCONTROL_PASSWORD="artemis_admin"
@@ -230,6 +283,7 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_VERSIONCONTROL_SSHPORT="7921"
     export ARTEMIS_TELEMETRY_ENABLED="false"
     export SERVER_URL="http://localhost:8080"
+    export ARTEMIS_USERMANAGEMENT_PASSKEY_ADDITIONALALLOWEDORIGINS="http://localhost:9000"
     export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
 
@@ -240,7 +294,11 @@ if [ "$SKIP_SERVER" = false ]; then
     fi
 
     # Start server in background
-    ./gradlew bootRun -x webapp > "$LOCAL_DIR/server.log" 2>&1 &
+    if [ "$DEBUG" = true ]; then
+        ./gradlew bootRun -x webapp > >(tee "$LOCAL_DIR/server.log") 2>&1 &
+    else
+        ./gradlew bootRun -x webapp > "$LOCAL_DIR/server.log" 2>&1 &
+    fi
     SERVER_PID=$!
     echo "$SERVER_PID" > "$LOCAL_DIR/server.pid"
     echo "Server starting (PID $SERVER_PID), log: $LOCAL_DIR/server.log"
@@ -255,7 +313,7 @@ fi
 
 if [ "$SKIP_CLIENT" = false ]; then
     echo ""
-    echo -e "${BLUE}Step 2b: Starting client (npm start)...${NC}"
+    echo -e "${BLUE}Step 2b: Starting client (pnpm start)...${NC}"
 
     # Kill stale client from previous run
     if [ -f "$LOCAL_DIR/client.pid" ]; then
@@ -267,7 +325,13 @@ if [ "$SKIP_CLIENT" = false ]; then
         fi
     fi
 
-    npm start > "$LOCAL_DIR/client.log" 2>&1 &
+    check_port_available 9000 "Angular client"
+
+    if [ "$DEBUG" = true ]; then
+        pnpm start > >(tee "$LOCAL_DIR/client.log") 2>&1 &
+    else
+        pnpm start > "$LOCAL_DIR/client.log" 2>&1 &
+    fi
     CLIENT_PID=$!
     echo "$CLIENT_PID" > "$LOCAL_DIR/client.pid"
     echo "Client starting (PID $CLIENT_PID), log: $LOCAL_DIR/client.log"
@@ -346,14 +410,14 @@ export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-6}}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
 export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-45}"
 export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-90}"
-export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-90000}"
-export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-60000}"
-export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-60000}"
+export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-120000}"
+export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-90000}"
+export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-90000}"
 
 cd src/test/playwright
 
 # Install Chromium if needed
-npm run playwright:setup-local 2>/dev/null
+pnpm run playwright:setup-local 2>/dev/null
 
 # Clean stale reports and coverage cache
 rm -f test-reports/results*.xml
@@ -404,7 +468,7 @@ EXIT_CODE=0
 # --- Run all tests (fast + slow) in a single phase ---
 echo -e "${BLUE}Running all tests with $TEST_WORKERS workers...${NC}"
 export PLAYWRIGHT_TEST_TYPE="parallel"
-TEST_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$TEST_WORKERS")
+TEST_CMD=(pnpm exec playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$TEST_WORKERS")
 echo "Running: ${TEST_CMD[*]}"
 echo ""
 
@@ -565,13 +629,15 @@ if [ $TOTAL_TESTS -gt 0 ]; then
 
         echo ""
         echo -e "${BLUE}View HTML report:${NC}"
-        echo "  cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
+        echo "  cd src/test/playwright && pnpm exec playwright show-report test-reports/monocart-report"
     fi
 else
     echo "  No JUnit test results found in $REPORT_DIR"
     echo "  Time: ${TEST_MINS}m ${TEST_SECS}s"
 fi
 
+echo ""
+echo -e "${BLUE}Logs:${NC} $LOCAL_DIR/ (server.log, client.log, cpu-usage.csv)"
 echo ""
 echo -e "${BLUE}Services are still running. Quick re-run:${NC}"
 echo "  ./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db [--filter \"Test\"]"

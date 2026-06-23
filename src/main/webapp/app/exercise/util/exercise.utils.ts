@@ -10,7 +10,7 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import { ExerciseServicable } from 'app/exercise/services/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -74,7 +74,7 @@ export class SaveExerciseCommand<T extends Exercise> {
             );
             const reEvaluatedCase = popupRefObs.pipe(
                 mergeMap((ref) =>
-                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback }])),
+                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback() }])),
                 ),
             );
             const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
@@ -164,9 +164,9 @@ export const isResumeExerciseAvailable = (exercise: Exercise, participation?: St
 };
 
 /**
- * The start practice button should be available for programming and quiz exercises
+ * The start practice button should be available for programming, quiz, text, and modeling exercises
  * - For quizzes when they are open for practice and the regular work period is over
- * - For programming exercises when it's after the due date
+ * - For programming, text, and modeling exercises when it's after the due date
  * @param exercise the exercise that the student wants to practice
  * @param participation the potentially existing participation
  */
@@ -176,6 +176,9 @@ export const isStartPracticeAvailable = (exercise: Exercise, participation?: Stu
             return hasDueDatePassed(exercise);
         case ExerciseType.PROGRAMMING:
             return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || programmingSetupNotFinished(participation));
+        case ExerciseType.TEXT:
+        case ExerciseType.MODELING:
+            return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !isPracticeMode(participation);
         default:
             return false;
     }

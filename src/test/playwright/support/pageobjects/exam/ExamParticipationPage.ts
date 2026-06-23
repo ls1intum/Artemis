@@ -1,11 +1,9 @@
 import { Page, expect } from '@playwright/test';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AdditionalData, ExerciseType } from '../../constants';
 import { UserCredentials } from '../../users';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
-import { CoursesPage } from '../course/CoursesPage';
-import { CourseOverviewPage } from '../course/CourseOverviewPage';
 import { ExamNavigationBar } from './ExamNavigationBar';
 import { ExamStartEndPage } from './ExamStartEndPage';
 import { ModelingEditor } from '../exercises/modeling/ModelingEditor';
@@ -14,10 +12,9 @@ import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
+import { BUILD_RESULT_TIMEOUT } from '../../timeouts';
 
 export class ExamParticipationPage extends ExamParticipationActions {
-    private readonly courseList: CoursesPage;
-    private readonly courseOverview: CourseOverviewPage;
     private readonly examNavigation: ExamNavigationBar;
     private readonly examStartEnd: ExamStartEndPage;
     private readonly modelingExerciseEditor: ModelingEditor;
@@ -26,8 +23,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
     private readonly textExerciseEditor: TextEditorPage;
 
     constructor(
-        courseList: CoursesPage,
-        courseOverview: CourseOverviewPage,
         examNavigation: ExamNavigationBar,
         examStartEnd: ExamStartEndPage,
         modelingExerciseEditor: ModelingEditor,
@@ -37,8 +32,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
         page: Page,
     ) {
         super(page);
-        this.courseList = courseList;
-        this.courseOverview = courseOverview;
         this.examNavigation = examNavigation;
         this.examStartEnd = examStartEnd;
         this.modelingExerciseEditor = modelingExerciseEditor;
@@ -67,7 +60,8 @@ export class ExamParticipationPage extends ExamParticipationActions {
     async makeTextExerciseSubmission(exerciseID: number, textFixture: string) {
         const content = await Fixtures.get(textFixture);
         await this.textExerciseEditor.typeSubmission(exerciseID, content!);
-        await this.page.waitForTimeout(300);
+        // Wait for the text to be processed by Angular change detection
+        await this.page.waitForTimeout(1000);
     }
 
     private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false, skipBuildResultCheck = false) {
@@ -79,10 +73,14 @@ export class ExamParticipationPage extends ExamParticipationActions {
         if (practiceMode) {
             await this.programmingExerciseEditor.submitPractice(exerciseID);
         } else {
-            await this.programmingExerciseEditor.submit(exerciseID);
+            // During exam setup (skipBuildResultCheck) the score-producing build runs only after the due date,
+            // so don't block on a result score here — it would not appear in time and could overrun the hook.
+            await this.programmingExerciseEditor.submit(exerciseID, !skipBuildResultCheck);
         }
         if (!skipBuildResultCheck) {
-            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({ timeout: 60000 });
+            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({
+                timeout: BUILD_RESULT_TIMEOUT * 2,
+            });
         }
     }
 
@@ -100,8 +98,30 @@ export class ExamParticipationPage extends ExamParticipationActions {
     }
 
     async openExam(student: UserCredentials, course: Course, exam: Exam) {
-        await Commands.login(this.page, student, `/courses/${course.id}/exams/${exam.id}`);
-        await this.page.waitForURL(`**/exams/${exam.id}`);
+        const examUrl = `/courses/${course.id}/exams/${exam.id}`;
+        const urlPattern = `**/exams/${exam.id}**`;
+        // Under heavy multi-node load the exam landing page's Angular router occasionally
+        // leaves the page on /courses after login when a lazy chunk fails to bootstrap.
+        // A bare waitForURL then consumes the whole test budget. Re-issue the navigation
+        // up to two extra times on URL miss; pre-warm alone doesn't address this because
+        // exam routes have a no-navbar configuration that bypasses the navbar reload check.
+        await Commands.login(this.page, student, examUrl);
+        const urlSettles = async (timeoutMs: number): Promise<boolean> =>
+            this.page
+                .waitForURL(urlPattern, { timeout: timeoutMs })
+                .then(() => true)
+                .catch(() => false);
+        if (await urlSettles(30_000)) {
+            return;
+        }
+        for (let attempt = 0; attempt < 2; attempt++) {
+            await this.page.goto(examUrl);
+            await this.page.waitForLoadState('load');
+            if (await urlSettles(20_000)) {
+                return;
+            }
+        }
+        throw new Error(`openExam: expected URL matching ${urlPattern} but landed at ${this.page.url()} for student ${student.username}`);
     }
 
     async startParticipation(student: UserCredentials, course: Course, exam: Exam) {
@@ -123,9 +143,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
         expect(response.status()).toBe(200);
     }
 
-    async checkExerciseScore(expectedResult: string) {
-        const resultScore = this.page.locator('.editor-statusbar').locator('#result-score');
-        await resultScore.waitFor({ state: 'visible' });
-        await expect(resultScore.getByText(expectedResult)).toBeVisible();
+    async checkExerciseScore(exerciseID: number, expectedResult: string, timeout: number = BUILD_RESULT_TIMEOUT) {
+        // In exam mode, page.reload() navigates away from the active exercise tab,
+        // so we rely on WebSocket to push build results and use Playwright's auto-retry.
+        const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
+        await expect(resultScore).toContainText(expectedResult, { timeout });
     }
 }

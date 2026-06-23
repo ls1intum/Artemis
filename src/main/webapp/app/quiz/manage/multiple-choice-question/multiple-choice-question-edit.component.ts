@@ -1,27 +1,32 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, computed, effect, inject, output, viewChild } from '@angular/core';
-import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
-import { faAngleDown, faAngleRight, faChevronDown, faChevronUp, faQuestionCircle, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { generateExerciseHintExplanation } from 'app/foundation/util/markdown.util';
+import { faAngleDown, faAngleRight, faChevronDown, faChevronUp, faQuestionCircle, faTrash, faUndo, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
-import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
-import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
-import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
-import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
-import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
-import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MAX_QUIZ_QUESTION_POINTS } from 'app/foundation/constants/input.constants';
+import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { WrongMultipleChoiceAnswerAction } from 'app/editor/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
+import { CorrectMultipleChoiceAnswerAction } from 'app/editor/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
+import { QuizExplanationAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MultipleChoiceVisualQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/visual-question/multiple-choice-visual-question.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { OnInit, input } from '@angular/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
@@ -41,11 +46,25 @@ import { NgClass } from '@angular/common';
         MultipleChoiceVisualQuestionComponent,
         ArtemisTranslatePipe,
         NgClass,
+        SelectModule,
+        CheckboxModule,
+        InputTextModule,
+        InputNumberModule,
     ],
 })
 export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, OnInit {
-    private modalService = inject(NgbModal);
-    private changeDetector = inject(ChangeDetectorRef);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
+
+    readonly scoringTypeOptions = computed(() => {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.all_or_nothing'), value: ScoringType.ALL_OR_NOTHING },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_with_penalty'), value: ScoringType.PROPORTIONAL_WITH_PENALTY },
+            { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
+        ];
+    });
 
     readonly markdownEditor = viewChild<MarkdownEditorMonacoComponent>('markdownEditor');
 
@@ -53,14 +72,17 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
 
     question = input.required<MultipleChoiceQuestion>();
     questionIndex = input.required<number>();
+    hyperionEnabled = input(false);
 
     questionUpdated = output();
     questionDeleted = output();
     questionMoveUp = output();
     questionMoveDown = output();
+    refineRequested = output();
+    collapseChanged = output<boolean>();
 
-    questionEditorText = '';
-    isQuestionCollapsed: boolean;
+    readonly questionEditorText = signal('');
+    readonly isQuestionCollapsed = signal<boolean>(undefined!);
     reEvaluationInProgress = input<boolean>(false);
     backupQuestion: MultipleChoiceQuestion;
 
@@ -69,10 +91,10 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         if (!markdownEditor || this.reEvaluationInProgress()) {
             return false;
         }
-        return markdownEditor.inPreviewMode;
+        return markdownEditor.inPreviewMode();
     });
-    showMultipleChoiceQuestionPreview = true;
-    showMultipleChoiceQuestionVisual = true;
+    readonly showMultipleChoiceQuestionPreview = signal(true);
+    readonly showMultipleChoiceQuestionVisual = signal(true);
 
     correctAction = new CorrectMultipleChoiceAnswerAction();
     wrongAction = new WrongMultipleChoiceAnswerAction();
@@ -83,6 +105,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
 
     // Icons
     faTrash = faTrash;
+    faWandMagicSparkles = faWandMagicSparkles;
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
     faQuestionCircle = faQuestionCircle;
@@ -102,7 +125,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      * Init the question editor text by parsing the markdown.
      */
     ngOnInit(): void {
-        this.questionEditorText = this.generateMarkdown();
+        this.questionEditorText.set(this.generateMarkdown());
     }
 
     /**
@@ -128,14 +151,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     }
 
     /**
-     * open the modal for the help dialog
-     * @param content
-     */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
-    }
-
-    /**
      * Detect of text changes in the markdown editor
      * 1. Parse the text in the editor to get the newest values
      * 2. Notify the parent component to check the validity of the text
@@ -143,7 +158,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     changesInMarkdown(): void {
         this.prepareForSave();
         this.questionUpdated.emit();
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -153,7 +167,6 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      */
     changesInVisualMode(): void {
         this.questionUpdated.emit();
-        this.changeDetector.detectChanges();
     }
 
     /**
@@ -162,12 +175,12 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      */
     prepareForSave(): void {
         const markdownEditor = this.markdownEditor();
-        if (markdownEditor?.inVisualMode) {
+        if (markdownEditor?.inVisualMode()) {
             /*
              * In the visual mode, the latest question values come from the visual tab, not the markdown editor.
              * We update the markdown editor, which triggers the parsing of the visual tab content.
              */
-            markdownEditor.markdown = this.visualChild().parseQuestion();
+            markdownEditor.setMarkdown(this.visualChild().parseQuestion());
         } else {
             this.cleanupQuestion();
             if (markdownEditor) {
@@ -179,7 +192,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
     onLeaveVisualTab(): void {
         const markdownEditor = this.markdownEditor();
         if (markdownEditor) {
-            markdownEditor.markdown = this.visualChild().parseQuestion();
+            markdownEditor.setMarkdown(this.visualChild().parseQuestion());
         }
         this.prepareForSave();
     }
@@ -244,17 +257,50 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      *        and the check for the question validity is triggered
      */
     private resetMultipleChoicePreview() {
-        this.showMultipleChoiceQuestionPreview = false;
-        this.changeDetector.detectChanges();
-        this.showMultipleChoiceQuestionPreview = true;
-        this.changeDetector.detectChanges();
+        // Genuinely-unavoidable synchronous detectChanges: the preview child must be destroyed and recreated
+        // within ONE call so it re-initializes from the in-place-mutated question, and prepareForSave()/the
+        // save flow may run immediately afterwards and require the child to exist again. Signal writes coalesce
+        // within a change-detection pass and afterNextRender would leave a one-render window in which
+        // viewChild.required throws / the save serializes an empty question (caught by E2E).
+        this.showMultipleChoiceQuestionPreview.set(false);
+        this.changeDetectorRef.detectChanges();
+        this.showMultipleChoiceQuestionPreview.set(true);
+        this.changeDetectorRef.detectChanges();
     }
 
     private resetMultipleChoiceVisual() {
-        this.showMultipleChoiceQuestionVisual = false;
-        this.changeDetector.detectChanges();
-        this.showMultipleChoiceQuestionVisual = true;
-        this.changeDetector.detectChanges();
+        // Synchronous destroy/recreate for the same reason as resetMultipleChoicePreview (see comment above).
+        this.showMultipleChoiceQuestionVisual.set(false);
+        this.changeDetectorRef.detectChanges();
+        this.showMultipleChoiceQuestionVisual.set(true);
+        this.changeDetectorRef.detectChanges();
+    }
+
+    toggleCollapse(): void {
+        this.isQuestionCollapsed.update((collapsed) => !collapsed);
+        this.collapseChanged.emit(this.isQuestionCollapsed());
+    }
+
+    refineAndExpand(): void {
+        if (this.isQuestionCollapsed()) {
+            this.isQuestionCollapsed.set(false);
+            this.collapseChanged.emit(false);
+        }
+        this.refineRequested.emit();
+    }
+
+    /**
+     * Reload the markdown editor content from the current question state.
+     * Called after an external update (e.g. AI refinement) mutates the question object in-place.
+     */
+    reloadFromQuestion(): void {
+        this.questionEditorText.set(this.generateMarkdown());
+        const editor = this.markdownEditor();
+        if (editor) {
+            editor.setMarkdown(this.questionEditorText());
+        }
+        this.resetMultipleChoicePreview();
+        this.resetMultipleChoiceVisual();
     }
 
     /**
@@ -298,6 +344,5 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
         this.question().singleChoice = this.backupQuestion.singleChoice;
         this.question().invalid = this.backupQuestion.invalid;
         this.question().answerOptions = cloneDeep(this.backupQuestion.answerOptions);
-        this.changeDetector.detectChanges();
     }
 }

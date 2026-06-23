@@ -13,11 +13,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
+import de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -88,13 +90,13 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     Set<QuizExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO(
+            SELECT new de.tum.cit.aet.artemis.calendar.dto.QuizExerciseCalendarEventDTO(
                 exercise.id,
                 exercise.quizMode,
                 exercise.title,
                 exercise.releaseDate,
                 exercise.dueDate,
-                batch,
+                batch.startTime,
                 exercise.duration
             )
             FROM QuizExercise exercise
@@ -177,4 +179,62 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
     }
+
+    /**
+     * Targeted UPDATE of releaseDate + dueDate, used by START_NOW. Issues a single-row UPDATE on
+     * {@code QuizExercise} instead of {@code saveAndFlush(quizExercise)}.
+     *
+     * <p>
+     * The original motivation was to bypass the DELETE+INSERT cascade on the unidirectional
+     * {@code @OneToMany + @JoinColumn + @OrderColumn} child collections — that bug class is fixed at the mapping
+     * level now (issues #12574 / #12584, bidirectional {@code mappedBy}), but this targeted UPDATE is retained
+     * because it remains the cheapest correct option for the lifecycle action: it avoids loading the full quiz
+     * graph, skips the {@code @PrePersist}/{@code @PreUpdate} hooks on every child question, and produces a
+     * single-row UPDATE that is atomic and easy to reason about.
+     *
+     * @param id          the id of the quiz exercise to update
+     * @param releaseDate the new release date (may be {@code null})
+     * @param dueDate     the new due date
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE QuizExercise qe
+            SET qe.releaseDate = :releaseDate,
+                qe.dueDate = :dueDate
+            WHERE qe.id = :id
+            """)
+    void updateReleaseAndDueDate(@Param("id") Long id, @Param("releaseDate") ZonedDateTime releaseDate, @Param("dueDate") ZonedDateTime dueDate);
+
+    /**
+     * Targeted UPDATE of releaseDate, used by SET_VISIBLE. See {@link #updateReleaseAndDueDate} for why this
+     * is preferred over a full {@code saveAndFlush(quizExercise)}.
+     *
+     * @param id          the id of the quiz exercise to update
+     * @param releaseDate the new release date
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE QuizExercise qe
+            SET qe.releaseDate = :releaseDate
+            WHERE qe.id = :id
+            """)
+    void updateReleaseDate(@Param("id") Long id, @Param("releaseDate") ZonedDateTime releaseDate);
+
+    /**
+     * Targeted UPDATE of dueDate, used by END_NOW. See {@link #updateReleaseAndDueDate} for why this is
+     * preferred over a full {@code saveAndFlush(quizExercise)}.
+     *
+     * @param id      the id of the quiz exercise to update
+     * @param dueDate the new due date
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE QuizExercise qe
+            SET qe.dueDate = :dueDate
+            WHERE qe.id = :id
+            """)
+    void updateDueDate(@Param("id") Long id, @Param("dueDate") ZonedDateTime dueDate);
 }

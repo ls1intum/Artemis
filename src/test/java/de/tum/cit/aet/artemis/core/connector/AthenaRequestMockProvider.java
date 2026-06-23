@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.connector;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -14,8 +13,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -29,8 +28,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.athena.config.AthenaEnabled;
+
 @Component
-@Profile(PROFILE_ATHENA)
+@Conditional(AthenaEnabled.class)
 @Lazy
 public class AthenaRequestMockProvider {
 
@@ -189,6 +190,21 @@ public class AthenaRequestMockProvider {
      * @param expectedContents The expected contents of the request
      */
     public void mockGetFeedbackSuggestionsAndExpect(String moduleType, RequestMatcher... expectedContents) {
+        mockGetFeedbackSuggestionsAndExpect(moduleType, false, expectedContents);
+    }
+
+    /**
+     * Mocks the /feedback_suggestions API from Athena used to retrieve feedback suggestions for a submission
+     * with a suggestion that has a null id.
+     *
+     * @param moduleType       The type of the module: "text" or "programming"
+     * @param expectedContents The expected contents of the request
+     */
+    public void mockGetFeedbackSuggestionsAndExpectWithNullId(String moduleType, RequestMatcher... expectedContents) {
+        mockGetFeedbackSuggestionsAndExpect(moduleType, true, expectedContents);
+    }
+
+    private void mockGetFeedbackSuggestionsAndExpect(String moduleType, boolean shouldUseNullId, RequestMatcher... expectedContents) {
         ResponseActions responseActions = mockServer
                 .expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/feedback_suggestions"))
                 .andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON));
@@ -197,8 +213,15 @@ public class AthenaRequestMockProvider {
             responseActions.andExpect(matcher);
         }
 
-        ObjectNode suggestion = mapper.createObjectNode().put("id", 1L).put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good")
-                .put("description", "This needs to be improved").put("credits", -1.0);
+        ObjectNode suggestion = mapper.createObjectNode().put("exerciseId", 1L).put("submissionId", 1L).put("title", "Not so good").put("description", "This needs to be improved")
+                .put("credits", -1.0);
+
+        if (shouldUseNullId) {
+            suggestion.putNull("id");
+        }
+        else {
+            suggestion.put("id", 1L);
+        }
 
         suggestion = switch (moduleType) {
             case "text" -> suggestion.put("indexStart", 3).put("indexEnd", 9);

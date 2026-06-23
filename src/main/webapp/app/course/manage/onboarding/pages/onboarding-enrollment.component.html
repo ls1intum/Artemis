@@ -1,0 +1,147 @@
+<div>
+    <div class="step-hero step-hero--enrollment">
+        <div class="step-hero-icon">
+            <fa-icon [icon]="faUserPlus" />
+        </div>
+        <div class="step-hero-text">
+            <h4>
+                <span jhiTranslate="artemisApp.course.onboarding.enrollment.title"></span>
+                <jhi-documentation-button [type]="'Course'" />
+            </h4>
+            <p jhiTranslate="artemisApp.course.onboarding.enrollment.description"></p>
+        </div>
+    </div>
+    <div class="step-body">
+        @if (ltiEnabled) {
+            <div class="d-flex align-items-center gap-3 mb-1">
+                <strong jhiTranslate="artemisApp.course.onlineCourse.title"></strong>
+                <div class="feature-toggle">
+                    <button
+                        type="button"
+                        class="toggle-btn"
+                        [ngClass]="{ 'active-enabled': course().onlineCourse }"
+                        [attr.aria-pressed]="course().onlineCourse"
+                        (click)="!course().onlineCourse && toggleOnlineCourse()"
+                    >
+                        <fa-icon [icon]="faCheck" />
+                        <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                    </button>
+                    <button
+                        type="button"
+                        class="toggle-btn"
+                        [ngClass]="{ 'active-disabled': !course().onlineCourse }"
+                        [attr.aria-pressed]="!course().onlineCourse"
+                        (click)="course().onlineCourse && toggleOnlineCourse()"
+                    >
+                        <fa-icon [icon]="faTimes" />
+                        <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                    </button>
+                </div>
+            </div>
+            @if (course().onlineCourse) {
+                <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.enrollment.onlineCourseEnabled"></p>
+            } @else {
+                <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.enrollment.onlineCourseDisabled"></p>
+            }
+        }
+
+        <div class="d-flex align-items-center gap-3 mb-1">
+            <strong jhiTranslate="artemisApp.course.enrollmentEnabled.title"></strong>
+            <div class="feature-toggle">
+                <button
+                    type="button"
+                    id="onboarding_enrollmentEnabled"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-enabled': course().enrollmentEnabled }"
+                    [attr.aria-pressed]="course().enrollmentEnabled"
+                    (click)="!course().enrollmentEnabled && toggleEnrollment()"
+                >
+                    <fa-icon [icon]="faCheck" />
+                    <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                </button>
+                <button
+                    type="button"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-disabled': !course().enrollmentEnabled }"
+                    [attr.aria-pressed]="!course().enrollmentEnabled"
+                    (click)="course().enrollmentEnabled && toggleEnrollment()"
+                >
+                    <fa-icon [icon]="faTimes" />
+                    <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                </button>
+            </div>
+        </div>
+        @if (course().enrollmentEnabled) {
+            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.enrollment.selfEnrollmentEnabled"></p>
+        } @else {
+            <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.enrollment.selfEnrollmentDisabled"></p>
+        }
+
+        @if (course().enrollmentEnabled) {
+            <div class="ms-4 mb-3">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.course.enrollmentStartDate' | artemisTranslate }}"
+                            [ngModel]="course().enrollmentStartDate"
+                            (ngModelChange)="updateField('enrollmentStartDate', $event)"
+                        />
+                    </div>
+                    <div class="col-md-6">
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.course.enrollmentEndDate' | artemisTranslate }}"
+                            [ngModel]="course().enrollmentEndDate"
+                            (ngModelChange)="updateField('enrollmentEndDate', $event)"
+                        />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" jhiTranslate="artemisApp.course.enrollmentConfirmationMessage"></label>
+                    <jhi-markdown-editor-monaco class="markdown-editor" [markdown]="course().enrollmentConfirmationMessage" (markdownChange)="updateEnrollmentMessage($event)" />
+                </div>
+
+                <div class="d-flex align-items-center gap-3 mb-1">
+                    <strong jhiTranslate="artemisApp.course.unenrollmentEnabled.title"></strong>
+                    <div class="feature-toggle">
+                        <button
+                            type="button"
+                            class="toggle-btn"
+                            [ngClass]="{ 'active-enabled': course().unenrollmentEnabled }"
+                            [attr.aria-pressed]="course().unenrollmentEnabled"
+                            (click)="!course().unenrollmentEnabled && toggleUnenrollment()"
+                        >
+                            <fa-icon [icon]="faCheck" />
+                            <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                        </button>
+                        <button
+                            type="button"
+                            class="toggle-btn"
+                            [ngClass]="{ 'active-disabled': !course().unenrollmentEnabled }"
+                            [attr.aria-pressed]="!course().unenrollmentEnabled"
+                            (click)="course().unenrollmentEnabled && toggleUnenrollment()"
+                        >
+                            <fa-icon [icon]="faTimes" />
+                            <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                        </button>
+                    </div>
+                </div>
+                @if (course().unenrollmentEnabled) {
+                    <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.enrollment.unenrollmentEnabled"></p>
+                } @else {
+                    <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.enrollment.unenrollmentDisabled"></p>
+                }
+
+                @if (course().unenrollmentEnabled) {
+                    <div class="ms-4 mb-3">
+                        <jhi-date-time-picker
+                            labelName="{{ 'artemisApp.course.unenrollmentEndDate' | artemisTranslate }}"
+                            [ngModel]="course().unenrollmentEndDate"
+                            (ngModelChange)="updateField('unenrollmentEndDate', $event)"
+                        />
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

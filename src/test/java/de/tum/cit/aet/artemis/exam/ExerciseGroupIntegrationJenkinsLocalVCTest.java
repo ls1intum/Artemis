@@ -21,23 +21,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -73,7 +77,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     private WeaviateService weaviateService;
 
     @Autowired(required = false)
-    private ExerciseWeaviateService exerciseWeaviateService;
+    private SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     private Course course1;
 
@@ -111,7 +115,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     private void testAllPreAuthorize() throws Exception {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
         request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.FORBIDDEN);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.FORBIDDEN);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", ExerciseGroupUpdateDTO.of(exerciseGroup1), HttpStatus.FORBIDDEN);
         request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN, ExerciseGroup.class);
         request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.FORBIDDEN, ExerciseGroup.class);
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
@@ -140,10 +144,13 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateExerciseGroup_asEditor() throws Exception {
+        // Exercise group with non-existent ID -> not found
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
-        exerciseGroup.setExam(null);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.CONFLICT);
-        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup1, HttpStatus.OK);
+        exerciseGroup.setId(999999L);
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", ExerciseGroupUpdateDTO.of(exerciseGroup), HttpStatus.NOT_FOUND);
+
+        // Valid update
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", ExerciseGroupUpdateDTO.of(exerciseGroup1), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1);
     }
 
@@ -170,8 +177,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExerciseGroup_asInstructor() throws Exception {
-        if (exerciseWeaviateService != null) {
-            exerciseWeaviateService.upsertExerciseAsync(textExercise1);
+        if (searchableEntityWeaviateService != null) {
+            searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(textExercise1));
 
             await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1));
         }
@@ -216,8 +223,10 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
 
         final List<ExerciseGroup> exerciseGroupsBefore = targetExam.getExerciseGroups();
 
-        final List<ExerciseGroup> exerciseGroupsNow = request.postListWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsBefore, ExerciseGroup.class, HttpStatus.OK);
+        final List<ExerciseGroup> exerciseGroupsNow = request
+                .postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsBefore,
+                        ExerciseGroupImportResultDTO.class, HttpStatus.OK)
+                .exerciseGroups();
 
         assertThat(exerciseGroupsNow).hasSize(9).containsAll(exerciseGroupsBefore).allMatch(element -> element.getId() != null);
 
@@ -231,6 +240,43 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseGroup_skipsFailedExerciseAndReportsPartialSuccess() throws Exception {
+        // Import groups from a source exam into a separate (empty) target exam, but remove the source quiz first so its
+        // import yields Optional.empty (a real "source exercise no longer available" failure). The import must skip the
+        // quiz, import the rest, drop the now-empty quiz group, and report the skipped quiz via the "skipped" list in the
+        // response body instead of silently dropping it.
+        Exam targetExam = examUtilService.addExam(course1);
+        Exam sourceExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        List<ExerciseGroup> groupsToImport = sourceExam.getExerciseGroups();
+
+        QuizExercise sourceQuiz = (QuizExercise) groupsToImport.stream().flatMap(group -> group.getExercises().stream()).filter(QuizExercise.class::isInstance).findFirst()
+                .orElseThrow();
+        String quizTitle = sourceQuiz.getTitle();
+        exerciseRepository.deleteById(sourceQuiz.getId());
+
+        ExerciseGroupImportResultDTO result = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                groupsToImport, ExerciseGroupImportResultDTO.class, HttpStatus.OK);
+
+        // The skipped quiz is reported to the editor via the "skipped" list in the response body (not silently dropped).
+        assertThat(result.skippedExercises()).as("the skipped quiz title must be reported").contains(quizTitle);
+        // No exercise failed partway, so the incomplete list is empty and omitted from the response (DTO uses @JsonInclude(NON_EMPTY)).
+        assertThat(result.incompleteExercises()).as("no exercise must be reported as incomplete").isNullOrEmpty();
+
+        // The target exam received modelling, text and file upload (the empty source group is filtered out before import).
+        // The quiz was skipped, so its group is empty but is intentionally KEPT (not deleted), in order, with no null
+        // element. No QuizExercise was imported.
+        Exam reloaded = examRepository.findWithExerciseGroupsAndExercisesById(targetExam.getId()).orElseThrow();
+        long importedExerciseCount = reloaded.getExerciseGroups().stream().mapToLong(group -> group.getExercises().size()).sum();
+        assertThat(importedExerciseCount).isEqualTo(3);
+        assertThat(reloaded.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())).as("the quiz must be the skipped exercise")
+                .noneMatch(QuizExercise.class::isInstance);
+        assertThat(reloaded.getExerciseGroups()).as("all four imported groups are retained, including the emptied quiz group").hasSize(4);
+        assertThat(reloaded.getExerciseGroups()).as("the ordered exercise-group list must not contain a null").doesNotContainNull();
+        assertThat(reloaded.getExerciseGroups()).filteredOn(group -> group.getExercises().isEmpty()).as("the emptied quiz group is retained").hasSize(1);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void importExerciseGroup_successfulIntoDifferentExam() throws Exception {
         Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
@@ -238,8 +284,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         Exam secondExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
-        final List<ExerciseGroup> listReceived = request.postListWithResponseBody(
-                "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", listSendToServer, ExerciseGroup.class, HttpStatus.OK);
+        final List<ExerciseGroup> listReceived = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                listSendToServer, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
 
         final List<ExerciseGroup> listExpected = new ArrayList<>(targetExam.getExerciseGroups());
         listExpected.addAll(listSendToServer);
@@ -265,8 +311,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         Exam secondExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
-        final List<ExerciseGroup> listReceived = request.postListWithResponseBody(
-                "/api/exam/courses/" + course2.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", listSendToServer, ExerciseGroup.class, HttpStatus.OK);
+        final List<ExerciseGroup> listReceived = request.postWithResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+                listSendToServer, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
         assertThat(listReceived).hasSize(9);
 
         final List<ExerciseGroup> listExpected = new ArrayList<>(targetExam.getExerciseGroups());

@@ -6,11 +6,11 @@ import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -68,13 +68,13 @@ describe('QuizExerciseExportComponent', () => {
         expect(courseService.find).toHaveBeenCalledWith(42);
         expect(quizService.findForCourse).toHaveBeenCalledWith(42);
         expect(quizService.find).toHaveBeenCalledWith(quiz.id);
-        expect(fixture.componentInstance.questions).toHaveLength(1);
-        expect(fixture.componentInstance.questions[0].exercise?.id).toBe(quiz.id);
+        expect(fixture.componentInstance.questions()).toHaveLength(1);
+        expect(fixture.componentInstance.questions()[0].exercise?.id).toBe(quiz.id);
     });
 
     it('should forward export call', () => {
         const fixture = TestBed.createComponent(QuizExerciseExportComponent);
-        fixture.componentInstance.questions = [{ id: 1 } as QuizQuestion];
+        fixture.componentInstance.questions.set([{ id: 1 } as QuizQuestion]);
 
         fixture.componentInstance.exportQuiz();
 

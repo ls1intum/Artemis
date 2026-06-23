@@ -7,7 +7,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { fromEvent } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.

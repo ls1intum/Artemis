@@ -1,16 +1,16 @@
 <div class="d-flex justify-content-between">
-    @if (course) {
-        <div id="exam-sidebar-test" [ngClass]="{ 'sidebar-collapsed': isCollapsed }" [hidden]="isExamStarted">
+    @if (course()) {
+        <div id="exam-sidebar-test" [ngClass]="{ 'sidebar-collapsed': isCollapsed() }" [hidden]="isExamStarted()">
             <jhi-sidebar
-                [itemSelected]="examSelected"
-                [courseId]="courseId"
-                [sidebarData]="sidebarData"
+                [itemSelected]="examSelected()"
+                [courseId]="courseId()"
+                [sidebarData]="sidebarData()!"
                 [collapseState]="DEFAULT_COLLAPSE_STATE"
                 [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
             />
         </div>
 
-        @if (examSelected) {
+        @if (examSelected()) {
             <div class="vw-100 module-bg rounded-3" style="min-width: 200px">
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>

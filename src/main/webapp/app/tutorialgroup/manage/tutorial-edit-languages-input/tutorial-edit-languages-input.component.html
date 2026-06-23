@@ -1,0 +1,44 @@
+<div class="label-and-input">
+    <label for="tutorial-edit-language-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate }} *</label>
+    <p-inputgroup>
+        @let languageValidation = languageValidationResult();
+        <p-inputgroup-addon>
+            <i class="pi pi-flag"></i>
+        </p-inputgroup-addon>
+        <input
+            id="tutorial-edit-language-input"
+            #searchInput
+            pInputText
+            [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate"
+            [(ngModel)]="language"
+            [invalid]="languageValidation.status === TutorialEditValidationStatus.INVALID"
+            (blur)="onBlur()"
+            (focus)="openPanel()"
+            (keydown)="onKeyDown($event)"
+        />
+        @if (languageValidation.status === TutorialEditValidationStatus.INVALID) {
+            <p-inputgroup-addon [pTooltip]="languageValidation.message | artemisTranslate" tooltipPosition="bottom">
+                <i class="pi pi-info-circle danger"></i>
+            </p-inputgroup-addon>
+        }
+    </p-inputgroup>
+</div>
+
+<ng-template #panelTemplate>
+    <div class="suggestion-panel">
+        <div class="suggestion-panel-header" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.languageAutocompleteHeader"></div>
+        <div class="suggestion-scroll-container">
+            @for (suggestedLanguage of alreadyUsedLanguages(); track suggestedLanguage; let index = $index) {
+                <button
+                    class="language-row"
+                    type="button"
+                    [class.active]="suggestionHighlightIndex() === index"
+                    (mousedown)="selectSuggestedLanguage(index)"
+                    (mousemove)="suggestionHighlightIndex.set(index)"
+                >
+                    {{ suggestedLanguage }}
+                </button>
+            }
+        </div>
+    </div>
+</ng-template>

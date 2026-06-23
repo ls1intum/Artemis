@@ -7,19 +7,19 @@ import { Subject } from 'rxjs';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/foundation/constants/file-extensions.constants';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { FileService } from 'app/shared/service/file.service';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { FileService } from 'app/foundation/service/file.service';
 
 export interface LectureAttachmentFormData {
     attachmentName?: string;
@@ -67,14 +67,14 @@ export class LectureAttachmentsComponent implements OnDestroy {
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
     lecture = signal<Lecture>(new Lecture());
-    attachments: Attachment[] = [];
+    attachments = signal<Attachment[]>([]);
     attachmentToBeUpdatedOrCreated = signal<Attachment | undefined>(undefined);
     attachmentBackup?: Attachment;
     attachmentFile = signal<File | undefined>(undefined);
-    isDownloadingAttachmentLink?: string;
+    readonly isDownloadingAttachmentLink = signal<string | undefined>(undefined);
     notificationText?: string;
-    erroredFile?: File;
-    errorMessage?: string;
+    readonly erroredFile = signal<File | undefined>(undefined);
+    readonly errorMessage = signal<string | undefined>(undefined);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -106,7 +106,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     loadAttachments(): void {
         this.attachmentService.findAllByLectureId(this.lecture().id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
-            this.attachments = attachmentsResponse.body!;
+            this.attachments.set(attachmentsResponse.body!);
         });
     }
 
@@ -140,9 +140,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.resetAttachmentFormVariables();
                     this.notificationText = undefined;
-                    this.attachments = this.attachments.map((el) => {
-                        return el.id === attachmentRes.body!.id ? attachmentRes.body! : el;
-                    });
+                    this.attachments.set(this.attachments().map((el) => (el.id === attachmentRes.body!.id ? attachmentRes.body! : el)));
                 },
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
@@ -166,8 +164,8 @@ export class LectureAttachmentsComponent implements OnDestroy {
     }
 
     private handleFailedUpload(error: HttpErrorResponse): void {
-        this.errorMessage = error.message;
-        this.erroredFile = this.attachmentFile();
+        this.errorMessage.set(error.message);
+        this.erroredFile.set(this.attachmentFile());
         const fileInputEl = this.fileInput();
         if (fileInputEl) {
             fileInputEl.nativeElement.value = '';
@@ -200,7 +198,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
     deleteAttachment(attachment: Attachment): void {
         this.attachmentService.delete(attachment.id!).subscribe({
             next: () => {
-                this.attachments = this.attachments.filter((attachmentEl) => attachmentEl.id !== attachment.id);
+                this.attachments.set(this.attachments().filter((attachmentEl) => attachmentEl.id !== attachment.id));
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -212,18 +210,20 @@ export class LectureAttachmentsComponent implements OnDestroy {
             this.resetAttachment();
         }
         this.attachmentToBeUpdatedOrCreated.set(undefined);
-        this.erroredFile = undefined;
+        this.erroredFile.set(undefined);
         this.resetAttachmentFormVariables();
     }
 
     resetAttachment(): void {
         if (this.attachmentBackup) {
-            this.attachments = this.attachments.map((attachment) => {
-                if (attachment.id === this.attachmentBackup!.id) {
-                    attachment = this.attachmentBackup as Attachment;
-                }
-                return attachment;
-            });
+            this.attachments.set(
+                this.attachments().map((attachment) => {
+                    if (attachment.id === this.attachmentBackup!.id) {
+                        attachment = this.attachmentBackup as Attachment;
+                    }
+                    return attachment;
+                }),
+            );
             this.attachmentBackup = undefined;
         }
     }
@@ -233,10 +233,10 @@ export class LectureAttachmentsComponent implements OnDestroy {
     }
 
     downloadAttachment(downloadName: string, downloadUrl: string): void {
-        if (!this.isDownloadingAttachmentLink) {
-            this.isDownloadingAttachmentLink = downloadUrl;
+        if (!this.isDownloadingAttachmentLink()) {
+            this.isDownloadingAttachmentLink.set(downloadUrl);
             this.fileService.downloadFileByAttachmentName(downloadUrl, downloadName);
-            this.isDownloadingAttachmentLink = undefined;
+            this.isDownloadingAttachmentLink.set(undefined);
         }
     }
 

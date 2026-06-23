@@ -1,7 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
@@ -11,13 +10,12 @@ import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-mouse-event.class';
 import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { MockProvider } from 'ng-mocks';
-import { MockNgbModalService } from 'src/test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
-import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
-import { TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { QuizExplanationAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -92,7 +90,6 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
     let component: DragAndDropQuestionEditComponent;
-    let modalService: NgbModal;
     let createObjectURLStub: Mock;
     let questionUpdatedSpy: Mock;
     let addFileSpy: Mock;
@@ -139,18 +136,16 @@ describe('DragAndDropQuestionEditComponent', () => {
         })
             .overrideComponent(DragAndDropQuestionEditComponent, {
                 set: {
-                    providers: [{ provide: NgbModal, useClass: MockNgbModalService }, MockProvider(ChangeDetectorRef)],
+                    providers: [MockProvider(ChangeDetectorRef)],
                 },
             })
             .compileComponents();
         fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
         component = fixture.componentInstance;
-        modalService = fixture.debugElement.injector.get(NgbModal);
         fixture.componentRef.setInput('question', clone(question1));
         fixture.componentRef.setInput('questionIndex', 1);
         fixture.componentRef.setInput('reEvaluationInProgress', false);
         questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
-        vi.spyOn(component['changeDetector'], 'detectChanges').mockImplementation(() => {});
         createObjectURLStub = vi.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {
             return 'some/client/dependent/path/' + file.name;
         });
@@ -169,7 +164,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     it('should initialize', () => {
         expect(component.backupQuestion).toEqual(question1);
-        expect(component.filePreviewPaths).toEqual(new Map<string, string>());
+        expect(component.filePreviewPaths()).toEqual(new Map<string, string>());
         expect(component.mouse).toStrictEqual(new DragAndDropMouseEvent());
     });
 
@@ -321,16 +316,11 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.draggingState).toBe(DragState.MOVE);
     });
 
-    it('should open, drag, drop', () => {
-        const content = {};
-        const modalServiceSpy = vi.spyOn(modalService, 'open');
-
-        component.open(content);
-        expect(modalServiceSpy).toHaveBeenCalledOnce();
+    it('should drag, drop', () => {
         component.drag();
-        expect(component.dropAllowed).toBe(true);
+        expect(component.dropAllowed()).toBe(true);
         component.drop();
-        expect(component.dropAllowed).toBe(false);
+        expect(component.dropAllowed()).toBe(false);
     });
 
     it('should duplicate drop location', () => {
@@ -387,7 +377,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const newDragItemOfQuestion = component.question().dragItems![0];
         expect(newDragItemOfQuestion.text).toBe('Text');
         expect(newDragItemOfQuestion.pictureFilePath).toBeUndefined();
-        expect(component.filePreviewPaths.size).toBe(0);
+        expect(component.filePreviewPaths().size).toBe(0);
         expect(addFileSpy).not.toHaveBeenCalled();
         expect(removeFileSpy).not.toHaveBeenCalled();
     });
@@ -397,8 +387,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         const fileName = 'testFile.' + extension;
         const expectedPath = 'some/client/dependent/path/' + fileName;
         const file = new File([], fileName);
+        const input = { files: [file], value: fileName };
 
-        component.createImageDragItem({ target: { files: [file] } });
+        component.createImageDragItem({ target: input });
 
         expect(component.question().dragItems).toHaveLength(1);
         const newDragItemOfQuestion = component.question().dragItems![0];
@@ -406,11 +397,12 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(newDragItemOfQuestion.pictureFilePath).toBeDefined();
         expect(newDragItemOfQuestion.pictureFilePath).toMatch(/\.png$/);
         const filePath = newDragItemOfQuestion.pictureFilePath!;
-        expect(component.filePreviewPaths.size).toBe(1);
-        expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
+        expect(component.filePreviewPaths().size).toBe(1);
+        expect(component.filePreviewPaths().get(filePath)).toBe(expectedPath);
         expect(addFileSpy).toHaveBeenCalledOnce();
         expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
+        expect(input.value).toBe('');
     });
 
     it('should delete drag item', () => {
@@ -518,7 +510,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.changeToTextDragItem(component.question().dragItems![1]);
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.filePreviewPaths.size).toBe(3);
+        expect(component.filePreviewPaths().size).toBe(3);
         expect(addFileSpy).not.toHaveBeenCalled();
         expect(removeFileSpy).toHaveBeenCalledOnce();
         expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
@@ -572,7 +564,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.question().dragItems![1].pictureFilePath).toBeDefined();
         expect(component.question().dragItems![1].pictureFilePath).toMatch(/\.png$/);
         const filePath = component.question().dragItems![1].pictureFilePath!;
-        expect(component.filePreviewPaths.get(filePath)).toBe(expectedPath);
+        expect(component.filePreviewPaths().get(filePath)).toBe(expectedPath);
         expect(addFileSpy).toHaveBeenCalledOnce();
         expect(addFileSpy).toHaveBeenCalledWith({ file, fileName: filePath });
         expect(removeFileSpy).not.toHaveBeenCalled();
@@ -662,7 +654,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     });
 
     it('should toggle preview', () => {
-        component.showPreview = true;
+        component.showPreview.set(true);
         const q = new DragAndDropQuestion();
         q.text = 'should be removed';
         fixture.componentRef.setInput('question', q);
@@ -670,7 +662,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         component.togglePreview();
 
-        expect(component.showPreview).toBe(false);
+        expect(component.showPreview()).toBe(false);
         expect(component.question().text).toBeUndefined();
     });
 
@@ -686,7 +678,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(questionUpdatedSpy).toHaveBeenCalledTimes(initialCalls + 1);
         expect(component.question().text).toBeUndefined();
-        expect(component.questionEditorText).toBe(newValue);
+        expect(component.questionEditorText()).toBe(newValue);
     });
 
     it('should detect domain actions', () => {
@@ -728,7 +720,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     it('should get images from drop locations', async () => {
         const dragAndDropQuestion = component.question();
         dragAndDropQuestion.backgroundFilePath = 'bg.png';
-        component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
+        component.filePreviewPaths.update((map) => new Map(map).set('bg.png', 'data:image/png;base64,test'));
         dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
         dragAndDropQuestion.correctMappings = [];
         dragAndDropQuestion.dragItems = [];
@@ -763,7 +755,7 @@ describe('DragAndDropQuestionEditComponent', () => {
     it('should blank out background image', async () => {
         const dragAndDropQuestion = component.question();
         dragAndDropQuestion.backgroundFilePath = 'bg.png';
-        component.filePreviewPaths.set('bg.png', 'data:image/png;base64,test');
+        component.filePreviewPaths.update((map) => new Map(map).set('bg.png', 'data:image/png;base64,test'));
         dragAndDropQuestion.dropLocations = [{ posX: 0, posY: 0, width: 50, height: 50 } as DropLocation, { posX: 50, posY: 50, width: 50, height: 50 } as DropLocation];
 
         const { mockContext, mockCanvas, getImageCallCount, cleanup } = setupCanvasAndImageMocks('data:image/png;base64,blanked');

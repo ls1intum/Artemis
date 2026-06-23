@@ -1,17 +1,18 @@
-import { Component, OnChanges, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, effect, inject, input, untracked } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { Subscription } from 'rxjs';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-message-inline-input',
@@ -20,7 +21,7 @@ import { Subscription } from 'rxjs';
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
-export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnChanges, OnDestroy {
+export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private draftService = inject(DraftService);
 
@@ -31,13 +32,22 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     private currentUserId: number | undefined;
     private draftMessageSubscription?: Subscription;
 
+    constructor() {
+        super();
+        // Track activeConversation changes to reload drafts when switching conversations
+        effect(() => {
+            this.activeConversation();
+            untracked(() => this.loadDraft());
+        });
+    }
+
     ngOnInit(): void {
         super.ngOnInit();
         this.loadCurrentUser();
     }
 
-    ngOnChanges() {
-        super.ngOnChanges();
+    protected override onPostingChanged(): void {
+        super.onPostingChanged();
         this.loadDraft();
     }
 
@@ -57,7 +67,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
 
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            content: [this.posting()?.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
 
         // Subscribe to content changes to save drafts
@@ -77,15 +87,21 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     createPosting(): void {
         // Wait for the markdown editor's 200ms textChangedEmitDelay to complete
         setTimeout(() => {
-            this.posting.content = this.formGroup.get('content')?.value;
-            this.metisService.createPost(this.posting).subscribe({
+            const posting = this.posting();
+            if (!posting) {
+                this.isLoading.set(false);
+                return;
+            }
+            const payload = deepClone(posting);
+            payload.content = this.formGroup.get('content')?.value;
+            this.metisService.createPost(payload).subscribe({
                 next: (post: Post) => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                     this.clearDraft();
                     this.onCreate.emit(post);
                 },
                 error: () => {
-                    this.isLoading = false;
+                    this.isLoading.set(false);
                 },
             });
         }, 250);
@@ -96,15 +112,21 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading.set(false);
+            return;
+        }
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
         this.isModalOpen.emit();
-        this.metisService.updatePost(this.posting).subscribe({
+        this.metisService.updatePost(payload).subscribe({
             next: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
                 this.clearDraft();
             },
             error: () => {
-                this.isLoading = false;
+                this.isLoading.set(false);
             },
         });
     }
@@ -121,20 +143,28 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
 
     private saveDraft(content: string): void {
         const key = this.getDraftKey();
+        if (!key) {
+            return;
+        }
         this.draftService.saveDraft(key, content);
     }
 
     private loadDraft(): void {
         const key = this.getDraftKey();
+        if (!key) {
+            return;
+        }
         const draft = this.draftService.loadDraft(key);
-        if (draft) {
-            this.posting.content = draft;
-            this.resetFormGroup();
+        if (draft && this.posting() && this.formGroup) {
+            this.formGroup.get('content')?.setValue(draft);
         }
     }
 
     private clearDraft(): void {
         const key = this.getDraftKey();
+        if (!key) {
+            return;
+        }
         this.draftService.clearDraft(key);
     }
 

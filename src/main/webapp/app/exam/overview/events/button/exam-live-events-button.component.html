@@ -1,6 +1,6 @@
-@if (eventCount) {
+@if (eventCount()) {
     <button class="btn btn-md btn-info" (click)="openDialog($event)">
         <fa-icon [icon]="faBullhorn" />
-        <span>({{ eventCount }})</span>
+        <span>({{ eventCount() }})</span>
     </button>
 }

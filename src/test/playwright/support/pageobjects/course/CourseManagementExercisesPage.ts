@@ -65,9 +65,21 @@ export class CourseManagementExercisesPage {
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(PROGRAMMING_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
-        // Wait for the delete confirmation dialog to close before asserting DOM changes.
-        // Angular needs time to process the response and remove the exercise from the list.
+        // Wait for the delete confirmation dialog to close and the exercise to be
+        // removed from the DOM. The dialog close is fast, but Angular's change detection
+        // might not remove the card immediately. Poll until both are done.
         await expect(this.page.getByTestId('delete-dialog-confirm-button')).not.toBeVisible({ timeout: 10000 });
+        // Wait for the exercise card to disappear. If Angular doesn't remove it
+        // after the dialog closes, reload to force a fresh render.
+        try {
+            await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
+        } catch {
+            await this.page.reload();
+            await this.page.waitForLoadState('domcontentloaded');
+            // Re-assert after the reload so a still-present card surfaces as a real test failure
+            // instead of being silently swallowed by the catch.
+            await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
+        }
     }
 
     async deleteFileUploadExercise(exercise: Exercise) {
@@ -134,7 +146,15 @@ export class CourseManagementExercisesPage {
         await endButton.scrollIntoViewIfNeeded();
         await endButton.click();
         await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
+        // Wait for the end-now request to actually complete before returning. Otherwise a follow-up step (e.g. a student
+        // loading the exercise to practice) can race the in-flight end-now and observe the quiz as still "Waiting for
+        // Start", with no Practice option — the root cause of the practice-mode flake.
+        const endResponse = this.page.waitForResponse(
+            (resp) => resp.url().includes(`/quiz-exercises/${quizExercise.id}/end-now`) && resp.request().method() === 'PUT' && resp.ok(),
+            { timeout: 20000 },
+        );
         await this.page.getByTestId('delete-dialog-confirm-button').click();
+        await endResponse;
     }
 
     async shouldContainExerciseWithName(exerciseID: number) {
@@ -144,6 +164,7 @@ export class CourseManagementExercisesPage {
     }
 
     async openExerciseParticipations(exerciseId: number) {
+        await this.waitForExerciseCardAttached(exerciseId);
         await this.getExercise(exerciseId).locator('.btn', { hasText: 'Participations' }).click();
     }
 
@@ -160,8 +181,31 @@ export class CourseManagementExercisesPage {
     }
 
     async openExerciseTeams(exerciseId: number) {
-        const exerciseElement = this.getExercise(exerciseId);
-        const teamsButton = exerciseElement.locator('.btn', { hasText: 'Teams' });
+        await this.waitForExerciseCardAttached(exerciseId);
+        const teamsButton = this.getExercise(exerciseId).locator('.btn', { hasText: 'Teams' });
         await teamsButton.click();
+    }
+
+    /**
+     * Wait for the given exercise card to be attached, reloading once if necessary.
+     * Under heavy parallel multi-node load, the exercise-list GET that the page issues
+     * on first render occasionally returns an empty list right after a sibling create —
+     * the freshly-created exercise has not yet become visible through the routed node
+     * (eventual visibility across the load-balancer + caches). A single reload re-issues
+     * the GET and reliably surfaces the card on the second attempt.
+     */
+    private async waitForExerciseCardAttached(exerciseId: number): Promise<void> {
+        const card = this.getExercise(exerciseId);
+        const attachedWithin = async (timeout: number): Promise<boolean> =>
+            card
+                .waitFor({ state: 'attached', timeout })
+                .then(() => true)
+                .catch(() => false);
+        if (await attachedWithin(15_000)) {
+            return;
+        }
+        await this.page.reload();
+        await this.page.waitForLoadState('load');
+        await card.waitFor({ state: 'attached', timeout: 60_000 });
     }
 }

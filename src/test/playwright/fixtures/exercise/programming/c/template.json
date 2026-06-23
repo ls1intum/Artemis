@@ -16,7 +16,7 @@
     "noVersionControlAndContinuousIntegrationAvailable": false,
     "packageName": "<Insert package name here>",
     "presentationScoreEnabled": false,
-    "problemStatement": "# Hello World\n\nWrite a C program that prints `Hello world!` to stdout.\n\n## Tests\n\n1. [task][Compile](TestCompile)\n2. [task][Output](TestOutput,TestOutputASan,TestOutputUBSan,TestOutputLSan)\n3. [task][Sanitizers](TestASan,TestUBSan,TestLSan)\n",
+    "problemStatement": "Write a C program that prints `Hello world!` to stdout.\n\n## Tests\n\n1. [task][Compile](TestCompile)\n2. [task][Output](TestOutput,TestOutputASan,TestOutputUBSan,TestOutputLSan)\n3. [task][Sanitizers](TestASan,TestUBSan,TestLSan)\n",
     "programmingLanguage": "C",
     "projectType": "GCC",
     "secondCorrectionEnabled": false,

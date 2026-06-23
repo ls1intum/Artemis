@@ -26,11 +26,12 @@ on:
 concurrency: ${{ github.event.inputs.environment_name }}
 
 env:
-  build_workflow_name: build.yml
+  # The single CI entry point that publishes the Artemis.war artifact (via ci-build.yml).
+  build_workflow_name: ci.yml
 
 jobs:
   check-build-status:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, artemis-prod-deployment]
     outputs:
       build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }}
     steps:
@@ -43,7 +44,7 @@ jobs:
 
       - name: Fetch workflow runs by branch and commit
         id: get_workflow_run
-        uses: octokit/request-action@v2.x
+        uses: octokit/request-action@dad4362715b7fb2ddedf9772c8670824af564f0d  # v2.4.0
         with:
           route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.build_workflow_name }}/runs?branch=${{ github.event.inputs.branch_name }}&head_sha=${{ github.event.inputs.commit_sha }}
         env:
@@ -51,9 +52,9 @@ jobs:
 
       - name: Extract workflow ID
         id: set_build_workflow_id
+        env:
+          WORKFLOW_DATA: ${{ steps.get_workflow_run.outputs.data }}
         run: |
-          WORKFLOW_DATA='${{ steps.get_workflow_run.outputs.data }}'
-
           WORKFLOW_ID=$(echo "$WORKFLOW_DATA" | jq -r '
             .workflow_runs[0].id // empty
           ')
@@ -68,7 +69,7 @@ jobs:
 
       - name: Check for war artifact
         id: verify_artifact
-        uses: octokit/request-action@v2.x
+        uses: octokit/request-action@dad4362715b7fb2ddedf9772c8670824af564f0d  # v2.4.0
         with:
           route: GET /repos/${{ github.repository }}/actions/runs/${{ steps.set_build_workflow_id.outputs.workflow_id }}/artifacts?name=Artemis.war
         env:
@@ -76,8 +77,10 @@ jobs:
 
       - name: Verify artifact exists
         id: check_result
+        env:
+          ARTIFACT_DATA: ${{ steps.verify_artifact.outputs.data }}
         run: |
-          TOTAL_COUNT=$(echo '${{ steps.verify_artifact.outputs.data }}' | jq -r '.total_count')
+          TOTAL_COUNT=$(echo "$ARTIFACT_DATA" | jq -r '.total_count')
 
           if [ "$TOTAL_COUNT" -gt 0 ]; then
             echo "Found Artemis.war artifact in build for commit ${{ github.event.inputs.commit_sha }}"
@@ -88,7 +91,7 @@ jobs:
 
   deploy:
     needs: check-build-status
-    runs-on: [self-hosted, deploy-artemis]
+    runs-on: [self-hosted, artemis-prod-deployment]
     environment:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
@@ -140,7 +143,7 @@ jobs:
           export VAULT_TOKEN=$(cat ~/.vault-token)
 
       - name: Download artifact
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Artemis.war
           path: /tmp/artifact

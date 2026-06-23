@@ -1,12 +1,12 @@
 package de.tum.cit.aet.artemis.programming.util;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
@@ -20,12 +20,12 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -170,8 +170,8 @@ public class ProgrammingUtilTestService {
         // There's no need to stub getOrCheckoutRepository here — use the real implementation.
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.workingCopyGitRepoFile.toURI());
         var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.getFirst().getId().getName(), SubmissionType.MANUAL);
-        participation = programmingExerciseStudentParticipationRepository
-                .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).getFirst();
+        participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), List.of(participation.getId()))
+                .getFirst();
         return (ProgrammingSubmission) participationUtilService.addSubmission(participation, submission);
     }
 }

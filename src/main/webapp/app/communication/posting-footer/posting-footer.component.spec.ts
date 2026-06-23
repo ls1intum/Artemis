@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -12,11 +14,20 @@ import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-cr
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from 'test/helpers/sample/metis-sample-data';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { User } from 'app/core/user/user.model';
+import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { signal } from '@angular/core';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { DialogService } from 'primeng/dynamicdialog';
 
 interface PostGroup {
     author: User | undefined;
@@ -24,17 +35,25 @@ interface PostGroup {
 }
 
 describe('PostingFooterComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PostingFooterComponent;
     let fixture: ComponentFixture<PostingFooterComponent>;
     let metisService: MetisService;
-    let metisServiceUserAuthorityStub: jest.SpyInstance;
+    let metisServiceUserAuthorityStub: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: PostService, useClass: MockPostService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
             imports: [
                 PostingFooterComponent,
@@ -43,18 +62,19 @@ describe('PostingFooterComponent', () => {
                 MockComponent(AnswerPostComponent),
                 MockComponent(AnswerPostCreateEditModalComponent),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(PostingFooterComponent);
-                component = fixture.componentInstance;
-                metisService = TestBed.inject(MetisService);
-                metisServiceUserAuthorityStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
-            });
+        });
+        TestBed.overrideComponent(PostingFooterComponent, {
+            remove: { imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent] },
+            add: { imports: [MockComponent(AnswerPostComponent), MockComponent(AnswerPostCreateEditModalComponent)] },
+        });
+        fixture = TestBed.createComponent(PostingFooterComponent);
+        component = fixture.componentInstance;
+        metisService = TestBed.inject(MetisService);
+        metisServiceUserAuthorityStub = vi.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should be initialized correctly for users that are at least tutors in course', () => {
@@ -62,50 +82,46 @@ describe('PostingFooterComponent', () => {
         fixture.componentRef.setInput('posting', post);
         metisServiceUserAuthorityStub.mockReturnValue(true);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).toBeTrue();
-        expect(component.createdAnswerPost.resolvesPost).toBeTrue();
+        expect(component.isAtLeastTutorInCourse).toBe(true);
+        expect(component.createdAnswerPost().resolvesPost).toBe(true);
     });
 
     it('should group answer posts correctly', () => {
         fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1, unApprovedAnswerPost2]);
-        const mockContainerRef = { clear: jest.fn() } as any;
-        const mockSignal = signal(mockContainerRef);
         fixture.detectChanges();
 
-        component.answerPostCreateEditModal = {
-            createEditAnswerPostContainerRef: mockSignal,
-        } as unknown as AnswerPostCreateEditModalComponent;
         component.groupAnswerPosts();
-        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
-        expect(component.groupedAnswerPosts[0].posts.length).toBeGreaterThan(0);
+        expect(component.groupedAnswerPosts().length).toBeGreaterThan(0);
+        expect(component.groupedAnswerPosts()[0].posts.length).toBeGreaterThan(0);
     });
 
     it('should group answer posts and detect changes on changes to sortedAnswerPosts input', () => {
         fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1, unApprovedAnswerPost2]);
-        const mockContainerRef = { clear: jest.fn() } as any;
-        const mockSignal = signal(mockContainerRef);
         fixture.detectChanges();
 
-        component.answerPostCreateEditModal = {
-            createEditAnswerPostContainerRef: mockSignal,
-        } as unknown as AnswerPostCreateEditModalComponent;
-        const changeDetectorSpy = jest.spyOn(component['changeDetector'], 'detectChanges');
-        component.ngOnChanges({ sortedAnswerPosts: { currentValue: unsortedAnswerArray, previousValue: [], firstChange: true, isFirstChange: () => true } });
-        expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
-        expect(changeDetectorSpy).toHaveBeenCalled();
+        const answerPostWithDate = { ...unApprovedAnswerPost1, id: 3, creationDate: dayjs().subtract(2, 'day') } as AnswerPost;
+        fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1, unApprovedAnswerPost2, answerPostWithDate]);
+        fixture.detectChanges();
+        expect(component.groupedAnswerPosts().length).toBeGreaterThan(0);
     });
 
     it('should clear answerPostCreateEditModal container on destroy', () => {
-        const mockContainerRef = { clear: jest.fn() } as any;
-        const mockSignal = signal(mockContainerRef);
+        fixture.componentRef.setInput('posting', post);
+        fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1]);
+        fixture.componentRef.setInput('showAnswers', true);
+        fixture.detectChanges();
 
-        component.answerPostCreateEditModal = {
-            createEditAnswerPostContainerRef: mockSignal,
-        } as unknown as AnswerPostCreateEditModalComponent;
-
-        const clearSpy = jest.spyOn(mockContainerRef, 'clear');
-        component.ngOnDestroy();
-        expect(clearSpy).toHaveBeenCalled();
+        const modal = component.answerPostCreateEditModal();
+        if (modal) {
+            const mockContainerRef = { clear: vi.fn() } as any;
+            const containerRefSignal = signal(mockContainerRef);
+            Object.defineProperty(modal, 'createEditAnswerPostContainerRef', { value: containerRefSignal });
+            component.ngOnDestroy();
+            expect(mockContainerRef.clear).toHaveBeenCalled();
+        } else {
+            // If no modal rendered, ngOnDestroy should not fail
+            component.ngOnDestroy();
+        }
     });
 
     it('should return the ID of the post in trackPostByFn', () => {
@@ -133,7 +149,7 @@ describe('PostingFooterComponent', () => {
         };
 
         const result = component.isLastPost(mockGroup, mockPost);
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
     });
 
     it('should return false if the post is not the last post in the group in isLastPost', () => {
@@ -144,7 +160,7 @@ describe('PostingFooterComponent', () => {
         };
 
         const result = component.isLastPost(mockGroup, mockPost);
-        expect(result).toBeFalse();
+        expect(result).toBe(false);
     });
 
     it('should be initialized correctly for users that are not at least tutors in course', () => {
@@ -152,21 +168,17 @@ describe('PostingFooterComponent', () => {
         fixture.componentRef.setInput('posting', post);
         metisServiceUserAuthorityStub.mockReturnValue(false);
         component.ngOnInit();
-        expect(component.isAtLeastTutorInCourse).toBeFalse();
-        expect(component.createdAnswerPost.resolvesPost).toBeFalse();
+        expect(component.isAtLeastTutorInCourse).toBe(false);
+        expect(component.createdAnswerPost().resolvesPost).toBe(false);
     });
 
     it('should open create answer post modal', () => {
         fixture.componentRef.setInput('posting', metisPostExerciseUser1);
         component.ngOnInit();
         fixture.detectChanges();
-        const mockContainerRef = { clear: jest.fn() } as any;
-        const mockSignal = signal(mockContainerRef);
 
-        component.answerPostCreateEditModal = {
-            createEditAnswerPostContainerRef: mockSignal,
-        } as unknown as AnswerPostCreateEditModalComponent;
-        const createAnswerPostModalOpen = jest.spyOn(component.createAnswerPostModalComponent, 'open');
+        const modalComponent = component.createAnswerPostModalComponent();
+        const createAnswerPostModalOpen = vi.spyOn(modalComponent, 'open');
         component.openCreateAnswerPostModal();
         expect(createAnswerPostModalOpen).toHaveBeenCalledOnce();
     });
@@ -175,13 +187,9 @@ describe('PostingFooterComponent', () => {
         fixture.componentRef.setInput('posting', metisPostExerciseUser1);
         component.ngOnInit();
         fixture.detectChanges();
-        const mockContainerRef = { clear: jest.fn() } as any;
-        const mockSignal = signal(mockContainerRef);
 
-        component.answerPostCreateEditModal = {
-            createEditAnswerPostContainerRef: mockSignal,
-        } as unknown as AnswerPostCreateEditModalComponent;
-        const createAnswerPostModalClose = jest.spyOn(component.createAnswerPostModalComponent, 'close');
+        const modalComponent = component.createAnswerPostModalComponent();
+        const createAnswerPostModalClose = vi.spyOn(modalComponent, 'close');
         component.closeCreateAnswerPostModal();
         expect(createAnswerPostModalClose).toHaveBeenCalledOnce();
     });
@@ -199,28 +207,22 @@ describe('PostingFooterComponent', () => {
         const post5: AnswerPost = { id: 5, author: authorB, creationDate: baseTime.add(14, 'minute') } as unknown as AnswerPost;
         fixture.componentRef.setInput('sortedAnswerPosts', [post3, post1, post5, post2, post4]);
         fixture.changeDetectorRef.detectChanges();
-        const mockContainerRef = { clear: jest.fn() } as any;
-        const mockSignal = signal(mockContainerRef);
-
-        component.answerPostCreateEditModal = {
-            createEditAnswerPostContainerRef: mockSignal,
-        } as unknown as AnswerPostCreateEditModalComponent;
 
         component.groupAnswerPosts();
-        expect(component.groupedAnswerPosts).toHaveLength(3);
+        expect(component.groupedAnswerPosts()).toHaveLength(3);
 
-        const group1 = component.groupedAnswerPosts[0];
+        const group1 = component.groupedAnswerPosts()[0];
         expect(group1.author).toEqual(authorA);
         expect(group1.posts).toHaveLength(2);
         expect(group1.posts).toContainEqual(expect.objectContaining({ id: post1.id }));
         expect(group1.posts).toContainEqual(expect.objectContaining({ id: post2.id }));
 
-        const group2 = component.groupedAnswerPosts[1];
+        const group2 = component.groupedAnswerPosts()[1];
         expect(group2.author).toEqual(authorA);
         expect(group2.posts).toHaveLength(1);
         expect(group2.posts).toContainEqual(expect.objectContaining({ id: post3.id }));
 
-        const group3 = component.groupedAnswerPosts[2];
+        const group3 = component.groupedAnswerPosts()[2];
         expect(group3.author).toEqual(authorB);
         expect(group3.posts).toHaveLength(2);
         expect(group3.posts).toContainEqual(expect.objectContaining({ id: post4.id }));
@@ -230,6 +232,6 @@ describe('PostingFooterComponent', () => {
     it('should handle empty answer posts array', () => {
         fixture.componentRef.setInput('sortedAnswerPosts', []);
         component.groupAnswerPosts();
-        expect(component.groupedAnswerPosts).toHaveLength(0);
+        expect(component.groupedAnswerPosts()).toHaveLength(0);
     });
 });

@@ -2,15 +2,18 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -20,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
@@ -31,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
@@ -40,6 +45,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnectionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 
 /**
@@ -83,7 +91,7 @@ public class PyrisConnectorService {
         try {
             var response = restTemplate.getForEntity(pyrisUrl + "/api/v2/memiris/user/" + userId, MemirisMemoryDataDTO.class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
-                return new MemirisMemoryDataDTO(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+                return new MemirisMemoryDataDTO(List.of(), List.of(), List.of());
             }
             return response.getBody();
         }
@@ -180,6 +188,64 @@ public class PyrisConnectorService {
     }
 
     /**
+     * Searches for lecture units in Pyris using a query string.
+     *
+     * @param query     the search query
+     * @param limit     the maximum number of results to return
+     * @param courseIds optional list of course IDs to restrict the search scope; null means global search across all courses
+     * @return list of matching lecture search results
+     */
+    public List<PyrisLectureSearchResultDTO> searchLectures(String query, int limit, @Nullable List<Long> courseIds) {
+        var endpoint = "/api/v1/search/lectures";
+        try {
+            var requestDTO = new PyrisLectureSearchRequestDTO(query, limit, courseIds);
+            var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, PyrisLectureSearchResultDTO[].class);
+            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody() || response.getBody() == null) {
+                return List.of();
+            }
+            return Arrays.asList(response.getBody());
+        }
+        catch (HttpStatusCodeException e) {
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to search lectures in Pyris", e);
+            throw new PyrisConnectorException("Could not fetch lecture search results from Pyris");
+        }
+    }
+
+    /**
+     * Asks Pyris to answer a question using course content via the async pipeline (POST /api/v1/pipelines/global-search/run → 202).
+     * Pyris will POST two webhook callbacks to Artemis:
+     * 1. A "thinking" update (~2 ms after this call) when the query is classified as a real question.
+     * 2. A "result" update when the LLM finishes, containing the answer (or null for navigation queries).
+     *
+     * @param query       the user's question
+     * @param limit       the maximum number of source segments to retrieve
+     * @param jobToken    the Hazelcast job token used for callback authentication and WebSocket routing
+     * @param aiSelection the user's LLM selection (LOCAL_AI or CLOUD_AI)
+     */
+    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection) {
+        var endpoint = "/api/v1/pipelines/global-search/run";
+        try {
+            var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of());
+            var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
+            if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
+                log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
+                throw new PyrisConnectorException("Unexpected status from Pyris global-search pipeline: " + response.getStatusCode().value());
+            }
+        }
+        catch (HttpStatusCodeException e) {
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send async search/ask request to Pyris", e);
+            throw new PyrisConnectorException("Could not send global search Iris answer request to Pyris");
+        }
+    }
+
+    /**
      * Executes a pipeline with the given feature and variant
      *
      * @param feature      The feature name of the pipeline to execute
@@ -191,7 +257,7 @@ public class PyrisConnectorService {
         // Add event query parameter if present
         endpoint += event.map(e -> "?event=" + e).orElse("");
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             throw toIrisException(e);
@@ -210,7 +276,7 @@ public class PyrisConnectorService {
     public void executeLectureAdditionWebhook(PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/lectures/ingest";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
@@ -230,7 +296,7 @@ public class PyrisConnectorService {
     public void executeLectureDeletionWebhook(PyrisWebhookLectureDeletionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/lectures/delete";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             log.error("Failed to send lectures to Pyris", e);
@@ -269,7 +335,7 @@ public class PyrisConnectorService {
     public void executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, PyrisWebhookFaqIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/faqs/ingest";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             log.error("Failed to send faq {} to Pyris: {}", toUpdateFaq.faqId(), e.getMessage());
@@ -289,7 +355,7 @@ public class PyrisConnectorService {
     public void executeFaqDeletionWebhook(PyrisWebhookFaqDeletionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/faqs/delete";
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
+            restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
         }
         catch (HttpStatusCodeException e) {
             log.error("Failed to send faqs to Pyris", e);

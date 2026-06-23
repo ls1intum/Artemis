@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -7,19 +7,19 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/sha
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { faListAlt } from '@fortawesome/free-solid-svg-icons';
-import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { onTextEditorTab } from 'app/shared/util/text.utils';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { onTextEditorTab } from 'app/foundation/util/text.utils';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -54,8 +54,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
 
     // answer represents the view state
-    answer: string;
-    problemStatementHtml: SafeHtml;
+    readonly answer = signal('');
+    readonly problemStatementHtml = signal<SafeHtml | undefined>(undefined);
     private textEditorInput = new Subject<string>();
 
     // Icons
@@ -66,7 +66,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     ngOnInit(): void {
         // show submission answers in UI
-        this.problemStatementHtml = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement);
+        this.problemStatementHtml.set(this.artemisMarkdown.safeHtmlForMarkdown(this.exercise()?.problemStatement));
         this.updateViewFromSubmission();
     }
 
@@ -79,8 +79,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateProblemStatement(newProblemStatementHtml: SafeHtml): void {
-        this.problemStatementHtml = newProblemStatementHtml;
-        this.changeDetectorReference.detectChanges();
+        this.problemStatementHtml.set(newProblemStatementHtml);
     }
 
     getSubmission(): Submission {
@@ -88,7 +87,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     updateViewFromSubmission(): void {
-        this.answer = this.studentSubmission().text ?? '';
+        this.answer.set(this.studentSubmission().text ?? '');
     }
 
     public hasUnsavedChanges(): boolean {
@@ -96,16 +95,16 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     public updateSubmissionFromView(): void {
-        this.studentSubmission().text = this.answer;
-        this.studentSubmission().language = this.textService.predictLanguage(this.answer);
+        this.studentSubmission().text = this.answer();
+        this.studentSubmission().language = this.textService.predictLanguage(this.answer());
     }
 
     get wordCount(): number {
-        return this.stringCountService.countWords(this.answer);
+        return this.stringCountService.countWords(this.answer());
     }
 
     get characterCount(): number {
-        return this.stringCountService.countCharacters(this.answer);
+        return this.stringCountService.countCharacters(this.answer());
     }
 
     onTextEditorInput(event: Event) {
@@ -115,10 +114,10 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     private updateViewFromSubmissionVersion() {
         if (this.submissionVersion?.content) {
-            this.answer = this.submissionVersion.content;
+            this.answer.set(this.submissionVersion.content);
         } else {
             // the content of the submission version can be undefined if an empty submission was saved
-            this.answer = '';
+            this.answer.set('');
         }
     }
 

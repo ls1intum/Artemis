@@ -3,12 +3,12 @@
         #select="ngModel"
         required
         class="form-select"
-        [ngModel]="programmingExercise.buildConfig?.theiaImage"
+        [ngModel]="programmingExercise().buildConfig?.theiaImage"
         (ngModelChange)="onTheiaImageChange($event)"
         name="theiaImage"
         id="field_theiaImage"
     >
-        @for (item of theiaImages! | keyvalue; track item) {
+        @for (item of theiaImages() | keyvalue; track item) {
             <option [value]="item.value">
                 {{ item.key }}
             </option>

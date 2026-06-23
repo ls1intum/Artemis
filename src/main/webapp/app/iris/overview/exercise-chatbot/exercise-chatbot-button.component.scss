@@ -11,95 +11,49 @@
     }
 }
 
-.read-more {
+%iris-popup {
+    position: absolute;
+    right: min(80px, calc(100vw - 100%));
     display: flex;
     align-items: center;
-    transform: none;
-    padding: 4px 6px;
-    border-radius: 8px;
-    font-size: 12px;
-    z-index: 100;
-    color: var(--secondary);
-    background-color: var(--iris-tertiary-background);
-    transition: all 0.2s ease;
-
-    &:focus-visible {
-        outline: 2px solid var(--link-color);
-        outline-offset: 2px;
-    }
+    text-align: left;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    background-color: var(--iris-secondary-background);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    z-index: 9998;
+    overflow: hidden;
 }
 
 .message-bubble {
-    --r: 13px; /* the radius */
+    @extend %iris-popup;
 
-    position: absolute;
-    z-index: 50;
     bottom: 100px;
-    right: 80px;
-    width: 350px;
-    background-color: var(--iris-secondary-background);
+    width: min(350px, calc(100vw - 120px));
+    max-height: 240px;
     cursor: pointer;
-    overflow: hidden;
+    border: none;
+    font: inherit;
+    color: inherit;
     overflow-wrap: break-word;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    border-radius: var(--r);
-    border-bottom-right-radius: 0;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     transform-origin: bottom right;
     transition:
         opacity 300ms ease-out,
         transform 300ms ease-out;
-    gap: 8px;
 
-    .bubble-text {
-        max-height: 200px;
+    .preview-text {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
         overflow: hidden;
-        width: 100%;
-    }
-
-    &.bubble-hidden {
-        opacity: 0;
-        transform: scale(0);
-        pointer-events: none;
-    }
-
-    &.bubble-visible {
-        opacity: 1;
-        transform: scale(1);
     }
 
     &:hover {
+        background-color: var(--iris-accent-background);
         transform: scale(1.05);
-
-        .read-more {
-            background-color: var(--iris-accent-background);
-        }
     }
-}
-
-.content-overflow {
-    &::before {
-        content: '';
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        position: absolute;
-    }
-}
-
-.hidden {
-    display: none;
-}
-
-.btn-circle {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    border-radius: 50%;
 }
 
 .unread-indicator {
@@ -109,4 +63,105 @@
     width: 10px;
     height: 10px;
     color: var(--red);
+}
+
+.status-indicator {
+    @extend %iris-popup;
+
+    bottom: 96px;
+    animation: status-bubble-enter 300ms ease-out;
+    cursor: pointer;
+    border: none;
+    font: inherit;
+    color: inherit;
+}
+
+@keyframes slideUpFade {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.status-label {
+    color: var(--bs-body-color);
+    font-size: 14px;
+    line-height: 1.6;
+    white-space: nowrap;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: min(200px, 40vw);
+
+    &.anim-a,
+    &.anim-b {
+        animation: slideUpFade 0.4s ease-out forwards;
+    }
+}
+
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background-color: var(--bs-body-color);
+        animation: dotPulse 1.4s ease-in-out infinite;
+
+        &:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        &:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+    }
+}
+
+@keyframes dotPulse {
+    0%,
+    80%,
+    100% {
+        transform: scale(0.8);
+        opacity: 0.3;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes status-bubble-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .typing-dots .dot,
+    .status-indicator {
+        animation: none;
+    }
+
+    .status-label.anim-a,
+    .status-label.anim-b {
+        animation: none;
+    }
+
+    .typing-dots .dot {
+        opacity: 0.6;
+    }
 }

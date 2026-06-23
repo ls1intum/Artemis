@@ -43,11 +43,21 @@ public class RedissonCodecConfiguration {
         });
     }
 
+    /**
+     * Configures the given {@link ObjectMapper} with the modules and serialization defaults used by the Redisson codec.
+     *
+     * @param objectMapper the mapper to configure
+     */
     public static void configureObjectMapper(ObjectMapper objectMapper) {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
+    /**
+     * Enables polymorphic type information so that {@code Object.class}-typed payloads (including Java records) survive a JSON round-trip.
+     *
+     * @param objectMapper the mapper to configure
+     */
     public static void configureTypeInclusion(ObjectMapper objectMapper) {
         // Use EVERYTHING instead of the default NON_FINAL to include Java records (which are final)
         // in type information. Without this, records like BuildAgentInformation are serialized

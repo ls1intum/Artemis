@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FormsModule } from '@angular/forms';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFilePdf, faFolderOpen, faFolderPlus } from '@fortawesome/free-solid-svg-icons';

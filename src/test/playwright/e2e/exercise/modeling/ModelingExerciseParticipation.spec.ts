@@ -17,11 +17,10 @@ test.describe('Modeling Exercise Participation', { tag: '@fast' }, () => {
     test('Student can start and submit their model', async ({ login, courseOverview, modelingExerciseEditor }) => {
         await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         await courseOverview.startExercise(modelingExercise.id!);
-        await courseOverview.openRunningExercise(modelingExercise.id!);
         await modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 1, 310, 320);
         await modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 2, 730, 500);
         await modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 3, 1000, 100);
-        await modelingExerciseEditor.submit();
+        await courseOverview.submitExercise('api/modeling/exercises/*/modeling-submissions');
     });
 
     // Seed courses are persistent — no cleanup needed

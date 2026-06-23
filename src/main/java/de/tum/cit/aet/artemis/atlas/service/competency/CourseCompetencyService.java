@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,6 +17,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.UpdateCourseCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
@@ -39,15 +40,14 @@ import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.LearningObjectImportService;
 import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
@@ -88,13 +88,13 @@ public class CourseCompetencyService {
 
     private final CompetencyLectureUnitLinkRepository lectureUnitLinkRepository;
 
-    private final AtlasMLService atlasMLService;
+    private final Optional<AtlasMLService> atlasMLService;
 
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LearningPathService learningPathService, AuthorizationCheckService authCheckService, StandardizedCompetencyRepository standardizedCompetencyRepository,
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository,
-            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, AtlasMLService atlasMLService) {
+            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, Optional<AtlasMLService> atlasMLService) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
@@ -271,7 +271,7 @@ public class CourseCompetencyService {
         }
 
         if (!allCompetenciesForAtlas.isEmpty()) {
-            atlasMLService.saveCompetencies(allCompetenciesForAtlas, OperationTypeDTO.UPDATE);
+            atlasMLService.ifPresent(service -> service.saveCompetencies(allCompetenciesForAtlas, OperationTypeDTO.UPDATE));
         }
 
         if (importOptions.importRelations()) {
@@ -408,7 +408,7 @@ public class CourseCompetencyService {
                 lectureUnit.setCompletedUsers(Set.of(completions.get(lectureUnit.getId())));
             }
             else {
-                lectureUnit.setCompletedUsers(Collections.emptySet());
+                lectureUnit.setCompletedUsers(Set.of());
             }
         });
 
@@ -432,11 +432,22 @@ public class CourseCompetencyService {
                 competency.setUserProgress(Set.of(progress.get(competency.getId())));
             }
             else {
-                competency.setUserProgress(Collections.emptySet());
+                competency.setUserProgress(Set.of());
             }
         });
 
         return competencies;
+    }
+
+    /**
+     * Gets the course progress for all competencies of a course.
+     *
+     * @param course the course entity
+     * @return a list of course competency progress DTOs
+     */
+    public List<CourseCompetencyProgressDTO> getCourseProgressForAllCompetencies(Course course) {
+        return courseCompetencyRepository.findByCourseIdWithExercises(course.getId()).stream()
+                .map(competency -> competencyProgressService.getCompetencyCourseProgress(competency, course)).toList();
     }
 
     /**

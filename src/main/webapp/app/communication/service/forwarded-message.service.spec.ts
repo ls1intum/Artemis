@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { lastValueFrom, of } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -6,6 +8,8 @@ import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-me
 import { PostingType } from 'app/communication/shared/entities/posting.model';
 
 describe('ForwardedMessageService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: ForwardedMessageService;
     let httpClientMock: Partial<HttpClient>;
 
@@ -14,8 +18,8 @@ describe('ForwardedMessageService', () => {
 
     beforeEach(() => {
         httpClientMock = {
-            post: jest.fn(),
-            get: jest.fn(),
+            post: vi.fn(),
+            get: vi.fn(),
         };
 
         TestBed.configureTestingModule({
@@ -26,7 +30,7 @@ describe('ForwardedMessageService', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should be created', () => {
@@ -36,7 +40,7 @@ describe('ForwardedMessageService', () => {
     describe('createForwardedMessage', () => {
         it('should call POST with a converted DTO in params', () => {
             const response = new HttpResponse<ForwardedMessage>({ body: sampleForwardedMessage });
-            (httpClientMock.post as jest.Mock).mockReturnValue(of(response));
+            (httpClientMock.post as ReturnType<typeof vi.fn>).mockReturnValue(of(response));
 
             service.createForwardedMessage(sampleForwardedMessage).subscribe((res) => {
                 expect(res.body).toEqual(sampleForwardedMessage);
@@ -68,7 +72,7 @@ describe('ForwardedMessageService', () => {
             ];
             const response = new HttpResponse({ body: expectedResponse });
 
-            (httpClientMock.get as jest.Mock).mockReturnValue(of(response));
+            (httpClientMock.get as ReturnType<typeof vi.fn>).mockReturnValue(of(response));
 
             service.getForwardedMessages(ids, PostingType.POST).subscribe((res) => {
                 expect(res.body).toEqual(expectedResponse);
@@ -76,7 +80,7 @@ describe('ForwardedMessageService', () => {
 
             expect(httpClientMock.get).toHaveBeenCalledOnce();
 
-            const [calledUrl, calledOptions] = (httpClientMock.get as jest.Mock).mock.calls[0];
+            const [calledUrl, calledOptions] = (httpClientMock.get as ReturnType<typeof vi.fn>).mock.calls[0];
             expect(calledUrl).toBe(apiUrl);
 
             const expectedParams = {
@@ -96,7 +100,7 @@ describe('ForwardedMessageService', () => {
             ];
             const response = new HttpResponse({ body: expectedResponse });
 
-            (httpClientMock.get as jest.Mock).mockReturnValue(of(response));
+            (httpClientMock.get as ReturnType<typeof vi.fn>).mockReturnValue(of(response));
 
             service.getForwardedMessages(ids, PostingType.ANSWER).subscribe((res) => {
                 expect(res.body).toEqual(expectedResponse);
@@ -104,7 +108,7 @@ describe('ForwardedMessageService', () => {
 
             expect(httpClientMock.get).toHaveBeenCalledOnce();
 
-            const [calledUrl, calledOptions] = (httpClientMock.get as jest.Mock).mock.calls[0];
+            const [calledUrl, calledOptions] = (httpClientMock.get as ReturnType<typeof vi.fn>).mock.calls[0];
             expect(calledUrl).toBe(apiUrl);
 
             const expectedParams = {

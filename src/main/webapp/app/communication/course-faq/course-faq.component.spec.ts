@@ -1,21 +1,23 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseFaqComponent } from 'app/communication/course-faq/course-faq.component';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
-import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ElementRef, signal } from '@angular/core';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
@@ -29,16 +31,22 @@ function createFaq(id: number, category: string, color: string): Faq {
 }
 
 describe('CourseFaqs', () => {
+    setupTestBed({ zoneless: true });
+
     let courseFaqComponentFixture: ComponentFixture<CourseFaqComponent>;
     let courseFaqComponent: CourseFaqComponent;
 
     let faqService: FaqService;
-    let alertServiceStub: jest.SpyInstance;
+    let alertServiceStub: ReturnType<typeof vi.spyOn>;
     let alertService: AlertService;
 
     let faq1: Faq;
     let faq2: Faq;
     let faq3: Faq;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(() => {
         // In beforeEach:
@@ -47,8 +55,15 @@ describe('CourseFaqs', () => {
         faq3 = createFaq(3, 'category3', '#0ab84f');
 
         TestBed.configureTestingModule({
-            imports: [MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent), FaIconComponent],
-            declarations: [CourseFaqComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockComponent(SearchFilterComponent)],
+            imports: [
+                MockComponent(CustomExerciseCategoryBadgeComponent),
+                MockComponent(CourseFaqAccordionComponent),
+                FaIconComponent,
+                CourseFaqComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+                MockComponent(SearchFilterComponent),
+            ],
             providers: [
                 MockProvider(FaqService),
                 { provide: Router, useClass: MockRouter },
@@ -94,6 +109,7 @@ describe('CourseFaqs', () => {
                             }),
                         );
                     },
+                    convertFaqCategoriesAsStringFromServer: () => [],
                     applyFilters: () => {
                         return [faq2, faq3];
                     },
@@ -102,19 +118,13 @@ describe('CourseFaqs', () => {
                     },
                 }),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                courseFaqComponentFixture = TestBed.createComponent(CourseFaqComponent);
-                courseFaqComponent = courseFaqComponentFixture.componentInstance;
+        });
 
-                faqService = TestBed.inject(FaqService);
-                alertService = TestBed.inject(AlertService);
-            });
-    });
+        courseFaqComponentFixture = TestBed.createComponent(CourseFaqComponent);
+        courseFaqComponent = courseFaqComponentFixture.componentInstance;
 
-    afterEach(() => {
-        jest.restoreAllMocks();
+        faqService = TestBed.inject(FaqService);
+        alertService = TestBed.inject(AlertService);
     });
 
     it('should initialize', () => {
@@ -124,41 +134,41 @@ describe('CourseFaqs', () => {
     });
 
     it('should fetch faqs when initialized', () => {
-        const findAllSpy = jest.spyOn(faqService, 'findAllByCourseIdAndState');
+        const findAllSpy = vi.spyOn(faqService, 'findAllByCourseIdAndState');
 
         courseFaqComponentFixture.detectChanges();
         expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1, FaqState.ACCEPTED);
-        expect(courseFaqComponent.faqs).toHaveLength(3);
+        expect(courseFaqComponent.faqs()).toHaveLength(3);
     });
 
     it('should toggle filter correctly', () => {
-        const toggleFilterSpy = jest.spyOn(faqService, 'toggleFilter');
+        const toggleFilterSpy = vi.spyOn(faqService, 'toggleFilter');
         courseFaqComponentFixture.detectChanges();
         courseFaqComponent.toggleFilters('category2');
         expect(toggleFilterSpy).toHaveBeenCalledOnce();
-        expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
-        expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
-        expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(courseFaqComponent.filteredFaqs()).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should search through already filtered array', () => {
-        const searchSpy = jest.spyOn(faqService, 'hasSearchTokens');
-        const applyFilterSpy = jest.spyOn(faqService, 'applyFilters');
+        const searchSpy = vi.spyOn(faqService, 'hasSearchTokens');
+        const applyFilterSpy = vi.spyOn(faqService, 'applyFilters');
         courseFaqComponent.setSearchValue('questionTitle');
         courseFaqComponent.refreshFaqList(courseFaqComponent.searchInput.getValue());
         expect(applyFilterSpy).toHaveBeenCalledOnce();
         expect(searchSpy).toHaveBeenCalledTimes(2);
         expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');
         expect(searchSpy).toHaveBeenCalledWith(faq3, 'questionTitle');
-        expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
-        expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
-        expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(courseFaqComponent.filteredFaqs()).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs()).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs()).toEqual([faq2, faq3]);
     });
 
     it('should catch error if no categories are found', () => {
-        alertServiceStub = jest.spyOn(alertService, 'error');
+        alertServiceStub = vi.spyOn(alertService, 'error');
         const error = { status: 404 };
-        jest.spyOn(faqService, 'findAllCategoriesByCourseIdAndCategory').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        vi.spyOn(faqService, 'findAllCategoriesByCourseIdAndCategory').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         courseFaqComponentFixture.detectChanges();
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
@@ -169,7 +179,7 @@ describe('CourseFaqs', () => {
         const middleFaq = createFaq(2, 'category2', '#0ab84f');
         const oldestFaq = createFaq(1, 'category1', '#94a11c');
 
-        jest.spyOn(faqService, 'findAllByCourseIdAndState').mockReturnValue(
+        vi.spyOn(faqService, 'findAllByCourseIdAndState').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [newestFaq, middleFaq, oldestFaq], // Server returns sorted
@@ -181,15 +191,15 @@ describe('CourseFaqs', () => {
         courseFaqComponentFixture.detectChanges();
 
         // Verify component displays FAQs in the exact order received from server
-        expect(courseFaqComponent.faqs).toHaveLength(3);
-        expect(courseFaqComponent.faqs[0].id).toBe(3); // Newest
-        expect(courseFaqComponent.faqs[1].id).toBe(2);
-        expect(courseFaqComponent.faqs[2].id).toBe(1); // Oldest
+        expect(courseFaqComponent.faqs()).toHaveLength(3);
+        expect(courseFaqComponent.faqs()[0].id).toBe(3); // Newest
+        expect(courseFaqComponent.faqs()[1].id).toBe(2);
+        expect(courseFaqComponent.faqs()[2].id).toBe(1); // Oldest
     });
 
     it('should scroll and focus on the faq element with given id', () => {
-        const nativeElement1 = { id: 'faq-1', scrollIntoView: jest.fn(), focus: jest.fn() };
-        const nativeElement2 = { id: 'faq-2', scrollIntoView: jest.fn(), focus: jest.fn() };
+        const nativeElement1 = { id: 'faq-1', scrollIntoView: vi.fn(), focus: vi.fn() };
+        const nativeElement2 = { id: 'faq-2', scrollIntoView: vi.fn(), focus: vi.fn() };
 
         const elementRef1 = new ElementRef(nativeElement1);
         const elementRef2 = new ElementRef(nativeElement2);

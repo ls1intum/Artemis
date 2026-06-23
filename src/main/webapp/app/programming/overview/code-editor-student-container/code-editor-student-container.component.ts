@@ -1,10 +1,10 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
@@ -16,13 +16,13 @@ import { isPracticeMode } from 'app/exercise/shared/entities/participation/stude
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { isManualResult as isManualResultFunction } from 'app/exercise/result/result.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseInstructionComponent } from '../../shared/instructions-render/programming-exercise-instruction.component';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
@@ -51,26 +51,32 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     private submissionPolicyService = inject(SubmissionPolicyService);
     private route = inject(ActivatedRoute);
 
-    @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
+    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
     readonly IncludedInOverallScore = IncludedInOverallScore;
+
+    readonly participationId = input<number>();
+    readonly lightweight = signal(false);
     readonly SubmissionPolicyType = SubmissionPolicyType;
 
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     paramSub: Subscription;
-    participation: ProgrammingExerciseStudentParticipation;
-    exercise: ProgrammingExercise;
-    course?: Course;
+    // Template-read state written in async callbacks (route params subscription + HTTP loads) must be
+    // signal-backed under zoneless change detection, otherwise the loaded editor never renders.
+    readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
+    readonly exercise = signal<ProgrammingExercise>(undefined!);
+    readonly course = signal<Course | undefined>(undefined);
 
     // Fatal error state: when the participation can't be retrieved, the code editor is unusable for the student
-    loadingParticipation = false;
-    participationCouldNotBeFetched = false;
-    repositoryIsLocked = false;
+    readonly loadingParticipation = signal(false);
+    readonly participationCouldNotBeFetched = signal(false);
+    readonly repositoryIsLocked = signal(false);
+    // Written only in a template event handler, which schedules change detection itself — may stay plain.
     showEditorInstructions = true;
-    latestResult: Result | undefined;
-    hasTutorAssessment = false;
-    numberOfSubmissionsForSubmissionPolicy?: number;
+    readonly latestResult = signal<Result | undefined>(undefined);
+    readonly hasTutorAssessment = signal(false);
+    readonly numberOfSubmissionsForSubmissionPolicy = signal<number | undefined>(undefined);
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -82,25 +88,27 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.paramSub = this.route!.params.subscribe((params) => {
-            this.loadingParticipation = true;
-            this.participationCouldNotBeFetched = false;
-            const participationId = Number(params['participationId']);
+            this.loadingParticipation.set(true);
+            this.participationCouldNotBeFetched.set(false);
+            const participationId = this.participationId() ?? Number(params['participationId']);
             this.loadParticipationWithLatestResult(participationId)
                 .pipe(
                     tap((participationWithResults) => {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
-                        this.participation = participationWithResults;
-                        this.exercise = this.participation.exercise as ProgrammingExercise;
-                        const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
+                        this.participation.set(participationWithResults);
+                        const exercise = participationWithResults.exercise as ProgrammingExercise;
+                        this.exercise.set(exercise);
+                        this.lightweight.set(!exercise?.exerciseGroup);
+                        const dueDateHasPassed = hasExerciseDueDatePassed(exercise, participationWithResults);
                         // TODO: load this information from the server in case submission policies are enabled for programming exercises
-                        this.repositoryIsLocked = dueDateHasPassed && !isPracticeMode(this.participation);
-                        const allResults = getAllResultsOfAllSubmissions(this.participation.submissions);
-                        this.latestResult = allResults.length >= 1 ? allResults.first() : undefined;
+                        this.repositoryIsLocked.set(dueDateHasPassed && !isPracticeMode(participationWithResults));
+                        const allResults = getAllResultsOfAllSubmissions(participationWithResults.submissions);
+                        this.latestResult.set(allResults.length >= 1 ? allResults.first() : undefined);
                         this.checkForTutorAssessment(dueDateHasPassed);
-                        this.course = getCourseFromExercise(this.exercise);
-                        this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(this.exercise.id!).subscribe((submissionPolicy) => {
+                        this.course.set(getCourseFromExercise(exercise));
+                        this.submissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exercise.id!).subscribe((submissionPolicy) => {
                             if (submissionPolicy?.active) {
-                                this.exercise.submissionPolicy = submissionPolicy;
+                                this.exercise().submissionPolicy = submissionPolicy;
                                 this.getNumberOfSubmissionsForSubmissionPolicy();
                             }
                         });
@@ -111,14 +119,18 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                 )
                 .subscribe({
                     next: () => {
-                        this.loadingParticipation = false;
+                        this.loadingParticipation.set(false);
                     },
                     error: () => {
-                        this.participationCouldNotBeFetched = true;
-                        this.loadingParticipation = false;
+                        this.participationCouldNotBeFetched.set(true);
+                        this.loadingParticipation.set(false);
                     },
                 });
         });
+    }
+
+    commit(): void {
+        this.codeEditorContainer()?.commit();
     }
 
     /**
@@ -145,21 +157,23 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     checkForTutorAssessment(dueDateHasPassed: boolean) {
         let isManualResult = false;
         let hasTutorFeedback = false;
-        if (this.latestResult) {
+        const latestResult = this.latestResult();
+        if (latestResult) {
             // latest result is the first element of results, see loadParticipationWithLatestResult
-            isManualResult = isManualResultFunction(this.latestResult);
+            isManualResult = isManualResultFunction(latestResult);
             if (isManualResult) {
-                hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
+                hasTutorFeedback = latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }
         }
         // Also check for assessment due date to never show manual feedback before the due date
-        this.hasTutorAssessment = dueDateHasPassed && isManualResult && hasTutorFeedback;
+        this.hasTutorAssessment.set(dueDateHasPassed && isManualResult && hasTutorFeedback);
     }
 
     getNumberOfSubmissionsForSubmissionPolicy() {
-        if (this.participation.id) {
-            this.submissionPolicyService.getParticipationSubmissionCount(this.participation.id).subscribe((numberOfSubmissions) => {
-                this.numberOfSubmissionsForSubmissionPolicy = numberOfSubmissions;
+        const participationId = this.participation()?.id;
+        if (participationId) {
+            this.submissionPolicyService.getParticipationSubmissionCount(participationId).subscribe((numberOfSubmissions) => {
+                this.numberOfSubmissionsForSubmissionPolicy.set(numberOfSubmissions);
             });
         }
     }
@@ -168,9 +182,10 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      * Check whether a latestResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] {
-        if (this.latestResult?.feedbacks) {
-            checkSubsequentFeedbackInAssessment(this.latestResult.feedbacks);
-            return getManualUnreferencedFeedback(this.latestResult.feedbacks) ?? [];
+        const latestResult = this.latestResult();
+        if (latestResult?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(latestResult.feedbacks);
+            return getManualUnreferencedFeedback(latestResult.feedbacks) ?? [];
         }
         return [];
     }

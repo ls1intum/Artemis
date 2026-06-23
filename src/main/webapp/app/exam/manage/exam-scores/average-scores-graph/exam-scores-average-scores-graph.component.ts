@@ -1,29 +1,33 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
+import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/shared/util/navigation.utils';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
-import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/util/statistics-graph.utils';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/foundation/util/navigation.utils';
+import { Course } from 'app/course/shared/entities/course.model';
+import { TranslateService } from '@ngx-translate/core';
+import { ChartModule } from 'primeng/chart';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 type NameToValueMap = { [name: string]: any };
 
 @Component({
     selector: 'jhi-exam-scores-average-scores-graph',
     templateUrl: './exam-scores-average-scores-graph.component.html',
-    imports: [TranslateDirective, BarChartModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, ChartModule],
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private activatedRoute = inject(ActivatedRoute);
     private localeConversionService = inject(LocaleConversionService);
+    private translateService = inject(TranslateService);
+    private chartColorService = inject(ChartColorService);
 
     averageScores = input.required<AggregatedExerciseGroupResult>();
     course = input.required<Course>();
@@ -31,18 +35,31 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     courseId: number;
     examId: number;
 
-    readonly xAxisTickFormatting = axisTickFormattingWithPercentageSign;
-
-    // ngx
-    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
-    ngxColor = {
-        name: 'exercise groups',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
-    xScaleMax = 100;
+    /** One entry per bar: the exercise group average followed by the exercise averages. */
+    readonly chartEntries = signal<ChartSeriesEntry[]>([]);
+    /** The raw per-bar colors (CSS variable references), index-aligned with {@link chartEntries}. */
+    readonly barColors = signal<string[]>([]);
+    readonly xScaleMax = signal(100);
     lookup: NameToValueMap = {};
+
+    private readonly resolvedColors = this.chartColorService.resolvedColors(() => this.barColors());
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
+    readonly chartOptions = computed(() =>
+        barChartOptions({
+            horizontal: true,
+            percentScale: true,
+            xAxis: { max: this.xScaleMax() },
+            tooltip: {
+                title: (items) => items[0]?.label ?? '',
+                label: (item) => {
+                    const name = item.label ?? '';
+                    const averagePointsTooltip = this.translateService.instant('artemisApp.examScores.averagePointsTooltip');
+                    return `${averagePointsTooltip}: ${this.lookupAbsoluteValue(name)} (${this.roundAndPerformLocalConversion(item.parsed.x ?? 0)}%)`;
+                },
+            },
+        }),
+    );
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
@@ -53,24 +70,29 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     private initializeChart(): void {
+        const entries: ChartSeriesEntry[] = [];
+        const colors: string[] = [];
+        let xScaleMax = 100;
         this.lookup[this.averageScores().title] = { absoluteValue: this.averageScores().averagePoints! };
         const exerciseGroupAverage = this.averageScores().averagePercentage ?? 0;
-        this.ngxData.push({ name: this.averageScores().title, value: exerciseGroupAverage });
-        this.ngxColor.domain.push(this.determineColor(true, exerciseGroupAverage));
-        this.xScaleMax = this.xScaleMax > exerciseGroupAverage ? this.xScaleMax : exerciseGroupAverage;
+        entries.push({ name: this.averageScores().title, value: exerciseGroupAverage });
+        colors.push(this.determineColor(true, exerciseGroupAverage));
+        xScaleMax = Math.max(xScaleMax, exerciseGroupAverage);
         this.averageScores().exerciseResults.forEach((exercise) => {
             const exerciseAverage = exercise.averagePercentage ?? 0;
-            this.xScaleMax = this.xScaleMax > exerciseAverage ? this.xScaleMax : exerciseAverage;
-            this.ngxData.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exerciseAverage });
+            xScaleMax = Math.max(xScaleMax, exerciseAverage);
+            entries.push({ name: exercise.exerciseId + ' ' + exercise.title, value: exerciseAverage });
             this.lookup[exercise.exerciseId + ' ' + exercise.title] = {
                 absoluteValue: exercise.averagePoints ?? 0,
                 exerciseId: exercise.exerciseId,
                 exerciseType: exercise.exerciseType,
             };
-            this.ngxColor.domain.push(this.determineColor(false, exerciseAverage));
+            colors.push(this.determineColor(false, exerciseAverage));
         });
 
-        this.ngxData = [...this.ngxData];
+        this.chartEntries.set(entries);
+        this.barColors.set(colors);
+        this.xScaleMax.set(xScaleMax);
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
@@ -95,11 +117,15 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
 
     /**
      * Delegates the user to the scores page of the specific exam exercise if the corresponding bar is clicked
-     * @param event the event that is fired by ngx-charts
+     * @param event the event that is fired by p-chart
      */
     onSelect(event: any) {
-        const id = this.lookup[event.name].exerciseId;
-        const type = this.lookup[event.name].exerciseType;
+        const selected = toChartSelectEvent(event, this.chartData());
+        if (!selected?.label) {
+            return;
+        }
+        const id = this.lookup[selected.label]?.exerciseId;
+        const type = this.lookup[selected.label]?.exerciseType;
         if (id && type) {
             this.navigateToExercise(id, type);
         }

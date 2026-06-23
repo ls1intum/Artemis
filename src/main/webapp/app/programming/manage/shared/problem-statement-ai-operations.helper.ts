@@ -1,9 +1,9 @@
 import { DestroyRef, Injector, Signal, afterNextRender, computed, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
-import { AlertService } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';

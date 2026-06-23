@@ -1,0 +1,87 @@
+// Collapse option group headers that have no label (empty labelKey)
+jhi-filter-dropdown {
+    .p-select-option-group:not(:has(span)) {
+        padding: 0 !important;
+        height: 0 !important;
+        overflow: hidden;
+    }
+
+    // Group headers: compact uppercase category label style
+    .p-select-option-group {
+        span {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--bs-secondary);
+            padding: 0;
+        }
+    }
+
+    // Indent options that belong to a group
+    .p-select-option {
+        padding-left: 1.25rem !important;
+    }
+
+    .p-select.filter-dropdown-default,
+    .p-select.filter-dropdown-active {
+        .p-select-clear-icon {
+            color: #fff;
+        }
+
+        .p-overlay {
+            right: 0;
+            left: auto !important;
+
+            .p-select-list-container {
+                overflow: hidden;
+                min-height: fit-content;
+                max-height: fit-content;
+            }
+        }
+    }
+
+    .p-select.filter-dropdown-default {
+        background-color: var(--bs-secondary);
+        border-color: var(--bs-secondary);
+
+        // Add funnel icon before placeholder text when no filter is active
+        .p-select-label::before {
+            font-family: 'primeicons';
+            content: '\e94c';
+            margin-right: 0.5rem;
+            font-style: normal;
+        }
+
+        .p-select-label,
+        .p-select-dropdown {
+            color: #fff;
+        }
+
+        &:hover,
+        &.p-focus,
+        &.p-select-open {
+            background-color: var(--bs-secondary-color) !important;
+            border-color: var(--bs-secondary-color) !important;
+            box-shadow: none !important;
+        }
+    }
+
+    .p-select.filter-dropdown-active {
+        background-color: var(--bs-success);
+        border-color: var(--bs-success);
+
+        .p-select-label,
+        .p-select-dropdown {
+            color: #fff;
+        }
+
+        &:hover,
+        &.p-focus,
+        &.p-select-open {
+            background-color: rgba(var(--bs-success-rgb), 0.8) !important;
+            border-color: rgba(var(--bs-success-rgb), 0.8) !important;
+            box-shadow: none !important;
+        }
+    }
+}

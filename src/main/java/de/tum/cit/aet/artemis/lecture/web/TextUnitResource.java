@@ -26,14 +26,14 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.dto.CompetencyDTO;
-import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.lecture.dto.TextUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
@@ -55,15 +55,15 @@ public class TextUnitResource {
 
     private final TextUnitRepository textUnitRepository;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository) {
+            LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
-        this.lectureUnitRepository = lectureUnitRepository;
+        this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
     }
 
     /**
@@ -75,7 +75,7 @@ public class TextUnitResource {
      */
     @GetMapping("lectures/{lectureId}/text-units/{textUnitId}")
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "textUnitId")
-    public ResponseEntity<TextUnit> getTextUnit(@PathVariable Long textUnitId, @PathVariable Long lectureId) {
+    public ResponseEntity<TextUnitDTO> getTextUnit(@PathVariable Long textUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get TextUnit : {}", textUnitId);
         Optional<TextUnit> optionalTextUnit = textUnitRepository.findByIdWithCompetencies(textUnitId);
         if (optionalTextUnit.isEmpty()) {
@@ -85,7 +85,7 @@ public class TextUnitResource {
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        return ResponseEntity.ok().body(textUnit);
+        return ResponseEntity.ok(TextUnitDTO.of(textUnit));
     }
 
     /**
@@ -123,50 +123,68 @@ public class TextUnitResource {
 
         // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
         existingTextUnit = textUnitRepository.save(existingTextUnit);
+        TextUnit savedTextUnit = existingTextUnit;
 
         if (competencyProgressApi.isPresent()) {
             // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingTextUnit);
         }
 
-        // convert into DTO
-        var result = new TextUnitDTO(existingTextUnit.getId(), existingTextUnit.getName(), existingTextUnit.getReleaseDate(), existingTextUnit.getContent(), existingTextUnit
-                .getCompetencyLinks().stream().map(link -> new CompetencyLinkDTO(new CompetencyDTO(link.getCompetency().getId()), link.getWeight())).collect(Collectors.toSet()));
-        return ResponseEntity.ok(result);
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(savedTextUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(savedTextUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, savedTextUnit.getId());
+            }
+        });
+
+        return ResponseEntity.ok(TextUnitDTO.of(existingTextUnit));
     }
 
     /**
      * POST /lectures/:lectureId/text-units : creates a new text unit.
      *
-     * @param lectureId the id of the lecture to which the text unit should be added
-     * @param textUnit  the text unit that should be created
+     * @param lectureId   the id of the lecture to which the text unit should be added
+     * @param textUnitDto the text unit that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new text unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("lectures/{lectureId}/text-units")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<TextUnit> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) throws URISyntaxException {
-        log.debug("REST request to create TextUnit : {}", textUnit);
-        if (textUnit.getId() != null) {
+    public ResponseEntity<TextUnitDTO> createTextUnit(@PathVariable Long lectureId, @RequestBody TextUnitDTO textUnitDto) throws URISyntaxException {
+        log.debug("REST request to create TextUnit : {}", textUnitDto);
+        if (textUnitDto.id() != null) {
             throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
-        if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
+        if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
 
-        lectureUnitRepository.reconnectCompetencyLinks(textUnit);
+        TextUnit textUnit = new TextUnit();
+        textUnit.setName(textUnitDto.name());
+        textUnit.setReleaseDate(textUnitDto.releaseDate());
+        textUnit.setContent(textUnitDto.content());
+        lectureUnitService.updateCompetencyLinks(textUnitDto, textUnit);
 
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
         TextUnit persistedUnit = (TextUnit) updatedLecture.getLectureUnits().getLast();
         // From now on, only use persistedUnit
-        lectureUnitService.saveWithCompetencyLinks(persistedUnit, textUnitRepository::saveAndFlush);
+        textUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
-        // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
-        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
-        return ResponseEntity.created(new URI("/api/text-units/" + persistedUnit.getId())).body(persistedUnit);
+        searchableEntityWeaviateService.ifPresent(service -> {
+            if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
+                service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
+            }
+            else {
+                service.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE_UNIT, persistedUnit.getId());
+            }
+        });
+
+        return ResponseEntity.created(new URI("/api/text-units/" + persistedUnit.getId())).body(TextUnitDTO.of(persistedUnit));
     }
 }

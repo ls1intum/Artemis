@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,12 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -34,12 +32,11 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 /**
  * REST controller for deleting/resetting programming exercises or related entities such as exercise tasks.
@@ -114,7 +111,7 @@ public class ProgrammingExerciseDeletionResource {
      * <p>
      * The available operations include:
      * 1. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results (also deletes repositories and build plans).
-     * 2. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI / Aeolus, this will reset the customized build plans).
+     * 2. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans (for LocalCI, this will reset the customized build plans).
      *
      * @param exerciseId                         - Id of the programming exercise to reset.
      * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
@@ -161,20 +158,6 @@ public class ProgrammingExerciseDeletionResource {
         programmingExerciseDeletionService.deleteTasks(exercise.getId());
         exerciseVersionService.createExerciseVersion(exercise);
         return ResponseEntity.noContent().build();
-    }
-
-    /**
-     * GET /programming-exercises/:exerciseId/deletion-summary : Get a summary of the deletion of a programming exercise.
-     *
-     * @param exerciseId the id of the programming exercise
-     * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the programming exercise
-     */
-    @GetMapping("programming-exercises/{exerciseId}/deletion-summary")
-    @EnforceAtLeastInstructorInExercise
-    @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
-        log.debug("REST request to get deletion summary for programming exercise : {}", exerciseId);
-        return ResponseEntity.ok(programmingExerciseDeletionService.getProgrammingExerciseDeletionSummary(exerciseId));
     }
 
 }

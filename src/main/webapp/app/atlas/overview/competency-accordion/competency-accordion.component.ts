@@ -1,11 +1,11 @@
-import { Component, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
+import { Component, OnChanges, SimpleChanges, inject, input, output, signal } from '@angular/core';
 import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SCORE_GREEN } from 'app/app.constants';
-import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
-import { round } from 'app/shared/util/utils';
+import { round } from 'app/foundation/util/utils';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -13,10 +13,9 @@ import { isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { JudgementOfLearningRatingComponent } from 'app/atlas/overview/judgement-of-learning-rating/judgement-of-learning-rating.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export interface CompetencyAccordionToggleEvent {
     opened: boolean;
@@ -27,17 +26,7 @@ export interface CompetencyAccordionToggleEvent {
     selector: 'jhi-competency-accordion',
     templateUrl: './competency-accordion.component.html',
     styleUrl: './competency-accordion.component.scss',
-    imports: [
-        FaIconComponent,
-        NgbTooltip,
-        NgbProgressbar,
-        CompetencyRingsComponent,
-        JudgementOfLearningRatingComponent,
-        TranslateDirective,
-        CourseExerciseRowComponent,
-        RouterLink,
-        ArtemisTranslatePipe,
-    ],
+    imports: [FaIconComponent, NgbTooltip, NgbProgressbar, CompetencyRingsComponent, TranslateDirective, CourseExerciseRowComponent, RouterLink, ArtemisTranslatePipe],
 })
 export class CompetencyAccordionComponent implements OnChanges {
     private router = inject(Router);
@@ -50,16 +39,14 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     accordionToggle = output<CompetencyAccordionToggleEvent>();
 
-    open = false;
-    nextExercises: Exercise[] = [];
-    nextLectureUnits: LectureUnitInformation[] = [];
-    exercisesProgress?: number;
-    lectureUnitsProgress?: number;
+    readonly open = signal(false);
+    readonly nextExercises = signal<Exercise[]>([]);
+    readonly nextLectureUnits = signal<LectureUnitInformation[]>([]);
+    readonly exercisesProgress = signal<number | undefined>(undefined);
+    readonly lectureUnitsProgress = signal<number | undefined>(undefined);
     confidence: number = 1;
-    mastery: number = 0;
-    progress: number = 0;
-    jolRating?: number;
-    promptForRating = false;
+    readonly mastery = signal<number>(0);
+    readonly progress = signal<number>(0);
 
     protected readonly faList = faList;
     protected readonly faFile = faFile;
@@ -75,38 +62,18 @@ export class CompetencyAccordionComponent implements OnChanges {
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.openedIndex && this.index() !== this.openedIndex()) {
-            this.open = false;
+            this.open.set(false);
         }
         if (changes.metrics) {
             this.setNextExercises();
             this.setNextLessonUnits();
             this.calculateProgressValues();
-
-            const courseCompetencies = Object.values(this.metrics().competencyMetrics?.competencyInformation ?? {}).map((competency) => {
-                return {
-                    ...competency,
-                    userProgress: [
-                        {
-                            progress: this.metrics().competencyMetrics?.progress?.[competency.id] ?? 0,
-                            confidence: this.metrics().competencyMetrics?.confidence?.[competency.id] ?? 1,
-                        },
-                    ],
-                } satisfies Competency;
-            });
-            this.promptForRating = CompetencyJol.shouldPromptForJol(
-                this.competency() satisfies Competency,
-                {
-                    progress: this.metrics().competencyMetrics?.progress?.[this.competency().id],
-                    confidence: this.metrics().competencyMetrics?.confidence?.[this.competency().id],
-                },
-                courseCompetencies,
-            );
         }
     }
 
     setNextExercises() {
         if (!this.metrics()) {
-            this.nextExercises = [];
+            this.nextExercises.set([]);
             return;
         }
         const courseExercises = this.course()?.exercises ?? [];
@@ -127,52 +94,48 @@ export class CompetencyAccordionComponent implements OnChanges {
         );
 
         const completionThreshold = MIN_SCORE_GREEN;
-        this.nextExercises = activeCompetencyExercises
-            .filter((exercise) => exercise.id && exerciseIdToMaxScore[exercise.id] <= completionThreshold)
-            .sort((a, b) => {
-                const scoreA = a.id ? (exerciseIdToMaxScore[a.id] ?? 0) : 0;
-                const scoreB = b.id ? (exerciseIdToMaxScore[b.id] ?? 0) : 0;
+        this.nextExercises.set(
+            activeCompetencyExercises
+                .filter((exercise) => exercise.id && exerciseIdToMaxScore[exercise.id] <= completionThreshold)
+                .sort((a, b) => {
+                    const scoreA = a.id ? (exerciseIdToMaxScore[a.id] ?? 0) : 0;
+                    const scoreB = b.id ? (exerciseIdToMaxScore[b.id] ?? 0) : 0;
 
-                if (scoreA !== scoreB) {
-                    return scoreA - scoreB;
-                }
-                const dueDateA = a.dueDate ?? a.startDate;
-                const dueDateB = b.dueDate ?? b.startDate;
-                return dueDateA?.diff(dueDateB) ?? 0;
-            })
-            .slice(0, 5);
+                    if (scoreA !== scoreB) {
+                        return scoreA - scoreB;
+                    }
+                    const dueDateA = a.dueDate ?? a.startDate;
+                    const dueDateB = b.dueDate ?? b.startDate;
+                    return dueDateA?.diff(dueDateB) ?? 0;
+                })
+                .slice(0, 5),
+        );
     }
 
     setNextLessonUnits() {
         if (!this.metrics()) {
-            this.nextLectureUnits = [];
+            this.nextLectureUnits.set([]);
             return;
         }
         const completedLectureUnits = this.metrics().lectureUnitStudentMetricsDTO?.completed ?? [];
         const competencyLectureUnits = this.metrics().competencyMetrics?.lectureUnits?.[this.competency().id] ?? [];
-        this.nextLectureUnits = competencyLectureUnits
-            .filter((lectureUnitId) => !completedLectureUnits.includes(lectureUnitId))
-            .flatMap((lectureUnitId) => this.metrics().lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
-            .filter((lectureUnit) => lectureUnit.releaseDate?.isBefore(dayjs()))
-            .sort((a, b) => (a.releaseDate?.isBefore(b?.releaseDate) ? -1 : 1))
-            .slice(0, Math.max(0, 5 - this.nextExercises.length));
+        this.nextLectureUnits.set(
+            competencyLectureUnits
+                .filter((lectureUnitId) => !completedLectureUnits.includes(lectureUnitId))
+                .flatMap((lectureUnitId) => this.metrics().lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId] ?? [])
+                .filter((lectureUnit) => lectureUnit.releaseDate?.isBefore(dayjs()))
+                .sort((a, b) => (a.releaseDate?.isBefore(b?.releaseDate) ? -1 : 1))
+                .slice(0, Math.max(0, 5 - this.nextExercises().length)),
+        );
     }
 
     calculateProgressValues() {
-        const jol = this.metrics().competencyMetrics?.currentJolValues?.[this.competency().id];
-        this.jolRating = jol?.jolValue;
-        this.exercisesProgress = this.calculateExercisesProgress();
-        this.lectureUnitsProgress = this.calculateLectureUnitsProgress();
+        this.exercisesProgress.set(this.calculateExercisesProgress());
+        this.lectureUnitsProgress.set(this.calculateLectureUnitsProgress());
         const userProgress = this.getUserProgress();
-        if (this.jolRating !== undefined) {
-            this.progress = this.getProgress(userProgress);
-            this.confidence = this.getConfidence(userProgress);
-            this.mastery = this.getMastery(userProgress);
-        } else {
-            this.progress = 0;
-            this.confidence = 1;
-            this.mastery = 0;
-        }
+        this.progress.set(this.getProgress(userProgress));
+        this.confidence = this.getConfidence(userProgress);
+        this.mastery.set(this.getMastery(userProgress));
     }
 
     calculateExercisesProgress(): number | undefined {
@@ -226,25 +189,8 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     toggle() {
-        this.open = !this.open;
-        this.accordionToggle.emit({ opened: this.open, index: this.index() });
-    }
-
-    onRatingChange(newRating: number) {
-        const competencyMetrics = this.metrics().competencyMetrics;
-        if (competencyMetrics) {
-            competencyMetrics.currentJolValues = {
-                ...(competencyMetrics.currentJolValues ?? {}),
-                [this.competency().id]: {
-                    competencyId: this.competency().id,
-                    jolValue: newRating,
-                    judgementTime: dayjs().toString(),
-                    competencyProgress: this.progress,
-                    competencyConfidence: this.confidence,
-                },
-            };
-            this.calculateProgressValues();
-        }
+        this.open.update((open) => !open);
+        this.accordionToggle.emit({ opened: this.open(), index: this.index() });
     }
 
     navigateToCompetencyDetailPage(event: Event) {

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
@@ -10,15 +10,16 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { MultipleChoiceQuestionStatistic } from 'app/quiz/shared/entities/multiple-choice-question-statistic.model';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
+import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
-import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
+import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
+import { TruncatePipe } from 'app/foundation/pipes/truncate.pipe';
+import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 
 @Component({
     selector: 'jhi-quiz-statistics-footer',
@@ -43,15 +44,15 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
-    quizExercise: QuizExercise;
-    question: QuizQuestion;
+    readonly quizExercise = signal<QuizExercise>(undefined!);
+    readonly question = signal<QuizQuestion>(undefined!);
     quizPointStatistic: QuizPointStatistic;
     questionStatistic: MultipleChoiceQuestionStatistic;
     questionIdParam: number;
     // timer
-    waitingForQuizStart = false;
-    remainingTimeText = '?';
-    remainingTimeSeconds = 0;
+    readonly waitingForQuizStart = signal(false);
+    readonly remainingTimeText = signal('?');
+    readonly remainingTimeSeconds = signal(0);
     interval: any;
 
     // Icons
@@ -79,21 +80,21 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
         // update remaining time
-        if (this.quizExercise && this.quizExercise.dueDate) {
-            const endDate = this.quizExercise.dueDate;
+        if (this.quizExercise() && this.quizExercise().dueDate) {
+            const endDate = this.quizExercise().dueDate!;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
-                this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
+                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
+                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
+                this.remainingTimeSeconds.set(-1);
+                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds = 0;
-            this.remainingTimeText = '?';
+            this.remainingTimeSeconds.set(0);
+            this.remainingTimeText.set('?');
         }
     }
 
@@ -104,13 +105,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
+        return formatQuizRelativeTime(remainingTimeSeconds);
     }
 
     ngOnDestroy() {
@@ -128,10 +123,10 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['/courses']);
         }
-        this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
-        this.question = updatedQuestion as QuizQuestion;
-        this.waitingForQuizStart = !this.quizExercise.quizStarted;
+        this.quizExercise.set(quiz);
+        const updatedQuestion = this.quizExercise().quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
+        this.question.set(updatedQuestion as QuizQuestion);
+        this.waitingForQuizStart.set(!this.quizExercise().quizStarted);
     }
 
     /**
@@ -139,19 +134,20 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * If the current page shows the first quiz question statistic then it will navigate to the quiz statistic
      */
     previousStatistic() {
-        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(this.quizExercise);
+        const quizExercise = this.quizExercise();
+        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(quizExercise);
 
         if (this.isQuizStatistic()) {
             this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
         } else if (this.isQuizPointStatistic()) {
-            if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
+            if (!quizExercise.quizQuestions || quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
             } else {
                 // go to previous question-statistic
-                this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions.last()!);
+                this.quizStatisticUtil.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions.last()!);
             }
         } else {
-            this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
+            this.quizStatisticUtil.previousStatistic(quizExercise, this.question());
         }
     }
 
@@ -160,20 +156,21 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * If the current page shows the last quiz question statistic then it will navigate to the quiz point statistic
      */
     nextStatistic() {
-        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(this.quizExercise);
+        const quizExercise = this.quizExercise();
+        const baseUrl = this.quizStatisticUtil.getBaseUrlForQuizExercise(quizExercise);
 
         if (this.isQuizPointStatistic()) {
             this.router.navigateByUrl(baseUrl + `/quiz-statistic`);
         } else if (this.isQuizStatistic()) {
             // go to quiz-statistic if the position = last position
-            if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
+            if (!quizExercise.quizQuestions || quizExercise.quizQuestions.length === 0) {
                 this.router.navigateByUrl(baseUrl + `/quiz-point-statistic`);
             } else {
                 // go to next question-statistic
-                this.quizStatisticUtil.navigateToStatisticOf(this.quizExercise, this.quizExercise.quizQuestions[0]);
+                this.quizStatisticUtil.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions[0]);
             }
         } else {
-            this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
+            this.quizStatisticUtil.nextStatistic(quizExercise, this.question());
         }
     }
 }

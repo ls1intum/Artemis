@@ -1,17 +1,20 @@
 /* Host element participates in parent flex layout */
 :host {
+    display: flex;
+    flex-direction: column;
     flex: 1;
-    min-width: 200px;
+    min-width: 0;
+    min-height: 0;
 }
 
 /* --- Transcript column: header stays fixed; only list scrolls --- */
 .transcript-column {
     width: 100%;
-    max-height: 500px;
-
+    height: 100%;
     overflow: hidden;
     padding-left: 0.5rem;
-
+    background-color: transparent;
+    color: var(--bs-body-color);
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -19,7 +22,6 @@
 
 .transcript-header {
     flex-shrink: 0;
-    background: transparent;
     padding-bottom: 0.5rem;
 }
 
@@ -45,9 +47,11 @@
 
 .search-input {
     width: 100%;
-    padding: 0.5rem 2.5rem 0.5rem 2.5rem;
+    padding: 0.5rem 2.5rem;
     border: 1px solid var(--border-color);
     border-radius: 0.25rem;
+    background-color: transparent;
+    color: var(--bs-body-color);
     font-size: 0.9rem;
     transition: border-color 0.2s;
 

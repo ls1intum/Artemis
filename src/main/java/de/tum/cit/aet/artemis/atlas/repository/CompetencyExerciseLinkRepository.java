@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -32,5 +33,14 @@ public interface CompetencyExerciseLinkRepository extends ArtemisJpaRepository<C
             WHERE cel.exercise.id IN :exerciseIds
             """)
     Set<CompetencyExerciseLink> findByExerciseIdInWithCompetency(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    @Query("""
+            SELECT cel.exercise
+            FROM CompetencyExerciseLink cel
+            WHERE cel.competency.id IN :competencyIds
+            """)
+    Set<de.tum.cit.aet.artemis.exercise.domain.Exercise> findExercisesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
+
+    Optional<CompetencyExerciseLink> findByExerciseIdAndCompetencyId(long exerciseId, long competencyId);
 
 }

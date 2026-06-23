@@ -8,8 +8,6 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,7 +22,6 @@ import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventType;
  */
 @Entity
 @Table(name = "text_assessment_event")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextAssessmentEvent extends DomainObject {
 
