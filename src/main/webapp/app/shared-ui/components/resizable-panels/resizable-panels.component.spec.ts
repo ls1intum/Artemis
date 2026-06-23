@@ -24,7 +24,7 @@ class ResizeObserverMock {
 @Component({
     template: `
         <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse">
-            <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft">Left Content</ng-template>
+            <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
             <ng-template jhiPanel [label]="'right'">Right Content</ng-template>
             <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed">Iris Content</ng-template>
         </jhi-resizable-panels>
@@ -80,12 +80,43 @@ describe('ResizablePanelsComponent', () => {
         expect(fixture.nativeElement.querySelector('p-splitter')).not.toBeNull();
     });
 
-    it('should not render the splitter when the right panel is collapsed', () => {
+    it('should keep the splitter mounted but show the icon rail when the right panel is collapsed', () => {
         const component = createFixture(true);
 
         expect(component.isRightPanelCollapsed()).toBe(true);
-        expect(fixture.nativeElement.querySelector('p-splitter')).toBeNull();
+        // The splitter stays mounted (so the left panel is preserved) and switches to the icon rail via the class.
+        const splitter = fixture.nativeElement.querySelector('p-splitter');
+        expect(splitter).not.toBeNull();
+        expect(splitter.classList.contains('right-collapsed')).toBe(true);
         expect(fixture.nativeElement.querySelector('.collapsed-right-panel')).not.toBeNull();
+    });
+
+    it('preserves the left panel element instance across a collapse/expand toggle (no editor recreation)', () => {
+        const component = createFixture();
+        const before = fixture.nativeElement.querySelector('#left-marker') as HTMLElement;
+        expect(before).not.toBeNull();
+
+        component.collapseRightPanel();
+        fixture.detectChanges();
+        const whileCollapsed = fixture.nativeElement.querySelector('#left-marker') as HTMLElement;
+        // Same DOM node => the left panel (and anything it hosts, e.g. the modeling editor) was not destroyed.
+        expect(whileCollapsed).toBe(before);
+
+        component.expandRightPanel(0);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#left-marker')).toBe(before);
+    });
+
+    it('snaps the right panel closed when it is dragged below the collapse threshold', () => {
+        const component = createFixture();
+        const splitter = fixture.debugElement.query(By.css('p-splitter'));
+
+        // Dragged to a 6% right panel (below the default 12% threshold) => snap closed.
+        splitter.componentInstance.onResizeEnd.emit({ originalEvent: new Event('mouseup'), sizes: [94, 6] });
+
+        expect(component.isRightPanelCollapsed()).toBe(true);
+        // The near-zero drag size is not remembered as the split; a sensible default is kept for reopening.
+        expect(component.savedSizes()).toEqual([65, 35]);
     });
 
     it('should not render the splitter in narrow mode', () => {

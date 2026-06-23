@@ -58,6 +58,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** FontAwesome icon for the resizer grip */
     faGripLinesVertical = faGripLinesVertical;
 
+    /** True while the divider is being dragged; disables the video's pointer events so the drag stays smooth. */
+    protected readonly isResizing = signal<boolean>(false);
+
     /** Store reference to window resize handler for cleanup */
     private resizeHandler: (() => void) | undefined = undefined;
 
@@ -197,6 +200,16 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
      * the clamped px width into `flex: 0 0 <percent>%` so the split changes and still scales naturally when the
      * wrapper is resized (matching the previous interact.js behaviour).
      */
+    /** Disables the video's pointer events while the divider is being dragged so the drag stays smooth. */
+    protected onResizeStart(): void {
+        this.isResizing.set(true);
+    }
+
+    /** Re-enables the video's pointer events once the drag finishes. */
+    protected onResizeEnd(): void {
+        this.isResizing.set(false);
+    }
+
     protected onVideoColumnResize(event: ResizableSizeEvent): void {
         const videoColumnEl = this.videoColumn()?.nativeElement;
         const wrapperEl = this.videoWrapper()?.nativeElement;

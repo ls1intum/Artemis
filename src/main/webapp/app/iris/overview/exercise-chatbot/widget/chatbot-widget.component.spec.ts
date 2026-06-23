@@ -224,6 +224,27 @@ describe('IrisChatbotWidgetComponent', () => {
         widget.remove();
     });
 
+    it('shows a resize cursor when hovering near a border and clears it in the body', () => {
+        // Regression: the in-house resize replaced interact.js, which changed the cursor near a resizable edge.
+        // Without a hover affordance users cannot tell the widget is resizable.
+        const { overlay, widget } = setupWidget({ left: 110, top: 100, width: 600, height: 600 }); // right = 710, bottom = 700
+
+        pointer(widget, 'pointermove', 705, 400); // within 10px of the right border
+        expect(widget.style.cursor).toBe('ew-resize');
+
+        pointer(widget, 'pointermove', 400, 695); // within 10px of the bottom border
+        expect(widget.style.cursor).toBe('ns-resize');
+
+        pointer(widget, 'pointermove', 705, 695); // bottom-right corner
+        expect(widget.style.cursor).toBe('nwse-resize');
+
+        pointer(widget, 'pointermove', 400, 400); // interior -> no resize affordance
+        expect(widget.style.cursor).toBe('');
+
+        overlay.remove();
+        widget.remove();
+    });
+
     it('drags the widget from the header and keeps it inside the overlay container', () => {
         const { overlay, widget, header } = setupWidget({ left: 110, top: 100, width: 450, height: 600 });
         widget.setAttribute('data-x', '10');

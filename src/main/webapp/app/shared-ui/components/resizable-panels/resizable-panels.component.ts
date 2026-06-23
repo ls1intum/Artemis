@@ -32,6 +32,17 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     readonly collapseBelowPx = input(768);
     /** Use the viewport width for the responsive breakpoint instead of this component's content width. */
     readonly useViewportWidthForCollapse = input(false);
+    /**
+     * When set, the chosen split sizes are persisted under this key (localStorage, via the splitter's native
+     * stateful mode) so they survive a reload. When omitted, sizes are only kept in memory for the session.
+     */
+    readonly storageKey = input<string | undefined>(undefined);
+    /**
+     * Drag-to-collapse threshold (percent). When the right panel is dragged narrower than this, it snaps shut
+     * (and the icon rail / collapse buttons reopen it). Restores the split.js `snapOffset` behaviour that the
+     * migration dropped. Set to 0 to disable drag-to-collapse.
+     */
+    readonly collapseSnapPercent = input(12);
 
     readonly panels = contentChildren(PanelDirective);
     readonly leftPanel = computed(() => this.panels()[0]);
@@ -131,6 +142,23 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     collapseRightPanel(): void {
         this.rightPanelCollapseChangedByUser = true;
         this._isRightPanelCollapsed.set(true);
+    }
+
+    /**
+     * Persists the split sizes on drag end, and snaps the right panel shut when it is dragged narrower than
+     * {@link collapseSnapPercent} (drag-to-collapse, the split.js `snapOffset` behaviour). When snapping closed,
+     * the near-zero drag size is not kept as the remembered split, so reopening uses a sensible width.
+     */
+    onResizeEnd(sizes: number[]): void {
+        const rightSize = sizes[1] ?? 0;
+        if (this.collapseSnapPercent() > 0 && rightSize <= this.collapseSnapPercent()) {
+            if (!this.savedSizes()) {
+                this.savedSizes.set([65, 35]);
+            }
+            this.collapseRightPanel();
+            return;
+        }
+        this.savedSizes.set(sizes);
     }
 
     setActiveSingle(value: string | number | undefined): void {

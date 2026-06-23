@@ -98,6 +98,15 @@
         > * {
             height: inherit;
         }
+
+        /* Pin the resize grip to the panel's visible bottom edge. As a normal flex child it inherited the panel
+           height and was pushed below the scrolled-out area, where overflow:auto clipped it - leaving no grabbable
+           handle, so the build output could not be resized. Sticky keeps it reachable at the bottom while scrolling. */
+        > .rg-bottom-bottom {
+            height: auto;
+            position: sticky;
+            bottom: 0;
+        }
     }
 
     /* In non-assessment mode, constrain the bottom section to fit in the viewport */
@@ -327,11 +336,14 @@
     z-index: 3;
 }
 
-/* Center each grip on the panel divider. `justify-self: center` is a no-op in the flex parent, so the handle
-   otherwise sits just inside the panel edge and reads as left-of-the-divider; shift it by half its own width
-   onto the divider line. */
+/* Center each grip on the panel divider. The left grip is the last flex child of the file-browser panel: when the
+   file tree is narrower than the panel, flex-grow does not push it to the edge, so it was stranded mid-panel (off the
+   divider, and reading as a stray icon). `margin-left: auto` absorbs that gap so the grip always sits at the panel's
+   right edge; `translateX(50%)` then shifts it half its width onto the divider line. The right grip is already the
+   first child pinned to the panel's left edge, so it only needs the half-width nudge. */
 /* stylelint-disable no-descending-specificity -- the transform override intentionally follows the shared :hover rule */
 .rg-sidebar-left {
+    margin-left: auto;
     transform: translateX(50%);
 }
 

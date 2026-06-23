@@ -50,6 +50,22 @@
             border-radius: 1px;
         }
     }
+
+    // Collapsed state: the splitter stays mounted (so the left panel survives), but the right panel shrinks to the
+    // icon rail and the gutter is hidden. !important overrides PrimeNG's inline flex-basis from panelSizes.
+    &.right-collapsed {
+        > .p-splitterpanel:first-child {
+            flex: 1 1 auto !important;
+        }
+
+        > .p-splitterpanel:last-child {
+            flex: 0 0 auto !important;
+        }
+
+        > .p-splitter-gutter {
+            display: none !important;
+        }
+    }
 }
 
 .right-panel-collapse-button {

@@ -13,12 +13,14 @@ import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-ic
 import { TextSubmissionViewerComponent } from './text-submission-viewer/text-submission-viewer.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SplitterModule } from 'primeng/splitter';
+import { TooltipModule } from 'primeng/tooltip';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-split-view',
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
-    imports: [SplitterModule, TextSubmissionViewerComponent, FaIconComponent],
+    imports: [SplitterModule, TextSubmissionViewerComponent, FaIconComponent, TooltipModule, ArtemisTranslatePipe],
 })
 export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestroy {
     private plagiarismCasesService = inject(PlagiarismCasesService);

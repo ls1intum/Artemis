@@ -4,6 +4,7 @@ import {
     HostListener,
     Injector,
     OnDestroy,
+    Renderer2,
     ViewEncapsulation,
     afterNextRender,
     computed,
@@ -15,7 +16,7 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { SplitterModule } from 'primeng/splitter';
 
 type SplitSizes = [number, number];
@@ -54,6 +55,8 @@ const MIN_PANEL_PERCENT = 5;
 export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     private readonly injector = inject(Injector);
+    private readonly renderer = inject(Renderer2);
+    private readonly document = inject<Document>(DOCUMENT);
 
     readonly isCollapsed = input<boolean>(true);
     readonly showSidebar = input<boolean>(false);
@@ -113,6 +116,16 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     private inertElements = new Map<HTMLElement, { hadInert: boolean; previousAriaHidden: string | null }>();
     private previouslyFocusedElement: HTMLElement | undefined;
 
+    /**
+     * Transparent overlay shown for the duration of a splitter drag. `p-splitter` resizes from a `document`-level
+     * `mousemove` listener (it does not use pointer capture), so once the pointer crosses a panel that contains a
+     * video/PDF `<iframe>` the iframe swallows the mouse events and the gutter stops following the cursor — the
+     * resize appears not to work at all. The overlay sits above the panels (and their iframes) while dragging so
+     * every `mousemove` keeps reaching the document. Same root cause and remedy as PR #12601 for the transcript
+     * divider, generalised here for the splitter gutters.
+     */
+    private resizeOverlay?: HTMLElement;
+
     private readonly fullscreenBodyClass = 'lecture-combined-view-fullscreen-active';
     private readonly focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -142,6 +155,7 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         this.clearFullscreenTopOffset();
         this.setGlobalFullscreenState(false);
         this.cleanupFullscreenAccessibility();
+        this.removeResizeOverlay();
     }
 
     @HostListener('window:resize')
@@ -187,11 +201,20 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
     }
 
     /**
+     * Shows the drag overlay (see {@link resizeOverlay}) when a splitter resize starts, so the iframes inside the
+     * panels cannot steal the mouse-move stream mid-drag. `orientation` selects the matching resize cursor.
+     */
+    protected onSplitterResizeStart(orientation: 'horizontal' | 'vertical'): void {
+        this.showResizeOverlay(orientation === 'horizontal' ? 'col-resize' : 'row-resize');
+    }
+
+    /**
      * Forwards the PrimeNG vertical (main | sidebar) splitter resize end to consumers,
      * mirroring the legacy split.js `onDragEnd` -> `splitSizesChange` wiring.
      * `p-splitter` emits sizes as numbers (percentages) but the type allows strings, so coerce.
      */
     protected onVerticalResize(event: { sizes: (number | string)[] }): void {
+        this.removeResizeOverlay();
         this.splitSizesChange.emit([Number(event.sizes[0]), Number(event.sizes[1])]);
     }
 
@@ -200,7 +223,28 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
      * mirroring the legacy split.js `onDragEnd` -> `horizontalSplitSizesChange` wiring.
      */
     protected onHorizontalResize(event: { sizes: (number | string)[] }): void {
+        this.removeResizeOverlay();
         this.horizontalSplitSizesChange.emit([Number(event.sizes[0]), Number(event.sizes[1])]);
+    }
+
+    private showResizeOverlay(cursor: 'col-resize' | 'row-resize'): void {
+        this.removeResizeOverlay();
+        const overlay = this.renderer.createElement('div') as HTMLElement;
+        // Cover the whole viewport above the fullscreen container (z-index 5002) and its iframes; transparent so it
+        // is invisible, but with default pointer-events so every move is hit-tested against the document, not an iframe.
+        this.renderer.setStyle(overlay, 'position', 'fixed');
+        this.renderer.setStyle(overlay, 'inset', '0');
+        this.renderer.setStyle(overlay, 'z-index', '10000');
+        this.renderer.setStyle(overlay, 'cursor', cursor);
+        this.renderer.appendChild(this.document.body, overlay);
+        this.resizeOverlay = overlay;
+    }
+
+    private removeResizeOverlay(): void {
+        if (this.resizeOverlay) {
+            this.resizeOverlay.remove();
+            this.resizeOverlay = undefined;
+        }
     }
 
     /**

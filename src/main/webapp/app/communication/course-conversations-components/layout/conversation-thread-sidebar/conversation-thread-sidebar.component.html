@@ -6,7 +6,7 @@
         [ngClass]="{ expanded: isExpanded() }"
         jhiResizable
         [resizableEdges]="{ left: '.draggable-left' }"
-        [resizableConstraints]="resizableConstraints"
+        [resizableConstraints]="resizableConstraints()"
     >
         @if (!isExpanded()) {
             <div class="draggable-left">

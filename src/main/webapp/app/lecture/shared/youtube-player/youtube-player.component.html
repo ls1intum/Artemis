@@ -6,6 +6,7 @@
         [resizableEdges]="{ right: '.resizer-handle' }"
         [resizableConstraints]="resizableConstraints"
         [resizableApplyInlineSize]="false"
+        [resizableHandleOutsideHost]="true"
         (resizeStart)="onResizeStart()"
         (resizeMove)="onVideoColumnResize($event)"
         (resizeEnd)="onResizeEnd()"
@@ -20,17 +21,19 @@
             (stateChange)="onStateChange($event)"
             (error)="onPlayerError($event)"
         />
-        <button
-            type="button"
-            class="resizer-handle"
-            #resizerHandle
-            (dblclick)="resetSplitRatio()"
-            (keydown.enter)="resetSplitRatio()"
-            (keydown.space)="resetSplitRatio(); $event.preventDefault()"
-            [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
-        >
-            <fa-icon [icon]="faGripLinesVertical" [attr.aria-hidden]="true" />
-        </button>
     </div>
+    <!-- Resizer divider sits between the video and transcript columns (not over the video). The directive resolves
+         this handle through resizableHandleOutsideHost, mirroring the previous interact.js between-columns divider. -->
+    <button
+        type="button"
+        class="resizer-handle"
+        #resizerHandle
+        (dblclick)="resetSplitRatio()"
+        (keydown.enter)="resetSplitRatio()"
+        (keydown.space)="resetSplitRatio(); $event.preventDefault()"
+        [attr.aria-label]="'artemisApp.attachmentVideoUnit.videoPlayer.resetSplitRatio' | artemisTranslate"
+    >
+        <fa-icon [icon]="faGripLinesVertical" [attr.aria-hidden]="true" />
+    </button>
     <jhi-transcript-viewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
 </div>

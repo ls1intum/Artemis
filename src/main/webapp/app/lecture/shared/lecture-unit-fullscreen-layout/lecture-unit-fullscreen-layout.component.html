@@ -20,6 +20,7 @@
                 [panelSizes]="horizontalSplit().sizes"
                 [minSizes]="horizontalMinSizes()"
                 [gutterSize]="12"
+                (onResizeStart)="onSplitterResizeStart('vertical')"
                 (onResizeEnd)="onHorizontalResize($event)"
             >
                 <ng-template #panel>
@@ -44,6 +45,7 @@
             [panelSizes]="verticalSplit().sizes"
             [minSizes]="verticalMinSizes()"
             [gutterSize]="12"
+            (onResizeStart)="onSplitterResizeStart('horizontal')"
             (onResizeEnd)="onVerticalResize($event)"
         >
             <ng-template #panel>

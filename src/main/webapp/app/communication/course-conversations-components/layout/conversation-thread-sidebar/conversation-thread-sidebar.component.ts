@@ -116,12 +116,12 @@ export class ConversationThreadSidebarComponent {
     }
 
     /**
-     * Width constraints for the resizable thread section, based on the current viewport width.
-     * Mirrors the previous interact.js restrictSize modifier (min 30% of the window width, max full width).
+     * Width constraints for the resizable thread section, based on the viewport width when the sidebar opens.
+     * Mirrors the previous interact.js restrictSize modifier (min 30% of the window width, max full width). Held in
+     * a signal with a stable reference (instead of a getter returning a fresh object every change-detection cycle),
+     * which avoided the layout thrash that made the sidebar open jankily.
      */
-    get resizableConstraints(): ResizableConstraints {
-        return { minWidth: window.innerWidth * 0.3, maxWidth: window.innerWidth };
-    }
+    readonly resizableConstraints = signal<ResizableConstraints>({ minWidth: window.innerWidth * 0.3, maxWidth: window.innerWidth }).asReadonly();
 
     scrollEditorIntoView(): void {
         this.scrollBody()?.nativeElement?.scrollTo({

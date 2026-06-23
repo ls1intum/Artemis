@@ -53,8 +53,11 @@
         overflow: hidden;
     }
 
-    /* Thin draggable divider, consistent with the app surface colors. */
+    /* Draggable divider, consistent with the app surface colors. */
     .p-splitter-gutter {
+        display: flex;
+        align-items: center;
+        justify-content: center;
         background: var(--bs-border-color);
 
         &:hover {
@@ -62,8 +65,27 @@
         }
     }
 
+    /* Vertical grip ("=" rotated) so the divider is obviously draggable. This also disambiguates the lock-files
+       button that sits on top of the gutter: with a clear drag grip, the lock icon no longer reads as a slider lock. */
     .p-splitter-gutter-handle {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        width: 100%;
+        height: 24px;
         background: transparent;
+
+        &::before,
+        &::after {
+            content: '';
+            display: block;
+            width: 2px;
+            height: 18px;
+            background: var(--bs-body-color);
+            border-radius: 1px;
+        }
     }
 
     /* "Show only left/right" fully collapses the other pane and hides the gutter. Implemented as a class

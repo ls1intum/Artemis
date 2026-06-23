@@ -4,7 +4,7 @@
         [class.collapsed-left]="collapsedSide() === 'left'"
         [class.collapsed-right]="collapsedSide() === 'right'"
         layout="horizontal"
-        [gutterSize]="8"
+        [gutterSize]="12"
         [panelSizes]="panelSizes()"
         [minSizes]="[10, 10]"
     >
@@ -46,8 +46,16 @@
         </ng-template>
     </p-splitter>
     <div class="split-pane-header-color">
-        <button class="btn btn-sm" (click)="toggleLockFiles()" [class.active]="isLockFilesEnabled()" data-qa="lock-files-toggle-button">
-            <fa-icon [icon]="isLockFilesEnabled() ? faLock : faUnlock" aria-label="Synchronize files while navigating on both sides" />
+        <button
+            class="btn btn-sm"
+            (click)="toggleLockFiles()"
+            [class.active]="isLockFilesEnabled()"
+            [pTooltip]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
+            tooltipPosition="bottom"
+            [attr.aria-label]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
+            data-qa="lock-files-toggle-button"
+        >
+            <fa-icon [icon]="isLockFilesEnabled() ? faLock : faUnlock" />
         </button>
     </div>
 </div>

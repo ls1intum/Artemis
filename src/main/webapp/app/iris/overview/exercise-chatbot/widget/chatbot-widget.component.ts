@@ -37,8 +37,12 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     /** Distance (px) from a border within which a pointerdown starts an edge resize. */
     private static readonly EDGE_MARGIN = 10;
+    /** Selector for controls whose clicks must never be hijacked by drag/resize gestures. */
+    private static readonly INTERACTIVE_CONTROL_SELECTOR = 'button, a, input, textarea, select, [role="button"], [role="menuitem"], [contenteditable="true"]';
     private widgetEl?: HTMLElement;
     private pointerDownCleanup?: () => void;
+    private hoverMoveCleanup?: () => void;
+    private hoverLeaveCleanup?: () => void;
     private gestureCleanup?: () => void;
     private gesture?: 'drag' | 'resize';
     private activePointerId?: number;
@@ -72,8 +76,76 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         this.widgetEl = widget;
         if (widget) {
             this.pointerDownCleanup = this.renderer.listen(widget, 'pointerdown', (event: PointerEvent) => this.onPointerDown(event));
+            // Hover affordance: mirror interact.js, which changed the cursor to a resize arrow near a resizable
+            // edge so users can tell the widget is resizable. Updated on every hover move and cleared on leave.
+            this.hoverMoveCleanup = this.renderer.listen(widget, 'pointermove', (event: PointerEvent) => this.onHoverMove(event));
+            this.hoverLeaveCleanup = this.renderer.listen(widget, 'pointerleave', () => this.setWidgetCursor(''));
         }
         this.setPositionAndScale();
+    }
+
+    /**
+     * Computes which borders of the widget the pointer is on, within {@link EDGE_MARGIN}. The top edge is the
+     * dedicated `.chat-widget-top-resize-area` strip (the header sits just below it and is the drag surface).
+     */
+    private detectResizeEdges(event: PointerEvent, rect: DOMRect, target: Element | null) {
+        const margin = IrisChatbotWidgetComponent.EDGE_MARGIN;
+        return {
+            left: event.clientX - rect.left <= margin,
+            right: rect.right - event.clientX <= margin,
+            bottom: rect.bottom - event.clientY <= margin,
+            top: !!target?.closest('.chat-widget-top-resize-area'),
+        };
+    }
+
+    /** Maps a set of active edges to the matching resize cursor (diagonal at corners), or '' for none. */
+    private resizeCursor(edges: { left: boolean; right: boolean; top: boolean; bottom: boolean }): string {
+        const { left, right, top, bottom } = edges;
+        if ((top && left) || (bottom && right)) {
+            return 'nwse-resize';
+        }
+        if ((top && right) || (bottom && left)) {
+            return 'nesw-resize';
+        }
+        if (left || right) {
+            return 'ew-resize';
+        }
+        if (top || bottom) {
+            return 'ns-resize';
+        }
+        return '';
+    }
+
+    /**
+     * Updates the cursor while hovering (no active gesture) so the resize affordance is visible: a resize arrow
+     * near a border, otherwise the inline cursor is cleared so the CSS `grab` cursor on the header (or the default)
+     * applies. Skipped for touch/pen and over interactive controls, which keep their own cursor.
+     */
+    private onHoverMove(event: PointerEvent): void {
+        const widget = this.widgetEl;
+        if (!widget || this.gesture || event.pointerType !== 'mouse') {
+            return;
+        }
+        const target = event.target as Element | null;
+        if (target?.closest(IrisChatbotWidgetComponent.INTERACTIVE_CONTROL_SELECTOR)) {
+            this.setWidgetCursor('');
+            return;
+        }
+        const cursor = this.resizeCursor(this.detectResizeEdges(event, widget.getBoundingClientRect(), target));
+        this.setWidgetCursor(cursor);
+    }
+
+    /** Sets (or clears, when empty) the inline cursor on the widget. */
+    private setWidgetCursor(cursor: string): void {
+        const widget = this.widgetEl;
+        if (!widget) {
+            return;
+        }
+        if (cursor) {
+            this.renderer.setStyle(widget, 'cursor', cursor);
+        } else {
+            this.renderer.removeStyle(widget, 'cursor');
+        }
     }
 
     private onPointerDown(event: PointerEvent): void {
@@ -88,17 +160,11 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         // these clicks via its drag threshold; the explicit handler must opt them out, otherwise preventDefault and
         // pointer capture below would swallow the click. This also covers controls that sit within EDGE_MARGIN of a
         // border (e.g. the close button near the top-right), which would otherwise start an edge resize.
-        if (target?.closest('button, a, input, textarea, select, [role="button"], [role="menuitem"], [contenteditable="true"]')) {
+        if (target?.closest(IrisChatbotWidgetComponent.INTERACTIVE_CONTROL_SELECTOR)) {
             return;
         }
         const rect = widget.getBoundingClientRect();
-        const margin = IrisChatbotWidgetComponent.EDGE_MARGIN;
-        const edges = {
-            left: event.clientX - rect.left <= margin,
-            right: rect.right - event.clientX <= margin,
-            bottom: rect.bottom - event.clientY <= margin,
-            top: !!target?.closest('.chat-widget-top-resize-area'),
-        };
+        const edges = this.detectResizeEdges(event, rect, target);
         const resizing = edges.left || edges.right || edges.top || edges.bottom;
         const dragging = !resizing && !!target?.closest('.chat-header');
         if (!resizing && !dragging) {
@@ -117,6 +183,8 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         this.startTranslateY = parseFloat(widget.getAttribute('data-y') ?? '') || 0;
 
         widget.setPointerCapture?.(event.pointerId);
+        // Hold the gesture cursor for the whole drag (pointer capture keeps it even when the pointer leaves the widget).
+        this.setWidgetCursor(this.gesture === 'resize' ? this.resizeCursor(edges) : 'grabbing');
         const move = (e: PointerEvent) => this.onPointerMove(e);
         const up = (e: PointerEvent) => {
             if (e.pointerId !== this.activePointerId) {
@@ -216,6 +284,8 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         this.activePointerId = undefined;
         this.gestureCleanup?.();
         this.gestureCleanup = undefined;
+        // Drop the gesture cursor; the next hover move (or the header's CSS grab cursor) takes over.
+        this.setWidgetCursor('');
     }
 
     setPositionAndScale() {
@@ -252,6 +322,8 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     ngOnDestroy() {
         this.pointerDownCleanup?.();
+        this.hoverMoveCleanup?.();
+        this.hoverLeaveCleanup?.();
         this.gestureCleanup?.();
         this.toggleScrollLock(false);
     }

@@ -32,16 +32,32 @@ export class CodeEditorGridComponent {
     // Resizable constraints (px). The min values mirror the previous interact.js configuration,
     // which derived them from the screen dimensions at view init.
     readonly resizableMinHeightMain = window.screen.height / 3;
-    readonly resizableMaxHeightMain = 1200;
-
     readonly resizableMinWidthLeft = window.screen.width / 7;
-    readonly resizableMaxWidthLeft = window.screen.width / 2;
-
     readonly resizableMinWidthRight = window.screen.width / 6;
-    readonly resizableMaxWidthRight = window.screen.width / 1.3;
-
     readonly resizableMinHeightBottom = window.screen.height / 6;
-    readonly resizableMaxHeightBottom = 600;
+
+    // Reserve enough of the viewport for the neighbouring panel so a resize can never push the build output (height)
+    // or the code editor (width) fully off the clipped wrapper - which previously left them unrecoverable without a
+    // reload. interact.js implicitly bounded this via its parent restriction; the in-house directive only clamps to
+    // these px limits, so the maxima are capped against the live viewport (not the larger physical screen).
+    private static readonly RESERVED_VERTICAL_PX = 320;
+    private static readonly RESERVED_HORIZONTAL_PX = 360;
+
+    get resizableMaxHeightMain(): number {
+        return Math.max(this.resizableMinHeightMain, Math.min(1200, window.innerHeight - CodeEditorGridComponent.RESERVED_VERTICAL_PX));
+    }
+
+    get resizableMaxWidthLeft(): number {
+        return Math.max(this.resizableMinWidthLeft, Math.min(window.screen.width / 2, window.innerWidth - CodeEditorGridComponent.RESERVED_HORIZONTAL_PX));
+    }
+
+    get resizableMaxWidthRight(): number {
+        return Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, window.innerWidth - CodeEditorGridComponent.RESERVED_HORIZONTAL_PX));
+    }
+
+    get resizableMaxHeightBottom(): number {
+        return Math.max(this.resizableMinHeightBottom, Math.min(600, window.innerHeight - CodeEditorGridComponent.RESERVED_VERTICAL_PX));
+    }
 
     protected readonly ResizeType = ResizeType;
 

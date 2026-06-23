@@ -127,6 +127,37 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         expect(horizontalSplitSizesChangeSpy).toHaveBeenCalledWith([70, 30]);
     });
 
+    it('shows a drag overlay on splitter resize start and removes it on resize end', () => {
+        const overlaySelector = 'div[style*="z-index: 10000"]';
+
+        // Vertical (main | sidebar) splitter: overlay with a col-resize cursor.
+        component['onSplitterResizeStart']('horizontal');
+        let overlay = document.body.querySelector<HTMLElement>(overlaySelector);
+        expect(overlay).not.toBeNull();
+        expect(overlay!.style.cursor).toBe('col-resize');
+        expect(overlay!.style.position).toBe('fixed');
+
+        component['onVerticalResize']({ sizes: [60, 40] });
+        expect(document.body.querySelector(overlaySelector)).toBeNull();
+
+        // Horizontal (top | bottom) splitter: overlay with a row-resize cursor.
+        component['onSplitterResizeStart']('vertical');
+        overlay = document.body.querySelector<HTMLElement>(overlaySelector);
+        expect(overlay).not.toBeNull();
+        expect(overlay!.style.cursor).toBe('row-resize');
+
+        component['onHorizontalResize']({ sizes: [50, 50] });
+        expect(document.body.querySelector(overlaySelector)).toBeNull();
+    });
+
+    it('removes a lingering drag overlay when destroyed mid-resize', () => {
+        component['onSplitterResizeStart']('horizontal');
+        expect(document.body.querySelector('div[style*="z-index: 10000"]')).not.toBeNull();
+
+        fixture.destroy();
+        expect(document.body.querySelector('div[style*="z-index: 10000"]')).toBeNull();
+    });
+
     it('converts px minSizes to percentages', () => {
         // 220px / 1600px reference width => 14% (rounded); see toPercentMinSizes.
         fixture.componentRef.setInput('verticalSplit', {

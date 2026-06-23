@@ -31,15 +31,10 @@
 }
 
 // The header is the drag surface (rendered by the embedded base chatbot). Opt it out of browser gestures so a free
-// drag works on touch under the widget's `pan-y`. Scoped to this widget so other base-chatbot usages are unaffected.
+// drag works on touch under the widget's `pan-y`, and show a grab cursor so the drag affordance is discoverable.
+// Scoped to this widget so other base-chatbot usages are unaffected. The resize-edge cursors are set on the widget
+// element from TypeScript (the edges are detected by pointer proximity, not as separate elements).
 :host ::ng-deep .chat-header {
     touch-action: none;
-}
-
-.ng-draggable {
     cursor: grab;
-}
-
-.ng-dragging {
-    cursor: grabbing;
 }

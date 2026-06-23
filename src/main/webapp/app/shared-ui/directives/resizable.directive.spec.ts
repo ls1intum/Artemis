@@ -42,6 +42,34 @@ class ResizableTestHostComponent {
     }
 }
 
+/**
+ * Host where the drag handle is a sibling of the resizable element (not a descendant), driven via
+ * resizableHandleOutsideHost - the layout the video/transcript divider relies on.
+ */
+@Component({
+    selector: 'jhi-resizable-external-host',
+    imports: [ResizableDirective],
+    template: `
+        <div class="wrapper">
+            <div
+                class="panel"
+                jhiResizable
+                [resizableEdges]="{ right: '.outside-handle' }"
+                [resizableApplyInlineSize]="false"
+                [resizableHandleOutsideHost]="true"
+                (resizeMove)="onResize($event)"
+            ></div>
+            <div class="outside-handle"></div>
+        </div>
+    `,
+})
+class ResizableExternalHostComponent {
+    lastResize?: ResizableSizeEvent;
+    onResize(e: ResizableSizeEvent): void {
+        this.lastResize = e;
+    }
+}
+
 /** jsdom has no PointerEvent constructor; a MouseEvent carries clientX/clientY/button plus the pointer fields the directive reads. */
 function pointer(target: Element, type: string, clientX: number, clientY: number, pointerId = 1): void {
     const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY, button: 0 });
@@ -79,6 +107,19 @@ describe('ResizableDirective', () => {
         pointer(panel, 'pointerup', 60, 50);
         expect(panel.classList.contains('card-resizable')).toBe(false);
         expect(fixture.componentInstance.lastEnd).toBeDefined();
+    });
+
+    it('sets a resize cursor on the handle and suppresses body text selection during the drag', async () => {
+        // The handle cursor is applied in afterNextRender; flush it before asserting.
+        await fixture.whenStable();
+        const handle = panel.querySelector('.draggable-left') as HTMLElement;
+        expect(handle.style.cursor).toBe('col-resize'); // left/right edge -> column resize
+
+        pointer(handle, 'pointerdown', 100, 50);
+        expect(document.body.style.userSelect).toBe('none');
+
+        pointer(panel, 'pointerup', 100, 50);
+        expect(document.body.style.userSelect).toBe('');
     });
 
     it('clamps to the configured min and max width', () => {
@@ -177,5 +218,22 @@ describe('ResizableDirective', () => {
         fixture.componentInstance.lastResize = undefined;
         pointer(panel, 'pointermove', 0, 50);
         expect(fixture.componentInstance.lastResize).toBeUndefined();
+    });
+
+    it('resizes from a handle outside the host when resizableHandleOutsideHost is set', async () => {
+        const externalFixture = TestBed.createComponent(ResizableExternalHostComponent);
+        const externalHost = externalFixture.nativeElement as HTMLElement;
+        externalFixture.detectChanges();
+        // The delegation listener on the parent is attached in afterNextRender; flush it before dispatching.
+        await externalFixture.whenStable();
+        const externalPanel = externalHost.querySelector('.panel') as HTMLElement;
+        externalPanel.getBoundingClientRect = () => ({ width: 200, height: 100, left: 100, top: 0, right: 300, bottom: 100, x: 100, y: 0, toJSON: () => ({}) }) as DOMRect;
+
+        // The handle is a sibling of the panel; the pointerdown is delegated from the shared parent (.wrapper).
+        const handle = externalHost.querySelector('.outside-handle')!;
+        pointer(handle, 'pointerdown', 300, 50);
+        pointer(externalPanel, 'pointermove', 360, 50); // moved 60px right -> +60 width
+
+        expect(externalFixture.componentInstance.lastResize).toEqual({ width: 260, height: 100 });
     });
 });
