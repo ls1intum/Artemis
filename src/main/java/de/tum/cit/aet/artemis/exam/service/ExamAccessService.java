@@ -200,7 +200,6 @@ public class ExamAccessService {
         }
         finally {
             lock.unlock();
-            studentExamCreationLocks.remove(lockKey, lock);
         }
     }
 
@@ -217,10 +216,10 @@ public class ExamAccessService {
         ReentrantLock lock = studentExamCreationLocks.computeIfAbsent(lockKey, _ -> new ReentrantLock());
         lock.lock();
 
-        List<StudentExam> studentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId());
-        List<StudentExam> unfinishedStudentExams = studentExams.stream().filter(attempt -> !attempt.isFinished()).toList();
-
         try {
+            List<StudentExam> studentExams = studentExamRepository.findStudentExamsForTestExamsByUserIdAndExamId(currentUser.getId(), exam.getId());
+            List<StudentExam> unfinishedStudentExams = studentExams.stream().filter(attempt -> !attempt.isFinished()).toList();
+
             if (unfinishedStudentExams.isEmpty()) {
                 ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
 
@@ -245,7 +244,6 @@ public class ExamAccessService {
         }
         finally {
             lock.unlock();
-            studentExamCreationLocks.remove(lockKey, lock);
         }
         // Check that the current user is registered for the test exam. Otherwise, the student can self-register
         examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
