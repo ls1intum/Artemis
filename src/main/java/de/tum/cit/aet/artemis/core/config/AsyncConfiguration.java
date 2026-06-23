@@ -37,8 +37,11 @@ public class AsyncConfiguration implements AsyncConfigurer {
 
     private final TaskExecutionProperties taskExecutionProperties;
 
-    public AsyncConfiguration(TaskExecutionProperties taskExecutionProperties) {
+    private final Environment environment;
+
+    public AsyncConfiguration(TaskExecutionProperties taskExecutionProperties, Environment environment) {
         this.taskExecutionProperties = taskExecutionProperties;
+        this.environment = environment;
     }
 
     @Override
@@ -54,25 +57,29 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
-     * Executor used for sending e-mails (see the mail sending service).
+     * Executor for the {@code @Async} mail methods (see the mail sending service).
      * <p>
-     * In production this returns the shared {@code taskExecutor}, so mail delivery behaves exactly as before: asynchronous
-     * on the general async pool. In the {@code test} profile it returns a {@link SyncTaskExecutor} so that e-mails are sent
-     * on the calling thread instead of a background thread. This guarantees the shared {@code JavaMailSender} spy is never
-     * invoked by a background thread while a test re-stubs or resets that spy between tests. Such concurrent access
-     * corrupts Mockito's internal state and surfaces as a flaky {@code UnfinishedStubbingException} in an unrelated test's
-     * {@code @BeforeEach} mock setup.
+     * In production this delegates to the shared {@code taskExecutor}, so mail is sent asynchronously on the same thread
+     * pool as before. It deliberately returns a thin delegating {@link Executor} (a method reference) rather than the
+     * {@code taskExecutor} bean instance itself: that instance is an {@link ExceptionHandlingAsyncTaskExecutor}, which is
+     * an {@code InitializingBean}/{@code DisposableBean}. Exposing it again under a second bean name would make Spring run
+     * its lifecycle callbacks a second time and initialize a second, orphaned thread pool. The delegate has no lifecycle,
+     * so production behavior is unchanged (mail still runs on the shared pool, asynchronously).
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor}: mail is sent on the calling thread so the shared
+     * {@code JavaMailSender} spy is never invoked by a background thread while a test stubs or resets it (which corrupts
+     * Mockito's state and surfaces as a flaky {@code UnfinishedStubbingException}). Only mail is affected; every other
+     * {@code @Async} task keeps using the real executor.
      *
-     * @param environment  the Spring environment, used to detect the test profile
-     * @param taskExecutor the general async executor, reused for mail in production
-     * @return a synchronous executor under the test profile, otherwise the shared async executor
+     * @param taskExecutor the shared async executor, delegated to for mail in production
+     * @return a synchronous executor under the {@code test} profile, otherwise a thin delegate to the shared executor
      */
     @Bean("mailTaskExecutor")
-    public Executor mailTaskExecutor(Environment environment, @Qualifier("taskExecutor") Executor taskExecutor) {
+    public Executor mailTaskExecutor(@Qualifier("taskExecutor") Executor taskExecutor) {
         if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return new SyncTaskExecutor();
         }
-        return taskExecutor;
+        return taskExecutor::execute;
     }
 
     @Override
