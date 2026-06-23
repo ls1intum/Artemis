@@ -1,5 +1,6 @@
 <div class="plagiarism-split-view">
     <p-splitter
+        #plagiarismSplitter
         class="plagiarism-splitter"
         [class.collapsed-left]="collapsedSide() === 'left'"
         [class.collapsed-right]="collapsedSide() === 'right'"
@@ -45,17 +46,21 @@
             </div>
         </ng-template>
     </p-splitter>
-    <div class="split-pane-header-color">
-        <button
-            class="btn btn-sm"
-            (click)="toggleLockFiles()"
-            [class.active]="isLockFilesEnabled()"
-            [pTooltip]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
-            tooltipPosition="bottom"
-            [attr.aria-label]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
-            data-qa="lock-files-toggle-button"
-        >
-            <fa-icon [icon]="isLockFilesEnabled() ? faLock : faUnlock" />
-        </button>
-    </div>
+    <!-- Lock-files control: follows the gutter (gutterCenterPx) so it stays on the divider while dragging instead of
+         staying fixed at the centre. Hidden when one pane is fully collapsed (there is no gutter then). -->
+    @if (!collapsedSide()) {
+        <div class="split-pane-header-color" [style.left.px]="gutterCenterPx()">
+            <button
+                class="btn btn-sm"
+                (click)="toggleLockFiles()"
+                [class.active]="isLockFilesEnabled()"
+                [pTooltip]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
+                tooltipPosition="bottom"
+                [attr.aria-label]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
+                data-qa="lock-files-toggle-button"
+            >
+                <fa-icon [icon]="isLockFilesEnabled() ? faLock : faUnlock" />
+            </button>
+        </div>
+    }
 </div>

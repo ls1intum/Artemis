@@ -1,4 +1,4 @@
-<div class="editor-wrapper" [class.assessment-wrapper]="isTutorAssessment()">
+<div class="editor-wrapper" #editorWrapper [class.assessment-wrapper]="isTutorAssessment()">
     <!-- Top bar -->
     <nav class="editor-statusbar" [hidden]="!showEditorNavbar()">
         <ng-content select="[editorNavbar]" />
@@ -7,8 +7,8 @@
         class="editor-main"
         jhiResizable
         [resizableEdges]="{ bottom: '.rg-main-bottom' }"
-        [resizableConstraints]="{ minHeight: resizableMinHeightMain, maxHeight: resizableMaxHeightMain }"
-        (resizeEnd)="onResize.emit(ResizeType.MAIN_BOTTOM)"
+        [resizableConstraints]="{ minHeight: resizableMinHeightMain, maxHeight: maxConstraints().heightMain }"
+        (resizeEnd)="onPanelResized(ResizeType.MAIN_BOTTOM)"
     >
         <div class="editor-main__content">
             <!-- File browser -->
@@ -17,9 +17,9 @@
                 class="editor-sidebar-left collapsable"
                 jhiResizable
                 [resizableEdges]="{ right: '.rg-sidebar-left' }"
-                [resizableConstraints]="{ minWidth: resizableMinWidthLeft, maxWidth: resizableMaxWidthLeft }"
+                [resizableConstraints]="{ minWidth: resizableMinWidthLeft, maxWidth: maxConstraints().widthLeft }"
                 [resizableEnabled]="!fileBrowserIsCollapsed()"
-                (resizeEnd)="onResize.emit(ResizeType.SIDEBAR_LEFT)"
+                (resizeEnd)="onPanelResized(ResizeType.SIDEBAR_LEFT)"
             >
                 <ng-content select="[editorSidebarLeft]" />
                 <!-- Required for resizing; don't remove empty span -->
@@ -43,9 +43,9 @@
                 [hidden]="!showEditorSidebarRight()"
                 jhiResizable
                 [resizableEdges]="{ left: '.rg-sidebar-right' }"
-                [resizableConstraints]="{ minWidth: resizableMinWidthRight, maxWidth: resizableMaxWidthRight }"
+                [resizableConstraints]="{ minWidth: resizableMinWidthRight, maxWidth: maxConstraints().widthRight }"
                 [resizableEnabled]="!rightPanelIsCollapsed()"
-                (resizeEnd)="onResize.emit(ResizeType.SIDEBAR_RIGHT)"
+                (resizeEnd)="onPanelResized(ResizeType.SIDEBAR_RIGHT)"
             >
                 @if (!rightPanelIsCollapsed()) {
                     <fa-icon [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right">
@@ -67,9 +67,9 @@
         class="editor-bottom collapsable"
         jhiResizable
         [resizableEdges]="{ bottom: '.rg-bottom-bottom' }"
-        [resizableConstraints]="{ minHeight: resizableMinHeightBottom, maxHeight: resizableMaxHeightBottom }"
+        [resizableConstraints]="{ minHeight: resizableMinHeightBottom, maxHeight: maxConstraints().heightBottom }"
         [resizableEnabled]="!buildOutputIsCollapsed()"
-        (resizeEnd)="onResize.emit(ResizeType.BOTTOM)"
+        (resizeEnd)="onPanelResized(ResizeType.BOTTOM)"
     >
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
         <!-- Required for resizing; don't remove empty span -->

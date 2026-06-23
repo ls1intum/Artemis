@@ -1,4 +1,4 @@
-import { Component, ElementRef, Renderer2, ViewEncapsulation, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, Renderer2, ViewEncapsulation, afterNextRender, inject, input, output, signal, viewChild } from '@angular/core';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
@@ -16,6 +16,7 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
 export class CodeEditorGridComponent {
     private renderer = inject(Renderer2);
 
+    readonly editorWrapperElement = viewChild<ElementRef<HTMLElement>>('editorWrapper');
     readonly buildOutputElement = viewChild.required<ElementRef>('buildOutput');
     readonly fileBrowserElement = viewChild.required<ElementRef>('fileBrowser');
     readonly instructionsElement = viewChild.required<ElementRef>('instructions');
@@ -36,34 +37,76 @@ export class CodeEditorGridComponent {
     readonly resizableMinWidthRight = window.screen.width / 6;
     readonly resizableMinHeightBottom = window.screen.height / 6;
 
-    // Reserve enough of the viewport for the neighbouring panel so a resize can never push the build output (height)
-    // or the code editor (width) fully off the clipped wrapper - which previously left them unrecoverable without a
-    // reload. interact.js implicitly bounded this via its parent restriction; the in-house directive only clamps to
-    // these px limits, so the maxima are capped against the live viewport (not the larger physical screen).
-    private static readonly RESERVED_VERTICAL_PX = 320;
-    private static readonly RESERVED_HORIZONTAL_PX = 360;
+    // Width that must always remain for the code editor in the middle, and small safety buffers for the
+    // inter-panel gap / grip / margins, so a resize cannot collapse a neighbour to nothing.
+    private static readonly EDITOR_CENTER_MIN_WIDTH = 300;
+    private static readonly VERTICAL_BUFFER_PX = 40;
+    private static readonly HORIZONTAL_BUFFER_PX = 24;
 
-    get resizableMaxHeightMain(): number {
-        return Math.max(this.resizableMinHeightMain, Math.min(1200, window.innerHeight - CodeEditorGridComponent.RESERVED_VERTICAL_PX));
-    }
-
-    get resizableMaxWidthLeft(): number {
-        return Math.max(this.resizableMinWidthLeft, Math.min(window.screen.width / 2, window.innerWidth - CodeEditorGridComponent.RESERVED_HORIZONTAL_PX));
-    }
-
-    get resizableMaxWidthRight(): number {
-        return Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, window.innerWidth - CodeEditorGridComponent.RESERVED_HORIZONTAL_PX));
-    }
-
-    get resizableMaxHeightBottom(): number {
-        return Math.max(this.resizableMinHeightBottom, Math.min(600, window.innerHeight - CodeEditorGridComponent.RESERVED_VERTICAL_PX));
-    }
+    /**
+     * Maximum panel sizes (px), recomputed on layout-affecting events (see {@link recomputeMaxConstraints}) rather
+     * than per change-detection, so the editor does not pay a layout read on every keystroke. The maxima are
+     * sum-aware: each panel's max leaves room for its neighbour and the editor, so editor + build output (height) or
+     * file browser + editor + instructions (width) can never exceed the visible area and push a panel - or its resize
+     * grip - off the clipped wrapper (which previously left it unrecoverable without a reload). interact.js bounded
+     * this implicitly via its parent restriction; the in-house directive only clamps to explicit px limits.
+     */
+    protected readonly maxConstraints = signal({
+        heightMain: 1200,
+        heightBottom: 600,
+        widthLeft: window.screen.width / 2,
+        widthRight: window.screen.width / 1.3,
+    });
 
     protected readonly ResizeType = ResizeType;
 
     // Icons
     faGripLines = faGripLines;
     faGripLinesVertical = faGripLinesVertical;
+
+    constructor() {
+        afterNextRender(() => this.recomputeMaxConstraints());
+    }
+
+    @HostListener('window:resize')
+    onWindowResize(): void {
+        this.recomputeMaxConstraints();
+    }
+
+    /** Re-emit a panel resize and refresh the sum-aware maxima so the next drag accounts for the new sizes. */
+    protected onPanelResized(type: ResizeType): void {
+        this.recomputeMaxConstraints();
+        this.onResize.emit(type);
+    }
+
+    /**
+     * Recomputes the sum-aware panel maxima from the current layout: each panel may grow only into the space left
+     * by its neighbour and the editor, within the visible viewport. Called on init, window resize, resize end and
+     * collapse, so it never runs during typing.
+     */
+    private recomputeMaxConstraints(): void {
+        const wrapper = this.editorWrapperElement()?.nativeElement;
+        if (!wrapper) {
+            return;
+        }
+        const main = wrapper.querySelector<HTMLElement>('.editor-main');
+        const bottom = wrapper.querySelector<HTMLElement>('.editor-bottom');
+        const content = wrapper.querySelector<HTMLElement>('.editor-main__content');
+        const left = wrapper.querySelector<HTMLElement>('.editor-sidebar-left');
+        const right = wrapper.querySelector<HTMLElement>('.editor-sidebar-right');
+
+        const mainTop = (main ?? wrapper).getBoundingClientRect().top;
+        const availableHeight = Math.max(0, window.innerHeight - mainTop - CodeEditorGridComponent.VERTICAL_BUFFER_PX);
+        const availableWidth = content?.clientWidth ?? window.innerWidth;
+        const reservedWidth = CodeEditorGridComponent.EDITOR_CENTER_MIN_WIDTH + CodeEditorGridComponent.HORIZONTAL_BUFFER_PX;
+
+        this.maxConstraints.set({
+            heightMain: Math.max(this.resizableMinHeightMain, Math.min(1200, availableHeight - (bottom?.offsetHeight ?? this.resizableMinHeightBottom))),
+            heightBottom: Math.max(this.resizableMinHeightBottom, Math.min(600, availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain))),
+            widthLeft: Math.max(this.resizableMinWidthLeft, Math.min(window.screen.width / 2, availableWidth - (right?.offsetWidth ?? 0) - reservedWidth)),
+            widthRight: Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
+        });
+    }
 
     private elementRefForCollapsableElement(collapsableElement: CollapsableCodeEditorElement): ElementRef {
         switch (collapsableElement) {
@@ -112,5 +155,8 @@ export class CodeEditorGridComponent {
                 break;
             }
         }
+
+        // A collapse changes the space available to the other panels; refresh the sum-aware maxima.
+        this.recomputeMaxConstraints();
     }
 }

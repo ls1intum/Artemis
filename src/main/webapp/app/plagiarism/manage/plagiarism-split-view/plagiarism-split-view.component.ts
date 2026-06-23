@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, afterNextRender, inject, input, signal, viewChild } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { Subject } from 'rxjs';
@@ -50,6 +50,17 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
      */
     readonly collapsedSide = signal<'left' | 'right' | undefined>(undefined);
 
+    /** Splitter host element, used to track the live gutter position so the lock-files control can follow it. */
+    private readonly splitterElement = viewChild<ElementRef<HTMLElement>>('plagiarismSplitter', { read: ElementRef });
+    /**
+     * Live x-position (px, from the splitter's left edge) of the gutter centre. The lock-files button is positioned
+     * here so it stays on the divider while dragging, instead of staying fixed at the centre (a reviewer finding).
+     * Updated by a ResizeObserver on the first panel because p-splitter emits no event during a drag.
+     */
+    readonly gutterCenterPx = signal<number | undefined>(undefined);
+    private readonly gutterSize = 12;
+    private panelResizeObserver?: ResizeObserver;
+
     readonly isProgrammingOrTextExercise = signal(false);
 
     readonly matchesA = signal<Map<string, FromToElement[]> | undefined>(undefined);
@@ -59,6 +70,26 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
     readonly dayjs = dayjs;
     protected readonly faLock: IconDefinition = faLock;
     protected readonly faUnlock: IconDefinition = faUnlock;
+
+    constructor() {
+        // Track the gutter position once the splitter (and its panels) have rendered.
+        afterNextRender(() => this.observeGutterPosition());
+    }
+
+    /**
+     * Observes the first splitter panel so the lock-files button can follow the gutter live while dragging.
+     * The gutter centre sits at the first panel's width plus half the gutter size, measured from the splitter's left.
+     */
+    private observeGutterPosition(): void {
+        const firstPanel = this.splitterElement()?.nativeElement.querySelector<HTMLElement>('.p-splitterpanel');
+        if (!firstPanel || typeof ResizeObserver === 'undefined') {
+            return;
+        }
+        const update = () => this.gutterCenterPx.set(firstPanel.offsetWidth + this.gutterSize / 2);
+        this.panelResizeObserver = new ResizeObserver(update);
+        this.panelResizeObserver.observe(firstPanel);
+        update();
+    }
 
     ngOnInit(): void {
         this.splitControlSubject()?.subscribe((pane: string) => this.handleSplitControl(pane));
@@ -92,6 +123,7 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
         this.fileSelectedSubject.complete();
         this.showFilesSubject.complete();
         this.dropdownHoverSubject.complete();
+        this.panelResizeObserver?.disconnect();
     }
 
     /**
