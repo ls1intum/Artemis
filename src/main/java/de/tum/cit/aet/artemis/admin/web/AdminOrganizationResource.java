@@ -36,7 +36,8 @@ import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.OrganizationService;
 import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
-import de.tum.cit.aet.artemis.admin.dto.OrganizationCountDTO;
+import de.tum.cit.aet.artemis.admin.dto.LoginListDTO;
+import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
@@ -109,6 +110,21 @@ public class AdminOrganizationResource {
         courseRepository.removeOrganizationFromCourse(courseId, organization);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, courseId.toString())).build();
+    }
+
+    /**
+     * POST organizations/:organizationId/users :
+     * Add multiple users to an organization.
+     * Users not found or already members are silently skipped.
+     *
+     * @param organizationId the id of the organization
+     * @param request        the request body containing the logins of the users to add
+     * @return empty ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("organizations/{organizationId}/users")
+    public ResponseEntity<Void> addUsersToOrganization(@PathVariable Long organizationId, @RequestBody @Valid LoginListDTO request) {
+        organizationService.addUsersToOrganization(organizationId, request.logins());
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -207,7 +223,7 @@ public class AdminOrganizationResource {
      */
     @GetMapping("organizations")
     public ResponseEntity<List<OrganizationDTO>> getOrganizations(@Valid SearchTermPageableSearchDTO<String> search, @RequestParam(defaultValue = "false") boolean withCounts) {
-        final Page<OrganizationDTO> page = organizationRepository.getAllOrganizations(search, withCounts);
+        final Page<OrganizationDTO> page = organizationService.getAllOrganizations(search, withCounts);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -223,7 +239,7 @@ public class AdminOrganizationResource {
     public ResponseEntity<List<OrganizationMemberDTO>> getOrganizationUsers(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get users of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
-        Page<OrganizationMemberDTO> page = organizationRepository.getUsersByOrganizationId(organizationId, search);
+        Page<OrganizationMemberDTO> page = organizationService.getUsersByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -239,26 +255,30 @@ public class AdminOrganizationResource {
     public ResponseEntity<List<OrganizationCourseDTO>> getOrganizationCourses(@PathVariable long organizationId, @Valid SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get courses of organization : {}", organizationId);
         organizationRepository.findByIdElseThrow(organizationId);
-        Page<OrganizationCourseDTO> page = organizationRepository.getCoursesByOrganizationId(organizationId, search);
+        Page<OrganizationCourseDTO> page = organizationService.getCoursesByOrganizationId(organizationId, search);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
-     * GET organizations/:organizationId/count : Get the number of users and courses
-     * currently mapped to an organization
+     * GET organizations/:organizationId/users/search : Search for users to register to a given organization
      *
-     * @param organizationId the id of the organization to retrieve the number of users and courses
-     * @return ResponseEntity containing a map containing the numbers of users and courses
+     * @param organizationId the id of the organization
+     * @param loginOrName    search term matched against login, full name, email, and registration number
+     * @param pageIndex      zero-based page index (default 0)
+     * @param pageSize       number of results per page (default 10)
+     * @return ResponseEntity containing a list of matching users with pagination headers
      */
-    @GetMapping("organizations/{organizationId}/count")
-    public ResponseEntity<OrganizationCountDTO> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
-        log.debug("REST request to get number of users and courses of organization : {}", organizationId);
-
-        OrganizationCountDTO numberOfUsersAndCourses = new OrganizationCountDTO(organizationId, organizationRepository.getNumberOfUsersByOrganizationId(organizationId),
-                organizationRepository.getNumberOfCoursesByOrganizationId(organizationId));
-
-        return new ResponseEntity<>(numberOfUsersAndCourses, HttpStatus.OK);
+    @GetMapping("organizations/{organizationId}/users/search")
+    public ResponseEntity<List<UserForRegistrationDTO>> searchUsersForOrganizationRegistration(@PathVariable long organizationId, @RequestParam String loginOrName,
+            @RequestParam(defaultValue = "0") int pageIndex, @RequestParam(defaultValue = "10") int pageSize) {
+        if (pageIndex < 0 || pageSize < 1) {
+            throw new BadRequestAlertException("Invalid pagination parameters", ENTITY_NAME, "invalidPagination");
+        }
+        organizationRepository.findByIdElseThrow(organizationId);
+        Page<UserForRegistrationDTO> page = organizationService.searchUsersForOrganizationRegistration(organizationId, loginOrName, pageIndex, pageSize);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
     /**
