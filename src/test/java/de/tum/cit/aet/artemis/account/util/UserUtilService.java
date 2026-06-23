@@ -384,7 +384,7 @@ public class UserUtilService {
         if (!usersToAdd.isEmpty()) {
             userCourseRoleTestRepository.deleteAllInBulk();
             log.debug("Save {} users to database...", usersToAdd.size());
-            usersToAdd = new ArrayList<>(userTestRepository.saveAll(usersToAdd));
+            usersToAdd = new ArrayList<>(userTestRepository.saveAllOrUpdate(usersToAdd));
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
 
@@ -400,7 +400,7 @@ public class UserUtilService {
      */
     public void addStudents(String prefix, int from, int to) {
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, from, to);
-        userTestRepository.saveAll(students);
+        userTestRepository.saveAllOrUpdate(students);
     }
 
     /**

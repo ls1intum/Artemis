@@ -95,7 +95,7 @@ public interface UserTestRepository extends UserRepository {
 
     /**
      * Batch-loads users with their {@code authorities} eagerly for the given set of logins.
-     * Used by {@link #saveAll} to fetch all existing users in a single query instead of
+     * Used by {@link #saveAllOrUpdate} to fetch all existing users in a single query instead of
      * issuing one {@code findOneWithAuthoritiesByLogin} query per user.
      * <p>
      * Unlike the production {@code findAllWithAuthoritiesByDeletedIsFalseAndLoginIn}, this
@@ -109,74 +109,46 @@ public interface UserTestRepository extends UserRepository {
     @Query("SELECT u FROM User u WHERE u.login IN :logins")
     Set<User> findAllWithAuthoritiesByLoginIn(@Param("logins") Set<String> logins);
 
-    @Override
-    @Transactional
-    default User save(User freshUser) {
-        if (freshUser.getId() == null) {
-            // New user — plain persist(), no collections to worry about.
-            return UserRepository.super.save(freshUser);
-        }
-        // Load with authorities eagerly so the PersistentSet sn is initialized (prevents NPE at flush).
-        User existing = findOneWithAuthoritiesByLogin(freshUser.getLogin()).orElseThrow(() -> new IllegalStateException("User not found for update: " + freshUser.getLogin()));
-        copyFieldsInPlace(freshUser, existing);
-        return UserRepository.super.save(existing);
-    }
-
     /**
-     * Overrides {@code saveAll} to prevent the Hibernate {@code PersistentSet(sn=null)} NPE
-     * for batch saves, using a single batch query instead of one query per entity.
+     * Batch-saves new users and updates existing ones in-place, preventing the Hibernate
+     * {@code PersistentSet(sn=null)} NPE for batch saves of "zombie" {@link User} objects
+     * (fresh Java objects with an existing DB ID and a plain {@code HashSet} for {@code authorities}).
      * <p>
-     * New users (no ID) are passed directly to {@code persist()}. Existing users are
-     * batch-loaded with {@code authorities} eagerly via {@link #findAllWithAuthoritiesByLoginIn}
-     * (one query for the whole batch), then each is updated in-place via {@link #copyFieldsInPlace}
-     * so the {@code PersistentSet} snapshot is always initialised before flush.
+     * When {@link #save} is called on a zombie, Spring Data JPA delegates to JPA {@code merge()},
+     * which loads the managed entity with a lazy, uninitialized {@code PersistentSet} ({@code sn=null})
+     * for the {@code authorities} {@code @ManyToMany} collection. Replacing that collection with a
+     * plain {@code HashSet} queues a {@code CollectionUpdateAction} whose {@code compareTo} calls
+     * {@code hasDeletes()} on the uninitialized snapshot — causing an NPE.
+     * <p>
+     * This method avoids that by batch-loading all existing users with {@code authorities} eagerly
+     * (one query via {@link #findAllWithAuthoritiesByLoginIn}) within the same {@code @Transactional}
+     * session, then updating each user in-place via {@link #copyFieldsInPlace} so the snapshot is
+     * always initialized before flush. New users (no ID) are passed directly to {@link #save}.
+     *
+     * @param users the list of users to persist or update
+     * @return the list of saved or updated managed users, in input order
      */
-    @Override
     @Transactional
-    default List<User> saveAll(Iterable<? extends User> entities) {
-        List<User> all = new ArrayList<>();
-        entities.forEach(all::add);
+    default List<User> saveAllOrUpdate(List<User> users) {
+        Set<String> existingLogins = users.stream().filter(u -> u.getId() != null).map(User::getLogin).collect(Collectors.toSet());
 
-        // Collect logins of users that already have a DB row (id != null).
-        Set<String> existingLogins = all.stream().filter(u -> u.getId() != null).map(User::getLogin).collect(Collectors.toSet());
-
-        // One batch query to load them all with authorities eagerly (initialises PersistentSet sn).
         Map<String, User> loadedByLogin = existingLogins.isEmpty() ? Map.of()
                 : findAllWithAuthoritiesByLoginIn(existingLogins).stream().collect(Collectors.toMap(User::getLogin, u -> u));
 
         List<User> result = new ArrayList<>();
-        for (User fresh : all) {
+        for (User fresh : users) {
             User loaded = fresh.getId() != null ? loadedByLogin.get(fresh.getLogin()) : null;
             if (loaded == null) {
-                // New user (or not found) — plain persist(), no PersistentSet to worry about.
-                result.add(UserRepository.super.save(fresh));
+                result.add(save(fresh));
             }
             else {
                 copyFieldsInPlace(fresh, loaded);
-                result.add(UserRepository.super.save(loaded));
+                result.add(save(loaded));
             }
         }
         return result;
     }
 
-    /**
-     * Overrides the default {@code save} to prevent a {@code NullPointerException} in Hibernate's
-     * {@code sortCollectionActions} when saving a detached {@link User} that already exists in the DB.
-     * <p>
-     * When {@code save(freshUser)} is called on a User with an existing ID, Spring Data JPA delegates
-     * to JPA {@code merge()}. Hibernate loads the managed entity with lazy, uninitialized
-     * {@code PersistentSet} for the {@code authorities} {@code @ManyToMany} collection ({@code sn = null}).
-     * Replacing the field with a plain Java {@code Set} then queues a {@code CollectionUpdateAction},
-     * whose {@code compareTo} calls {@code hasDeletes()} on the uninitialized snapshot → NPE.
-     * <p>
-     * This override avoids that by loading the managed user <strong>with authorities eagerly</strong>
-     * first (within the same {@code @Transactional} scope so they share the Hibernate session),
-     * then updating the {@code authorities} {@code PersistentSet} in-place rather than replacing it.
-     * New users (no ID) are delegated directly to the default implementation.
-     *
-     * @param freshUser the user to persist (new) or update (existing); must have all fields set
-     * @return the saved or updated user
-     */
     /**
      * Copies all scalar fields and updates the {@code authorities} collection in-place from
      * {@code fresh} into {@code existing}. Never replaces the {@code PersistentSet} reference so
