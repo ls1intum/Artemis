@@ -18,7 +18,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
 
     test.beforeEach('Create exam', async ({ login, examAPIRequests }) => {
         await login(admin);
-        exam = await examAPIRequests.createExam({ course, title: examTitle, examType: ExamType.PRACTICE });
+        exam = await examAPIRequests.createExam({ course, title: examTitle, examType: ExamType.TEST });
     });
 
     test.describe('Manage Group', () => {

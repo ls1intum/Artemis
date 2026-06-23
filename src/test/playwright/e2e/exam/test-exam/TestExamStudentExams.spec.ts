@@ -28,7 +28,7 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
         const examConfig = {
             course,
             title: examTitle,
-            examType: ExamType.PRACTICE,
+            examType: ExamType.TEST,
             startDate: dayjs().subtract(1, 'day'),
             visibleDate: dayjs().subtract(2, 'days'),
             workingTime: 120,

@@ -26,7 +26,7 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
             const examConfig = {
                 course,
                 title: examTitle,
-                examType: ExamType.PRACTICE,
+                examType: ExamType.TEST,
                 startDate: dayjs().subtract(1, 'day'),
                 visibleDate: dayjs().subtract(2, 'days'),
                 examMaxPoints: 20,
@@ -92,7 +92,7 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
             const examConfig = {
                 course,
                 title: examTitle,
-                examType: ExamType.PRACTICE,
+                examType: ExamType.TEST,
                 startDate: dayjs().subtract(1, 'day'),
                 visibleDate: dayjs().subtract(2, 'days'),
                 workingTime: 15,

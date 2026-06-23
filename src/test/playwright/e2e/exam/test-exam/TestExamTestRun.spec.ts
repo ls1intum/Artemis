@@ -24,7 +24,7 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
         const examConfig = {
             course,
             title: examTitle,
-            examType: ExamType.PRACTICE,
+            examType: ExamType.TEST,
             examMaxPoints: 40,
             numberOfExercisesInExam: 4,
         };

@@ -49,7 +49,7 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
         exam = { ...(await examResponse.json()), course };
         expect(examResponse.status()).toBe(201);
         expect(exam.title).toBe(examData.title);
-        expect(exam.examType).toBe(ExamType.PRACTICE);
+        expect(exam.examType).toBe(ExamType.TEST);
         expect(trimDate(String(exam.visibleDate))).toBe(trimDate(dayjsToString(examData.visibleDate)));
         expect(trimDate(String(exam.startDate))).toBe(trimDate(dayjsToString(examData.startDate)));
         expect(trimDate(String(exam.endDate))).toBe(trimDate(dayjsToString(examData.endDate)));
@@ -71,7 +71,7 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
             const examConfig = {
                 course,
                 title: examData.title,
-                examType: ExamType.PRACTICE,
+                examType: ExamType.TEST,
             };
             exam = await examAPIRequests.createExam(examConfig);
         });
