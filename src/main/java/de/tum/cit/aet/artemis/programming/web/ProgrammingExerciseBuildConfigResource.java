@@ -1,0 +1,89 @@
+package de.tum.cit.aet.artemis.programming.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.dto.UpdateBuildPlanConfigurationDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildPlanService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
+
+/**
+ * REST controller for managing the build configuration of a programming exercise from the dedicated build plan editor.
+ * <p>
+ * In contrast to the full programming exercise update, this controller only updates the values the build plan editor
+ * controls (build phases, Docker image, and timeout), so the build plan can be edited independently of the rest of the
+ * exercise configuration.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@RestController
+@RequestMapping("api/programming/")
+public class ProgrammingExerciseBuildConfigResource {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildConfigResource.class);
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private final ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService;
+
+    private final ProgrammingTriggerService programmingTriggerService;
+
+    public ProgrammingExerciseBuildConfigResource(ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
+            ProgrammingTriggerService programmingTriggerService) {
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
+        this.programmingTriggerService = programmingTriggerService;
+    }
+
+    /**
+     * PUT /programming-exercises/{exerciseId}/build-config : Updates the build plan configuration (build phases, Docker
+     * image, and timeout) of an existing programming exercise from the dedicated build plan editor.
+     * <p>
+     * Analogous to the build plan editor for external CI systems, a template and solution build is triggered afterwards
+     * so that the editor immediately shows whether the new build plan works as expected.
+     *
+     * @param exerciseId the id of the programming exercise whose build config should be updated
+     * @param dto        the new build plan configuration and build timeout
+     * @return the ResponseEntity with status 200 (OK) and the updated build config in the body
+     * @throws JsonProcessingException if the build plan configuration cannot be serialized
+     */
+    @PutMapping("programming-exercises/{exerciseId}/build-config")
+    @EnforceAtLeastEditorInExercise
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<UpdateProgrammingExerciseBuildConfigDTO> updateBuildConfig(@PathVariable long exerciseId, @Valid @RequestBody UpdateBuildPlanConfigurationDTO dto)
+            throws JsonProcessingException {
+        log.debug("REST request to update the build plan configuration of programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
+        ProgrammingExerciseBuildConfig updatedBuildConfig = programmingExerciseBuildPlanService.updateBuildPlanConfiguration(programmingExercise, dto.buildPlan(),
+                dto.timeoutSeconds());
+        programmingTriggerService.triggerTemplateAndSolutionBuild(exerciseId);
+        return ResponseEntity.ok(UpdateProgrammingExerciseBuildConfigDTO.of(updatedBuildConfig));
+    }
+}

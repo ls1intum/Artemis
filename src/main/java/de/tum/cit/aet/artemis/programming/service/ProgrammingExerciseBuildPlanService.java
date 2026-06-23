@@ -4,7 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -17,11 +19,13 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.service.BuildPhasesTemplateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -143,6 +147,52 @@ public class ProgrammingExerciseBuildPlanService {
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
             updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalBuildPlanConfiguration);
+        }
+    }
+
+    /**
+     * Updates the build plan configuration (build phases and Docker image) and the build timeout of an existing
+     * programming exercise from the dedicated build plan editor, without re-running the full programming exercise update.
+     * <p>
+     * The structured configuration is serialized and stored in the build config. For LocalCI the configuration is
+     * interpreted at build time, so persisting it is sufficient; {@link #updateBuildPlanForExercise} recreates the build
+     * plans for external CI systems when the configuration changed.
+     *
+     * @param programmingExercise the programming exercise whose build config should be updated (with its build config loaded)
+     * @param buildPlan           the new build plan configuration (build phases and Docker image)
+     * @param timeoutSeconds      the build timeout in seconds
+     * @return the persisted build config
+     * @throws JsonProcessingException if the build plan configuration cannot be serialized
+     */
+    public ProgrammingExerciseBuildConfig updateBuildPlanConfiguration(ProgrammingExercise programmingExercise, BuildPlanPhasesDTO buildPlan, int timeoutSeconds)
+            throws JsonProcessingException {
+        validateBuildPhaseNames(buildPlan.phases());
+
+        var buildConfig = programmingExercise.getBuildConfig();
+        final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();
+        buildConfig.setBuildPlanConfiguration(buildPlan.toBuildPlanConfiguration());
+        // the structured phases configuration supersedes any legacy build script
+        buildConfig.setBuildScript(null);
+        buildConfig.setTimeoutSeconds(timeoutSeconds);
+
+        updateBuildPlanForExercise(originalBuildPlanConfiguration, programmingExercise);
+
+        return programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
+    }
+
+    /**
+     * Validates that the build phase names are unique (case-insensitively) and do not use reserved names. The name
+     * pattern and non-blank constraints are enforced via bean validation on {@link BuildPhaseDTO}.
+     *
+     * @param phases the build phases to validate
+     */
+    private void validateBuildPhaseNames(List<BuildPhaseDTO> phases) {
+        var lowerCaseNames = phases.stream().map(phase -> phase.name().toLowerCase(Locale.ROOT)).toList();
+        if (new HashSet<>(lowerCaseNames).size() != lowerCaseNames.size()) {
+            throw new BadRequestAlertException("Build phase names must be unique", "buildConfig", "duplicateBuildPhaseName");
+        }
+        if (lowerCaseNames.stream().anyMatch(BuildPhaseDTO.RESERVED_PHASE_NAMES::contains)) {
+            throw new BadRequestAlertException("Build phase names must not use reserved names", "buildConfig", "reservedBuildPhaseName");
         }
     }
 
