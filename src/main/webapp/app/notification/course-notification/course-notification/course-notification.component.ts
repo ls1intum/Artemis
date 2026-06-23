@@ -73,7 +73,7 @@ export class CourseNotificationComponent {
             courseName: notification.courseName,
             courseId: notification.courseId,
         };
-        for (const [key, value] of Object.entries(notification.parameters!)) {
+        for (const [key, value] of Object.entries(notification.parameters ?? {})) {
             if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                 notificationParameters[key] = value;
             } else {
