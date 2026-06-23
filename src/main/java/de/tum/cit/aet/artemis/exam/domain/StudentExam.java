@@ -87,6 +87,7 @@ public class StudentExam extends AbstractAuditingEntity {
         return Boolean.TRUE.equals(testRun);
     }
 
+    @JsonIgnore
     public ExamType getExamType() {
         return exam.getExamType();
     }

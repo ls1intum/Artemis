@@ -270,7 +270,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
         examRepository.save(testExam1);
 
-        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
