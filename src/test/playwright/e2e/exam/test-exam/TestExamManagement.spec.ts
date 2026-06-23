@@ -1,4 +1,5 @@
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamType } from '../../../support/constants';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 import { admin, instructor } from '../../../support/users';

@@ -1,4 +1,5 @@
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamType } from '../../../support/constants';
 
 import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/build_error/submission.json';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../../support/constants';

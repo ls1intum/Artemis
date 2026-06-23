@@ -2,7 +2,8 @@ import { test } from '../../support/fixtures';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamType } from '../../support/constants';
 import { SEED_COURSES } from '../../support/seedData';
 import { admin } from '../../support/users';
 

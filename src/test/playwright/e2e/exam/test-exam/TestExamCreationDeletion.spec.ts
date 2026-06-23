@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamType } from '../../../support/constants';
 
 import { dayjsToString, generateUUID, trimDate } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
