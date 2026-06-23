@@ -54,8 +54,6 @@ public class WeaviateService {
 
     private final boolean isOpenApiDocsGeneration;
 
-    private final WeaviateMigrationService migrationService;
-
     /**
      * The {@code WeaviateClient} bean is created lazily because the enclosing
      * {@link WeaviateClientConfiguration} and this service are both {@code @Lazy}.
@@ -75,15 +73,13 @@ public class WeaviateService {
      *
      * @throws IllegalStateException if the client is not available outside of OpenAPI docs generation
      */
-    public WeaviateService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment,
-            WeaviateMigrationService migrationService) {
+    public WeaviateService(Optional<WeaviateClient> clientOptional, WeaviateConfigurationProperties properties, Environment environment) {
         this.isOpenApiDocsGeneration = Boolean.parseBoolean(environment.getProperty("artemis.openapi-docs-generation", "false"));
         if (clientOptional.isEmpty() && !isOpenApiDocsGeneration) {
             throw new IllegalStateException("WeaviateClient bean is required when Weaviate is enabled and not in OpenAPI docs generation mode");
         }
         this.client = clientOptional.orElse(null);
         this.properties = properties;
-        this.migrationService = migrationService;
     }
 
     /**
@@ -110,25 +106,24 @@ public class WeaviateService {
         log.info("Initializing Weaviate collections at {}://{}:{} (gRPC: {}) with vectorizer module: {}", properties.scheme(), properties.httpHost(), properties.httpPort(),
                 properties.grpcPort(), properties.vectorizerModule());
 
-        for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
-            ensureCollectionExists(schema);
-        }
-
-        try {
-            migrationService.runPendingMigrations();
-        }
-        catch (Exception e) {
-            log.error("Weaviate migration failed during startup, but the server will continue. Search may return incomplete results until entities are re-indexed: {}",
-                    e.getMessage());
-        }
-
-        // Second pass: recreate any collections that a migration dropped to apply schema changes
-        // (e.g. V0→V1 drops SearchableEntities so it is rebuilt with trigram tokenization).
-        for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
-            ensureCollectionExists(schema);
-        }
+        ensureAllCollectionsExist();
 
         log.info("Weaviate collection initialization complete");
+    }
+
+    /**
+     * Ensures every collection in {@link WeaviateSchemas#ALL_SCHEMAS} exists, creating any that are missing.
+     * <p>
+     * Runs on every Weaviate-enabled node during startup (via {@link #initializeCollections()}) so the indexing
+     * and search paths always have their target collections available. It is idempotent and is invoked again by
+     * {@link WeaviateMigrationStartupService} after a migration completes as future-proofing: should a later migration
+     * drop one of the managed {@link WeaviateSchemas#ALL_SCHEMAS} collections, it is recreated here. (The current V0→V1
+     * migration drops only the unmanaged legacy {@code Exercises} collection, so this pass is a no-op for it.)
+     */
+    public void ensureAllCollectionsExist() {
+        for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
+            ensureCollectionExists(schema);
+        }
     }
 
     /**
