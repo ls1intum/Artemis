@@ -31,8 +31,6 @@ public interface RepositoryVCSAccessTokenRepository extends ArtemisJpaRepository
      */
     Optional<RepositoryVCSAccessToken> findByUserIdAndRepositoryUri(long userId, String repositoryUri);
 
-    boolean existsByUserIdAndRepositoryUri(long userId, String repositoryUri);
-
     /**
      * Returns the repository URIs a user already has a token for, restricted to the given exercises. Used to batch-create only the missing tokens.
      *
@@ -64,10 +62,6 @@ public interface RepositoryVCSAccessTokenRepository extends ArtemisJpaRepository
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByExerciseId(long exerciseId);
-
-    @Transactional // ok because of delete
-    @Modifying
-    void deleteAllByAuxiliaryRepositoryId(long auxiliaryRepositoryId);
 
     @Transactional // ok because of delete
     @Modifying
