@@ -68,7 +68,10 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
 
         test('Instructor can see complaint and reject it', async ({ login, courseAssessment, modelingExerciseAssessment }) => {
             await login(instructor, `/course-management/${course.id}/complaints`);
-            await courseAssessment.showTheComplaint();
+            // Open this modeling exercise's own complaint row: the shared seed course's complaint list also
+            // contains complaints from other assessment tests, so opening the first one races them and can open
+            // an already-handled complaint whose response editor stays disabled.
+            await courseAssessment.showTheComplaint(modelingExercise.title);
             await modelingExerciseAssessment.rejectComplaint('You are wrong.', false);
         });
     });

@@ -131,7 +131,6 @@ describe('AdminContainerComponent', () => {
         expect(component.examEnabled()).toBe(false);
         expect(component.standardizedCompetenciesEnabled()).toBe(false);
         expect(component.passkeyEnabled()).toBe(false);
-        expect(component.passkeyRequiredForAdmin()).toBe(false);
         expect(component.isSuperAdmin()).toBe(false);
     });
 
@@ -149,15 +148,14 @@ describe('AdminContainerComponent', () => {
         expect(newComponent.examEnabled()).toBe(true);
     });
 
-    it('should detect passkey feature flags from profile info', () => {
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => ['passkey', 'passkey-admin'].includes(feature));
+    it('should detect passkey feature flag from profile info', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === 'passkey');
 
         const newFixture = TestBed.createComponent(AdminContainerComponent);
         const newComponent = newFixture.componentInstance;
         newFixture.detectChanges();
 
         expect(newComponent.passkeyEnabled()).toBe(true);
-        expect(newComponent.passkeyRequiredForAdmin()).toBe(true);
     });
 
     describe('onResize', () => {

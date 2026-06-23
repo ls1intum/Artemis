@@ -123,7 +123,7 @@ describe('TextExercise Management Component', () => {
 
             // THEN
             expect(comp.internalTextExercises()).toHaveLength(1);
-            expect(comp.filteredTextExercises).toHaveLength(1);
+            expect(comp.filteredTextExercises()).toHaveLength(1);
         });
 
         it('should show no exercises', () => {
@@ -136,7 +136,7 @@ describe('TextExercise Management Component', () => {
 
             // THEN
             expect(comp.internalTextExercises()).toHaveLength(1);
-            expect(comp.filteredTextExercises).toHaveLength(0);
+            expect(comp.filteredTextExercises()).toHaveLength(0);
         });
     });
 
@@ -145,7 +145,7 @@ describe('TextExercise Management Component', () => {
         comp.toggleExercise(textExercise);
 
         // THEN
-        expect(comp.selectedExercises[0]).toMatchObject({ id: textExercise.id });
-        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.internalTextExercises().length);
+        expect(comp.selectedExercises()[0]).toMatchObject({ id: textExercise.id });
+        expect(comp.allChecked()).toEqual(comp.selectedExercises().length === comp.internalTextExercises().length);
     });
 });

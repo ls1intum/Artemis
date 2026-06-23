@@ -1,10 +1,14 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { GraphColors, SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
-import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import { TranslateService } from '@ngx-translate/core';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { NgxChartsSingleSeriesDataEntry } from 'app/exercise/chart/ngx-charts-datatypes';
+import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
+import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
+import { singleSeriesChartData } from 'app/shared-ui/chart/chart-adapters';
+import { barChartOptions, toChartSelectEvent } from 'app/shared-ui/chart/chart-options';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { ChartExerciseTypeFilter } from 'app/exercise/chart/chart-exercise-type-filter';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -13,9 +17,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
+import { ChartModule } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
-interface ExerciseStatisticsEntry extends NgxChartsSingleSeriesDataEntry {
+interface ExerciseStatisticsEntry extends ChartSeriesEntry {
     exerciseType: ExerciseType;
     exerciseId: number;
 }
@@ -29,11 +34,12 @@ export enum PerformanceInterval {
 @Component({
     selector: 'jhi-statistics-average-score-graph',
     templateUrl: './statistics-average-score-graph.component.html',
-    styleUrls: ['./statistics-average-score-graph.component.scss', '../../chart/vertical-bar-chart.scss'],
-    imports: [TranslateDirective, FaIconComponent, BarChartModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgClass, ArtemisTranslatePipe],
+    styleUrls: ['./statistics-average-score-graph.component.scss'],
+    imports: [TranslateDirective, FaIconComponent, ChartModule, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgClass, ArtemisTranslatePipe],
 })
 export class StatisticsAverageScoreGraphComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private translateService = inject(TranslateService);
     readonly exerciseTypeFilter = inject(ChartExerciseTypeFilter);
     readonly chartCategoryFilter = inject(ChartCategoryFilter);
 
@@ -51,14 +57,33 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     // Data
     barChartLabels: string[] = [];
-    // ngx
-    ngxData: ExerciseStatisticsEntry[] = [];
-    ngxColor = {
-        name: 'Course statistics',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [],
-    } as Color;
+    readonly chartEntries = signal<ExerciseStatisticsEntry[]>([]);
+    /** the raw per-bar colors (GraphColors values); resolved to concrete theme colors below */
+    readonly barColors = signal<string[]>([]);
+
+    private readonly resolvedColors = inject(ChartColorService).resolvedColors(() => this.barColors());
+
+    readonly chartData = computed(() => singleSeriesChartData(this.chartEntries(), this.resolvedColors()));
+    readonly chartOptions = computed(() =>
+        barChartOptions({
+            yAxis: { max: 100, tickFormatter: (value) => axisTickFormattingWithPercentageSign(String(value)) },
+            tooltip: {
+                label: (item) => {
+                    const name = String(item.label ?? '');
+                    const value = item.parsed.y ?? 0;
+                    return [
+                        `${this.translateService.instant('artemisApp.courseStatistics.exerciseAverage')}: ${value}%`,
+                        `${this.translateService.instant('artemisApp.courseStatistics.exerciseType')}: ${this.translateService.instant(
+                            'artemisApp.courseStatistics.' + this.convertTypeForTooltip(name, value),
+                        )}`,
+                    ];
+                },
+            },
+            dataLabels: { formatter: (value) => this.formatDataLabel(value) },
+        }),
+    );
+    /** chartjs-plugin-datalabels renders the persistent per-bar value labels; pass to <p-chart [plugins]>. */
+    readonly dataLabelsPlugin = [ChartDataLabels];
 
     // for filtering
     exerciseScoresFilteredByPerformanceInterval: CourseManagementStatisticsModel[];
@@ -66,7 +91,6 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     displayColorMap = new Map<PerformanceInterval, string>();
     numberOfSelectedIntervals = 3;
 
-    readonly yAxisTickFormatting = axisTickFormattingWithPercentageSign;
     readonly performanceIntervals = [PerformanceInterval.LOWEST, PerformanceInterval.AVERAGE, PerformanceInterval.BEST];
     readonly convertToMapKey = ChartExerciseTypeFilter.convertToMapKey;
     readonly CRITICAL_CLASS = 'critical-color';
@@ -78,8 +102,8 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     bestThirdLowerBoundary: number;
 
     // Left arrow -> decrease, right arrow -> increase
-    currentPeriod = 0;
-    currentSize = 0;
+    readonly currentPeriod = signal(0);
+    readonly currentSize = signal(0);
 
     // Icons
     faArrowLeft = faArrowLeft;
@@ -99,12 +123,12 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
         this.setupChart(this.orderedScores);
         this.currentlyDisplayableExercises = this.orderedScores;
         this.exerciseScoresFilteredByPerformanceInterval = this.orderedScores;
-        this.currentSize = this.orderedScores.length;
+        this.currentSize.set(this.orderedScores.length);
     }
 
     // handles arrow clicks and updates the exercises which are shown, forward is boolean since it is either forward or backward
     public switchTimeSpan(forward: boolean): void {
-        this.currentPeriod += forward ? 1 : -1;
+        this.currentPeriod.update((value) => value + (forward ? 1 : -1));
         this.setupChart(this.currentlyDisplayableExercises);
     }
 
@@ -124,12 +148,12 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
 
     /**
      * Handles the click event on one of the bars and navigates to the corresponding exercise statistics page
-     * @param event the event that is passed by the framework
+     * @param event the event that is passed by p-chart
      */
     onSelect(event: any): void {
-        const dataEntry = this.determineChartEntry(event.name, event.value);
+        const selected = toChartSelectEvent(event, this.chartData());
+        const dataEntry = selected?.meta as ExerciseStatisticsEntry | undefined;
 
-        // a workaround in order to prevent false navigation. If more than one exercise is matching, no routing is done
         if (dataEntry) {
             const route = ['course-management', this.courseId(), '', dataEntry.exerciseId, 'exercise-statistics'];
             let type = dataEntry.exerciseType.toLowerCase();
@@ -156,7 +180,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
          * is not an ideal solution as this pair is not necessarily unique.
          * In practice they most likely are unique, though. Not being able to find the entry in this edge case therefore has negligible impact.
          */
-        this.ngxData.forEach((exercise) => {
+        this.chartEntries().forEach((exercise) => {
             if (exercise.name === name && exercise.value === value) {
                 counter++;
                 result = exercise;
@@ -186,21 +210,23 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     }
 
     /**
-     * Sets up chart labels, the dedicated objects in order to represent the exercises by ngx-charts and the bar coloring
+     * Sets up chart labels, the dedicated objects in order to represent the exercises in the chart and the bar coloring
      * @param exerciseModels the models representing the course exercises
      */
     private setupChart(exerciseModels: CourseManagementStatisticsModel[]): void {
-        this.barChartLabels = exerciseModels.slice(this.currentPeriod, 10 + this.currentPeriod).map((exercise) => exercise.exerciseName);
-        this.ngxData = exerciseModels.slice(this.currentPeriod, 10 + this.currentPeriod).map(
-            (exercise, index) =>
-                ({
-                    name: this.barChartLabels[index],
-                    value: exercise.averageScore,
-                    exerciseType: exercise.exerciseType,
-                    exerciseId: exercise.exerciseId,
-                }) as ExerciseStatisticsEntry,
+        this.barChartLabels = exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map((exercise) => exercise.exerciseName);
+        this.chartEntries.set(
+            exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map(
+                (exercise, index) =>
+                    ({
+                        name: this.barChartLabels[index],
+                        value: exercise.averageScore,
+                        exerciseType: exercise.exerciseType,
+                        exerciseId: exercise.exerciseId,
+                    }) as ExerciseStatisticsEntry,
+            ),
         );
-        this.ngxColor.domain = this.ngxData.map((exercise) => this.determineColor(exercise.value));
+        this.barColors.set(this.chartEntries().map((exercise) => this.determineColor(exercise.value)));
     }
 
     /**
@@ -244,7 +270,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     togglePerformanceInterval(interval: PerformanceInterval): void {
         const currentValue = this.displayColorMap.get(interval);
         // we reset the view of the chart (changed with the arrows) before displaying the filtered exercises
-        this.currentPeriod = 0;
+        this.currentPeriod.set(0);
         let newValue = '';
         // This means an interval is selected that is currently already displayed
         if (currentValue !== '') {
@@ -319,7 +345,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
         this.chartCategoryFilter.setupCategoryFilter(this.exerciseScoresFilteredByPerformanceInterval);
         this.setupChart(this.exerciseScoresFilteredByPerformanceInterval);
         this.currentlyDisplayableExercises = this.exerciseScoresFilteredByPerformanceInterval;
-        this.currentSize = this.exerciseScoresFilteredByPerformanceInterval.length;
+        this.currentSize.set(this.exerciseScoresFilteredByPerformanceInterval.length);
     }
 
     /**
@@ -382,9 +408,9 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      */
     private initializeChartWithFilter(filteredAgainstCategory: CourseManagementStatisticsModel[], filteredAgainstType: CourseManagementStatisticsModel[]): void {
         this.currentlyDisplayableExercises = this.orderAverageScores(filteredAgainstCategory.filter((score) => filteredAgainstType.includes(score)));
-        this.currentPeriod = 0;
+        this.currentPeriod.set(0);
         this.setupChart(this.currentlyDisplayableExercises);
-        this.currentSize = this.currentlyDisplayableExercises.length;
+        this.currentSize.set(this.currentlyDisplayableExercises.length);
     }
 
     /**

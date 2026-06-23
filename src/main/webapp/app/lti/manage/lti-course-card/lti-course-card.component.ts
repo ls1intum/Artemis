@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
@@ -17,14 +17,6 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 export class LtiCourseCardComponent {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     course = input.required<Course>();
-    courseColor: string;
-    contentColor: string;
-
-    constructor() {
-        effect(() => {
-            const courseValue = this.course();
-            this.courseColor = courseValue?.color || this.ARTEMIS_DEFAULT_COLOR;
-            this.contentColor = getContrastingTextColor(this.courseColor);
-        });
-    }
+    readonly courseColor = computed(() => this.course()?.color || this.ARTEMIS_DEFAULT_COLOR);
+    readonly contentColor = computed(() => getContrastingTextColor(this.courseColor()));
 }

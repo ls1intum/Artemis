@@ -98,16 +98,16 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     lectureOnInit: Lecture;
     existingLectures = signal<Lecture[]>([]);
     isEditMode = signal<boolean>(false);
-    isSaving: boolean;
-    isProcessing: boolean;
-    processUnitMode: boolean;
-    formStatusSections: FormSectionStatus[];
+    readonly isSaving = signal<boolean>(undefined!);
+    readonly isProcessing = signal<boolean>(undefined!);
+    readonly processUnitMode = signal<boolean>(undefined!);
+    readonly formStatusSections = signal<FormSectionStatus[]>(undefined!);
     domainActionsDescription = [new FormulaAction()];
     file: File;
-    fileName: string;
+    readonly fileName = signal<string>(undefined!);
     fileInputTouched = false;
     isNewlyCreatedExercise = false;
-    isChangeMadeToTitleOrPeriodSection = false;
+    readonly isChangeMadeToTitleOrPeriodSection = signal(false);
     shouldDisplayDismissWarning = true;
     areSectionsValid = computed(() => this.computeAreSectionsValid());
     createLectureOptions = computed(() => this.computeCreateLectureOptions());
@@ -170,9 +170,9 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     ngOnInit() {
-        this.isSaving = false;
-        this.processUnitMode = false;
-        this.isProcessing = false;
+        this.isSaving.set(false);
+        this.processUnitMode.set(false);
+        this.isProcessing.set(false);
         this.activatedRoute.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'] as Lecture;
@@ -222,7 +222,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
             });
         }
 
-        this.formStatusSections = updatedFormStatusSections;
+        this.formStatusSections.set(updatedFormStatusSections);
     }
 
     isChangeMadeToTitleSection() {
@@ -248,7 +248,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     protected updateIsChangesMadeToTitleOrPeriodSection() {
-        this.isChangeMadeToTitleOrPeriodSection = this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection();
+        this.isChangeMadeToTitleOrPeriodSection.set(this.isChangeMadeToTitleSection() || this.isChangeMadeToPeriodSection());
     }
 
     /**
@@ -267,7 +267,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      */
     save() {
         this.shouldDisplayDismissWarning = false;
-        this.isSaving = true;
+        this.isSaving.set(true);
         if (this.lecture().id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture()));
         } else {
@@ -277,7 +277,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
     }
 
     proceedToUnitSplit() {
-        this.isProcessing = true;
+        this.isProcessing.set(true);
         this.save();
     }
 
@@ -286,17 +286,17 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      * This function is called by checking Automatic unit processing checkbox when creating a new lecture
      */
     onSelectProcessUnit() {
-        this.processUnitMode = !this.processUnitMode;
+        this.processUnitMode.update((value) => !value);
     }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (!input.files?.length) {
-            this.fileName = '';
+            this.fileName.set('');
             return;
         }
         this.file = input.files[0];
-        this.fileName = this.file.name;
+        this.fileName.set(this.file.name);
     }
 
     /**
@@ -314,18 +314,18 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      * Action on successful lecture creation or edit
      */
     protected onSaveSuccess(lecture: Lecture) {
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         if (!lecture.course?.id) {
             captureException('Lecture has no course id: ' + lecture);
             return;
         }
 
-        if (this.processUnitMode) {
-            this.isProcessing = false;
+        if (this.processUnitMode()) {
+            this.isProcessing.set(false);
             this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture().id !== undefined ? 'updated' : 'created'}.`);
             this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 'process'], {
-                state: { file: this.file, fileName: this.fileName },
+                state: { file: this.file, fileName: this.fileName() },
             });
         } else if (this.isEditMode()) {
             this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id]);
@@ -349,7 +349,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy, LectureUnsaved
      * @param errorRes the errorRes handed to the alert service
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         if (errorRes.error && errorRes.error.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);

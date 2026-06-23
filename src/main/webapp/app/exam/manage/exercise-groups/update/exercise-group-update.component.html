@@ -1,12 +1,19 @@
 <div>
-    <h4 jhiTranslate="{{ exerciseGroup.id ? 'artemisApp.examManagement.exerciseGroup.update' : 'artemisApp.examManagement.exerciseGroup.create' }}"></h4>
+    <h4 jhiTranslate="{{ exerciseGroup().id ? 'artemisApp.examManagement.exerciseGroup.update' : 'artemisApp.examManagement.exerciseGroup.create' }}"></h4>
     <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
         <div class="form-group">
             <label class="form-check-label" for="title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"></label>
-            <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exerciseGroup.title" />
+            <input class="form-control" required type="text" name="title" id="title" [ngModel]="exerciseGroup().title" (ngModelChange)="exerciseGroup().title = $event" />
         </div>
         <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="isMandatory" name="isMandatory" [(ngModel)]="exerciseGroup.isMandatory" />
+            <input
+                class="form-check-input"
+                type="checkbox"
+                id="isMandatory"
+                name="isMandatory"
+                [ngModel]="exerciseGroup().isMandatory"
+                (ngModelChange)="exerciseGroup().isMandatory = $event"
+            />
             <label class="form-check-label" for="isMandatory" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"></label>
         </div>
         <ngb-alert [type]="alertType" [dismissible]="false">

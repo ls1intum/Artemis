@@ -101,6 +101,25 @@ describe('ThemeService', () => {
         expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
+    it('bumps appliedThemeRevision only once the theme stylesheet is in effect', () => {
+        TestBed.tick();
+        const initialRevision = service.appliedThemeRevision();
+
+        service.applyThemePreference(Theme.DARK);
+        TestBed.tick();
+
+        // The dark stylesheet has not loaded yet, so the revision must not change
+        expect(service.appliedThemeRevision()).toBe(initialRevision);
+
+        newElement.onload!(new Event('load'));
+        expect(service.appliedThemeRevision()).toBe(initialRevision + 1);
+
+        // Switching back to the light theme removes the override synchronously
+        service.applyThemePreference(Theme.LIGHT);
+        TestBed.tick();
+        expect(service.appliedThemeRevision()).toBe(initialRevision + 2);
+    });
+
     it('restores stored theme correctly', () => {
         const retrieveSpy = vi.spyOn(localStorageService, 'retrieve').mockReturnValue('LIGHT');
 

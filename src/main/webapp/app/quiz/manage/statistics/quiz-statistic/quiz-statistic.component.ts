@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -11,15 +11,15 @@ import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/qui
 import { Subscription } from 'rxjs';
 import { round } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { BarChartModule } from '@swimlane/ngx-charts';
+import { ChartModule } from 'primeng/chart';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../exercise/chart/vertical-bar-chart.scss'],
-    imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
+    imports: [TranslateDirective, ChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -27,9 +27,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
-    private changeDetector = inject(ChangeDetectorRef);
 
-    quizExercise: QuizExercise;
+    readonly quizExercise = signal<QuizExercise>(undefined!);
 
     label: string[] = [];
     backgroundColor: string[] = [];
@@ -45,9 +44,16 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
-            this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
-            this.ngxData[this.ngxData.length - 1].name = this.translateService.instant('showStatistic.quizStatistic.average');
-            this.ngxData = [...this.ngxData];
+            this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
+            this.chartEntries.update((entries) => {
+                if (!entries.length) {
+                    return entries;
+                }
+                const updated = [...entries];
+                const lastEntry = updated[updated.length - 1];
+                updated[updated.length - 1] = { name: this.translateService.instant('artemisApp.showStatistic.quizStatistic.average'), value: lastEntry.value };
+                return updated;
+            });
         });
         this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
@@ -69,7 +75,6 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
                 }
             });
         });
-        this.changeDetector.detectChanges();
     }
 
     ngOnDestroy() {
@@ -87,8 +92,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['/courses']);
         }
-        this.quizExercise = quiz;
-        this.maxScore = calculateMaxScore(this.quizExercise);
+        this.quizExercise.set(quiz);
+        this.maxScore = calculateMaxScore(this.quizExercise());
         this.loadData();
     }
 
@@ -105,8 +110,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         this.unratedAverage = 0;
 
         // set data based on the CorrectCounters in the QuestionStatistics
-        for (let i = 0; i < this.quizExercise.quizQuestions!.length; i++) {
-            const question = this.quizExercise.quizQuestions![i];
+        for (let i = 0; i < this.quizExercise().quizQuestions!.length; i++) {
+            const question = this.quizExercise().quizQuestions![i];
             const statistic = question.quizQuestionStatistic!;
             const ratedCounter = statistic.ratedCorrectCounter!;
             const unratedCounter = statistic.unRatedCorrectCounter!;
@@ -119,8 +124,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         }
 
         // set Background for invalid questions = grey
-        for (let i = 0; i < this.quizExercise.quizQuestions!.length; i++) {
-            if (this.quizExercise.quizQuestions![i].invalid) {
+        for (let i = 0; i < this.quizExercise().quizQuestions!.length; i++) {
+            if (this.quizExercise().quizQuestions![i].invalid) {
                 this.backgroundColor[i] = '#949494';
             }
         }
@@ -138,18 +143,18 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         const lastLabel = this.translateService.instant('artemisApp.showStatistic.quizStatistic.average');
         this.label.push(lastLabel);
         this.chartLabels = this.label;
-        this.ngxColor.domain = this.backgroundColor;
+        this.chartColors.set([...this.backgroundColor]);
 
         // load data into chart
         this.loadDataInDiagram();
     }
 
     /**
-     * updates the chart by setting the data set, re-calculating the height and calling update on the chart view child
+     * updates the chart by setting the data set and re-calculating the height
      */
     loadDataInDiagram(): void {
-        this.setData(this.quizExercise.quizPointStatistic!);
-        this.pushDataToNgxEntry(this.changeDetector);
+        this.setData(this.quizExercise().quizPointStatistic!);
+        this.updateChartData();
         this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
     }
 }
