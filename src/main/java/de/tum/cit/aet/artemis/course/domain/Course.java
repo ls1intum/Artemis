@@ -174,7 +174,7 @@ public class Course extends DomainObject {
     private Integer accuracyOfScores = 1; // default value
 
     @JsonIgnore
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "athena_config_id")
     private CourseAthenaConfig athenaConfig;
 
