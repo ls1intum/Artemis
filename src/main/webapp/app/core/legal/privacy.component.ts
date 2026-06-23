@@ -48,7 +48,7 @@ export class PrivacyComponent implements AfterViewInit, OnInit {
      */
     ngAfterViewInit(): void {
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            this.scrollToFragment(params['fragment']);
+            this.scrollToFragment(params?.['fragment']);
         });
     }
 
