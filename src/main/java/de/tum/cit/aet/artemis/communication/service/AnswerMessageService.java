@@ -275,10 +275,14 @@ public class AnswerMessageService extends PostingService {
         AnswerPost answerMessage = this.findById(answerMessageId);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
-        // Tutors are allowed to reject (delete) unverified Iris replies even if they are not the author
+        // Tutors are allowed to reject (delete) unverified Iris replies even if they are not the author, but
+        // only within conversations they actually belong to — mirroring mayUpdateOrDeleteAnswerMessageElseThrow,
+        // so a tutor cannot reject a reply in a restricted channel they are not a member of.
         Conversation conversation;
         if (answerMessage.isUnverifiedIrisReply() && authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            conversation = conversationService.getConversationById(answerMessage.getPost().getConversation().getId());
+            Long conversationId = answerMessage.getPost().getConversation().getId();
+            conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, user, Optional.empty());
+            conversation = conversationService.getConversationById(conversationId);
         }
         else {
             conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
@@ -387,6 +391,9 @@ public class AnswerMessageService extends PostingService {
         if (existingAnswerMessage.isVerified()) {
             throw new BadRequestAlertException("Answer message is already verified", METIS_ANSWER_POST_ENTITY_NAME, "alreadyVerified");
         }
+        // The acting tutor must belong to the conversation, mirroring mayUpdateOrDeleteAnswerMessageElseThrow:
+        // any course member may verify in a course-wide channel, but a restricted channel requires membership.
+        conversationService.isMemberOrCreateForCourseWideElseThrow(existingAnswerMessage.getPost().getConversation().getId(), user, Optional.empty());
 
         Set<User> mentionedUsers = Set.of();
         if (verifyDto != null && verifyDto.content() != null && !verifyDto.content().isBlank()) {

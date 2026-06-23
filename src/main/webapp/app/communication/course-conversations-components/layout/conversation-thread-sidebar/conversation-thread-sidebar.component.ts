@@ -100,7 +100,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
         }
         this.isExpanded.update((expanded) => !expanded);
         this.expandTooltip()?.close();
-        if (!this.isExpanded) {
+        if (!this.isExpanded()) {
+            // After collapsing, re-pin the sidebar width once the DOM has settled.
             setTimeout(() => this.lockWidth(), 0);
         }
     }

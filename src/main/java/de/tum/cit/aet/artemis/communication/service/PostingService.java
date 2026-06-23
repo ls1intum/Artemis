@@ -134,11 +134,22 @@ public abstract class PostingService {
     @SuppressWarnings("deprecation")
     public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {
         Post post = postDTO.post();
+
+        // A pending (unverified) Iris reply must never reach students. Clients replace their whole cached
+        // post — including its answers — on every UPDATE frame, so a single shared payload cannot serve
+        // students and tutors at once: re-broadcasting an unrelated change (a reaction, an edit, another
+        // reply) would otherwise push the pending reply out on the course-wide topic students subscribe to.
+        // When the post carries a pending Iris reply we therefore deliver per-user instead.
+        Conversation postConversation = post.getConversation();
+        if (postConversation != null && hasPendingIrisReply(post)) {
+            broadcastPostWithPendingIrisReply(post, postDTO.action(), postConversation);
+            return;
+        }
+
         // Build the cycle-free wire payload before adjusting entity state — PostResponseDTO.from
         // walks the entity exactly once.
         PostBroadcastDTO broadcastPayload = PostBroadcastDTO.from(post, postDTO.action());
 
-        Conversation postConversation = post.getConversation();
         if (postConversation != null) {
             String coursePathSuffix = "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
@@ -159,6 +170,39 @@ public abstract class PostingService {
             websocketMessagingService.sendMessage(METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
             websocketMessagingService.sendMessage(LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX + plagiarismCaseSuffix, broadcastPayload);
         }
+    }
+
+    /**
+     * @return {@code true} if the post carries at least one unverified Iris reply that students must not see
+     */
+    private boolean hasPendingIrisReply(Post post) {
+        return post.getAnswers() != null && post.getAnswers().stream().anyMatch(AnswerPost::isUnverifiedIrisReply);
+    }
+
+    /**
+     * Broadcasts a post that carries at least one unverified Iris reply. The full post (pending reply
+     * included) goes to tutors so the review controls stay live, while everyone else receives a copy
+     * with the pending Iris replies stripped. Both payloads are addressed to each recipient's personal
+     * topic — never the shared course-wide topic — because students subscribe to it as well and a client
+     * replaces its whole cached post on every UPDATE, which would otherwise expose the pending reply.
+     *
+     * @param post         the post to broadcast; its answers are mutated in place to build the student payload
+     * @param action       the CRUD action this broadcast describes
+     * @param conversation the conversation the post belongs to
+     */
+    @SuppressWarnings("deprecation")
+    private void broadcastPostWithPendingIrisReply(Post post, MetisCrudAction action, Conversation conversation) {
+        // Tutor payload first, while the pending reply is still attached.
+        PostBroadcastDTO tutorPayload = PostBroadcastDTO.from(post, action);
+        // Then strip the pending replies and re-project for everyone else.
+        post.getAnswers().removeIf(AnswerPost::isUnverifiedIrisReply);
+        PostBroadcastDTO studentPayload = PostBroadcastDTO.from(post, action);
+
+        // Resolve recipients together with their course role — a caller-supplied set need not carry the tutor flag.
+        getNotificationRecipients(conversation).forEach(recipient -> {
+            PostBroadcastDTO payload = recipient.isAtLeastTutorInCourse() ? tutorPayload : studentPayload;
+            websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", payload);
+        });
     }
 
     /**
