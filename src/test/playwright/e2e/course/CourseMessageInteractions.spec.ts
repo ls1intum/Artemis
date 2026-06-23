@@ -370,6 +370,11 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         let reply: Post;
 
         test.beforeEach('Create source/destination channels, a message and a reply', async ({ login, communicationAPIRequests }) => {
+            // Forwarding is heavyweight for a @fast test: two full conversation navigations, a forward dialog, and the
+            // cache-readiness reload-retry that renders the forwarded preview (openConversationAndWaitForForwardedPreview).
+            // Under parallel multi-node CI load this legitimately exceeds the 60s fast budget, so mark these tests slow
+            // (test.slow() triples the timeout). Determinism is handled by the reload-retry helper, not by the extra time.
+            test.slow();
             await login(admin);
             const uid = generateUUID().slice(0, 8);
             const courseRef = { id: writeCourse.id } as any;
