@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ViewEncapsulation, inject, input, output, signal, viewChildren } from '@angular/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { firstValueFrom } from 'rxjs';
 import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -35,6 +35,7 @@ import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-
 })
 export class QuizQuestionListEditComponent {
     private dialogService = inject(DialogService);
+    private cdr = inject(ChangeDetectorRef);
 
     courseId = input.required<number>();
     quizQuestions = input<QuizQuestion[]>([]);
@@ -62,13 +63,13 @@ export class QuizQuestionListEditComponent {
     readonly faWandMagicSparkles = faWandMagicSparkles;
 
     /** Questions whose AI refinement panel is currently open. */
-    openRefinementQuestions = signal(new Set<QuizQuestion>());
+    protected readonly openRefinementQuestions = new Set<QuizQuestion>();
     /** Questions whose editor card is currently collapsed. */
-    collapsedQuestions = signal(new Set<QuizQuestion>());
+    protected readonly collapsedQuestions = new Set<QuizQuestion>();
     /** Per-question reasoning from the last bulk refinement. */
-    bulkRefinementReasonings = signal(new Map<QuizQuestion, string>());
+    protected readonly bulkRefinementReasonings = new Map<QuizQuestion, string>();
     /** Per-question snapshots taken before the last bulk refinement, for restore support. */
-    bulkRefinementPreviousQuestions = signal(new Map<QuizQuestion, MultipleChoiceQuestion>());
+    protected readonly bulkRefinementPreviousQuestions = new Map<QuizQuestion, MultipleChoiceQuestion>();
 
     readonly showExistingQuestions = signal(false);
     fileMap = new Map<string, { path?: string; file: File }>();
@@ -78,12 +79,16 @@ export class QuizQuestionListEditComponent {
      * Called by the parent after a successful global refinement request.
      *
      * @param reasonings map from each refined question to its AI reasoning string
+     * @param previousSnapshots map storing the original state of each question before refinement
      */
     applyBulkRefinement(reasonings: Map<QuizQuestion, string>, previousSnapshots: Map<QuizQuestion, MultipleChoiceQuestion>): void {
-        this.bulkRefinementReasonings.set(reasonings);
-        this.bulkRefinementPreviousQuestions.set(previousSnapshots);
+        this.bulkRefinementReasonings.clear();
+        reasonings.forEach((value, key) => this.bulkRefinementReasonings.set(key, value));
+        this.bulkRefinementPreviousQuestions.clear();
+        previousSnapshots.forEach((value, key) => this.bulkRefinementPreviousQuestions.set(key, value));
         this.editMultipleChoiceQuestionComponents().forEach((component) => component.reloadFromQuestion());
         this.onQuestionUpdated.emit();
+        this.cdr.markForCheck();
     }
 
     /**
@@ -99,13 +104,11 @@ export class QuizQuestionListEditComponent {
      * @param question the question whose refinement panel to toggle
      */
     toggleRefinement(question: QuizQuestion): void {
-        const updated = new Set(this.openRefinementQuestions());
-        if (updated.has(question)) {
-            updated.delete(question);
+        if (this.openRefinementQuestions.has(question)) {
+            this.openRefinementQuestions.delete(question);
         } else {
-            updated.add(question);
+            this.openRefinementQuestions.add(question);
         }
-        this.openRefinementQuestions.set(updated);
     }
 
     /**
@@ -116,13 +119,11 @@ export class QuizQuestionListEditComponent {
      * @param collapsed whether the question is now collapsed
      */
     handleCollapseChanged(question: QuizQuestion, collapsed: boolean): void {
-        const updated = new Set(this.collapsedQuestions());
         if (collapsed) {
-            updated.add(question);
+            this.collapsedQuestions.add(question);
         } else {
-            updated.delete(question);
+            this.collapsedQuestions.delete(question);
         }
-        this.collapsedQuestions.set(updated);
     }
 
     /**
@@ -158,30 +159,17 @@ export class QuizQuestionListEditComponent {
             return;
         }
         this.quizQuestions().splice(index, 1);
-        const openUpdated = new Set(this.openRefinementQuestions());
-        openUpdated.delete(quizQuestion);
-        this.openRefinementQuestions.set(openUpdated);
-        const collapsedUpdated = new Set(this.collapsedQuestions());
-        collapsedUpdated.delete(quizQuestion);
-        this.collapsedQuestions.set(collapsedUpdated);
-        const reasoningsUpdated = new Map(this.bulkRefinementReasonings());
-        reasoningsUpdated.delete(quizQuestion);
-        this.bulkRefinementReasonings.set(reasoningsUpdated);
-        const prevUpdated = new Map(this.bulkRefinementPreviousQuestions());
-        prevUpdated.delete(quizQuestion);
-        this.bulkRefinementPreviousQuestions.set(prevUpdated);
+        this.openRefinementQuestions.delete(quizQuestion);
+        this.collapsedQuestions.delete(quizQuestion);
+        this.bulkRefinementReasonings.delete(quizQuestion);
+        this.bulkRefinementPreviousQuestions.delete(quizQuestion);
         this.onQuestionDeleted.emit(quizQuestion);
     }
 
     /** Removes the stored reasoning and previous snapshot for a question after the user dismisses or restores its card. */
     clearReasoning(quizQuestion: QuizQuestion): void {
-        const reasoningUpdated = new Map(this.bulkRefinementReasonings());
-        reasoningUpdated.delete(quizQuestion);
-        this.bulkRefinementReasonings.set(reasoningUpdated);
-
-        const prevUpdated = new Map(this.bulkRefinementPreviousQuestions());
-        prevUpdated.delete(quizQuestion);
-        this.bulkRefinementPreviousQuestions.set(prevUpdated);
+        this.bulkRefinementReasonings.delete(quizQuestion);
+        this.bulkRefinementPreviousQuestions.delete(quizQuestion);
     }
 
     /**
