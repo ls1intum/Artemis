@@ -71,7 +71,9 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await page.waitForLoadState('domcontentloaded');
-            await expect(page.getByText(title)).toBeVisible();
+            // The preview page lazy-mounts the question component; extend timeout to match
+            // the DnD/MC-Visual tests which already use 30s for the same reason.
+            await expect(page.getByText(title)).toBeVisible({ timeout: 30000 });
         });
 
         test('Creates a Quiz with Drag and Drop', async ({ page, quizExerciseCreation }) => {
