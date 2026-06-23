@@ -238,6 +238,7 @@ describe('CourseExamsComponent', () => {
             snapshot: {
                 params: { examId: visibleRealExam1.id },
             },
+            params: of({ examId: visibleRealExam1.id }),
         };
         vi.spyOn(examParticipationService, 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(testExamAttemptsSubject);
 
@@ -256,6 +257,7 @@ describe('CourseExamsComponent', () => {
             snapshot: {
                 params: { examId: visibleTestExam1.id },
             },
+            params: of({ examId: visibleTestExam1.id }),
         };
         vi.spyOn(examParticipationService, 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(testExamAttemptsSubject);
 
@@ -274,6 +276,7 @@ describe('CourseExamsComponent', () => {
             snapshot: {
                 params: { examId: visibleTestExamWithSimulation.id },
             },
+            params: of({ examId: visibleTestExamWithSimulation.id }),
         };
         vi.spyOn(examParticipationService, 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(testExamAttemptsSubject);
 
