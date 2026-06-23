@@ -58,7 +58,7 @@ describe('ExamLiveEventComponent', () => {
         expect(typeElement.textContent).toContain('artemisApp.exam.events.type.examAttendanceCheck');
     });
 
-    it('should display exam-wide announcement text when event is of type EXAM_WIDE_ANNOUNCEMENT', () => {
+    it('should display exam-wide announcement text when event is of type EXAM_WIDE_ANNOUNCEMENT', async () => {
         const event = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
             text: 'This is an announcement',
@@ -68,7 +68,11 @@ describe('ExamLiveEventComponent', () => {
         fixture.detectChanges();
 
         const contentElement = fixture.debugElement.query(By.css('.content > div')).nativeElement;
-        expect(contentElement.innerHTML).toContain('This is an announcement');
+        // Markdown is rendered asynchronously via the lazy [jhiMarkdown] directive.
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(contentElement.innerHTML).toContain('This is an announcement');
+        });
     });
 
     it('should display working time update when event is of type WORKING_TIME_UPDATE', () => {
@@ -91,7 +95,7 @@ describe('ExamLiveEventComponent', () => {
         expect(titleElement.getAttribute('jhiTranslate')).toBe('artemisApp.exam.events.messages.workingTimeUpdate.titleEveryone');
     });
 
-    it('should display problem statement update when event is of type PROBLEM_STATEMENT_UPDATE', () => {
+    it('should display problem statement update when event is of type PROBLEM_STATEMENT_UPDATE', async () => {
         const event = {
             eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
             text: 'Dear students, the problem statement of the exercise was changed',
@@ -107,7 +111,11 @@ describe('ExamLiveEventComponent', () => {
         const contentElement = fixture.debugElement.query(By.css('.content > div')).nativeElement;
 
         expect(typeElement.textContent).toContain('artemisApp.exam.events.type.problemStatementUpdate');
-        expect(contentElement.innerHTML).toContain('Dear students, the problem statement of the exercise was changed');
+        // Markdown (the event text) is rendered asynchronously via the lazy [jhiMarkdown] directive.
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(contentElement.innerHTML).toContain('Dear students, the problem statement of the exercise was changed');
+        });
         expect(contentElement.innerHTML).toContain('artemisApp.exam.events.messages.problemStatementUpdate.description');
     });
 

@@ -80,7 +80,7 @@ describe('ProblemStatementComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should render problem statement when exercise is available', () => {
+    it('should render problem statement when exercise is available', async () => {
         const textExercise = new TextExercise(course, undefined);
         textExercise.problemStatement = 'Test problem statement';
 
@@ -89,7 +89,11 @@ describe('ProblemStatementComponent', () => {
 
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('#problem-statement')).toBeTruthy();
-        expect(compiled.querySelector('#problem-statement p').innerHTML).toContain('Test problem statement');
+        // Markdown is rendered asynchronously via the lazy [jhiMarkdown] directive.
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(compiled.querySelector('#problem-statement p')?.innerHTML).toContain('Test problem statement');
+        });
     });
 
     it('should render problem statement when exercise is available by getting from services', async () => {

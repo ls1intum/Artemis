@@ -88,7 +88,7 @@ describe('SearchResultItemComponent', () => {
         expect(spy).toHaveBeenCalledWith(component.result());
     });
 
-    it('should not render an active anchor for markdown links in description', () => {
+    it('should not render an active anchor for markdown links in description', async () => {
         fixture.componentRef.setInput('result', {
             id: '1',
             title: 'Graph BFS Shortest Path',
@@ -105,8 +105,11 @@ describe('SearchResultItemComponent', () => {
         const descriptionEl: HTMLElement = fixture.nativeElement.querySelector('.result-description');
         expect(descriptionEl).toBeTruthy();
 
-        // The link text should be visible
-        expect(descriptionEl.textContent).toContain('docs');
+        // The link text should be visible (markdown is rendered asynchronously via the lazy [jhiMarkdown] directive).
+        await vi.waitFor(() => {
+            fixture.detectChanges();
+            expect(descriptionEl.textContent).toContain('docs');
+        });
 
         // But no <a> element should be present
         const anchor = descriptionEl.querySelector('a');

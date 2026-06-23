@@ -47,7 +47,7 @@ class StructuredLayoutStubComponent {
     standalone: true,
     host: { '[innerHTML]': "'converted:' + jhiMarkdown()" },
 })
-class MarkdownDirectiveStub {
+class StubMarkdownDirective {
     jhiMarkdown = input<string>();
 }
 
@@ -55,14 +55,14 @@ describe('ResizableInstructionsComponent', () => {
     setupTestBed({ zoneless: true });
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ResizableInstructionsComponent, FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, MarkdownDirectiveStub],
+            imports: [ResizableInstructionsComponent, FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, StubMarkdownDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: TranslateStore, useValue: {} },
             ],
         })
             .overrideComponent(ResizableInstructionsComponent, {
-                set: { imports: [FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, MarkdownDirectiveStub] },
+                set: { imports: [FaIconStubComponent, TranslateDirectiveStub, StructuredLayoutStubComponent, StubMarkdownDirective] },
             })
             .compileComponents();
     });
