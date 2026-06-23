@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.dto.TestCaseBase;
  * @param name         name of the test case.
  * @param testMessages list of error messages.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LocalCITestJobDTO(String name, List<String> testMessages) implements TestCaseBase, Serializable {
 
     public LocalCITestJobDTO {

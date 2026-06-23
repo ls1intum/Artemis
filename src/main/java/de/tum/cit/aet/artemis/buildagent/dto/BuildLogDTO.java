@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildLogDTO(@NotNull ZonedDateTime time, @NotNull String log) implements Serializable {
 
 }
