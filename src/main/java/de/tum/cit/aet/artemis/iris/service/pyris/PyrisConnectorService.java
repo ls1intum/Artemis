@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
@@ -69,6 +70,8 @@ public class PyrisConnectorService {
 
     private final PyrisJobService pyrisJobService;
 
+    private final Optional<WeaviateService> weaviateService;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
@@ -76,10 +79,11 @@ public class PyrisConnectorService {
     private String pyrisUrl;
 
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            PyrisJobService pyrisJobService) {
+            PyrisJobService pyrisJobService, Optional<WeaviateService> weaviateService) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.pyrisJobService = pyrisJobService;
+        this.weaviateService = weaviateService;
     }
 
     /**
@@ -232,7 +236,8 @@ public class PyrisConnectorService {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null);
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of(), accessContext);
+            var entityCollectionName = weaviateService.map(WeaviateService::getSearchableEntitiesCollectionName).orElse(null);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of(), accessContext, entityCollectionName);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
