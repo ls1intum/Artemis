@@ -35,5 +35,15 @@ describe('markdown-render.util', () => {
             const html = await renderPostingMarkdownToHtml('first\n\nlast', false);
             expect(html).toContain('inline-paragraph">first');
         });
+
+        it('returns the rendered HTML unchanged when there is no paragraph (e.g. fenced-code-only content)', async () => {
+            const code = '```\nconst x = 1;\n```';
+            const before = await renderPostingMarkdownToHtml(code, true);
+            const after = await renderPostingMarkdownToHtml(code, false);
+            expect(before).toContain('<pre');
+            expect(before).not.toContain('inline-paragraph');
+            expect(after).not.toContain('inline-paragraph');
+            expect(before).toBe(after);
+        });
     });
 });

@@ -51,8 +51,11 @@ export async function renderPostingMarkdownToHtml(
         return '';
     }
     const { htmlForMarkdown } = await loadMarkdownModule();
-    let convertedString = htmlForMarkdown(markdownText, [], allowedHtmlTags, allowedHtmlAttributes, true);
+    const convertedString = htmlForMarkdown(markdownText, [], allowedHtmlTags, allowedHtmlAttributes, true);
     const paragraphPosition = contentBeforeReference ? convertedString.lastIndexOf('<p>') : convertedString.indexOf('<p>');
-    convertedString = convertedString.slice(0, paragraphPosition) + convertedString.slice(paragraphPosition).replace('<p>', '<p class="inline-paragraph">');
-    return convertedString;
+    if (paragraphPosition === -1) {
+        // No paragraph to tag (e.g. fenced-code-only content) — return the rendered HTML unchanged.
+        return convertedString;
+    }
+    return convertedString.slice(0, paragraphPosition) + convertedString.slice(paragraphPosition).replace('<p>', '<p class="inline-paragraph">');
 }

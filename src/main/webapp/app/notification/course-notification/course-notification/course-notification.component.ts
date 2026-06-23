@@ -78,8 +78,14 @@ export class CourseNotificationComponent {
                 notificationParameters[key] = value;
             } else {
                 // Render markdown, then iteratively strip HTML tags to plain text (handles nested tags like
-                // <scr<script>ipt>). The conversion util already sanitizes the HTML via DOMPurify.
-                let sanitized = await renderPostingMarkdownToHtml(value!.toString());
+                // <scr<script>ipt>). The conversion util already sanitizes the HTML via DOMPurify. If the lazy
+                // markdown chunk fails to load, fall back to the raw value rather than leak an unhandled rejection.
+                let sanitized: string;
+                try {
+                    sanitized = await renderPostingMarkdownToHtml(value!.toString());
+                } catch {
+                    sanitized = value!.toString();
+                }
                 let previous: string;
                 do {
                     previous = sanitized;

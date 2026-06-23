@@ -61,12 +61,19 @@ export class MarkdownDirective {
             const htmlPromise = posting
                 ? renderPostingMarkdownToHtml(text, contentBeforeReference, allowedTags, allowedAttributes)
                 : renderMarkdownToHtml(text, extensions, allowedTags, allowedAttributes, lineBreaks);
-            htmlPromise.then((html) => {
-                // Ignore a render whose inputs were superseded before the lazy chunk/conversion resolved.
-                if (token === this.renderToken) {
-                    this.renderedHtml.set(this.sanitizer.bypassSecurityTrustHtml(html));
-                }
-            });
+            htmlPromise
+                .then((html) => {
+                    // Ignore a render whose inputs were superseded before the lazy chunk/conversion resolved.
+                    if (token === this.renderToken) {
+                        this.renderedHtml.set(this.sanitizer.bypassSecurityTrustHtml(html));
+                    }
+                })
+                .catch(() => {
+                    // The lazy chunk failed to load or rendering threw — clear rather than leak an unhandled rejection.
+                    if (token === this.renderToken) {
+                        this.renderedHtml.set('');
+                    }
+                });
         });
     }
 }

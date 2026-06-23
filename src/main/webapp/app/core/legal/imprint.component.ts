@@ -38,14 +38,29 @@ export class ImprintComponent implements AfterViewInit, OnInit {
      */
     ngAfterViewInit(): void {
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            try {
-                const fragment = document.querySelector('#' + params['fragment']);
-                if (fragment !== null) {
-                    fragment.scrollIntoView();
-                }
-            } catch (e) {
-                /* empty */
-            }
+            this.scrollToFragment(params['fragment']);
         });
+    }
+
+    /**
+     * Scrolls to the anchor with the given id. The imprint is rendered asynchronously (HTTP load + lazy
+     * markdown rendering), so the anchor may not exist yet; retry over a few animation frames until it does.
+     */
+    private scrollToFragment(fragmentId: string | undefined, attemptsLeft = 20): void {
+        if (!fragmentId) {
+            return;
+        }
+        try {
+            const fragment = document.querySelector('#' + fragmentId);
+            if (fragment !== null) {
+                fragment.scrollIntoView();
+                return;
+            }
+        } catch (e) {
+            return; // invalid selector — nothing to scroll to
+        }
+        if (attemptsLeft > 0) {
+            requestAnimationFrame(() => this.scrollToFragment(fragmentId, attemptsLeft - 1));
+        }
     }
 }
