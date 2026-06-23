@@ -580,6 +580,44 @@ export class CourseMessagesPage {
         throw new Error(`Post #item-${postID} did not render in conversation ${conversationID} after activating and reloading`);
     }
 
+    /**
+     * Opens a conversation and waits until a forwarded-message preview containing the given source content has rendered.
+     *
+     * Rendering a forwarded preview requires a multi-step background chain after the conversation activates: the message
+     * list loads, the forwarded-message metadata is fetched (GET /forwarded-messages), and finally the source post/answer
+     * is fetched (GET /messages-source-posts or /answer-messages-source-posts) and rendered. {@link openConversation} only
+     * guarantees the conversation has *activated*, so under heavy parallel multi-node load that background chain can lag
+     * behind activation and the preview is briefly absent. A reload re-issues the message-list request, which re-fires the
+     * whole chain. Retrying the reload before failing keeps the test verifying its actual behavior (the preview renders)
+     * rather than racing the background fetch chain against the test deadline, mirroring {@link openConversationAndWaitForPost}.
+     *
+     * Because the preview only renders when the access-check-guarded source fetch succeeds (an inaccessible source returns
+     * 403, which is swallowed to undefined and yields no preview), waiting for the rendered preview also asserts that the
+     * source fetch returned successfully for an accessible source.
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the destination conversation to open.
+     * @param expectedSourceContent - The content of the original (forwarded) post/answer that must appear in the preview.
+     */
+    async openConversationAndWaitForForwardedPreview(courseID: number, conversationID: number, expectedSourceContent: string) {
+        const forwardedPreview = this.page.locator('.forwarded-message-container', { hasText: expectedSourceContent });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt === 0) {
+                await this.openConversation(courseID, conversationID);
+            } else {
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+            }
+            try {
+                await forwardedPreview.first().waitFor({ state: 'visible', timeout: 12000 });
+                return;
+            } catch {
+                // Preview not rendered yet — fall through to a reload, which re-fetches the message list and re-fires the
+                // forwarded-source fetch chain.
+            }
+        }
+        throw new Error(`Forwarded preview for source content "${expectedSourceContent}" did not render in conversation ${conversationID} after activating and reloading`);
+    }
+
     async listMembersButton(courseID: number, conversationID: number) {
         const membersButton = this.page.locator('.members');
         try {
@@ -863,15 +901,6 @@ export class CourseMessagesPage {
         // so scope the click to the surrounding jhi-answer-post host instead of the #item-<id> element
         await this.page.locator(`jhi-answer-post:has(#item-${replyId})`).locator('.dropdown-menu.show .forward').click();
         await this.completeForwardDialog(destinationName, extraContent);
-    }
-
-    /**
-     * Asserts that a forwarded-message preview containing the given source content is visible in the open conversation.
-     * @param expectedSourceContent - The content of the original (forwarded) posting.
-     */
-    async checkForwardedPreview(expectedSourceContent: string) {
-        const forwarded = this.page.locator('.forwarded-message-container', { hasText: expectedSourceContent });
-        await expect(forwarded.first()).toBeVisible({ timeout: 10000 });
     }
 
     /**

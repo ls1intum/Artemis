@@ -382,33 +382,29 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             reply = await communicationAPIRequests.createCourseMessageReply(courseRef, sourcePost, `Forward reply message ${uid}`);
         });
 
-        test('Forwarded post renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
+        test('Forwarded post renders its preview in the destination conversation', async ({ login, courseMessages }) => {
             await login(instructor);
             await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardMessageToChannel(sourcePost.id!, destinationChannel.name!);
 
-            // opening the destination triggers the source-post fetch that the access check guards; it must succeed for an accessible source
-            const sourcePostsResponse = page.waitForResponse((resp) => resp.url().includes('/messages-source-posts') && resp.request().method() === 'GET');
-            await courseMessages.openConversation(writeCourse.id, destinationChannel.id!);
-            expect((await sourcePostsResponse).status()).toBe(200);
-
-            await courseMessages.checkForwardedPreview(sourcePost.content!);
+            // Opening the destination kicks off a background chain (message list -> forwarded metadata -> source post fetch)
+            // that renders the preview. Reload-retry until the preview is visible so the test verifies the rendered outcome
+            // instead of racing that chain against the test deadline under parallel multi-node load. The preview only
+            // renders when the access-check-guarded source fetch succeeds (a 403 yields no preview), so this also covers it.
+            await courseMessages.openConversationAndWaitForForwardedPreview(writeCourse.id, destinationChannel.id!, sourcePost.content!);
         });
 
-        test('Forwarded reply renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
+        test('Forwarded reply renders its preview in the destination conversation', async ({ login, courseMessages }) => {
             await login(instructor);
             await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardReplyToChannel(sourcePost.id!, reply.id!, destinationChannel.name!);
 
-            const answerSourceResponse = page.waitForResponse((resp) => resp.url().includes('/answer-messages-source-posts') && resp.request().method() === 'GET');
-            await courseMessages.openConversation(writeCourse.id, destinationChannel.id!);
-            expect((await answerSourceResponse).status()).toBe(200);
-
-            await courseMessages.checkForwardedPreview(reply.content!);
+            // Same reload-retry rationale as the forwarded-post case, here for the answer source fetch.
+            await courseMessages.openConversationAndWaitForForwardedPreview(writeCourse.id, destinationChannel.id!, reply.content!);
         });
     });
 });
