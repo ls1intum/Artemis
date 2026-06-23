@@ -1,0 +1,61 @@
+{
+    "artemisApp": {
+        "irisDashboard": {
+            "title": "Iris Dashboard",
+            "loading": "Loading...",
+            "error": "Failed to load dashboard data. Please try again.",
+            "refresh": "Refresh",
+            "totalSessions": "Total Sessions",
+            "activeSessions": "Active Sessions",
+            "engagementRate": "Engagement Rate",
+            "uniqueUsers": "Unique Users",
+            "noResponseRate": "No-Response Rate",
+            "noResponseMessages": "No-Response Messages",
+            "noResponseSessions": "No-Response Sessions",
+            "thumbsUpRatio": "Thumbs Up Ratio",
+            "thumbsDownRatio": "Thumbs Down Ratio",
+            "sessionsWithThumbsUp": "Sessions with Thumbs Up",
+            "sessionsWithThumbsDown": "Sessions with Thumbs Down",
+            "absolute": "Absolute",
+            "avgResponseTime": "Avg Response Time",
+            "p50p95": "P50 / P95",
+            "tokenCost": "Token Cost",
+            "help": {
+                "totalSessions": "Total number of Iris chat sessions created during the selected time range (includes course/exercise chats and tutor-suggestion sessions).",
+                "activeSessions": "Sessions created in the selected time range that received at least one user message.",
+                "engagementRate": "Share of total sessions that were active (received at least one user message): active ÷ total × 100.",
+                "uniqueUsers": "Number of distinct users who sent at least one message during the selected time range.",
+                "noResponseRate": "Share of eligible user messages that received no Iris response. Only messages old enough to have plausibly been answered (older than the stale-response threshold) are counted.",
+                "noResponseMessages": "Number of eligible user messages that received no Iris response.",
+                "noResponseSessions": "Number of distinct sessions containing at least one unanswered user message.",
+                "thumbsUpRatio": "Share of Iris (LLM) messages rated thumbs-up, out of all Iris messages. 'Absolute' is the share of all sessions that received at least one thumbs-up.",
+                "thumbsDownRatio": "Share of Iris (LLM) messages rated thumbs-down, out of all Iris messages. 'Absolute' is the share of all sessions that received at least one thumbs-down.",
+                "sessionsWithThumbsUp": "Number of distinct sessions with at least one thumbs-up rating.",
+                "sessionsWithThumbsDown": "Number of distinct sessions with at least one thumbs-down rating.",
+                "avgResponseTime": "Average time between a user message and the following Iris response, in seconds.",
+                "p50p95": "Median (P50) and 95th-percentile (P95) response time between a user message and the following Iris response, in seconds.",
+                "tokenCost": "Estimated LLM token cost attributed to Iris during the selected time range, in euros (sum of input and output token costs)."
+            },
+            "breakdown": {
+                "byChatMode": "By Chat Mode",
+                "byCourse": "By Course (Top 10)",
+                "byModel": "By Model",
+                "mode": "Mode",
+                "sessions": "Sessions",
+                "messages": "Messages",
+                "noResponseRate": "No-Response Rate",
+                "course": "Course",
+                "costEur": "Cost (EUR)",
+                "model": "Model",
+                "totalTokens": "Total Tokens"
+            },
+            "config": "Configuration (Read-Only)",
+            "timeSpan": {
+                "day": "Day",
+                "week": "Week",
+                "month": "Month",
+                "quarter": "Quarter"
+            }
+        }
+    }
+}

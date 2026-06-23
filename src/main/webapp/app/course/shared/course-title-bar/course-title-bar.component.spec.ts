@@ -2,15 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { facSidebar } from 'app/foundation/icons/icons';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 
 describe('CourseTitleBarComponent', () => {
     setupTestBed({ zoneless: true });
@@ -21,7 +18,7 @@ describe('CourseTitleBarComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockComponent(FaIconComponent), MockDirective(NgbTooltip), MockDirective(TranslateDirective)],
+            imports: [MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -138,21 +135,11 @@ describe('CourseTitleBarComponent', () => {
         expect(renderedContent.nativeElement.textContent).toBe('Test Content');
     });
 
-    it('should have the correct icons', () => {
+    it('should render the shared sidebar toggle button', () => {
         fixture.componentRef.setInput('hasSidebar', true);
         fixture.detectChanges();
 
-        const faIconElements = fixture.debugElement.queryAll(By.directive(FaIconComponent));
-
-        // Check that we have at least the sidebar icon and two chevron icons
-        expect(faIconElements.length).toBeGreaterThanOrEqual(3);
-
-        // Verify icon types
-        const sidebarIcon = faIconElements[0].componentInstance;
-        expect(sidebarIcon.icon()).toBe(facSidebar);
-
-        const chevronIcon = faIconElements[1].componentInstance;
-        expect(chevronIcon.icon()).toBe(faChevronRight);
+        expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeTruthy();
     });
 
     it('should have the correct styling classes on the title bar', () => {

@@ -27,7 +27,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';

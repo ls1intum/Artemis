@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import JSZip from 'jszip';
+import { ZipBuilder } from 'app/foundation/util/zip.util';
 
 export function downloadZipFileFromResponse(response: HttpResponse<Blob>): void {
     if (response.body) {
@@ -31,9 +31,9 @@ export function downloadStream(data: any, type: string, filename: string) {
     downloadFile(blob, `${filename || 'file'}.pdf`);
 }
 
-export function downloadZipFromFilePromises(zip: JSZip, filePromises: Promise<void | File>[], zipFileName: string) {
+export function downloadZipFromFilePromises(zip: ZipBuilder, filePromises: Promise<void | File>[], zipFileName: string) {
     Promise.allSettled(filePromises).then(() => {
-        zip.generateAsync({ type: 'blob' })
+        zip.generateBlob()
             .then((zipBlob) => {
                 downloadFile(zipBlob, `${zipFileName}.zip`);
             })

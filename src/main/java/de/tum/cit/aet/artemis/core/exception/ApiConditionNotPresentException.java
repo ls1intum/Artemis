@@ -13,6 +13,6 @@ public class ApiConditionNotPresentException extends RuntimeException {
      * @param propertyName name of the Spring property that needs to be enabled.
      */
     public ApiConditionNotPresentException(Class<? extends AbstractApi> api, String propertyName) {
-        super(String.format("Api %s is not enabled, because property %s is not enabled. Did you override it in your application.yml?", api.getName(), propertyName));
+        super("Api %s is not enabled, because property %s is not enabled. Did you override it in your application.yml?".formatted(api.getName(), propertyName));
     }
 }

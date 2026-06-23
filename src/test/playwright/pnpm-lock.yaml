@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  nodemailer: 8.0.9
+  nodemailer: 9.0.1
   lodash: 4.18.1
   shell-quote: 1.8.4
 
@@ -718,8 +718,8 @@ packages:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
 
-  nodemailer@8.0.9:
-    resolution: {integrity: sha512-5ofa7BUN8+C+Hckh5V2GjeeOGRQBx0CJQA6KxrvuZfC8iU4/q7sLn8XrtEEhJkjV6HdyIiQs7Bba6bTao8JhkA==}
+  nodemailer@9.0.1:
+    resolution: {integrity: sha512-Gwv8SQewT616ZM/URn0H54b8PWo/Wum7md3EW2aWy1lO27+WZCX+Xyak3J+NlmHUjDh5ME+uesJUDRbR3Ye8Bw==}
     engines: {node: '>=6.0.0'}
 
   normalize-path@3.0.0:
@@ -1595,7 +1595,7 @@ snapshots:
       lz-utils: 2.1.1
       monocart-coverage-reports: 2.12.11
       monocart-locator: 1.0.3
-      nodemailer: 8.0.9
+      nodemailer: 9.0.1
 
   ms@2.1.3: {}
 
@@ -1603,7 +1603,7 @@ snapshots:
 
   negotiator@0.6.3: {}
 
-  nodemailer@8.0.9: {}
+  nodemailer@9.0.1: {}
 
   normalize-path@3.0.0: {}
 
