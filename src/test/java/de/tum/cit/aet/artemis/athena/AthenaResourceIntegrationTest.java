@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.athena;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -295,13 +297,16 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         course.setAthenaConfig(athenaConfig);
         courseRepository.save(course);
 
+        // Mock the async Athena /feedbacks call triggered when the result is submitted
+        athenaRequestMockProvider.mockSendFeedbackAndExpect("programming");
+
         result.setSubmission(null); // avoid sending the submission to the server, keep the payload small
         Result response = request.putWithResponseBody("/api/programming/participations/" + participation.getId() + "/manual-results?submit=true", result, Result.class,
                 HttpStatus.OK);
 
-        // Check that nothing went wrong, even with Athena enabled
         assertThat(response).as("response is not null").isNotNull();
-        // TODO: add more assertions here
+        // Wait for the async sendFeedback call to complete and consume the mock expectation
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> athenaRequestMockProvider.verify());
     }
 
     @ParameterizedTest
