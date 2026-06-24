@@ -144,6 +144,11 @@
                 }
             </li>
             <jhi-server-administration class="nav-item" [isExamActive]="isExamActive()" [isExamStarted]="isExamStarted()" (collapseNavbarListener)="collapseNavbar()" />
+            @if (isStudentCourseView()) {
+                <li class="nav-item d-flex align-items-center">
+                    <jhi-course-notification-overview [courseId]="currentCourse()!.id!" />
+                </li>
+            }
             @if (!currAccount() && languages && languages.length > 1) {
                 <li ngbDropdown class="nav-item dropdown pointer" display="dynamic">
                     <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
@@ -181,48 +186,41 @@
 <jhi-system-notification />
 <div class="breadcrumb-container">
     @if (!isExamStarted() && !isExamActive() && breadcrumbs().length > 0) {
-        <div>
-            <ol class="breadcrumb">
-                @for (breadcrumb of breadcrumbs(); track breadcrumb.label; let i = $index) {
-                    @if (i !== 0) {
-                        <fa-icon [icon]="faChevronRight" size="xs" class="breadcrumb-divider mx-2" />
+        <ol class="breadcrumb">
+            @for (breadcrumb of breadcrumbs(); track breadcrumb.label; let i = $index) {
+                @if (i !== 0) {
+                    <fa-icon [icon]="faChevronRight" size="xs" class="breadcrumb-divider mx-2" />
+                }
+                <li class="breadcrumb-item">
+                    @if (breadcrumb && breadcrumb.translate) {
+                        <a class="breadcrumb-link" id="bread-crumb-{{ i }}" [routerLink]="breadcrumb.uri" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">{{
+                            breadcrumb.label | artemisTranslate
+                        }}</a>
                     }
-                    <li class="breadcrumb-item">
-                        @if (breadcrumb && breadcrumb.translate) {
+                    @if (breadcrumb && !breadcrumb.translate) {
+                        @if (isBuildAgentDetails()) {
                             <a
                                 class="breadcrumb-link"
                                 id="bread-crumb-{{ i }}"
                                 [routerLink]="breadcrumb.uri"
                                 routerLinkActive="active"
                                 [routerLinkActiveOptions]="{ exact: true }"
-                                >{{ breadcrumb.label | artemisTranslate }}</a
+                                [queryParams]="{ agentName: agentName() }"
+                                >{{ breadcrumb.label }}</a
+                            >
+                        } @else {
+                            <a
+                                class="breadcrumb-link"
+                                id="bread-crumb-plain-{{ i }}"
+                                [routerLink]="breadcrumb.uri"
+                                routerLinkActive="active"
+                                [routerLinkActiveOptions]="{ exact: true }"
+                                >{{ breadcrumb.label }}</a
                             >
                         }
-                        @if (breadcrumb && !breadcrumb.translate) {
-                            @if (isBuildAgentDetails()) {
-                                <a
-                                    class="breadcrumb-link"
-                                    id="bread-crumb-{{ i }}"
-                                    [routerLink]="breadcrumb.uri"
-                                    routerLinkActive="active"
-                                    [routerLinkActiveOptions]="{ exact: true }"
-                                    [queryParams]="{ agentName: agentName() }"
-                                    >{{ breadcrumb.label }}</a
-                                >
-                            } @else {
-                                <a
-                                    class="breadcrumb-link"
-                                    id="bread-crumb-plain-{{ i }}"
-                                    [routerLink]="breadcrumb.uri"
-                                    routerLinkActive="active"
-                                    [routerLinkActiveOptions]="{ exact: true }"
-                                    >{{ breadcrumb.label }}</a
-                                >
-                            }
-                        }
-                    </li>
-                }
-            </ol>
-        </div>
+                    }
+                </li>
+            }
+        </ol>
     }
 </div>

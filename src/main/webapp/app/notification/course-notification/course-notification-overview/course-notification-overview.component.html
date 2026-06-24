@@ -1,5 +1,5 @@
 <span class="course-notification-overview d-inline-block">
-    <button (click)="toggleOverlay()" class="btn btn-outline-secondary btn-sm">
+    <button (click)="toggleOverlay()" class="course-notification-overview-toggle">
         <fa-icon [icon]="faBell" />
 
         <jhi-course-notification-bubble class="course-notification-overview-bubble" [totalAmount]="courseNotificationCount()" [isSmall]="true" />
@@ -11,19 +11,21 @@
         <div class="course-notification-overview-headline-button-wrap mb-2">
             <h4 class="course-notification-overview-overlay-headline mb-0" jhiTranslate="artemisApp.courseNotification.overview.title"></h4>
 
-            <div>
+            <div class="course-notification-overview-header-actions">
+                @if (selectableSettingPresets()) {
+                    <jhi-course-notification-preset-picker
+                        [availableCourseSettingPresets]="selectableSettingPresets()!"
+                        [selectedCourseSettingPreset]="selectedSettingPreset()"
+                        [isSmallButton]="true"
+                        (onPresetSelected)="presetSelected($event)"
+                    />
+                }
                 <button
-                    class="btn btn-outline-secondary btn-sm"
-                    (click)="archiveClicked()"
-                    [ngbTooltip]="'artemisApp.courseNotification.overview.archiveAllTooltip' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faTrash" />
-                </button>
-                <button
-                    routerLink="settings"
-                    routerLinkActive="active"
-                    class="btn btn-outline-secondary btn-sm"
-                    [ngbTooltip]="'artemisApp.courseNotification.overview.settingsTooltip' | artemisTranslate"
+                    pButton
+                    outlined
+                    size="small"
+                    [routerLink]="['/courses', courseId(), 'settings']"
+                    [pTooltip]="'artemisApp.courseNotification.overview.settingsTooltip' | artemisTranslate"
                 >
                     <fa-icon [icon]="faCog" />
                 </button>
@@ -36,6 +38,15 @@
                     <span [jhiTranslate]="'artemisApp.courseNotification.category.' + category.toString().toLowerCase()"></span>
                 </div>
             }
+            <button
+                id="mark-all-as-read-button"
+                pButton
+                outlined
+                size="small"
+                (click)="markAllAsReadClicked()"
+                class="course-notification-overview-mark-all-as-read"
+                jhiTranslate="artemisApp.courseNotification.overview.markAllAsRead"
+            ></button>
         </div>
 
         <div #scrollContainer class="course-notification-overview-notification-container">

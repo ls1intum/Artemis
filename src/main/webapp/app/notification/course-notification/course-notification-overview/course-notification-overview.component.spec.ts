@@ -7,7 +7,7 @@ import { CourseNotificationService } from 'app/notification/course-notification/
 import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/notification/shared/entities/course-notification/course-notification-viewing-status';
-import { Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { faBell } from '@fortawesome/free-solid-svg-icons';
@@ -20,6 +20,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
+import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
+import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
+import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
+import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 
 describe('CourseNotificationOverviewComponent', () => {
     setupTestBed({ zoneless: true });
@@ -27,9 +33,26 @@ describe('CourseNotificationOverviewComponent', () => {
     let component: CourseNotificationOverviewComponent;
     let fixture: ComponentFixture<CourseNotificationOverviewComponent>;
     let courseNotificationService: CourseNotificationService;
+    let courseNotificationSettingService: CourseNotificationSettingService;
     let notificationCountSubject: Subject<number>;
     let notificationsSubject: Subject<CourseNotification[]>;
     let componentAsAny: any;
+
+    const mockNotificationSettingPresets: CourseNotificationSettingPreset[] = [
+        { typeId: 1, identifier: 'All Notifications', presetMap: { test: { PUSH: true, EMAIL: true, WEBAPP: true } } },
+        { typeId: 2, identifier: 'Important Only', presetMap: { test: { PUSH: true, EMAIL: false, WEBAPP: true } } },
+        { typeId: 3, identifier: 'Minimal', presetMap: { test: { PUSH: false, EMAIL: false, WEBAPP: true } } },
+    ];
+
+    const mockSettingInfo: CourseNotificationSettingInfo = {
+        selectedPreset: 1,
+        notificationTypeChannels: { test: { PUSH: true, EMAIL: true, WEBAPP: true } },
+    };
+
+    const mockNotificationInfo: CourseNotificationInfo = {
+        presets: mockNotificationSettingPresets,
+        notificationTypes: {},
+    };
 
     const createMockNotification = (
         id: number,
@@ -54,16 +77,20 @@ describe('CourseNotificationOverviewComponent', () => {
             setNotificationStatus: vi.fn(),
             setNotificationStatusInMap: vi.fn(),
             decreaseNotificationCountBy: vi.fn(),
-            archiveAll: vi.fn(),
-            archiveAllInMap: vi.fn(),
             removeNotificationFromMap: vi.fn(),
             getNextNotificationPage: vi.fn().mockReturnValue(true),
             getIconFromType: vi.fn().mockReturnValue(faBell),
             getDateTranslationKey: vi.fn().mockReturnValue(''),
             getDateTranslationParams: vi.fn().mockReturnValue({}),
             safeHtmlForPostingMarkdown: vi.fn().mockReturnValue(''),
+            getInfo: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockNotificationInfo }))),
             pageSize: 10,
         } as unknown as CourseNotificationService;
+
+        courseNotificationSettingService = {
+            getSettingInfo: vi.fn().mockReturnValue(of(mockSettingInfo)),
+            setSettingPreset: vi.fn(),
+        } as unknown as CourseNotificationSettingService;
 
         await TestBed.configureTestingModule({
             imports: [
@@ -76,13 +103,21 @@ describe('CourseNotificationOverviewComponent', () => {
             ],
             providers: [
                 { provide: CourseNotificationService, useValue: courseNotificationService },
+                { provide: CourseNotificationSettingService, useValue: courseNotificationSettingService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         });
         TestBed.overrideComponent(CourseNotificationOverviewComponent, {
-            remove: { imports: [CourseNotificationComponent, CourseNotificationBubbleComponent, TranslateDirective] },
-            add: { imports: [MockComponent(CourseNotificationComponent), MockComponent(CourseNotificationBubbleComponent), MockDirective(TranslateDirective)] },
+            remove: { imports: [CourseNotificationComponent, CourseNotificationBubbleComponent, TranslateDirective, CourseNotificationPresetPickerComponent] },
+            add: {
+                imports: [
+                    MockComponent(CourseNotificationComponent),
+                    MockComponent(CourseNotificationBubbleComponent),
+                    MockDirective(TranslateDirective),
+                    MockComponent(CourseNotificationPresetPickerComponent),
+                ],
+            },
         });
 
         fixture = TestBed.createComponent(CourseNotificationOverviewComponent);
@@ -246,11 +281,14 @@ describe('CourseNotificationOverviewComponent', () => {
         expect(querySpy).not.toHaveBeenCalled();
     });
 
-    it('should handle archive button click', () => {
-        componentAsAny.archiveClicked();
+    it('should mark all shown notifications as read on client and server', () => {
+        const updateClientSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+        const updateServerSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnServer');
 
-        expect(courseNotificationService.archiveAll).toHaveBeenCalledWith(101);
-        expect(courseNotificationService.archiveAllInMap).toHaveBeenCalledWith(101);
+        componentAsAny.markAllAsReadClicked();
+
+        expect(updateClientSpy).toHaveBeenCalledOnce();
+        expect(updateServerSpy).toHaveBeenCalledOnce();
     });
 
     it('should handle notification close button click', () => {
@@ -407,5 +445,48 @@ describe('CourseNotificationOverviewComponent', () => {
         categoryElements[0].nativeElement.click();
 
         expect(selectCategorySpy).toHaveBeenCalled();
+    });
+
+    describe('notification setting presets', () => {
+        it('should fetch the setting info and notification info on init', () => {
+            expect(courseNotificationSettingService.getSettingInfo).toHaveBeenCalledWith(101, false);
+            expect(courseNotificationService.getInfo).toHaveBeenCalledOnce();
+        });
+
+        it('should initialize the selectable and selected presets once both responses are available', () => {
+            expect(componentAsAny.selectableSettingPresets()).toEqual(mockNotificationSettingPresets);
+            expect(componentAsAny.selectedSettingPreset()).toEqual(mockNotificationSettingPresets[0]);
+        });
+
+        it('should leave the selected preset undefined when no preset is selected', () => {
+            componentAsAny.info = mockNotificationInfo;
+            componentAsAny.settingInfo = { ...mockSettingInfo, selectedPreset: 0 };
+
+            componentAsAny.initializeCourseNotificationValues();
+
+            expect(componentAsAny.selectableSettingPresets()).toEqual(mockNotificationSettingPresets);
+            expect(componentAsAny.selectedSettingPreset()).toBeUndefined();
+        });
+
+        it('should select a new preset when presetSelected is called', () => {
+            componentAsAny.presetSelected(2);
+
+            expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(101, 2, mockNotificationSettingPresets[0]);
+            expect(componentAsAny.selectedSettingPreset()).toEqual(mockNotificationSettingPresets[1]);
+        });
+
+        it('should set the selected preset to undefined when custom settings are selected', () => {
+            componentAsAny.presetSelected(0);
+
+            expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(101, 0, mockNotificationSettingPresets[0]);
+            expect(componentAsAny.selectedSettingPreset()).toBeUndefined();
+        });
+
+        it('should render the preset picker once presets are available', () => {
+            fixture.changeDetectorRef.detectChanges();
+
+            const presetPicker = fixture.debugElement.query(By.css('jhi-course-notification-preset-picker'));
+            expect(presetPicker).not.toBeNull();
+        });
     });
 });

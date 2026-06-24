@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -40,6 +40,7 @@ import { ServerAdministrationComponent } from 'app/core/navbar/server-administra
 import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
 import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
+import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -70,6 +71,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
         GlobalSearchNavbarComponent,
         ImageComponent,
         SlicePipe,
+        CourseNotificationOverviewComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -132,6 +134,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly agentName = signal<string | undefined>(undefined);
     readonly isExamStarted = signal(false);
     readonly currentCourse = this.currentCourseContextService.course;
+
+    readonly currentUrl = signal<string>('');
+
+    readonly isStudentCourseView = computed(() => this.currentUrl().startsWith('/courses') && !!this.currentCourse()?.id && !this.isExamActive() && !this.isExamStarted());
 
     courseTitle = signal<string | undefined>(undefined);
     exerciseTitle = signal<string | undefined>(undefined);
@@ -409,6 +415,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Fills the breadcrumbs array with entries for admin and course-management routes
      */
     private buildBreadcrumbs(fullURI: string): void {
+        this.currentUrl.set(fullURI ?? '');
         this.breadcrumbs.set([]);
         this.breadcrumbSubscriptions?.forEach((subscription) => subscription.unsubscribe());
         this.breadcrumbSubscriptions = [];

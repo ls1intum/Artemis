@@ -332,10 +332,11 @@
                 "sunday": "Sonntag"
             },
             "overview": {
-                "title": "Benachrichtigungen",
+                "title": "Kurs Benachrichtigungen",
                 "emptyTitle": "Alles erledigt!",
                 "settingsTooltip": "Zu den Einstellungen",
                 "archiveAllTooltip": "Alle entfernen",
+                "markAllAsRead": "Als gelesen markieren",
                 "emptyMessage": "Momentan gibt es keine Benachrichtigungen in dieser Kategorie."
             },
             "category": {
@@ -343,7 +344,7 @@
                 "communication": "Kommunikation"
             },
             "setting": {
-                "headline": "Benachrichtigungen"
+                "headline": "Kurs Benachrichtigungen"
             },
             "channel": {
                 "email": "E-Mail",
@@ -354,18 +355,18 @@
                 "collapseToggle": "Einklappen"
             },
             "preset": {
-                "dropdown": "Aktiv",
+                "dropdown": "Präferenz",
                 "defaultUserCourseNotificationSettingPreset": {
                     "title": "Standard",
-                    "description": "Erhalte die essenziellen Benachrichtigungen für diesen Kurs."
+                    "description": "Erhalte die essenziellen Benachrichtigungen."
                 },
                 "ignoreUserCourseNotificationSettingPreset": {
                     "title": "Ignorieren",
-                    "description": "Erhalte keine Benachrichtigungen für diesen Kurs."
+                    "description": "Erhalte keine Benachrichtigungen."
                 },
                 "allActivityUserCourseNotificationSettingPreset": {
                     "title": "Jede Aktivität",
-                    "description": "Erhalte den Großteil der Benachrichtigungen für diesen Kurs um immer auf dem neuesten Stand zu bleiben."
+                    "description": "Erhalte den Großteil der Benachrichtigungen."
                 },
                 "customUserCourseNotificationSettingPreset": {
                     "title": "Angepasst",
