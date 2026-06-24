@@ -49,6 +49,12 @@
         .iris-sidebar {
             position: relative;
             min-width: 120px;
+
+            // Fill the full height of the p-splitter panel (a flex column). Without flex/min-height the sidebar
+            // shrinks to its content, so the embedded Iris chat collapsed and its absolutely-positioned disclaimer
+            // overlapped the input. The sibling .main-content already does this; the old split.js row stretched it.
+            flex: 1;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             background-color: var(--lecture-combined-view-surface);
