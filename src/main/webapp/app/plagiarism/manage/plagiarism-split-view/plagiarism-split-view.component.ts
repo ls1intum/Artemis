@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, afterNextRender, inject, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, afterNextRender, inject, input, signal } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { Subject } from 'rxjs';
@@ -24,6 +24,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 })
 export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestroy {
     private plagiarismCasesService = inject(PlagiarismCasesService);
+    private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
 
     readonly comparison = input<PlagiarismComparison | undefined>(undefined!);
     readonly exercise = input<Exercise>();
@@ -50,8 +51,6 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
      */
     readonly collapsedSide = signal<'left' | 'right' | undefined>(undefined);
 
-    /** Splitter host element, used to track the live gutter position so the lock-files control can follow it. */
-    private readonly splitterElement = viewChild<ElementRef<HTMLElement>>('plagiarismSplitter', { read: ElementRef });
     /**
      * Live x-position (px, from the splitter's left edge) of the gutter centre. The lock-files button is positioned
      * here so it stays on the divider while dragging, instead of staying fixed at the centre (a reviewer finding).
@@ -81,7 +80,7 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
      * The gutter centre sits at the first panel's width plus half the gutter size, measured from the splitter's left.
      */
     private observeGutterPosition(): void {
-        const firstPanel = this.splitterElement()?.nativeElement.querySelector<HTMLElement>('.p-splitterpanel');
+        const firstPanel = this.hostElement.nativeElement.querySelector<HTMLElement>('.p-splitterpanel');
         if (!firstPanel || typeof ResizeObserver === 'undefined') {
             return;
         }
