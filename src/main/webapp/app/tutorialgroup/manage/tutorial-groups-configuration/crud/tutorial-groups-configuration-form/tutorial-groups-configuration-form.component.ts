@@ -1,12 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, output } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
 import { Course, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisDateRangePipe } from 'app/foundation/pipes/artemis-date-range.pipe';
-import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { DatePickerModule } from 'primeng/datepicker';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export interface TutorialGroupsConfigurationFormData {
@@ -15,13 +11,29 @@ export interface TutorialGroupsConfigurationFormData {
     useTutorialGroupChannels?: boolean;
 }
 
+/**
+ * Validates the tutorial period selected via the range p-datepicker.
+ * Replaces owl's range validators: returns `{ required }` when the range is missing/incomplete and
+ * `{ invalidRange }` when the start date is after the end date.
+ */
+export function tutorialPeriodRangeValidator(control: AbstractControl): ValidationErrors | null {
+    const value = control.value;
+    if (!Array.isArray(value) || value.length < 2 || !(value[0] instanceof Date) || !(value[1] instanceof Date) || isNaN(value[0].getTime()) || isNaN(value[1].getTime())) {
+        return { required: true };
+    }
+    const [start, end] = value as Date[];
+    if (start.getTime() > end.getTime()) {
+        return { invalidRange: true };
+    }
+    return null;
+}
+
 @Component({
     selector: 'jhi-tutorial-groups-configuration-form',
     templateUrl: './tutorial-groups-configuration-form.component.html',
     styleUrls: ['./tutorial-groups-configuration-form.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, OwlDateTimeModule, FaIconComponent, ArtemisDateRangePipe, ArtemisTranslatePipe],
-    providers: [ArtemisDatePipe],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, DatePickerModule, ArtemisTranslatePipe],
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit {
     private fb = inject(FormBuilder);
@@ -35,8 +47,6 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
     readonly formSubmitted = output<TutorialGroupsConfigurationFormData>();
 
     readonly course = input.required<Course>();
-
-    faCalendarAlt = faCalendarAlt;
 
     readonly isMessagingEnabled = isMessagingEnabled;
 
@@ -96,7 +106,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit {
         }
 
         this.form = this.fb.group({
-            period: [undefined, Validators.required],
+            period: [undefined, tutorialPeriodRangeValidator],
             useTutorialGroupChannels: [false],
             usePublicTutorialGroupChannels: [false],
         });

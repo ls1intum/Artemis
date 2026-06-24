@@ -1,11 +1,10 @@
-import { Component, computed, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
-import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
-import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { Component, computed, forwardRef, input, model, output, signal } from '@angular/core';
+import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -26,37 +25,13 @@ export enum DateTimePickerType {
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
     ],
-    imports: [
-        FaStackComponent,
-        NgbTooltip,
-        FaIconComponent,
-        FaStackItemSizeDirective,
-        FormsModule,
-        OwlDateTimeModule,
-        NgClass,
-        NgTemplateOutlet,
-        TranslateDirective,
-        ArtemisTranslatePipe,
-    ],
+    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor {
-    protected readonly faCalendarAlt = faCalendarAlt;
     protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
     protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faCircleXmark = faCircleXmark;
     protected readonly faTriangleExclamation = faTriangleExclamation;
-
-    private readonly dateInputRef = viewChild<NgModel>('dateInput');
-    private dateInputOverride?: NgModel;
-
-    get dateInput(): NgModel {
-        return this.dateInputOverride ?? this.dateInputRef()!;
-    }
-
-    set dateInput(dateInput: NgModel | undefined) {
-        this.dateInputOverride = dateInput;
-    }
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
@@ -71,20 +46,39 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     max = input<dayjs.Dayjs>(); // Dates after this date are not selectable.
     shouldDisplayTimeZoneWarning = input<boolean>(true); // Displays a warning that the current time zone might differ from the participants'.
     pickerType = input<DateTimePickerType>(DateTimePickerType.DEFAULT); // Select type of picker
+    baseZIndex = input<number>(1060); // z-index floor for the overlay panel so it renders above ng-bootstrap modals (~1055).
     valueChange = output<void>();
 
-    protected isInputValid = signal<boolean>(false);
+    protected isInputValid = signal<boolean>(true);
     protected dateInputValue = signal<string>('');
+
+    /** DEFAULT renders date + time; CALENDAR renders date only; TIMER renders time only. */
+    protected showTime = computed(() => this.pickerType() === DateTimePickerType.DEFAULT);
+    protected timeOnly = computed(() => this.pickerType() === DateTimePickerType.TIMER);
+    protected dateFormat = computed(() => (this.timeOnly() ? undefined : 'dd.mm.yy'));
+    protected placeholder = computed(() => {
+        switch (this.pickerType()) {
+            case DateTimePickerType.TIMER:
+                return 'hh:mm';
+            case DateTimePickerType.CALENDAR:
+                return 'dd.mm.yyyy';
+            default:
+                return 'dd.mm.yyyy hh:mm';
+        }
+    });
 
     isValid = computed(() => {
         const isInvalid = this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()) || this.warning();
         return !isInvalid;
     });
 
-    updateSignals(): void {
-        const dateInput = this.dateInputRef() ?? this.dateInputOverride;
-        this.isInputValid.set(!dateInput?.invalid);
-        this.dateInputValue.set(dateInput?.value);
+    /**
+     * Backwards-compatible accessor: a few consumers (e.g. the exercise-update components) read
+     * `dateTimePicker.dateInput.valid` to gate overall form validity. We expose the input validity
+     * through the same shape instead of a raw `NgModel`.
+     */
+    get dateInput(): { valid: boolean } {
+        return { valid: this.isInputValid() };
     }
 
     private onChange?: (val?: dayjs.Dayjs) => void;
@@ -94,7 +88,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     valueChanged() {
         this.valueChange.emit();
-        this.updateSignals();
     }
 
     /**
@@ -102,13 +95,28 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * @param value as dayjs or date
      */
     writeValue(value: any) {
-        // convert dayjs to date, because owl-date-time only works correctly with date objects
-        if (dayjs.isDayjs(value)) {
-            this.value.set((value as dayjs.Dayjs).toDate());
-        } else {
-            this.value.set(value);
+        // convert dayjs to date, because p-datepicker only works correctly with date objects
+        const next = dayjs.isDayjs(value) ? (value as dayjs.Dayjs).toDate() : (value ?? null);
+        // Idempotency guard: Angular re-invokes writeValue on every change-detection pass while
+        // p-datepicker's CVA write calls markForCheck. Re-setting the `value` signal with an equal
+        // value would never let change detection settle (NG0103), so skip no-op writes.
+        if (this.valuesEqual(this.value(), next)) {
+            return;
         }
+        this.value.set(next);
         this.updateSignals();
+    }
+
+    /** True when both values represent the same instant (or are both empty). */
+    private valuesEqual(a?: dayjs.Dayjs | Date | string | null, b?: dayjs.Dayjs | Date | string | null): boolean {
+        const aEmpty = a == undefined;
+        const bEmpty = b == undefined;
+        if (aEmpty || bEmpty) {
+            return aEmpty && bEmpty;
+        }
+        const da = dayjs(a);
+        const db = dayjs(b);
+        return da.isValid() && db.isValid() && da.isSame(db);
     }
 
     /**
@@ -126,13 +134,59 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
 
     /**
+     * Handles model changes emitted by the p-datepicker.
      *
-     * @param newValue
+     * With `keepInvalid="true"` and the default `dataType="date"`, the picker emits:
+     * - a `Date` for a valid selection / fully parsed entry,
+     * - `null` when the field is cleared / empty,
+     * - the raw, unparseable `string` while the user is typing an invalid date.
+     *
+     * The string case must never be converted to a dayjs (that would silently fabricate a date);
+     * instead we keep the typed text visible (via `keepInvalid`) and only flag the field invalid.
+     * @param newValue the value emitted by the picker
      */
-    updateField(newValue: dayjs.Dayjs) {
-        this.value.set(newValue);
-        this.onChange?.(dayjs(this.value()));
+    updateField(newValue: Date | string | null) {
+        const currentValue = this.value();
+        if (newValue instanceof Date && dayjs(newValue).isValid()) {
+            // Always refresh validity (this also recovers from a previous unparseable entry).
+            this.isInputValid.set(true);
+            this.dateInputValue.set(newValue.toISOString());
+            // Only propagate when the instant actually changed. Re-setting the bound `value` signal
+            // with an equal date would feed an infinite change-detection loop (NG0103) when the form
+            // value is patched programmatically and p-datepicker re-emits through its ngModel.
+            const unchanged = (dayjs.isDayjs(currentValue) || currentValue instanceof Date) && dayjs(currentValue).isSame(dayjs(newValue));
+            if (!unchanged) {
+                this.value.set(newValue);
+                this.onChange?.(dayjs(newValue));
+            }
+        } else if (newValue == undefined || newValue === '') {
+            // Empty is valid-but-missing; the required check is handled separately by `isValid`.
+            this.isInputValid.set(true);
+            this.dateInputValue.set('');
+            if (currentValue != undefined) {
+                this.value.set(null);
+                this.onChange?.(undefined);
+            }
+        } else {
+            // leftover unparseable text: keep it visible in the input but flag invalid
+            this.isInputValid.set(false);
+            this.dateInputValue.set(String(newValue));
+            this.onChange?.(undefined);
+        }
         this.valueChanged();
+    }
+
+    /**
+     * Recomputes the validity signals from the currently bound value. Called after `writeValue`,
+     * and exposed publicly so parents can refresh validation after programmatically patching the
+     * bound form value (e.g. `exam-update` does this after a CD cycle).
+     */
+    updateSignals() {
+        const currentValue = this.value();
+        const parsed = currentValue != undefined ? dayjs(currentValue) : undefined;
+        // An empty field is valid (the required check is handled separately); a present-but-unparseable value is not.
+        this.isInputValid.set(parsed == undefined || parsed.isValid());
+        this.dateInputValue.set(parsed?.isValid() ? parsed.toISOString() : '');
     }
 
     /**
@@ -161,17 +215,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     convertToDate(value?: dayjs.Dayjs) {
         return value != undefined && value.isValid() ? value.toDate() : null;
-    }
-
-    /**
-     * Clear the datepicker value.
-     */
-    clearDate() {
-        this.dateInput?.reset(undefined);
-        if (this.onChange) {
-            this.onChange(undefined);
-        }
-        this.updateSignals();
     }
 
     protected readonly DateTimePickerType = DateTimePickerType;

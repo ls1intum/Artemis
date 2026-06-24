@@ -5,7 +5,6 @@
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
 @import 'node_modules/bootstrap/scss/bootstrap';
-@import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 
 // Needed for mathematical formulas in markdown editor
 @import 'node_modules/katex/dist/katex.min.css';
@@ -735,7 +734,8 @@ code.password:hover {
     background: $displaycolor-background;
 }
 
-// This positions the owl-datetime-picker above the ngbootstrap modal, accounting for a 10px margin which reduces width and height by 20px.
+// Positions Angular CDK overlays (e.g. the mat-select panel below) above the ng-bootstrap modal,
+// accounting for a 10px margin which reduces width and height by 20px.
 .cdk-overlay-container {
     z-index: 1060;
     margin: 10px;

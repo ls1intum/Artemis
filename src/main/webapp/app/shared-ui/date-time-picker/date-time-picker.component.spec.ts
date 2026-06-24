@@ -1,6 +1,5 @@
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
@@ -17,13 +16,12 @@ describe('FormDateTimePickerComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, FormDateTimePickerComponent],
+            imports: [FormDateTimePickerComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FormDateTimePickerComponent);
         component = fixture.componentInstance;
-        component.dateInput = { reset: vi.fn() } as any;
     });
 
     it('should emit if a value is changed', () => {
@@ -71,6 +69,16 @@ describe('FormDateTimePickerComponent', () => {
 
             expect(component.value()).toEqual(normalDateAsDateObject);
         });
+
+        it('should clear the value to null when undefined is written after a date was set', () => {
+            component.writeValue(normalDateAsDateObject);
+            expect(component.value()).toEqual(normalDateAsDateObject);
+
+            component.writeValue(undefined);
+
+            expect(component.value()).toBeNull();
+            expect(component.dateInput.valid).toBe(true);
+        });
     });
 
     it('should register callback function', () => {
@@ -83,20 +91,66 @@ describe('FormDateTimePickerComponent', () => {
         expect(onChangeSpy).toHaveBeenCalledWith(normalDate);
     });
 
-    it('should update field', () => {
-        const onChangeSpy = vi.fn();
-        component.registerOnChange(onChangeSpy);
-        const valueChangedStub = vi.spyOn(component, 'valueChanged').mockImplementation(() => undefined);
-        const newDate = normalDate.add(2, 'days');
-        fixture.componentRef.setInput('value', normalDate);
-        fixture.changeDetectorRef.detectChanges();
+    describe('test updateField', () => {
+        it('should accept a valid Date and emit the equivalent dayjs', () => {
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+            const valueChangedStub = vi.spyOn(component, 'valueChanged').mockImplementation(() => undefined);
 
-        component.updateField(newDate);
+            component.updateField(normalDateAsDateObject);
 
-        expect(component.value()).toEqual(newDate);
-        expect(onChangeSpy).toHaveBeenCalledOnce();
-        expect(onChangeSpy).toHaveBeenCalledWith(newDate);
-        expect(valueChangedStub).toHaveBeenCalledOnce();
+            expect(component.value()).toEqual(normalDateAsDateObject);
+            expect(component.dateInput.valid).toBe(true);
+            expect(onChangeSpy).toHaveBeenCalledOnce();
+            expect(onChangeSpy).toHaveBeenCalledWith(dayjs(normalDateAsDateObject));
+            expect(valueChangedStub).toHaveBeenCalledOnce();
+        });
+
+        it('should flag the field invalid for unparseable text and not emit a date', () => {
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+
+            component.updateField('not-a-date');
+
+            expect(component.dateInput.valid).toBe(false);
+            expect(onChangeSpy).toHaveBeenCalledWith(undefined);
+        });
+
+        it('should clear the value when null is emitted', () => {
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+            // seed a value first
+            component.updateField(normalDateAsDateObject);
+            onChangeSpy.mockClear();
+
+            component.updateField(null);
+
+            expect(component.value()).toBeNull();
+            expect(component.dateInput.valid).toBe(true);
+            expect(onChangeSpy).toHaveBeenCalledWith(undefined);
+        });
+
+        it('should recover validity when the same date is re-entered after unparseable text', () => {
+            component.updateField(normalDateAsDateObject);
+            component.updateField('not-a-date');
+            expect(component.dateInput.valid).toBe(false);
+
+            // re-typing the same (still-current) date must clear the invalid state, not stay stuck
+            component.updateField(normalDateAsDateObject);
+
+            expect(component.dateInput.valid).toBe(true);
+            expect(component.value()).toEqual(normalDateAsDateObject);
+        });
+
+        it('should recover validity when an empty field with unparseable text is cleared', () => {
+            component.updateField('not-a-date');
+            expect(component.dateInput.valid).toBe(false);
+
+            component.updateField('');
+
+            expect(component.dateInput.valid).toBe(true);
+            expect(component.value()).toBeUndefined();
+        });
     });
 
     it('should have working getters', () => {
@@ -113,15 +167,5 @@ describe('FormDateTimePickerComponent', () => {
         expect(dayjs(component.minDate())).toEqual(expectedMinDate);
         expect(dayjs(component.maxDate())).toEqual(expectedMaxDate);
         expect(dayjs(component.startDate())).toEqual(expectedStartDate);
-    });
-
-    it('should clear the datepicker value', () => {
-        const resetSpy = vi.spyOn(component.dateInput, 'reset').mockImplementation(() => undefined);
-        const updateSignalsSpy = vi.spyOn(component, 'updateSignals').mockImplementation(() => undefined);
-
-        component.clearDate();
-
-        expect(resetSpy).toHaveBeenCalledWith(undefined);
-        expect(updateSignalsSpy).toHaveBeenCalled();
     });
 });

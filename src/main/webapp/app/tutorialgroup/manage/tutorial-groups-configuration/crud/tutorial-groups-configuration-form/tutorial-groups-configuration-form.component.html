@@ -5,35 +5,32 @@
                 <!-- Period -->
                 <div class="col-auto">
                     <h5 jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></h5>
-                    <div class="input-group">
-                        <input
-                            name="period"
-                            id="period"
-                            required
-                            [attr.aria-label]="'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate"
-                            [class.is-invalid]="isPeriodInvalid"
-                            (focus)="markPeriodAsTouched()"
-                            [value]="periodControl?.value | artemisDateRange: 'long-date' : undefined : true"
-                            [owlDateTimeTrigger]="period"
-                            readonly
-                            class="form-control"
-                        />
-                        <input formControlName="period" [owlDateTime]="period" class="date-time-picker-anchor" [selectMode]="'range'" />
-                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period">
-                            <fa-icon [icon]="faCalendarAlt" />
-                        </button>
-                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period />
-                    </div>
+                    <p-datepicker
+                        inputId="period"
+                        name="period"
+                        formControlName="period"
+                        selectionMode="range"
+                        [readonlyInput]="true"
+                        [firstDayOfWeek]="1"
+                        dateFormat="dd.mm.yy"
+                        [showIcon]="true"
+                        iconDisplay="input"
+                        showOnFocus="false"
+                        appendTo="body"
+                        [baseZIndex]="1060"
+                        styleClass="w-100"
+                        [inputStyle]="{ width: '100%' }"
+                        [invalid]="isPeriodInvalid"
+                        [attr.aria-label]="'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate"
+                        (onFocus)="markPeriodAsTouched()"
+                    />
                     <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.periodInput.explanation"></div>
                     @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
                         <div class="alert alert-danger">
-                            @if (periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required) {
+                            @if (periodControl?.errors?.required) {
                                 <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"></div>
                             }
-                            @if (periodControl?.errors?.owlDateTimeParse) {
-                                <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.parseError"></div>
-                            }
-                            @if (periodControl?.errors?.owlDateTimeRange) {
+                            @if (periodControl?.errors?.invalidRange) {
                                 <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"></div>
                             }
                         </div>

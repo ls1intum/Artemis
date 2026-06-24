@@ -39,22 +39,13 @@ async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: num
 
     const input = picker.locator('input#date-input-field');
     await expect(input).toBeVisible();
-    await input.click();
 
-    const panel = page.locator('.owl-dt-container:visible');
-    try {
-        await expect(panel).toBeVisible({ timeout: 2000 });
-    } catch {
-        await picker.getByRole('button').first().click();
-        await expect(panel).toBeVisible();
-    }
-
-    for (let i = 0; i < monthsAhead; i++) {
-        await panel.getByRole('button', { name: 'Next month' }).click();
-    }
-
+    // The CALENDAR-mode p-datepicker renders dates as DD.MM.YYYY. Typing the value directly
+    // (kept by keepInvalid) and tabbing out lets the picker parse it into the form model — more
+    // robust than clicking through calendar cells.
     const targetDate = dayjs().add(monthsAhead, 'months').date(day);
-    await panel.getByRole('cell', { name: targetDate.date().toString() }).click();
+    await input.fill(targetDate.format('DD.MM.YYYY'));
+    await input.press('Tab');
 }
 
 async function setMarkdownDescription(page: Page, text: string) {
