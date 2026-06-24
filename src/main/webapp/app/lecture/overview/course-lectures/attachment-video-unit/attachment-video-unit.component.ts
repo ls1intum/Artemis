@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatDialog } from '@angular/material/dialog';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
@@ -95,6 +96,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly injector = inject(Injector);
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
+    private readonly dialog = inject(MatDialog);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -444,6 +446,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onFullscreenChange(isFullscreen: boolean): void {
         this.fullscreenState.set(isFullscreen);
+        if (isFullscreen) {
+            // Close the floating Iris chat widget when entering fullscreen. It is a MatDialog rendered in a
+            // popover overlay, so it keeps painting on top of the fullscreen view but its pointer events fall
+            // through to the fullscreen content underneath - the widget looks active yet can be neither moved
+            // nor clicked. The fullscreen view has its own Iris sidebar, and the chatbot button is likewise
+            // hidden here, so dismissing the widget is both correct and consistent (matches the widget's own
+            // closeAll() on navigation).
+            this.dialog.closeAll();
+        }
     }
 
     private shouldShowIrisSidebarInFullscreen(): boolean {
