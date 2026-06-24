@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
@@ -60,40 +60,41 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
 
     readonly ExerciseType = ExerciseType;
 
-    mathExercise: MathExercise;
-    course?: Course;
+    readonly mathExercise = signal<MathExercise>(undefined!);
+    readonly course = signal<Course | undefined>(undefined);
     formattedProblemStatement: SafeHtml | null;
     formattedExampleSolution: SafeHtml | null;
-    submissions: MathSubmission[] = [];
+    readonly submissions = signal<MathSubmission[]>([]);
 
-    doughnutStats: ExerciseManagementStatisticsDto;
-    detailOverviewSections: DetailOverviewSection[];
+    readonly doughnutStats = signal<ExerciseManagementStatisticsDto>(undefined!);
+    readonly detailOverviewSections = signal<DetailOverviewSection[]>([]);
 
     private eventSubscriber: Subscription;
 
     ngOnInit() {
         this.route.data.subscribe(({ mathExercise }) => {
-            this.mathExercise = mathExercise;
+            this.mathExercise.set(mathExercise);
             this.onExerciseLoaded();
         });
         this.registerChangeInMathExercises();
     }
 
     onExerciseLoaded() {
-        this.course = this.mathExercise.course;
+        const exercise = this.mathExercise();
+        this.course.set(exercise.course);
 
-        this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(this.mathExercise.problemStatement);
-        this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(this.mathExercise.exampleSolution);
-        this.detailOverviewSections = this.getExerciseDetailSections();
+        this.formattedProblemStatement = this.artemisMarkdownService.safeHtmlForMarkdown(exercise.problemStatement);
+        this.formattedExampleSolution = this.artemisMarkdownService.safeHtmlForMarkdown(exercise.exampleSolution);
+        this.detailOverviewSections.set(this.getExerciseDetailSections());
 
-        const exerciseId = this.mathExercise.id;
+        const exerciseId = exercise.id;
         if (exerciseId !== undefined) {
             this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
-                this.doughnutStats = statistics;
+                this.doughnutStats.set(statistics);
             });
 
             this.mathSubmissionService.getSubmittedSubmissions(exerciseId).subscribe((submissions) => {
-                this.submissions = submissions;
+                this.submissions.set(submissions);
             });
         }
     }
@@ -102,14 +103,14 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
         this.mathExerciseService.find(exerciseId).subscribe((mathExerciseResponse: HttpResponse<MathExercise>) => {
             const exercise = mathExerciseResponse.body;
             if (exercise) {
-                this.mathExercise = exercise;
+                this.mathExercise.set(exercise);
                 this.onExerciseLoaded();
             }
         });
     }
 
     getExerciseDetailSections(): DetailOverviewSection[] {
-        const exercise = this.mathExercise;
+        const exercise = this.mathExercise();
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
         const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement, exercise);
@@ -144,7 +145,7 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
 
     registerChangeInMathExercises() {
         this.eventSubscriber = this.eventManager.subscribe('mathExerciseListModification', () => {
-            const exerciseId = this.mathExercise?.id;
+            const exerciseId = this.mathExercise()?.id;
             if (exerciseId !== undefined) {
                 this.load(exerciseId);
             }
