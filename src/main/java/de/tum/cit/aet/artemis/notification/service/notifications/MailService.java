@@ -18,6 +18,8 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisDashboardDigestDTO;
 import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 
@@ -206,5 +208,33 @@ public class MailService {
         context.setVariable(VERSION_INFO, versionInfo);
         context.setVariable(SHOULD_RECOMMEND_UPGRADE, shouldRecommendUpgrade);
         prepareTemplateAndSendEmail(admin, "mail/vulnerabilityScanResultEmail", "email.vulnerabilityScan.title", context);
+    }
+
+    /**
+     * Sends the Iris dashboard daily digest email.
+     *
+     * @param recipient the admin recipient to notify
+     * @param digest    the digest data to include in the email
+     */
+    public void sendIrisDashboardDigestEmail(MailRecipientDTO recipient, IrisDashboardDigestDTO digest) {
+        log.debug("Sending Iris dashboard digest email to admin email address '{}'", recipient.email());
+        Locale locale = Locale.forLanguageTag(recipient.langKey());
+        Context context = createBaseContext(recipient, locale);
+        context.setVariable("digest", digest);
+        prepareTemplateAndSendEmail(recipient, "mail/irisDashboardDigest", "email.irisDashboardDigest.title", context);
+    }
+
+    /**
+     * Sends the Iris dashboard alert email.
+     *
+     * @param recipient the admin recipient to notify
+     * @param alert     the alert data to include in the email
+     */
+    public void sendIrisDashboardAlertEmail(MailRecipientDTO recipient, IrisDashboardAlertDTO alert) {
+        log.debug("Sending Iris dashboard alert email to admin email address '{}'", recipient.email());
+        Locale locale = Locale.forLanguageTag(recipient.langKey());
+        Context context = createBaseContext(recipient, locale);
+        context.setVariable("alert", alert);
+        prepareTemplateAndSendEmail(recipient, "mail/irisDashboardAlert", "email.irisDashboardAlert.title", context);
     }
 }

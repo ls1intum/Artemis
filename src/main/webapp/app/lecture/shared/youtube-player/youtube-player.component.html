@@ -1,5 +1,16 @@
 <div class="video-wrapper" #videoWrapper [class.is-resizing]="isResizing()">
-    <div class="video-column" #videoColumn>
+    <div
+        class="video-column"
+        #videoColumn
+        jhiResizable
+        [resizableEdges]="{ right: '.resizer-handle' }"
+        [resizableConstraints]="resizableConstraints"
+        [resizableApplyInlineSize]="false"
+        [resizableHandleOutsideHost]="true"
+        (resizeStart)="onResizeStart()"
+        (resizeMove)="onVideoColumnResize($event)"
+        (resizeEnd)="onResizeEnd()"
+    >
         <youtube-player
             [videoId]="videoId()"
             [disableCookies]="true"
@@ -11,6 +22,8 @@
             (error)="onPlayerError($event)"
         />
     </div>
+    <!-- Resizer divider sits between the video and transcript columns (not over the video). The directive resolves
+         this handle through resizableHandleOutsideHost, mirroring the previous interact.js between-columns divider. -->
     <button
         type="button"
         class="resizer-handle"

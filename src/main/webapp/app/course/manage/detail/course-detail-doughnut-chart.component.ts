@@ -49,7 +49,7 @@ export class CourseDetailDoughnutChartComponent {
     readonly chartOptions = computed(() =>
         doughnutChartOptions({
             legend: false,
-            tooltip: { label: (item) => `${item.label}: ${this.valueFormatting({ value: item.parsed })}` },
+            tooltip: { label: (item) => `${this.valueFormatting({ value: item.parsed })}` },
         }),
     );
 

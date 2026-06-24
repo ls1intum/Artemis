@@ -141,7 +141,7 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
                     }
 
                     if (entityType.isPresent()) {
-                        String message = String.format("Entity returned from REST controller: %s#%s - return type '%s' contains entity '%s'", controllerClass.getFullName(),
+                        String message = "Entity returned from REST controller: %s#%s - return type '%s' contains entity '%s'".formatted(controllerClass.getFullName(),
                                 archMethod.getName(), returnType.getTypeName(), entityType.get().getName());
                         violations.add(message);
                         // Note: We don't add to events because we want to allow a configurable number of violations
@@ -224,7 +224,7 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
 
                         if (entityType.isPresent()) {
                             String annotation = isRequestBody ? "@RequestBody" : "@RequestPart";
-                            String message = String.format("Incoming entity used in %s: %s#%s - parameter '%s' has (or contains) entity type '%s' (parameter type: %s)", annotation,
+                            String message = "Incoming entity used in %s: %s#%s - parameter '%s' has (or contains) entity type '%s' (parameter type: %s)".formatted(annotation,
                                     controllerClass.getFullName(), archMethod.getName(), parameter.getName(), entityType.get().getName(), parameterType.getTypeName());
                             violations.add(message);
                             // Note: We don't add to events because we want to allow a configurable number of violations
@@ -287,10 +287,9 @@ public abstract class AbstractModuleEntityUsageArchitectureTest extends Abstract
                     Optional<Class<?>> entityType = findFirstEntityType(fieldType);
 
                     if (entityType.isPresent()) {
-                        String message = String.format(
-                                "DTO contains entity field: %s.%s - field type '%s' contains entity '%s'. "
-                                        + "DTOs must not reference entities; extract only the needed primitive/DTO fields instead.",
-                                dtoClass.getFullName(), field.getName(), fieldType.getTypeName(), entityType.get().getName());
+                        String message = ("DTO contains entity field: %s.%s - field type '%s' contains entity '%s'. "
+                                + "DTOs must not reference entities; extract only the needed primitive/DTO fields instead.")
+                                .formatted(dtoClass.getFullName(), field.getName(), fieldType.getTypeName(), entityType.get().getName());
                         violations.add(message);
                         // Note: We don't add to events because we want to allow a configurable number of violations
                         // The assertion at the end will check if the count is within the allowed limit

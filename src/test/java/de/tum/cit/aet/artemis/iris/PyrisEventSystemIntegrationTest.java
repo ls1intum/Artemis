@@ -118,7 +118,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         // Add a participation for student1.
         studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        studentParticipation.setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
+        studentParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s.git").formatted(projectKey, assignmentRepositorySlug));
         studentParticipation.setBranch(defaultBranch);
 
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
@@ -170,8 +170,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     private ProgrammingExerciseStudentParticipation createTeamParticipation(User owner) {
         var team = teamUtilService.addTeamForExercise(exercise, owner);
         var teamParticipation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team);
-        teamParticipation
-                .setRepositoryUri(String.format(localVCBaseUri + "/git/%s/%s-%s.git", exercise.getProjectKey(), exercise.getProjectKey().toLowerCase(), team.getShortName()));
+        teamParticipation.setRepositoryUri((localVCBaseUri + "/git/%s/%s-%s.git").formatted(exercise.getProjectKey(), exercise.getProjectKey().toLowerCase(), team.getShortName()));
         return programmingExerciseStudentParticipationRepository.save(teamParticipation);
     }
 

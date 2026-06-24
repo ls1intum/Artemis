@@ -15,10 +15,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
 
-vi.mock('split.js', () => ({
-    default: vi.fn(() => ({ destroy: vi.fn(), getSizes: vi.fn(() => [65, 35]) })),
-}));
-
 class ResizeObserverMock {
     observe = vi.fn();
     unobserve = vi.fn();
@@ -94,6 +90,29 @@ describe('ExerciseSplitPanelComponent', () => {
         accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
 
         expect(component.irisPanelStartsCollapsed()).toBe(false);
+    });
+
+    it('navigates only when the target route identity changes, not when the participation object is replaced (prevents the navigate-thrash loop on incoming results, #12976)', () => {
+        const navigateSpy = vi.mocked(TestBed.inject(Router).navigate);
+
+        // Programming exercise with the online editor: navigating to the code editor is expected on the first run.
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true } as unknown as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+        expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 5], expect.anything());
+
+        navigateSpy.mockClear();
+
+        // An incoming result replaces the participation object but keeps its id. This must NOT re-navigate — otherwise
+        // navigation thrashes and re-creates the code-editor subtree in a loop, flooding the server with requests.
+        fixture.componentRef.setInput('studentParticipation', { id: 5, submissions: [{ id: 9 }] } as StudentParticipation);
+        fixture.detectChanges();
+        expect(navigateSpy).not.toHaveBeenCalled();
+
+        // A genuine switch to a different participation still navigates.
+        fixture.componentRef.setInput('studentParticipation', { id: 6 } as StudentParticipation);
+        fixture.detectChanges();
+        expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 6], expect.anything());
     });
 
     it('should keep the problem statement open for users who opted out of AI when an editor panel is shown', () => {

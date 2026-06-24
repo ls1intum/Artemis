@@ -12,13 +12,14 @@ import { ModelingExplanationEditorComponent } from '../modeling-explanation-edit
 import { captureException } from '@sentry/angular';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe, DialogModule],
+    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe, DialogModule, ResizableDirective],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;
@@ -92,8 +93,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                     this.readOnlySVG.set(this.sanitizer.bypassSecurityTrustHtml(this.readonlyApollonDiagram.svg));
                 }
             }
-        } else {
-            this.setupInteract();
         }
     }
 
@@ -195,7 +194,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * If the apollon editor is not null, destroy it and set it to null, on component destruction
      */
     ngOnDestroy(): void {
-        super.ngOnDestroy();
         this.isDestroyed = true;
         try {
             this.destroyApollonEditor();

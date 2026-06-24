@@ -273,7 +273,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 this.course.set(courseResponse.body!);
             }
             this.sidebarItems.set(this.getSidebarItems());
-            this.updateRecentlyAccessedCourses().catch();
         });
     }
 
@@ -289,14 +288,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     protected getHasSidebar(): boolean {
         return this.communicationRouteLoaded();
-    }
-
-    /** Navigate to a new Course */
-    switchCourse(course: Course) {
-        const url = ['course-management', course.id];
-        this.router.navigate(url).then(() => {
-            this.handleCourseIdChange(course.id!);
-        });
     }
 
     protected handleComponentActivation(componentRef: any): void {

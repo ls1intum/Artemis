@@ -1,16 +1,33 @@
 name: PR Coverage Reporter
 
-# Reuses coverage artifacts produced by the `Test` workflow to render the
-# coverage table in the PR description, instead of re-running the entire
-# test suite a second time (which was the historical bottleneck).
+# Reuses coverage artifacts produced by the CI umbrella's `test` job (ci-test.yml) to render
+# the coverage table in the PR description, instead of re-running the entire test suite a
+# second time (which was the historical bottleneck).
+#
+# `workflow_run` listens for the umbrella's name. Coverage artifacts are uploaded by
+# ci-test.yml's `server-tests` job under the umbrella's run id, so artifact lookups via
+# `workflow_run.id` continue to work after the migration.
+#
+# FORK PRs ONLY. Internal (same-repo) PRs get their coverage table from ci.yml's in-run
+# `coverage-report` job, which posts as soon as `test` finishes (~28 min) instead of waiting for the
+# whole CI run (paced by the advisory e2e tail, up to ~120 min). This workflow_run path remains for
+# FORK PRs, where the in-run job's GITHUB_TOKEN is force-read-only and cannot post — fork runs have no
+# e2e, so this path is already timely for them.
+#
+# SECURITY: a `workflow_run` job runs in the base-repo context with write permissions. To avoid a
+# "pwn request", this workflow NEVER checks out or executes PR/fork code — it checks out the trusted
+# default branch, derives changed files from the GitHub API, and runs the coverage tooling with
+# `node` (no `pnpm install`, whose postinstall hook is fork-editable) against downloaded artifacts.
 on:
   workflow_run:
-    # Must match the name of test.yml's `name:` field.
-    workflows: ["Test"]
+    # Must match the `name:` field of .github/workflows/ci.yml.
+    workflows: ["CI"]
     types: [completed]
 
+# Group by PR number when available, falling back to head_sha — head_branch alone collides
+# across PRs that share a branch name on a shared fork.
 concurrency:
-  group: coverage-${{ github.event.workflow_run.head_branch }}
+  group: coverage-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 env:
@@ -22,6 +39,7 @@ jobs:
     name: Report PR Coverage
     if: |
       github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name != github.repository &&
       github.event.workflow_run.conclusion != 'cancelled' &&
       github.event.workflow_run.conclusion != 'skipped'
     runs-on: ubuntu-latest
@@ -53,7 +71,6 @@ jobs:
               console.log(`No open PR found for branch ${headOwner}:${branch}`);
               return '';
             }
-            core.setOutput('base_ref', prs[0].base.ref);
             core.setOutput('author', prs[0].user.login);
             return prs[0].number;
 
@@ -63,69 +80,39 @@ jobs:
           echo "No matching open PR; skipping coverage report."
           exit 0
 
-      - uses: actions/checkout@v6
+      # Trusted default branch only (never the PR head) — see the SECURITY note at the top of the
+      # file. Changed files come from the API below, not a git diff of a checked-out PR tree.
+      - name: Checkout coverage tooling (trusted default branch — never the PR head)
+        uses: actions/checkout@v6
         if: steps.find-pr.outputs.result != ''
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 0
 
-      - name: Detect changed modules
+      - name: Detect changed files (via API — no PR checkout)
         if: steps.find-pr.outputs.result != ''
         id: changes
+        # A transient listFiles blip must not red this advisory job (skips downstream, retries next run).
+        continue-on-error: true
+        uses: actions/github-script@v9
         env:
-          BASE_BRANCH: ${{ steps.find-pr.outputs.base_ref }}
+          PR_NUMBER: ${{ steps.find-pr.outputs.result }}
+        with:
+          script: await require('./.github/scripts/detect-pr-coverage-changes.js')({ github, context, core })
+
+      - name: Overlay PR source for accurate line/expect counts (data only)
+        if: steps.find-pr.outputs.result != ''
+        env:
+          PR_NUMBER: ${{ steps.find-pr.outputs.result }}
         run: |
-          set -euo pipefail
-          # Validate the ref name shape so it's safe to interpolate below.
-          if ! printf '%s' "$BASE_BRANCH" | grep -Eq '^[A-Za-z0-9._/-]+$'; then
-            echo "::error::Unexpected base branch name: $BASE_BRANCH"
-            exit 1
+          set -uo pipefail
+          # Overlay ONLY the PR head's source trees as DATA so the per-file Lines/Expects columns
+          # count the PR's code, not the default branch we run. The tooling under supporting_scripts/
+          # is never overlaid and is what executes; these files are read as text only. Best-effort —
+          # on failure the counts fall back to default-branch values.
+          if git fetch --depth=1 origin "pull/${PR_NUMBER}/head" 2>/dev/null \
+             && git checkout FETCH_HEAD -- src/main/webapp src/main/java 2>/dev/null; then
+            echo "Overlaid PR source for accurate line/expect counts."
+          else
+            echo "::warning::Could not overlay PR source; line/expect counts may be default-branch-relative."
           fi
-          git fetch origin "$BASE_BRANCH"
-
-          CHANGED_FILES=$(git diff --name-only "origin/$BASE_BRANCH"...HEAD)
-
-          CLIENT_MODULES=""
-          HAS_CLIENT_CHANGES="false"
-          for file in $CHANGED_FILES; do
-            if [[ "$file" == src/main/webapp/app/*.ts ]] && [[ "$file" != *.spec.ts ]] && [[ "$file" != *.module.ts ]]; then
-              HAS_CLIENT_CHANGES="true"
-              MODULE=$(echo "$file" | sed -n 's|^src/main/webapp/app/\([^/]*\)/.*|\1|p')
-              if [ -n "$MODULE" ] && [[ ! "$CLIENT_MODULES" =~ (^|,)$MODULE(,|$) ]]; then
-                if [ -z "$CLIENT_MODULES" ]; then
-                  CLIENT_MODULES="$MODULE"
-                else
-                  CLIENT_MODULES="$CLIENT_MODULES,$MODULE"
-                fi
-              fi
-            fi
-          done
-
-          SERVER_MODULES=""
-          HAS_SERVER_CHANGES="false"
-          for file in $CHANGED_FILES; do
-            if [[ "$file" == src/main/java/de/tum/cit/aet/artemis/*.java ]]; then
-              HAS_SERVER_CHANGES="true"
-              MODULE=$(echo "$file" | sed -n 's|^src/main/java/de/tum/cit/aet/artemis/\([^/]*\)/.*|\1|p')
-              if [ -n "$MODULE" ] && [[ ! "$SERVER_MODULES" =~ (^|,)$MODULE(,|$) ]]; then
-                if [ -z "$SERVER_MODULES" ]; then
-                  SERVER_MODULES="$MODULE"
-                else
-                  SERVER_MODULES="$SERVER_MODULES,$MODULE"
-                fi
-              fi
-            fi
-          done
-
-          {
-            echo "has_client_changes=$HAS_CLIENT_CHANGES"
-            echo "has_server_changes=$HAS_SERVER_CHANGES"
-            echo "client_modules=$CLIENT_MODULES"
-            echo "server_modules=$SERVER_MODULES"
-          } >> "$GITHUB_OUTPUT"
-
-          echo "Client changes: $HAS_CLIENT_CHANGES (modules: $CLIENT_MODULES)"
-          echo "Server changes: $HAS_SERVER_CHANGES (modules: $SERVER_MODULES)"
 
       - name: Download server JaCoCo XML
         if: steps.changes.outputs.has_server_changes == 'true'
@@ -143,74 +130,34 @@ jobs:
         continue-on-error: true
         with:
           name: Client Coverage Summaries
-          # upload-artifact@v6 strips the common ancestor of the uploaded paths.
-          # test.yml's uploader ships build/test-results/vitest/coverage/coverage-summary.json
-          # (the whole client now runs on Vitest), so the archive contains
-          # vitest/coverage/coverage-summary.json. Restore the stripped ancestor here so the file
-          # lands where supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs reads it.
-          path: build/test-results/
+          # Nested path is deliberate: the single-file artifact unpacks flat, and it must land where
+          # local-pr-coverage.mjs reads it (VITEST_COVERAGE_SUMMARY). Don't shorten to build/test-results/.
+          path: build/test-results/vitest/coverage/
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Setup pnpm
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        uses: pnpm/action-setup@v4
-        with:
-          run_install: false
       - name: Setup Node.js
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: '${{ env.node }}'
-          cache: 'pnpm'
-
-      - name: Install Dependencies
-        if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
-        run: pnpm install --frozen-lockfile
 
       - name: Generate coverage table
         id: coverage
         if: steps.changes.outputs.has_client_changes == 'true' || steps.changes.outputs.has_server_changes == 'true'
         env:
-          BASE_BRANCH: ${{ steps.find-pr.outputs.base_ref }}
           CLIENT_MODULES: ${{ steps.changes.outputs.client_modules }}
           SERVER_MODULES: ${{ steps.changes.outputs.server_modules }}
+          CHANGED_FILES: ${{ steps.changes.outputs.changed_files }}
           HAS_CLIENT: ${{ steps.changes.outputs.has_client_changes }}
           HAS_SERVER: ${{ steps.changes.outputs.has_server_changes }}
-        run: |
-          set -o pipefail
-          ARGS=(--skip-tests --print --base-branch "origin/$BASE_BRANCH")
-          if [ "$HAS_CLIENT" = "true" ] && [ "$HAS_SERVER" != "true" ]; then
-            ARGS+=(--client-only)
-          elif [ "$HAS_SERVER" = "true" ] && [ "$HAS_CLIENT" != "true" ]; then
-            ARGS+=(--server-only)
-          fi
-          if [ -n "$CLIENT_MODULES" ]; then
-            ARGS+=(--client-modules "$CLIENT_MODULES")
-          fi
-          if [ -n "$SERVER_MODULES" ]; then
-            ARGS+=(--server-modules "$SERVER_MODULES")
-          fi
-
-          echo "Running: pnpm run coverage:pr -- ${ARGS[*]}"
-          if ! COVERAGE_OUTPUT=$(pnpm run coverage:pr -- "${ARGS[@]}" 2>&1); then
-            echo "$COVERAGE_OUTPUT"
-            echo "success=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "$COVERAGE_OUTPUT"
-          echo "success=true" >> "$GITHUB_OUTPUT"
-
-          # Extract content between the script's separator lines (rows of ─).
-          COVERAGE_TABLE=$(echo "$COVERAGE_OUTPUT" | sed -n '/^─/,/^─/p' | sed '1d;$d')
-          {
-            echo 'coverage_table<<COVERAGE_EOF'
-            echo "$COVERAGE_TABLE"
-            echo 'COVERAGE_EOF'
-          } >> "$GITHUB_OUTPUT"
+        run: .github/scripts/generate-coverage-table.sh
 
       - name: Update PR description with coverage
-        if: steps.find-pr.outputs.result != ''
+        # Skip when detection failed (don't post a misleading "no changes"); a transient write blip
+        # must not red this advisory job either.
+        if: steps.find-pr.outputs.result != '' && steps.changes.outcome == 'success'
+        continue-on-error: true
         uses: actions/github-script@v9
         env:
           PR_NUMBER: ${{ steps.find-pr.outputs.result }}
@@ -221,82 +168,7 @@ jobs:
           COVERAGE_SUCCESS: ${{ steps.coverage.outputs.success }}
           TEST_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           TEST_RUN_URL: ${{ github.event.workflow_run.html_url }}
+          POST_AUTHOR_COMMENT: 'true'
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const prNumber = Number(process.env.PR_NUMBER);
-            const author = process.env.PR_AUTHOR;
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-
-            const hasClient = process.env.HAS_CLIENT === 'true';
-            const hasServer = process.env.HAS_SERVER === 'true';
-            const coverageTable = (process.env.COVERAGE_TABLE || '').trim();
-            const coverageSuccess = process.env.COVERAGE_SUCCESS === 'true';
-            const testConclusion = process.env.TEST_CONCLUSION;
-            const testRunUrl = process.env.TEST_RUN_URL;
-
-            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
-
-            let body = pr.body || '';
-            const coverageSection = '### Test Coverage';
-            const coverageIndex = body.indexOf(coverageSection);
-            if (coverageIndex === -1) {
-              console.log('Test Coverage section not found in PR description');
-              return;
-            }
-            const afterCoverage = body.substring(coverageIndex + coverageSection.length);
-            const nextSectionMatch = afterCoverage.match(/\n###\s/);
-            const nextSectionIndex = nextSectionMatch
-              ? coverageIndex + coverageSection.length + nextSectionMatch.index
-              : body.length;
-
-            const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-
-            const lines = [
-              coverageSection,
-              '<!-- Please add the test coverages for all changed files modified in this PR here. You can generate the coverage table using one of these options: -->',
-              '<!-- 1. Run `pnpm run coverage:pr` to generate coverage locally by running only the affected module tests (see supporting_scripts/code-coverage/local-pr-coverage/README.md) -->',
-              '<!-- 2. Use `supporting_scripts/code-coverage/generate_code_cov_table/generate_code_cov_table.py` to generate the table from CI artifacts (requires GitHub token, follow the README for setup) -->',
-              '<!-- The line coverage must be above 90% for changed files, and you must use extensive and useful assertions for server tests and expect statements for client tests. -->',
-              '<!-- Note: Confirm in the last column that you have implemented extensive assertions for server tests and expect statements for client tests. -->',
-              '<!--       Remove rows with only trivial changes from the table. -->',
-              ''
-            ];
-
-            const noChanges = !hasClient && !hasServer;
-            if (noChanges) {
-              lines.push('**No code changes detected** - test coverage not required for this PR.', '');
-            } else if (!coverageSuccess) {
-              lines.push(
-                `**Warning:** Coverage table could not be generated. The \`Test\` workflow concluded with status \`${testConclusion}\`; coverage artifacts may be missing or incomplete. See [workflow logs](${testRunUrl}).`,
-                ''
-              );
-            } else {
-              if (testConclusion !== 'success') {
-                lines.push(
-                  `**Note:** Some tests in the [Test workflow](${testRunUrl}) did not pass (\`${testConclusion}\`). Coverage below may be partial.`,
-                  ''
-                );
-              }
-              if (coverageTable) {
-                lines.push(coverageTable, '');
-              } else {
-                lines.push('Coverage data was found, but no rows applied to changed files.', '');
-              }
-            }
-            lines.push(`_Last updated: ${timestamp}_`, '', '');
-
-            const newBody = body.substring(0, coverageIndex) + lines.join('\n') + body.substring(nextSectionIndex);
-
-            await github.rest.pulls.update({ owner, repo, pull_number: prNumber, body: newBody });
-            console.log('Updated PR description with coverage results');
-
-            // Notify the author.
-            if (noChanges) return;
-            const commentBody = coverageSuccess
-              ? `@${author} Test coverage has been automatically updated in the PR description.`
-              : `@${author} Coverage table could not be generated. See the [Test workflow run](${testRunUrl}) for details.`;
-            await github.rest.issues.createComment({
-              owner, repo, issue_number: prNumber, body: commentBody
-            });
+          script: await require('./.github/scripts/update-pr-coverage.js')({ github, context, core })

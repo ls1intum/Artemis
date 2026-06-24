@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.account.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,7 +27,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long>, JpaSpecificationExecutor<Organization>, CustomOrganizationRepository {
+public interface OrganizationRepository extends ArtemisJpaRepository<Organization, Long>, JpaSpecificationExecutor<Organization> {
 
     /**
      * Get all organizations where the given user is currently in
@@ -56,34 +58,6 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
     Set<Organization> findAllOrganizationsByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Get the number of users currently mapped to the given organization
-     *
-     * @param organizationId the id of the organization where the users are in
-     * @return the number of users contained in the organization
-     */
-    @Query("""
-            SELECT COUNT(user.id)
-            FROM User user
-                JOIN user.organizations organization
-            WHERE organization.id = :organizationId
-            """)
-    Long getNumberOfUsersByOrganizationId(@Param("organizationId") long organizationId);
-
-    /**
-     * Get the number of courses currently mapped to the given organization
-     *
-     * @param organizationId the id of the organization where the courses are in
-     * @return the number of courses contained in the organization
-     */
-    @Query("""
-            SELECT COUNT(course.id)
-            FROM Course course
-                JOIN course.organizations organization
-            WHERE organization.id = :organizationId
-            """)
-    Long getNumberOfCoursesByOrganizationId(@Param("organizationId") long organizationId);
-
-    /**
      * Returns the title of the organization with the given id.
      *
      * @param organizationId the id of the organization
@@ -96,6 +70,56 @@ public interface OrganizationRepository extends ArtemisJpaRepository<Organizatio
             """)
     @Cacheable(cacheNames = "organizationTitle", key = "#organizationId", unless = "#result == null")
     String getOrganizationTitle(@Param("organizationId") Long organizationId);
+
+    /**
+     * Returns the subset of the given user IDs that are members of the given organization.
+     * Uses the owning-side join ({@link User#getOrganizations()}) because {@link Organization}
+     * has no inverse-side {@code users} collection.
+     *
+     * @param organizationId the organization to check membership against
+     * @param userIds        the user IDs to check; must not be empty
+     * @return the subset of {@code userIds} that belong to the organization
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+                JOIN u.organizations o
+            WHERE o.id = :organizationId
+                AND u.id IN :userIds
+            """)
+    Set<Long> findMemberUserIdsByOrganizationIdAndUserIds(@Param("organizationId") long organizationId, @Param("userIds") List<Long> userIds);
+
+    /**
+     * Returns the number of users per organization for a batch of organization IDs.
+     * Each element is a two-element {@code Object[]} where {@code [0]} is the organization id and {@code [1]} is the user count.
+     *
+     * @param organizationIds the ids of the organizations to count users for
+     * @return a list of [organizationId, userCount] pairs; organizations with no members are omitted
+     */
+    @Query("""
+            SELECT o.id, COUNT(u)
+            FROM User u
+                JOIN u.organizations o
+            WHERE o.id IN :organizationIds
+            GROUP BY o.id
+            """)
+    List<Object[]> findUserCountsByOrganizationIds(@Param("organizationIds") Collection<Long> organizationIds);
+
+    /**
+     * Returns the number of courses per organization for a batch of organization IDs.
+     * Each element is a two-element {@code Object[]} where {@code [0]} is the organization id and {@code [1]} is the course count.
+     *
+     * @param organizationIds the ids of the organizations to count courses for
+     * @return a list of [organizationId, courseCount] pairs; organizations with no courses are omitted
+     */
+    @Query("""
+            SELECT o.id, COUNT(c)
+            FROM Course c
+                JOIN c.organizations o
+            WHERE o.id IN :organizationIds
+            GROUP BY o.id
+            """)
+    List<Object[]> findCourseCountsByOrganizationIds(@Param("organizationIds") Collection<Long> organizationIds);
 
     /**
      * Retrieve a set containing all organizations with an emailPattern matching the
