@@ -1,0 +1,34 @@
+// Keep the selector from growing with a long context label (e.g. a long lecture/exercise title). The label
+// truncates with an ellipsis instead, so in the narrow floating Iris window the send button next to it stays
+// visible and clickable. The full title remains readable in the open dropdown.
+:host {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+}
+
+:host ::ng-deep {
+    .p-select {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .p-select-label {
+        min-width: 0;
+        overflow: hidden;
+
+        .flex {
+            min-width: 0;
+        }
+
+        fa-icon {
+            flex-shrink: 0;
+        }
+
+        span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+}

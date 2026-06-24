@@ -551,7 +551,19 @@ pre {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 6px;
         padding: 6px 6px 6px 8px;
+
+        // The context selector may shrink (its label truncates) so a long context never pushes the send button
+        // out of the narrow floating window; the send button keeps its size and stays clickable.
+        jhi-context-selection {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        #irisSendButton {
+            flex-shrink: 0;
+        }
     }
 
     // These values must stay in sync with the textarea padding (16px) and send button width (56px)
@@ -566,7 +578,7 @@ pre {
         font-family: var(--bs-body-font-family);
         font-size: inherit;
         line-height: inherit;
-        word-wrap: break-word;
+        overflow-wrap: break-word;
         overflow: hidden;
     }
 
