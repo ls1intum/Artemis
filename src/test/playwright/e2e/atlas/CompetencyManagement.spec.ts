@@ -2,7 +2,7 @@ import { test } from '../../support/fixtures';
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import type { Page } from '@playwright/test';
-import { generateUUID, setMonacoEditorContent } from '../../support/utils';
+import { fillDateTimePicker, generateUUID, setMonacoEditorContent } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { admin } from '../../support/users';
 
@@ -40,12 +40,10 @@ async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: num
     const input = picker.locator('input#date-input-field');
     await expect(input).toBeVisible();
 
-    // The CALENDAR-mode p-datepicker renders dates as DD.MM.YYYY. Typing the value directly
-    // (kept by keepInvalid) and tabbing out lets the picker parse it into the form model — more
-    // robust than clicking through calendar cells.
+    // The CALENDAR-mode p-datepicker renders dates as DD.MM.YYYY. Type the value (the picker ignores
+    // programmatic fills that aren't preceded by a keydown) and tab out to commit it to the form.
     const targetDate = dayjs().add(monthsAhead, 'months').date(day);
-    await input.fill(targetDate.format('DD.MM.YYYY'));
-    await input.press('Tab');
+    await fillDateTimePicker(input, targetDate, 'DD.MM.YYYY');
 }
 
 async function setMarkdownDescription(page: Page, text: string) {

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
-import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
+import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
@@ -43,9 +43,23 @@ export function generateUUID() {
  * Allows to enter date into the UI
  */
 export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs) {
-    const dateInputField = page.locator(selector).locator('#date-input-field');
+    await fillDateTimePicker(page.locator(selector).locator('#date-input-field'), date);
+}
+
+/**
+ * Types a date into a PrimeNG p-datepicker input (the `jhi-date-time-picker` wrapper).
+ *
+ * The picker must be driven with real keystrokes: its `onUserInput` handler ignores any `input`
+ * event that is not preceded by a `keydown` (an `isKeydown` guard), so Playwright's `fill()` — which
+ * sets the value without keyboard events — is silently dropped. We clear the field and type the value
+ * in the picker's display format (DD.MM.YYYY HH:mm), then tab out to commit it to the form model.
+ */
+export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Dayjs, format: string = DATE_TIME_PICKER_FORMAT) {
     await expect(dateInputField).toBeEnabled();
-    await dateInputField.fill(dayjsToString(date), { force: true });
+    await dateInputField.click();
+    await dateInputField.clear();
+    await dateInputField.pressSequentially(date.format(format));
+    await dateInputField.press('Tab');
 }
 
 /**
