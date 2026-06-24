@@ -65,7 +65,6 @@ export class AdminSidebarComponent {
     atlasEnabled = input<boolean>(false);
     examEnabled = input<boolean>(false);
     passkeyEnabled = input<boolean>(false);
-    passkeyRequiredForAdmin = input<boolean>(false);
     isSuperAdmin = input<boolean>(false);
     irisEnabled = input<boolean>(false);
 
@@ -105,7 +104,9 @@ export class AdminSidebarComponent {
                 testId: 'admin-user-management',
             },
         ];
-        if (this.passkeyEnabled() && this.passkeyRequiredForAdmin() && this.isSuperAdmin()) {
+        // Show the passkey management table whenever passkeys are enabled, independent of whether passkeys are required for
+        // admin features. A super admin can then review and approve admin passkeys before that requirement is turned on.
+        if (this.passkeyEnabled() && this.isSuperAdmin()) {
             accountGroupItems.push({
                 routerLink: '/admin/passkey-management',
                 icon: faKey,

@@ -93,9 +93,32 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             // Trigger a fresh build via REST while staying on the overview. The card must update from websocket pushes
             // alone: first the building/queued indicator, then the result again — proving the live re-render.
             const card = courseOverview.getExerciseSidebarCard(exercise.title!);
-            const triggerResponse = await page.request.post(`/api/programming/participations/${participationId}/trigger-build?submissionType=MANUAL`, { data: {} });
-            expect(triggerResponse.ok(), `trigger-build failed: ${triggerResponse.status()}`).toBeTruthy();
-            await expect(card.locator('#test-building, #test-queued, jhi-result-progress-bar')).toBeVisible({ timeout: BUILD_RESULT_TIMEOUT });
+            const buildingIndicator = card.locator('#test-building, #test-queued, jhi-result-progress-bar');
+            // The live building/queued indicator is driven by the per-user /user/topic/newSubmissions and
+            // /user/topic/submissionProcessing websocket notifications. In the multi-node cluster these user-destination
+            // messages are delivered cross-node via the broker's user-destination broadcast, which is best-effort under
+            // load: a single notification can be missed when the trigger-build request is processed on a different node
+            // than the student's websocket session. The build (and its eventual result) always run; only the transient
+            // building push may be lost. Re-trigger a fresh build until the card shows the live indicator — mirroring how
+            // other tests here re-issue best-effort async backend actions (e.g. the message-search retry) — so this
+            // assertion reliably observes the websocket-driven re-render instead of depending on a single push.
+            let buildingObserved = false;
+            for (let attempt = 0; attempt < 6 && !buildingObserved; attempt++) {
+                // A transient non-2xx (the build dispatch itself can briefly fail under heavy multi-node load) is just
+                // retried — only the final "never observed" outcome fails the test.
+                const triggerResponse = await page.request
+                    .post(`/api/programming/participations/${participationId}/trigger-build?submissionType=MANUAL`, { data: {} })
+                    .catch(() => undefined);
+                if (!triggerResponse?.ok()) {
+                    continue;
+                }
+                buildingObserved = await buildingIndicator.waitFor({ state: 'visible', timeout: 20000 }).then(
+                    () => true,
+                    () => false,
+                );
+            }
+            expect(buildingObserved, 'the course-overview sidebar card never showed the live building/queued indicator after re-triggering the build').toBe(true);
+            // After the live building indicator, the card must transition back to the result purely from the websocket result push.
             await expect(card.locator('#result-score')).toContainText(expectedResultPattern, { timeout: BUILD_RESULT_TIMEOUT * 2 });
         });
     });

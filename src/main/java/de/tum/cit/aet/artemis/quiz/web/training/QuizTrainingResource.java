@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.quiz.web;
+package de.tum.cit.aet.artemis.quiz.web.training;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +48,10 @@ import de.tum.cit.aet.artemis.quiz.service.QuizQuestionProgressService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingLeaderboardService;
 import de.tum.cit.aet.artemis.quiz.service.QuizTrainingService;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -94,10 +99,11 @@ public class QuizTrainingResource {
      * @param questionIds  optional set of question IDs to filter the questions
      * @return a list of quiz questions for the training session depending on the pagination information
      */
+    @ApiResponse(responseCode = "200", headers = { @Header(name = "X-Has-Next", schema = @Schema(type = "boolean")) })
     @PostMapping("courses/{courseId}/training-questions")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, Pageable pageable, @RequestParam boolean isNewSession,
-            @RequestBody Set<Long> questionIds) {
+    public ResponseEntity<List<QuizQuestionTrainingDTO>> getQuizQuestionsForPractice(@PathVariable long courseId, @ParameterObject Pageable pageable,
+            @RequestParam boolean isNewSession, @RequestBody Set<Long> questionIds) {
         log.info("REST request to get quiz questions for course with id : {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -119,7 +125,8 @@ public class QuizTrainingResource {
     @PostMapping("courses/{courseId}/training-questions/{trainingQuestionId}/submit")
     @EnforceAtLeastStudent
     public ResponseEntity<SubmittedAnswerAfterEvaluationDTO> submitForTraining(@PathVariable long courseId, @PathVariable("trainingQuestionId") long quizQuestionId,
-            @RequestParam boolean isRated, @Valid @RequestBody SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
+            @RequestParam boolean isRated,
+            @Valid @RequestBody @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(schema = @Schema(implementation = SubmittedAnswerFromLiveClientDTO.class))) SubmittedAnswerFromLiveClientDTO submittedAnswerDTO) {
         log.debug("REST request to submit QuizQuestion for training, course {} question {}", courseId, quizQuestionId);
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
