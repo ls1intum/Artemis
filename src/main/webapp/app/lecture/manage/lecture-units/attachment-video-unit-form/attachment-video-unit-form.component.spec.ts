@@ -497,4 +497,42 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
         expect(attachmentVideoUnitFormComponent.isTransformable).toBe(true);
     });
+
+    describe('gocast stream picker integration', () => {
+        beforeEach(() => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+        });
+
+        it('should auto-fill, replace on re-selection, and clear the video source URL', () => {
+            // Select -> auto-fills using the bound course slug (with ?video_only=1 so the validator accepts it).
+            attachmentVideoUnitFormComponent.onGocastStreamSelected({ streamId: 42, streamName: 'Lecture 1', slug: 'eidi' });
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://tum.live/w/eidi/42?video_only=1');
+
+            // Re-select a different stream -> URL follows the new selection.
+            attachmentVideoUnitFormComponent.onGocastStreamSelected({ streamId: 43, streamName: 'Lecture 2', slug: 'eidi' });
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://tum.live/w/eidi/43?video_only=1');
+
+            // Clear -> URL is removed.
+            attachmentVideoUnitFormComponent.onGocastStreamSelected(undefined);
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('');
+        });
+
+        it('selecting a stream auto-fills a URL that passes videoSourceUrlValidator (form becomes valid)', () => {
+            // Set the required name field so the form can reach VALID status.
+            attachmentVideoUnitFormComponent.nameControl!.setValue('Lecture 1');
+
+            // Simulate selecting a stream from the picker.
+            attachmentVideoUnitFormComponent.onGocastStreamSelected({ streamId: 42, streamName: 'Lecture 1', slug: 'eidi' });
+
+            // The auto-filled URL must include ?video_only=1, which the validator requires for TUM Live URLs.
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://tum.live/w/eidi/42?video_only=1');
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.errors).toBeNull();
+        });
+
+        it('should preserve a user-edited video source URL when a stream is selected', () => {
+            attachmentVideoUnitFormComponent.videoSourceControl?.setValue('https://my.custom/video');
+            attachmentVideoUnitFormComponent.onGocastStreamSelected({ streamId: 42, streamName: 'Lecture 1', slug: 'eidi' });
+            expect(attachmentVideoUnitFormComponent.videoSourceControl?.value).toBe('https://my.custom/video');
+        });
+    });
 });

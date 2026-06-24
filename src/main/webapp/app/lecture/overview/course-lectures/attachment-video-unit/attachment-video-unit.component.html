@@ -71,6 +71,18 @@
                             <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.loading">Loading...</span>
                         </div>
                     </div>
+                } @else if (gocastIdentity()) {
+                    <!-- Non-public TUM Live stream: fetch a signed playback token via EP2.
+                         videoUrl carries the resolved public .m3u8 playlist (if any) so the player can fall
+                         back to it when EP2 fails (409 no ACTIVE binding / 503 / feature-disabled). -->
+                    <div #videoContainer class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
+                        <jhi-video-player
+                            [gocastIdentity]="gocastIdentity()!"
+                            [videoUrl]="playlistUrl()"
+                            [transcriptSegments]="transcriptSegments()"
+                            [initialTimestamp]="targetTimestamp()"
+                        />
+                    </div>
                 } @else if (playlistUrl() && hasTranscript()) {
                     <div #videoContainer class="video-container-wrapper" [class.video-container-wrapper--fullscreen]="isFullscreen()">
                         <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />

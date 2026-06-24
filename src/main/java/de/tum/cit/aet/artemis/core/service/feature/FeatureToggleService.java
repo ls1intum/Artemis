@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
@@ -35,6 +36,12 @@ public class FeatureToggleService {
 
     @Value("${artemis.iris.lecture-content-processing.enabled:false}")
     private boolean lectureContentProcessingEnabledOnStart;
+
+    @Value("${artemis.tum-live.api-base-url:}")
+    private String gocastApiBaseUrl;
+
+    @Value("${artemis.tum-live.service-account-token:}")
+    private String gocastServiceAccountToken;
 
     private final boolean globalSearchEnabledOnStart;
 
@@ -91,11 +98,12 @@ public class FeatureToggleService {
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, GlobalSearch, and AutonomousTutor) are
+        // This ensures that all features (except Science, TutorSuggestions, AtlasML, AtlasAgent, Memiris, RateLimit, GlobalSearch, AutonomousTutor, and Gocast) are
         // enabled once the system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature) && feature != Feature.Science && feature != Feature.TutorSuggestions && feature != Feature.AtlasML && feature != Feature.AtlasAgent
-                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor) {
+                    && feature != Feature.Memiris && feature != Feature.RateLimit && feature != Feature.GlobalSearch && feature != Feature.AutonomousTutor
+                    && feature != Feature.Gocast) {
                 features.put(feature, true);
             }
         }
@@ -126,6 +134,12 @@ public class FeatureToggleService {
 
         if (!features.containsKey(Feature.AutonomousTutor)) {
             features.put(Feature.AutonomousTutor, false);
+        }
+
+        // Gocast (TUM Live) integration: enabled only when BOTH api-base-url AND service-account-token are configured.
+        // This matches the GocastEnabled condition, which requires both properties to be non-blank.
+        if (!features.containsKey(Feature.Gocast)) {
+            features.put(Feature.Gocast, StringUtils.hasText(gocastApiBaseUrl) && StringUtils.hasText(gocastServiceAccountToken));
         }
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
         if (profileService.isDevActive() && !lectureContentProcessingEnabledOnStart) {

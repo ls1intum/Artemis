@@ -380,6 +380,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             if (this.ltiEnabled && currentCourse.onlineCourse) {
                 sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(courseId));
             }
+            sidebarItems.push(this.sidebarItemService.getGocastBindingItem(courseId));
             sidebarItems.push(this.sidebarItemService.getCourseSettingsItem(courseId));
         }
 

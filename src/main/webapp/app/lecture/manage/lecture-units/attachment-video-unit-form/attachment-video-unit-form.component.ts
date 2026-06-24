@@ -14,7 +14,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { GocastStreamPickerComponent } from 'app/videosource/gocast/gocast-stream-picker.component';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -31,6 +32,8 @@ export interface FormProperties {
     videoSource?: string;
     urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
+    /** Set when a TUM Live stream is selected via the stream picker (Stage 2). */
+    gocastStreamId?: number;
 }
 
 // file input is a special case and is not included in the reactive form structure
@@ -95,6 +98,7 @@ function videoSourceUrlValidator(control: AbstractControl): ValidationErrors | u
         CompetencySelectionComponent,
         ArtemisTranslatePipe,
         FeatureToggleHideDirective,
+        GocastStreamPickerComponent,
     ],
 })
 export class AttachmentVideoUnitFormComponent {
@@ -103,6 +107,9 @@ export class AttachmentVideoUnitFormComponent {
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly FeatureToggle = FeatureToggle;
+
+    private readonly featureToggleService = inject(FeatureToggleService);
+    protected readonly isGocastActive = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Gocast), { initialValue: false });
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
@@ -114,6 +121,18 @@ export class AttachmentVideoUnitFormComponent {
 
     hasCancelButton = input<boolean>(false);
     onCancel = output<void>();
+
+    /**
+     * The Artemis course id. When provided, the TUM Live stream picker (Stage 2) is rendered
+     * below the video URL field. The picker self-resolves the binding status and only shows
+     * the stream dropdown when the binding is ACTIVE.
+     */
+    courseId = input<number | undefined>(undefined);
+
+    /** streamId selected via the TUM Live stream picker; included in the emitted form data. */
+    private selectedGocastStreamId: number | undefined;
+    /** The URL the picker auto-filled into the video source field; cleared together with the stream on de-selection. */
+    private lastAutoFilledGocastUrl: string | undefined;
 
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
@@ -211,9 +230,47 @@ export class AttachmentVideoUnitFormComponent {
         return this.form.get('urlHelper');
     }
 
+    /**
+     * Called when the TUM Live stream picker (Stage 2) selection changes.
+     * Records the chosen streamId for inclusion in the submitted form data, or clears it
+     * (and the auto-filled URL) when the picker selection is cleared.
+     */
+    onGocastStreamSelected(event: { streamId: number; streamName: string; slug?: string } | undefined): void {
+        if (!event) {
+            // Selection cleared — drop the cached id and remove the URL we auto-filled.
+            if (this.selectedGocastStreamId !== undefined && this.videoSourceControl?.value === this.lastAutoFilledGocastUrl) {
+                this.videoSourceControl?.setValue('');
+            }
+            this.selectedGocastStreamId = undefined;
+            this.lastAutoFilledGocastUrl = undefined;
+            return;
+        }
+        this.selectedGocastStreamId = event.streamId;
+        // Auto-fill the video source URL.
+        // Format: https://tum.live/w/{courseSlug}/{streamId} — required by TumLiveService regex.
+        // Only write when the field is empty or still holds a value we previously auto-filled,
+        // so a URL the user typed/edited by hand is preserved. This also keeps the URL in sync
+        // when the picker selection changes from one stream to another.
+        const currentValue = this.videoSourceControl?.value;
+        const canAutoFill = !currentValue || currentValue === this.lastAutoFilledGocastUrl;
+        if (canAutoFill && event.slug) {
+            // Include ?video_only=1 so the URL passes the attachment-video form validator
+            // (videoSourceUrlValidator rejects TUM Live URLs that lack this parameter).
+            // The query param does NOT affect server-side slug/streamId extraction: both the Java
+            // TumLiveService pattern (/w/([^/]+)/([0-9]+)) and the client parseTumLiveUrl regex
+            // match on the pathname only and ignore query parameters.
+            const url = `https://tum.live/w/${event.slug}/${event.streamId}?video_only=1`;
+            this.videoSourceControl?.setValue(url);
+            this.lastAutoFilledGocastUrl = url;
+        }
+    }
+
     submitForm() {
         const formValue = this.form.value;
-        const formProperties: FormProperties = { ...formValue };
+        const formProperties: FormProperties = {
+            ...formValue,
+            gocastStreamId: this.selectedGocastStreamId,
+        };
         const fileProperties: FileProperties = {
             file: this.file,
             fileName: this.fileName(),

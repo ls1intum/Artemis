@@ -60,6 +60,13 @@
                     </div>
                 }
             </div>
+            <!-- TUM Live stream picker (Stage 2): self-resolves binding status when courseId is present.
+                 Hidden when the Gocast feature toggle is disabled (e.g. deployment without TUM Live config). -->
+            @if (courseId() && isGocastActive()) {
+                <div class="form-group">
+                    <jhi-gocast-stream-picker [courseId]="courseId()!" (streamSelected)="onGocastStreamSelected($event)" />
+                </div>
+            }
             <div class="form-group">
                 <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate" />
             </div>

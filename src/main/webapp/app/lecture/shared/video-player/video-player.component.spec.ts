@@ -17,6 +17,7 @@ vi.mock('hls.js', () => {
         loadSource: vi.fn(),
         attachMedia: vi.fn(),
         on: vi.fn(),
+        off: vi.fn(),
         destroy: vi.fn(),
         startLoad: vi.fn(),
         recoverMediaError: vi.fn(),
@@ -84,6 +85,11 @@ global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VideoPlayerComponent } from './video-player.component';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
+import { GocastService } from 'app/videosource/gocast/gocast.service';
+import { of, throwError } from 'rxjs';
+import { GocastStreamIdentity } from './video-player.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('VideoPlayerComponent', () => {
     setupTestBed({ zoneless: true });
@@ -98,6 +104,8 @@ describe('VideoPlayerComponent', () => {
     const getMockInteract = () => (globalThis as any).__mockInteract__;
     const getMockInteractInstance = () => (globalThis as any).__mockInteractInstance__;
 
+    let mockGocastService: { getPlaybackToken: ReturnType<typeof vi.fn> };
+
     beforeEach(async () => {
         const mockHls = getMockHls();
         const MockHlsClass = getMockHlsClass();
@@ -109,6 +117,7 @@ describe('VideoPlayerComponent', () => {
             mockHls.loadSource.mockClear();
             mockHls.attachMedia.mockClear();
             mockHls.on.mockClear();
+            mockHls.off.mockClear();
             mockHls.destroy.mockClear();
             mockHls.startLoad.mockClear();
             mockHls.recoverMediaError.mockClear();
@@ -120,8 +129,16 @@ describe('VideoPlayerComponent', () => {
             getMockInteractInstance().unset.mockClear();
         }
 
+        mockGocastService = {
+            getPlaybackToken: vi.fn(),
+        };
+
         TestBed.configureTestingModule({
             imports: [VideoPlayerComponent],
+            providers: [
+                { provide: GocastService, useValue: mockGocastService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
 
         // Override template to a minimal one for testing (includes resizer elements)
@@ -131,6 +148,9 @@ describe('VideoPlayerComponent', () => {
                     <div #videoWrapper class="video-wrapper">
                         <div #videoColumn class="video-column">
                             <video #videoRef></video>
+                            @if (tumLiveWatchUrl()) {
+                                <jhi-tum-live-attribution [watchUrl]="tumLiveWatchUrl()!" />
+                            }
                         </div>
                         <div #resizerHandle class="resizer-handle"></div>
                         <div class="transcript-column"></div>
@@ -627,6 +647,336 @@ describe('VideoPlayerComponent', () => {
             const setSignalSpy = vi.spyOn(component.currentSegmentIndex, 'set');
             component.updateCurrentSegment(10.5);
             expect(setSignalSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('GocastService token-based playback', () => {
+        const identity: GocastStreamIdentity = { courseId: 42, streamId: 1234, slug: 'eidi' };
+
+        function setGocastIdentity(): void {
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+        }
+
+        it('fetches a playback token when gocastIdentity is provided (non-public stream)', async () => {
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: 'https://tum.live/hls/signed.m3u8', expiresIn: 3600 }));
+
+            setGocastIdentity();
+            await render();
+
+            expect(mockGocastService.getPlaybackToken).toHaveBeenCalledWith(42, 1234);
+        });
+
+        it('loads the signed playlist URL via HLS.js after token fetch', async () => {
+            const signedUrl = 'https://tum.live/hls/signed.m3u8';
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: signedUrl, expiresIn: 3600 }));
+
+            setGocastIdentity();
+            await render();
+
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(signedUrl);
+            expect(getMockHls().attachMedia).toHaveBeenCalled();
+        });
+
+        it('falls back to playlistUrlPres when playlistUrl is absent', async () => {
+            const presUrl = 'https://tum.live/hls/pres.m3u8';
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrlPres: presUrl, expiresIn: 3600 }));
+
+            setGocastIdentity();
+            await render();
+
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(presUrl);
+        });
+
+        it('sets tumLiveWatchUrl to the correct watch-page URL', async () => {
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: 'https://tum.live/hls/signed.m3u8', expiresIn: 3600 }));
+
+            setGocastIdentity();
+            await render();
+
+            expect(component.tumLiveWatchUrl()).toBe('https://tum.live/w/eidi/1234');
+        });
+
+        it('does NOT call GocastService when no gocastIdentity is provided (public path)', async () => {
+            setInputs('https://cdn.example.com/master.m3u8', []);
+            await render();
+
+            expect(mockGocastService.getPlaybackToken).not.toHaveBeenCalled();
+        });
+
+        it('sets tokenError signal on service failure', async () => {
+            mockGocastService.getPlaybackToken.mockReturnValue(throwError(() => new Error('network error')));
+
+            setGocastIdentity();
+            await render();
+
+            expect(component.tokenError()).toBe(true);
+        });
+
+        it('falls back to the public videoUrl via HLS when the token fetch fails and a videoUrl is set', async () => {
+            const publicUrl = 'https://cdn.example.com/public.m3u8';
+            mockGocastService.getPlaybackToken.mockReturnValue(throwError(() => new Error('EP2 503')));
+
+            // gocastIdentity present (EP2 path attempted) AND a public videoUrl fallback available.
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+            fixture.componentRef.setInput('videoUrl', publicUrl);
+            await render();
+
+            // The public URL is loaded into HLS as a fallback...
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(publicUrl);
+            expect(getMockHls().attachMedia).toHaveBeenCalled();
+            // ...and the player does NOT get stuck in the tokenError state because the fallback succeeded.
+            expect(component.tokenError()).toBe(false);
+        });
+
+        it('sets tokenError when token response has no usable URL', async () => {
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ expiresIn: 3600 }));
+
+            setGocastIdentity();
+            await render();
+
+            expect(component.tokenError()).toBe(true);
+        });
+
+        it('schedules a token refresh timer before expiry', async () => {
+            const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: 'https://tum.live/hls/signed.m3u8', expiresIn: 3600 }));
+
+            setGocastIdentity();
+            await render();
+
+            // Timer should be set for (3600 - 30) * 1000 ms = 3570000 ms
+            expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3570000);
+        });
+
+        it('calls hls.loadSource again on token refresh with the new URL', async () => {
+            vi.useFakeTimers();
+
+            const firstUrl = 'https://tum.live/hls/first.m3u8';
+            const secondUrl = 'https://tum.live/hls/second.m3u8';
+
+            mockGocastService.getPlaybackToken.mockReturnValueOnce(of({ playlistUrl: firstUrl, expiresIn: 60 })).mockReturnValueOnce(of({ playlistUrl: secondUrl, expiresIn: 60 }));
+
+            setGocastIdentity();
+            await render();
+
+            getMockHls().loadSource.mockClear();
+
+            // Advance timer past the refresh point: (60 - 30) * 1000 = 30000 ms
+            vi.advanceTimersByTime(31000);
+
+            expect(mockGocastService.getPlaybackToken).toHaveBeenCalledTimes(2);
+            // Second call should reload the HLS source with the new URL
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(secondUrl);
+
+            vi.useRealTimers();
+        });
+
+        it('switches to videoUrl via HLS when a token REFRESH fails and a fallback videoUrl is set', async () => {
+            vi.useFakeTimers();
+
+            const firstUrl = 'https://tum.live/hls/first.m3u8';
+            const fallbackUrl = 'https://cdn.example.com/public.m3u8';
+
+            // First call succeeds (initial load), second call (refresh) fails
+            mockGocastService.getPlaybackToken
+                .mockReturnValueOnce(of({ playlistUrl: firstUrl, expiresIn: 60 }))
+                .mockReturnValueOnce(throwError(() => new Error('409 binding revoked')));
+
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+            fixture.componentRef.setInput('videoUrl', fallbackUrl);
+            await render();
+
+            // Clear the initial loadSource call
+            getMockHls().loadSource.mockClear();
+
+            // Trigger the refresh timer — this fires fetchAndLoadToken again which will fail
+            vi.advanceTimersByTime(31000);
+
+            // The player must switch to fallbackUrl via hls.loadSource (not tokenError)
+            expect(component.tokenError()).toBe(false);
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(fallbackUrl);
+
+            vi.useRealTimers();
+        });
+
+        it('restores currentTime and resumes playback when the refreshed manifest is parsed', async () => {
+            vi.useFakeTimers();
+
+            const firstUrl = 'https://tum.live/hls/first.m3u8';
+            const secondUrl = 'https://tum.live/hls/second.m3u8';
+
+            mockGocastService.getPlaybackToken.mockReturnValueOnce(of({ playlistUrl: firstUrl, expiresIn: 60 })).mockReturnValueOnce(of({ playlistUrl: secondUrl, expiresIn: 60 }));
+
+            setGocastIdentity();
+            await render();
+
+            // Simulate playback progress: at 42s and currently playing
+            videoElement.currentTime = 42;
+            Object.defineProperty(videoElement, 'paused', { configurable: true, value: false });
+            const playSpy = vi.spyOn(videoElement, 'play').mockResolvedValue(undefined);
+
+            getMockHls().on.mockClear();
+            getMockHls().off.mockClear();
+
+            // Trigger the refresh: re-fetches and calls hls.loadSource(secondUrl), then registers
+            // a one-shot MANIFEST_PARSED handler that should restore position + play state.
+            vi.advanceTimersByTime(31000);
+
+            // The component must have registered a MANIFEST_PARSED handler for the restoration.
+            const manifestCall = getMockHls().on.mock.calls.find((call: any) => call[0] === 'hlsManifestParsed');
+            expect(manifestCall).toBeDefined();
+            const manifestHandler = manifestCall[1];
+
+            // Mutate currentTime as a real HLS reload would (resets to 0) so we can verify the seek-back.
+            videoElement.currentTime = 0;
+
+            // Fire the manifest-parsed event: this is the core behavior under test.
+            manifestHandler();
+
+            // Position is restored to the pre-refresh time...
+            expect(videoElement.currentTime).toBe(42);
+            // ...and playback resumes because the player was playing before the refresh.
+            expect(playSpy).toHaveBeenCalled();
+            // ...and the one-shot handler is removed to avoid leaks / double-restore.
+            expect(getMockHls().off).toHaveBeenCalledWith('hlsManifestParsed', manifestHandler);
+
+            vi.useRealTimers();
+        });
+
+        it('does NOT resume playback on refresh when the player was paused', async () => {
+            vi.useFakeTimers();
+
+            mockGocastService.getPlaybackToken
+                .mockReturnValueOnce(of({ playlistUrl: 'https://tum.live/hls/first.m3u8', expiresIn: 60 }))
+                .mockReturnValueOnce(of({ playlistUrl: 'https://tum.live/hls/second.m3u8', expiresIn: 60 }));
+
+            setGocastIdentity();
+            await render();
+
+            videoElement.currentTime = 17;
+            Object.defineProperty(videoElement, 'paused', { configurable: true, value: true });
+            const playSpy = vi.spyOn(videoElement, 'play').mockResolvedValue(undefined);
+
+            getMockHls().on.mockClear();
+
+            vi.advanceTimersByTime(31000);
+
+            const manifestCall = getMockHls().on.mock.calls.find((call: any) => call[0] === 'hlsManifestParsed');
+            const manifestHandler = manifestCall[1];
+
+            videoElement.currentTime = 0;
+            manifestHandler();
+
+            // Position is still restored...
+            expect(videoElement.currentTime).toBe(17);
+            // ...but play() is NOT called because the player was paused.
+            expect(playSpy).not.toHaveBeenCalled();
+
+            vi.useRealTimers();
+        });
+
+        it('clears the refresh timer on ngOnDestroy', async () => {
+            const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: 'https://tum.live/hls/signed.m3u8', expiresIn: 3600 }));
+
+            setGocastIdentity();
+            await render();
+
+            fixture.destroy();
+
+            expect(clearTimeoutSpy).toHaveBeenCalled();
+        });
+
+        it('uses minimum 5000ms delay when expiresIn is very small (≤ TOKEN_REFRESH_BUFFER_SECONDS)', async () => {
+            const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+            // expiresIn = 10 → (10 - 30) * 1000 = -20000, floor → 5000
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: 'https://tum.live/hls/signed.m3u8', expiresIn: 10 }));
+
+            setGocastIdentity();
+            await render();
+
+            // Timer must be set to at least 5000ms, not 0 or negative
+            expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+        });
+
+        it('uses minimum 5000ms delay when expiresIn equals TOKEN_REFRESH_BUFFER_SECONDS', async () => {
+            const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+            // expiresIn = 30 → (30 - 30) * 1000 = 0, floor → 5000
+            mockGocastService.getPlaybackToken.mockReturnValue(of({ playlistUrl: 'https://tum.live/hls/signed.m3u8', expiresIn: 30 }));
+
+            setGocastIdentity();
+            await render();
+
+            expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+        });
+
+        it('falls back to videoUrl via HLS when EP2 fails and videoUrl is set', async () => {
+            // Fix 2: EP2 error + fallback videoUrl → player loads public HLS URL instead of setting tokenError.
+            const fallbackUrl = 'https://cdn.example.com/public.m3u8';
+            mockGocastService.getPlaybackToken.mockReturnValue(throwError(() => new Error('409 no binding')));
+
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+            fixture.componentRef.setInput('videoUrl', fallbackUrl);
+            await render();
+
+            expect(component.tokenError()).toBe(false);
+            expect(getMockHls().loadSource).toHaveBeenCalledWith(fallbackUrl);
+        });
+
+        it('sets tokenError when EP2 fails and no videoUrl fallback is available', async () => {
+            // Fix 2: EP2 error + no videoUrl → tokenError is shown (existing behaviour preserved).
+            mockGocastService.getPlaybackToken.mockReturnValue(throwError(() => new Error('404')));
+
+            fixture.componentRef.setInput('transcriptSegments', []);
+            fixture.componentRef.setInput('gocastIdentity', identity);
+            // videoUrl not set
+            await render();
+
+            expect(component.tokenError()).toBe(true);
+            expect(getMockHls().loadSource).not.toHaveBeenCalled();
+        });
+
+        it('cancels pending token fetch subscription on component destroy via takeUntilDestroyed', async () => {
+            // The getPlaybackToken observable should be cancellable.
+            // We verify by checking that destroying the component does not cause tokenError
+            // even if the observable would have emitted an error after destroy.
+            let reject: (reason?: unknown) => void;
+            const neverSettles = new Promise<never>((_resolve, rej) => {
+                reject = rej;
+            });
+
+            // Return an observable that never emits
+            const { Observable } = await import('rxjs');
+            let subscriberCompleted = false;
+            mockGocastService.getPlaybackToken.mockReturnValue(
+                new Observable((observer) => {
+                    // Simulate a long-running HTTP request by not completing immediately
+                    neverSettles.catch(() => {
+                        observer.error(new Error('cancelled'));
+                    });
+                    return () => {
+                        subscriberCompleted = true;
+                    };
+                }),
+            );
+
+            setGocastIdentity();
+            await render();
+
+            // Destroy the component — takeUntilDestroyed should cancel the subscription
+            fixture.destroy();
+
+            // Signal the never-settling promise to reject (simulating cleanup)
+            reject!(new Error('test cleanup'));
+
+            // The teardown should have been called (subscription was unsubscribed)
+            expect(subscriberCompleted).toBe(true);
+            // tokenError must not be set because the subscription was cancelled before any error
+            expect(component.tokenError()).toBe(false);
         });
     });
 });

@@ -182,4 +182,51 @@ describe('OnlineUnitFormComponent', () => {
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(resourceDto.title);
         expect(onlineUnitFormComponent.descriptionControl?.value).toEqual(resourceDto.description);
     });
+
+    it('should auto-fill the source on gocast stream selection and clear it (incl. cached id) on de-selection', () => {
+        onlineUnitFormComponentFixture.detectChanges();
+
+        // Select a stream — auto-fills the source URL using the bound course slug.
+        onlineUnitFormComponent.onGocastStreamSelected({ streamId: 42, streamName: 'Lecture 1', slug: 'eidi' });
+        expect(onlineUnitFormComponent.sourceControl?.value).toBe('https://tum.live/w/eidi/42');
+        let emitted: OnlineUnitFormData | undefined;
+        const emitSpy = vi.spyOn(onlineUnitFormComponent.formSubmitted, 'emit').mockImplementation((d) => (emitted = d));
+        onlineUnitFormComponent.submitForm();
+        expect(emitted?.gocastStreamId).toBe(42);
+
+        // Clear the selection — drops the cached id and removes the auto-filled URL.
+        onlineUnitFormComponent.onGocastStreamSelected(undefined);
+        expect(onlineUnitFormComponent.sourceControl?.value).toBe('');
+        onlineUnitFormComponent.submitForm();
+        expect(emitted?.gocastStreamId).toBeUndefined();
+
+        emitSpy.mockRestore();
+    });
+
+    it('should update the auto-filled source URL when the gocast stream selection changes', () => {
+        onlineUnitFormComponentFixture.detectChanges();
+
+        onlineUnitFormComponent.onGocastStreamSelected({ streamId: 42, streamName: 'Lecture 1', slug: 'eidi' });
+        expect(onlineUnitFormComponent.sourceControl?.value).toBe('https://tum.live/w/eidi/42');
+
+        // Re-selecting a different stream replaces the previously auto-filled URL.
+        onlineUnitFormComponent.onGocastStreamSelected({ streamId: 43, streamName: 'Lecture 2', slug: 'eidi' });
+        expect(onlineUnitFormComponent.sourceControl?.value).toBe('https://tum.live/w/eidi/43');
+    });
+
+    it('should preserve a user-edited source URL when a gocast stream is selected', () => {
+        onlineUnitFormComponentFixture.detectChanges();
+
+        // User types their own URL first.
+        onlineUnitFormComponent.sourceControl?.setValue('https://my.custom/video');
+        onlineUnitFormComponent.onGocastStreamSelected({ streamId: 42, streamName: 'Lecture 1', slug: 'eidi' });
+
+        // The hand-edited URL is preserved (not overwritten by auto-fill), but the stream id is still recorded.
+        expect(onlineUnitFormComponent.sourceControl?.value).toBe('https://my.custom/video');
+        let emitted: OnlineUnitFormData | undefined;
+        const emitSpy = vi.spyOn(onlineUnitFormComponent.formSubmitted, 'emit').mockImplementation((d) => (emitted = d));
+        onlineUnitFormComponent.submitForm();
+        expect(emitted?.gocastStreamId).toBe(42);
+        emitSpy.mockRestore();
+    });
 });

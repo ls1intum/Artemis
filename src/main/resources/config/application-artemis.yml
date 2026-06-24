@@ -153,6 +153,12 @@ artemis:
   weaviate:
     enabled: false
 
+  tum-live:
+    api-base-url: ""                 # gocast REST API base URL; empty = TUM Live integration disabled
+    service-account-token: ""        # long-lived bearer token for the gocast service account; set via secret management
+    service-account-user-id: ""      # gocast user id of the service account (used for approval-page links)
+    web-base-url: ""                 # gocast web UI base URL, e.g. https://tum.live (used for approval-page links)
+
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:
   ai:

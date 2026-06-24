@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, effect, inject, input, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
@@ -6,13 +7,31 @@ import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { MessageModule } from 'primeng/message';
 
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
+import { GocastService } from 'app/videosource/gocast/gocast.service';
+import { TumLiveAttributionComponent } from 'app/videosource/gocast/tum-live-attribution.component';
+
+/**
+ * Identity of a non-public bound TUM Live stream, used to fetch and refresh playback tokens.
+ * courseId: the Artemis course id (used to scope the EP2 call)
+ * streamId: the gocast stream id
+ * slug: the TUM Live course slug (used to build the watch-page URL for the attribution label)
+ */
+export interface GocastStreamIdentity {
+    courseId: number;
+    streamId: number;
+    slug: string;
+}
+
+/** How many seconds before token expiry to schedule a refresh (safety buffer). */
+const TOKEN_REFRESH_BUFFER_SECONDS = 30;
 
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
-    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe],
+    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent, ArtemisTranslatePipe, TumLiveAttributionComponent, MessageModule],
     templateUrl: './video-player.component.html',
     styleUrls: ['./video-player.component.scss'],
 })
@@ -37,6 +56,17 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Optional timestamp to seek to once the player is ready */
     initialTimestamp = input<number | undefined>(undefined);
+
+    /**
+     * Identity of a non-public bound TUM Live stream that requires a signed playback token.
+     * When provided, the player fetches a token via GocastService.getPlaybackToken and refreshes
+     * it before expiry. When absent, the player uses videoUrl directly (existing public path).
+     *
+     * TODO(gocast): wire this from AttachmentVideoUnitComponent / OnlineUnitComponent once
+     * the server-side stream identity is threaded through the lectureUnit DTO. For now, callers
+     * that know their unit is a non-public bound TUM Live stream can pass this explicitly.
+     */
+    gocastIdentity = input<GocastStreamIdentity | undefined>(undefined);
 
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
@@ -72,6 +102,19 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     private lastInitialTimestamp: number | undefined;
     private pendingInitialSeek: number | undefined;
 
+    /** Token refresh timer id (returned by setTimeout) */
+    private tokenRefreshTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+
+    /** The TUM Live watch-page URL for the attribution label, e.g. https://tum.live/w/{slug}/{streamId} */
+    readonly tumLiveWatchUrl = signal<string | undefined>(undefined);
+
+    /** Whether the token fetch failed (shown as an error state) */
+    readonly tokenError = signal<boolean>(false);
+
+    private readonly gocastService = inject(GocastService);
+
+    private readonly destroyRef = inject(DestroyRef);
+
     constructor() {
         effect(() => {
             if (!this.viewReady()) {
@@ -102,15 +145,113 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     ngAfterViewInit(): void {
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
-        const src = this.videoUrl();
 
         this.viewReady.set(true);
 
-        if (!videoElement || !src) {
-            return;
+        const identity = this.gocastIdentity();
+
+        if (identity) {
+            // Non-public bound TUM Live stream: derive the watch-page link and fetch a token.
+            this.tumLiveWatchUrl.set(`https://tum.live/w/${identity.slug}/${identity.streamId}`);
+            if (videoElement) {
+                this.fetchAndLoadToken(identity, videoElement);
+            }
+        } else {
+            // Existing public path: use videoUrl directly.
+            const src = this.videoUrl();
+            if (videoElement && src) {
+                this.initHls(src, videoElement);
+            }
         }
 
-        // Initialize HLS.js for .m3u8 files
+        if (videoElement) {
+            this.timeupdateHandler = () => {
+                this.updateCurrentSegment(videoElement.currentTime);
+            };
+            videoElement.addEventListener('timeupdate', this.timeupdateHandler);
+
+            this.initializeResizer();
+        }
+    }
+
+    /**
+     * Fetches a playback token from the Artemis backend (EP2) and loads the signed HLS URL.
+     * Schedules a timer to refresh the token before it expires, preserving playback position
+     * and play/pause state across the reload.
+     */
+    private fetchAndLoadToken(identity: GocastStreamIdentity, videoElement: HTMLVideoElement): void {
+        this.gocastService
+            .getPlaybackToken(identity.courseId, identity.streamId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (token) => {
+                    const url = token.playlistUrl ?? token.playlistUrlPres ?? token.playlistUrlCam;
+                    if (!url) {
+                        this.tokenError.set(true);
+                        return;
+                    }
+
+                    this.tokenError.set(false);
+
+                    if (this.hls) {
+                        // Refresh: swap the source while preserving position and play state.
+                        const currentTime = videoElement.currentTime;
+                        const wasPlaying = !videoElement.paused;
+
+                        this.hls.loadSource(url);
+
+                        // Restore position after the new manifest loads
+                        const restoreAfterManifest = () => {
+                            videoElement.currentTime = currentTime;
+                            if (wasPlaying) {
+                                videoElement.play().catch(() => {
+                                    // Autoplay may be blocked; ignore and let user resume manually
+                                });
+                            }
+                            this.hls?.off(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
+                        };
+                        this.hls.on(Hls.Events.MANIFEST_PARSED, restoreAfterManifest);
+                    } else {
+                        // First load
+                        this.initHls(url, videoElement);
+                    }
+
+                    // Schedule a refresh slightly before the token expires.
+                    // Use a minimum floor of 5 000 ms to avoid tight polling loops when
+                    // expiresIn is very small (e.g. ≤ TOKEN_REFRESH_BUFFER_SECONDS).
+                    const expiresIn = token.expiresIn; // seconds
+                    const refreshAfterMs = Math.max(5000, (expiresIn - TOKEN_REFRESH_BUFFER_SECONDS) * 1000);
+                    this.clearTokenRefreshTimer();
+                    this.tokenRefreshTimer = setTimeout(() => {
+                        this.fetchAndLoadToken(identity, videoElement);
+                    }, refreshAfterMs);
+                },
+                error: () => {
+                    // EP2 failed (initial load or refresh — 409/404/503/etc.).
+                    // Fall back to the public videoUrl path whenever available.
+                    // For a refresh failure, this.hls already exists — still switch sources so the stale
+                    // signed URL is replaced immediately rather than waiting for the CDN to expire it.
+                    this.clearTokenRefreshTimer();
+                    const fallbackUrl = this.videoUrl();
+                    if (fallbackUrl) {
+                        this.tokenError.set(false);
+                        if (this.hls) {
+                            this.hls.loadSource(fallbackUrl);
+                        } else {
+                            this.initHls(fallbackUrl, videoElement);
+                        }
+                    } else {
+                        this.tokenError.set(true);
+                    }
+                },
+            });
+    }
+
+    /**
+     * Initializes HLS.js with the given source URL and attaches it to the video element.
+     * This is used both for the initial public path and for the first load of a token-gated stream.
+     */
+    private initHls(src: string, videoElement: HTMLVideoElement): void {
         if (Hls.isSupported()) {
             this.hls = new Hls();
             this.hls.loadSource(src);
@@ -140,15 +281,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             // Native HLS support (Safari)
             videoElement.src = src;
         }
-
-        // Listen to timeupdate events to sync transcript
-        this.timeupdateHandler = () => {
-            this.updateCurrentSegment(videoElement.currentTime);
-        };
-        videoElement.addEventListener('timeupdate', this.timeupdateHandler);
-
-        // Initialize resizable panel
-        this.initializeResizer();
     }
 
     /**
@@ -313,8 +445,18 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    private clearTokenRefreshTimer(): void {
+        if (this.tokenRefreshTimer !== undefined) {
+            clearTimeout(this.tokenRefreshTimer);
+            this.tokenRefreshTimer = undefined;
+        }
+    }
+
     /** Clean up on destroy. */
     ngOnDestroy(): void {
+        // Clear token refresh timer
+        this.clearTokenRefreshTimer();
+
         // Remove event listener to prevent memory leaks
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
