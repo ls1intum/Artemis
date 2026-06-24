@@ -852,6 +852,36 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importTextExerciseOmittingModeAndScoreKeepsEntityDefaults() throws Exception {
+        var now = ZonedDateTime.now();
+        Course course1 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEmptyCourse();
+        courseUtilService.enableMessagingForCourse(course2);
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course1);
+        textExerciseRepository.save(textExercise);
+        textExercise.setCourse(course2);
+        textExercise.setChannelName("testchannel-defaults-" + textExercise.getId());
+
+        // Simulate an older/API client that omits mode and includedInOverallScore in the import payload. The old entity
+        // request body kept the entity defaults (INDIVIDUAL, INCLUDED_COMPLETELY) for omitted fields; the DTO mapper must
+        // not overwrite them with null (null mode breaks the non-null column, null score fails validateGeneralSettings).
+        var src = ImportTextExerciseDTO.of(textExercise);
+        var dto = new ImportTextExerciseDTO(src.id(), src.title(), src.channelName(), src.shortName(), src.problemStatement(), src.categories(), src.difficulty(), null,
+                src.maxPoints(), src.bonusPoints(), null, src.allowComplaintsForAutomaticAssessments(), src.allowFeedbackRequests(), src.presentationScoreEnabled(),
+                src.secondCorrectionEnabled(), src.feedbackSuggestionModule(), src.gradingInstructions(), src.releaseDate(), src.startDate(), src.dueDate(),
+                src.assessmentDueDate(), src.exampleSolutionPublicationDate(), src.exampleSolution(), src.courseId(), src.exerciseGroupId(), src.teamAssignmentConfig(),
+                src.plagiarismDetectionConfig(), src.gradingCriteria(), src.competencyLinks());
+
+        var newTextExerciseDto = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), dto, TextExerciseResponseDTO.class,
+                HttpStatus.CREATED);
+        TextExercise newTextExercise = textExerciseRepository.findById(newTextExerciseDto.id()).orElseThrow();
+        assertThat(newTextExercise.getMode()).as("omitted mode keeps the INDIVIDUAL entity default instead of null").isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(newTextExercise.getIncludedInOverallScore()).as("omitted includedInOverallScore keeps the INCLUDED_COMPLETELY entity default")
+                .isEqualTo(IncludedInOverallScore.INCLUDED_COMPLETELY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importTextExerciseWithExampleSubmissionFromCourseToCourse() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = courseUtilService.addEmptyCourse();
@@ -1087,22 +1117,31 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void getExamTextExerciseCarriesNestedExamCourse() throws Exception {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         TextExercise examTextExercise = textExerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseGroup));
-        Course examCourse = exerciseGroup.getExam().getCourse();
+        var exam = exerciseGroup.getExam();
+        Course examCourse = exam.getCourse();
 
         TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + examTextExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
 
         assertThat(textExerciseServer).as("exam text exercise was retrieved").isNotNull();
         assertThat(textExerciseServer.exerciseGroup()).as("nested exerciseGroup is exposed for an exam exercise").isNotNull();
-        assertThat(textExerciseServer.exerciseGroup().exam()).as("nested exam reference is exposed").isNotNull();
+        var examRef = textExerciseServer.exerciseGroup().exam();
+        assertThat(examRef).as("nested exam reference is exposed").isNotNull();
         // For exam exercises the client resolves the course via exercise.exerciseGroup.exam.course (top-level course is
         // null). It needs the course group names there to compute access rights (account.service.setAccessRightsForCourse);
         // dropping it loses course context and access rights on the exam exercise management screens.
-        assertThat(textExerciseServer.exerciseGroup().exam().course()).as("nested exam course is present for an exam exercise").isNotNull();
-        assertThat(textExerciseServer.exerciseGroup().exam().course().id()).as("nested exam course carries its id").isEqualTo(examCourse.getId());
-        assertThat(textExerciseServer.exerciseGroup().exam().course().teachingAssistantGroupName()).as("nested exam course carries the TA group name used for access rights")
+        assertThat(examRef.course()).as("nested exam course is present for an exam exercise").isNotNull();
+        assertThat(examRef.course().id()).as("nested exam course carries its id").isEqualTo(examCourse.getId());
+        assertThat(examRef.course().teachingAssistantGroupName()).as("nested exam course carries the TA group name used for access rights")
                 .isEqualTo(examCourse.getTeachingAssistantGroupName());
-        assertThat(textExerciseServer.exerciseGroup().exam().course().instructorGroupName()).as("nested exam course carries the instructor group name used for access rights")
+        assertThat(examRef.course().instructorGroupName()).as("nested exam course carries the instructor group name used for access rights")
                 .isEqualTo(examCourse.getInstructorGroupName());
+        // The unchanged Angular views also read exam.title (detail-page exam link), exam.testExam (gates feedback-
+        // suggestion options) and exam.numberOfCorrectionRoundsInExam (assessment controls); they must survive the DTO.
+        assertThat(examRef.id()).as("nested exam id").isEqualTo(exam.getId());
+        assertThat(examRef.title()).as("nested exam title for the detail-page exam link").isEqualTo(exam.getTitle());
+        assertThat(examRef.testExam()).as("nested exam test-exam flag gating feedback-suggestion options").isEqualTo(exam.isTestExam());
+        assertThat(examRef.numberOfCorrectionRoundsInExam()).as("nested exam correction-round count for the assessment controls")
+                .isEqualTo(exam.getNumberOfCorrectionRoundsInExam());
     }
 
     @Test
@@ -1207,6 +1246,25 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         final var searchNon = pageableSearchUtilService.configureSearch("No course has this name");
         final var resultNon = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchExamTextExerciseCarriesNestedExerciseGroupForImportMarker() throws Exception {
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
+        examTextExercise.setTitle("searchExamMarker-" + UUID.randomUUID().toString().substring(0, 8));
+        examTextExercise = textExerciseRepository.save(examTextExercise);
+
+        final var search = pageableSearchUtilService.configureSearch(examTextExercise.getTitle());
+        final var result = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExerciseListItemDTO.class, pageableSearchUtilService.searchMapping(search));
+
+        final long exerciseId = examTextExercise.getId();
+        TextExerciseListItemDTO found = result.getResultsOnPage().stream().filter(e -> e.id().equals(exerciseId)).findFirst().orElseThrow();
+        // The cross-course import search table shows the exam-question marker via @if (exercise.exerciseGroup); the list
+        // DTO must carry a nested exerciseGroup for exam exercises or that marker disappears.
+        assertThat(found.exerciseGroup()).as("exam text exercise carries a nested exerciseGroup so the import search marks it as an exam question").isNotNull();
+        assertThat(found.examId()).as("flat examId is still present alongside the nested group").isEqualTo(exerciseGroup.getExam().getId());
     }
 
     @Test

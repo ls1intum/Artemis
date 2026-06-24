@@ -167,13 +167,22 @@ public class TextExerciseExportImportResource {
         exercise.setProblemStatement(dto.problemStatement());
         exercise.setCategories(dto.categories());
         exercise.setDifficulty(dto.difficulty());
-        exercise.setMode(dto.mode());
+        // mode and includedInOverallScore have non-null entity defaults (INDIVIDUAL, INCLUDED_COMPLETELY) that the old
+        // entity request body preserved when a client omitted them. Guard the setters so an import payload that omits
+        // them (older/API clients) keeps those defaults instead of overwriting with null, which would violate the
+        // non-null mode column and make validateGeneralSettings() reject the missing included-score. Mirrors the create
+        // path's mode guard.
+        if (dto.mode() != null) {
+            exercise.setMode(dto.mode());
+        }
         // Text exercises are always manually assessed (mirrors the create path); the import DTO does not carry
         // assessmentType, so set it explicitly to avoid copyExerciseBasis persisting null.
         exercise.setAssessmentType(AssessmentType.MANUAL);
         exercise.setMaxPoints(dto.maxPoints());
         exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+        if (dto.includedInOverallScore() != null) {
+            exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+        }
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
         }
