@@ -31,7 +31,6 @@ export function tutorialPeriodRangeValidator(control: AbstractControl): Validati
 @Component({
     selector: 'jhi-tutorial-groups-configuration-form',
     templateUrl: './tutorial-groups-configuration-form.component.html',
-    styleUrls: ['./tutorial-groups-configuration-form.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, DatePickerModule, ArtemisTranslatePipe],
 })

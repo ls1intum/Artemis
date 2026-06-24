@@ -57,8 +57,14 @@ export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs)
 export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Dayjs, format: string = DATE_TIME_PICKER_FORMAT) {
     await expect(dateInputField).toBeEnabled();
     await dateInputField.click();
-    await dateInputField.clear();
-    await dateInputField.pressSequentially(date.format(format));
+    // Wait until the input is actually focused before typing; otherwise the first character(s) can be
+    // dropped while focus is still settling. Clear any existing value via the keyboard so focus is kept.
+    await expect(dateInputField).toBeFocused();
+    await dateInputField.press('ControlOrMeta+a');
+    await dateInputField.press('Delete');
+    // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type with real
+    // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
+    await dateInputField.pressSequentially(date.format(format), { delay: 30 });
     await dateInputField.press('Tab');
 }
 
