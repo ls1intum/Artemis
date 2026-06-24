@@ -125,6 +125,8 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
      * divider, generalised here for the splitter gutters.
      */
     private resizeOverlay?: HTMLElement;
+    /** Document/window listeners that tear the overlay down on any gesture end (see {@link showResizeOverlay}). */
+    private overlayCleanupFns: (() => void)[] = [];
 
     private readonly fullscreenBodyClass = 'lecture-combined-view-fullscreen-active';
     private readonly focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -146,6 +148,9 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
                     this.clearFullscreenTopOffset();
                     this.setGlobalFullscreenState(false);
                     this.cleanupFullscreenAccessibility();
+                    // Escape can close fullscreen mid-drag: the splitter unrenders before any resize-end event
+                    // reaches it, so the drag overlay would otherwise orphan into a full-viewport click blocker.
+                    this.removeResizeOverlay();
                 }
             });
         });
@@ -238,9 +243,20 @@ export class LectureUnitFullscreenLayoutComponent implements OnDestroy {
         this.renderer.setStyle(overlay, 'cursor', cursor);
         this.renderer.appendChild(this.document.body, overlay);
         this.resizeOverlay = overlay;
+        // Self-heal: tear the overlay down on any gesture end. p-splitter only triggers removal via (onResizeEnd)
+        // on a normal mouseup; it never fires for touchcancel/pointercancel, so an interrupted drag would leave the
+        // full-viewport, z-index 10000 overlay in place as an invisible click blocker over the whole app. These
+        // document/window listeners guarantee teardown regardless of how the gesture ends (and are idempotent with
+        // the (onResizeEnd) path). The listener returned by renderer.listen is its own unlisten function.
+        for (const endEvent of ['mouseup', 'touchend', 'touchcancel', 'pointercancel']) {
+            this.overlayCleanupFns.push(this.renderer.listen('document', endEvent, () => this.removeResizeOverlay()));
+        }
+        this.overlayCleanupFns.push(this.renderer.listen('window', 'blur', () => this.removeResizeOverlay()));
     }
 
     private removeResizeOverlay(): void {
+        this.overlayCleanupFns.forEach((cleanup) => cleanup());
+        this.overlayCleanupFns = [];
         if (this.resizeOverlay) {
             this.resizeOverlay.remove();
             this.resizeOverlay = undefined;

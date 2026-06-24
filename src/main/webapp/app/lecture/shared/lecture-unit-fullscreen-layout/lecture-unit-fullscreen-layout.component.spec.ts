@@ -158,6 +158,39 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         expect(document.body.querySelector('div[style*="z-index: 10000"]')).toBeNull();
     });
 
+    it('self-heals the drag overlay on a gesture end the splitter never reports (touchcancel / mouseup)', () => {
+        const overlaySelector = 'div[style*="z-index: 10000"]';
+
+        // p-splitter emits onResizeEnd only on a normal mouseup; a cancelled touch gesture would otherwise orphan
+        // the overlay. The document-level listener tears it down regardless of how the gesture ends.
+        component['onSplitterResizeStart']('horizontal');
+        expect(document.body.querySelector(overlaySelector)).not.toBeNull();
+        document.dispatchEvent(new Event('touchcancel'));
+        expect(document.body.querySelector(overlaySelector)).toBeNull();
+
+        component['onSplitterResizeStart']('vertical');
+        expect(document.body.querySelector(overlaySelector)).not.toBeNull();
+        document.dispatchEvent(new Event('mouseup'));
+        expect(document.body.querySelector(overlaySelector)).toBeNull();
+    });
+
+    it('removes a lingering drag overlay when fullscreen closes mid-resize (Escape)', async () => {
+        const overlaySelector = 'div[style*="z-index: 10000"]';
+        component.open();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        component['onSplitterResizeStart']('horizontal');
+        expect(document.body.querySelector(overlaySelector)).not.toBeNull();
+
+        // Escape closes fullscreen mid-drag: the splitter unrenders without a resize-end event, so the close path
+        // must drop the overlay itself, otherwise it orphans as a full-viewport click blocker.
+        component.close();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(document.body.querySelector(overlaySelector)).toBeNull();
+    });
+
     it('converts px minSizes to percentages', () => {
         // 220px / 1600px reference width => 14% (rounded); see toPercentMinSizes.
         fixture.componentRef.setInput('verticalSplit', {

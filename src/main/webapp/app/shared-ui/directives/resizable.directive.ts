@@ -1,4 +1,4 @@
-import { DestroyRef, Directive, ElementRef, Renderer2, afterNextRender, inject, input, output } from '@angular/core';
+import { DestroyRef, Directive, ElementRef, Renderer2, afterNextRender, effect, inject, input, output } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 
 /**
@@ -95,6 +95,13 @@ export class ResizableDirective {
         afterNextRender(() => {
             this.applyHandleStyles(this.resizableEdges());
             this.attachExternalHandleListener();
+        });
+        // Re-apply the handle affordance styles (touch-action: none + resize cursor) whenever the edge map changes,
+        // so handles whose edges are computed (e.g. modeling-assessment toggling horizontal/vertical resize) pick
+        // up the styles as soon as they render, not only after the first pointerdown. afterNextRender covers the
+        // initial pass; onPointerDown re-applies as a final safety net for handles re-created with an unchanged map.
+        effect(() => {
+            this.applyHandleStyles(this.resizableEdges());
         });
         this.destroyRef.onDestroy(() => {
             // Release a still-held pointer capture and reset state if the host is destroyed mid-drag.

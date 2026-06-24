@@ -118,6 +118,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     }
 
     ngAfterViewInit(): void {
+        this.seedSavedSizesFromStorage();
         const observedElement = this.useViewportWidthForCollapse() ? this.document.documentElement : this.elementRef.nativeElement;
         this.resizeObserver = new ResizeObserver((entries) => {
             const width = entries[0].contentRect.width;
@@ -128,6 +129,33 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+    }
+
+    /**
+     * Seeds {@link savedSizes} from the splitter's persisted localStorage entry on init. The splitter restores the
+     * panel widths itself (stateStorage="local"), but it never feeds them back to this component, so savedSizes
+     * stays undefined after a reload. Without this, the first collapse/expand (or a drag-to-collapse) would fall
+     * back to {@link DEFAULT_SIZES} and silently discard the user's persisted custom split. No-op when no
+     * storageKey is set or the stored value is not a usable two-number split.
+     */
+    private seedSavedSizesFromStorage(): void {
+        const key = this.storageKey();
+        if (!key) {
+            return;
+        }
+        try {
+            const raw = this.document.defaultView?.localStorage.getItem(key);
+            if (!raw) {
+                return;
+            }
+            // Matches PrimeNG's Splitter stateStorage format: JSON.stringify(number[]).
+            const parsed: unknown = JSON.parse(raw);
+            if (Array.isArray(parsed) && parsed.length === 2 && parsed.every((size) => typeof size === 'number' && Number.isFinite(size))) {
+                this.savedSizes.set(parsed as number[]);
+            }
+        } catch {
+            // Malformed or unavailable storage (private mode / no window); the in-memory default applies.
+        }
     }
 
     setActiveRight(value: string | number | undefined): void {
@@ -158,7 +186,10 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         const usable = current && (current[1] ?? 0) >= this.collapseSnapPercent() ? [...current] : [...ResizablePanelsComponent.DEFAULT_SIZES];
         this.savedSizes.set(usable);
 
-        const panels = this.elementRef.nativeElement.querySelectorAll('.resizable-panels-splitter [data-pc-section="panel"]') as NodeListOf<HTMLElement>;
+        // Direct-child combinator: PrimeNG applies the root class to the <p-splitter> host and renders the panel
+        // divs as its direct children (it selects them the same way: el.children.filter(data-pc-section==="panel")).
+        // A descendant selector would also match panels of a nested PrimeNG component projected into a panel.
+        const panels = this.elementRef.nativeElement.querySelectorAll('.resizable-panels-splitter > [data-pc-section="panel"]') as NodeListOf<HTMLElement>;
         if (panels.length >= 2) {
             // Mirrors PrimeNG's own flexBasis formula: calc(size% - (panels-1) * gutterSize px).
             panels[0].style.flexBasis = `calc(${usable[0]}% - ${ResizablePanelsComponent.GUTTER_SIZE}px)`;
@@ -183,7 +214,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     onResizeEnd(sizes: number[]): void {
         const rightSize = sizes[1] ?? 0;
         if (this.collapseSnapPercent() > 0 && rightSize <= this.collapseSnapPercent()) {
-            const reopenSizes = [...(this.savedSizes() ?? [65, 35])];
+            const reopenSizes = [...(this.savedSizes() ?? ResizablePanelsComponent.DEFAULT_SIZES)];
             this.savedSizes.set(reopenSizes);
             this.persistSizes(reopenSizes);
             this.collapseRightPanel();

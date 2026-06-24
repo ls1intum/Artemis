@@ -163,6 +163,30 @@ describe('ResizablePanelsComponent', () => {
         expect(localStorage.getItem('test-split')).toBe(JSON.stringify([70, 30]));
     });
 
+    it('seeds the saved split from localStorage on init so a reload + reopen keeps the persisted split', () => {
+        // Simulate a prior session having persisted a custom split under the storage key.
+        localStorage.setItem('test-split', JSON.stringify([72, 28]));
+
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.storageKey = 'test-split';
+        fixture.detectChanges();
+        const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+
+        // Seeded from storage on init, not left undefined (which would later fall back to the default split).
+        expect(component.savedSizes()).toEqual([72, 28]);
+
+        // A collapse/expand cycle without a drag in between must preserve the persisted split, not reset to the default.
+        component.collapseRightPanel();
+        fixture.detectChanges();
+        component.expandRightPanel(0);
+        fixture.detectChanges();
+
+        expect(component.savedSizes()).toEqual([72, 28]);
+        const splitter = fixture.nativeElement.querySelector('p-splitter');
+        const [, right] = Array.from(splitter.querySelectorAll('[data-pc-section="panel"]')) as HTMLElement[];
+        expect(right.style.flexBasis).toBe('calc(28% - 12px)');
+    });
+
     it('stores an independent copy of the sizes (p-splitter mutates its own array in place)', () => {
         const component = createFixture();
         const splitter = fixture.debugElement.query(By.css('p-splitter'));

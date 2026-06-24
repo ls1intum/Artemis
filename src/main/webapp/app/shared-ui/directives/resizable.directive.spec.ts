@@ -122,6 +122,22 @@ describe('ResizableDirective', () => {
         expect(document.body.style.userSelect).toBe('');
     });
 
+    it('re-applies handle styles when the edge map changes, before any pointerdown', async () => {
+        await fixture.whenStable();
+        const right = panel.querySelector('.draggable-right') as HTMLElement;
+        // Not a configured edge yet -> no resize affordance.
+        expect(right.style.cursor).toBe('');
+
+        // Adding the right edge (e.g. a computed edge map toggling on) must re-apply the affordance styles
+        // reactively, otherwise a freshly-shown handle has no touch-action / cursor until the first pointerdown.
+        fixture.componentInstance.edges.set({ left: '.draggable-left', right: '.draggable-right' });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(right.style.cursor).toBe('col-resize');
+        expect(right.style.touchAction).toBe('none');
+    });
+
     it('clamps to the configured min and max width', () => {
         const handle = panel.querySelector('.draggable-left')!;
         // Drag far right -> width would shrink below min (100) -> clamped to 100.

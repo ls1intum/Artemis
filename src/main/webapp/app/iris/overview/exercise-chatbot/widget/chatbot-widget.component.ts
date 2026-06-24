@@ -37,8 +37,13 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     /** Distance (px) from a border within which a pointerdown starts an edge resize. */
     private static readonly EDGE_MARGIN = 10;
-    /** Selector for controls whose clicks must never be hijacked by drag/resize gestures. */
-    private static readonly INTERACTIVE_CONTROL_SELECTOR = 'button, a, input, textarea, select, [role="button"], [role="menuitem"], [contenteditable="true"]';
+    /**
+     * Selector for controls whose clicks must never be hijacked by drag/resize gestures. The session-switcher menu
+     * (`.p-menu` / `[role="menu"]`) is included so a press on its chrome (padding/gaps between items, which are not
+     * themselves `[role="menuitem"]`) does not drag the whole widget out from under the open menu.
+     */
+    private static readonly INTERACTIVE_CONTROL_SELECTOR =
+        'button, a, input, textarea, select, [role="button"], [role="menuitem"], [contenteditable="true"], .p-menu, [role="menu"]';
     private widgetEl?: HTMLElement;
     private pointerDownCleanup?: () => void;
     private hoverMoveCleanup?: () => void;

@@ -12,23 +12,8 @@
     background-color: var(--lecture-combined-view-surface);
     overflow: hidden;
 
-    > .main-content {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-
-        > [content-main] {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            min-height: 0;
-            overflow: hidden;
-        }
-    }
-
-    // When the vertical splitter is active, the main content and sidebar live inside p-splitter panels.
+    // The main content renders either as a direct child (no sidebar) or inside a p-splitter panel (sidebar /
+    // horizontal split); the descendant selector covers both, so it stays stretched to fill its container.
     .main-content {
         flex: 1;
         min-width: 0;
