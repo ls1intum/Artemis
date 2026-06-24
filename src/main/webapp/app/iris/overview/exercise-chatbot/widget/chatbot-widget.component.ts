@@ -38,12 +38,14 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     /** Distance (px) from a border within which a pointerdown starts an edge resize. */
     private static readonly EDGE_MARGIN = 10;
     /**
-     * Selector for controls whose clicks must never be hijacked by drag/resize gestures. The session-switcher menu
-     * (`.p-menu` / `[role="menu"]`) is included so a press on its chrome (padding/gaps between items, which are not
-     * themselves `[role="menuitem"]`) does not drag the whole widget out from under the open menu.
+     * Selector for controls whose clicks must never be hijacked by drag/resize gestures. Besides the obvious form
+     * controls it covers: the session-switcher menu and its wrapper (`.p-menu` / `[role="menu"]` /
+     * `.session-switcher-inline-menu`) so a press on the menu chrome or its wrapper gutter does not drag the widget
+     * out from under the open menu; and the PrimeNG context select (`.p-select` / `[role="combobox"]`), whose label
+     * area is not a `<select>`/`[role="button"]`, so its open-dropdown click is preserved regardless of layout.
      */
     private static readonly INTERACTIVE_CONTROL_SELECTOR =
-        'button, a, input, textarea, select, [role="button"], [role="menuitem"], [contenteditable="true"], .p-menu, [role="menu"]';
+        'button, a, input, textarea, select, [role="button"], [role="menuitem"], [contenteditable="true"], .p-menu, [role="menu"], .session-switcher-inline-menu, .p-select, [role="combobox"]';
     private widgetEl?: HTMLElement;
     private pointerDownCleanup?: () => void;
     private hoverMoveCleanup?: () => void;
@@ -310,8 +312,9 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     setPositionAndScale() {
+        const nE = this.widgetEl ?? (this.document.querySelector('.chat-widget') as HTMLElement | null);
         const cntRect = (this.document.querySelector('.cdk-overlay-container') as HTMLElement)?.getBoundingClientRect();
-        if (!cntRect) {
+        if (!cntRect || !nE) {
             return;
         }
 
@@ -326,7 +329,6 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
             initY = cntRect.height - this.initialHeight - 20;
         }
 
-        const nE = this.document.querySelector('.chat-widget') as HTMLElement;
         nE.style.transform = `translate(${initX}px, ${initY}px)`;
         nE.setAttribute('data-x', String(initX));
         nE.setAttribute('data-y', String(initY));

@@ -112,7 +112,10 @@ describe('VideoPlayerComponent', () => {
                             [resizableConstraints]="resizableConstraints"
                             [resizableApplyInlineSize]="false"
                             [resizableHandleOutsideHost]="true"
+                            [class.is-resizing]="isResizing()"
+                            (resizeStart)="onResizeStart()"
                             (resizeMove)="onVideoColumnResize($event)"
+                            (resizeEnd)="onResizeEnd()"
                         >
                             <video #videoRef></video>
                         </div>
@@ -275,6 +278,26 @@ describe('VideoPlayerComponent', () => {
             videoColumnEl.dispatchEvent(new MouseEvent('pointerup', { clientX: targetClientX, bubbles: true }));
             return videoColumnEl;
         }
+
+        it('toggles isResizing across a drag so the video iframe stops swallowing pointer moves (the #12601 fix)', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            const videoColumnEl = component.videoColumn()!.nativeElement;
+            const wrapperEl = component.videoWrapper()!.nativeElement;
+            vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue(makeRect(1000));
+            vi.spyOn(videoColumnEl, 'getBoundingClientRect').mockReturnValue(makeRect(500));
+            fixture.detectChanges();
+
+            expect(component.isResizing()).toBe(false);
+
+            const handleEl = component.resizerHandle()!.nativeElement;
+            handleEl.dispatchEvent(new MouseEvent('pointerdown', { clientX: 500, button: 0, bubbles: true }));
+            expect(component.isResizing()).toBe(true);
+
+            videoColumnEl.dispatchEvent(new MouseEvent('pointerup', { clientX: 600, bubbles: true }));
+            expect(component.isResizing()).toBe(false);
+        });
 
         it('exposes width constraints derived from the live wrapper width', async () => {
             setInputs('https://cdn.example.com/m.m3u8', []);

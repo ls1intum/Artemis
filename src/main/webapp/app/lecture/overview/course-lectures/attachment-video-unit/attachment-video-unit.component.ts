@@ -452,7 +452,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // through to the fullscreen content underneath - the widget looks active yet can be neither moved
             // nor clicked. The fullscreen view has its own Iris sidebar, and the chatbot button is likewise
             // hidden here, so dismissing the widget is both correct and consistent (matches the widget's own
-            // closeAll() on navigation).
+            // closeAll() on navigation). Note closeAll() closes every open Material dialog; that is acceptable
+            // because Iris is the only feature using MatDialog here (other Artemis modals use PrimeNG/ng-bootstrap).
             this.dialog.closeAll();
         }
     }

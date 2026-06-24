@@ -7,7 +7,7 @@
         class="resizable-panels-splitter w-100 h-100"
         [class.right-collapsed]="isRightPanelCollapsed()"
         layout="horizontal"
-        [panelSizes]="savedSizes() ?? [65, 35]"
+        [panelSizes]="panelSizesForSplitter()"
         [minSizes]="[0, 0]"
         [gutterSize]="12"
         [stateKey]="storageKey()"

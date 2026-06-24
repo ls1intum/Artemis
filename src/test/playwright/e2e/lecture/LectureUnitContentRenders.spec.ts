@@ -47,8 +47,8 @@ test.describe('Lecture unit content renders when expanded', { tag: '@fast' }, ()
         await expect(toggle).toBeVisible({ timeout: 30_000 });
         await toggle.click();
 
-        // The content-main projection slot must render the video block. Before the fix it was empty.
-        await expect(page.locator('[content-main]')).toBeAttached({ timeout: 30_000 });
-        await expect(page.locator('.video-player-container').first()).toBeVisible({ timeout: 30_000 });
+        // The content-main projection slot must actually render the video block inside it. Before the fix the slot
+        // existed but was empty, so assert on the projected descendant (not just the now-unconditional slot div).
+        await expect(page.locator('[content-main] .video-player-container').first()).toBeVisible({ timeout: 30_000 });
     });
 });

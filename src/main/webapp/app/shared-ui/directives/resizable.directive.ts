@@ -96,11 +96,13 @@ export class ResizableDirective {
             this.applyHandleStyles(this.resizableEdges());
             this.attachExternalHandleListener();
         });
-        // Re-apply the handle affordance styles (touch-action: none + resize cursor) whenever the edge map changes,
-        // so handles whose edges are computed (e.g. modeling-assessment toggling horizontal/vertical resize) pick
-        // up the styles as soon as they render, not only after the first pointerdown. afterNextRender covers the
-        // initial pass; onPointerDown re-applies as a final safety net for handles re-created with an unchanged map.
+        // Re-apply the handle affordance styles (touch-action: none + resize cursor) and re-attach the external
+        // (sibling) handle delegation whenever their inputs change: the edge map (e.g. modeling-assessment toggling
+        // horizontal/vertical resize) or resizableHandleOutsideHost. Both operations are idempotent
+        // (attachExternalHandleListener cleans up the prior listener), so running them here plus once in
+        // afterNextRender is safe and keeps handles affordance-correct without waiting for the first pointerdown.
         effect(() => {
+            this.attachExternalHandleListener();
             this.applyHandleStyles(this.resizableEdges());
         });
         this.destroyRef.onDestroy(() => {
@@ -237,6 +239,11 @@ export class ResizableDirective {
         if (!this.activeEdge || event.pointerId !== this.activePointerId) {
             return;
         }
+        // Honor a mid-drag disable (the "inert when false" contract): if the consumer toggles resizableEnabled off
+        // during a drag, stop writing/emitting sizes. The gesture is still torn down normally on pointerup/cancel.
+        if (!this.resizableEnabled()) {
+            return;
+        }
         const { minWidth, maxWidth, minHeight, maxHeight } = this.resizableConstraints();
         let width = this.startWidth;
         let height = this.startHeight;
@@ -309,11 +316,13 @@ export class ResizableDirective {
 
     private clamp(value: number, min?: number, max?: number): number {
         let result = value;
-        if (min !== undefined) {
-            result = Math.max(min, result);
-        }
+        // Apply max first, then min, so the minimum always wins if a caller ever passes max < min: a panel must
+        // never be forced below its configured minimum (a maximum below the minimum is treated as "at least min").
         if (max !== undefined) {
             result = Math.min(max, result);
+        }
+        if (min !== undefined) {
+            result = Math.max(min, result);
         }
         return result;
     }

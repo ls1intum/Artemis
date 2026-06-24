@@ -1,7 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Component } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { LectureUnitFullscreenLayoutComponent } from './lecture-unit-fullscreen-layout.component';
+
+/** Host that projects marker content so we can assert it lands INSIDE the p-splitter panels (not left unprojected). */
+@Component({
+    template: `
+        <jhi-lecture-unit-fullscreen-layout [isCollapsed]="false" [showSidebar]="true">
+            <div content-main class="probe-main">MAIN</div>
+            <div content-sidebar class="probe-sidebar">SIDEBAR</div>
+        </jhi-lecture-unit-fullscreen-layout>
+    `,
+    imports: [LectureUnitFullscreenLayoutComponent],
+})
+class ProjectionHostComponent {}
 
 describe('LectureUnitFullscreenLayoutComponent', () => {
     setupTestBed({ zoneless: true });
@@ -326,5 +340,41 @@ describe('LectureUnitFullscreenLayoutComponent', () => {
         expect(preventDefaultShiftTabSpy).toHaveBeenCalled();
         expect(focusButton2Spy).toHaveBeenCalledOnce();
         expect(document.activeElement).toBe(button2);
+    });
+});
+
+describe('LectureUnitFullscreenLayoutComponent content projection', () => {
+    setupTestBed({ zoneless: true });
+
+    let hostFixture: ComponentFixture<ProjectionHostComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({ imports: [ProjectionHostComponent] }).compileComponents();
+        hostFixture = TestBed.createComponent(ProjectionHostComponent);
+        hostFixture.detectChanges();
+    });
+
+    afterEach(() => {
+        document.body.classList.remove('lecture-combined-view-fullscreen-active');
+    });
+
+    it('projects content-main and content-sidebar INTO the p-splitter panels in fullscreen (not left unprojected)', async () => {
+        const layout = hostFixture.debugElement.query(By.directive(LectureUnitFullscreenLayoutComponent)).componentInstance as LectureUnitFullscreenLayoutComponent;
+        layout.open();
+        await hostFixture.whenStable();
+        hostFixture.detectChanges();
+
+        const hostEl = hostFixture.nativeElement as HTMLElement;
+        // The main | sidebar splitter renders side-by-side (layout="horizontal").
+        expect(hostEl.querySelector('p-splitter.p-splitter-horizontal')).not.toBeNull();
+
+        const main = hostEl.querySelector('.probe-main');
+        const sidebar = hostEl.querySelector('.probe-sidebar');
+        expect(main).not.toBeNull();
+        expect(sidebar).not.toBeNull();
+        // The actual regression guard: both markers must land inside a splitter panel, i.e. the nested
+        // <ng-content> projection into the p-splitter panels works (the bug the PR fixed left these slots empty).
+        expect(main!.closest('[data-pc-section="panel"]')).not.toBeNull();
+        expect(sidebar!.closest('[data-pc-section="panel"]')).not.toBeNull();
     });
 });

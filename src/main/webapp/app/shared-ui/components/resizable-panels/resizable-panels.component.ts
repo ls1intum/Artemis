@@ -70,9 +70,18 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Split sizes (in percent) of the two splitter panels, persisted across mode switches.
-     * Bound to p-splitter via [panelSizes] and updated on (onResizeEnd).
+     * Updated on (onResizeEnd); fed to the splitter via {@link panelSizesForSplitter}.
      */
     readonly savedSizes = signal<number[] | undefined>(undefined);
+
+    /**
+     * The array actually bound to the splitter's [panelSizes]. It MUST be a copy of {@link savedSizes}: PrimeNG's
+     * `set panelSizes` adopts the bound array by reference and then mutates it in place on every drag
+     * (primeng-splitter.mjs). Binding `savedSizes()` directly would alias the signal's array to the splitter's
+     * internal buffer, so a drag would silently corrupt the remembered split (a near-zero snap size would leak into
+     * savedSizes + localStorage and reopen/reload jammed). Spreading here hands the splitter a throwaway copy.
+     */
+    readonly panelSizesForSplitter = computed(() => [...(this.savedSizes() ?? ResizablePanelsComponent.DEFAULT_SIZES)]);
 
     private resizeObserver?: ResizeObserver;
     private rightPanelCollapseChangedByUser = false;
@@ -150,7 +159,16 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             }
             // Matches PrimeNG's Splitter stateStorage format: JSON.stringify(number[]).
             const parsed: unknown = JSON.parse(raw);
-            if (Array.isArray(parsed) && parsed.length === 2 && parsed.every((size) => typeof size === 'number' && Number.isFinite(size))) {
+            // Only seed a usable split: two finite numbers, a positive left, and a right above the collapse
+            // threshold. A near-zero/degenerate stored value (external tampering, legacy data) is ignored so the
+            // initial render never restores a jammed sliver (restoreUsableSplit only runs on expand, not on seed).
+            if (
+                Array.isArray(parsed) &&
+                parsed.length === 2 &&
+                parsed.every((size) => typeof size === 'number' && Number.isFinite(size)) &&
+                parsed[0] > 0 &&
+                parsed[1] > this.collapseSnapPercent()
+            ) {
                 this.savedSizes.set(parsed as number[]);
             }
         } catch {
@@ -214,7 +232,11 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     onResizeEnd(sizes: number[]): void {
         const rightSize = sizes[1] ?? 0;
         if (this.collapseSnapPercent() > 0 && rightSize <= this.collapseSnapPercent()) {
-            const reopenSizes = [...(this.savedSizes() ?? ResizablePanelsComponent.DEFAULT_SIZES)];
+            // Only reuse the remembered split if it is itself usable. Guards against a degenerate value (and, as a
+            // belt-and-suspenders to panelSizesForSplitter's copy, against any near-zero size that aliasing might
+            // have left in savedSizes), so reopening/reloading never restores a jammed sliver.
+            const remembered = this.savedSizes();
+            const reopenSizes = remembered && (remembered[1] ?? 0) > this.collapseSnapPercent() ? [...remembered] : [...ResizablePanelsComponent.DEFAULT_SIZES];
             this.savedSizes.set(reopenSizes);
             this.persistSizes(reopenSizes);
             this.collapseRightPanel();

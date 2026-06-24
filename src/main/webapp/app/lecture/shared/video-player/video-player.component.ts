@@ -193,13 +193,6 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         this.resizeObserver.observe(videoColumnEl);
     }
 
-    /**
-     * Applies a resize from the {@link ResizableDirective} to the video column as a percentage-based flex-basis.
-     * The directive runs with `resizableApplyInlineSize=false`: it would otherwise write an inline `width`, which a
-     * `flex: 3` column ignores (flex-basis 0% wins over width), so the divider would not actually move. We translate
-     * the clamped px width into `flex: 0 0 <percent>%` so the split changes and still scales naturally when the
-     * wrapper is resized (matching the previous interact.js behaviour).
-     */
     /** Disables the video's pointer events while the divider is being dragged so the drag stays smooth. */
     protected onResizeStart(): void {
         this.isResizing.set(true);
@@ -210,6 +203,13 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         this.isResizing.set(false);
     }
 
+    /**
+     * Applies a resize from the {@link ResizableDirective} to the video column as a percentage-based flex-basis.
+     * The directive runs with `resizableApplyInlineSize=false`: it would otherwise write an inline `width`, which a
+     * `flex: 3` column ignores (flex-basis 0% wins over width), so the divider would not actually move. We translate
+     * the clamped px width into `flex: 0 0 <percent>%` so the split changes and still scales naturally when the
+     * wrapper is resized (matching the previous interact.js behaviour).
+     */
     protected onVideoColumnResize(event: ResizableSizeEvent): void {
         const videoColumnEl = this.videoColumn()?.nativeElement;
         const wrapperEl = this.videoWrapper()?.nativeElement;

@@ -187,6 +187,33 @@ describe('ResizablePanelsComponent', () => {
         expect(right.style.flexBasis).toBe('calc(28% - 12px)');
     });
 
+    it('keeps the usable split when snap-collapsing after a reopen (splitter buffer is not aliased to savedSizes)', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.storageKey = 'test-split';
+        fixture.detectChanges();
+        const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        const splitter = fixture.debugElement.query(By.css('p-splitter'));
+
+        // Establish a usable split, then collapse and reopen. Reopening feeds savedSizes into [panelSizes]; if that
+        // array were the signal's own buffer, the next drag would mutate it in place and corrupt the remembered split.
+        splitter.componentInstance.onResizeEnd.emit({ originalEvent: new Event('mouseup'), sizes: [70, 30] });
+        component.collapseRightPanel();
+        fixture.detectChanges();
+        component.expandRightPanel(0);
+        fixture.detectChanges();
+
+        // Simulate p-splitter mutating its internal buffer in place during a drag down to a near-zero right panel,
+        // then ending the drag below the snap threshold. The remembered usable split must survive untouched.
+        const internalBuffer = splitter.componentInstance.panelSizes as number[];
+        internalBuffer[0] = 94;
+        internalBuffer[1] = 6;
+        splitter.componentInstance.onResizeEnd.emit({ originalEvent: new Event('mouseup'), sizes: internalBuffer });
+
+        expect(component.isRightPanelCollapsed()).toBe(true);
+        expect(component.savedSizes()).toEqual([70, 30]);
+        expect(localStorage.getItem('test-split')).toBe(JSON.stringify([70, 30]));
+    });
+
     it('stores an independent copy of the sizes (p-splitter mutates its own array in place)', () => {
         const component = createFixture();
         const splitter = fixture.debugElement.query(By.css('p-splitter'));

@@ -127,8 +127,11 @@ export class CodeEditorGridComponent {
     toggleCollapse(interactableEvent: InteractableEvent, collapsableElement: CollapsableCodeEditorElement) {
         const event = interactableEvent.event;
         const horizontal = interactableEvent.horizontal;
-        const target = event.event?.toElement || event.relatedTarget || event.target;
-        target.blur();
+        // The collapse buttons emit a plain DOM event; blur the clicked control so it doesn't keep focus styling.
+        // (The old `event.event?.toElement || event.relatedTarget` chain was interact.js's wrapped-event shape and
+        // is dead now that interact.js is gone.)
+        const target = event.target as HTMLElement | undefined;
+        target?.blur();
         const cardElement = this.elementRefForCollapsableElement(collapsableElement);
 
         const collapsed = `collapsed--${horizontal ? 'horizontal' : 'vertical'}`;

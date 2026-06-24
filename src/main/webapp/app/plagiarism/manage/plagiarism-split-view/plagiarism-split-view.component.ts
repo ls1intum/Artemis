@@ -57,7 +57,8 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
      * Updated by a ResizeObserver on the first panel because p-splitter emits no event during a drag.
      */
     readonly gutterCenterPx = signal<number | undefined>(undefined);
-    private readonly gutterSize = 12;
+    /** Splitter gutter width (px); single source of truth, bound to the template's [gutterSize] and used to centre the lock button. */
+    protected readonly gutterSize = 12;
     private panelResizeObserver?: ResizeObserver;
 
     readonly isProgrammingOrTextExercise = signal(false);
@@ -84,7 +85,15 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
         if (!firstPanel || typeof ResizeObserver === 'undefined') {
             return;
         }
-        const update = () => this.gutterCenterPx.set(firstPanel.offsetWidth + this.gutterSize / 2);
+        const update = () => {
+            // Skip a meaningless measurement (panel not laid out yet, e.g. inside an inactive ngbNav tab): writing
+            // gutterSize/2 here would jam the lock button near the far-left edge. Leaving gutterCenterPx undefined
+            // keeps the SCSS fallback (left: 50%; translateX(-50%)) centring it until a real width arrives.
+            const width = firstPanel.offsetWidth;
+            if (width > 0) {
+                this.gutterCenterPx.set(width + this.gutterSize / 2);
+            }
+        };
         this.panelResizeObserver = new ResizeObserver(update);
         this.panelResizeObserver.observe(firstPanel);
         update();
