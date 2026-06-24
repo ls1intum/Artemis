@@ -58,7 +58,7 @@ public class SystemNotificationResource {
     @GetMapping("system-notifications")
     @EnforceAtLeastTutor
     public ResponseEntity<List<SystemNotificationDTO>> getAllSystemNotifications(Pageable pageable) {
-        log.debug("REST request to get all Courses the user has access to");
+        log.debug("REST request to get all SystemNotifications");
         final Page<SystemNotification> page = systemNotificationRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent().stream().map(SystemNotificationDTO::from).toList(), headers, HttpStatus.OK);
