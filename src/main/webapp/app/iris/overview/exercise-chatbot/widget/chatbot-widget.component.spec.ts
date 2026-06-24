@@ -262,6 +262,42 @@ describe('IrisChatbotWidgetComponent', () => {
         widget.remove();
     });
 
+    it('does not stay stuck after a cancelled gesture (pointercancel) and can be dragged again', () => {
+        // Regression: the gesture-end handler released the pointer capture unconditionally. On pointercancel the
+        // browser has already released it, so releasePointerCapture() throws InvalidPointerId, which aborted the
+        // teardown and left the widget permanently following the pointer (with its listeners leaked).
+        const { overlay, widget, header } = setupWidget({ left: 110, top: 100, width: 450, height: 600 });
+        widget.setAttribute('data-x', '10');
+        widget.setAttribute('data-y', '20');
+
+        // jsdom no-ops pointer capture; reproduce the real browser: on pointercancel the capture is already gone,
+        // so hasPointerCapture() is false and an unguarded releasePointerCapture() call would throw.
+        widget.setPointerCapture = vi.fn();
+        widget.hasPointerCapture = vi.fn(() => false);
+        widget.releasePointerCapture = vi.fn(() => {
+            throw new DOMException('InvalidPointerId', 'NotFoundError');
+        });
+
+        // Drag, then let the browser cancel the gesture mid-drag.
+        pointer(header, 'pointerdown', 300, 300);
+        pointer(widget, 'pointermove', 330, 295); // -> translate(40px, 15px)
+        expect(widget.style.transform).toBe('translate(40px, 15px)');
+        pointer(widget, 'pointercancel', 330, 295);
+
+        // The gesture must have torn down: a stray move no longer drags the widget.
+        pointer(widget, 'pointermove', 500, 500);
+        expect(widget.style.transform).toBe('translate(40px, 15px)');
+
+        // And a fresh gesture works again (proves the widget is not wedged).
+        pointer(header, 'pointerdown', 300, 300);
+        pointer(widget, 'pointermove', 320, 300); // dx +20 from (40,15) -> (60,15)
+        expect(widget.style.transform).toBe('translate(60px, 15px)');
+        pointer(widget, 'pointerup', 320, 300);
+
+        overlay.remove();
+        widget.remove();
+    });
+
     it('does not start a drag when the pointerdown lands on a header control, so the control keeps its click', () => {
         // Regression: the drag/resize handler used to start a drag (and preventDefault) on any pointerdown inside
         // .chat-header, which swallowed clicks on the header controls (info / new chat / maximize / close).

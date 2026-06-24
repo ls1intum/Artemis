@@ -190,7 +190,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
             if (e.pointerId !== this.activePointerId) {
                 return;
             }
-            widget.releasePointerCapture?.(e.pointerId);
+            this.releaseCaptureSafely(widget, e.pointerId);
             this.endGesture();
         };
         const unMove = this.renderer.listen(widget, 'pointermove', move);
@@ -288,6 +288,22 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         this.setWidgetCursor('');
     }
 
+    /**
+     * Releases the pointer capture only while the widget still holds it. On `pointercancel` the browser has
+     * already released the capture, so calling releasePointerCapture() again throws InvalidPointerId; that throw
+     * would abort gesture teardown and leave the widget stuck following the pointer (with its listeners leaked).
+     * The hasPointerCapture guard plus try/catch make this safe to call from pointerup, pointercancel and destroy.
+     */
+    private releaseCaptureSafely(widget: HTMLElement, pointerId: number): void {
+        try {
+            if (widget.hasPointerCapture?.(pointerId)) {
+                widget.releasePointerCapture(pointerId);
+            }
+        } catch {
+            // The capture was already released (e.g. on pointercancel); nothing to do.
+        }
+    }
+
     setPositionAndScale() {
         const cntRect = (this.document.querySelector('.cdk-overlay-container') as HTMLElement)?.getBoundingClientRect();
         if (!cntRect) {
@@ -321,6 +337,10 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     ngOnDestroy() {
+        // If the widget is torn down mid-gesture, release any capture it still holds before dropping the listeners.
+        if (this.widgetEl && this.activePointerId !== undefined) {
+            this.releaseCaptureSafely(this.widgetEl, this.activePointerId);
+        }
         this.pointerDownCleanup?.();
         this.hoverMoveCleanup?.();
         this.hoverLeaveCleanup?.();
