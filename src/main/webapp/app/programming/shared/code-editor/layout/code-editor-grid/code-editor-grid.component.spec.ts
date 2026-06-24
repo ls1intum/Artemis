@@ -106,24 +106,4 @@ describe('CodeEditorGridComponent', () => {
             }
         };
     });
-
-    describe('Editor / build-output divider coupling', () => {
-        it('shrinks the build output as the editor area grows, and vice versa, so the divider transfers space', () => {
-            fixture.detectChanges();
-            const wrapper = fixture.nativeElement.querySelector('.editor-wrapper') as HTMLElement;
-            const main = wrapper.querySelector('.editor-main') as HTMLElement;
-            const bottom = wrapper.querySelector('.editor-bottom') as HTMLElement;
-            // Pin the editor's top so availableVerticalSpace is deterministic.
-            Object.defineProperty(main, 'getBoundingClientRect', { value: () => ({ top: 100 }) as DOMRect, configurable: true });
-            const available = window.innerHeight - 100 - 40; // matches VERTICAL_BUFFER_PX
-
-            // Dragging the editor divider grows the editor area; the build output shrinks to fill the rest.
-            (comp as any).onVerticalPanelResize('main', { width: 0, height: 200 });
-            expect(bottom.style.height).toBe(`${Math.max(comp.resizableMinHeightBottom, Math.min(600, available - 200))}px`);
-
-            // Dragging the build-output divider grows it; the editor area shrinks in step.
-            (comp as any).onVerticalPanelResize('bottom', { width: 0, height: 250 });
-            expect(main.style.height).toBe(`${Math.max(comp.resizableMinHeightMain, Math.min(1200, available - 250))}px`);
-        });
-    });
 });

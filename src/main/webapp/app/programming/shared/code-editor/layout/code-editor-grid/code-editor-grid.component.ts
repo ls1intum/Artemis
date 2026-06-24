@@ -4,7 +4,7 @@ import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-ic
 import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
     selector: 'jhi-code-editor-grid',
@@ -80,37 +80,6 @@ export class CodeEditorGridComponent {
     }
 
     /**
-     * Couples the editor / build-output divider so it behaves like a real splitter: dragging the divider grows one
-     * panel and shrinks the other by the same amount. This lets the user enlarge the file content by giving up
-     * build-output height (and vice versa) even when the viewport is already full - without it the two panels resize
-     * independently and the divider hits a wall once the visible area is used up.
-     */
-    protected onVerticalPanelResize(panel: 'main' | 'bottom', event: ResizableSizeEvent): void {
-        const wrapper = this.editorWrapperElement()?.nativeElement;
-        const main = wrapper?.querySelector<HTMLElement>('.editor-main');
-        const bottom = wrapper?.querySelector<HTMLElement>('.editor-bottom');
-        if (!main || !bottom) {
-            return;
-        }
-        const available = this.availableVerticalSpace();
-        if (panel === 'main') {
-            const newBottom = Math.max(this.resizableMinHeightBottom, Math.min(600, available - event.height));
-            this.renderer.setStyle(bottom, 'height', `${newBottom}px`);
-        } else {
-            const newMain = Math.max(this.resizableMinHeightMain, Math.min(1200, available - event.height));
-            this.renderer.setStyle(main, 'height', `${newMain}px`);
-        }
-    }
-
-    /** Visible height available to the editor + build output: from the top of the editor to the viewport bottom. */
-    private availableVerticalSpace(): number {
-        const wrapper = this.editorWrapperElement()?.nativeElement;
-        const main = wrapper?.querySelector<HTMLElement>('.editor-main');
-        const top = (main ?? wrapper)?.getBoundingClientRect().top ?? 0;
-        return Math.max(0, window.innerHeight - top - CodeEditorGridComponent.VERTICAL_BUFFER_PX);
-    }
-
-    /**
      * Recomputes the sum-aware panel maxima from the current layout: each panel may grow only into the space left
      * by its neighbour and the editor, within the visible viewport. Called on init, window resize, resize end and
      * collapse, so it never runs during typing.
@@ -120,19 +89,20 @@ export class CodeEditorGridComponent {
         if (!wrapper) {
             return;
         }
+        const main = wrapper.querySelector<HTMLElement>('.editor-main');
+        const bottom = wrapper.querySelector<HTMLElement>('.editor-bottom');
         const content = wrapper.querySelector<HTMLElement>('.editor-main__content');
         const left = wrapper.querySelector<HTMLElement>('.editor-sidebar-left');
         const right = wrapper.querySelector<HTMLElement>('.editor-sidebar-right');
 
-        const availableHeight = this.availableVerticalSpace();
+        const mainTop = (main ?? wrapper).getBoundingClientRect().top;
+        const availableHeight = Math.max(0, window.innerHeight - mainTop - CodeEditorGridComponent.VERTICAL_BUFFER_PX);
         const availableWidth = content?.clientWidth ?? window.innerWidth;
         const reservedWidth = CodeEditorGridComponent.EDITOR_CENTER_MIN_WIDTH + CodeEditorGridComponent.HORIZONTAL_BUFFER_PX;
 
         this.maxConstraints.set({
-            // The editor / build-output divider transfers space (see onVerticalPanelResize), so each may grow until the
-            // other reaches its minimum. The coupling shrinks the neighbour in step, so nothing overflows the wrapper.
-            heightMain: Math.max(this.resizableMinHeightMain, Math.min(1200, availableHeight - this.resizableMinHeightBottom)),
-            heightBottom: Math.max(this.resizableMinHeightBottom, Math.min(600, availableHeight - this.resizableMinHeightMain)),
+            heightMain: Math.max(this.resizableMinHeightMain, Math.min(1200, availableHeight - (bottom?.offsetHeight ?? this.resizableMinHeightBottom))),
+            heightBottom: Math.max(this.resizableMinHeightBottom, Math.min(600, availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain))),
             widthLeft: Math.max(this.resizableMinWidthLeft, Math.min(window.screen.width / 2, availableWidth - (right?.offsetWidth ?? 0) - reservedWidth)),
             widthRight: Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
         });
