@@ -159,15 +159,88 @@ describe('FormDateTimePickerComponent', () => {
         });
 
         it('should recover validity when the same date is re-entered after unparseable text', () => {
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
             component.updateField(normalDateAsDateObject);
             component.updateField('not-a-date');
             expect(component.dateInput.valid).toBe(false);
+            onChangeSpy.mockClear();
 
-            // re-typing the same (still-current) date must clear the invalid state, not stay stuck
+            // re-typing the same (still-current) date must clear the invalid state AND re-emit
+            // onChange so the parent form model (currently undefined after the invalid entry)
+            // is re-synced — even though this.value() still holds the previous date.
             component.updateField(normalDateAsDateObject);
 
             expect(component.dateInput.valid).toBe(true);
             expect(component.value()).toEqual(normalDateAsDateObject);
+            expect(onChangeSpy).toHaveBeenCalledOnce();
+            expect(onChangeSpy).toHaveBeenCalledWith(dayjs(normalDateAsDateObject));
+        });
+
+        it('should reject a typed date before [min] and not propagate it to the parent', () => {
+            const minDate = normalDate.subtract(0, 'day'); // min = normalDate itself
+            fixture.componentRef.setInput('min', minDate);
+            fixture.detectChanges();
+
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+            const beforeMin = new Date(normalDateAsDateObject.getTime() - 24 * 60 * 60 * 1000); // 1 day before
+
+            component.updateField(beforeMin);
+
+            expect(component.dateInput.valid).toBe(false);
+            expect(onChangeSpy).toHaveBeenCalledWith(undefined);
+            expect(onChangeSpy).not.toHaveBeenCalledWith(expect.objectContaining({ $d: expect.any(Date) }));
+        });
+
+        it('should reject a typed date after [max] and not propagate it to the parent', () => {
+            const maxDate = normalDate.add(0, 'day'); // max = normalDate itself
+            fixture.componentRef.setInput('max', maxDate);
+            fixture.detectChanges();
+
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+            const afterMax = new Date(normalDateAsDateObject.getTime() + 24 * 60 * 60 * 1000); // 1 day after
+
+            component.updateField(afterMax);
+
+            expect(component.dateInput.valid).toBe(false);
+            expect(onChangeSpy).toHaveBeenCalledWith(undefined);
+        });
+
+        it('should accept a typed date equal to [min]', () => {
+            fixture.componentRef.setInput('min', normalDate);
+            fixture.detectChanges();
+
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+
+            component.updateField(normalDateAsDateObject);
+
+            expect(component.dateInput.valid).toBe(true);
+            expect(onChangeSpy).toHaveBeenCalledWith(dayjs(normalDateAsDateObject));
+        });
+
+        it('should recover and re-emit after a prior out-of-range rejection', () => {
+            const minDate = normalDate;
+            fixture.componentRef.setInput('min', minDate);
+            fixture.detectChanges();
+
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+
+            const beforeMin = new Date(normalDateAsDateObject.getTime() - 24 * 60 * 60 * 1000);
+            const validDate = new Date(normalDateAsDateObject.getTime() + 24 * 60 * 60 * 1000);
+
+            // Reject out-of-range → then enter a valid in-range date → must propagate
+            component.updateField(beforeMin);
+            expect(onChangeSpy).toHaveBeenLastCalledWith(undefined);
+            onChangeSpy.mockClear();
+
+            component.updateField(validDate);
+
+            expect(component.dateInput.valid).toBe(true);
+            expect(onChangeSpy).toHaveBeenCalledWith(dayjs(validDate));
         });
 
         it('should recover validity when an empty field with unparseable text is cleared', () => {

@@ -51,6 +51,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     protected isInputValid = signal<boolean>(true);
     protected dateInputValue = signal<string>('');
+    // True when the last emission to the parent was onChange(undefined) due to an invalid or
+    // out-of-range entry, but this.value() was NOT cleared (to preserve the display via
+    // keepInvalid). Without this flag the `unchanged` guard in updateField would swallow the
+    // re-emission when the user corrects the input back to the previously held date.
+    private needsParentSync = false;
 
     /** DEFAULT renders date + time; CALENDAR renders date only; TIMER renders time only. */
     protected showTime = computed(() => this.pickerType() === DateTimePickerType.DEFAULT);
@@ -151,14 +156,37 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     updateField(newValue: Date | string | null) {
         const currentValue = this.value();
         if (newValue instanceof Date && dayjs(newValue).isValid()) {
+            const parsed = dayjs(newValue);
+            const min = this.min();
+            const max = this.max();
+
+            // P2 fix: PrimeNG emits a real Date even for dates outside [minDate]/[maxDate]
+            // because the calendar popup's disabled-day range only prevents picking — typed input
+            // bypasses it. Reject out-of-range values here so the parent model never receives them
+            // and the field shows as invalid. We do NOT clear this.value() so the displayed date
+            // stays visible (keepInvalid-like); needsParentSync ensures recovery is propagated.
+            if ((min && parsed.isBefore(min)) || (max && parsed.isAfter(max))) {
+                this.isInputValid.set(false);
+                this.dateInputValue.set(newValue.toISOString());
+                this.needsParentSync = true;
+                this.onChange?.(undefined);
+                this.valueChanged();
+                return;
+            }
+
             // Always refresh validity (this also recovers from a previous unparseable entry).
             this.isInputValid.set(true);
             this.dateInputValue.set(newValue.toISOString());
+
             // Only propagate when the instant actually changed. Re-setting the bound `value` signal
             // with an equal date would feed an infinite change-detection loop (NG0103) when the form
             // value is patched programmatically and p-datepicker re-emits through its ngModel.
-            const unchanged = (dayjs.isDayjs(currentValue) || currentValue instanceof Date) && dayjs(currentValue).isSame(dayjs(newValue));
+            // P1 fix: also bypass the guard when needsParentSync is true — the parent model was set
+            // to undefined by a prior invalid/out-of-range entry while this.value() still holds the
+            // old date, so we must always re-emit to re-sync even if the date looks unchanged.
+            const unchanged = !this.needsParentSync && (dayjs.isDayjs(currentValue) || currentValue instanceof Date) && dayjs(currentValue).isSame(parsed);
             if (!unchanged) {
+                this.needsParentSync = false;
                 this.value.set(newValue);
                 this.onChange?.(dayjs(newValue));
             }
@@ -166,14 +194,20 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             // Empty is valid-but-missing; the required check is handled separately by `isValid`.
             this.isInputValid.set(true);
             this.dateInputValue.set('');
+            this.needsParentSync = false;
             if (currentValue != undefined) {
                 this.value.set(null);
                 this.onChange?.(undefined);
             }
         } else {
-            // leftover unparseable text: keep it visible in the input but flag invalid
+            // Unparseable text: keep it visible (keepInvalid) and flag the field invalid.
+            // We do NOT clear this.value() here because that would update [ngModel] on the inner
+            // p-datepicker and immediately erase the raw text the user just typed. Instead we set
+            // needsParentSync so the unchanged guard (above) does not swallow the re-emission
+            // when the user corrects the input back to the previously-held valid date.
             this.isInputValid.set(false);
             this.dateInputValue.set(String(newValue));
+            this.needsParentSync = true;
             this.onChange?.(undefined);
         }
         this.valueChanged();
