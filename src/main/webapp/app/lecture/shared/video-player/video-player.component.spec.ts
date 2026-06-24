@@ -95,9 +95,10 @@ describe('VideoPlayerComponent', () => {
             imports: [VideoPlayerComponent],
         });
 
-        // Override template to a minimal one for testing (includes resizer elements).
-        // The handle lives inside the video column so the jhiResizable directive resolves it as a
-        // descendant, mirroring the real template.
+        // Override template to a minimal one for testing (includes resizer elements). Mirror the real template:
+        // the resizer handle is a SIBLING of the video column (not a descendant), so the jhiResizable directive
+        // resolves it through resizableHandleOutsideHost and delegates the pointerdown from the wrapper. That is
+        // the exact wiring that ships in production, so the drag tests below exercise that delegated path.
         TestBed.overrideComponent(VideoPlayerComponent, {
             set: {
                 imports: [ResizableDirective],
@@ -110,11 +111,12 @@ describe('VideoPlayerComponent', () => {
                             [resizableEdges]="{ right: '.resizer-handle' }"
                             [resizableConstraints]="resizableConstraints"
                             [resizableApplyInlineSize]="false"
+                            [resizableHandleOutsideHost]="true"
                             (resizeMove)="onVideoColumnResize($event)"
                         >
                             <video #videoRef></video>
-                            <button #resizerHandle type="button" class="resizer-handle"></button>
                         </div>
+                        <button #resizerHandle type="button" class="resizer-handle"></button>
                         <div class="transcript-column"></div>
                     </div>
                 `,

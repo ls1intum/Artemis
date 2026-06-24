@@ -208,6 +208,29 @@ describe('YouTubePlayerComponent', () => {
         expect(videoColumnEl.style.width).toBe('');
     });
 
+    it('resizes the video column by dragging the sibling divider handle', async () => {
+        await render();
+
+        // The real template renders the handle as a sibling of the video column (resizableHandleOutsideHost), so
+        // the directive delegates the pointerdown from the wrapper. This is the production wiring; drive it end to
+        // end so the percent -> flex translation is covered (not just resetSplitRatio / the constraints getter).
+        const makeRect = (width: number) => ({ left: 0, width, top: 0, right: width, bottom: 500, height: 500, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect;
+        const videoColumnEl = component.videoColumn()!.nativeElement;
+        const wrapperEl = component.videoWrapper()!.nativeElement;
+        vi.spyOn(wrapperEl, 'getBoundingClientRect').mockReturnValue(makeRect(1000));
+        vi.spyOn(videoColumnEl, 'getBoundingClientRect').mockReturnValue(makeRect(500));
+        fixture.detectChanges();
+
+        // Drag the right edge from 500px to 600px within a 1000px wrapper (inside [300, 750]) -> 600 / 1000 = 60%.
+        const handleEl = component.resizerHandle()!.nativeElement;
+        handleEl.dispatchEvent(new MouseEvent('pointerdown', { clientX: 500, button: 0, bubbles: true }));
+        videoColumnEl.dispatchEvent(new MouseEvent('pointermove', { clientX: 600, bubbles: true }));
+        videoColumnEl.dispatchEvent(new MouseEvent('pointerup', { clientX: 600, bubbles: true }));
+
+        expect(videoColumnEl.style.flex).toBe('0 0 60%');
+        expect(videoColumnEl.style.width).toBe('');
+    });
+
     it('toggles isResizing while the divider is dragged', async () => {
         await render();
 
