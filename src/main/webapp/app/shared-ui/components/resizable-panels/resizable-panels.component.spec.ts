@@ -66,6 +66,29 @@ describe('ResizablePanelsComponent', () => {
         return fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
     };
 
+    it('reopens with a visible split (slider not jammed to the edge) after a drag-to-collapse', () => {
+        const component = createFixture();
+        const splitter = fixture.nativeElement.querySelector('p-splitter');
+        const panels = () => Array.from(splitter.querySelectorAll('[data-pc-section="panel"]')) as HTMLElement[];
+
+        // Drag-to-collapse: the splitter leaves the panels at the near-zero position they were dragged to.
+        component['onResizeEnd']([100, 0]);
+        const [left, right] = panels();
+        left.style.flexBasis = 'calc(100% - 12px)';
+        right.style.flexBasis = 'calc(0% - 12px)';
+        fixture.detectChanges();
+        expect(component.isRightPanelCollapsed()).toBe(true);
+
+        // Reopen via the icon rail: the right panel must come back with a usable width, not 0%.
+        component.expandRightPanel(0);
+        fixture.detectChanges();
+
+        expect(component.isRightPanelCollapsed()).toBe(false);
+        expect(right.style.flexBasis).toBe('calc(35% - 12px)');
+        expect(left.style.flexBasis).toBe('calc(65% - 12px)');
+        expect(component.savedSizes()).toEqual([65, 35]);
+    });
+
     it('should render the right panel expanded by default', () => {
         const component = createFixture();
 

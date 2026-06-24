@@ -44,6 +44,11 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      */
     readonly collapseSnapPercent = input(12);
 
+    /** Gutter size (px) of the splitter; kept in sync with the template's [gutterSize]. */
+    private static readonly GUTTER_SIZE = 12;
+    /** Split (percent) used when reopening without a usable saved size. */
+    private static readonly DEFAULT_SIZES = [65, 35];
+
     readonly panels = contentChildren(PanelDirective);
     readonly leftPanel = computed(() => this.panels()[0]);
     readonly rightPanels = computed(() => this.panels().slice(1));
@@ -137,6 +142,28 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         }
         this.rightPanelCollapseChangedByUser = true;
         this._isRightPanelCollapsed.set(false);
+        this.restoreUsableSplit();
+    }
+
+    /**
+     * Reopens the right panel with a visible split. After a drag-to-collapse the splitter keeps the near-zero
+     * position the slider was dragged to, and only re-applies its panel sizes when the `panelSizes` input changes,
+     * not when the collapse state toggles. So expanding would otherwise show the panel jammed against the edge,
+     * invisible until the user drags the slider back (a reviewer finding). Re-apply a usable split: refresh
+     * savedSizes (a new reference, so the splitter re-applies it and the persisted size matches) and also write the
+     * panel flex-basis directly as a safeguard, in case the splitter does not pick up the change on expand.
+     */
+    private restoreUsableSplit(): void {
+        const current = this.savedSizes();
+        const usable = current && (current[1] ?? 0) >= this.collapseSnapPercent() ? [...current] : [...ResizablePanelsComponent.DEFAULT_SIZES];
+        this.savedSizes.set(usable);
+
+        const panels = this.elementRef.nativeElement.querySelectorAll('.resizable-panels-splitter [data-pc-section="panel"]') as NodeListOf<HTMLElement>;
+        if (panels.length >= 2) {
+            // Mirrors PrimeNG's own flexBasis formula: calc(size% - (panels-1) * gutterSize px).
+            panels[0].style.flexBasis = `calc(${usable[0]}% - ${ResizablePanelsComponent.GUTTER_SIZE}px)`;
+            panels[1].style.flexBasis = `calc(${usable[1]}% - ${ResizablePanelsComponent.GUTTER_SIZE}px)`;
+        }
     }
 
     collapseRightPanel(): void {
