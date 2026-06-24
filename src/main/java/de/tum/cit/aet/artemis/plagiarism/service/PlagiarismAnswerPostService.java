@@ -74,7 +74,6 @@ public class PlagiarismAnswerPostService extends PostingService {
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
-        postRepository.save(post);
 
         preparePostAndBroadcast(savedAnswerPost, course);
 

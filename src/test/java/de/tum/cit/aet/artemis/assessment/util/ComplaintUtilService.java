@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.assessment.util;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -119,7 +120,8 @@ public class ComplaintUtilService {
      * @param complaintType The type of the complaint to create.
      */
     public void addComplaintToSubmission(Submission submission, String userLogin, ComplaintType complaintType) {
-        Result result = submission.getLatestResult();
+        Result result = submission.getId() == null ? submission.getLatestResult()
+                : resultTestRepository.findLatestResultsBySubmissionIds(Set.of(submission.getId())).stream().findFirst().orElse(null);
         if (result != null) {
             result.hasComplaint(true);
             resultTestRepository.save(result);
