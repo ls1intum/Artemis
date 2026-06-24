@@ -336,22 +336,6 @@
     z-index: 3;
 }
 
-/* Center each grip on the panel divider. The left grip is the last flex child of the file-browser panel: when the
-   file tree is narrower than the panel, flex-grow does not push it to the edge, so it was stranded mid-panel (off the
-   divider, and reading as a stray icon). `margin-left: auto` absorbs that gap so the grip always sits at the panel's
-   right edge; `translateX(50%)` then shifts it half its width onto the divider line. The right grip is already the
-   first child pinned to the panel's left edge, so it only needs the half-width nudge. */
-/* stylelint-disable no-descending-specificity -- the transform override intentionally follows the shared :hover rule */
-.rg-sidebar-left {
-    margin-left: auto;
-    transform: translateX(50%);
-}
-
-.rg-sidebar-right {
-    transform: translateX(-50%);
-}
-/* stylelint-enable no-descending-specificity */
-
 .separator {
     margin: 0;
 }

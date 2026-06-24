@@ -8,6 +8,7 @@
         jhiResizable
         [resizableEdges]="{ bottom: '.rg-main-bottom' }"
         [resizableConstraints]="{ minHeight: resizableMinHeightMain, maxHeight: maxConstraints().heightMain }"
+        (resizeMove)="onVerticalPanelResize('main', $event)"
         (resizeEnd)="onPanelResized(ResizeType.MAIN_BOTTOM)"
     >
         <div class="editor-main__content">
@@ -69,6 +70,7 @@
         [resizableEdges]="{ bottom: '.rg-bottom-bottom' }"
         [resizableConstraints]="{ minHeight: resizableMinHeightBottom, maxHeight: maxConstraints().heightBottom }"
         [resizableEnabled]="!buildOutputIsCollapsed()"
+        (resizeMove)="onVerticalPanelResize('bottom', $event)"
         (resizeEnd)="onPanelResized(ResizeType.BOTTOM)"
     >
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
