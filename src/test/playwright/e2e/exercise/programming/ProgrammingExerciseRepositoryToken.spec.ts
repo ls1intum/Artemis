@@ -31,4 +31,20 @@ test.describe('Programming exercise staff repository access token', { tag: '@fas
         expect(cloneUrl).toContain(instructor.username);
         expect(cloneUrl).toContain('-exercise.git');
     });
+
+    test('Instructor obtains a repository-scoped token on the exercise detail page without configuring a personal token', async ({ login, page, programmingExerciseOverview }) => {
+        // Regression test: on the exercise detail page the clone dialog used to show a "set up your VCS token manually"
+        // warning and a disabled copy button for staff who had no personal token. It must now provision a repository-scoped
+        // token automatically, exactly like the dedicated repository view does.
+        await login(instructor, `/course-management/${course.id}/programming-exercises/${exercise.id}`);
+
+        // Scope to the template repository row (stable detail id) instead of relying on the order of code buttons on the page.
+        const templateCodeButton = page.locator('[id="detail-value-artemisApp.programmingExercise.templateRepositoryUri"] .code-button');
+        await programmingExerciseOverview.openCloneMenu(GitCloneMethod.httpsWithToken, templateCodeButton);
+        const cloneUrl = await programmingExerciseOverview.copyCloneUrl(GitCloneMethod.httpsWithToken, templateCodeButton);
+
+        expect(cloneUrl).toContain('vcpat-');
+        expect(cloneUrl).toContain(instructor.username);
+        expect(cloneUrl).toContain('-exercise.git');
+    });
 });

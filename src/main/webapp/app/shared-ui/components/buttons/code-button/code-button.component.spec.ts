@@ -9,7 +9,7 @@ import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared-
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
@@ -208,6 +208,70 @@ describe('CodeButtonComponent', () => {
             fixture.detectChanges();
 
             expect(getVcsAccessTokenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should load the repository-scoped token via the exerciseId input when no exercise object is provided', async () => {
+            // The exercise detail view only knows the exercise id, not the full exercise object.
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+        });
+
+        it('should pass the auxiliaryRepositoryId when loading the token for an auxiliary repository', async () => {
+            fixture.componentRef.setInput('repositoryType', 'AUXILIARY');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('auxiliaryRepositoryId', 3);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'AUXILIARY', 3);
+        });
+
+        it('should keep the copy button enabled for SSH when the repository token resolves after the dialog opened', async () => {
+            // Reproduces the production ordering that synchronous of() mocks hide: the token HTTP response arrives only
+            // after onClick already set the SSH copy state. The async response must not clobber it back to disabled.
+            const tokenSubject = new Subject<HttpResponse<string>>();
+            getRepoTokenSpy.mockReturnValue(tokenSubject.asObservable());
+            localStorageState = RepositoryAuthenticationMethod.SSH;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+
+            component.onClick();
+            expect(component.useSsh()).toBe(true);
+            // The user has SSH keys, so copy is enabled while the token request is still pending.
+            expect(component.copyEnabled()).toBe(true);
+
+            // The repository token resolves now, after the dialog already opened.
+            tokenSubject.next(new HttpResponse({ body: repoToken }));
+            tokenSubject.complete();
+
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+            expect(component.copyEnabled()).toBe(true);
+        });
+
+        it('should not show the manual VCS token warning for a base repository in course management', async () => {
+            // In course management (e.g. the exercise detail page) the personal-token warning must never appear for base
+            // repositories, because a repository-scoped staff token is provisioned automatically instead.
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.isInCourseManagement.set(true);
+            fixture.detectChanges();
+
+            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.detectChanges();
+
+            expect(component.isBaseRepository()).toBe(true);
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(fixture.debugElement.query(By.css('.alert-warning'))).toBeNull();
         });
     });
 

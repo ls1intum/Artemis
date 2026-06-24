@@ -92,6 +92,8 @@ export class CodeButtonComponent implements OnInit {
     // When set to a base repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY), the code button uses a repository-scoped staff VCS access token instead of a participation token.
     repositoryType = input<RepositoryType>();
     auxiliaryRepositoryId = input<number>();
+    // The exercise id, used as a fallback to load the repository-scoped staff token when the full exercise object is not available (e.g. in the exercise detail view).
+    exerciseId = input<number>();
 
     // Fields (immutable after construction)
     sshEnabled = false;
@@ -266,9 +268,9 @@ export class CodeButtonComponent implements OnInit {
 
         // Fallback for course staff: generate the repository-scoped token on demand when the clone dialog is opened and none exists yet.
         if (this.isBaseRepository() && !this.repositoryAccessToken()) {
-            const exercise = this.exercise();
-            if (exercise?.id) {
-                this.loadRepositoryVcsAccessToken(exercise.id, this.repositoryType()!, this.auxiliaryRepositoryId());
+            const exerciseId = this.exercise()?.id ?? this.exerciseId();
+            if (exerciseId) {
+                this.loadRepositoryVcsAccessToken(exerciseId, this.repositoryType()!, this.auxiliaryRepositoryId());
             }
         }
 
@@ -324,7 +326,11 @@ export class CodeButtonComponent implements OnInit {
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     participation.vcsAccessToken = res.body;
-                    this.copyEnabled.set(this.useToken());
+                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
+                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
+                    if (this.useToken()) {
+                        this.copyEnabled.set(true);
+                    }
                 }
             },
             error: (error: HttpErrorResponse) => {
@@ -346,7 +352,11 @@ export class CodeButtonComponent implements OnInit {
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     participation.vcsAccessToken = res.body;
-                    this.copyEnabled.set(this.useToken());
+                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
+                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
+                    if (this.useToken()) {
+                        this.copyEnabled.set(true);
+                    }
                 }
             },
             error: (error: HttpErrorResponse) => {
@@ -366,7 +376,11 @@ export class CodeButtonComponent implements OnInit {
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     this.repositoryAccessToken.set(res.body);
-                    this.copyEnabled.set(this.useToken());
+                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
+                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
+                    if (this.useToken()) {
+                        this.copyEnabled.set(true);
+                    }
                 }
             },
             error: (error: HttpErrorResponse) => {
@@ -389,7 +403,11 @@ export class CodeButtonComponent implements OnInit {
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     this.repositoryAccessToken.set(res.body);
-                    this.copyEnabled.set(this.useToken());
+                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
+                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
+                    if (this.useToken()) {
+                        this.copyEnabled.set(true);
+                    }
                 }
             },
             error: (error: HttpErrorResponse) => {
