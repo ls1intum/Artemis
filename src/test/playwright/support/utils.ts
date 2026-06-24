@@ -113,13 +113,15 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
 
 /**
  * This function is necessary to make the server and the client date comparable.
- * The server sometimes has 3 digit on the milliseconds and sometimes only 1 digit.
- * With this function we always cut the date string after the first digit.
+ * Dates are entered through the PrimeNG p-datepicker, which is minute-precision (it has no seconds
+ * field), so the persisted value is always truncated to the minute. We therefore compare only down
+ * to the minute (YYYY-MM-DDTHH:mm) and ignore seconds/milliseconds, which also avoids the server's
+ * varying millisecond digit count.
  * @param date the date as a string
- * @returns a date string with only one digit for the milliseconds
+ * @returns a date string trimmed to minute precision
  */
 export function trimDate(date: string) {
-    return date.slice(0, 19);
+    return date.slice(0, 16);
 }
 
 /**
