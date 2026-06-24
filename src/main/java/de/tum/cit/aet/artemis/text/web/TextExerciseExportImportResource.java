@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -167,6 +168,9 @@ public class TextExerciseExportImportResource {
         exercise.setCategories(dto.categories());
         exercise.setDifficulty(dto.difficulty());
         exercise.setMode(dto.mode());
+        // Text exercises are always manually assessed (mirrors the create path); the import DTO does not carry
+        // assessmentType, so set it explicitly to avoid copyExerciseBasis persisting null.
+        exercise.setAssessmentType(AssessmentType.MANUAL);
         exercise.setMaxPoints(dto.maxPoints());
         exercise.setBonusPoints(dto.bonusPoints());
         exercise.setIncludedInOverallScore(dto.includedInOverallScore());

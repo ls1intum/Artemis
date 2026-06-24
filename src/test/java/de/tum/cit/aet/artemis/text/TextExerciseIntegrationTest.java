@@ -841,6 +841,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var newTextExerciseDto = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), ImportTextExerciseDTO.of(textExercise),
                 TextExerciseResponseDTO.class, HttpStatus.CREATED);
         TextExercise newTextExercise = textExerciseRepository.findById(newTextExerciseDto.id()).orElseThrow();
+        // The import DTO does not carry assessmentType; without setting it explicitly the new exercise would be
+        // persisted with assessmentType == null instead of the MANUAL mode the old entity payload preserved.
+        assertThat(newTextExercise.getAssessmentType()).as("imported text exercise keeps the MANUAL assessment type").isEqualTo(AssessmentType.MANUAL);
         Channel channel = channelRepository.findChannelByExerciseId(newTextExercise.getId());
         assertThat(channel).isNotNull();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(newTextExercise));
@@ -1077,6 +1080,29 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 .isEqualTo(course.getTeachingAssistantGroupName());
         assertThat(textExerciseServer.course().instructorGroupName()).as("nested course carries the instructor group name used for access rights")
                 .isEqualTo(course.getInstructorGroupName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getExamTextExerciseCarriesNestedExamCourse() throws Exception {
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        TextExercise examTextExercise = textExerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exerciseGroup));
+        Course examCourse = exerciseGroup.getExam().getCourse();
+
+        TextExerciseResponseDTO textExerciseServer = request.get("/api/text/text-exercises/" + examTextExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
+
+        assertThat(textExerciseServer).as("exam text exercise was retrieved").isNotNull();
+        assertThat(textExerciseServer.exerciseGroup()).as("nested exerciseGroup is exposed for an exam exercise").isNotNull();
+        assertThat(textExerciseServer.exerciseGroup().exam()).as("nested exam reference is exposed").isNotNull();
+        // For exam exercises the client resolves the course via exercise.exerciseGroup.exam.course (top-level course is
+        // null). It needs the course group names there to compute access rights (account.service.setAccessRightsForCourse);
+        // dropping it loses course context and access rights on the exam exercise management screens.
+        assertThat(textExerciseServer.exerciseGroup().exam().course()).as("nested exam course is present for an exam exercise").isNotNull();
+        assertThat(textExerciseServer.exerciseGroup().exam().course().id()).as("nested exam course carries its id").isEqualTo(examCourse.getId());
+        assertThat(textExerciseServer.exerciseGroup().exam().course().teachingAssistantGroupName()).as("nested exam course carries the TA group name used for access rights")
+                .isEqualTo(examCourse.getTeachingAssistantGroupName());
+        assertThat(textExerciseServer.exerciseGroup().exam().course().instructorGroupName()).as("nested exam course carries the instructor group name used for access rights")
+                .isEqualTo(examCourse.getInstructorGroupName());
     }
 
     @Test
