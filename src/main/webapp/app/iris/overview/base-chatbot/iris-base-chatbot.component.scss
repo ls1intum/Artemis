@@ -526,12 +526,17 @@ pre {
     &-inner {
         position: relative;
         display: flex;
+
+        // Allow this flex chain to shrink below its content's min-content; otherwise a long, nowrap context label
+        // deeper down forces the whole input row wider than the (narrow) widget and pushes the send button out.
+        min-width: 0;
     }
 
     .textarea-wrapper {
         display: flex;
         flex-direction: column;
         flex: 1;
+        min-width: 0;
         position: relative;
         background-color: var(--iris-secondary-background);
         border: 1px solid var(--bs-border-color);
@@ -552,6 +557,7 @@ pre {
         align-items: center;
         justify-content: space-between;
         gap: 6px;
+        min-width: 0;
         padding: 6px 6px 6px 8px;
 
         // The context selector may shrink (its label truncates) so a long context never pushes the send button
