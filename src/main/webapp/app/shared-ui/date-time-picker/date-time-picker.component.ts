@@ -78,7 +78,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * through the same shape instead of a raw `NgModel`.
      */
     get dateInput(): { valid: boolean } {
-        return { valid: this.isInputValid() };
+        return { valid: this.isInputValid() && !(this.requiredField() && !this.dateInputValue()) };
     }
 
     private onChange?: (val?: dayjs.Dayjs) => void;
@@ -101,6 +101,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         // p-datepicker's CVA write calls markForCheck. Re-setting the `value` signal with an equal
         // value would never let change detection settle (NG0103), so skip no-op writes.
         if (this.valuesEqual(this.value(), next)) {
+            // The bound value is unchanged, but a prior unparseable entry may have left the validity
+            // signals stale; refresh them so a programmatic reset/write clears any lingering invalid state.
+            this.updateSignals();
             return;
         }
         this.value.set(next);

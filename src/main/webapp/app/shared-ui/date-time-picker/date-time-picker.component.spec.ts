@@ -79,6 +79,34 @@ describe('FormDateTimePickerComponent', () => {
             expect(component.value()).toBeNull();
             expect(component.dateInput.valid).toBe(true);
         });
+
+        it('should clear a stale invalid state when an equal-empty value is written (programmatic reset)', () => {
+            // empty field; user types unparseable text
+            component.updateField('not-a-date');
+            expect(component.dateInput.valid).toBe(false);
+
+            // parent resets the control: writes undefined while value() is already empty (equal write)
+            component.writeValue(undefined);
+
+            expect(component.dateInput.valid).toBe(true);
+        });
+    });
+
+    describe('dateInput.valid compatibility accessor', () => {
+        it('should report an empty required field as invalid', () => {
+            fixture.componentRef.setInput('requiredField', true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.dateInput.valid).toBe(false);
+        });
+
+        it('should report a filled required field as valid', () => {
+            fixture.componentRef.setInput('requiredField', true);
+            component.updateField(normalDateAsDateObject);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.dateInput.valid).toBe(true);
+        });
     });
 
     it('should register callback function', () => {
