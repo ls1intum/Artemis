@@ -289,14 +289,16 @@ describe('VideoPlayerComponent', () => {
             vi.spyOn(videoColumnEl, 'getBoundingClientRect').mockReturnValue(makeRect(500));
             fixture.detectChanges();
 
-            expect(component.isResizing()).toBe(false);
+            // isResizing is a protected signal; read it via index access (like the YouTube spec) so tsc's
+            // protected-member check (compile:tests) passes - dot access fails TypeScript compilation (TS2445).
+            expect(component['isResizing']()).toBe(false);
 
             const handleEl = component.resizerHandle()!.nativeElement;
             handleEl.dispatchEvent(new MouseEvent('pointerdown', { clientX: 500, button: 0, bubbles: true }));
-            expect(component.isResizing()).toBe(true);
+            expect(component['isResizing']()).toBe(true);
 
             videoColumnEl.dispatchEvent(new MouseEvent('pointerup', { clientX: 600, bubbles: true }));
-            expect(component.isResizing()).toBe(false);
+            expect(component['isResizing']()).toBe(false);
         });
 
         it('exposes width constraints derived from the live wrapper width', async () => {
