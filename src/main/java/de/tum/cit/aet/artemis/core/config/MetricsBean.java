@@ -18,11 +18,13 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthContributor;
 import org.springframework.boot.health.contributor.HealthContributors;
@@ -183,7 +185,11 @@ public class MetricsBean {
     // NOTE: only active on scheduling node
     private final AtomicLong failedBuildsGauge = new AtomicLong(0);
 
+    @Value("${artemis.scheduled-metrics.enabled:false}")
     private boolean scheduledMetricsEnabled = false;
+
+    @Value("${artemis.websocket-log.enabled:false}")
+    private boolean websocketLogEnabled = false;
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
@@ -270,7 +276,7 @@ public class MetricsBean {
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
         // Note: this mechanism prevents that this is logged during testing
-        if (!profileService.isProfileActive(SPRING_PROFILE_TEST)) {
+        if (!profileService.isProfileActive(SPRING_PROFILE_TEST) && websocketLogEnabled) {
             webSocketStats.setLoggingPeriod(WEBSOCKET_LOGGING_DELAY_SECONDS * 1000L);
             scheduler.scheduleAtFixedRate(() -> {
                 final var connectedUsers = userRegistry.getUsers();
@@ -780,7 +786,10 @@ public class MetricsBean {
      * @param health the Health whose status should be mapped
      * @return a double corresponding to the health status
      */
-    private double mapHealthToDouble(Health health) {
+    private double mapHealthToDouble(@Nullable Health health) {
+        if (health == null) {
+            return -3;
+        }
         return switch (health.getStatus().getCode()) {
             case "UP" -> 1;
             case "DOWN" -> 0;
