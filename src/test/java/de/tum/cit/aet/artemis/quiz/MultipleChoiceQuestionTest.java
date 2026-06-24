@@ -97,9 +97,7 @@ class MultipleChoiceQuestionTest {
         assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(new AnswerOptionInput(1L, null, null, null, false, false)))).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Answer option text must not be blank");
         assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(new AnswerOptionInput(1L, "A", null, null, null, false)))).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Answer option boolean fields must not be null");
-        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(new AnswerOptionInput(1L, "A", null, null, false, null)))).isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Answer option boolean fields must not be null");
+                .hasMessageContaining("Answer option correctness must not be null");
     }
 
     @Test
@@ -133,7 +131,7 @@ class MultipleChoiceQuestionTest {
 
         assertThat(question.getAnswerOptions()).extracting(AnswerOption::getId).containsExactly(7L);
         assertThat(question.getNextComponentId()).isEqualTo(8L);
-        assertThatThrownBy(question::validateAnswerOptions).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("boolean fields must not be null");
+        assertThatThrownBy(question::validateAnswerOptions).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("correctness must not be null");
     }
 
     @Test

@@ -214,8 +214,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
 
                 // check if an answer is set invalid or if the correctness has changed
                 // if true an update of the Statistics and Results is necessary
-                if ((answer.isInvalid() && !this.isInvalid() && originalAnswer.isInvalid() == null) || (answer.isInvalid() && !this.isInvalid() && !originalAnswer.isInvalid())
-                        || (!(answer.isIsCorrect().equals(originalAnswer.isIsCorrect())))) {
+                if ((answer.isInvalid() && !this.isInvalid() && !originalAnswer.isInvalid()) || (!(answer.isIsCorrect().equals(originalAnswer.isIsCorrect())))) {
                     updateNecessary = true;
                 }
             }
@@ -396,8 +395,8 @@ public class MultipleChoiceQuestion extends QuizQuestion {
                 || input.explanation() != null && input.explanation().length() > MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH) {
             throw new IllegalArgumentException("Answer option text, hint, or explanation exceeds its maximum length");
         }
-        if (input.isCorrect() == null || input.invalid() == null) {
-            throw new IllegalArgumentException("Answer option boolean fields must not be null");
+        if (input.isCorrect() == null) {
+            throw new IllegalArgumentException("Answer option correctness must not be null");
         }
     }
 }

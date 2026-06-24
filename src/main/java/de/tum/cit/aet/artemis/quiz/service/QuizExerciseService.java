@@ -330,7 +330,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Set<Long> invalidIds = originalQuestion.getAnswerOptions().stream().map(AnswerOption::getId).filter(id -> !requestedOptionIds.contains(id)).collect(Collectors.toSet());
         List<AnswerOptionInput> inputs = mcDTO.answerOptions().stream().map(optionDTO -> {
             AnswerOption existingOption = originalQuestion.findAnswerOptionById(optionDTO.id());
-            Boolean invalid = existingOption != null && existingOption.isInvalid() ? Boolean.TRUE : optionDTO.invalid();
+            boolean invalid = existingOption != null && existingOption.isInvalid() ? true : optionDTO.invalid();
             return new AnswerOptionInput(optionDTO.id(), optionDTO.text(), optionDTO.hint(), optionDTO.explanation(), optionDTO.isCorrect(), invalid);
         }).toList();
         try {
@@ -1278,7 +1278,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         try {
             question.replaceAnswerOptions(dto.answerOptions().stream().map(optionDTO -> {
                 AnswerOption existingOption = question.findAnswerOptionById(optionDTO.id());
-                Boolean invalid = existingOption == null ? Boolean.FALSE : existingOption.isInvalid();
+                boolean invalid = existingOption != null && existingOption.isInvalid();
                 return new AnswerOptionInput(optionDTO.id(), optionDTO.text(), optionDTO.hint(), optionDTO.explanation(), optionDTO.isCorrect(), invalid);
             }).toList());
         }

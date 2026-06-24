@@ -374,13 +374,30 @@ public class StudentExamService {
         }
     }
 
+    /**
+     * Checks the participant identity contained in the client payload.
+     * <p>
+     * Quiz responses expose participants as ID-only DTOs, so the deserialized user usually has no login.
+     * {@link StudentParticipation#isOwnedBy(User)} compares logins and therefore cannot validate this reduced client representation.
+     */
     private static boolean isParticipationFromClientOwnedByCurrentUser(StudentParticipation participationFromClient, User currentUser) {
-        return participationFromClient.getStudent().map(student -> hasSameUserIdentity(student, currentUser)).orElseGet(
-                () -> participationFromClient.getTeam().map(team -> team.getStudents().stream().anyMatch(student -> hasSameUserIdentity(student, currentUser))).orElse(false));
+        var studentFromClient = participationFromClient.getStudent().orElse(null);
+        if (studentFromClient != null) {
+            return hasSameUserIdentity(studentFromClient, currentUser);
+        }
+
+        var teamFromClient = participationFromClient.getTeam().orElse(null);
+        if (teamFromClient != null) {
+            return teamFromClient.getStudents().stream().anyMatch(student -> hasSameUserIdentity(student, currentUser));
+        }
+        return false;
     }
 
     private static boolean hasSameUserIdentity(User userFromClient, User currentUser) {
-        return Objects.equals(userFromClient.getId(), currentUser.getId()) || Objects.equals(userFromClient.getLogin(), currentUser.getLogin());
+        if (userFromClient.getId() != null) {
+            return Objects.equals(userFromClient.getId(), currentUser.getId());
+        }
+        return Objects.equals(userFromClient.getLogin(), currentUser.getLogin());
     }
 
     private void saveSubmissionModelingExercise(User currentUser, StudentParticipation existingParticipationInDatabase, Submission submissionFromClient) {

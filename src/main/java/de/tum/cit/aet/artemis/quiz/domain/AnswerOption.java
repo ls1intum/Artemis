@@ -30,12 +30,12 @@ public class AnswerOption {
     private Boolean isCorrect;
 
     @JsonProperty("invalid")
-    private Boolean invalid = false;
+    private boolean invalid;
 
     public AnswerOption() {
     }
 
-    public AnswerOption(Long id, String text, String hint, String explanation, Boolean isCorrect, Boolean invalid) {
+    public AnswerOption(Long id, String text, String hint, String explanation, Boolean isCorrect, boolean invalid) {
         this.id = id;
         this.text = text;
         this.hint = hint;
@@ -109,15 +109,11 @@ public class AnswerOption {
         this.isCorrect = isCorrect;
     }
 
-    public Boolean isInvalid() {
-        return invalid != null && invalid;
-    }
-
-    Boolean rawInvalid() {
+    public boolean isInvalid() {
         return invalid;
     }
 
-    public void setInvalid(Boolean invalid) {
+    public void setInvalid(boolean invalid) {
         this.invalid = invalid;
     }
 
