@@ -147,18 +147,41 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     /**
      * Persists the split sizes on drag end, and snaps the right panel shut when it is dragged narrower than
      * {@link collapseSnapPercent} (drag-to-collapse, the split.js `snapOffset` behaviour). When snapping closed,
-     * the near-zero drag size is not kept as the remembered split, so reopening uses a sensible width.
+     * the near-zero drag size is not kept as the remembered split, so reopening (or reloading) uses a usable width.
+     *
+     * The incoming `sizes` is the splitter's own internal array, which it mutates in place on the next drag, so it
+     * must be copied before being stored. The splitter also persists that raw size to localStorage (stateStorage)
+     * before this handler runs, so on a snap-collapse the stored size must be overwritten too.
      */
     onResizeEnd(sizes: number[]): void {
         const rightSize = sizes[1] ?? 0;
         if (this.collapseSnapPercent() > 0 && rightSize <= this.collapseSnapPercent()) {
-            if (!this.savedSizes()) {
-                this.savedSizes.set([65, 35]);
-            }
+            const reopenSizes = [...(this.savedSizes() ?? [65, 35])];
+            this.savedSizes.set(reopenSizes);
+            this.persistSizes(reopenSizes);
             this.collapseRightPanel();
             return;
         }
-        this.savedSizes.set(sizes);
+        this.savedSizes.set([...sizes]);
+    }
+
+    /**
+     * Mirrors the chosen sizes into the splitter's own localStorage entry. The splitter persists its raw drag
+     * sizes there (stateStorage="local") before {@link onResizeEnd} runs, so after a drag-to-collapse its storage
+     * holds the near-zero size; overwriting it keeps a reload from restoring the collapsed sliver. No-op when no
+     * storageKey is set (sizes are then only kept in memory anyway).
+     */
+    private persistSizes(sizes: number[]): void {
+        const key = this.storageKey();
+        if (!key) {
+            return;
+        }
+        try {
+            // Matches PrimeNG's Splitter stateStorage format: JSON.stringify(number[]) under the stateKey.
+            this.document.defaultView?.localStorage.setItem(key, JSON.stringify(sizes));
+        } catch {
+            // localStorage may be unavailable (private mode / no window); the in-memory savedSizes still applies.
+        }
     }
 
     setActiveSingle(value: string | number | undefined): void {

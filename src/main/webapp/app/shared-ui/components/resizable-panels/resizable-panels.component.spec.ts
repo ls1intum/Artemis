@@ -23,7 +23,7 @@ class ResizeObserverMock {
 
 @Component({
     template: `
-        <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse">
+        <jhi-resizable-panels [useViewportWidthForCollapse]="useViewportWidthForCollapse" [storageKey]="storageKey">
             <ng-template jhiPanel [label]="'left'" [icon]="faAlignLeft"><div id="left-marker">Left Content</div></ng-template>
             <ng-template jhiPanel [label]="'right'">Right Content</ng-template>
             <ng-template jhiPanel [label]="'iris'" [icon]="faComment" [startsCollapsed]="irisStartsCollapsed">Iris Content</ng-template>
@@ -36,6 +36,7 @@ class ResizablePanelsTestComponent {
     protected readonly faComment = faComment;
     irisStartsCollapsed = false;
     useViewportWidthForCollapse = false;
+    storageKey: string | undefined = undefined;
 }
 
 describe('ResizablePanelsComponent', () => {
@@ -54,6 +55,7 @@ describe('ResizablePanelsComponent', () => {
     afterEach(() => {
         ResizeObserverMock.instances = [];
         vi.unstubAllGlobals();
+        localStorage.clear();
     });
 
     const createFixture = (irisStartsCollapsed = false, useViewportWidthForCollapse = false) => {
@@ -117,6 +119,38 @@ describe('ResizablePanelsComponent', () => {
         expect(component.isRightPanelCollapsed()).toBe(true);
         // The near-zero drag size is not remembered as the split; a sensible default is kept for reopening.
         expect(component.savedSizes()).toEqual([65, 35]);
+    });
+
+    it('keeps a usable split (in memory and in storage) when snapping closed after a previous resize', () => {
+        fixture = TestBed.createComponent(ResizablePanelsTestComponent);
+        fixture.componentInstance.storageKey = 'test-split';
+        fixture.detectChanges();
+        const component = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        const splitter = fixture.debugElement.query(By.css('p-splitter'));
+
+        // A usable resize is remembered as-is.
+        splitter.componentInstance.onResizeEnd.emit({ originalEvent: new Event('mouseup'), sizes: [70, 30] });
+        expect(component.savedSizes()).toEqual([70, 30]);
+
+        // Dragging below the threshold snaps shut. The near-zero size must not survive: neither in savedSizes (used
+        // when reopening) nor in the splitter's localStorage entry (used when reloading); both keep the usable split.
+        splitter.componentInstance.onResizeEnd.emit({ originalEvent: new Event('mouseup'), sizes: [94, 6] });
+        expect(component.isRightPanelCollapsed()).toBe(true);
+        expect(component.savedSizes()).toEqual([70, 30]);
+        expect(localStorage.getItem('test-split')).toBe(JSON.stringify([70, 30]));
+    });
+
+    it('stores an independent copy of the sizes (p-splitter mutates its own array in place)', () => {
+        const component = createFixture();
+        const splitter = fixture.debugElement.query(By.css('p-splitter'));
+
+        const sizes = [40, 60];
+        splitter.componentInstance.onResizeEnd.emit({ originalEvent: new Event('mouseup'), sizes });
+        // Simulate p-splitter reusing and mutating the same array on a later drag.
+        sizes[0] = 99;
+        sizes[1] = 1;
+
+        expect(component.savedSizes()).toEqual([40, 60]);
     });
 
     it('should not render the splitter in narrow mode', () => {
