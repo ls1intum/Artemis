@@ -25,4 +25,8 @@
             <where>test_exam = TRUE</where>
         </update>
     </changeSet>
+
+    <changeSet id="20260624180225-3" author="matyasht">
+        <dropColumn tableName="exam" columnName="test_exam"/>
+    </changeSet>
 </databaseChangeLog>
