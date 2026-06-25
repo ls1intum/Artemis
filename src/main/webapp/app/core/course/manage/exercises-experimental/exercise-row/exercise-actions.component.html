@@ -55,18 +55,21 @@
     </p-popover>
 }
 
-<!-- Hidden off-screen render used only to measure each button's natural width -->
-<div #measureContainer class="actions-measure d-flex gap-1" aria-hidden="true">
-    @for (action of allActions(); track action.id) {
-        <span #measureItem [attr.data-id]="action.id">
-            <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+<!-- Hidden off-screen render used only to measure each button's natural width. Rendered only while this row
+     introduces a button width the shared cache hasn't measured yet; warm rows skip it entirely. -->
+@if (needsMeasure()) {
+    <div class="actions-measure d-flex gap-1" aria-hidden="true">
+        @for (action of allActions(); track action.id) {
+            <span #measureItem [attr.data-signature]="signatureOf(action)">
+                <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+            </span>
+        }
+        <span #ellipsisMeasure>
+            <button type="button" class="btn btn-outline-secondary"><fa-icon [icon]="faEllipsis" /></button>
         </span>
-    }
-    <span #ellipsisMeasure>
-        <button type="button" class="btn btn-outline-secondary"><fa-icon [icon]="faEllipsis" /></button>
-    </span>
-    <span #separatorMeasure><div class="vr"></div></span>
-</div>
+        <span #separatorMeasure><div class="vr"></div></span>
+    </div>
+}
 
 <ng-template #actionTpl let-action let-inMenu="inMenu">
     @switch (action.kind) {

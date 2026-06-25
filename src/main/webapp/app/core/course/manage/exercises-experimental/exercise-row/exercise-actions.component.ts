@@ -1,10 +1,24 @@
-import { Component, DestroyRef, ElementRef, afterNextRender, computed, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import {
+    ChangeDetectorRef,
+    Component,
+    DestroyRef,
+    ElementRef,
+    afterNextRender,
+    afterRenderEffect,
+    computed,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+    viewChildren,
+} from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { IconDefinition, IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
     faBoxesStacked,
     faChartBar,
@@ -39,6 +53,7 @@ import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-u
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
+import { ExerciseActionWidthCacheService } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-action-width-cache.service';
 
 /**
  * A single exercise action. `quiz` group items are the quiz lifecycle buttons: they always stay visible and never
@@ -65,6 +80,10 @@ interface ActionLayout {
 // Approximate flex gap (gap-1 = 0.25rem) added per item when summing widths.
 const GAP_PX = 4;
 
+// Fixed cache signatures for the two non-button measured elements.
+const ELLIPSIS_SIGNATURE = '__ellipsis__';
+const SEPARATOR_SIGNATURE = '__separator__';
+
 @Component({
     selector: 'jhi-exercise-actions',
     templateUrl: './exercise-actions.component.html',
@@ -86,6 +105,7 @@ export class ExerciseActionsComponent {
 
     private readonly host = inject(ElementRef);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly textExerciseService = inject(TextExerciseService);
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
     private readonly quizExerciseService = inject(QuizExerciseService);
@@ -94,19 +114,16 @@ export class ExerciseActionsComponent {
     private readonly exerciseService = inject(ExerciseService);
     private readonly eventManager = inject(EventManager);
     private readonly translateService = inject(TranslateService);
+    private readonly widthCache = inject(ExerciseActionWidthCacheService);
 
     private readonly menu = viewChild<Popover>('menu');
     private readonly batchMenu = viewChild<Popover>('batchMenu');
     private readonly measureItems = viewChildren<ElementRef<HTMLElement>>('measureItem');
     private readonly ellipsisMeasure = viewChild<ElementRef<HTMLElement>>('ellipsisMeasure');
     private readonly separatorMeasure = viewChild<ElementRef<HTMLElement>>('separatorMeasure');
-    private readonly measureContainer = viewChild<ElementRef<HTMLElement>>('measureContainer');
     private readonly quizLifecycle = viewChild(QuizExerciseLifecycleButtonsComponent);
 
     private readonly containerWidth = signal(0);
-    private readonly measuredWidths = signal<Map<string, number>>(new Map());
-    private readonly ellipsisWidth = signal(0);
-    private readonly separatorWidth = signal(0);
 
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
@@ -268,6 +285,21 @@ export class ExerciseActionsComponent {
 
     readonly allActions = computed<ActionItem[]>(() => [...this.quizActions(), ...this.mainActions()]);
 
+    /** Visual signature that determines a button's rendered width: same signature ⇒ same width across all rows. */
+    protected signatureOf(action: ActionItem): string {
+        const iconName = (action.icon as IconDefinition).iconName ?? String(action.icon);
+        return `${action.kind}|${iconName}|${action.styleClass}|${action.label}`;
+    }
+
+    /** True only while this row introduces a button width the shared cache has not measured yet. */
+    readonly needsMeasure = computed<boolean>(() => {
+        const known = this.widthCache.widthsBySignature();
+        if (!known.has(ELLIPSIS_SIGNATURE) || !known.has(SEPARATOR_SIGNATURE)) {
+            return true;
+        }
+        return this.allActions().some((action) => !known.has(this.signatureOf(action)));
+    });
+
     readonly deletionSummary = computed<Observable<EntitySummary>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
 
     /** Placeholders for the delete confirmation question (`{{ courseType }}` / `{{ courseTitle }}`). */
@@ -282,7 +314,7 @@ export class ExerciseActionsComponent {
     private readonly layout = computed<ActionLayout>(() => {
         const quiz = this.quizActions();
         const main = this.mainActions();
-        const widths = this.measuredWidths();
+        const widths = this.widthCache.widthsBySignature();
         const available = this.containerWidth();
 
         // Before measurement, show everything.
@@ -290,8 +322,8 @@ export class ExerciseActionsComponent {
             return { visibleQuiz: quiz, visibleMain: main, overflowMain: [] };
         }
 
-        const widthOf = (item: ActionItem) => (widths.get(item.id) ?? 0) + GAP_PX;
-        const sep = this.separatorWidth() + 2 * GAP_PX;
+        const widthOf = (item: ActionItem) => (widths.get(this.signatureOf(item)) ?? 0) + GAP_PX;
+        const sep = (widths.get(SEPARATOR_SIGNATURE) ?? 1) + 2 * GAP_PX;
         const bothPresent = quiz.length > 0 && main.length > 0;
 
         const totalAll = quiz.reduce((sum, item) => sum + widthOf(item), 0) + main.reduce((sum, item) => sum + widthOf(item), 0) + (bothPresent ? sep : 0);
@@ -301,7 +333,7 @@ export class ExerciseActionsComponent {
 
         // Quiz lifecycle buttons always stay visible; only main actions collapse into the ellipsis. Reserve the quiz
         // group width up front and fill the remaining budget with main actions.
-        const ellipsis = this.ellipsisWidth() + GAP_PX;
+        const ellipsis = (widths.get(ELLIPSIS_SIGNATURE) ?? 40) + GAP_PX;
         const quizGroupWidth = quiz.reduce((sum, item) => sum + widthOf(item), 0) + (bothPresent ? sep : 0);
         let budget = available - ellipsis - quizGroupWidth;
 
@@ -329,30 +361,45 @@ export class ExerciseActionsComponent {
 
     constructor() {
         afterNextRender(() => {
-            const observer = new ResizeObserver(() => this.measure());
-            observer.observe(this.host.nativeElement);
-            const measureEl = this.measureContainer()?.nativeElement;
-            if (measureEl) {
-                observer.observe(measureEl);
-            }
+            const hostEl = this.host.nativeElement;
+            // Read clientWidth live (not the observer's recorded contentRect, which can lag a tick behind during a
+            // continuous resize) so the collapse keeps up with the drag. It is a single cheap read per resize tick.
+            // Flush change detection synchronously inside the observer callback (which runs after layout but before
+            // paint) so the new visible/overflow split is reflected before the frame is painted — otherwise the
+            // previous, wider button set would be painted for one frame, which reads as a lag while shrinking.
+            const observer = new ResizeObserver(() => {
+                this.containerWidth.set(hostEl.clientWidth);
+                this.changeDetectorRef.detectChanges();
+            });
+            observer.observe(hostEl);
             this.destroyRef.onDestroy(() => observer.disconnect());
-            this.measure();
+            this.containerWidth.set(hostEl.clientWidth);
         });
-    }
 
-    private measure(): void {
-        const widths = new Map<string, number>();
-        for (const ref of this.measureItems()) {
-            const el = ref.nativeElement;
-            const id = el.getAttribute('data-id');
-            if (id) {
-                widths.set(id, el.offsetWidth);
+        // Measure button widths only while this row introduces a signature the shared cache hasn't seen. The measure
+        // DOM is rendered (off-screen) only then; once contributed, `needsMeasure` flips to false, the DOM is removed,
+        // and every other row reuses the cached widths without measuring at all.
+        afterRenderEffect(() => {
+            if (!this.needsMeasure()) {
+                return;
             }
-        }
-        this.measuredWidths.set(widths);
-        this.ellipsisWidth.set(this.ellipsisMeasure()?.nativeElement.offsetWidth ?? 40);
-        this.separatorWidth.set(this.separatorMeasure()?.nativeElement.offsetWidth ?? 1);
-        this.containerWidth.set(this.host.nativeElement.clientWidth);
+            const measured = new Map<string, number>();
+            for (const ref of this.measureItems()) {
+                const signature = ref.nativeElement.getAttribute('data-signature');
+                if (signature) {
+                    measured.set(signature, ref.nativeElement.offsetWidth);
+                }
+            }
+            const ellipsisEl = this.ellipsisMeasure()?.nativeElement;
+            const separatorEl = this.separatorMeasure()?.nativeElement;
+            if (ellipsisEl) {
+                measured.set(ELLIPSIS_SIGNATURE, ellipsisEl.offsetWidth);
+            }
+            if (separatorEl) {
+                measured.set(SEPARATOR_SIGNATURE, separatorEl.offsetWidth);
+            }
+            this.widthCache.contribute(measured);
+        });
     }
 
     protected toggleMenu(event: Event): void {
