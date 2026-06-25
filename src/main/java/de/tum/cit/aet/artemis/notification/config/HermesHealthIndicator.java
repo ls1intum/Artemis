@@ -62,7 +62,8 @@ public class HermesHealthIndicator implements HealthIndicator {
     @Value("${artemis.push-notification-relay:https://hermes-staging.artemis.cit.tum.de}")
     private String hermesUrl;
 
-    public HermesHealthIndicator(@Qualifier("shortTimeoutHermesRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+    // @Lazy: the RestTemplate is only used in health() (request-time). Keeps the REST template configuration out of eager startup.
+    public HermesHealthIndicator(@Lazy @Qualifier("shortTimeoutHermesRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 

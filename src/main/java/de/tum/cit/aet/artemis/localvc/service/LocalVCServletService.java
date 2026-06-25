@@ -138,12 +138,16 @@ public class LocalVCServletService {
 
     public static final String BUILD_USER_NAME = "buildjob_user";
 
+    // This service is pulled into eager startup because the git servlet (JGitServletConfiguration) depends on it. The dependencies below marked @Lazy are only used while
+    // processing a push (see processNewPush*), never on the read/auth path of a fetch/clone. Injecting them lazily keeps their (large) transitive graphs - CI triggering,
+    // submission handling, notifications, exercise versioning - out of the eager startup path; they are warmed afterwards by DeferredEagerBeanInitializer (or on first push).
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService,
-            AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService, ExerciseVersionService exerciseVersionService) {
+            AuxiliaryRepositoryService auxiliaryRepositoryService, @Lazy ContinuousIntegrationTriggerService ciTriggerService,
+            @Lazy ProgrammingSubmissionService programmingSubmissionService, @Lazy ProgrammingSubmissionMessagingService programmingSubmissionMessagingService,
+            @Lazy ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository,
+            Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
+            @Lazy ExerciseVersionService exerciseVersionService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;

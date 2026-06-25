@@ -41,7 +41,7 @@ public class SshGitLocationResolverService implements GitLocationResolver {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public SshGitLocationResolverService(LocalVCServletService localVCServletService, ProgrammingExerciseRepository programmingExerciseRepository) {
+    public SshGitLocationResolverService(@Lazy LocalVCServletService localVCServletService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.localVCServletService = localVCServletService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
