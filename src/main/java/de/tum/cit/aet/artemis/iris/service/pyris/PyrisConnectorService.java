@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDT
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchableEntityDTO;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 
 /**
@@ -228,11 +229,12 @@ public class PyrisConnectorService {
      * @param aiSelection   the user's LLM selection (LOCAL_AI or CLOUD_AI)
      * @param accessContext the role-based access context for the requesting user
      */
-    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, PyrisAccessContextDTO accessContext) {
+    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, PyrisAccessContextDTO accessContext,
+            List<PyrisSearchableEntityDTO> prefetchedEntities) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null);
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of(), accessContext);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of(), accessContext, prefetchedEntities);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());
