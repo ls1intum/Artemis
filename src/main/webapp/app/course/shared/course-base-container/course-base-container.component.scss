@@ -48,8 +48,7 @@
     }
 
     &.exam-is-active {
-        // Sidebar is removed from the layout via [hidden] in the template,
-        // so the content already spans the full width through flex: 1.
+        /* Sidebar is removed from the layout via [hidden] in the template, so the content already spans the full width through flex: 1. */
         .layout-content {
             width: 100vw;
         }

@@ -49,14 +49,14 @@
     }
 }
 
-// PrimeNG AutoComplete chip display
+/* PrimeNG AutoComplete chip display */
 ::ng-deep {
     .group-tag-list {
         .p-autocomplete-input-multiple {
             width: 100%;
         }
 
-        // Render the assigned-group chips in the previous blue tag color
+        /* Render the assigned-group chips in the previous blue tag color */
         .p-autocomplete-chip {
             background: #0275d8;
             color: #fff;

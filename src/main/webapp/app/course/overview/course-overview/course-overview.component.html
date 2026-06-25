@@ -9,7 +9,7 @@
                 'container-closed': isNavbarCollapsed(),
             }"
         >
-            <div class="sidebar module-bg rounded-3" [class.collapsed]="isNavbarCollapsed()" [hidden]="isExamStarted()">
+            <div class="sidebar module-bg rounded-3" [hidden]="isExamStarted()">
                 <jhi-course-sidebar
                     [course]="course()"
                     [sidebarItems]="sidebarItems()"
