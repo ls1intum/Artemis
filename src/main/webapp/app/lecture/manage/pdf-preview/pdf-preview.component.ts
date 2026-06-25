@@ -18,7 +18,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { PDFDocument } from 'pdf-lib';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbModule, NgbPopover, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
@@ -72,12 +72,12 @@ export interface HiddenPageMap {
         ArtemisTranslatePipe,
         FontAwesomeModule,
         NgbTooltipModule,
+        NgbPopover,
         RouterModule,
         DeleteButtonDirective,
         TranslateDirective,
         ConfirmAutofocusButtonComponent,
         PdfPreviewDateBoxComponent,
-        NgbModule,
     ],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
