@@ -6,6 +6,7 @@ import { faCaretDown, faCaretUp, faSort } from '@fortawesome/free-solid-svg-icon
 import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
+import { TooltipModule } from 'primeng/tooltip';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -42,6 +43,7 @@ export interface TableGroupChange {
         TableModule,
         SelectModule,
         CheckboxModule,
+        TooltipModule,
         CdkDropList,
         CdkDrag,
         CdkDragHandle,
@@ -226,6 +228,18 @@ export class ExerciseTableComponent {
     }
 
     protected readonly rowTrackBy = (_index: number, exercise: Exercise): unknown => exercise.id ?? exercise;
+
+    /**
+     * Only individual-mode quizzes support per-student dates, so only they can reasonably share a group's timeline.
+     * Synchronized/batched quizzes must stay out of groups; the server enforces this independently.
+     */
+    isQuizNonIndividual(exercise: Exercise): boolean {
+        return exercise.type === ExerciseType.QUIZ && this.asQuiz(exercise).quizMode !== undefined && this.asQuiz(exercise).quizMode !== QuizMode.INDIVIDUAL;
+    }
+
+    nonIndividualQuizTooltip(exercise: Exercise): string | undefined {
+        return this.isQuizNonIndividual(exercise) ? 'Synchronized and batched quizzes have a single shared run and cannot be added to a group.' : undefined;
+    }
 
     quizStatusLabel(exercise: QuizExercise): string | undefined {
         switch (exercise.status) {

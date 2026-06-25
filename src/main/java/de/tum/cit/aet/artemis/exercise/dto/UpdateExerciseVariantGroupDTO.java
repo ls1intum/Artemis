@@ -17,7 +17,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateExerciseVariantGroupDTO(@NotNull Long id, @NotBlank String title, @Nullable Double maxPoints, @Nullable ZonedDateTime releaseDate,
-        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate) {
+        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
+        @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
 
     /**
      * Applies this DTO's settings to the given existing entity. The course link is intentionally left untouched.
@@ -32,5 +33,6 @@ public record UpdateExerciseVariantGroupDTO(@NotNull Long id, @NotBlank String t
         group.setDueDate(dueDate);
         group.setAssessmentDueDate(assessmentDueDate);
         group.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        group.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestStudentSubmissionsAfterDueDate);
     }
 }

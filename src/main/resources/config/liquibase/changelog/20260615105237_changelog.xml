@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!-- Introduce exercise variant groups: a course-owned grouping of interchangeable exercise variants that share
-         a timeline and a points cap. See ExerciseVariantGroup / EXERCISE_VARIANT_OBJECT_MODEL.md. -->
+         a timeline and a points cap. -->
     <changeSet id="20260615105237-1" author="dominikremo">
         <createTable tableName="exercise_variant_group">
             <column autoIncrement="true" name="id" type="bigint">
@@ -17,6 +17,7 @@
             <column name="due_date" type="datetime(3)"/>
             <column name="assessment_due_date" type="datetime(3)"/>
             <column name="example_solution_publication_date" type="datetime(3)"/>
+            <column name="build_and_test_student_submissions_after_due_date" type="datetime(3)"/>
             <column name="course_id" type="bigint"/>
         </createTable>
     </changeSet>

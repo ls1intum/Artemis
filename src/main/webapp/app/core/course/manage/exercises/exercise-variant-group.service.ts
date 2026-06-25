@@ -17,6 +17,7 @@ export interface ExerciseVariantGroupDTO {
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
+    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     exerciseIds?: number[];
 }
 
@@ -29,6 +30,7 @@ export interface CreateExerciseVariantGroupDTO {
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
     exampleSolutionPublicationDate?: dayjs.Dayjs;
+    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 }
 
 /**
@@ -72,6 +74,7 @@ export class ExerciseVariantGroupService {
         group.dueDate = convertDateFromServer(group.dueDate);
         group.assessmentDueDate = convertDateFromServer(group.assessmentDueDate);
         group.exampleSolutionPublicationDate = convertDateFromServer(group.exampleSolutionPublicationDate);
+        group.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(group.buildAndTestStudentSubmissionsAfterDueDate);
         return group;
     }
 
@@ -82,6 +85,7 @@ export class ExerciseVariantGroupService {
             dueDate?: dayjs.Dayjs;
             assessmentDueDate?: dayjs.Dayjs;
             exampleSolutionPublicationDate?: dayjs.Dayjs;
+            buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
         },
     >(group: T): T {
         return {
@@ -91,6 +95,7 @@ export class ExerciseVariantGroupService {
             dueDate: convertDateFromClient(group.dueDate),
             assessmentDueDate: convertDateFromClient(group.assessmentDueDate),
             exampleSolutionPublicationDate: convertDateFromClient(group.exampleSolutionPublicationDate),
+            buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(group.buildAndTestStudentSubmissionsAfterDueDate),
         } as unknown as T;
     }
 }
@@ -109,6 +114,8 @@ export function toCourseExerciseGroup(dto: ExerciseVariantGroupDTO, exercisesByI
         startDate: dto.startDate,
         dueDate: dto.dueDate,
         assessmentDueDate: dto.assessmentDueDate,
+        exampleSolutionPublicationDate: dto.exampleSolutionPublicationDate,
+        buildAndTestStudentSubmissionsAfterDueDate: dto.buildAndTestStudentSubmissionsAfterDueDate,
         exercises: (dto.exerciseIds ?? []).map((id) => exercisesById.get(id)).filter((exercise): exercise is Exercise => exercise !== undefined),
     };
 }
