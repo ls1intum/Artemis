@@ -21,39 +21,27 @@
                 @if (exercisesProgress() !== undefined) {
                     <div class="d-flex gap-3 align-items-center justify-content-center">
                         <fa-icon [icon]="faList" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exercises' | artemisTranslate" />
-                        <div
-                            class="progress overflow-visible w-100"
-                            [style.height]="'0.75rem'"
+                        <p-progressbar
+                            class="w-100"
+                            [value]="exercisesProgress()!"
+                            [showValue]="false"
+                            color="var(--bs-success, #28a745)"
+                            [style]="{ height: '0.75rem' }"
                             [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exerciseProgress' | artemisTranslate: { progress: exercisesProgress() }"
-                        >
-                            <div
-                                class="progress-bar bg-success overflow-visible"
-                                role="progressbar"
-                                [style.width.%]="(exercisesProgress()! / 100) * 100"
-                                [attr.aria-valuenow]="exercisesProgress()!"
-                                aria-valuemin="0"
-                                [attr.aria-valuemax]="100"
-                            ></div>
-                        </div>
+                        />
                     </div>
                 }
                 @if (lectureUnitsProgress() !== undefined) {
                     <div class="d-flex gap-3 align-items-center justify-content-center">
                         <fa-icon [icon]="faFilePdf" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectures' | artemisTranslate" />
-                        <div
-                            class="progress overflow-visible w-100"
-                            [style.height]="'0.75rem'"
+                        <p-progressbar
+                            class="w-100"
+                            [value]="lectureUnitsProgress()!"
+                            [showValue]="false"
+                            color="var(--bs-success, #28a745)"
+                            [style]="{ height: '0.75rem' }"
                             [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectureProgress' | artemisTranslate: { progress: lectureUnitsProgress() }"
-                        >
-                            <div
-                                class="progress-bar bg-success overflow-visible"
-                                role="progressbar"
-                                [style.width.%]="(lectureUnitsProgress()! / 100) * 100"
-                                [attr.aria-valuenow]="lectureUnitsProgress()!"
-                                aria-valuemin="0"
-                                [attr.aria-valuemax]="100"
-                            ></div>
-                        </div>
+                        />
                     </div>
                 }
             </div>

@@ -20,6 +20,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Message } from 'primeng/message';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -37,6 +38,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         PresentationScoreComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
+        Message,
     ],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {

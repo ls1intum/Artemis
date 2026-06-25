@@ -24,6 +24,7 @@ import { CourseExerciseLatenessComponent } from './course-exercise-lateness/cour
 import { CompetencyAccordionComponent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { ProgressBar } from 'primeng/progressbar';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -37,6 +38,7 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
         CompetencyAccordionComponent,
         FeatureToggleHideDirective,
         FeatureOverlayComponent,
+        ProgressBar,
     ],
 })
 export class CourseDashboardComponent implements OnDestroy {

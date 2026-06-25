@@ -99,12 +99,12 @@
                 (submissionPolicyTypeChange)="calculateFormStatus()"
             />
             @if (programmingExerciseCreationConfig().isEdit) {
-                <div class="alert alert-info" role="alert">
+                <p-message severity="info">
                     <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.editInGradingInformation"></span>
                     <a [href]="editPolicyUrl()">
                         <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.goToGradingToEditInformation"></span>
                     </a>
-                </div>
+                </p-message>
             }
         </div>
     }

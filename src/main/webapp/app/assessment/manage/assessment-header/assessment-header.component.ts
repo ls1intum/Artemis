@@ -14,6 +14,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentWarningComponent } from '../assessment-warning/assessment-warning.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { Message } from 'primeng/message';
 
 /**
  * The <jhi-assessment-header> component is used in the shared assessment layout.
@@ -25,7 +26,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-assessment-header',
     templateUrl: './assessment-header.component.html',
     styleUrls: ['./assessment-header.component.scss'],
-    imports: [TranslateDirective, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, NgbTooltip, FaIconComponent, RouterLink, AssessmentWarningComponent, ArtemisTranslatePipe, Message],
 })
 export class AssessmentHeaderComponent {
     textAssessmentAnalytics = inject(TextAssessmentAnalytics);

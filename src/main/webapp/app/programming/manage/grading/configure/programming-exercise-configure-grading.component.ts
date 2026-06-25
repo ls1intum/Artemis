@@ -37,6 +37,7 @@ import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/
 import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.component';
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';
+import { Message } from 'primeng/message';
 
 /**
  * Describes the editableField
@@ -97,6 +98,7 @@ export type Table = 'testCases' | 'codeAnalysis';
         ScaCategoryDistributionChartComponent,
         FeedbackAnalysisComponent,
         TableViewComponent,
+        Message,
     ],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {

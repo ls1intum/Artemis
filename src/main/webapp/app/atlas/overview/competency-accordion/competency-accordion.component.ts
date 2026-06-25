@@ -16,6 +16,7 @@ import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/comp
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ProgressBar } from 'primeng/progressbar';
 
 export interface CompetencyAccordionToggleEvent {
     opened: boolean;
@@ -26,7 +27,7 @@ export interface CompetencyAccordionToggleEvent {
     selector: 'jhi-competency-accordion',
     templateUrl: './competency-accordion.component.html',
     styleUrl: './competency-accordion.component.scss',
-    imports: [FaIconComponent, NgbTooltip, CompetencyRingsComponent, TranslateDirective, CourseExerciseRowComponent, RouterLink, ArtemisTranslatePipe],
+    imports: [FaIconComponent, NgbTooltip, CompetencyRingsComponent, TranslateDirective, CourseExerciseRowComponent, RouterLink, ArtemisTranslatePipe, ProgressBar],
 })
 export class CompetencyAccordionComponent implements OnChanges {
     private router = inject(Router);

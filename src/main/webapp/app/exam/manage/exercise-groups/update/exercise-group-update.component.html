@@ -16,9 +16,9 @@
             />
             <label class="form-check-label" for="isMandatory" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"></label>
         </div>
-        <div class="alert" [ngClass]="'alert-' + alertType" role="alert">
+        <p-message [severity]="alertType">
             <span jhiTranslate="artemisApp.examManagement.exerciseGroup.titleInfo"></span>
-        </div>
+        </p-message>
         <div class="mt-3">
             <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
             <button type="submit" id="save-group" [disabled]="editForm.form.invalid || isSaving()" class="btn btn-primary">

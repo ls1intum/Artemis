@@ -45,9 +45,9 @@
                     />
                     @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
                         @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                            <div class="alert alert-danger">
+                            <p-message severity="error">
                                 <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
-                            </div>
+                            </p-message>
                         }
                     }
                 </div>
@@ -114,19 +114,19 @@
                         />
                     }
                     @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames || programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
-                        <div class="alert alert-danger" role="alert">
+                        <p-message severity="error">
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames"></span>
                             }
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames"></span>
                             }
-                        </div>
+                        </p-message>
                     }
                     @if (programmingExerciseCreationConfig() && !isLocalCIEnabled()) {
-                        <div class="alert alert-info" role="alert">
+                        <p-message severity="info">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
-                        </div>
+                        </p-message>
                     }
                     @if (isLocalCIEnabled() && !isImport() && !programmingExerciseCreationConfig().isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                         <jhi-button

@@ -32,6 +32,7 @@ import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { Message } from 'primeng/message';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 
@@ -56,6 +57,7 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
         KeyValuePipe,
         RemoveKeysPipe,
         TableViewComponent,
+        Message,
     ],
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnInit, OnDestroy {
