@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, signal, untracked, viewChild, viewChildren } from '@angular/core';
-import interact from 'interactjs';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
@@ -15,7 +14,7 @@ import { CourseDiscussionDirective } from 'app/communication/directive/course-di
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
+import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -26,6 +25,7 @@ import { ChannelService } from 'app/communication/conversations/service/channel.
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -42,6 +42,7 @@ import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter
         TranslateDirective,
         NgbTooltipModule,
         SearchFilterComponent,
+        ResizableDirective,
     ],
     providers: [MetisService],
 })
@@ -155,7 +156,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     ngOnDestroy(): void {
         super.onDestroy();
         this.postCreateEditModal()?.close();
-        this.interactable?.unset();
     }
 
     /**
@@ -222,35 +222,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
     }
 
-    private interactable: ReturnType<typeof interact> | undefined;
-
-    /**
-     * makes discussion section expandable by configuring 'interact'
-     */
     ngAfterViewInit(): void {
-        this.interactable = interact('.expanded-discussion')
-            .resizable({
-                edges: { left: '.draggable-left', right: false, bottom: false, top: false },
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: 375, height: 0 },
-                        max: { width: 600, height: 4000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                target.style.width = event.rect.width + 'px';
-            });
-
         this.messages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
             this.handleScrollOnNewMessage();
         });

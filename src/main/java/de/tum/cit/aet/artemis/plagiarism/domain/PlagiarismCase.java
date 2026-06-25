@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.domain;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -106,7 +105,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
         else if (team != null) {
             return team.getStudents();
         }
-        return Collections.emptySet();
+        return Set.of();
     }
 
     public Post getPost() {

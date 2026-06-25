@@ -1,15 +1,13 @@
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
-import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/localci/shared/entities/build-log.model';
 import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { Interactable } from '@interactjs/core/Interactable';
-import interact from 'interactjs';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { findLatestResult } from 'app/foundation/util/utils';
 import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
@@ -30,7 +28,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TranslateDirective, ArtemisDatePipe],
 })
-export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnDestroy {
+export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     private buildLogService = inject(CodeEditorBuildLogService);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
@@ -40,16 +38,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     secondaryHeader = input<boolean>(false);
 
     onAnnotations = output<Array<Annotation>>();
-    onToggleCollapse = output<{ event: any; horizontal: boolean; interactable: Interactable; resizableMinWidth?: number; resizableMinHeight: number }>();
+    onToggleCollapse = output<{ event: any; horizontal: boolean }>();
     onError = output<string>();
 
     readonly isBuilding = signal(false);
     readonly rawBuildLogs = signal(new BuildLogEntryArray());
     readonly result = signal<Result | undefined>(undefined);
-
-    /** Resizable constants **/
-    resizableMinHeight = 150;
-    interactResizable: Interactable;
 
     private resultSubscription: Subscription;
     private submissionSubscription: Subscription;
@@ -59,48 +53,57 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     faCircleNotch = faCircleNotch;
     faTerminal = faTerminal;
 
+    /**
+     * Stable key controlling when build logs are (re-)fetched: the participation id and its latest result id. It
+     * deliberately excludes the participation/result object references, so the effect below does not re-run (and
+     * re-fetch the build logs) when the input is replaced by an equivalent object — which otherwise loops and floods
+     * the server (see PR #12976).
+     */
+    private readonly resultFetchKey = computed(() => {
+        const participation = this.participation();
+        const results = getAllResultsOfAllSubmissions(participation.submissions);
+        return `${participation.id}:${results.length ? (findLatestResult(results)?.id ?? 'pending') : 'none'}`;
+    });
+
     constructor() {
         effect(() => {
-            const participation = this.participation();
-            this.setupResultWebsocket();
+            // Depend ONLY on the stable identity key, not on the participation object reference. The participation
+            // input gets replaced with a fresh object (same id, same latest result) on unrelated change-detection
+            // cycles; reacting to that re-ran this effect and re-fetched the build logs on every cycle — an infinite
+            // loop that floods the server and crashes the tab (see PR #12976). Running the setup + fetch untracked
+            // keeps the effect's dependency confined to the key, so only a genuine participation/result change re-runs it.
+            this.resultFetchKey();
+            untracked(() => {
+                const participation = this.participation();
+                this.setupResultWebsocket();
 
-            // If the participation changes and it has results, fetch the result details to decide if the build log should be shown
-            if (getAllResultsOfAllSubmissions(participation.submissions).length) {
-                const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
-                of(latestResult)
-                    .pipe(
-                        switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(participation, result) : of(result))),
-                        tap((result) => {
-                            this.result.set(result);
-                        }),
-                        switchMap((result) => this.fetchBuildResults(result)),
-                        map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
-                        tap((buildLogsFromServer: BuildLogEntryArray) => {
-                            this.rawBuildLogs.set(buildLogsFromServer);
-                        }),
-                        catchError(() => {
-                            this.rawBuildLogs.set(new BuildLogEntryArray());
-                            return of();
-                        }),
-                    )
-                    .subscribe(() => this.extractAnnotations());
-            }
+                // If the participation has results, fetch the result details to decide if the build log should be shown
+                if (getAllResultsOfAllSubmissions(participation.submissions).length) {
+                    const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
+                    of(latestResult)
+                        .pipe(
+                            switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(participation, result) : of(result))),
+                            tap((result) => {
+                                this.result.set(result);
+                            }),
+                            switchMap((result) => this.fetchBuildResults(result)),
+                            map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
+                            tap((buildLogsFromServer: BuildLogEntryArray) => {
+                                this.rawBuildLogs.set(buildLogsFromServer);
+                            }),
+                            catchError(() => {
+                                this.rawBuildLogs.set(new BuildLogEntryArray());
+                                return of();
+                            }),
+                        )
+                        .subscribe(() => this.extractAnnotations());
+                }
+            });
         });
     }
 
     ngOnInit(): void {
         this.setupSubmissionWebsocket();
-    }
-
-    /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
-     */
-    ngAfterViewInit(): void {
-        this.resizableMinHeight = window.screen.height / 6;
-        this.interactResizable = interact('.resizable-buildoutput');
     }
 
     /**
@@ -154,6 +157,13 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             .pipe(
                 // Ignore initial null/undefined result from service
                 filter((result) => !!result),
+                // The per-participation result subject is a BehaviorSubject that can re-emit the same result many
+                // times (websocket re-delivery / republication via notifyAllResultSubscribers). Without this guard
+                // every emission triggered a fresh `buildlogs` fetch — and because of the switchMap below, each new
+                // emission cancelled the in-flight request — flooding the server with thousands of (cancelled)
+                // requests and pegging the client until it crashed (reported on PR #12967, fixed here). Only react
+                // when the result identity actually changes.
+                distinctUntilChanged((previous, current) => previous?.id === current?.id),
                 tap((result) => {
                     this.result.set(result!);
                 }),
@@ -216,9 +226,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         this.onToggleCollapse.emit({
             event,
             horizontal: false,
-            interactable: this.interactResizable,
-            resizableMinWidth: undefined,
-            resizableMinHeight: this.resizableMinHeight,
         });
     }
 
@@ -228,9 +235,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         }
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
-        }
-        if (this.interactResizable) {
-            this.interactResizable.unset();
         }
     }
 }
