@@ -5,7 +5,7 @@
             <span class="perspective-switch-divider" aria-hidden="true">|</span>
             <a [routerLink]="managementViewLink()" [class.subtle]="routeIsAtCourseManagementView()" (click)="collapseNavbar()" jhiTranslate="global.menu.course">Management</a>
         </div>
-        @if (currAccount() && !isExamActive() && !isExamStarted()) {
+        @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
             <jhi-global-search-navbar />
         }
         @if (!currAccount() && languages && languages.length > 1) {
