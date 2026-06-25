@@ -174,7 +174,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         var fileBytes = Files.readAllBytes(actualFilePath);
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
 
-        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.filePath());
+        String requestUrl = "%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.filePath());
         MvcResult file = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(expectedMediaType)).andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }
