@@ -17,6 +17,7 @@ import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-asses
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -29,7 +30,7 @@ export interface DropInfo {
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
-    imports: [ScoreDisplayComponent, FaIconComponent, ModelingExplanationEditorComponent],
+    imports: [ScoreDisplayComponent, FaIconComponent, ModelingExplanationEditorComponent, ResizableDirective],
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -125,11 +126,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         // Ensure assessments are added after editor initialization
         await this.updateApollonAssessments(this.referencedFeedbacks);
         await this.applyStateConfiguration();
-        this.setupInteract();
     }
 
     ngOnDestroy() {
-        super.ngOnDestroy();
         if (this.apollonEditor) {
             if (this.modelChangeSubscription !== undefined) {
                 this.apollonEditor.unsubscribe(this.modelChangeSubscription);
