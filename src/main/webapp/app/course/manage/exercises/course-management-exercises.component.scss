@@ -12,16 +12,12 @@
     cursor: grab;
 }
 
-// Prevent exercise panels from expanding the page when the table is wider than the viewport.
-// PrimeNG Panel uses display:grid (for toggle animation) on .p-panel-content-container, with
-// grid-template-columns:1fr. A grid item's default auto min-size inflates the 1fr track to fit
-// the content's natural width, overflowing the bounded panel. min-width:0 on the grid item
-// overrides that so the track resolves to the available space; overflow:hidden clips the rest.
-// Note: [cdkDrag] compiles to the lowercase attribute cdkdrag — use the .cdk-drag class instead.
-.cdk-drag ::ng-deep .p-panel-content-container {
+/* Keep a too-wide table scrolling inside its panel, not the page: min-width:0 lets PrimeNG's grid
+   track shrink and overflow:hidden clips the rest. */
+:host ::ng-deep .p-panel-content-container {
     overflow: hidden;
 }
-.cdk-drag ::ng-deep .p-panel-content-wrapper {
+:host ::ng-deep .p-panel-content-wrapper {
     min-width: 0;
 }
 

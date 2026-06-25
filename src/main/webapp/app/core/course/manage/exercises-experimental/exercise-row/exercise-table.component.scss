@@ -1,16 +1,16 @@
 :host {
     display: block;
-    width: 100%;
 }
 
-// Fill the panel; when the content columns need more than the panel offers, the scrollable
-// container (p-table [scrollable]) scrolls horizontally instead of the whole page.
+/* Fill the panel; the table's own scroll container absorbs horizontal overflow. */
 :host ::ng-deep .p-datatable-table {
     width: 100%;
 }
 
-// Title keeps a readable minimum rather than collapsing to its longest word.
+/* Readable width that still shrinks on narrow viewports. */
 .col-title {
+    width: 28rem;
+    max-width: 28rem;
     min-width: 14rem;
 }
 
@@ -18,17 +18,15 @@
     min-width: 16rem;
 }
 
-// Actions is the flexible column that absorbs leftover width, so as many buttons as fit are
-// shown (the rest collapse into the ellipsis menu). Its content is an absolute overlay (see
-// exercise-actions.component) so the buttons never inflate the column; the cell clips them and
-// keeps a minimum so the ellipsis button is always reachable.
+/*
+ * Cap at the widest button set (60rem ≈ a full quiz row); without it the column absorbs all leftover
+ * width as whitespace. Buttons are an absolute overlay (exercise-actions.component) so they never
+ * inflate the column; overflow:hidden clips them and min-width keeps the ellipsis button reachable.
+ */
 th.col-actions,
 td.col-actions {
-    width: 1000%;
+    width: 60rem;
     min-width: 4rem;
-}
-
-td.col-actions {
     position: relative;
     overflow: hidden;
 }
@@ -56,7 +54,7 @@ td.col-actions {
     }
 }
 
-// Compact card shown under the cursor while dragging a row (a detached <tr> would not render correctly).
+/* Card shown under the cursor while dragging a row. */
 .exercise-drag-preview {
     display: flex;
     align-items: center;
@@ -67,12 +65,12 @@ td.col-actions {
     box-shadow: 0 5px 12px rgb(0 0 0 / 20%);
 }
 
-// Gap left behind in the table where the dragged row currently sits.
+/* Gap where the dragged row sits. */
 .cdk-drag-placeholder {
     opacity: 0.4;
 }
 
-// Smooth settle animation when a row is dropped.
+/* Settle animation on drop. */
 .cdk-drag-animating {
     transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
