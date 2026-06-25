@@ -70,7 +70,15 @@
                 </div>
             }
             @if (selectedCompetency(); as competency) {
-                <div class="sc-detail-panel" [style.width.px]="detailPanelWidth()">
+                <div
+                    class="sc-detail-panel"
+                    [style.width.px]="detailPanelWidth()"
+                    jhiResizable
+                    [resizableEdges]="{ left: '.draggable-left' }"
+                    [resizableConstraints]="{ minWidth: 250, maxWidth: 1100 }"
+                    [resizableApplyInlineSize]="false"
+                    (resizeMove)="detailPanelWidth.set($event.width)"
+                >
                     <div class="draggable-left">
                         <fa-icon [icon]="faGripLinesVertical" />
                     </div>
@@ -89,7 +97,15 @@
                     </div>
                 </div>
             } @else if (selectedKnowledgeArea(); as knowledgeArea) {
-                <div class="sc-detail-panel" [style.width.px]="detailPanelWidth()">
+                <div
+                    class="sc-detail-panel"
+                    [style.width.px]="detailPanelWidth()"
+                    jhiResizable
+                    [resizableEdges]="{ left: '.draggable-left' }"
+                    [resizableConstraints]="{ minWidth: 250, maxWidth: 1100 }"
+                    [resizableApplyInlineSize]="false"
+                    (resizeMove)="detailPanelWidth.set($event.width)"
+                >
                     <div class="draggable-left">
                         <fa-icon [icon]="faGripLinesVertical" />
                     </div>

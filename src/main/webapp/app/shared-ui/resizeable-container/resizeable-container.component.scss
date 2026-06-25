@@ -85,6 +85,9 @@
         justify-content: center;
         min-width: 15px;
         z-index: 10;
+
+        // Show a resize affordance on the drag handle (interact.js used to set this automatically).
+        cursor: col-resize;
     }
 }
 
