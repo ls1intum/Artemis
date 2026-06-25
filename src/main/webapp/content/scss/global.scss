@@ -1468,7 +1468,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     transition: transform 0.3s ease;
 }
 
-// About Iris modal — PrimeNG variant (sidebar chat)
+// About Iris modal — PrimeNG DynamicDialog (used by every Iris host)
 .p-dialog-mask.about-iris-dialog {
     background-color: rgba(0, 0, 0, 0.3);
 }
@@ -1483,16 +1483,45 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
-// About Iris modal — CDK MatDialog variant (exercise/lecture chat widget)
-.about-iris-backdrop {
-    background-color: rgba(0, 0, 0, 0.3);
-}
+// Floating Iris chat widget — PrimeNG DynamicDialog (exercise/lecture chat button).
+// The widget is a non-modal, no-backdrop, bottom-right floating panel. The embedded
+// `.chat-widget` is `position: fixed` and manages its own placement, drag and resize, so the
+// PrimeNG dialog shell must be a transparent, full-viewport, pointer-events-passthrough container
+// that does not impose its own chrome or positioning (mirrors the `.iris-onboarding-dialog` pattern).
+// !important is required because PrimeNG applies inline styles on the `.p-dialog` root.
+.iris-chat-widget-dialog {
+    pointer-events: none !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    // Neutralize any PrimeNG enter/leave transform on the dialog root: a transformed ancestor would
+    // make the embedded `position: fixed` `.chat-widget` resolve against the dialog instead of the
+    // viewport, breaking its bottom-right placement and drag/resize math.
+    transform: none !important;
+    animation: none !important;
 
-.about-iris-dialog .mat-mdc-dialog-surface {
-    border-radius: 1rem;
-    overflow: hidden;
-    background-color: var(--iris-secondary-background);
-    padding: 0;
+    .p-dialog-content {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        overflow: visible;
+    }
+
+    // Re-enable interaction on the actual widget; the shell above stays click-through.
+    .chat-widget {
+        pointer-events: auto;
+    }
 }
 
 // Communication dialogs (PrimeNG DynamicDialog styling)

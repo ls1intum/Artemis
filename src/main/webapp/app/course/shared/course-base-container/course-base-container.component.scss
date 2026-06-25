@@ -4,44 +4,37 @@
 @import './course-variables';
 @import 'src/main/webapp/content/scss/artemis-mixins.scss';
 
-// ng-deep needed to remove scrollbar from mat-sidebar
-::ng-deep .mat-drawer-inner-container {
-    overflow: hidden !important;
-}
-
 .sidebar-wrapper {
     overflow-x: hidden;
     position: sticky;
     width: 100vw;
 }
 
-.mat-drawer-side {
-    border: none;
-}
+.layout-container {
+    display: flex;
 
-.mat-drawer-container {
     &.exam-wrapper {
         height: 100vh !important;
     }
 
-    .mat-drawer {
+    .sidebar {
+        flex: 0 0 auto;
         box-sizing: content-box;
         width: $menu-width-open;
-        transition: width 0.2s ease-in-out !important;
+        overflow: hidden;
+        border: none;
+        transition: width 0.2s ease-in-out;
     }
 
-    .mat-drawer-content {
-        position: sticky;
+    .layout-content {
+        flex: 1;
+        min-width: 0;
+        position: relative;
         z-index: 1;
-        display: block;
 
         @include dynamic-content-height(--spacing-modules, --system-notification-height);
-        width: calc(100vw - $menu-width-open);
         overflow: hidden;
-        margin-left: $menu-width-open !important;
-        transition:
-            width 0.2s ease-in-out,
-            margin-left 0.2s ease-in-out !important;
+        transition: width 0.2s ease-in-out;
 
         &.exam-wrapper {
             height: 100vh !important;
@@ -49,31 +42,22 @@
     }
 
     &.container-closed {
-        .mat-drawer {
+        .sidebar {
             width: $menu-width-closed;
-        }
-
-        .mat-drawer-content {
-            width: calc(100vw - $menu-width-closed);
-            margin-left: $menu-width-closed !important;
         }
     }
 
     &.exam-is-active {
-        .mat-drawer-content {
+        // Sidebar is removed from the layout via [hidden] in the template,
+        // so the content already spans the full width through flex: 1.
+        .layout-content {
             width: 100vw;
-            margin-left: 0 !important;
         }
     }
 
     @media screen and (max-width: 960px) {
-        .mat-drawer {
+        .sidebar {
             width: $menu-width-closed;
-        }
-
-        .mat-drawer-content {
-            width: calc(100vw - $menu-width-closed);
-            margin-left: $menu-width-closed !important;
         }
     }
 }
@@ -115,14 +99,13 @@ a:not(.btn):not(.tab-link):hover {
 }
 
 @media print {
-    .mat-drawer {
+    .sidebar {
         display: none !important; /* Hide the sidebar */
     }
 
-    .mat-drawer-container,
-    .mat-drawer-container.container-closed {
-        .mat-drawer-content {
-            margin-left: 0 !important; /* Remove any left margin or padding if necessary */
+    .layout-container,
+    .layout-container.container-closed {
+        .layout-content {
             width: 100% !important; /* Make the content full width */
         }
     }

@@ -19,7 +19,6 @@ import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExercisePerformanceComponent } from './course-exercise-performance/course-exercise-performance.component';
 import { CourseExerciseLatenessComponent } from './course-exercise-lateness/course-exercise-lateness.component';
 import { CompetencyAccordionComponent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
@@ -33,7 +32,6 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
     imports: [
         CourseChatbotComponent,
         TranslateDirective,
-        NgbProgressbar,
         CourseExercisePerformanceComponent,
         CourseExerciseLatenessComponent,
         CompetencyAccordionComponent,

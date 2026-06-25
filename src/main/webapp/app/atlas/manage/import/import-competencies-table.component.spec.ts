@@ -6,7 +6,6 @@ import { ImportCompetenciesTableComponent } from 'app/atlas/manage/import/import
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -18,7 +17,7 @@ describe('ImportCompetenciesTableComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, ImportCompetenciesTableComponent, MockDirective(SortDirective), MockDirective(TranslateDirective), MockComponent(NgbPagination)],
+            imports: [ReactiveFormsModule, ImportCompetenciesTableComponent, MockDirective(SortDirective), MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

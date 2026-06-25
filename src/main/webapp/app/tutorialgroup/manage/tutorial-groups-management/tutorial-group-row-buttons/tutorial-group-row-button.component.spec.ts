@@ -17,7 +17,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import '@angular/localize/init';
 
 interface TutorialGroupApiServiceMock {
     deleteTutorialGroup: ReturnType<typeof vi.fn>;

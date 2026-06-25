@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
@@ -17,7 +16,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbHighlight, NgbPagination, NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbHighlight, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LearningPathsTableComponent', () => {
     setupTestBed({ zoneless: true });
@@ -58,8 +57,8 @@ describe('LearningPathsTableComponent', () => {
             ],
         })
             .overrideComponent(LearningPathsTableComponent, {
-                remove: { imports: [NgbPaginationModule, NgbTypeaheadModule, FontAwesomeModule] },
-                add: { imports: [MockComponent(NgbPagination), MockComponent(NgbHighlight), MockComponent(FaIconComponent)] },
+                remove: { imports: [NgbTypeaheadModule, FontAwesomeModule] },
+                add: { imports: [MockComponent(NgbHighlight), MockComponent(FaIconComponent)] },
             })
             .compileComponents();
 

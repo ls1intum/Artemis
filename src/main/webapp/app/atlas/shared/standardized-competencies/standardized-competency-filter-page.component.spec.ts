@@ -7,11 +7,7 @@ import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/stan
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({ template: '' })
-class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {
-    protected override get knowledgeAreaTreeComponent() {
-        return undefined;
-    }
-}
+class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {}
 
 describe('StandardizedCompetencyFilterPageComponent', () => {
     setupTestBed({ zoneless: true });

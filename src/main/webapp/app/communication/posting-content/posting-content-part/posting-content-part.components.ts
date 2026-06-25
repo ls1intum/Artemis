@@ -17,7 +17,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
-import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,10 +30,11 @@ import { FileService } from 'app/foundation/service/file.service';
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['../../metis.component.scss'],
     imports: [RouterLink, FaIconComponent, HtmlForPostingMarkdownPipe, TranslateDirective],
+    providers: [DialogService],
 })
 export class PostingContentPartComponent implements OnInit {
     private fileService = inject(FileService);
-    private dialog = inject(MatDialog);
+    private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
 
     postingContentPart = input<PostingContentPart>();
@@ -142,9 +143,11 @@ export class PostingContentPartComponent implements OnInit {
      * @param slideToReference {string} the reference to the slide
      */
     enlargeImage(slideToReference: string) {
-        this.dialog.open(EnlargeSlideImageComponent, {
+        this.dialogService.open(EnlargeSlideImageComponent, {
             data: { slideToReference },
-            maxWidth: '95vw',
+            modal: true,
+            dismissableMask: true,
+            style: { 'max-width': '95vw' },
         });
     }
 

@@ -7,7 +7,6 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { Course } from 'app/course/shared/entities/course.model';
 
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -32,14 +31,7 @@ describe('ImportAllCompetenciesComponent', () => {
         dialogConfig = { data: {} } as DynamicDialogConfig;
 
         await TestBed.configureTestingModule({
-            imports: [
-                ImportAllCompetenciesComponent,
-                MockComponent(NgbPagination),
-                FontAwesomeTestingModule,
-                MockComponent(ButtonComponent),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-            ],
+            imports: [ImportAllCompetenciesComponent, FontAwesomeTestingModule, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
             declarations: [],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

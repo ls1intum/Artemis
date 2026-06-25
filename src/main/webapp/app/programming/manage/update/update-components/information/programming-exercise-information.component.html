@@ -58,7 +58,7 @@
                         <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
                         <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                     </div>
-                    <jhi-category-selector
+                    <jhi-category-selector-primeng
                         [categories]="programmingExerciseCreationConfig().exerciseCategories"
                         [existingCategories]="programmingExerciseCreationConfig().existingCategories"
                         (selectedCategories)="programmingExerciseCreationConfig().updateCategories($event)"
@@ -114,19 +114,19 @@
                         />
                     }
                     @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames || programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
-                        <ngb-alert [dismissible]="false" [type]="'danger'">
+                        <div class="alert alert-danger" role="alert">
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames"></span>
                             }
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames"></span>
                             }
-                        </ngb-alert>
+                        </div>
                     }
                     @if (programmingExerciseCreationConfig() && !isLocalCIEnabled()) {
-                        <ngb-alert [dismissible]="false" [type]="'info'">
+                        <div class="alert alert-info" role="alert">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
-                        </ngb-alert>
+                        </div>
                     }
                     @if (isLocalCIEnabled() && !isImport() && !programmingExerciseCreationConfig().isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                         <jhi-button

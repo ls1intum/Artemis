@@ -3,9 +3,7 @@
     <div>
         <div class="custom-slider">
             <h5>Selected Timestamp: {{ displayCurrentTimestamp() }}</h5>
-            <mat-slider class="mat-slider mb-5" [min]="0" [max]="submissionTimeStamps().length - 1" [step]="1" (change)="onSliderInputChange()" [showTickMarks]="true">
-                <input matSliderThumb [(ngModel)]="timestampIndex" #slider />
-            </mat-slider>
+            <p-slider class="mb-5" [(ngModel)]="timestampIndex" [min]="0" [max]="submissionTimeStamps().length - 1" [step]="1" (onSlideEnd)="onSliderInputChange()" #slider />
         </div>
         <jhi-exam-navigation-bar
             #examNavigationBar

@@ -7,7 +7,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FeedbackAnalysisComponent, FeedbackAnalysisState } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import '@angular/localize/init';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';

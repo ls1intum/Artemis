@@ -19,7 +19,6 @@ import { CourseExerciseLatenessComponent } from 'app/course/overview/course-dash
 import { CourseExercisePerformanceComponent } from 'app/course/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { of, throwError } from 'rxjs';
 import { CourseDashboardService } from 'app/course/overview/course-dashboard/course-dashboard.service';
@@ -161,7 +160,6 @@ describe('CourseDashboardComponent', () => {
             imports: [
                 CourseDashboardComponent,
                 MockCourseChatbotComponent,
-                NgbProgressbar,
                 TranslatePipeMock,
                 MockComponent(CourseExerciseLatenessComponent),
                 MockComponent(CourseExercisePerformanceComponent),

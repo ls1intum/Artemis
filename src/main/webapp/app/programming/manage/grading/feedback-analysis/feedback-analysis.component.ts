@@ -1,7 +1,8 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelRequestDTO, FeedbackDetail } from './service/feedback-analysis.service';
-import { NgbModal, NgbModule, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -33,7 +34,7 @@ export interface FeedbackAnalysisState {
     selector: 'jhi-feedback-analysis',
     templateUrl: './feedback-analysis.component.html',
     styleUrls: ['./feedback-analysis.component.scss'],
-    imports: [SortIconComponent, NgbModule, NgbPagination, TranslateDirective, FontAwesomeModule, CommonModule, ArtemisTranslatePipe, FormsModule],
+    imports: [SortIconComponent, NgbTooltipModule, PaginatorModule, TranslateDirective, FontAwesomeModule, CommonModule, ArtemisTranslatePipe, FormsModule],
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {
@@ -176,6 +177,11 @@ export class FeedbackAnalysisComponent {
     setPage(newPage: number): void {
         this.page.set(newPage);
         this.loadData();
+    }
+
+    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
+    onPageChange(event: PaginatorState): void {
+        this.setPage((event.page ?? 0) + 1);
     }
 
     async search(searchTerm: string): Promise<void> {

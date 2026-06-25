@@ -5,15 +5,13 @@ jhi-category-selector-primeng {
     .category-chip-list {
         width: 100%;
 
-        /* Hide Material's notched outline */
-        .mdc-notched-outline {
-            display: none !important;
-        }
-
-        .mat-mdc-form-field-flex {
+        /* Make the multiple-mode container look like a Bootstrap form field */
+        .p-autocomplete-input-multiple {
+            width: 100%;
             background: var(--p-form-field-background, var(--bs-body-bg));
             border: 1px solid var(--p-form-field-border-color, var(--bs-border-color));
             border-radius: var(--p-form-field-border-radius, var(--bs-border-radius));
+            padding: 0.3rem 0.5rem;
             transition: border-color 0.2s;
 
             &:hover {
@@ -21,26 +19,16 @@ jhi-category-selector-primeng {
             }
         }
 
-        &.mat-focused .mat-mdc-form-field-flex {
-            border-color: var(--p-form-field-focus-border-color, var(--bs-primary));
-            box-shadow: var(--p-form-field-focus-ring-shadow, 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25));
+        /* Render each selected category as a colored tag */
+        .p-autocomplete-chip-item {
+            margin: 2px 4px 2px 0;
         }
 
-        .mat-mdc-form-field-infix {
-            padding: 0.45rem 0.75rem !important;
-            min-height: 0 !important;
-        }
-
-        .mat-mdc-chip-grid {
-            margin: 0 !important;
-        }
-
-        .category-chip {
+        .p-autocomplete-chip {
             padding: 0 !important;
             height: 22px !important;
             border-radius: 0.25rem !important;
             background: transparent !important;
-            margin: 2px 4px 2px 0 !important;
 
             .custom-tag {
                 position: relative;
@@ -56,45 +44,20 @@ jhi-category-selector-primeng {
                 &:hover {
                     opacity: 0.8;
                 }
+            }
 
-                .category-chip-remove {
-                    color: #fff;
-                    font-size: 0.7rem;
-                    margin-left: 0.25rem;
-                }
+            .category-chip-remove {
+                color: #fff;
+                font-size: 0.7rem;
+                margin: 0 0.4rem 0 0.25rem;
+                cursor: pointer;
             }
         }
-
-        /* Remove extra padding from chip action */
-        .mat-mdc-standard-chip.mdc-evolution-chip--with-trailing-action .mdc-evolution-chip__action--primary {
-            padding-left: 0 !important;
-            padding-right: 0 !important;
-        }
-
-        /* Remove additional border from custom tags */
-        .mat-mdc-standard-chip .mdc-evolution-chip__action--primary::before {
-            border-style: none !important;
-        }
-
-        /* Ensure consistent input height */
-        input.category-chip-input {
-            height: 22px;
-            margin: 2px 0;
-        }
     }
 
-    .category-chip-input {
+    .category-chip-input,
+    .p-autocomplete-input {
         color: var(--text-editor-color);
-    }
-
-    /* Hide subscript wrapper to prevent extra spacing */
-    .mat-mdc-form-field-subscript-wrapper {
-        display: none;
-    }
-
-    /* Prevent x icon from jumping when opening colorpicker */
-    .remove-button::before {
-        position: absolute;
     }
 }
 

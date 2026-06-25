@@ -9,7 +9,10 @@
         <ng-content select="[jhiBannerSlot]" />
     </div>
     @if (hasAssessmentDueDatePassed() && !result()?.completionDate) {
-        <ngb-alert [style.fontSize]="'65%'" [type]="'warning'" (close)="hasAssessmentDueDatePassed.set(false)" jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver" />
+        <div class="alert alert-warning alert-dismissible" role="alert" [style.fontSize]="'65%'">
+            <span jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver"></span>
+            <button type="button" class="btn-close" (click)="hasAssessmentDueDatePassed.set(false)" aria-label="Close"></button>
+        </div>
     }
     @if (!isLoading()) {
         <div class="row-container flex-wrap flex-lg-nowrap">

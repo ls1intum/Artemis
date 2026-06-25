@@ -24,7 +24,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import '@angular/localize/init';
 import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';

@@ -27,7 +27,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ProgrammingExerciseConfigureGradingStatusComponent } from '../configure-status/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from '../configure-actions/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from '../configure-submission-policy/programming-exercise-grading-submission-policy-configuration-actions.component';
-import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGradingTasksTableComponent } from '../tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { TestCaseDistributionChartComponent } from '../charts/test-case-distribution-chart.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from '../table-actions/programming-exercise-grading-table-actions.component';
@@ -88,7 +87,6 @@ export type Table = 'testCases' | 'codeAnalysis';
         ProgrammingExerciseConfigureGradingActionsComponent,
         ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent,
         SubmissionPolicyUpdateComponent,
-        NgbAlert,
         ProgrammingExerciseGradingTasksTableComponent,
         TestCaseDistributionChartComponent,
         ProgrammingExerciseGradingTableActionsComponent,

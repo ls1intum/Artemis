@@ -1,7 +1,11 @@
 import { ErrorHandler, Injectable, inject } from '@angular/core';
 import { browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
-import type { Integration } from '@sentry/core';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
+
+// `@sentry/angular` re-exports the public Sentry API but not the bare `Integration` type
+// (that lives in `@sentry/core`, which we intentionally do not depend on directly).
+// Derive it from an integration factory's return type instead of importing `@sentry/core`.
+type Integration = ReturnType<typeof dedupeIntegration>;
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 

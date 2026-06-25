@@ -30,7 +30,7 @@ import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submis
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { MatSlider } from '@angular/material/slider';
+import { Slider } from 'primeng/slider';
 import { FormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -138,7 +138,7 @@ describe('Student Exam Timeline Component', () => {
                         MockComponent(QuizExamSubmissionComponent),
                         MockComponent(FileUploadExamSubmissionComponent),
                         MockComponent(ExamNavigationBarComponent),
-                        MockComponent(MatSlider),
+                        MockComponent(Slider),
                     ],
                 },
             })

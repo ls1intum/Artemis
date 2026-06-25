@@ -10,13 +10,13 @@ import { onError } from 'app/foundation/util/global.utils';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
+import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-exercise-group-update',
     templateUrl: './exercise-group-update.component.html',
-    imports: [TranslateDirective, FormsModule, NgbAlert, FaIconComponent],
+    imports: [TranslateDirective, FormsModule, NgClass, FaIconComponent],
 })
 export class ExerciseGroupUpdateComponent implements OnInit {
     private route = inject(ActivatedRoute);

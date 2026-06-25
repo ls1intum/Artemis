@@ -1,19 +1,25 @@
-.tree-indent {
-    padding-left: 3rem;
+// the `.knowledge-area-tree` class sits on the `<p-tree>` host element itself
+.knowledge-area-tree {
+    // let the PrimeNG tree fill the available width of the surrounding card / panel
+    width: 100%;
+    border: none;
+    background-color: transparent;
+    padding: 0;
+
+    // give the node rows the same light "card" background the previous Material tree cards had
+    ::ng-deep .p-tree-node-content {
+        background-color: var(--overview-light-background-color);
+    }
 }
 
-.tree-card {
-    background-color: var(--overview-light-background-color);
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    overflow: hidden;
-    flex-wrap: wrap;
-    padding: 0.5rem;
-    border-radius: 0;
-}
-
-.tree-card-row {
+.knowledge-area-node {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+}
+
+.competency-node {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
 }

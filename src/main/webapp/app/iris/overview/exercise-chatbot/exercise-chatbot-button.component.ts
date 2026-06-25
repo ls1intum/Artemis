@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { Overlay } from '@angular/cdk/overlay';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActivatedRoute, Params } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { EMPTY, filter, map, of, switchMap } from 'rxjs';
@@ -22,13 +21,13 @@ import { createStageRotation } from 'app/iris/overview/iris-stage-rotation.util'
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
     imports: [FaIconComponent, IrisLogoComponent],
+    providers: [DialogService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisExerciseChatbotButtonComponent {
     protected readonly faCircle = faCircle;
 
-    private readonly dialog = inject(MatDialog);
-    private readonly overlay = inject(Overlay);
+    private readonly dialogService = inject(DialogService);
     private readonly chatService = inject(IrisChatService);
     private readonly route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
@@ -42,7 +41,7 @@ export class IrisExerciseChatbotButtonComponent {
 
     readonly mode = input.required<ChatServiceMode>();
 
-    dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | undefined = undefined;
+    dialogRef: DynamicDialogRef<IrisChatbotWidgetComponent> | undefined = undefined;
 
     // UI state as signals for OnPush change detection
     readonly chatOpen = signal(false);
@@ -188,23 +187,32 @@ export class IrisExerciseChatbotButtonComponent {
     }
 
     /**
-     * Opens the chat dialog using MatDialog.
-     * Sets the configuration options for the dialog, including position, size, and data.
+     * Opens the chat widget using PrimeNG's DialogService.
+     *
+     * The widget is a floating, non-modal, bottom-right panel (no backdrop), reproducing the
+     * previous MatDialog config (`hasBackdrop: false`, `position: { bottom, right }`,
+     * `disableClose: true`, noop scroll strategy):
+     * - `modal: false` renders no blocking backdrop/mask, so the page stays interactive.
+     * - `closable: false` and `dismissableMask: false` prevent PrimeNG from closing the dialog
+     *   (the widget closes itself via its own controls and on navigation).
+     * - `showHeader: false` removes the PrimeNG dialog chrome; the widget renders its own header.
+     * - `styleClass: 'iris-chat-widget-dialog'` makes the PrimeNG `.p-dialog` shell a transparent,
+     *   pointer-events-passthrough, full-viewport container so the embedded `.chat-widget`
+     *   (position: fixed) keeps self-positioning to the bottom-right and drag/resizing as before.
      */
     public openChat() {
         this.chatOpen.set(true);
         this.newIrisMessage.set(undefined);
         this.lastShownBubbleMessage = undefined;
-        this.dialogRef = this.dialog.open(IrisChatbotWidgetComponent, {
-            hasBackdrop: false,
-            scrollStrategy: this.overlay.scrollStrategies.noop(),
-            position: { bottom: '0px', right: '0px' },
-            disableClose: true,
-        });
-        this.dialogRef
-            .afterClosed()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => this.handleDialogClose());
+        this.dialogRef =
+            this.dialogService.open(IrisChatbotWidgetComponent, {
+                modal: false,
+                closable: false,
+                dismissableMask: false,
+                showHeader: false,
+                styleClass: 'iris-chat-widget-dialog',
+            }) ?? undefined;
+        this.dialogRef?.onClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.handleDialogClose());
     }
 
     private handleDialogClose() {

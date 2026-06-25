@@ -24,10 +24,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
 import { RemoveAuxiliaryRepositoryButtonComponent } from '../../remove-auxiliary-repository-button.component';
-import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { AddAuxiliaryRepositoryButtonComponent } from '../../add-auxiliary-repository-button.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
@@ -50,10 +49,9 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
         ProgrammingExerciseEditCheckoutDirectoriesComponent,
         TableEditableFieldComponent,
         RemoveAuxiliaryRepositoryButtonComponent,
-        NgbAlert,
         ButtonComponent,
         AddAuxiliaryRepositoryButtonComponent,
-        CategorySelectorComponent,
+        CategorySelectorPrimengComponent,
         ProgrammingExerciseDifficultyComponent,
         KeyValuePipe,
         RemoveKeysPipe,

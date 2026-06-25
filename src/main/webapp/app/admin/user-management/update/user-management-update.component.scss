@@ -1,34 +1,6 @@
 .group-tag-list {
     width: 100%;
     color: var(--bs-border-color);
-
-    .group-tag {
-        padding: 0 !important;
-        height: 30px !important;
-        border-radius: 0.25rem !important;
-        background: transparent !important;
-
-        .custom-tag {
-            padding: 0.15rem 0.45rem;
-            background: #0275d8;
-            border-radius: 0.25rem;
-            color: #fff;
-            display: flex;
-            align-items: center;
-
-            &:hover {
-                opacity: 0.8;
-            }
-
-            .group-tag-remove {
-                color: #fff;
-            }
-        }
-    }
-
-    .group-tag-input {
-        color: var(--text-editor-color);
-    }
 }
 
 // Global roles styling
@@ -77,31 +49,23 @@
     }
 }
 
-// Material Design overrides for proper chip display
+// PrimeNG AutoComplete chip display
 ::ng-deep {
     .group-tag-list {
-        .mdc-text-field--outlined .mat-mdc-form-field-infix,
-        .mdc-text-field--no-label .mat-mdc-form-field-infix {
-            padding-top: 0.5rem !important;
-            padding-bottom: 0.5rem !important;
-            padding-left: 0.5rem !important;
-            min-height: 1.75rem !important;
+        .p-autocomplete-input-multiple {
+            width: 100%;
         }
 
-        .mat-mdc-standard-chip.mdc-evolution-chip--with-trailing-action .mdc-evolution-chip__action--primary {
-            padding-left: 0 !important;
-            padding-right: 0 !important;
+        // Render the assigned-group chips in the previous blue tag color
+        .p-autocomplete-chip {
+            background: #0275d8;
+            color: #fff;
         }
 
-        // Remove the additional border around each custom tag
-        .mat-mdc-standard-chip .mdc-evolution-chip__action--primary::before {
-            border-style: none !important;
+        .group-tag-remove {
+            color: #fff;
+            cursor: pointer;
+            margin-left: 0.25rem;
         }
-    }
-
-    .group-panel {
-        background-color: var(--bs-body-bg);
-        color: var(--bs-body-color);
-        border: 1px solid var(--bs-gray-400);
     }
 }

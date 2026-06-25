@@ -23,7 +23,7 @@
     </div>
     @if (dataSource.data.length) {
         <div class="d-flex">
-            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [dataSource]="dataSource">
+            <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100 w-50" [nodes]="treeNodes()">
                 <ng-template let-competency="competency" #competencyTemplate>
                     <input type="checkbox" class="form-check-input me-2" (change)="toggleSelect(competency)" [(ngModel)]="competency.selected" />
                     <div class="d-flex align-items-center clickable" (click)="openCompetencyDetails(competency)">

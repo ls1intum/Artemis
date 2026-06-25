@@ -5,7 +5,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 
 import {
@@ -72,9 +71,6 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
     providers: [MetisConversationService],
     imports: [
         NgClass,
-        MatSidenavContainer,
-        MatSidenavContent,
-        MatSidenav,
         RouterLink,
         RouterOutlet,
         NgTemplateOutlet,

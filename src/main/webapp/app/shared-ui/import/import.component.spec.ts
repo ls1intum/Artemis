@@ -2,7 +2,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -50,14 +49,7 @@ describe('ImportComponent', () => {
         } as unknown as DynamicDialogRef;
 
         TestBed.configureTestingModule({
-            imports: [
-                FormsModule,
-                DummyImportComponent,
-                MockComponent(ButtonComponent),
-                MockComponent(NgbPagination),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-            ],
+            imports: [FormsModule, DummyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
             providers: [MockProvider(DummyPagingService), MockProvider(SortService), { provide: DynamicDialogRef, useValue: dialogRef }],
         })
             .compileComponents()

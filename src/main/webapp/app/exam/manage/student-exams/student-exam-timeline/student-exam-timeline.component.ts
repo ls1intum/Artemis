@@ -20,7 +20,7 @@ import { SubmissionVersionService } from 'app/exercise/submission-version/submis
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { MatSlider, MatSliderThumb } from '@angular/material/slider';
+import { Slider } from 'primeng/slider';
 import { FormsModule } from '@angular/forms';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
@@ -31,8 +31,7 @@ import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.uti
     styleUrls: ['./student-exam-timeline.component.scss'],
     imports: [
         TranslateDirective,
-        MatSlider,
-        MatSliderThumb,
+        Slider,
         FormsModule,
         ExamNavigationBarComponent,
         QuizExamSubmissionComponent,

@@ -13,8 +13,7 @@ import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Title } from '@angular/platform-browser';
-import { MatChipInputEvent } from '@angular/material/chips';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { AutoCompleteSelectEvent } from 'primeng/autocomplete';
 import * as Sentry from '@sentry/angular';
 
 import { UserManagementUpdateComponent } from 'app/admin/user-management/update/user-management-update.component';
@@ -336,15 +335,21 @@ describe('UserManagementUpdateComponent', () => {
         expect(component.user().organizations).toEqual([organization1]);
     });
 
+    /** Builds an AutoComplete select event carrying the picked group label. */
+    const groupSelectEvent = (value: string) => ({ value }) as AutoCompleteSelectEvent;
+
+    /** Builds a keydown event with the typed group value, as the input element would emit on Enter. */
+    const groupEnterEvent = (value: string) => {
+        const input = { value } as HTMLInputElement;
+        return { target: input } as unknown as KeyboardEvent;
+    };
+
     it('should add selected group from autocomplete panel to user', () => {
         const newGroup = 'nicegroup';
         component.user.set({ groups: [] } as unknown as User);
         component.allGroups = [newGroup];
 
-        const option = { viewValue: newGroup };
-        const event = { option } as unknown as MatAutocompleteSelectedEvent;
-
-        component.onSelected(event);
+        component.onGroupSelect(groupSelectEvent(newGroup));
 
         expect(component.user().groups).toEqual([newGroup]);
     });
@@ -354,12 +359,12 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [newGroup];
         component.user.set({ groups: [] } as unknown as User);
 
-        const event = { value: newGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
+        const event = groupEnterEvent(newGroup);
 
         component.onGroupAdd(component.user(), event);
 
         expect(component.user().groups).toEqual([newGroup]);
-        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
+        expect((event.target as HTMLInputElement).value).toBe('');
     });
 
     it('should not add group that is not in allowed groups list', () => {
@@ -368,12 +373,12 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [allowedGroup];
         component.user.set({ groups: [] } as unknown as User);
 
-        const event = { value: notAllowedGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
+        const event = groupEnterEvent(notAllowedGroup);
 
         component.onGroupAdd(component.user(), event);
 
         expect(component.user().groups).toEqual([]);
-        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
+        expect((event.target as HTMLInputElement).value).toBe('');
     });
 
     it('should remove group from user', () => {
@@ -420,7 +425,7 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [newGroup];
         component.user.set({} as User); // No groups property
 
-        const event = { value: newGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
+        const event = groupEnterEvent(newGroup);
         component.onGroupAdd(component.user(), event);
 
         expect(component.user().groups).toEqual([newGroup]);
@@ -431,7 +436,7 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [existingGroup];
         component.user.set({ groups: [existingGroup] } as unknown as User);
 
-        const event = { value: existingGroup, chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
+        const event = groupEnterEvent(existingGroup);
         component.onGroupAdd(component.user(), event);
 
         expect(component.user().groups).toEqual([existingGroup]);
@@ -441,7 +446,7 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = ['nicegroup'];
         component.user.set({ groups: [] } as unknown as User);
 
-        const event = { value: '', chipInput: { clear: vi.fn() } } as unknown as MatChipInputEvent;
+        const event = groupEnterEvent('');
         component.onGroupAdd(component.user(), event);
 
         expect(component.user().groups).toEqual([]);
@@ -742,7 +747,7 @@ describe('UserManagementUpdateComponent', () => {
         });
     });
 
-    describe('filteredGroups observable', () => {
+    describe('group suggestions', () => {
         it('should filter groups based on input value', async () => {
             const courseAdminService = TestBed.inject(CourseAdminService);
             const mockGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
@@ -751,15 +756,12 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
             await fixture.whenStable();
 
-            let filteredResult: string[] = [];
-            component.filteredGroups().subscribe((groups) => (filteredResult = groups));
+            component.onGroupComplete({ originalEvent: new Event('input'), query: 'admin' });
 
-            component.groupCtrl.setValue('admin');
-
-            expect(filteredResult).toEqual(['AdminGroup']);
+            expect(component.groupSuggestions()).toEqual(['AdminGroup']);
         });
 
-        it('should return all groups when value is undefined', async () => {
+        it('should return all groups when query is empty', async () => {
             const courseAdminService = TestBed.inject(CourseAdminService);
             const mockGroups = ['Group1', 'Group2'];
             vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
@@ -767,12 +769,23 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
             await fixture.whenStable();
 
-            let filteredResult: string[] = [];
-            component.filteredGroups().subscribe((groups) => (filteredResult = groups));
+            component.onGroupComplete({ originalEvent: new Event('input'), query: '' });
 
-            component.groupCtrl.setValue(undefined);
+            expect(component.groupSuggestions()).toEqual(['Group1', 'Group2']);
+        });
 
-            expect(filteredResult).toEqual(['Group1', 'Group2']);
+        it('should exclude groups already assigned to the user', async () => {
+            const courseAdminService = TestBed.inject(CourseAdminService);
+            const mockGroups = ['Group1', 'Group2'];
+            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+            component.user.set({ groups: ['Group1'] } as unknown as User);
+
+            component.onGroupComplete({ originalEvent: new Event('input'), query: '' });
+
+            expect(component.groupSuggestions()).toEqual(['Group2']);
         });
     });
 });

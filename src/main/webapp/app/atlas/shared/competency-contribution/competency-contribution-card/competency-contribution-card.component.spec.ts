@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { provideRouter } from '@angular/router';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { NgbProgressbar, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,7 +25,6 @@ describe('CompetencyContributionCardComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 FaIconComponent,
                 MockComponent(FaLayersComponent),
-                MockComponent(NgbProgressbar),
                 MockModule(NgbTooltipModule),
                 MockRouterLinkDirective,
             ],

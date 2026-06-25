@@ -63,14 +63,12 @@
             {{ formattedAverageProgress() !== undefined ? formattedAverageProgress() + '%' : 'N/A' }}
         </div>
 
-        <ngb-pagination
-            [maxSize]="5"
-            [collectionSize]="collectionSize()"
-            [page]="page()"
-            (pageChange)="setPage($event)"
-            [pageSize]="pageSize()"
-            size="sm"
+        <p-paginator
             class="d-flex justify-content-end mt-2 pagination"
+            [first]="(page() - 1) * pageSize()"
+            [rows]="pageSize()"
+            [totalRecords]="collectionSize()"
+            (onPageChange)="onPageChange($event)"
         />
     </div>
 </div>
