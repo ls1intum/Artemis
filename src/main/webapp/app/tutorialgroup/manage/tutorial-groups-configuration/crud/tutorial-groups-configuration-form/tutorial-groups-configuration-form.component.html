@@ -3,7 +3,7 @@
         @if (form) {
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <!-- Period -->
-                <div class="col-auto">
+                <div class="col-auto" [class.invalid-date-input]="isPeriodInvalid">
                     <h5 jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></h5>
                     <p-datepicker
                         inputId="period"
@@ -19,21 +19,19 @@
                         appendTo="body"
                         [baseZIndex]="1060"
                         styleClass="w-100"
-                        [inputStyle]="{ width: '100%' }"
+                        panelStyleClass="jhi-date-time-picker-panel"
                         [invalid]="isPeriodInvalid"
                         [attr.aria-label]="'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate"
                         (onFocus)="markPeriodAsTouched()"
                     />
                     <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.periodInput.explanation"></div>
                     @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
-                        <div class="alert alert-danger">
-                            @if (periodControl?.errors?.required) {
-                                <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"></div>
-                            }
-                            @if (periodControl?.errors?.invalidRange) {
-                                <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"></div>
-                            }
-                        </div>
+                        @if (periodControl?.errors?.required) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"></div>
+                        }
+                        @if (periodControl?.errors?.invalidRange) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"></div>
+                        }
                     }
                     <!-- Do not show options if the course has communication disabled -->
                     <div class="mt-3" [hidden]="!isMessagingEnabled(course())">

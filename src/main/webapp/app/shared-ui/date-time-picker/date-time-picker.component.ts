@@ -78,6 +78,20 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     });
 
     /**
+     * Whether the field should render the red "invalid" border. Mirrors the conditions that show the
+     * "missing/invalid" message (unparseable / out-of-range / empty-required) plus the parent-provided
+     * {@link error} flag, but excludes the (yellow) {@link warning} state, which has its own styling.
+     *
+     * This is consumed by a class on the wrapper element (see the template) rather than only by the
+     * inner `<p-datepicker [invalid]>` input. Under zoneless change detection the OnPush picker view
+     * can stay stale when validity flips as a result of the picker's own `ngModelChange` (the message,
+     * rendered by this wrapper, updates but the picker's border does not — see PR #13009 review). Driving
+     * the border from a wrapper class lets plain CSS cascade onto the (existing) input element, so the
+     * border always matches the message regardless of the inner picker's change-detection timing.
+     */
+    protected showErrorBorder = computed(() => !!this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()));
+
+    /**
      * Backwards-compatible accessor: a few consumers (e.g. the exercise-update components) read
      * `dateTimePicker.dateInput.valid` to gate overall form validity. We expose the input validity
      * through the same shape instead of a raw `NgModel`.

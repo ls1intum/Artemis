@@ -14,12 +14,13 @@
         <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary" />
     </fa-stack>
 }
-<div class="d-flex position-relative">
+<div class="d-flex position-relative" [class.invalid-date-input]="showErrorBorder()">
     <p-datepicker
+        #datePicker
         inputId="date-input-field"
         styleClass="w-100"
-        [inputStyle]="{ width: '100%' }"
         [inputStyleClass]="warning() ? 'border-warning' : ''"
+        panelStyleClass="jhi-date-time-picker-panel"
         [ngModel]="value() ?? null"
         [ngModelOptions]="{ standalone: true }"
         (ngModelChange)="updateField($event)"
@@ -42,8 +43,17 @@
         [maxDate]="maxDate()"
         [defaultDate]="startDate()"
         [disabled]="disabled()"
+        [showButtonBar]="showTime() || timeOnly()"
         [invalid]="!isValid()"
-    />
+    >
+        <!-- The picker applies a time selection immediately, but (unlike the legacy picker) leaves the
+             panel open. Provide an explicit confirm/close affordance for the modes with a time spinner. -->
+        <ng-template #buttonbar>
+            <div class="d-flex justify-content-end w-100">
+                <button type="button" class="btn btn-primary btn-sm" (click)="datePicker.hideOverlay()" jhiTranslate="entity.action.done"></button>
+            </div>
+        </ng-template>
+    </p-datepicker>
 </div>
 @if (!isInputValid() || (requiredField() && !dateInputValue())) {
     <div class="invalid-feedback" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName() }"></div>

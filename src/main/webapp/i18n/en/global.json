@@ -371,6 +371,7 @@
             "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",
+            "done": "Done",
             "finish": "Finish",
             "import": "Import",
             "to-import": "Import",

@@ -109,6 +109,50 @@ describe('FormDateTimePickerComponent', () => {
         });
     });
 
+    describe('invalid border rendering', () => {
+        // The red border is driven by a class on the wrapper element (not only the inner p-datepicker
+        // [invalid] input) so it stays in sync with the message under zoneless change detection (PR #13009).
+        const wrapper = () => fixture.nativeElement.querySelector('.d-flex.position-relative') as HTMLElement;
+        const hasInvalidClass = () => wrapper().classList.contains('invalid-date-input');
+
+        it('does not mark a valid value as invalid', () => {
+            component.writeValue(normalDateAsDateObject);
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(false);
+        });
+
+        it('marks the wrapper invalid for unparseable typed text', () => {
+            component.updateField('not-a-date');
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(true);
+        });
+
+        it('marks the wrapper invalid when the parent passes error()', () => {
+            component.writeValue(normalDateAsDateObject);
+            fixture.componentRef.setInput('error', true);
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(true);
+        });
+
+        it('marks an empty required field invalid', () => {
+            fixture.componentRef.setInput('requiredField', true);
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(true);
+        });
+
+        it('does not show the red invalid border for a warning-only state (warning has its own styling)', () => {
+            component.writeValue(normalDateAsDateObject);
+            fixture.componentRef.setInput('warning', true);
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(false);
+        });
+    });
+
     it('should register callback function', () => {
         const onChangeSpy = vi.fn();
         component.registerOnChange(onChangeSpy);

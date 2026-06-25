@@ -229,6 +229,22 @@ Generic styles
     display: block;
 }
 
+// PrimeNG date picker (jhi-date-time-picker and the tutorial period range picker):
+// Render the invalid border from a wrapper class instead of relying solely on the inner
+// `<p-datepicker [invalid]>` input. Under zoneless change detection the OnPush picker view can stay
+// stale when validity flips from the picker's own input event, leaving the border out of sync with the
+// "missing/invalid" message (PR #13009 review). A class on the wrapper is updated reliably and cascades
+// onto the existing input via plain CSS. `:not(:focus)` lets the focus ring win while editing.
+.invalid-date-input .p-datepicker-input:not(:focus) {
+    border-color: var(--p-inputtext-invalid-border-color) !important;
+}
+
+// PrimeNG date picker: keep the overlay calendar at its natural width. With `appendTo="body"` PrimeNG
+// sets an inline `min-width` equal to the (full-width) input, which stretches the calendar far too wide.
+.jhi-date-time-picker-panel {
+    min-width: auto !important;
+}
+
 .pad {
     padding: 10px;
 }
