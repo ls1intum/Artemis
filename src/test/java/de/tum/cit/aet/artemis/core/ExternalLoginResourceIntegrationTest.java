@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
@@ -182,6 +183,18 @@ class ExternalLoginResourceIntegrationTest extends AbstractSpringIntegrationInde
             // auth method and passkey-approval, so passkey-approved admins keep working with the returned JWT.
             assertThat(tokenProvider.getAuthenticationMethod(token.accessToken())).isEqualTo(AuthenticationMethod.PASSKEY);
             assertThat(tokenProvider.isPasskeySuperAdminApproved(token.accessToken())).isTrue();
+        });
+    }
+
+    @Test
+    void shouldSerializeAccessTokenAsSnakeCaseField() throws Throwable {
+        withFeatureEnabled(() -> {
+            String code = issueCodeSuccessfully(CALLBACK);
+            // The exchange response must use the documented snake_case contract (access_token), matching the existing
+            // /api/core/public/authenticate endpoint, so clients read a single consistent field.
+            var builder = post(new URI(TOKEN_ENDPOINT)).contentType(MediaType.APPLICATION_JSON)
+                    .content(request.getObjectMapper().writeValueAsString(new ExternalLoginTokenRequestDTO(code, VERIFIER)));
+            request.performMvcRequest(builder).andExpect(status().isOk()).andExpect(jsonPath("$.access_token").isNotEmpty()).andExpect(jsonPath("$.accessToken").doesNotExist());
         });
     }
 
