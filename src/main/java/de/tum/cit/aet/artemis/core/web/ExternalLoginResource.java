@@ -53,7 +53,7 @@ public class ExternalLoginResource {
 
     private static final int CODE_BYTES = 32; // 256 bits of entropy
 
-    private final ExternalLoginRedirectUriValidator validator;
+    private final ExternalLoginProperties externalLoginProperties;
 
     private final HazelcastExternalLoginCodeRepository codeRepository;
 
@@ -61,12 +61,22 @@ public class ExternalLoginResource {
 
     private final TokenProvider tokenProvider;
 
-    public ExternalLoginResource(ExternalLoginProperties properties, HazelcastExternalLoginCodeRepository codeRepository, JWTCookieService jwtCookieService,
+    public ExternalLoginResource(ExternalLoginProperties externalLoginProperties, HazelcastExternalLoginCodeRepository codeRepository, JWTCookieService jwtCookieService,
             TokenProvider tokenProvider) {
-        this.validator = new ExternalLoginRedirectUriValidator(properties.getAllowedRedirectSchemes(), properties.getAllowedRedirectAuthorities());
+        this.externalLoginProperties = externalLoginProperties;
         this.codeRepository = codeRepository;
         this.jwtCookieService = jwtCookieService;
         this.tokenProvider = tokenProvider;
+    }
+
+    /**
+     * Builds the callback validator from the current configuration. Constructed per request (cheap) so that the
+     * feature flag and the allowlists reflect the live configuration instead of being frozen at construction time.
+     *
+     * @return the redirect URI validator for the current configuration
+     */
+    private ExternalLoginRedirectUriValidator validator() {
+        return new ExternalLoginRedirectUriValidator(externalLoginProperties.getAllowedRedirectSchemes(), externalLoginProperties.getAllowedRedirectAuthorities());
     }
 
     /**
@@ -79,6 +89,7 @@ public class ExternalLoginResource {
     @PostMapping("code")
     @EnforceAtLeastStudent
     public ResponseEntity<ExternalLoginCodeResponseDTO> issueCode(@RequestBody ExternalLoginCodeRequestDTO body, HttpServletRequest request) {
+        ExternalLoginRedirectUriValidator validator = validator();
         if (!validator.isFeatureEnabled()) {
             return ResponseEntity.notFound().build();
         }
