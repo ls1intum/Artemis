@@ -17,7 +17,7 @@ public class SshGitCommandFactoryService extends GitPackCommandFactory {
 
     public final LocalVCServletService localVCServletService;
 
-    public SshGitCommandFactoryService(@Lazy LocalVCServletService localVCServletService) {
+    public SshGitCommandFactoryService(LocalVCServletService localVCServletService) {
         this.localVCServletService = localVCServletService;
     }
 

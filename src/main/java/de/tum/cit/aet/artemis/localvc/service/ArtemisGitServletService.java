@@ -38,9 +38,7 @@ public class ArtemisGitServletService extends GitServlet {
      *
      * @param localVCServletService the service for authenticating and authorizing users and retrieving the repository from disk
      */
-    // @Lazy: init() only passes localVCServletService to the per-request filters/resolver/hook factories, it never calls it at startup. Injecting it lazily keeps the whole
-    // localVC request/auth subtree (repository access, participation, LDAP, exercise dates, ...) out of eager startup; it is built on the first git request (or warmed deferred).
-    public ArtemisGitServletService(@Lazy LocalVCServletService localVCServletService) {
+    public ArtemisGitServletService(LocalVCServletService localVCServletService) {
         this.localVCServletService = localVCServletService;
     }
 

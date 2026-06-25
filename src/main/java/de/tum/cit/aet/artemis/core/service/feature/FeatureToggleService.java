@@ -48,9 +48,7 @@ public class FeatureToggleService {
 
     private Map<Feature, Boolean> features;
 
-    // websocketMessagingService is only used to broadcast toggle changes (see updateFeatureToggles), never at construction. Injecting it lazily keeps the
-    // websocket/STOMP broker graph out of the eager startup path (this service is reached eagerly via the security filter chain -> rate limiting).
-    public FeatureToggleService(@Lazy WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
             ProfileService profileService, RateLimitConfigurationService rateLimitConfigurationService,
             @Value("${artemis.global-search.enable:false}") boolean globalSearchEnabledOnStart) {
         this.websocketMessagingService = websocketMessagingService;
