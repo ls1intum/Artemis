@@ -14,7 +14,9 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatDialog } from '@angular/material/dialog';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
@@ -69,6 +71,7 @@ const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
+        NgTemplateOutlet,
         LectureUnitComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -100,6 +103,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly injector = inject(Injector);
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
+    private readonly dialog = inject(MatDialog);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -107,8 +111,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly lectureUnitCard = viewChild(LectureUnitComponent);
     readonly fullscreenLayout = viewChild(LectureUnitFullscreenLayoutComponent);
-    readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
-    readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
     readonly videoPlayer = viewChild(VideoPlayerComponent);
     readonly youtubePlayer = viewChild(YouTubePlayerComponent);
     readonly pdfViewer = viewChild(PdfViewerComponent);
@@ -199,8 +201,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         sizes: this.horizontalSplitSizes(),
         minSizes: this.minHorizontalSplitSizes,
         defaultSizes: this.defaultHorizontalSplitSizes,
-        topElement: this.videoContainerElement(),
-        bottomElement: this.pdfContainerElement(),
     }));
 
     readonly fullscreenAriaLabel = computed(() => {
@@ -471,6 +471,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onFullscreenChange(isFullscreen: boolean): void {
         this.fullscreenState.set(isFullscreen);
+        if (isFullscreen) {
+            // Close the floating Iris chat widget when entering fullscreen. It is a MatDialog rendered in a
+            // popover overlay, so it keeps painting on top of the fullscreen view but its pointer events fall
+            // through to the fullscreen content underneath - the widget looks active yet can be neither moved
+            // nor clicked. The fullscreen view has its own Iris sidebar, and the chatbot button is likewise
+            // hidden here, so dismissing the widget is both correct and consistent (matches the widget's own
+            // closeAll() on navigation). Note closeAll() closes every open Material dialog; that is acceptable
+            // because Iris is the only feature using MatDialog here (other Artemis modals use PrimeNG/ng-bootstrap).
+            this.dialog.closeAll();
+        }
     }
 
     protected onSynchronizationToggleChange(enabled: boolean): void {
