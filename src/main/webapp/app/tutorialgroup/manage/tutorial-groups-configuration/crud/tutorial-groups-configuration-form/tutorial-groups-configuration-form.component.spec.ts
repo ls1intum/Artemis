@@ -120,6 +120,34 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
         }
     });
 
+    it('should render a PrimeNG-style invalid-feedback message only once the invalid period is touched/dirty', () => {
+        const feedback = () => fixture.nativeElement.querySelectorAll('.invalid-feedback');
+
+        // invalid (empty period) but still pristine/untouched -> no message yet
+        fixture.detectChanges();
+        expect(component.isPeriodInvalid).toBe(false);
+        expect(feedback()).toHaveLength(0);
+
+        // touched empty period -> the "required" message renders
+        component.markPeriodAsTouched();
+        fixture.detectChanges();
+        expect(component.isPeriodInvalid).toBe(true);
+        expect(feedback()).toHaveLength(1);
+
+        // inverted range -> the "invalidRange" message renders (still exactly one message)
+        component.form.get('period')!.setValue([validPeriodEnd, validPeriodStart]);
+        component.form.get('period')!.markAsDirty();
+        fixture.detectChanges();
+        expect(component.isPeriodInvalid).toBe(true);
+        expect(feedback()).toHaveLength(1);
+
+        // valid range -> no message
+        component.form.get('period')!.setValue(validPeriod);
+        fixture.detectChanges();
+        expect(component.isPeriodInvalid).toBe(false);
+        expect(feedback()).toHaveLength(0);
+    });
+
     // === helper functions ===
     const setValidFormValues = () => {
         component.form.get('period')!.setValue(validPeriod);

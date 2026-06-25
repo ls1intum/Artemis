@@ -1,6 +1,7 @@
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DatePicker } from 'primeng/datepicker';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
@@ -150,6 +151,46 @@ describe('FormDateTimePickerComponent', () => {
             fixture.detectChanges();
 
             expect(hasInvalidClass()).toBe(false);
+        });
+    });
+
+    describe('time picker confirm/close affordance', () => {
+        const innerPicker = () => fixture.debugElement.query((de) => de.componentInstance instanceof DatePicker).componentInstance as DatePicker;
+
+        // Open the overlay by toggling the panel directly. detectChanges(false) skips the dev-mode
+        // "changed after checked" assertion, which the picker's overlay-open focus state churn would
+        // otherwise trip in the test harness (not a production concern).
+        async function openPanel(picker: DatePicker) {
+            picker.overlayVisible = true;
+            fixture.detectChanges(false);
+            await fixture.whenStable();
+            fixture.detectChanges(false);
+        }
+
+        it('shows a Done button for the time-only picker that closes the open panel', async () => {
+            fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
+            fixture.detectChanges();
+            const picker = innerPicker();
+            await openPanel(picker);
+
+            const button = document.body.querySelector('.p-datepicker-buttonbar button') as HTMLButtonElement | null;
+            expect(button).not.toBeNull();
+
+            const hideSpy = vi.spyOn(picker, 'hideOverlay');
+            button!.click();
+
+            expect(hideSpy).toHaveBeenCalledOnce();
+            expect(picker.overlayVisible).toBe(false);
+        });
+
+        it('does not render a button bar for the date-only (CALENDAR) picker', async () => {
+            fixture.componentRef.setInput('pickerType', DateTimePickerType.CALENDAR);
+            fixture.detectChanges();
+            const picker = innerPicker();
+            await openPanel(picker);
+
+            expect(picker.showButtonBar).toBe(false);
+            expect(document.body.querySelector('.p-datepicker-buttonbar')).toBeNull();
         });
     });
 

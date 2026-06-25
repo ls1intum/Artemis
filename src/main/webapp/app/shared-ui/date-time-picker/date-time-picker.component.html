@@ -44,7 +44,7 @@
         [defaultDate]="startDate()"
         [disabled]="disabled()"
         [showButtonBar]="showTime() || timeOnly()"
-        [invalid]="!isValid()"
+        [invalid]="showErrorBorder()"
     >
         <!-- The picker applies a time selection immediately, but (unlike the legacy picker) leaves the
              panel open. Provide an explicit confirm/close affordance for the modes with a time spinner. -->
