@@ -1,4 +1,5 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, Type, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { NgComponentOutlet } from '@angular/common';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -19,7 +20,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer.component';
@@ -71,7 +71,7 @@ function isQuizComponentRef(component: unknown): component is QuizComponentRef {
         ResetRepoButtonComponent,
         ComplaintsStudentViewComponent,
         RatingComponent,
-        ModelingEditorComponent,
+        NgComponentOutlet,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         CompetencyContributionComponent,
         LtiInitializerComponent,
@@ -93,6 +93,26 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizEnded = signal(false);
     private readonly _quizHasStarted = signal(false);
     private readonly _quizComponent = signal<QuizComponentRef | undefined>(undefined);
+    /**
+     * Lazily loaded ModelingEditorComponent type — populated by a runtime dynamic import the first time
+     * a modeling example solution is displayed. The static import was removed to prevent @tumaet/apollon
+     * from entering the ExerciseSplitPanelComponent bundle for non-modeling exercises (Vite eagerly
+     * resolves all static imports regardless of @defer blocks in the template).
+     */
+    protected readonly _modelingEditorCmp = signal<Type<unknown> | undefined>(undefined);
+
+    /** Inputs forwarded to the lazily created ModelingEditorComponent via NgComponentOutlet. */
+    protected readonly modelingEditorInputs = computed(() => {
+        const info = this.exampleSolutionInfo();
+        return {
+            readOnly: true,
+            diagramType: info?.modelingExercise?.diagramType,
+            umlModel: info?.exampleSolutionUML,
+            withExplanation: !!info?.modelingExercise?.exampleSolutionExplanation,
+            explanation: info?.modelingExercise?.exampleSolutionExplanation ?? '',
+        };
+    });
+
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
     private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
@@ -233,6 +253,14 @@ export class ExerciseSplitPanelComponent {
         // Keep _quizBatchStarted / _quizEnded in sync with the exercise input.
         // Effects (unlike computed signals) do not throw NG0950 when reading required inputs,
         // so this is safe even during the initial evaluation before inputs are fully bound.
+        // Trigger a one-time dynamic import of ModelingEditorComponent (+ Apollon) only when
+        // an example solution UML is actually present — keeps apollon out of the initial bundle.
+        effect(() => {
+            const info = this.exampleSolutionInfo();
+            if (info?.exampleSolutionUML && info?.modelingExercise && !untracked(() => this._modelingEditorCmp())) {
+                import('app/modeling/shared/modeling-editor/modeling-editor.component').then((m) => this._modelingEditorCmp.set(m.ModelingEditorComponent));
+            }
+        });
         effect(() => {
             const exercise = this.exercise();
             const isQuiz = exercise.type === ExerciseType.QUIZ;
