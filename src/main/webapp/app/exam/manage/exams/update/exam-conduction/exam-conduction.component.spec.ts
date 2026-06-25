@@ -213,6 +213,28 @@ describe('ExamConductionComponent', () => {
         expect(latestValidity).toBe(false);
     });
 
+    it('should consider equal visible and start dates valid for test exams but invalid for real exams', () => {
+        const start = dayjs();
+        setInputs({
+            examType: ExamType.TEST,
+            visibleFrom: start,
+            startOfWorkingTime: start,
+            endOfWorkingTime: start.add(2, 'hours'),
+            workingTime: 7200,
+            gracePeriod: 0,
+        });
+        fixture.detectChanges();
+
+        expect(latestValidity).toBe(true);
+
+        setInputs({
+            examType: ExamType.REAL,
+        });
+        fixture.detectChanges();
+
+        expect(latestValidity).toBe(false);
+    });
+
     it('should show a warning when the visible date is more than 4 hours before the start date', () => {
         setInputs({
             visibleFrom: dayjs(),
