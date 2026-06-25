@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.dto.ExternalLoginCodeResponseDTO;
 import de.tum.cit.aet.artemis.core.dto.ExternalLoginTokenRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.ExternalLoginTokenResponseDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.externallogin.PkceUtil;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
@@ -282,5 +283,17 @@ class ExternalLoginResourceIntegrationTest extends AbstractSpringIntegrationInde
     void shouldRequireAuthenticationToIssueCode() throws Exception {
         // Without a session JWT the request is rejected by the security layer before the handler runs.
         issue(new ExternalLoginCodeRequestDTO(CHALLENGE, CALLBACK), null, HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void shouldRejectToolScopedSessionJwt() throws Throwable {
+        // A tool-scoped token must never be upgraded into a full (unscoped) Artemis JWT via the handoff. On this
+        // non-public endpoint the ToolsInterceptor rejects tool tokens with 403 before the handler runs (the handler
+        // also guards against it explicitly), so no code is ever minted.
+        withFeatureEnabled(() -> {
+            var authentication = new UsernamePasswordAuthenticationToken(USERNAME, USERNAME, List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+            String toolScopedJwt = tokenProvider.createToken(authentication, 24 * 60 * 60 * 1000, ToolTokenType.SCORPIO);
+            issue(new ExternalLoginCodeRequestDTO(CHALLENGE, CALLBACK), toolScopedJwt, HttpStatus.FORBIDDEN);
+        });
     }
 }

@@ -119,6 +119,12 @@ public class ExternalLoginResource {
         if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        // Never upgrade a tool-scoped token into a full (unscoped) Artemis JWT. The ToolsInterceptor already rejects
+        // tool tokens on this non-public endpoint; this explicit guard keeps the invariant local to the mint and
+        // independent of that wiring.
+        if (tokenProvider.getTools(current.jwt()) != null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         // Mint a full (unscoped) JWT for the current principal, stored server-side until the code is exchanged.
         // Preserve the originating session's authentication method and passkey-approval claims so a passkey/SAML
