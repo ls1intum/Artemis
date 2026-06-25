@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureSearchApi;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -39,6 +40,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchAskReques
 @RequestMapping("api/iris/")
 public class IrisLectureSearchResource {
 
+    private final IrisLectureSearchApi irisLectureSearchApi;
+
     private final PyrisConnectorService pyrisConnectorService;
 
     private final PyrisJobService pyrisJobService;
@@ -49,8 +52,9 @@ public class IrisLectureSearchResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public IrisLectureSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authCheckService) {
+    public IrisLectureSearchResource(IrisLectureSearchApi irisLectureSearchApi, PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService,
+            UserRepository userRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService) {
+        this.irisLectureSearchApi = irisLectureSearchApi;
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
@@ -106,7 +110,7 @@ public class IrisLectureSearchResource {
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid PyrisLectureSearchRequestDTO requestDTO, Principal principal) {
         var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         var accessContext = buildAccessContext(user);
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds(), accessContext));
+        return ResponseEntity.ok(irisLectureSearchApi.searchLecturesByAccessContext(requestDTO.query(), requestDTO.limit(), accessContext));
     }
 
     /**
