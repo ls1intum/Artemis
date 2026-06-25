@@ -31,7 +31,14 @@
     }
 }
 
+// While dragging the divider, let pointer events pass through the video so the native controls do not interrupt
+// the drag (the directive uses pointer capture; this keeps the gesture smooth and consistent with the YouTube player).
+.video-wrapper.is-resizing .video-player {
+    pointer-events: none;
+}
+
 .resizer-handle {
+    // A flex item between the video and transcript columns (the divider), not overlapping the video.
     display: flex;
     align-items: center;
     justify-content: center;
