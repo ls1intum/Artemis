@@ -6,6 +6,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
+    faBoxesStacked,
     faChartBar,
     faClipboardList,
     faEllipsis,
@@ -13,7 +14,10 @@ import {
     faLightbulb,
     faListAlt,
     faPencilAlt,
+    faPlayCircle,
+    faPlus,
     faRedo,
+    faStopCircle,
     faTable,
     faTrash,
     faUsers,
@@ -23,7 +27,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -37,9 +41,9 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 
 /**
- * A single exercise action. `quiz` group items are the quiz lifecycle buttons (edge case): they stay
- * visible longest and, when they do overflow, render at the top of the ellipsis menu with a separator.
- * `main` group items overflow left-to-right first (Delete is rightmost, so it overflows last).
+ * A single exercise action. `quiz` group items are the quiz lifecycle buttons: they always stay visible and never
+ * overflow into the ellipsis menu. `main` group items collapse into the ellipsis from the left when space is tight
+ * (Delete is rightmost, so it overflows last).
  */
 interface ActionItem {
     id: string;
@@ -47,7 +51,7 @@ interface ActionItem {
     icon: IconProp;
     styleClass: string;
     group: 'quiz' | 'main';
-    kind: 'link' | 'button' | 'delete';
+    kind: 'link' | 'button' | 'delete' | 'batches';
     link?: (string | number)[];
     onClick?: () => void;
 }
@@ -55,7 +59,6 @@ interface ActionItem {
 interface ActionLayout {
     visibleQuiz: ActionItem[];
     visibleMain: ActionItem[];
-    overflowQuiz: ActionItem[];
     overflowMain: ActionItem[];
 }
 
@@ -78,6 +81,8 @@ export class ExerciseActionsComponent {
 
     protected readonly ExerciseType = ExerciseType;
     protected readonly faEllipsis = faEllipsis;
+    protected readonly faPlayCircle = faPlayCircle;
+    protected readonly faPlus = faPlus;
 
     private readonly host = inject(ElementRef);
     private readonly destroyRef = inject(DestroyRef);
@@ -91,10 +96,12 @@ export class ExerciseActionsComponent {
     private readonly translateService = inject(TranslateService);
 
     private readonly menu = viewChild<Popover>('menu');
+    private readonly batchMenu = viewChild<Popover>('batchMenu');
     private readonly measureItems = viewChildren<ElementRef<HTMLElement>>('measureItem');
     private readonly ellipsisMeasure = viewChild<ElementRef<HTMLElement>>('ellipsisMeasure');
     private readonly separatorMeasure = viewChild<ElementRef<HTMLElement>>('separatorMeasure');
     private readonly measureContainer = viewChild<ElementRef<HTMLElement>>('measureContainer');
+    private readonly quizLifecycle = viewChild(QuizExerciseLifecycleButtonsComponent);
 
     private readonly containerWidth = signal(0);
     private readonly measuredWidths = signal<Map<string, number>>(new Map());
@@ -104,16 +111,63 @@ export class ExerciseActionsComponent {
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
 
-    /**
-     * Quiz lifecycle buttons are rendered by the shared {@link QuizExerciseLifecycleButtonsComponent} (reused from
-     * develop) rather than as overflow {@link ActionItem}s, so the quiz group of the action layout is always empty.
-     */
-    readonly quizActions = computed<ActionItem[]>(() => []);
-
     /** The current exercise typed as a quiz, or `undefined` for non-quiz exercises. Drives the lifecycle buttons. */
     readonly quizExercise = computed<QuizExercise | undefined>(() => {
         const ex = this.exercise();
         return ex.type === ExerciseType.QUIZ ? (ex as QuizExercise) : undefined;
+    });
+
+    /** Batches of the current quiz (empty for non-batched / non-quiz exercises). Shown in the batches popover. */
+    readonly quizBatches = computed<QuizBatch[]>(() => this.quizExercise()?.quizBatches ?? []);
+
+    /** Whether the batches trigger and popover apply: a running or visible batched quiz. */
+    readonly showBatchMenu = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return !!quiz && quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
+    });
+
+    /**
+     * Quiz lifecycle buttons styled like the rest of the action row. Visibility mirrors the develop lifecycle buttons
+     * (see {@link QuizExerciseLifecycleButtonsComponent}); clicking delegates to that hidden component's public methods,
+     * which own the backend calls and optimistic state updates.
+     */
+    readonly quizActions = computed<ActionItem[]>(() => {
+        const quiz = this.quizExercise();
+        if (!quiz) return [];
+        const items: ActionItem[] = [];
+        // Make visible: an invisible quiz students cannot see yet.
+        if (quiz.status === QuizStatus.INVISIBLE && quiz.isAtLeastEditor && !quiz.visibleToStudents) {
+            items.push({
+                id: 'set-visible',
+                label: 'Set Visible',
+                icon: faEye,
+                styleClass: 'btn-warning',
+                group: 'quiz',
+                kind: 'button',
+                onClick: () => this.quizLifecycle()?.showQuiz(),
+            });
+        }
+        // Start: a synchronized quiz that has not been started yet.
+        if ((quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && quiz.isAtLeastEditor && !quiz.quizStarted) {
+            items.push({
+                id: 'start',
+                label: 'Start',
+                icon: faPlayCircle,
+                styleClass: 'btn-success',
+                group: 'quiz',
+                kind: 'button',
+                onClick: () => this.quizLifecycle()?.startQuiz(),
+            });
+        }
+        // Batched: a single trigger that opens a popover listing each batch (id, password, status) and adds new ones.
+        if (this.showBatchMenu()) {
+            items.push({ id: 'batches', label: `Batches (${quiz.quizBatches?.length ?? 0})`, icon: faBoxesStacked, styleClass: 'btn-primary', group: 'quiz', kind: 'batches' });
+        }
+        // End: a running non-synchronized quiz that has not ended yet (synchronized quizzes end via their duration).
+        if ((quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE) && quiz.quizMode !== QuizMode.SYNCHRONIZED && quiz.isAtLeastInstructor && !quiz.quizEnded) {
+            items.push({ id: 'end', label: 'End', icon: faStopCircle, styleClass: 'btn-danger', group: 'quiz', kind: 'button', onClick: () => this.quizLifecycle()?.endQuiz() });
+        }
+        return items;
     });
 
     /** Regular actions in original display order: Teams → Participations → Scores → type-specific → Edit → Delete. */
@@ -233,7 +287,7 @@ export class ExerciseActionsComponent {
 
         // Before measurement, show everything.
         if (available === 0 || widths.size === 0) {
-            return { visibleQuiz: quiz, visibleMain: main, overflowQuiz: [], overflowMain: [] };
+            return { visibleQuiz: quiz, visibleMain: main, overflowMain: [] };
         }
 
         const widthOf = (item: ActionItem) => (widths.get(item.id) ?? 0) + GAP_PX;
@@ -242,18 +296,15 @@ export class ExerciseActionsComponent {
 
         const totalAll = quiz.reduce((sum, item) => sum + widthOf(item), 0) + main.reduce((sum, item) => sum + widthOf(item), 0) + (bothPresent ? sep : 0);
         if (totalAll <= available) {
-            return { visibleQuiz: quiz, visibleMain: main, overflowQuiz: [], overflowMain: [] };
+            return { visibleQuiz: quiz, visibleMain: main, overflowMain: [] };
         }
 
-        // Collapse left-to-right: quiz group first (as a unit), then main actions one by one.
+        // Quiz lifecycle buttons always stay visible; only main actions collapse into the ellipsis. Reserve the quiz
+        // group width up front and fill the remaining budget with main actions.
         const ellipsis = this.ellipsisWidth() + GAP_PX;
-        const quizGroupWidth = quiz.reduce((sum, item) => sum + widthOf(item), 0) + (quiz.length > 0 && main.length > 0 ? sep : 0);
-        const mainTotalWidth = main.reduce((sum, item) => sum + widthOf(item), 0);
+        const quizGroupWidth = quiz.reduce((sum, item) => sum + widthOf(item), 0) + (bothPresent ? sep : 0);
+        let budget = available - ellipsis - quizGroupWidth;
 
-        const quizVisible = ellipsis + quizGroupWidth + mainTotalWidth <= available;
-        let budget = available - ellipsis - (quizVisible ? quizGroupWidth : 0);
-
-        // Fill from the right so Delete collapses last.
         let keepFrom = main.length;
         for (let i = main.length - 1; i >= 0; i--) {
             if (budget >= widthOf(main[i])) {
@@ -265,18 +316,16 @@ export class ExerciseActionsComponent {
         }
 
         return {
-            visibleQuiz: quizVisible ? quiz : [],
+            visibleQuiz: quiz,
             visibleMain: main.slice(keepFrom),
-            overflowQuiz: quizVisible ? [] : quiz,
             overflowMain: main.slice(0, keepFrom),
         };
     });
 
     readonly visibleQuiz = computed(() => this.layout().visibleQuiz);
     readonly visibleMain = computed(() => this.layout().visibleMain);
-    readonly overflowQuiz = computed(() => this.layout().overflowQuiz);
     readonly overflowMain = computed(() => this.layout().overflowMain);
-    readonly hasOverflow = computed(() => this.overflowQuiz().length > 0 || this.overflowMain().length > 0);
+    readonly hasOverflow = computed(() => this.overflowMain().length > 0);
 
     constructor() {
         afterNextRender(() => {
@@ -319,6 +368,31 @@ export class ExerciseActionsComponent {
         if (inMenu) {
             this.menu()?.hide();
         }
+    }
+
+    protected toggleBatchMenu(event: Event): void {
+        this.batchMenu()?.toggle(event);
+    }
+
+    /** Add a new batch via the hidden lifecycle component (which performs the backend call and returns its password). */
+    protected addBatch(): void {
+        this.quizLifecycle()?.addBatch();
+    }
+
+    /** Start the given batch via the hidden lifecycle component. */
+    protected startBatch(batchId: number): void {
+        this.quizLifecycle()?.startBatch(batchId);
+    }
+
+    /**
+     * Relays an optimistic quiz update from the lifecycle component to the parent. The client-derived `status` /
+     * `quizStarted` flags are recomputed first (as the develop quiz view does) so the action buttons reflect the new
+     * state immediately.
+     */
+    protected onQuizLifecycleUpdate(quiz: QuizExercise): void {
+        quiz.status = this.quizExerciseService.getStatus(quiz);
+        quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
+        this.exerciseUpdated.emit(quiz);
     }
 
     /**

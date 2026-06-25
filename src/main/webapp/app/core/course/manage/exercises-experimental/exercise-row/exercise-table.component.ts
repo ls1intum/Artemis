@@ -230,6 +230,8 @@ export class ExerciseTableComponent {
         return exercise as QuizExercise;
     }
 
+    protected readonly rowTrackBy = (_index: number, exercise: Exercise): unknown => exercise.id ?? exercise;
+
     quizStatusLabel(exercise: QuizExercise): string | undefined {
         switch (exercise.status) {
             case QuizStatus.INVISIBLE:

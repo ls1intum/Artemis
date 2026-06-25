@@ -149,14 +149,13 @@ export class CourseManagementExercisesComponent implements OnInit {
                             exercise.isAtLeastEditor = loadedCourse?.isAtLeastEditor;
                             exercise.isAtLeastInstructor = loadedCourse?.isAtLeastInstructor;
                             if (exercise.type === ExerciseType.QUIZ) {
-                                const quiz = exercise as QuizExercise;
-                                quiz.status = this.quizExerciseService.getStatus(quiz);
-                                quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
+                                this.applyQuizClientState(exercise as QuizExercise);
                             }
                         });
                         this.exercises.set(exercises);
                         this.loadGroupsFromServer(courseId);
                         this.buildBuckets();
+                        this.loadQuizBatches(courseId);
                     },
                 });
             } else {
@@ -540,6 +539,47 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onGroupEditModalCancel(): void {
         this.pendingNewGroup.set(undefined);
+    }
+
+    /** Recomputes the client-derived quiz `status` / `quizStarted` flags (the server does not serialize them). */
+    private applyQuizClientState(quiz: QuizExercise): void {
+        quiz.status = this.quizExerciseService.getStatus(quiz);
+        quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
+    }
+
+    /**
+     * The /with-exercises response does not load the quizBatches association, so batches would be missing after a
+     * refresh. Fetch them from the dedicated quiz endpoint and merge them into the loaded quiz exercises, then
+     * recompute the batch-dependent status. Replaced quizzes get a fresh object reference so the row's signal input
+     * reacts (an in-place mutation would not re-render until a view rebuild); both the flat list and the groups are
+     * pointed at the new objects, mirroring {@link onExerciseUpdated}.
+     */
+    private loadQuizBatches(courseId: number): void {
+        this.quizExerciseService.findForCourse(courseId).subscribe((response) => {
+            const batchesById = new Map((response.body ?? []).map((quiz) => [quiz.id, quiz.quizBatches]));
+            const replacements = new Map<number, Exercise>();
+            const merged = this.exercises().map((exercise) => {
+                if (exercise.type === ExerciseType.QUIZ && exercise.id !== undefined && batchesById.has(exercise.id)) {
+                    const quiz = { ...(exercise as QuizExercise) } as QuizExercise;
+                    quiz.quizBatches = batchesById.get(exercise.id);
+                    this.applyQuizClientState(quiz);
+                    replacements.set(exercise.id, quiz);
+                    return quiz;
+                }
+                return exercise;
+            });
+            if (replacements.size === 0) {
+                return;
+            }
+            this.exercises.set(merged);
+            this.groups.set(
+                this.groups().map((group) => ({
+                    ...group,
+                    exercises: (group.exercises ?? []).map((exercise) => (exercise.id !== undefined && replacements.has(exercise.id) ? replacements.get(exercise.id)! : exercise)),
+                })),
+            );
+            this.buildBuckets();
+        });
     }
 
     /** Loads the course's variant groups from the server and maps them to the view model (non-mock mode only). */

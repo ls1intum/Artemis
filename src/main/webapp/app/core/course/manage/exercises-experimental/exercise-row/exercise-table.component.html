@@ -6,7 +6,7 @@
     [cdkDropListDisabled]="!showDragHandle()"
     (cdkDropListDropped)="onDrop($event)"
 >
-    <p-table [value]="sortedExercises()" size="small" styleClass="p-datatable-sm" [scrollable]="true">
+    <p-table [value]="sortedExercises()" [rowTrackBy]="rowTrackBy" size="small" styleClass="p-datatable-sm" [scrollable]="true">
         <ng-template pTemplate="header">
             <tr>
                 @if (showCheckbox()) {
