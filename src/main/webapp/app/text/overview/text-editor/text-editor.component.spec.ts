@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Test suite for TextEditorComponent.
  * Tests text submission, participation management, and editor functionality.
  */
@@ -316,14 +316,14 @@ describe('TextEditorComponent', () => {
     it('should not submit while saving', () => {
         comp.isSaving.set(true);
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 
     it('should not submit without submission', () => {
         comp.submission.set(undefined!);
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).not.toHaveBeenCalled();
     });
 
@@ -333,7 +333,7 @@ describe('TextEditorComponent', () => {
         comp.textExercise.set({ id: 1 } as TextExercise);
         comp.answer.set('abc');
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(comp.isSaving()).toBeFalsy();
     });
@@ -347,7 +347,7 @@ describe('TextEditorComponent', () => {
         comp.answer.set('abc');
         comp.isAllowedToSubmitAfterDueDate.set(false);
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
@@ -361,7 +361,7 @@ describe('TextEditorComponent', () => {
         comp.answer.set('abc');
         comp.isAllowedToSubmitAfterDueDate.set(true);
         vi.spyOn(textSubmissionService, 'update');
-        comp.submit();
+        comp.submitExercise();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });

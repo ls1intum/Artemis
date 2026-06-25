@@ -1,5 +1,6 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, of, take } from 'rxjs';
@@ -70,7 +71,7 @@ import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exerci
         ArtemisTranslatePipe,
     ],
 })
-export class QuizParticipationComponent implements OnInit, OnDestroy {
+export class QuizParticipationComponent implements OnInit, OnDestroy, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
     private quizExerciseService = inject(QuizExerciseService);
     private participationService = inject(ParticipationService);
@@ -404,7 +405,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // auto submit when time is up
         this.runningTimeouts.push(
             setTimeout(() => {
-                this.onSubmit();
+                this.submitExercise();
             }, quizExercise.duration! * 1000),
         );
     }
@@ -993,7 +994,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * This function is called when the user clicks the 'Submit' button
      */
-    onSubmit() {
+    submitExercise() {
         const translationBasePath = 'artemisApp.quizExercise.';
         this.applySelection();
         let confirmSubmit = true;

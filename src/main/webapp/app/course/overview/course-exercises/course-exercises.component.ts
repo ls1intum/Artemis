@@ -14,7 +14,20 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
+
+/**
+ * Minimal contract for exercise-details route components activated in the inner outlet.
+ * Using a duck-type guard instead of `instanceof CourseExerciseDetailsComponent` avoids
+ * a static import that would pull the entire ExerciseSplitPanel (+ Apollon + monaco) into
+ * the CourseExercisesComponent chunk, defeating the router's lazy `loadComponent`.
+ */
+interface ExerciseDetailsRef {
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void;
+}
+
+function isExerciseDetailsRef(component: unknown): component is ExerciseDetailsRef {
+    return !!component && typeof (component as ExerciseDetailsRef).setSidebarToggle === 'function';
+}
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -69,7 +82,7 @@ export class CourseExercisesComponent {
     private readonly _isShownViaLti = signal(false);
     private readonly _isMultiLaunch = signal(false);
     private readonly _multiLaunchExerciseIDs = signal<number[]>([]);
-    private readonly _activeExerciseDetails = signal<CourseExerciseDetailsComponent | undefined>(undefined);
+    private readonly _activeExerciseDetails = signal<ExerciseDetailsRef | undefined>(undefined);
     readonly pageTitle = signal<string>('');
     private courseUpdateSubscription?: Subscription;
 
@@ -233,7 +246,7 @@ export class CourseExercisesComponent {
     }
 
     onSubRouteActivate(componentRef: unknown) {
-        if (componentRef instanceof CourseExerciseDetailsComponent) {
+        if (isExerciseDetailsRef(componentRef)) {
             this._activeExerciseDetails.set(componentRef);
         }
     }

@@ -5,11 +5,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
-import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
-import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
-import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
-import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
-import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
+import { QuizLiveHeaderInfo } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
@@ -37,6 +34,27 @@ import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+
+/**
+ * Minimal interface for quiz participation components activated via the router outlet.
+ * Avoids a static import of QuizParticipationComponent which would defeat lazy chunk splitting.
+ */
+interface QuizComponentRef {
+    isSubmitDisabled: () => boolean;
+    submitTitleKey: () => string;
+    liveHeaderInfo: () => QuizLiveHeaderInfo | undefined;
+    mode: () => string;
+    restartPractice: () => void;
+    quizStartedEvent: { subscribe(fn: () => void): { unsubscribe(): void } };
+    quizSubmittedEvent: { subscribe(fn: (s: QuizSubmission) => void): { unsubscribe(): void } };
+    liveQuizStatusChange: { subscribe(fn: (s: LiveQuizParticipationStatus | undefined) => void): { unsubscribe(): void } };
+    practiceParticipationChanged: { subscribe(fn: (p: StudentParticipation) => void): { unsubscribe(): void } };
+    liveQuizResultParticipation: { subscribe(fn: (p: StudentParticipation) => void): { unsubscribe(): void } };
+}
+
+function isQuizComponentRef(component: unknown): component is QuizComponentRef {
+    return !!component && 'quizStartedEvent' in (component as object) && typeof (component as any).isSubmitDisabled === 'function';
+}
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -74,7 +92,7 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizBatchStarted = signal(false);
     private readonly _quizEnded = signal(false);
     private readonly _quizHasStarted = signal(false);
-    private readonly _quizComponent = signal<QuizParticipationComponent | undefined>(undefined);
+    private readonly _quizComponent = signal<QuizComponentRef | undefined>(undefined);
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
     private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
@@ -298,18 +316,8 @@ export class ExerciseSplitPanelComponent {
     submitExercise(): void {
         const context = this.childrenOutletContexts.getContext('primary');
         if (context?.outlet?.isActivated) {
-            const component = context.outlet.component;
-            if (component instanceof TextEditorComponent) {
-                component.submit();
-            } else if (component instanceof CodeEditorStudentContainerComponent) {
-                component.commit();
-            } else if (component instanceof ModelingSubmissionComponent) {
-                component.submit();
-            } else if (component instanceof FileUploadSubmissionComponent) {
-                component.submitExercise();
-            } else if (component instanceof QuizParticipationComponent) {
-                component.onSubmit();
-            }
+            const component = context.outlet.component as ExerciseSubmission;
+            component.submitExercise();
         }
     }
 
@@ -323,7 +331,7 @@ export class ExerciseSplitPanelComponent {
     }
 
     onOutletActivate(component: any): void {
-        if (component instanceof QuizParticipationComponent) {
+        if (isQuizComponentRef(component)) {
             this._quizComponent.set(component);
             this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {
                 this._quizHasStarted.set(true);

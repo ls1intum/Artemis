@@ -14,6 +14,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { Feedback, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
@@ -64,7 +65,7 @@ import { TranslateService } from '@ngx-translate/core';
         HtmlForMarkdownPipe,
     ],
 })
-export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
     private route = inject(ActivatedRoute);
     private textSubmissionService = inject(TextSubmissionService);
     private textService = inject(TextEditorService);
@@ -420,7 +421,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         return true;
     }
 
-    submit() {
+    submitExercise() {
         if (this.isSaving()) {
             return;
         }

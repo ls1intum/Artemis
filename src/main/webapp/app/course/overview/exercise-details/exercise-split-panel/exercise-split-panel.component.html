@@ -18,13 +18,15 @@
                     <dl class="row-md jh-entity-details markdown-preview">
                         @if (exampleSolutionInfo()?.exampleSolutionUML && exampleSolutionInfo()?.modelingExercise) {
                             <dd>
-                                <jhi-modeling-editor
-                                    [readOnly]="true"
-                                    [diagramType]="exampleSolutionInfo()?.modelingExercise?.diagramType"
-                                    [umlModel]="exampleSolutionInfo()?.exampleSolutionUML"
-                                    [withExplanation]="!!exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation"
-                                    [explanation]="exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation || ''"
-                                />
+                                @defer (on idle) {
+                                    <jhi-modeling-editor
+                                        [readOnly]="true"
+                                        [diagramType]="exampleSolutionInfo()?.modelingExercise?.diagramType"
+                                        [umlModel]="exampleSolutionInfo()?.exampleSolutionUML"
+                                        [withExplanation]="!!exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation"
+                                        [explanation]="exampleSolutionInfo()?.modelingExercise?.exampleSolutionExplanation || ''"
+                                    />
+                                }
                             </dd>
                         }
                         @if (exampleSolutionInfo()?.exampleSolution) {
@@ -86,7 +88,9 @@
 
     @if (showDiscussion()) {
         <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComment">
-            <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
+            @defer (on idle) {
+                <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
+            }
         </ng-template>
     }
 </jhi-resizable-panels>

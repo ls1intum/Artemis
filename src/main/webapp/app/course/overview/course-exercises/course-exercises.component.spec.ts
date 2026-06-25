@@ -37,7 +37,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { CourseExerciseDetailsComponent } from 'app/course/overview/exercise-details/course-exercise-details.component';
 
 describe('CourseExercisesComponent', () => {
     setupTestBed({ zoneless: true });
@@ -195,8 +194,7 @@ describe('CourseExercisesComponent', () => {
     });
 
     it('should provide sidebar toggle state to active exercise details', () => {
-        const exerciseDetails = Object.create(CourseExerciseDetailsComponent.prototype) as CourseExerciseDetailsComponent;
-        exerciseDetails.setSidebarToggle = vi.fn();
+        const exerciseDetails = { setSidebarToggle: vi.fn() };
         (component as any)._isCollapsed.set(false);
 
         component.onSubRouteActivate(exerciseDetails);
