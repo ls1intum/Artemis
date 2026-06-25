@@ -154,7 +154,7 @@ class TextBlockServiceTest {
     }
 
     private Condition<? super Collection<? extends TextBlock>> textBlock(String expectedText) {
-        return new Condition<>(String.format("a text block with text=\"%s\"", expectedText)) {
+        return new Condition<>("a text block with text=\"%s\"".formatted(expectedText)) {
 
             @Override
             public boolean matches(Collection<? extends TextBlock> value) {
@@ -164,7 +164,7 @@ class TextBlockServiceTest {
     }
 
     private Condition<? super Collection<? extends TextBlock>> textBlock(int expectedStartIndex, int expectedEndIndex, String expectedText) {
-        return new Condition<>(String.format("a text block with startIndex=%d, endIndex=%d, and text=\"%s\"", expectedStartIndex, expectedEndIndex, expectedText)) {
+        return new Condition<>("a text block with startIndex=%d, endIndex=%d, and text=\"%s\"".formatted(expectedStartIndex, expectedEndIndex, expectedText)) {
 
             @Override
             public boolean matches(Collection<? extends TextBlock> value) {

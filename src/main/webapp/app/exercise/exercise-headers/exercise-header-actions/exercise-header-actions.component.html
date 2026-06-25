@@ -77,7 +77,13 @@
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
-                            $implicit: { icon: faPlayCircle, label: 'artemisApp.exerciseActions.startPractice', quizMode: 'practice', hideLabelMobile: false },
+                            $implicit: {
+                                id: 'quiz-start-practice-' + exercise().id,
+                                icon: faPlayCircle,
+                                label: 'artemisApp.exerciseActions.startPractice',
+                                quizMode: 'practice',
+                                hideLabelMobile: false,
+                            },
                         }"
                     />
                 }

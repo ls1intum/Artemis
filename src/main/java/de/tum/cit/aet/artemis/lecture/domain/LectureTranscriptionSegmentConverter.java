@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 import jakarta.persistence.AttributeConverter;
@@ -34,7 +33,7 @@ public class LectureTranscriptionSegmentConverter implements AttributeConverter<
     @Override
     public List<LectureTranscriptionSegment> convertToEntityAttribute(String jsonData) {
         if (jsonData == null || jsonData.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         try {

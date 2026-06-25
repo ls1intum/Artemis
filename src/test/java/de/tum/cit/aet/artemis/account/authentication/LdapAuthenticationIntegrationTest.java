@@ -72,8 +72,8 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         doReturn(Optional.empty()).when(ldapUserService).findByLogin(NONEXISTENT_LOGIN);
         doReturn(Optional.of(ldapUserDTO)).when(ldapUserService).findByAnyEmail(EMAIL);
         doReturn(Optional.empty()).when(ldapUserService).findByAnyEmail("nonexistent@test.de");
-        doReturn(true).when(ldapTemplate).authenticate("", String.format("(uid=%s)", ldapUserDTO.getLogin()), USER_PASSWORD);
-        doReturn(false).when(ldapTemplate).authenticate("", String.format("(uid=%s)", ldapUserDTO.getLogin()), INCORRECT_PASSWORD);
+        doReturn(true).when(ldapTemplate).authenticate("", "(uid=%s)".formatted(ldapUserDTO.getLogin()), USER_PASSWORD);
+        doReturn(false).when(ldapTemplate).authenticate("", "(uid=%s)".formatted(ldapUserDTO.getLogin()), INCORRECT_PASSWORD);
     }
 
     @Test

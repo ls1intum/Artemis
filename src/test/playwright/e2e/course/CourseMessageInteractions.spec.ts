@@ -47,8 +47,22 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             await courseMessages.checkMessage(message.id!, message.content!);
             await courseMessages.bookmarkMessage(message.id!);
             await courseMessages.checkMessageBookmarked(message.id!, true);
-            // Reload page completely
-            await page.reload();
+            // Reload the page completely. Under heavy multi-node load the conversation occasionally fails to
+            // re-activate from the conversationId query param after a reload (the conversations-cache activation race
+            // that openConversation also works around), leaving an empty view in which the message never renders.
+            // Retry the full reload until the message reappears so this assertion tests bookmark persistence rather
+            // than that unrelated activation race.
+            for (let attempt = 0; attempt < 3; attempt++) {
+                await page.reload();
+                try {
+                    await courseMessages.getSinglePost(message.id!).waitFor({ state: 'visible', timeout: 12000 });
+                    break;
+                } catch {
+                    if (attempt === 2) {
+                        throw new Error('Bookmarked message did not reappear after reload — conversation failed to re-activate');
+                    }
+                }
+            }
             // Verify the message is still visible and still bookmarked
             await courseMessages.checkMessage(message.id!, message.content!);
             await courseMessages.checkMessageBookmarked(message.id!, true);
@@ -369,7 +383,8 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         });
 
         test('Forwarded post renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
-            await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${sourceChannel.id}`);
+            await login(instructor);
+            await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardMessageToChannel(sourcePost.id!, destinationChannel.name!);
@@ -383,7 +398,8 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         });
 
         test('Forwarded reply renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
-            await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${sourceChannel.id}`);
+            await login(instructor);
+            await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardReplyToChannel(sourcePost.id!, reply.id!, destinationChannel.name!);

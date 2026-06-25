@@ -1,0 +1,13 @@
+{
+    "artemisApp": {
+        "exerciseVariantGroup": {
+            "edit": "Edit group",
+            "delete": "Delete group",
+            "deleted": "Deleted group with identifier {{ param }}",
+            "deleteDialog": {
+                "question": "Are you sure you want to delete the group <strong>{{ title }}</strong>? The exercises in this group will <strong>not</strong> be deleted, only ungrouped.",
+                "typeNameToConfirm": "Please type in the name of the group to confirm."
+            }
+        }
+    }
+}

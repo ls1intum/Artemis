@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -43,7 +44,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
+public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
 
     @Query("""
             SELECT DISTINCT course.instructorGroupName

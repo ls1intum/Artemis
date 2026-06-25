@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -150,7 +149,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         List<Long> ids = findLatestAutomaticResultsForExercise(exerciseId).stream().map(DomainObject::getId).toList();
 
         if (ids.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         return findResultsWithFeedbacksAndTestCaseByIdIn(ids);

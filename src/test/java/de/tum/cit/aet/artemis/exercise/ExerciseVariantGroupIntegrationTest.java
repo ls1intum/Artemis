@@ -154,6 +154,21 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExerciseVariantGroup_withMembersDetachesExercises() throws Exception {
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), sampleCreateDTO(), ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group";
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.OK);
+
+        request.delete(groupsUrl() + "/" + created.id(), HttpStatus.OK);
+
+        // The group is gone, but its member exercise survives and is simply ungrouped.
+        assertThat(exerciseVariantGroupRepository.findById(created.id())).isEmpty();
+        Exercise survivor = exerciseRepository.findByIdElseThrow(exercise.getId());
+        assertThat(survivor.getExerciseVariantGroup()).isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testDeleteExerciseVariantGroup_editorForbidden() throws Exception {
         ExerciseVariantGroupDTO created = createGroupAsEditor();

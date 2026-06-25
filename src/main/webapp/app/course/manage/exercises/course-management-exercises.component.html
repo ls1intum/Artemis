@@ -56,66 +56,13 @@
             <div style="min-width: 0">
                 <p-panel [toggleable]="true">
                     <ng-template pTemplate="header">
-                        <div class="d-flex flex-column w-100">
-                            <!-- Row 1: always visible -->
-                            <div class="d-flex align-items-center gap-2">
-                                @if (bucket.icon) {
-                                    <fa-icon [icon]="bucket.icon" [fixedWidth]="true" />
-                                }
-
-                                @if (isGroup() && bucket.group) {
-                                    <span class="fw-semibold">{{ bucket.group.title }}</span>
-                                    <span class="text-muted">({{ bucket.exercises.length }})</span>
-                                    <p-button
-                                        [text]="true"
-                                        severity="secondary"
-                                        size="small"
-                                        title="Edit group"
-                                        (onClick)="openGroupEditModal(bucket.group.id!); $event.stopPropagation()"
-                                    >
-                                        <fa-icon [icon]="faPen" />
-                                    </p-button>
-                                } @else {
-                                    <span class="fw-semibold">{{ bucket.title }} ({{ bucket.exercises.length }})</span>
-                                }
-                            </div>
-
-                            <!-- Row 1b: non-edit group details (structured, labeled) -->
+                        <div class="d-flex align-items-center gap-2 w-100">
                             @if (isGroup() && bucket.group) {
-                                @if (
-                                    bucket.group.releaseDate ||
-                                    bucket.group.startDate ||
-                                    bucket.group.dueDate ||
-                                    bucket.group.assessmentDueDate ||
-                                    bucket.group.maxPoints !== undefined
-                                ) {
-                                    <div class="d-flex flex-wrap gap-3 mt-1 small text-muted" (click)="$event.stopPropagation()">
-                                        @if (bucket.group.releaseDate) {
-                                            <span><span class="fw-semibold">Release:</span> {{ bucket.group.releaseDate | artemisDate: 'short-date' }}</span>
-                                        }
-                                        @if (bucket.group.startDate) {
-                                            <span><span class="fw-semibold">Start:</span> {{ bucket.group.startDate | artemisDate: 'short-date' }}</span>
-                                        }
-                                        @if (bucket.group.dueDate) {
-                                            <span><span class="fw-semibold">Due:</span> {{ bucket.group.dueDate | artemisDate: 'short-date' }}</span>
-                                        }
-                                        @if (bucket.group.assessmentDueDate) {
-                                            <span><span class="fw-semibold">Feedback due:</span> {{ bucket.group.assessmentDueDate | artemisDate: 'short-date' }}</span>
-                                        }
-                                        @if (bucket.group.maxPoints !== undefined) {
-                                            <span class="d-flex align-items-center gap-1">
-                                                <span class="fw-semibold">Max points:</span> {{ bucket.group.maxPoints }}p
-                                                <fa-icon
-                                                    [icon]="faCircleInfo"
-                                                    class="ms-1"
-                                                    pTooltip="Caps the total points this group contributes to the course score."
-                                                    tooltipPosition="top"
-                                                />
-                                            </span>
-                                        }
-                                    </div>
-                                }
+                                <fa-icon [icon]="faLayerGroup" [fixedWidth]="true" />
+                            } @else if (bucket.icon) {
+                                <fa-icon [icon]="bucket.icon" [fixedWidth]="true" />
                             }
+                            <span class="fw-semibold">{{ bucket.title }} ({{ bucket.exercises.length }})</span>
                         </div>
                     </ng-template>
 
@@ -134,13 +81,60 @@
                             [selectedIds]="selectedIds()"
                             [groups]="groups()"
                             (groupChange)="onTableGroupChange($event)"
-                            (groupCreate)="onTableGroupCreate($event)"
                             (rowsReordered)="onTableRowsReordered(bucket, $event)"
                             (exerciseUpdated)="onExerciseUpdated($event)"
                             (exerciseDeleted)="onExerciseDeleted($event)"
                             (selectionToggle)="toggleSelection($event)"
                             (selectionAllChange)="onTableSelectionAllChange(bucket, $event)"
                         />
+                    }
+
+                    <!-- Group footer: shared group meta info on the left, group-level actions on the right -->
+                    @if (isGroup() && bucket.group) {
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-3">
+                            <div class="d-flex flex-wrap gap-3 small text-muted">
+                                @if (
+                                    bucket.group.releaseDate ||
+                                    bucket.group.startDate ||
+                                    bucket.group.dueDate ||
+                                    bucket.group.assessmentDueDate ||
+                                    bucket.group.maxPoints !== undefined
+                                ) {
+                                    @if (bucket.group.releaseDate) {
+                                        <span><span class="fw-semibold">Release:</span> {{ bucket.group.releaseDate | artemisDate: 'short-date' }}</span>
+                                    }
+                                    @if (bucket.group.startDate) {
+                                        <span><span class="fw-semibold">Start:</span> {{ bucket.group.startDate | artemisDate: 'short-date' }}</span>
+                                    }
+                                    @if (bucket.group.dueDate) {
+                                        <span><span class="fw-semibold">Due:</span> {{ bucket.group.dueDate | artemisDate: 'short-date' }}</span>
+                                    }
+                                    @if (bucket.group.assessmentDueDate) {
+                                        <span><span class="fw-semibold">Feedback due:</span> {{ bucket.group.assessmentDueDate | artemisDate: 'short-date' }}</span>
+                                    }
+                                    @if (bucket.group.maxPoints !== undefined) {
+                                        <span class="d-flex align-items-center gap-1">
+                                            <span class="fw-semibold">Max points:</span> {{ bucket.group.maxPoints }}p
+                                            <fa-icon [icon]="faCircleInfo" pTooltip="Caps the total points this group contributes to the course score." tooltipPosition="top" />
+                                        </span>
+                                    }
+                                } @else {
+                                    <span class="fst-italic">No group-level dates or points set.</span>
+                                }
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="openGroupEditModal(bucket.group.id!)">
+                                    <fa-icon [icon]="faPen" />
+                                    <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.edit"></span>
+                                </p-button>
+                                @if (canDeleteGroups()) {
+                                    <p-button severity="danger" [outlined]="true" size="small" (onClick)="confirmDeleteGroup(bucket.group)">
+                                        <fa-icon [icon]="faTrash" />
+                                        <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.delete"></span>
+                                    </p-button>
+                                }
+                            </div>
+                        </div>
                     }
                 </p-panel>
             </div>
