@@ -53,6 +53,7 @@
                 [fetchEntitySummary]="deletionSummary()"
                 deleteQuestion="artemisApp.exercise.delete.question"
                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                [translateValues]="deleteTranslateValues()"
                 (delete)="onDelete($event)"
                 [dialogError]="dialogError$"
                 class="btn {{ action.styleClass }}"

@@ -12,6 +12,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { DifficultyLevel, Exercise, ExerciseType, IncludedInOverallScore, getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseActionsComponent } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-actions.component';
 
@@ -54,6 +55,7 @@ export class ExerciseTableComponent {
     readonly exercises = input.required<Exercise[]>();
     readonly group = input<CourseExerciseGroup | undefined>(undefined);
     readonly courseId = input.required<number>();
+    readonly course = input<Course | undefined>(undefined);
     readonly showDragHandle = input<boolean>(false);
     readonly showGroupSelector = input<boolean>(false);
     readonly showTypeIcon = input<boolean>(false);
@@ -71,6 +73,7 @@ export class ExerciseTableComponent {
     readonly groupCreate = output<Exercise>();
     readonly rowsReordered = output<Exercise[]>();
     readonly exerciseUpdated = output<Exercise>();
+    readonly exerciseDeleted = output<Exercise>();
     readonly selectionToggle = output<number>();
     readonly selectionAllChange = output<boolean>();
 
@@ -227,7 +230,7 @@ export class ExerciseTableComponent {
         return exercise as QuizExercise;
     }
 
-    quizStatusLabel(exercise: QuizExercise): string {
+    quizStatusLabel(exercise: QuizExercise): string | undefined {
         switch (exercise.status) {
             case QuizStatus.INVISIBLE:
                 return 'Invisible';
@@ -238,7 +241,7 @@ export class ExerciseTableComponent {
             case QuizStatus.OPEN_FOR_PRACTICE:
                 return 'Practice';
             default:
-                return '—';
+                return undefined;
         }
     }
 

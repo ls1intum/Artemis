@@ -57,13 +57,6 @@
                         <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted me-1" />
                     }
                     <a class="fw-semibold" [routerLink]="titleLink(exercise)">{{ exercise.title }}</a>
-                    @if (exercise.type === ExerciseType.QUIZ) {
-                        @let q = asQuiz(exercise);
-                        <span class="badge ms-1 {{ quizStatusClass(q) }} small">{{ quizStatusLabel(q) }}</span>
-                        @if (q.quizMode && q.quizMode !== QuizMode.SYNCHRONIZED) {
-                            <span class="badge bg-light text-dark border small ms-1">{{ q.quizMode }}</span>
-                        }
-                    }
                 </td>
                 <td class="col-dates">
                     <div class="d-flex flex-column small">
@@ -131,14 +124,30 @@
                     </td>
                 }
                 <td>
+                    @if (exercise.type === ExerciseType.QUIZ) {
+                        @let q = asQuiz(exercise);
+                        @let statusLabel = quizStatusLabel(q);
+                        @if (statusLabel) {
+                            <span class="badge {{ quizStatusClass(q) }} small me-1">{{ statusLabel }}</span>
+                        }
+                        @if (q.quizMode) {
+                            <span class="badge bg-light text-dark border small me-1">{{ q.quizMode }}</span>
+                        }
+                    }
                     @if (exercise.categories && exercise.categories.length > 0) {
                         <jhi-exercise-categories [exercise]="exercise" />
-                    } @else {
+                    } @else if (exercise.type !== ExerciseType.QUIZ || (!asQuiz(exercise).quizMode && !quizStatusLabel(asQuiz(exercise)))) {
                         <span class="text-muted fst-italic small">none</span>
                     }
                 </td>
                 <td class="col-actions">
-                    <jhi-exercise-actions [exercise]="exercise" [courseId]="courseId()" (exerciseUpdated)="exerciseUpdated.emit($event)" />
+                    <jhi-exercise-actions
+                        [exercise]="exercise"
+                        [courseId]="courseId()"
+                        [course]="course()"
+                        (exerciseUpdated)="exerciseUpdated.emit($event)"
+                        (exerciseDeleted)="exerciseDeleted.emit($event)"
+                    />
                 </td>
             </tr>
         </ng-template>

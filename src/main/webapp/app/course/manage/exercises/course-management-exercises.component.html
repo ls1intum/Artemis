@@ -123,6 +123,7 @@
                         <jhi-exercise-table
                             [exercises]="bucket.exercises"
                             [courseId]="courseId()!"
+                            [course]="course()"
                             [group]="bucket.group"
                             [dropListId]="bucket.id"
                             [connectedDropLists]="dropListIds()"
@@ -136,6 +137,7 @@
                             (groupCreate)="onTableGroupCreate($event)"
                             (rowsReordered)="onTableRowsReordered(bucket, $event)"
                             (exerciseUpdated)="onExerciseUpdated($event)"
+                            (exerciseDeleted)="onExerciseDeleted($event)"
                             (selectionToggle)="toggleSelection($event)"
                             (selectionAllChange)="onTableSelectionAllChange(bucket, $event)"
                         />

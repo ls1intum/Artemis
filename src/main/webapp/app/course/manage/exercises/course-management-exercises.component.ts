@@ -331,6 +331,24 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.buildBuckets();
     }
 
+    onExerciseDeleted(deleted: Exercise): void {
+        // Remove the deleted exercise from the flat list and from any group it belonged to, then rebuild the buckets
+        // so it disappears from the view without requiring a page refresh.
+        this.exercises.set(this.exercises().filter((e) => e.id !== deleted.id));
+        this.groups.set(
+            this.groups().map((g) => ({
+                ...g,
+                exercises: (g.exercises ?? []).filter((e) => e.id !== deleted.id),
+            })),
+        );
+        if (deleted.id !== undefined && this.selectedIds().has(deleted.id)) {
+            const remaining = new Set(this.selectedIds());
+            remaining.delete(deleted.id);
+            this.selectedIds.set(remaining);
+        }
+        this.buildBuckets();
+    }
+
     private hasSearch(): boolean {
         return this.search().trim().length > 0;
     }

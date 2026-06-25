@@ -22,10 +22,12 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -71,8 +73,10 @@ const GAP_PX = 4;
 export class ExerciseActionsComponent {
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
+    readonly course = input<Course | undefined>(undefined);
 
     readonly exerciseUpdated = output<Exercise>();
+    readonly exerciseDeleted = output<Exercise>();
 
     protected readonly ExerciseType = ExerciseType;
     protected readonly faEllipsis = faEllipsis;
@@ -86,6 +90,7 @@ export class ExerciseActionsComponent {
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly exerciseService = inject(ExerciseService);
     private readonly eventManager = inject(EventManager);
+    private readonly translateService = inject(TranslateService);
 
     private readonly menu = viewChild<Popover>('menu');
     private readonly measureItems = viewChildren<ElementRef<HTMLElement>>('measureItem');
@@ -222,6 +227,15 @@ export class ExerciseActionsComponent {
 
     readonly deletionSummary = computed<Observable<EntitySummary>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
 
+    /** Placeholders for the delete confirmation question (`{{ courseType }}` / `{{ courseTitle }}`). */
+    readonly deleteTranslateValues = computed<{ [key: string]: unknown }>(() => {
+        const course = this.course();
+        return {
+            courseTitle: course?.title,
+            courseType: this.translateService.instant(course?.testCourse ? 'artemisApp.exercise.delete.testCourse' : 'artemisApp.exercise.delete.realCourse'),
+        };
+    });
+
     private readonly layout = computed<ActionLayout>(() => {
         const quiz = this.quizActions();
         const main = this.mainActions();
@@ -339,6 +353,8 @@ export class ExerciseActionsComponent {
                 next: () => {
                     this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
                     this.dialogErrorSource.next('');
+                    // Notify the parent so the deleted exercise is removed from the view without a page refresh.
+                    this.exerciseDeleted.emit(exercise);
                 },
                 error: (e: HttpErrorResponse) => this.dialogErrorSource.next(e.message),
             });
