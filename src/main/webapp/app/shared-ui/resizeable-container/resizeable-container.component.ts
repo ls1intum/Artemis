@@ -1,9 +1,8 @@
-import { Component, ElementRef, OnDestroy, effect, input, model, viewChild } from '@angular/core';
+import { Component, input, model } from '@angular/core';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
-import { Interactable } from '@interactjs/core/Interactable';
-import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 /**
  * Resizable Layout with collapsible panel on the right hand side.
@@ -20,13 +19,13 @@ import { NgTemplateOutlet } from '@angular/common';
     selector: 'jhi-resizeable-container',
     templateUrl: './resizeable-container.component.html',
     styleUrls: ['./resizeable-container.component.scss'],
-    imports: [FaIconComponent, NgTemplateOutlet],
+    imports: [FaIconComponent, NgTemplateOutlet, ResizableDirective],
     host: {
         class: 'flex-grow-1',
         '(window:resize)': 'onWindowResize($event)',
     },
 })
-export class ResizeableContainerComponent implements OnDestroy {
+export class ResizeableContainerComponent {
     readonly collapsed = model<boolean>(false);
     readonly isExerciseParticipation = input<boolean>(false);
     readonly examTimeline = input<boolean>(false);
@@ -46,55 +45,10 @@ export class ResizeableContainerComponent implements OnDestroy {
      */
     readonly expandProblemStatement = input<boolean>(false);
 
-    readonly expandedPanel = viewChild<ElementRef<HTMLElement>>('expandedPanel');
-
-    private interactResizable: Interactable | undefined;
-
     // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
-
-    constructor() {
-        effect(() => {
-            this.interactResizable?.unset();
-            const panel = this.expandedPanel();
-            if (!panel) {
-                this.interactResizable = undefined;
-                return;
-            }
-            this.interactResizable = this.initializeResizable(panel.nativeElement);
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.interactResizable?.unset();
-    }
-
-    private initializeResizable(panelElement: HTMLElement): Interactable {
-        return interact(panelElement)
-            .resizable({
-                edges: { left: '.draggable-left', right: false, bottom: false, top: false },
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: 215, height: 0 },
-                        max: { width: 1500, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', (event: any) => {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', (event: any) => {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', (event: any) => {
-                const target = event.target;
-                target.style.width = event.rect.width + 'px';
-            });
-    }
 
     // Make right side always expanded for smaller screens
     onWindowResize(event: any) {
