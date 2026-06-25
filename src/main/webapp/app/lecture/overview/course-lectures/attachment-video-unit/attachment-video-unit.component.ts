@@ -157,7 +157,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly isBlobLoadInProgress = signal<boolean>(false);
     private blobLoadSubscription?: Subscription;
     private pendingPdfTargetPage?: number;
-    private pendingVideoTargetSlideNumber?: number;
+    private isApplyingVideoSeek = false;
 
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
@@ -517,8 +517,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        if (this.pendingVideoTargetSlideNumber === slideNumber) {
-            this.pendingVideoTargetSlideNumber = undefined;
+        // A sync-initiated seek re-emits the active slide synchronously (both players call
+        // updateCurrentSegment from within seekTo). Ignore that echo regardless of which slide it
+        // resolved to, otherwise our own seek would drag the PDF back — see seekVideoToDisplayedPageNumber.
+        if (this.isApplyingVideoSeek) {
             return;
         }
 
@@ -595,15 +597,22 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
 
         const shouldResumePlayback = this.isVideoCurrentlyPlaying();
-        this.pendingVideoTargetSlideNumber = displayedPageNumber;
 
-        const videoPlayer = this.videoPlayer();
-        if (videoPlayer) {
-            videoPlayer.seekTo(timestamp, shouldResumePlayback);
-            return;
+        // Both players synchronously re-emit the active slide from inside seekTo. Guard the whole
+        // call so that synchronous echo is suppressed in onVideoSlideNumberChange and cannot bounce
+        // the PDF back. The flag is only ever set for the duration of this synchronous call.
+        this.isApplyingVideoSeek = true;
+        try {
+            const videoPlayer = this.videoPlayer();
+            if (videoPlayer) {
+                videoPlayer.seekTo(timestamp, shouldResumePlayback);
+                return;
+            }
+
+            this.youtubePlayer()?.seekTo(timestamp, shouldResumePlayback);
+        } finally {
+            this.isApplyingVideoSeek = false;
         }
-
-        this.youtubePlayer()?.seekTo(timestamp, shouldResumePlayback);
     }
 
     private isVideoCurrentlyPlaying(): boolean {
@@ -616,7 +625,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private clearSynchronizationTargets(): void {
         this.pendingPdfTargetPage = undefined;
-        this.pendingVideoTargetSlideNumber = undefined;
+        this.isApplyingVideoSeek = false;
     }
 
     private computeSynchronizationState(): {

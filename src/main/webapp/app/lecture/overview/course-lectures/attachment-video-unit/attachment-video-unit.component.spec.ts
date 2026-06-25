@@ -854,6 +854,32 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(seekTo).toHaveBeenCalledWith(9, false);
         });
 
+        it('does not bounce the PDF when a sync-initiated seek synchronously re-emits a slide', () => {
+            // Scrolling to PDF page 2 (display number 8) seeks the video. The player re-emits the active
+            // slide synchronously from inside seekTo; if it resolves to the neighbouring slide 7 (a segment
+            // boundary), the echo must be suppressed so the PDF is NOT dragged back to page 1.
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 5, endTime: 10, text: 'Slide 8', slideNumber: 8 },
+            ]);
+
+            const goToPage = vi.fn();
+            const seekTo = vi.fn().mockImplementation(() => {
+                // Simulate the synchronous echo of the previous slide at the shared boundary.
+                component['onVideoSlideNumberChange'](7);
+            });
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 2, goToPage });
+            (component as any).videoPlayer = () => ({ seekTo, isPlaying: () => false, getCurrentSlideNumber: () => undefined });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onPdfCurrentPageChange'](2);
+
+            expect(seekTo).toHaveBeenCalledWith(5, false);
+            expect(goToPage).not.toHaveBeenCalled();
+        });
+
         it('openFullscreen: returns immediately when no fullscreen content is available', () => {
             component.lectureUnit().videoSource = undefined;
             component.lectureUnit().attachment = undefined;
