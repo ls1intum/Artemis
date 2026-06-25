@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
@@ -51,6 +50,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDT
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisSearchableEntityDTO;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 
 /**
@@ -71,8 +71,6 @@ public class PyrisConnectorService {
 
     private final PyrisJobService pyrisJobService;
 
-    private final Optional<WeaviateService> weaviateService;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
@@ -80,11 +78,10 @@ public class PyrisConnectorService {
     private String pyrisUrl;
 
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            PyrisJobService pyrisJobService, Optional<WeaviateService> weaviateService) {
+            PyrisJobService pyrisJobService) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.pyrisJobService = pyrisJobService;
-        this.weaviateService = weaviateService;
     }
 
     /**
@@ -233,12 +230,12 @@ public class PyrisConnectorService {
      * @param aiSelection   the user's LLM selection (LOCAL_AI or CLOUD_AI)
      * @param accessContext the role-based access context for the requesting user
      */
-    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, PyrisAccessContextDTO accessContext) {
+    public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, PyrisAccessContextDTO accessContext,
+            List<PyrisSearchableEntityDTO> prefetchedEntities) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             var settings = new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue());
-            var entityCollectionName = weaviateService.map(WeaviateService::getSearchableEntitiesCollectionName).orElse(null);
-            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of(), accessContext, entityCollectionName);
+            var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, List.of(), accessContext, prefetchedEntities);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {
                 log.warn("Unexpected status {} from Pyris search/ask async", response.getStatusCode().value());

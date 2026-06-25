@@ -21,5 +21,5 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisGlobalSearchAnswerRequestDTO(@NotBlank String query, @Min(1) @Max(5) int limit, PyrisPipelineExecutionSettingsDTO settings,
         @JsonProperty("initialStages") List<PyrisStageDTO> initialStages, @JsonProperty("accessContext") PyrisAccessContextDTO accessContext,
-        @JsonProperty("entityCollectionName") String entityCollectionName) {
+        @JsonProperty("prefetchedEntities") List<PyrisSearchableEntityDTO> prefetchedEntities) {
 }
