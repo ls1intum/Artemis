@@ -185,8 +185,8 @@ public class MetricsBean {
     // NOTE: only active on scheduling node
     private final AtomicLong failedBuildsGauge = new AtomicLong(0);
 
-    @Value("${artemis.scheduled-metrics.enabled:false}")
-    private boolean scheduledMetricsEnabled = false;
+    @Value("${artemis.scheduled-metrics.enabled:true}")
+    private boolean scheduledMetricsEnabled = true;
 
     @Value("${artemis.websocket-log.enabled:false}")
     private boolean websocketLogEnabled = false;
@@ -247,10 +247,12 @@ public class MetricsBean {
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
 
-        if (profileService.isSchedulingActive()) {
-            // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
-            scheduledMetricsEnabled = true;
+        // Scheduled metrics are identical across instances, so they run only on the scheduling node. They can additionally be turned off via
+        // artemis.scheduled-metrics.enabled. Combine the injected configuration flag with the scheduling profile (instead of forcing it on) so
+        // the configured value is respected and the scheduled recalculation methods below correctly skip on non-scheduling nodes.
+        scheduledMetricsEnabled = scheduledMetricsEnabled && profileService.isSchedulingActive();
 
+        if (scheduledMetricsEnabled) {
             registerActiveAdminMetrics();
             registerExerciseAndExamMetrics();
             registerStudentExerciseMetrics();
