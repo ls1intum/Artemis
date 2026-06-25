@@ -531,7 +531,7 @@ For ICL, the run configuration for core nodes need to include the additional pro
 To enable LTI integration, add `--artemis.lti.enabled=true` to your configuration.
 To enable Iris integration, add `--artemis.iris.enabled=true` to your configuration.
 To enable LDAP-based user synchronization, add `--artemis.user-management.ldap.enabled=true` to your configuration.
-To enable Athena-based feedback suggestions, add `--artemis.athena.enabled=true` to your configuration.
+To enable Athena-based feedback suggestions, add `--artemis.athena.enabled=true` to your configuration. After enabling, AI feedback features must also be activated per course by an administrator via the course settings. The Athena modules for each exercise type (text, programming, modeling) are configured at the application level via `artemis.athena.modules.*` and apply to all courses. See [Athena Service](/admin/extensions-setup#athena-service) for the full configuration reference.
 
 Core nodes do not require further adjustments to the `application-prod.yml`, as long as you have added the necessary variables as described in the [Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup).
 

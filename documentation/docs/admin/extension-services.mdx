@@ -86,18 +86,23 @@ artemis:
 
 ### Configure the Athena boundary
 
-Configure the Athena endpoint and shared secret in the active deployment-specific configuration. Artemis discovers available modules from Athena; exercise configuration selects an allowed module rather than using a static per-type module mapping.
+Configure the Athena endpoint and shared secret in the active deployment-specific configuration. The module used for each supported exercise type (text, programming, modeling) is configured at the application level and applies to all courses; it is not configurable per course or per exercise.
 
 ```yaml
 artemis:
     athena:
         url: https://<athena-service>
         secret: <shared-secret>
-        # Optional: restrict modules unless a course grants restricted-module access.
-        restricted-modules: <comma-separated-module-names>
+        # Optional: override the default module name for each exercise type.
+        modules:
+            text: module_text_llm
+            programming: module_programming_llm
+            modeling: module_modeling_llm
 ```
 
-Use a deployment-managed shared secret. For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
+The `modules.*` keys are optional; the defaults shown above are used when omitted. For a list of available modules, refer to the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena documentation</a>. Use a deployment-managed shared secret. For the service-side module layout and decorator contracts, refer to the [Athena module structure](https://ls1intum.github.io/edutelligence/athena/docs/dev/module/structure/).
+
+Enabling Athena at the deployment level makes AI-assisted feedback available; it must still be activated per course by an instructor or administrator. See [AI Assisted Feedback](/instructor/course-management/course-configuration#ai-assisted-feedback) in the Course Configuration documentation.
 
 ---
 

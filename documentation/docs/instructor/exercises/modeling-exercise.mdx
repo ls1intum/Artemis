@@ -8,6 +8,7 @@ import courseDashboard from './assets/general/course-management-course-dashboard
 import createNewModelingExercise from './assets/modeling/create-new-modeling-exercise.png';
 import createModelingExerciseForm1 from './assets/modeling/create-modeling-exercise-form-1.png';
 import createModelingExerciseForm2 from './assets/modeling/create-modeling-exercise-form-2.png';
+import createModelingExerciseFormProblem from './assets/modeling/create-modeling-exercise-form-problem.png';
 import createModelingExerciseForm3 from './assets/modeling/create-modeling-exercise-form-3.png';
 import hintIcon from './assets/modeling/hint.png';
 import createModelingExerciseFormHint from './assets/modeling/create-modeling-exercise-form-hint.png';
@@ -112,9 +113,10 @@ The following screenshot illustrates the first section of the form. It consists 
 
 The following screenshot illustrates the second section of the form. It consists of:
 
-- **Enable automatic assessment suggestions**: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise
-- **Enable feedback suggestions from Athena**: When enabled, Artemis tries to automatically suggest assessments for diagram elements using the Athena service
 - **Problem Statement**: The task description of the exercise as seen by students
+
+<Image src={createModelingExerciseFormProblem} alt="Create Modeling Exercise Form Problem Statement" size={ImageSize.large} caption="Problem Statement" />
+
 - **Assessment Instructions**: Instructions for instructors while assessing the submission
 
 <Image src={createModelingExerciseForm2} alt="Create Modeling Exercise Form 2" size={ImageSize.large} caption="Modeling Exercise Creation Form (2/3)" />
@@ -219,11 +221,11 @@ Once you're done assessing the solution, you can either:
 
 ## Automatic Assessment Suggestions
 
-If the checkbox **Automatic assessment suggestions enabled** is checked for a modeling exercise, Artemis generates assessment suggestions for submissions using the Athena service.
+When **Grading Feedback Suggestions** is enabled at the course level, Artemis automatically generates assessment suggestions for modeling submissions using the Athena service.
 
 <Callout variant={CalloutVariant.info}>
 
-  To learn how to set up an instance of the Athena service and configure your Artemis installation accordingly, please refer to the section <a href="/admin/artemis-intelligence#athena-service">Athena Service</a>.
+  Grading feedback suggestions are enabled per course by an administrator. See <a href="/instructor/course-management/course-configuration#ai-assisted-feedback">AI Assisted Feedback</a> in the Course Configuration documentation. To learn how to set up the Athena service, refer to <a href="/admin/artemis-intelligence">Artemis Intelligence</a>.
 
 </Callout>
 
@@ -312,7 +314,7 @@ Evaluate the following 10 criteria:
 
 **Overview:**
 
-When a modeling exercise is configured to allow **Allow automatic AI preliminary feedback requests**, preliminary AI feedback can be requested for modeling submissions. The feedback is generated through the Athena Service, which analyzes both the **structure** and **layout** of the diagrams and produces feedback based on the provided **Grading Instructions**, **Problem Statement**, and **Sample Solution**.
+When **Formative Feedback Requests** is enabled at the course level, students can request preliminary AI feedback for their modeling submissions before the due date. The feedback is generated through the Athena Service, which analyzes both the **structure** and **layout** of the diagrams and produces feedback based on the provided **Grading Instructions**, **Problem Statement**, and **Sample Solution**.
 
 <Callout variant={CalloutVariant.warning}>
 
