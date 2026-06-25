@@ -1,0 +1,16 @@
+<div class="d-flex flex-column align-items-center justify-content-center gap-3 text-center py-5">
+    @if (status() === 'redirecting') {
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">{{ 'artemisApp.externalLogin.redirecting' | artemisTranslate }}</span>
+        </div>
+        <h2>{{ 'artemisApp.externalLogin.redirecting' | artemisTranslate }}</h2>
+        <p>{{ 'artemisApp.externalLogin.openHint' | artemisTranslate }}</p>
+        @if (deepLink()) {
+            <button type="button" class="btn btn-primary" (click)="openManually()">{{ 'artemisApp.externalLogin.openManually' | artemisTranslate }}</button>
+        }
+    } @else {
+        <h2>{{ 'artemisApp.externalLogin.error.title' | artemisTranslate }}</h2>
+        <p>{{ 'artemisApp.externalLogin.error.description' | artemisTranslate }}</p>
+        <a class="btn btn-primary" routerLink="/">{{ 'artemisApp.externalLogin.backHome' | artemisTranslate }}</a>
+    }
+</div>

@@ -114,6 +114,16 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'external-login',
+        loadComponent: () => import('app/core/auth/external-login/external-login.component').then((m) => m.ExternalLoginComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.externalLogin.pageTitle',
+            usesModuleBackground: true,
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'imprint',
         loadComponent: () => import('app/core/legal/imprint.component').then((m) => m.ImprintComponent),
         data: {

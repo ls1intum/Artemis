@@ -1,0 +1,17 @@
+{
+    "artemisApp": {
+        "externalLogin": {
+            "pageTitle": "Bei externem Client anmelden",
+            "redirecting": "Anmeldung läuft…",
+            "openHint": "Falls sich dein Editor nicht automatisch öffnet, nutze die Schaltfläche unten.",
+            "openManually": "Editor öffnen",
+            "backHome": "Zurück zu Artemis",
+            "error": {
+                "title": "Anmeldung konnte nicht abgeschlossen werden",
+                "description": "Die Anmeldeanfrage ist ungültig oder wurde abgelehnt. Bitte starte die Anmeldung erneut aus deinem Editor.",
+                "missingParams": "Dem Anmeldelink fehlen erforderliche Informationen. Bitte starte die Anmeldung erneut aus deinem Editor.",
+                "codeIssuanceFailed": "Die Anmeldeanfrage konnte nicht abgeschlossen werden. Bitte starte die Anmeldung erneut aus deinem Editor."
+            }
+        }
+    }
+}
