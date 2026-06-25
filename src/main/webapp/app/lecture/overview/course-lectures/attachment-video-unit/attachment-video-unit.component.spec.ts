@@ -19,6 +19,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
+import { MatDialog } from '@angular/material/dialog';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -108,6 +109,7 @@ describe('AttachmentVideoUnitComponent', () => {
                 MockProvider(NgbModal),
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
+                { provide: MatDialog, useValue: { closeAll: vi.fn() } },
             ],
         }).compileComponents();
 
@@ -130,6 +132,21 @@ describe('AttachmentVideoUnitComponent', () => {
 
     it('should initialize', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('closes the floating Iris chat widget when entering fullscreen, but not when leaving it', () => {
+        const dialog = TestBed.inject(MatDialog);
+
+        // Entering fullscreen must dismiss the floating widget (it would otherwise hover over the fullscreen
+        // view as a non-interactive overlay).
+        component['onFullscreenChange'](true);
+        expect(dialog.closeAll).toHaveBeenCalledTimes(1);
+        expect(component.isFullscreen()).toBe(true);
+
+        // Leaving fullscreen must not close any dialogs.
+        component['onFullscreenChange'](false);
+        expect(dialog.closeAll).toHaveBeenCalledTimes(1);
+        expect(component.isFullscreen()).toBe(false);
     });
 
     it('should get file name', () => {
