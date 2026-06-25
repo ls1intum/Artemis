@@ -55,7 +55,7 @@ export class ExamConductionComponent {
                 kind: 'required',
                 labelStringKey: isTestExam ? 'artemisApp.examManagement.testExam.startDate' : 'artemisApp.examManagement.startDate',
                 date: this.startOfWorkingTime,
-                mustBeStrictlyAfterPrevious: true,
+                mustBeStrictlyAfterPrevious: !isTestExam,
                 helpKey: 'artemisApp.examManagement.startDateTooltip',
             },
             {
