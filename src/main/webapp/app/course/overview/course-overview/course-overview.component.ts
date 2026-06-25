@@ -548,6 +548,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     ngOnDestroy() {
         super.ngOnDestroy();
+        // Clear the fully-loaded marker so the next visit re-fetches fresh course data from the server
+        // instead of reusing a potentially stale cached course. Within the current visit, tab switches
+        // still skip the duplicate findOneForDashboard call because the marker remains set until destroy.
+        this.courseStorageService.clearFullyLoaded(this.courseId());
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
         }

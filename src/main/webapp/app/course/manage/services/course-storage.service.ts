@@ -99,6 +99,15 @@ export class CourseStorageService implements OnDestroy {
         return this.fullyLoadedCourseIds.has(courseId);
     }
 
+    /**
+     * Drops the fully-loaded marker for a single course without touching the stored course object.
+     * Used by components that cache-reuse the full course during their lifetime but must not let
+     * the marker survive beyond it — the next visit should always re-fetch fresh data.
+     */
+    clearFullyLoaded(courseId: number): void {
+        this.fullyLoadedCourseIds.delete(courseId);
+    }
+
     subscribeToCourseUpdates(courseId: number): Observable<Course> {
         if (!this.courseUpdateSubscriptions.has(courseId)) {
             this.courseUpdateSubscriptions.set(courseId, new SubjectObservablePair());
