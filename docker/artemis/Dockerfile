@@ -129,30 +129,6 @@ WORKDIR /opt/artemis
 
 COPY --chown=artemis:artemis --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
 
-# Generate an Application Class-Data Sharing (AppCDS) archive at image-build time. The runtime then memory-maps pre-parsed class metadata instead of re-parsing every class on
-# each start, which shortens cold start (commonly ~10-25%) with no steady-state cost (unlike -XX:TieredStopAtLevel=1). The training run refreshes the Spring context against an
-# in-memory H2 database and exits immediately (-Dspring.context.exit=onRefresh), so it needs no external services. It deliberately omits the buildagent profile, which would
-# require a Docker daemon that is unavailable during the image build. AppCDS keys on the classpath + module flags (identical here to the runtime CMD), not on the active Spring
-# profiles, so the archive built from this representative profile set is reused at runtime regardless of which profiles a node activates. It is best-effort: on any failure the
-# build still succeeds (the archive is simply absent) and the runtime falls back to -XX:+AutoCreateSharedArchive (see CMD), so a missing or stale archive never blocks startup.
-RUN java -XX:ArchiveClassesAtExit=/opt/artemis/Artemis.jsa \
-  -Dspring.context.exit=onRefresh \
-  -Xmx3g \
-  --add-modules java.se \
-  --add-exports java.base/jdk.internal.ref=ALL-UNNAMED \
-  --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED \
-  --add-opens java.base/java.lang=ALL-UNNAMED \
-  --add-opens java.base/java.nio=ALL-UNNAMED \
-  --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
-  --add-opens java.management/sun.management=ALL-UNNAMED \
-  --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
-  -jar /opt/artemis/Artemis.war \
-  --spring.profiles.active=dev,artemis,core,scheduling,localci,localvc,ldap \
-  --spring.datasource.url='jdbc:h2:mem:cdstraining;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE' \
-  --spring.datasource.username=sa --spring.datasource.password= \
-  --eureka.client.enabled=false \
-  || echo "WARNING: AppCDS training run failed; the image will start without a baked archive (runtime falls back to -XX:+AutoCreateSharedArchive)."
-
 VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]
 VOLUME ["/opt/artemis/public/content"]
@@ -160,10 +136,7 @@ VOLUME ["/opt/artemis/public/content"]
 EXPOSE 8080
 
 # use exec format (square brackets) as otherwise the shell fromat will not forward signals
-# -XX:SharedArchiveFile uses the AppCDS archive baked above; -XX:+AutoCreateSharedArchive turns a missing/stale archive into a no-op (regenerated at exit) instead of a startup failure.
 CMD [ "java", \
-"-XX:+AutoCreateSharedArchive", \
-"-XX:SharedArchiveFile=/opt/artemis/Artemis.jsa", \
 "-Djdk.tls.ephemeralDHKeySize=2048", \
 "-DLC_CTYPE=UTF-8", \
 "-Dfile.encoding=UTF-8", \
