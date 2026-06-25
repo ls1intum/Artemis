@@ -191,9 +191,6 @@ importers:
       html-diff-ts:
         specifier: 1.4.2
         version: 1.4.2
-      interactjs:
-        specifier: 1.10.27
-        version: 1.10.27
       katex:
         specifier: 0.17.0
         version: 0.17.0
@@ -227,9 +224,6 @@ importers:
       rxjs:
         specifier: 7.8.2
         version: 7.8.2
-      split.js:
-        specifier: 1.6.5
-        version: 1.6.5
       tslib:
         specifier: 2.8.1
         version: 2.8.1
@@ -1841,9 +1835,6 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
-
-  '@interactjs/types@1.10.27':
-    resolution: {integrity: sha512-BUdv0cvs4H5ODuwft2Xp4eL8Vmi3LcihK42z0Ft/FbVJZoRioBsxH+LlsBdK4tAie7PqlKGy+1oyOncu1nQ6eA==}
 
   '@isaacs/fs-minipass@4.0.1':
     resolution: {integrity: sha512-wgm9Ehl2jpeqP3zw/7mo3kRHFp5MEDhqAdwy1fTGkHAwnkGOVsgpvQhL8B5n1qlb01jV3n/bI0ZfZp5lWA1k4w==}
@@ -4671,9 +4662,6 @@ packages:
     resolution: {integrity: sha512-IBTdIkzZNOpqm7q3dRqJvMaldXjDHWkEDfrwGEQTs5eaQMWV+djAhR+wahyNNMAa+qpbDUhBMVt4ZKNwpPm7xQ==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  interactjs@1.10.27:
-    resolution: {integrity: sha512-y/8RcCftGAF24gSp76X2JS3XpHiUvDQyhF8i7ujemBz77hwiHDuJzftHx7thY8cxGogwGiPJ+o97kWB6eAXnsA==}
-
   intl-messageformat@10.7.18:
     resolution: {integrity: sha512-m3Ofv/X/tV8Y3tHXLohcuVuhWKo7BBq62cqY15etqmLxg2DZ34AGGgQDeR+SCta2+zICb1NX83af0GJmbQ1++g==}
 
@@ -5999,9 +5987,6 @@ packages:
   speedline-core@1.4.3:
     resolution: {integrity: sha512-DI7/OuAUD+GMpR6dmu8lliO2Wg5zfeh+/xsdyJZCzd8o5JgFUjCeLsBDuZjIQJdwXS3J0L/uZYrELKYqx+PXog==}
     engines: {node: '>=8.0'}
-
-  split.js@1.6.5:
-    resolution: {integrity: sha512-mPTnGCiS/RiuTNsVhCm9De9cCAUsrNFFviRbADdKiiV+Kk8HKp/0fWu7Kr8pi3/yBmsqLFHuXGT9UUZ+CNLwFw==}
 
   ssri@13.0.1:
     resolution: {integrity: sha512-QUiRf1+u9wPTL/76GTYlKttDEBWV1ga9ZXW8BG6kfdeyyM8LGPix9gROyg9V2+P0xNyF3X2Go526xKFdMZrHSQ==}
@@ -8419,8 +8404,6 @@ snapshots:
   '@inquirer/type@3.0.10(@types/node@24.13.2)':
     optionalDependencies:
       '@types/node': 24.13.2
-
-  '@interactjs/types@1.10.27': {}
 
   '@isaacs/fs-minipass@4.0.1':
     dependencies:
@@ -11308,10 +11291,6 @@ snapshots:
 
   ini@6.0.0: {}
 
-  interactjs@1.10.27:
-    dependencies:
-      '@interactjs/types': 1.10.27
-
   intl-messageformat@10.7.18:
     dependencies:
       '@formatjs/ecma402-abstract': 2.3.6
@@ -12805,8 +12784,6 @@ snapshots:
       '@types/node': 24.13.2
       image-ssim: 0.2.0
       jpeg-js: 0.4.4
-
-  split.js@1.6.5: {}
 
   ssri@13.0.1:
     dependencies:
