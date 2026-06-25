@@ -11,6 +11,10 @@ artemis:
   build-logs-path: ./build-logs                   # a folder in which build logs are stored
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
+  config-check:
+    # Bearer token for /api/admin/internal/config-check. Leave empty (default) to disable the
+    # endpoint entirely. Only needed for the Claudia e2e testing flow on the CI VM.
+    token: ${ARTEMIS_CONFIG_CHECK_TOKEN:}
   user-management:
     use-external: true # enables ldap authentication
     password-reset:
