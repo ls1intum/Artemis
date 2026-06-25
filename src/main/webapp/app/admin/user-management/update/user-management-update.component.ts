@@ -105,7 +105,7 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly isSaving = signal(false);
 
     /** All available groups for autocomplete */
-    allGroups: string[];
+    allGroups: string[] = [];
 
     /** Suggestions shown in the group autocomplete dropdown, recomputed on each keystroke via {@link onGroupComplete}. */
     readonly groupSuggestions = signal<string[]>([]);

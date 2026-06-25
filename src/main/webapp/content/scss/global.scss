@@ -1502,6 +1502,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     margin: 0 !important;
     top: 0 !important;
     left: 0 !important;
+
     // Neutralize any PrimeNG enter/leave transform on the dialog root: a transformed ancestor would
     // make the embedded `position: fixed` `.chat-widget` resolve against the dialog instead of the
     // viewport, breaking its bottom-right placement and drag/resize math.

@@ -33,6 +33,7 @@
         z-index: 1;
 
         @include dynamic-content-height(--spacing-modules, --system-notification-height);
+
         overflow: hidden;
         transition: width 0.2s ease-in-out;
 
