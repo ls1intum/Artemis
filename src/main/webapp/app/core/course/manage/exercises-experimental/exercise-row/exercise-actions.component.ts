@@ -13,10 +13,7 @@ import {
     faLightbulb,
     faListAlt,
     faPencilAlt,
-    faPlayCircle,
-    faPlus,
     faRedo,
-    faStopCircle,
     faTable,
     faTrash,
     faUsers,
@@ -26,7 +23,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -68,7 +66,7 @@ const GAP_PX = 4;
     selector: 'jhi-exercise-actions',
     templateUrl: './exercise-actions.component.html',
     styleUrl: './exercise-actions.component.scss',
-    imports: [RouterLink, NgTemplateOutlet, FaIconComponent, PopoverModule, DeleteButtonDirective],
+    imports: [RouterLink, NgTemplateOutlet, FaIconComponent, PopoverModule, DeleteButtonDirective, QuizExerciseLifecycleButtonsComponent],
 })
 export class ExerciseActionsComponent {
     readonly exercise = input.required<Exercise>();
@@ -106,25 +104,16 @@ export class ExerciseActionsComponent {
     private readonly dialogErrorSource = new Subject<string>();
     readonly dialogError$ = this.dialogErrorSource.asObservable();
 
-    /** Quiz lifecycle buttons (edge case): highest priority to stay visible. */
-    readonly quizActions = computed<ActionItem[]>(() => {
+    /**
+     * Quiz lifecycle buttons are rendered by the shared {@link QuizExerciseLifecycleButtonsComponent} (reused from
+     * develop) rather than as overflow {@link ActionItem}s, so the quiz group of the action layout is always empty.
+     */
+    readonly quizActions = computed<ActionItem[]>(() => []);
+
+    /** The current exercise typed as a quiz, or `undefined` for non-quiz exercises. Drives the lifecycle buttons. */
+    readonly quizExercise = computed<QuizExercise | undefined>(() => {
         const ex = this.exercise();
-        if (ex.type !== ExerciseType.QUIZ) return [];
-        const q = ex as QuizExercise;
-        const items: ActionItem[] = [];
-        if (q.status === QuizStatus.INVISIBLE) {
-            items.push({ id: 'set-visible', label: 'Set Visible', icon: faEye, styleClass: 'btn-warning', group: 'quiz', kind: 'button', onClick: () => this.setQuizVisible(q) });
-        }
-        if (q.status === QuizStatus.VISIBLE && q.quizMode === QuizMode.SYNCHRONIZED && !q.quizStarted) {
-            items.push({ id: 'start', label: 'Start', icon: faPlayCircle, styleClass: 'btn-success', group: 'quiz', kind: 'button', onClick: () => this.startQuiz(q) });
-        }
-        if ((q.status === QuizStatus.VISIBLE || q.status === QuizStatus.ACTIVE) && q.quizMode === QuizMode.BATCHED) {
-            items.push({ id: 'add-batch', label: 'Add Batch', icon: faPlus, styleClass: 'btn-primary', group: 'quiz', kind: 'button', onClick: () => this.addBatch(q) });
-        }
-        if ((q.status === QuizStatus.VISIBLE || q.status === QuizStatus.ACTIVE) && !q.quizEnded) {
-            items.push({ id: 'end', label: 'End', icon: faStopCircle, styleClass: 'btn-danger', group: 'quiz', kind: 'button', onClick: () => this.endQuiz(q) });
-        }
-        return items;
+        return ex.type === ExerciseType.QUIZ ? (ex as QuizExercise) : undefined;
     });
 
     /** Regular actions in original display order: Teams → Participations → Scores → type-specific → Edit → Delete. */
@@ -332,19 +321,14 @@ export class ExerciseActionsComponent {
         }
     }
 
-    private setQuizVisible(exercise: QuizExercise): void {
-        this.exerciseUpdated.emit({ ...exercise, status: QuizStatus.VISIBLE } as QuizExercise);
+    /**
+     * The lifecycle component emits `loadOne` to reload a quiz from the server (e.g. after a failed mutation reverts the
+     * optimistic state). The experimental view holds the exercise locally, so we just re-emit the current value to force
+     * the parent to refresh that row.
+     */
+    protected onQuizReload(): void {
+        this.exerciseUpdated.emit(this.exercise());
     }
-
-    private startQuiz(exercise: QuizExercise): void {
-        this.exerciseUpdated.emit({ ...exercise, status: QuizStatus.ACTIVE, quizStarted: true } as QuizExercise);
-    }
-
-    private endQuiz(exercise: QuizExercise): void {
-        this.exerciseUpdated.emit({ ...exercise, status: QuizStatus.INVISIBLE, quizEnded: true, quizStarted: false } as QuizExercise);
-    }
-
-    private addBatch(_exercise: QuizExercise): void {}
 
     protected onDelete(event: { [key: string]: boolean }): void {
         const exercise = this.exercise();

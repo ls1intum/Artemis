@@ -1,4 +1,7 @@
 <div class="d-flex gap-1 align-items-center justify-content-end flex-nowrap">
+    @if (quizExercise(); as quiz) {
+        <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quiz" (handleNewQuizExercise)="exerciseUpdated.emit($event)" (loadOne)="onQuizReload()" />
+    }
     @for (action of visibleQuiz(); track action.id) {
         <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
     }

@@ -15,6 +15,8 @@ import { faCalendarDays, faCircleInfo, faCode, faFileExport, faFileImport, faLay
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { MockDataService } from 'app/core/interceptor/mock-data.service';
@@ -122,6 +124,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly mockService = inject(ExerciseManagementMockService);
     private readonly mockDataService = inject(MockDataService);
     private readonly courseManagementService = inject(CourseManagementService);
+    private readonly quizExerciseService = inject(QuizExerciseService);
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
@@ -139,7 +142,19 @@ export class CourseManagementExercisesComponent implements OnInit {
                 const courseId = course.id;
                 this.courseManagementService.findWithExercises(courseId).subscribe({
                     next: (response) => {
-                        this.exercises.set(response.body?.exercises ?? []);
+                        const loadedCourse = response.body;
+                        const exercises = loadedCourse?.exercises ?? [];
+                        exercises.forEach((exercise) => {
+                            exercise.isAtLeastTutor = loadedCourse?.isAtLeastTutor;
+                            exercise.isAtLeastEditor = loadedCourse?.isAtLeastEditor;
+                            exercise.isAtLeastInstructor = loadedCourse?.isAtLeastInstructor;
+                            if (exercise.type === ExerciseType.QUIZ) {
+                                const quiz = exercise as QuizExercise;
+                                quiz.status = this.quizExerciseService.getStatus(quiz);
+                                quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
+                            }
+                        });
+                        this.exercises.set(exercises);
                         this.loadGroupsFromServer(courseId);
                         this.buildBuckets();
                     },

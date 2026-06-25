@@ -104,6 +104,23 @@ const EXERCISE_ROUTES: Array<{ pattern: RegExp; data: (url: string) => unknown }
     { pattern: /^api\/core\/management\/statistics\/exercise-statistics$/, data: () => mockStats() },
 ];
 
+// Quiz lifecycle mutations are PUTs (not GETs), so they bypass the read-only mock routes above. The reused
+// QuizExerciseLifecycleButtonsComponent calls these and applies the response optimistically, so we return
+// plausible bodies to keep the buttons working in mock/demo mode without a backend.
+const QUIZ_DATES_MUTATION = /^api\/quiz\/quiz-exercises\/\d+\/(start-now|end-now|set-visible)$/;
+const QUIZ_ADD_BATCH = /^api\/quiz\/quiz-exercises\/\d+\/add-batch$/;
+const QUIZ_START_BATCH = /^api\/quiz\/quiz-batches\/\d+\/start-batch$/;
+
+function mockQuizDates(): { releaseDate: string; startDate: string; dueDate: string } {
+    const now = new Date();
+    const due = new Date(now.getTime() + 60 * 60 * 1000);
+    return { releaseDate: now.toISOString(), startDate: now.toISOString(), dueDate: due.toISOString() };
+}
+
+function mockQuizBatch(): { id: number; started: boolean; password: string } {
+    return { id: Math.floor(Math.random() * 1_000_000), started: false, password: Math.random().toString(36).slice(2, 8).toUpperCase() };
+}
+
 // The exercise detail view requests competency contributions per exercise (shown below the problem
 // statement). Returns the mock competencies linked to that exercise, or an empty list otherwise — the
 // latter also avoids a 403 "not authorized" alert when a mock id collides with a real exercise.
@@ -135,7 +152,24 @@ export class MockCourseInterceptor implements HttpInterceptor {
     private readonly mockDataService = inject(MockDataService);
 
     intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-        if (!isDevMode() || req.method !== 'GET' || !this.mockDataService.enabled()) {
+        if (!isDevMode() || !this.mockDataService.enabled()) {
+            return next.handle(req);
+        }
+
+        // Quiz lifecycle mutations (PUT) — mocked so the reused lifecycle buttons work in demo mode.
+        if (req.method === 'PUT') {
+            if (QUIZ_DATES_MUTATION.test(req.url)) {
+                return mockResponse(mockQuizDates());
+            }
+            if (QUIZ_ADD_BATCH.test(req.url)) {
+                return mockResponse(mockQuizBatch());
+            }
+            if (QUIZ_START_BATCH.test(req.url)) {
+                return mockResponse(null);
+            }
+        }
+
+        if (req.method !== 'GET') {
             return next.handle(req);
         }
 
