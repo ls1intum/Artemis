@@ -49,7 +49,8 @@ public class PublicExternalLoginResource {
     @EnforceNothing
     @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
     public ResponseEntity<ExternalLoginTokenResponseDTO> exchangeCode(@RequestBody ExternalLoginTokenRequestDTO body) {
-        if (body == null || body.code() == null || body.codeVerifier() == null) {
+        // Reject blank codes and malformed/overlong PKCE verifiers before any repository or hashing work.
+        if (body == null || body.code() == null || body.code().isBlank() || !PkceUtil.isValidCodeVerifier(body.codeVerifier())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         // Single-use: atomically consume the code, then verify the PKCE verifier against the stored challenge.

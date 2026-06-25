@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Profile;
  * <p>
  * Lets an external client obtain a full Artemis JWT after the user authenticates in the browser with
  * any method (passkey, SAML SSO, password), using a one-time code + PKCE exchange. The feature is
- * <strong>disabled by default</strong>: with an empty {@link #allowedRedirectSchemes} no callback is
- * ever accepted.
+ * <strong>disabled by default</strong> and requires <strong>both</strong> {@link #allowedRedirectSchemes}
+ * and {@link #allowedRedirectAuthorities} to be non-empty: if either is empty no callback is ever accepted.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -30,9 +30,9 @@ public class ExternalLoginProperties {
     private List<String> allowedRedirectSchemes = List.of();
 
     /**
-     * Optional allowlist of callback authorities (the host part, e.g. the extension id
-     * {@code aet-tum.iris-thaumantias}). Empty means any authority is accepted for an allowed scheme.
-     * Setting this prevents another extension from receiving the one-time code.
+     * Allowlist of callback authorities (the host part, e.g. the extension id
+     * {@code aet-tum.iris-thaumantias}). <strong>Required</strong> when the feature is enabled: an empty list
+     * disables the feature, so that an allowed scheme alone cannot deliver the one-time code to an arbitrary handler.
      */
     private List<String> allowedRedirectAuthorities = List.of();
 
@@ -51,7 +51,7 @@ public class ExternalLoginProperties {
     }
 
     /**
-     * @return the optional allowlist of callback authorities (empty = any authority allowed)
+     * @return the allowlist of callback authorities (required when the feature is enabled; empty disables the feature)
      */
     public List<String> getAllowedRedirectAuthorities() {
         return allowedRedirectAuthorities;

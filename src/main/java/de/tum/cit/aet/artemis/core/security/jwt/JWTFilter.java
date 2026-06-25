@@ -101,8 +101,12 @@ public class JWTFilter extends GenericFilterBean {
             long newTokenExpirationTimeInMs = Math.min(nowInMs + tokenValidityInMs, issuedAt.getTime() + Math.multiplyExact(this.tokenValidityInSecondsForPasskey, 1000));
             // Determine the lifetime of the rotated token
             long rotatedTokenDurationInMs = newTokenExpirationTimeInMs - nowInMs;
-            // Create the rotated token with updated expiration and same issued time/tools
-            var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(jwtToken), true);
+            // Create the rotated token with updated expiration and same issued time/tools. Only passkey tokens are
+            // rotated (see the guard above), so record PASSKEY explicitly and carry over the passkey-approval claim
+            // from the source token; the rebuilt authentication no longer carries either.
+            boolean isPasskeyApproved = this.tokenProvider.isPasskeySuperAdminApproved(jwtToken);
+            var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(jwtToken),
+                    AuthenticationMethod.PASSKEY, isPasskeyApproved);
 
             // Build and set the new token as a response cookie
             ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMs);

@@ -11,8 +11,10 @@ import java.util.Set;
  * Validates extension callback URIs for the external-client browser login flow.
  * <p>
  * Only custom URI schemes in the configured allowlist are accepted; {@code http} and {@code https}
- * are always rejected, which prevents classic open-redirect token theft. Optionally restricts the
- * callback authority (the host part, e.g. the extension id) to a configured allowlist.
+ * are always rejected, which prevents classic open-redirect token theft. The callback authority (the
+ * host part, e.g. the extension id) must also match a configured allowlist: a non-empty authority
+ * allowlist is <strong>required</strong> for the feature to be active, so that an allowed scheme on
+ * its own can never deliver a JWT to an arbitrary handler.
  */
 public class ExternalLoginRedirectUriValidator {
 
@@ -26,7 +28,7 @@ public class ExternalLoginRedirectUriValidator {
 
     /**
      * @param allowedSchemes     the allowed custom URI schemes (lower-cased internally)
-     * @param allowedAuthorities the optional allowlist of callback authorities (empty = any)
+     * @param allowedAuthorities the allowlist of callback authorities (lower-cased internally); required (non-empty) for the feature to be active
      */
     public ExternalLoginRedirectUriValidator(List<String> allowedSchemes, List<String> allowedAuthorities) {
         this.allowedSchemes = allowedSchemes.stream().map(scheme -> scheme.toLowerCase(Locale.ROOT)).toList();
@@ -34,10 +36,13 @@ public class ExternalLoginRedirectUriValidator {
     }
 
     /**
-     * @return {@code true} if at least one scheme is allowlisted (i.e. the feature is enabled)
+     * The feature requires both a scheme and an authority allowlist: an allowed scheme without an authority allowlist
+     * would trust every handler for that scheme, so such a (misconfigured) setup is treated as disabled.
+     *
+     * @return {@code true} if at least one scheme and at least one authority are allowlisted (i.e. the feature is enabled)
      */
     public boolean isFeatureEnabled() {
-        return !allowedSchemes.isEmpty();
+        return !allowedSchemes.isEmpty() && !allowedAuthorities.isEmpty();
     }
 
     /**
@@ -79,11 +84,11 @@ public class ExternalLoginRedirectUriValidator {
             return Optional.of("URI scheme '" + scheme + "' is not in the allowlist");
         }
 
-        if (!allowedAuthorities.isEmpty()) {
-            String host = uri.getHost();
-            if (host == null || !allowedAuthorities.contains(host.toLowerCase(Locale.ROOT))) {
-                return Optional.of("callback authority is not in the allowlist");
-            }
+        // The authority allowlist is mandatory: an empty allowlist rejects every callback (fail closed), so an allowed
+        // scheme alone can never deliver the one-time code (and the JWT it unlocks) to an arbitrary handler.
+        String host = uri.getHost();
+        if (host == null || !allowedAuthorities.contains(host.toLowerCase(Locale.ROOT))) {
+            return Optional.of("callback authority is not in the allowlist");
         }
 
         if (uri.getUserInfo() != null) {

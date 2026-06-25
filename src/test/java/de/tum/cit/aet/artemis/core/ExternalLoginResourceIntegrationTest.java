@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.net.URI;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.http.Cookie;
 
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.core.dto.ExternalLoginTokenRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.ExternalLoginTokenResponseDTO;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.externallogin.PkceUtil;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -93,7 +95,7 @@ class ExternalLoginResourceIntegrationTest extends AbstractSpringIntegrationInde
     }
 
     private void withFeatureEnabled(Executable test) throws Throwable {
-        withFeatureEnabled(List.of("vscode", "vscode-insiders"), List.of(), test);
+        withFeatureEnabled(List.of("vscode", "vscode-insiders"), List.of("aet-tum.iris-thaumantias"), test);
     }
 
     // --- request helpers -------------------------------------------------------------------------
@@ -159,6 +161,29 @@ class ExternalLoginResourceIntegrationTest extends AbstractSpringIntegrationInde
         });
     }
 
+    @Test
+    void shouldPreservePasskeyClaimsThroughExchange() throws Throwable {
+        withFeatureEnabled(() -> {
+            // A source session JWT representing an approved passkey login (auth-method PASSKEY, super-admin approved).
+            long now = System.currentTimeMillis();
+            var authentication = new UsernamePasswordAuthenticationToken(USERNAME, USERNAME, List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+            authentication.setDetails(Map.of(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, true));
+            String passkeySessionJwt = tokenProvider.createToken(authentication, new Date(now), new Date(now + 24 * 60 * 60 * 1000), null, true);
+            // Sanity: the source token carries the passkey claims.
+            assertThat(tokenProvider.getAuthenticationMethod(passkeySessionJwt)).isEqualTo(AuthenticationMethod.PASSKEY);
+            assertThat(tokenProvider.isPasskeySuperAdminApproved(passkeySessionJwt)).isTrue();
+
+            MvcResult result = issue(new ExternalLoginCodeRequestDTO(CHALLENGE, CALLBACK), passkeySessionJwt, HttpStatus.OK);
+            ExternalLoginCodeResponseDTO codeResponse = request.getObjectMapper().readValue(result.getResponse().getContentAsString(), ExternalLoginCodeResponseDTO.class);
+            ExternalLoginTokenResponseDTO token = exchange(codeResponse.code(), VERIFIER, HttpStatus.OK);
+
+            // The exchanged handoff token must not degrade to a password token: it preserves the originating session's
+            // auth method and passkey-approval, so passkey-approved admins keep working with the returned JWT.
+            assertThat(tokenProvider.getAuthenticationMethod(token.accessToken())).isEqualTo(AuthenticationMethod.PASSKEY);
+            assertThat(tokenProvider.isPasskeySuperAdminApproved(token.accessToken())).isTrue();
+        });
+    }
+
     // --- exchange security -----------------------------------------------------------------------
 
     @Test
@@ -173,8 +198,8 @@ class ExternalLoginResourceIntegrationTest extends AbstractSpringIntegrationInde
     void shouldBurnCodeEvenWhenVerifierIsWrong() throws Throwable {
         withFeatureEnabled(() -> {
             String code = issueCodeSuccessfully(CALLBACK);
-            // A failed exchange (wrong verifier) must still consume the single-use code (consume-before-verify),
-            assertThat(exchange(code, "a-wrong-verifier-value-1122334455667788", HttpStatus.UNAUTHORIZED)).isNull();
+            // A failed exchange with a well-formed but wrong verifier must still consume the single-use code (consume-before-verify),
+            assertThat(exchange(code, "a-wrong-verifier-value-1122334455667788-abcdefgh", HttpStatus.UNAUTHORIZED)).isNull();
             // so the same code cannot subsequently be redeemed even with the correct verifier (no brute-force on one code).
             assertThat(exchange(code, VERIFIER, HttpStatus.UNAUTHORIZED)).isNull();
         });
@@ -202,6 +227,15 @@ class ExternalLoginResourceIntegrationTest extends AbstractSpringIntegrationInde
         assertThat(exchange("some-code", null, HttpStatus.UNAUTHORIZED)).isNull();
     }
 
+    @Test
+    void shouldRejectMalformedVerifier() throws Throwable {
+        withFeatureEnabled(() -> {
+            String code = issueCodeSuccessfully(CALLBACK);
+            // A verifier shorter than the RFC 7636 minimum (43 chars) is malformed and rejected before any code work.
+            assertThat(exchange(code, "too-short-verifier", HttpStatus.UNAUTHORIZED)).isNull();
+        });
+    }
+
     // --- issue endpoint guards -------------------------------------------------------------------
 
     @Test
@@ -211,8 +245,21 @@ class ExternalLoginResourceIntegrationTest extends AbstractSpringIntegrationInde
     }
 
     @Test
+    void shouldReturnNotFoundWhenSchemesSetButAuthoritiesEmpty() throws Throwable {
+        // A scheme allowlist without an authority allowlist is treated as disabled (fail closed), so the endpoint 404s.
+        withFeatureEnabled(List.of("vscode", "vscode-insiders"), List.of(),
+                () -> issue(new ExternalLoginCodeRequestDTO(CHALLENGE, CALLBACK), studentSessionJwt(), HttpStatus.NOT_FOUND));
+    }
+
+    @Test
     void shouldRejectBlankCodeChallenge() throws Throwable {
         withFeatureEnabled(() -> issue(new ExternalLoginCodeRequestDTO("  ", CALLBACK), studentSessionJwt(), HttpStatus.BAD_REQUEST));
+    }
+
+    @Test
+    void shouldRejectMalformedCodeChallenge() throws Throwable {
+        // A non-S256-shaped challenge (wrong length / illegal characters) is rejected before a JWT-bearing code is minted.
+        withFeatureEnabled(() -> issue(new ExternalLoginCodeRequestDTO("not-a-valid-s256-challenge", CALLBACK), studentSessionJwt(), HttpStatus.BAD_REQUEST));
     }
 
     @Test

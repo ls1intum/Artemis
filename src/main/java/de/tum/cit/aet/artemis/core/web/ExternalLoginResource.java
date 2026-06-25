@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.Date;
 import java.util.Optional;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,7 +28,8 @@ import de.tum.cit.aet.artemis.core.repository.externallogin.HazelcastExternalLog
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.externallogin.ExternalLoginCodeData;
 import de.tum.cit.aet.artemis.core.security.externallogin.ExternalLoginRedirectUriValidator;
-import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.security.externallogin.PkceUtil;
+import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
@@ -53,19 +56,17 @@ public class ExternalLoginResource {
 
     private static final int CODE_BYTES = 32; // 256 bits of entropy
 
+    private static final int MAX_LOGGED_REJECTION_REASON_LENGTH = 200;
+
     private final ExternalLoginProperties externalLoginProperties;
 
     private final HazelcastExternalLoginCodeRepository codeRepository;
 
-    private final JWTCookieService jwtCookieService;
-
     private final TokenProvider tokenProvider;
 
-    public ExternalLoginResource(ExternalLoginProperties externalLoginProperties, HazelcastExternalLoginCodeRepository codeRepository, JWTCookieService jwtCookieService,
-            TokenProvider tokenProvider) {
+    public ExternalLoginResource(ExternalLoginProperties externalLoginProperties, HazelcastExternalLoginCodeRepository codeRepository, TokenProvider tokenProvider) {
         this.externalLoginProperties = externalLoginProperties;
         this.codeRepository = codeRepository;
-        this.jwtCookieService = jwtCookieService;
         this.tokenProvider = tokenProvider;
     }
 
@@ -93,12 +94,15 @@ public class ExternalLoginResource {
         if (!validator.isFeatureEnabled()) {
             return ResponseEntity.notFound().build();
         }
-        if (body == null || body.codeChallenge() == null || body.codeChallenge().isBlank()) {
+        // Reject malformed PKCE challenges up front: a non-S256-shaped challenge could never be matched at exchange,
+        // so we fail fast with 400 instead of minting a dead-on-arrival, JWT-bearing code.
+        if (body == null || !PkceUtil.isValidS256Challenge(body.codeChallenge())) {
             return ResponseEntity.badRequest().build();
         }
         Optional<String> rejection = validator.validate(body.callback());
         if (rejection.isPresent()) {
-            log.warn("External-login callback rejected: {}", rejection.get());
+            // The rejection reason can embed attacker-controlled callback input, so sanitize it before logging.
+            log.warn("External-login callback rejected: {}", sanitizeForLog(rejection.get()));
             return ResponseEntity.badRequest().build();
         }
 
@@ -107,13 +111,21 @@ public class ExternalLoginResource {
         if (current == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        long remaining = tokenProvider.getExpirationDate(current.jwt()).getTime() - System.currentTimeMillis();
-        if (remaining <= 0) {
+        Date sessionExpiry = tokenProvider.getExpirationDate(current.jwt());
+        if (sessionExpiry.getTime() - System.currentTimeMillis() <= 0) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        Authentication authentication = tokenProvider.getAuthentication(current.jwt());
+        if (authentication == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         // Mint a full (unscoped) JWT for the current principal, stored server-side until the code is exchanged.
-        String jwt = jwtCookieService.buildLoginCookie(remaining, null).getValue();
+        // Preserve the originating session's authentication method and passkey-approval claims so a passkey/SAML
+        // browser login does not silently degrade to a password token (which would break passkey-approved admins).
+        AuthenticationMethod authenticationMethod = tokenProvider.getAuthenticationMethod(current.jwt());
+        boolean isPasskeyApproved = tokenProvider.isPasskeySuperAdminApproved(current.jwt());
+        String jwt = tokenProvider.createToken(authentication, null, sessionExpiry, null, authenticationMethod, isPasskeyApproved);
         String code = generateCode();
         codeRepository.save(code, new ExternalLoginCodeData(jwt, body.codeChallenge(), body.callback()));
 
@@ -124,5 +136,17 @@ public class ExternalLoginResource {
         byte[] bytes = new byte[CODE_BYTES];
         SECURE_RANDOM.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    /**
+     * Strips line breaks and bounds the length of a callback-rejection reason before it is logged, so attacker-controlled
+     * callback input cannot inject forged log lines (log poisoning) or bloat the logs.
+     *
+     * @param reason the rejection reason from the validator
+     * @return a single-line, length-bounded version safe to log
+     */
+    private static String sanitizeForLog(String reason) {
+        String singleLine = reason.replace('\n', ' ').replace('\r', ' ');
+        return singleLine.length() > MAX_LOGGED_REJECTION_REASON_LENGTH ? singleLine.substring(0, MAX_LOGGED_REJECTION_REASON_LENGTH) : singleLine;
     }
 }

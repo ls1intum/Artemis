@@ -175,6 +175,34 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
                 assertThat(tokenProvider.getExpirationDate(updatedJwt)).isBefore(new Date(System.currentTimeMillis() + expectedRemainingLifetimeInMilliseconds));
             }
 
+            /**
+             * A rotated passkey token must keep the super-admin approval claim; otherwise an approved admin would silently
+             * lose approval once the cookie crosses its half-life (the claim gates {@code PasskeyAuthenticationService}).
+             */
+            @Test
+            void testRotationPreservesSuperAdminApproval() throws Exception {
+                Authentication authentication = AuthenticationFactory.createWebAuthnAuthentication(USER_NAME);
+
+                long moreThanHalfOfTokenValidityPassed = (long) (TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 0.6 * 1000);
+                Date issuedAt = new Date(System.currentTimeMillis() - moreThanHalfOfTokenValidityPassed);
+                Date expiration = new Date(issuedAt.getTime() + TOKEN_VALIDITY_REMEMBER_ME_IN_SECONDS * 1000);
+
+                // A super-admin approved passkey session token (auth-method PASSKEY, approval true).
+                String jwt = tokenProvider.createToken(authentication, issuedAt, expiration, null, AuthenticationMethod.PASSKEY, true);
+                assertThat(tokenProvider.isPasskeySuperAdminApproved(jwt)).isTrue();
+
+                MockHttpServletResponse response = performRequest(jwt, false);
+
+                String setCookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
+                assertThat(setCookieHeader).isNotNull();
+                ResponseCookie updatedCookie = CookieParserTestUtil.parseSetCookieHeader(setCookieHeader);
+
+                String updatedJwt = updatedCookie.getValue();
+                assertThat(updatedJwt).isNotEqualTo(jwt);
+                assertThat(tokenProvider.getAuthenticationMethod(updatedJwt)).isEqualTo(AuthenticationMethod.PASSKEY);
+                assertThat(tokenProvider.isPasskeySuperAdminApproved(updatedJwt)).isTrue();
+            }
+
         }
 
         @Nested
@@ -337,6 +365,8 @@ class JWTFilterIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(tokenProvider.getAuthentication(updatedJwt).getPrincipal()).isEqualTo(expectedAuthentication.getPrincipal());
         assertThat(tokenProvider.getAuthentication(updatedJwt).getAuthorities()).isEqualTo(expectedAuthentication.getAuthorities());
         assertThat(tokenProvider.getAuthenticationMethod(updatedJwt)).isEqualTo(AuthenticationMethod.PASSKEY);
+        // The passkey super-admin approval claim must survive rotation: it is carried over from the source token.
+        assertThat(tokenProvider.isPasskeySuperAdminApproved(updatedJwt)).isEqualTo(tokenProvider.isPasskeySuperAdminApproved(originalJwt));
         assertThat(tokenProvider.getIssuedAtDate(updatedJwt)).isCloseTo(expectedIssuedAt, 1000); // should not have changed, tolerance due to formatting
     }
 

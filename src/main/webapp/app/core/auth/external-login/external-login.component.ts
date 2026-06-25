@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ButtonModule } from 'primeng/button';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -19,7 +21,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
     selector: 'jhi-external-login',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, RouterLink],
+    imports: [ArtemisTranslatePipe, RouterLink, ButtonModule, ProgressSpinnerModule],
     templateUrl: './external-login.component.html',
 })
 export class ExternalLoginComponent implements OnInit {
