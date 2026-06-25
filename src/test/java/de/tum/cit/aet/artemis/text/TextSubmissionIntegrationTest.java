@@ -452,6 +452,24 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void updateTextSubmissionWithExistingResultForksNewSubmission() throws Exception {
+        // An existing, persisted submission that already carries a result (e.g. Athena auto-feedback).
+        TextSubmission existing = textExerciseUtilService.saveTextSubmission(releasedTextExercise, textSubmission, TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(existing, AssessmentType.AUTOMATIC_ATHENA);
+        final String originalText = existing.getText();
+
+        // Autosave new text against that submission id. The request DTO carries no results, so the server must detect the
+        // existing result and fork a fresh submission instead of overwriting the result-bearing one.
+        TextSubmissionRequestDTO requestBody = new TextSubmissionRequestDTO(existing.getId(), "autosaved replacement text", Language.ENGLISH, false);
+        request.putWithResponseBody("/api/text/exercises/" + releasedTextExercise.getId() + "/text-submissions", requestBody, TextSubmissionResponseDTO.class, HttpStatus.OK);
+
+        TextSubmission preserved = testSubmissionTestRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(existing.getId());
+        assertThat(preserved.getText()).as("the result-bearing submission must not be overwritten by autosave").isEqualTo(originalText);
+        assertThat(preserved.getResults()).as("the Athena result on the existing submission is preserved").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void saveAndSubmitTextSubmission_tooLarge() throws Exception {
         // should be ok
         char[] chars = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH)];

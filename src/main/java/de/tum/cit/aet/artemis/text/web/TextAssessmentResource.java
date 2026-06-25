@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.AssessmentResource;
@@ -113,6 +115,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private final FeedbackRepository feedbackRepository;
 
+    private final LongFeedbackTextRepository longFeedbackTextRepository;
+
     private final ResultService resultService;
 
     private final GradingInstructionRepository gradingInstructionRepository;
@@ -124,7 +128,7 @@ public class TextAssessmentResource extends AssessmentResource {
             TextSubmissionService textSubmissionService, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             GradingCriterionRepository gradingCriterionRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
             FeedbackRepository feedbackRepository, ResultService resultService, GradingInstructionRepository gradingInstructionRepository,
-            Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            LongFeedbackTextRepository longFeedbackTextRepository, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
 
         this.textAssessmentService = textAssessmentService;
@@ -137,6 +141,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
         this.gradingInstructionRepository = gradingInstructionRepository;
+        this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
@@ -539,8 +544,20 @@ public class TextAssessmentResource extends AssessmentResource {
 
     private Feedback feedbackFromDto(final FeedbackDTO dto) {
         final Feedback feedback = new Feedback();
+        // Preserve the id so an existing feedback is matched (not recreated) on re-save; the long-feedback persistence
+        // and cleanup paths (ResultService) key on feedback id.
+        feedback.setId(dto.id());
         feedback.setCredits(dto.credits());
-        feedback.setDetailText(dto.detailText());
+        // The read DTO carries only the preview of long feedback (the full text lives in a separate LongFeedbackText that
+        // is never sent to the client). For an existing long feedback, reload the full text and set it so the re-save
+        // keeps the complete feedback instead of downgrading it to the preview that setDetailText would otherwise store.
+        if (dto.hasLongFeedbackText() && dto.id() != null) {
+            final String fullDetailText = longFeedbackTextRepository.findByFeedbackId(dto.id()).map(LongFeedbackText::getText).orElse(dto.detailText());
+            feedback.setDetailText(fullDetailText);
+        }
+        else {
+            feedback.setDetailText(dto.detailText());
+        }
         feedback.setText(dto.text());
         feedback.setReference(dto.reference());
         feedback.setType(dto.type());

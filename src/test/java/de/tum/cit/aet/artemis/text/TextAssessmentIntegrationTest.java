@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ComplaintDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
@@ -144,6 +145,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     protected AthenaRequestMockProvider athenaRequestMockProvider;
 
+    @Autowired
+    private LongFeedbackTextRepository longFeedbackTextRepository;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 3, 0, 1);
@@ -169,6 +173,40 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
         var result = resultRepository.findDistinctBySubmissionId(textSubmission.getId());
         assertThat(result).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentWithExistingLongFeedbackPreservesFullText() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result result = textSubmission.getLatestResult();
+
+        // A long feedback (> soft max) is stored as a short preview on the feedback plus a separate LongFeedbackText holding
+        // the full text.
+        final String fullLongText = "L".repeat(1500);
+        Feedback longFeedback = new Feedback();
+        longFeedback.setCredits(1.0);
+        longFeedback.setType(FeedbackType.MANUAL_UNREFERENCED);
+        longFeedback.setDetailText(fullLongText);
+        participationUtilService.addFeedbackToResult(longFeedback, result);
+        final long feedbackId = longFeedback.getId();
+        assertThat(longFeedback.getHasLongFeedbackText()).as("setup: feedback is stored as long feedback").isTrue();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId).orElseThrow().getText()).as("setup: full long text persisted").isEqualTo(fullLongText);
+
+        // Re-save the assessment the way the client does: the DTO carries the feedback id and hasLongFeedbackText, but only
+        // the PREVIEW detail text (the full long text is never sent to the client).
+        FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
+        assertThat(feedbackDTO.hasLongFeedbackText()).isTrue();
+        assertThat(feedbackDTO.detailText()).as("read DTO carries only the preview, not the full long text").isNotEqualTo(fullLongText);
+        TextAssessmentDTO body = new TextAssessmentDTO(List.of(feedbackDTO), null, null);
+        request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
+                ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
+
+        // The full long feedback must survive the re-save: the mapper must not downgrade it to the preview.
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).as("long feedback is preserved on re-save").isPresent();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId).orElseThrow().getText()).as("the full long text is not downgraded to the preview")
+                .isEqualTo(fullLongText);
     }
 
     @Test

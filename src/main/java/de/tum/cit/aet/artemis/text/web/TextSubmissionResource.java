@@ -144,7 +144,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         if (textSubmissionDTO.id() == null) {
             return createTextSubmission(exerciseId, textSubmissionDTO);
         }
-        return handleTextSubmission(exerciseId, toTextSubmission(textSubmissionDTO));
+        final TextSubmission textSubmission = toTextSubmission(textSubmissionDTO);
+        // The request DTO no longer carries results, so reconstruct the Athena-result fork signal from the persisted
+        // submission: if the existing submission already has a result (e.g. Athena auto-feedback), autosave must create a
+        // fresh submission instead of overwriting the result-bearing one.
+        boolean existingSubmissionHasResults = textSubmissionRepository.findWithEagerResultsAssessorById(textSubmissionDTO.id()).map(existing -> !existing.getResults().isEmpty())
+                .orElse(false);
+        return handleTextSubmission(exerciseId, textSubmission, existingSubmissionHasResults);
     }
 
     /**
@@ -165,6 +171,11 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     @NonNull
     private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
+        return handleTextSubmission(exerciseId, textSubmission, false);
+    }
+
+    @NonNull
+    private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission, boolean forceNewSubmission) {
         long start = System.currentTimeMillis();
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
@@ -182,6 +193,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Check if the user is allowed to submit
         textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
 
+        if (forceNewSubmission) {
+            textSubmission.setId(null);
+        }
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user);
         textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
