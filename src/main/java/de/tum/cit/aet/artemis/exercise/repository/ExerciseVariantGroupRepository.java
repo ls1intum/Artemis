@@ -49,4 +49,23 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
     default ExerciseVariantGroup findByIdAndCourseIdElseThrow(Long groupId, Long courseId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdAndCourseId(groupId, courseId), groupId);
     }
+
+    /**
+     * Loads the group <em>without</em> its member exercises. Used for deletion: pulling the members into the persistence
+     * context would make Hibernate's flush fail with a {@code TransientPropertyValueException} (the managed exercises
+     * would still reference the removed group). With the members left unloaded, the {@code ON DELETE SET NULL} foreign
+     * key on {@code exercise.exercise_variant_group_id} cleanly ungroups them.
+     */
+    @Query("""
+            SELECT evg
+            FROM Course c
+                JOIN c.exerciseVariantGroups evg
+            WHERE c.id = :courseId
+                AND evg.id = :groupId
+            """)
+    Optional<ExerciseVariantGroup> findByIdAndCourseIdWithoutExercises(@Param("groupId") Long groupId, @Param("courseId") Long courseId);
+
+    default ExerciseVariantGroup findByIdAndCourseIdWithoutExercisesElseThrow(Long groupId, Long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findByIdAndCourseIdWithoutExercises(groupId, courseId), groupId);
+    }
 }

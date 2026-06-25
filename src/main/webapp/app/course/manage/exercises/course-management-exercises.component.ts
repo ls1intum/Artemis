@@ -1,4 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -11,7 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCalendarDays, faCircleInfo, faCode, faFileExport, faFileImport, faLayerGroup, faList, faPen, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDays, faCircleInfo, faCode, faFileExport, faFileImport, faLayerGroup, faList, faPen, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -26,6 +28,10 @@ import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarToolbarDirective } from 'app/course/shared/directives/course-title-bar-toolbar.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
 type View = 'type' | 'week' | 'group' | 'list';
 
@@ -65,6 +71,7 @@ const TYPE_TITLES: Record<string, string> = {
         ArtemisDatePipe,
         CourseTitleBarTitleDirective,
         CourseTitleBarToolbarDirective,
+        TranslateDirective,
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
@@ -73,6 +80,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     protected readonly faFileExport = faFileExport;
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly faPen = faPen;
+    protected readonly faTrash = faTrash;
+    protected readonly faLayerGroup = faLayerGroup;
     protected readonly ExerciseType = ExerciseType;
 
     readonly viewOptions: { label: string; value: View; icon: IconProp }[] = [
@@ -98,6 +107,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly pendingNewGroup = signal<CourseExerciseGroup | undefined>(undefined);
 
     readonly isGroup = computed(() => this.view() === 'group');
+    /** Deleting a group requires the same permission as deleting an exercise: instructor (or admin) on the course. */
+    readonly canDeleteGroups = computed(() => this.course()?.isAtLeastInstructor ?? false);
     /** Ids of all rendered buckets, so each group's exercise table is a connected CDK drop target for the others. */
     readonly dropListIds = computed(() => this.buckets().map((bucket) => bucket.id));
     readonly groupEditModalGroup = computed(() => this.pendingNewGroup() ?? this.groups().find((g) => g.id === this.groupEditModalId()));
@@ -125,6 +136,9 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
+    private readonly deleteDialogService = inject(DeleteDialogService);
+
+    private readonly groupDeleteError = new Subject<string>();
 
     ngOnInit(): void {
         this.route.parent!.data.subscribe(({ course }) => {
@@ -176,41 +190,6 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     clearSelection(): void {
         this.selectedIds.set(new Set());
-    }
-
-    createGroupForExercise(exercise: Exercise): void {
-        const courseId = this.course()?.id;
-        if (!this.mockDataService.enabled() && courseId !== undefined && exercise.id !== undefined) {
-            const exerciseId = exercise.id;
-            // Seed the new group with the exercise's current timeline so creating a group from it does not wipe its
-            // dates (the group's timeline is propagated back onto every member on assignment).
-            this.exerciseVariantGroupService
-                .createGroup(courseId, {
-                    title: this.defaultGroupTitle(),
-                    releaseDate: exercise.releaseDate,
-                    startDate: exercise.startDate,
-                    dueDate: exercise.dueDate,
-                    assessmentDueDate: exercise.assessmentDueDate,
-                })
-                .subscribe((dto) => {
-                    this.exerciseVariantGroupService.setExerciseVariantGroup(courseId, exerciseId, dto.id).subscribe(() => this.loadGroupsFromServer(courseId));
-                });
-            return;
-        }
-        const nextId = Math.max(0, ...this.groups().map((g) => g.id ?? 0)) + 1;
-        const newGroup: CourseExerciseGroup = {
-            id: nextId,
-            title: `Group ${nextId}`,
-            order: nextId,
-            releaseDate: exercise.releaseDate,
-            startDate: exercise.startDate,
-            dueDate: exercise.dueDate,
-            assessmentDueDate: exercise.assessmentDueDate,
-            exercises: [exercise],
-        };
-        const stripped = this.groups().map((g) => ({ ...g, exercises: (g.exercises ?? []).filter((e) => e.id !== exercise.id) }));
-        this.groups.set([...stripped, newGroup]);
-        this.buildBuckets();
     }
 
     changeExerciseGroup(exercise: Exercise, newGroup: CourseExerciseGroup | undefined): void {
@@ -288,17 +267,14 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onAddModalGroupCreate(): void {
         this.view.set('group');
-        // Open the edit modal with a blank draft — the group is only persisted when the user saves.
-        this.pendingNewGroup.set({ title: this.defaultGroupTitle(), exercises: [] });
+        // Open the edit modal with a blank draft — the user names the group there (the modal's Save stays disabled until
+        // a title is entered) and it is only persisted when they save.
+        this.pendingNewGroup.set({ exercises: [] });
         this.groupEditModalVisible.set(true);
     }
 
     onTableGroupChange(event: TableGroupChange): void {
         this.changeExerciseGroup(event.exercise, event.group);
-    }
-
-    onTableGroupCreate(exercise: Exercise): void {
-        this.createGroupForExercise(exercise);
     }
 
     onTableSelectionAllChange(bucket: Bucket, selectAll: boolean): void {
@@ -449,6 +425,39 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.groupEditModalVisible.set(true);
     }
 
+    /** Opens the shared delete-confirmation dialog for a group; the actual deletion runs on confirm. */
+    confirmDeleteGroup(group: CourseExerciseGroup): void {
+        this.deleteDialogService.openDeleteDialog({
+            entityTitle: group.title,
+            deleteQuestion: 'artemisApp.exerciseVariantGroup.deleteDialog.question',
+            deleteConfirmationText: 'artemisApp.exerciseVariantGroup.deleteDialog.typeNameToConfirm',
+            translateValues: {},
+            actionType: ActionType.Delete,
+            buttonType: ButtonType.ERROR,
+            requireConfirmationOnlyForAdditionalChecks: false,
+            dialogError: this.groupDeleteError.asObservable(),
+            delete: () => this.deleteGroup(group),
+        });
+    }
+
+    /** Deletes the group. Member exercises are not deleted, they simply fall back into the "Ungrouped" bucket. */
+    private deleteGroup(group: CourseExerciseGroup): void {
+        const courseId = this.course()?.id;
+        if (!this.mockDataService.enabled() && courseId !== undefined && group.id !== undefined) {
+            this.exerciseVariantGroupService.deleteGroup(courseId, group.id).subscribe({
+                next: () => {
+                    this.groupDeleteError.next('');
+                    this.loadGroupsFromServer(courseId);
+                },
+                error: (error: HttpErrorResponse) => this.groupDeleteError.next(error.message),
+            });
+            return;
+        }
+        this.groups.set(this.groups().filter((g) => g.id !== group.id));
+        this.groupDeleteError.next('');
+        this.buildBuckets();
+    }
+
     onGroupEditModalSave(updated: CourseExerciseGroup): void {
         const isNew = this.pendingNewGroup() !== undefined;
         this.pendingNewGroup.set(undefined);
@@ -458,7 +467,8 @@ export class CourseManagementExercisesComponent implements OnInit {
             if (!this.mockDataService.enabled() && courseId !== undefined) {
                 this.exerciseVariantGroupService
                     .createGroup(courseId, {
-                        title: updated.title || this.defaultGroupTitle(),
+                        // The modal only emits a save with a non-empty, trimmed title (its Save button enforces this).
+                        title: updated.title!,
                         maxPoints: updated.maxPoints,
                         releaseDate: updated.releaseDate,
                         startDate: updated.startDate,
@@ -483,7 +493,7 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.exerciseVariantGroupService
                 .updateGroup(courseId, {
                     id: updated.id,
-                    title: updated.title || 'Group',
+                    title: updated.title!,
                     maxPoints: updated.maxPoints,
                     releaseDate: updated.releaseDate,
                     startDate: updated.startDate,
@@ -527,10 +537,6 @@ export class CourseManagementExercisesComponent implements OnInit {
                 .filter((exercise) => exercise.id !== undefined)
                 .map((exercise) => [exercise.id!, exercise]),
         );
-    }
-
-    private defaultGroupTitle(): string {
-        return `Group ${this.groups().length + 1}`;
     }
 
     /**

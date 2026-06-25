@@ -68,7 +68,6 @@ export class ExerciseTableComponent {
     readonly overviewRouteMiddleSegments = input<string[]>([]);
 
     readonly groupChange = output<TableGroupChange>();
-    readonly groupCreate = output<Exercise>();
     readonly rowsReordered = output<Exercise[]>();
     readonly exerciseUpdated = output<Exercise>();
     readonly selectionToggle = output<number>();
@@ -217,10 +216,6 @@ export class ExerciseTableComponent {
     onGroupSelect(exercise: Exercise, groupId: number | undefined): void {
         const group = this.groups().find((g) => g.id === groupId);
         this.groupChange.emit({ exercise, group });
-    }
-
-    onGroupCreate(exercise: Exercise): void {
-        this.groupCreate.emit(exercise);
     }
 
     asQuiz(exercise: Exercise): QuizExercise {

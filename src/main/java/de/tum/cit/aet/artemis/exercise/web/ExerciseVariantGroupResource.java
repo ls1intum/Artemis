@@ -163,9 +163,12 @@ public class ExerciseVariantGroupResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deleteExerciseVariantGroup(@PathVariable Long groupId, @PathVariable Long courseId) {
         log.debug("REST request to delete ExerciseVariantGroup {} in course {}", groupId, courseId);
-        ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId);
+        // Load the group without its member exercises: keeping them out of the persistence context lets the
+        // ON DELETE SET NULL foreign key (see the Liquibase changelog) ungroup them, instead of Hibernate failing the
+        // flush because managed exercises still reference the removed group. The members survive, simply ungrouped.
+        ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId);
         exerciseVariantGroupRepository.delete(group);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, groupId.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, group.getTitle())).build();
     }
 
     /**
