@@ -17,6 +17,9 @@ import { faCalendarDays, faCircleInfo, faCode, faFileExport, faFileImport, faLay
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { MockDataService } from 'app/core/interceptor/mock-data.service';
@@ -137,6 +140,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly translateService = inject(TranslateService);
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
     private readonly deleteDialogService = inject(DeleteDialogService);
+    private readonly alertService = inject(AlertService);
 
     private readonly groupDeleteError = new Subject<string>();
 
@@ -178,6 +182,11 @@ export class CourseManagementExercisesComponent implements OnInit {
         return this.groups().find((group) => group.exercises?.some((member) => member.id === exercise.id));
     }
 
+    /** Only individual-mode quizzes support per-student dates, so only they can join a group's shared timeline. */
+    private isQuizNonIndividual(exercise: Exercise): boolean {
+        return exercise.type === ExerciseType.QUIZ && (exercise as QuizExercise).quizMode !== undefined && (exercise as QuizExercise).quizMode !== QuizMode.INDIVIDUAL;
+    }
+
     toggleSelection(id: number): void {
         const current = new Set(this.selectedIds());
         if (current.has(id)) {
@@ -193,9 +202,19 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     changeExerciseGroup(exercise: Exercise, newGroup: CourseExerciseGroup | undefined): void {
+        if (newGroup && this.isQuizNonIndividual(exercise)) {
+            // Mirrors the server-side rejection: synchronized/batched quizzes have a single shared run and cannot
+            // share a group's timeline with other variants. The UI already disables the control for these exercises;
+            // this is a defensive fallback (e.g. drag-and-drop in the group view).
+            this.alertService.addErrorAlert('Only individual-mode quizzes can be added to an exercise group.');
+            return;
+        }
         const courseId = this.course()?.id;
         if (!this.mockDataService.enabled() && courseId !== undefined && exercise.id !== undefined) {
-            this.exerciseVariantGroupService.setExerciseVariantGroup(courseId, exercise.id, newGroup?.id).subscribe(() => this.loadGroupsFromServer(courseId));
+            this.exerciseVariantGroupService.setExerciseVariantGroup(courseId, exercise.id, newGroup?.id).subscribe({
+                next: () => this.loadGroupsFromServer(courseId),
+                error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
+            });
             return;
         }
         const updated = this.groups().map((g) => ({
@@ -474,6 +493,8 @@ export class CourseManagementExercisesComponent implements OnInit {
                         startDate: updated.startDate,
                         dueDate: updated.dueDate,
                         assessmentDueDate: updated.assessmentDueDate,
+                        exampleSolutionPublicationDate: updated.exampleSolutionPublicationDate,
+                        buildAndTestStudentSubmissionsAfterDueDate: updated.buildAndTestStudentSubmissionsAfterDueDate,
                     })
                     .subscribe((dto) => {
                         const created = toCourseExerciseGroup(dto, this.exercisesById());
@@ -499,6 +520,8 @@ export class CourseManagementExercisesComponent implements OnInit {
                     startDate: updated.startDate,
                     dueDate: updated.dueDate,
                     assessmentDueDate: updated.assessmentDueDate,
+                    exampleSolutionPublicationDate: updated.exampleSolutionPublicationDate,
+                    buildAndTestStudentSubmissionsAfterDueDate: updated.buildAndTestStudentSubmissionsAfterDueDate,
                 })
                 .subscribe((dto) => {
                     const mapped = toCourseExerciseGroup(dto, this.exercisesById());
@@ -548,5 +571,9 @@ export class CourseManagementExercisesComponent implements OnInit {
         exercise.startDate = group.startDate;
         exercise.dueDate = group.dueDate;
         exercise.assessmentDueDate = group.assessmentDueDate;
+        exercise.exampleSolutionPublicationDate = group.exampleSolutionPublicationDate;
+        if (exercise.type === ExerciseType.PROGRAMMING) {
+            (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate = group.buildAndTestStudentSubmissionsAfterDueDate;
+        }
     }
 }

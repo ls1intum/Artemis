@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * An {@code ExerciseVariantGroup} bundles a set of {@link Exercise}s that are interchangeable variants of one another
@@ -66,6 +67,14 @@ public class ExerciseVariantGroup extends DomainObject {
     @Nullable
     @Column(name = "example_solution_publication_date")
     private ZonedDateTime exampleSolutionPublicationDate;
+
+    /**
+     * Only {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise}s have this date; it stays null on
+     * groups containing other exercise types.
+     */
+    @Nullable
+    @Column(name = "build_and_test_student_submissions_after_due_date")
+    private ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate;
 
     // Ignore "course" as well to break the Course -> exerciseVariantGroups -> group -> exercises -> exercise.course cycle,
     // mirroring the guard on Course.exercises.
@@ -135,6 +144,15 @@ public class ExerciseVariantGroup extends DomainObject {
         this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
     }
 
+    @Nullable
+    public ZonedDateTime getBuildAndTestStudentSubmissionsAfterDueDate() {
+        return buildAndTestStudentSubmissionsAfterDueDate;
+    }
+
+    public void setBuildAndTestStudentSubmissionsAfterDueDate(@Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
+        this.buildAndTestStudentSubmissionsAfterDueDate = buildAndTestStudentSubmissionsAfterDueDate;
+    }
+
     public Set<Exercise> getExercises() {
         return exercises;
     }
@@ -151,6 +169,56 @@ public class ExerciseVariantGroup extends DomainObject {
     public void removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
         exercise.setExerciseVariantGroup(null);
+    }
+
+    /**
+     * Checks whether this group's own timeline fields are internally consistent, mirroring the ordering rules
+     * {@link Exercise#validateDates()} applies to a single exercise (release &lt;= start &lt;= due, and the assessment due /
+     * example solution publication dates not preceding release or due). {@link #buildAndTestStudentSubmissionsAfterDueDate}
+     * is exempt, since {@link de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise} itself does not enforce any
+     * ordering on that field either.
+     *
+     * @return {@code true} if the set dates do not contradict each other
+     */
+    public boolean areDatesValid() {
+        //@formatter:off
+        return isNotAfterAndNotNull(releaseDate, dueDate)
+                && isNotAfterAndNotNull(releaseDate, startDate)
+                && isNotAfterAndNotNull(startDate, dueDate)
+                && isValidAssessmentDueDate(startDate, dueDate, assessmentDueDate)
+                && isValidAssessmentDueDate(releaseDate, dueDate, assessmentDueDate)
+                && isNotAfterAndNotNull(startDate, exampleSolutionPublicationDate)
+                && isNotAfterAndNotNull(releaseDate, exampleSolutionPublicationDate)
+                && isNotAfterAndNotNull(dueDate, exampleSolutionPublicationDate);
+        //@formatter:on
+    }
+
+    /**
+     * Same check as {@link #areDatesValid()}, but throws so callers that persist a group directly (create/update) reject
+     * an inconsistent timeline instead of silently saving a group that no future member exercise could validly join.
+     */
+    public void validateDates() {
+        if (!areDatesValid()) {
+            throw new BadRequestAlertException("The group dates are not valid", "exerciseVariantGroup", "noValidDates");
+        }
+    }
+
+    private static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        if (assessmentDueDate == null) {
+            return true;
+        }
+        // There cannot be an assessmentDueDate without a dueDate.
+        if (dueDate == null) {
+            return false;
+        }
+        return isNotAfterAndNotNull(dueDate, assessmentDueDate) && isNotAfterAndNotNull(releaseDate, assessmentDueDate);
+    }
+
+    private static boolean isNotAfterAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
+        if (previousDate == null || laterDate == null) {
+            return true;
+        }
+        return !previousDate.isAfter(laterDate);
     }
 
     @Override

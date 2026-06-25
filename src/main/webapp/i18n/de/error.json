@@ -106,6 +106,7 @@
         "courseTitleTooLong": "Der Kurstitel ist zu lang (max. 255 Zeichen), bitte nutze einen kürzeren Kurstitel.",
         "courseIdUndefined": "Die Kurs-ID ist nicht definiert, bitte stelle sicher, dass der Kurs existiert.",
         "notAllowedInExam": "Diese Aktion ist in einer Klausur nicht erlaubt.",
+        "quizNotIndividual": "Nur Quizaufgaben im Einzelmodus können einer Aufgabengruppe hinzugefügt werden.",
         "profilePictureFilesizeTooBig": "Die Dateigröße des hochgeladenen Bilds ist zu groß, bitte lade ein kleineres Bild hoch.",
         "profilePictureFileFormatNotSupported": "Das Dateiformat wird nicht unterstützt, bitte lade eine .png oder .jpg Datei hoch.",
         "envVariablesTooLong": "Die Umgebungsvariablen sind zu lang. Bitte stelle sicher, dass jeder Schlüssel oder Wert nicht länger als 1000 Zeichen ist.",

@@ -52,6 +52,11 @@ td.col-actions {
     &:active {
         cursor: grabbing;
     }
+
+    &.disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+    }
 }
 
 /* Card shown under the cursor while dragging a row. */

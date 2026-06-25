@@ -47,7 +47,7 @@ class ExerciseVariantGroupTest {
 
     @Test
     void testCreateDtoToEntityMapsAllSettings() {
-        CreateExerciseVariantGroupDTO dto = new CreateExerciseVariantGroupDTO("Loop variants", 100.0, null, null, null, null, null);
+        CreateExerciseVariantGroupDTO dto = new CreateExerciseVariantGroupDTO("Loop variants", 100.0, null, null, null, null, null, null);
 
         ExerciseVariantGroup entity = dto.toEntity();
 
@@ -60,7 +60,7 @@ class ExerciseVariantGroupTest {
     void testUpdateDtoApplyToLeavesExercisesUntouched() {
         ExerciseVariantGroup group = new ExerciseVariantGroup();
         group.addExercise(new TextExercise());
-        UpdateExerciseVariantGroupDTO dto = new UpdateExerciseVariantGroupDTO(1L, "Renamed", 50.0, null, null, null, null, null);
+        UpdateExerciseVariantGroupDTO dto = new UpdateExerciseVariantGroupDTO(1L, "Renamed", 50.0, null, null, null, null, null, null);
 
         dto.applyTo(group);
 

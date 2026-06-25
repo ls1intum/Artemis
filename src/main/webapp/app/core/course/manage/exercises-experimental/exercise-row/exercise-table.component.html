@@ -49,7 +49,13 @@
                 }
                 @if (showDragHandle()) {
                     <td>
-                        <span cdkDragHandle class="pi pi-bars drag-handle" title="Drag to reorder or move between groups"></span>
+                        <span
+                            cdkDragHandle
+                            [cdkDragHandleDisabled]="isQuizNonIndividual(exercise)"
+                            class="pi pi-bars drag-handle"
+                            [class.disabled]="isQuizNonIndividual(exercise)"
+                            [title]="nonIndividualQuizTooltip(exercise) ?? 'Drag to reorder or move between groups'"
+                        ></span>
                     </td>
                 }
                 <td class="col-title">
@@ -119,16 +125,19 @@
                 }
                 @if (showGroupSelector()) {
                     <td>
-                        <p-select
-                            [options]="groupOptions()"
-                            [ngModel]="owningGroupId(exercise)"
-                            (ngModelChange)="onGroupSelect(exercise, $event)"
-                            optionLabel="label"
-                            optionValue="value"
-                            size="small"
-                            styleClass="col-group-select"
-                            appendTo="body"
-                        />
+                        <span [pTooltip]="nonIndividualQuizTooltip(exercise)" tooltipPosition="top">
+                            <p-select
+                                [options]="groupOptions()"
+                                [ngModel]="owningGroupId(exercise)"
+                                (ngModelChange)="onGroupSelect(exercise, $event)"
+                                optionLabel="label"
+                                optionValue="value"
+                                size="small"
+                                styleClass="col-group-select"
+                                appendTo="body"
+                                [disabled]="isQuizNonIndividual(exercise)"
+                            />
+                        </span>
                     </td>
                 }
                 <td>

@@ -91,34 +91,47 @@
                     @if (isGroup() && bucket.group) {
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-3">
                             <div class="d-flex flex-wrap gap-3 small text-muted">
-                                @if (
-                                    bucket.group.releaseDate ||
-                                    bucket.group.startDate ||
-                                    bucket.group.dueDate ||
-                                    bucket.group.assessmentDueDate ||
-                                    bucket.group.maxPoints !== undefined
-                                ) {
+                                <span>
+                                    <span class="fw-semibold">Release:</span>
                                     @if (bucket.group.releaseDate) {
-                                        <span><span class="fw-semibold">Release:</span> {{ bucket.group.releaseDate | artemisDate: 'short-date' }}</span>
+                                        {{ bucket.group.releaseDate | artemisDate: 'short-date' }}
+                                    } @else {
+                                        <span class="fst-italic">none</span>
                                     }
+                                </span>
+                                <span>
+                                    <span class="fw-semibold">Start:</span>
                                     @if (bucket.group.startDate) {
-                                        <span><span class="fw-semibold">Start:</span> {{ bucket.group.startDate | artemisDate: 'short-date' }}</span>
+                                        {{ bucket.group.startDate | artemisDate: 'short-date' }}
+                                    } @else {
+                                        <span class="fst-italic">none</span>
                                     }
+                                </span>
+                                <span>
+                                    <span class="fw-semibold">Due:</span>
                                     @if (bucket.group.dueDate) {
-                                        <span><span class="fw-semibold">Due:</span> {{ bucket.group.dueDate | artemisDate: 'short-date' }}</span>
+                                        {{ bucket.group.dueDate | artemisDate: 'short-date' }}
+                                    } @else {
+                                        <span class="fst-italic">none</span>
                                     }
+                                </span>
+                                <span>
+                                    <span class="fw-semibold">Feedback due:</span>
                                     @if (bucket.group.assessmentDueDate) {
-                                        <span><span class="fw-semibold">Feedback due:</span> {{ bucket.group.assessmentDueDate | artemisDate: 'short-date' }}</span>
+                                        {{ bucket.group.assessmentDueDate | artemisDate: 'short-date' }}
+                                    } @else {
+                                        <span class="fst-italic">none</span>
                                     }
+                                </span>
+                                <span class="d-flex align-items-center gap-1">
+                                    <span class="fw-semibold">Max points:</span>
                                     @if (bucket.group.maxPoints !== undefined) {
-                                        <span class="d-flex align-items-center gap-1">
-                                            <span class="fw-semibold">Max points:</span> {{ bucket.group.maxPoints }}p
-                                            <fa-icon [icon]="faCircleInfo" pTooltip="Caps the total points this group contributes to the course score." tooltipPosition="top" />
-                                        </span>
+                                        {{ bucket.group.maxPoints }}p
+                                    } @else {
+                                        <span class="fst-italic">none</span>
                                     }
-                                } @else {
-                                    <span class="fst-italic">No group-level dates or points set.</span>
-                                }
+                                    <fa-icon [icon]="faCircleInfo" pTooltip="Caps the total points this group contributes to the course score." tooltipPosition="top" />
+                                </span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <p-button severity="secondary" [outlined]="true" size="small" (onClick)="openGroupEditModal(bucket.group.id!)">

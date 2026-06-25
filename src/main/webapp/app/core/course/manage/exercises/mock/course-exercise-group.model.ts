@@ -26,6 +26,9 @@ export class CourseExerciseGroup {
     startDate?: dayjs.Dayjs;
     dueDate?: dayjs.Dayjs;
     assessmentDueDate?: dayjs.Dayjs;
+    exampleSolutionPublicationDate?: dayjs.Dayjs;
+    /** Only relevant while the group's members are programming exercises. */
+    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 
     /**
      * Optional cap on the points the group can contribute to the course score. Applied at grade
@@ -60,6 +63,8 @@ export function buildGroupsFromExercises(exercises: Exercise[]): CourseExerciseG
                 startDate: convertDateFromServer(reference.startDate),
                 dueDate: convertDateFromServer(reference.dueDate),
                 assessmentDueDate: convertDateFromServer(reference.assessmentDueDate),
+                exampleSolutionPublicationDate: convertDateFromServer(reference.exampleSolutionPublicationDate),
+                buildAndTestStudentSubmissionsAfterDueDate: convertDateFromServer(reference.buildAndTestStudentSubmissionsAfterDueDate),
                 exercises: [],
             };
             groupsById.set(reference.id, group);
@@ -100,7 +105,7 @@ export class ExerciseRelation {
     target?: ExerciseRelationEndpoint;
 }
 
-export type GroupTimelineField = 'releaseDate' | 'startDate' | 'dueDate' | 'assessmentDueDate';
+export type GroupTimelineField = 'releaseDate' | 'startDate' | 'dueDate' | 'assessmentDueDate' | 'exampleSolutionPublicationDate' | 'buildAndTestStudentSubmissionsAfterDueDate';
 
 /**
  * Resolves the date that actually applies to an exercise for a given timeline field. Once an exercise
@@ -109,5 +114,9 @@ export type GroupTimelineField = 'releaseDate' | 'startDate' | 'dueDate' | 'asse
  * their individual dates.
  */
 export function effectiveDate(exercise: Exercise, group: CourseExerciseGroup | undefined, field: GroupTimelineField): dayjs.Dayjs | undefined {
-    return group ? group[field] : exercise[field];
+    if (group) {
+        return group[field];
+    }
+    // buildAndTestStudentSubmissionsAfterDueDate only exists on ProgrammingExercise, not on the base Exercise type.
+    return (exercise as unknown as Record<GroupTimelineField, dayjs.Dayjs | undefined>)[field];
 }

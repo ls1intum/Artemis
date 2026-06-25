@@ -16,7 +16,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CreateExerciseVariantGroupDTO(@NotBlank String title, @Nullable Double maxPoints, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate) {
+        @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
+        @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
 
     /**
      * Converts this DTO into a new, unsaved {@link ExerciseVariantGroup} entity.
@@ -32,6 +33,7 @@ public record CreateExerciseVariantGroupDTO(@NotBlank String title, @Nullable Do
         group.setDueDate(dueDate);
         group.setAssessmentDueDate(assessmentDueDate);
         group.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
+        group.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestStudentSubmissionsAfterDueDate);
         return group;
     }
 }

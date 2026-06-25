@@ -41,14 +41,20 @@
                 <i class="pi pi-exclamation-triangle"></i>
                 Group dates override individual exercise dates.
             </div>
-            <jhi-exercise-timeline [timelineItems]="timelineItems()" />
+            <jhi-exercise-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.set($event)" />
+            @if (!timelineStatus().valid) {
+                <div class="alert alert-danger py-1 px-2 small d-flex align-items-center gap-2 mt-2">
+                    <i class="pi pi-times-circle"></i>
+                    The dates are not in a valid order.
+                </div>
+            }
         </div>
     </div>
 
     <ng-template pTemplate="footer">
         <div class="d-flex justify-content-end gap-2">
             <p-button severity="secondary" [text]="true" label="Cancel" (onClick)="onCancel()" />
-            <p-button label="Save" [disabled]="!isTitleValid()" (onClick)="onSave()" />
+            <p-button label="Save" [disabled]="isSaveDisabled()" (onClick)="onSave()" />
         </div>
     </ng-template>
 </p-dialog>
