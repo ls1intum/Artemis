@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseTabAccessDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
+import de.tum.cit.aet.artemis.course.service.CourseTabAccessService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -100,10 +101,12 @@ public class CourseOverviewResource {
 
     private final FaqRepository faqRepository;
 
+    private final CourseTabAccessService courseTabAccessService;
+
     public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository,
             Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
-            QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository) {
+            QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository, CourseTabAccessService courseTabAccessService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -116,6 +119,7 @@ public class CourseOverviewResource {
         this.teamRepository = teamRepository;
         this.quizQuestionProgressService = quizQuestionProgressService;
         this.faqRepository = faqRepository;
+        this.courseTabAccessService = courseTabAccessService;
     }
 
     /**
@@ -182,7 +186,7 @@ public class CourseOverviewResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        return ResponseEntity.ok(courseService.getCourseTabAccess(course, user));
+        return ResponseEntity.ok(courseTabAccessService.getCourseTabAccess(course, user));
     }
 
     /**

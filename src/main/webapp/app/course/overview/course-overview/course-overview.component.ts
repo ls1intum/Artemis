@@ -531,7 +531,14 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         // The user is only needed for the dashboard fallback decision (AI opt-out); at this point the identity is already resolved
         const user = childPath === CourseOverviewRoutePath.DASHBOARD ? this.accountService.userIdentity() : undefined;
-        this.courseManagementService.getCourseTabAccess(courseId).subscribe((access) => this.courseOverviewGuard.decideAccess(courseId, access, childPath, user));
+        this.courseManagementService
+            .getCourseTabAccess(courseId)
+            .pipe(catchError(() => of(undefined)))
+            .subscribe((access) => {
+                if (access) {
+                    this.courseOverviewGuard.decideAccess(courseId, access, childPath, user);
+                }
+            });
     }
 
     ngOnDestroy() {
