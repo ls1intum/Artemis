@@ -77,7 +77,7 @@
                             [videoUrl]="playlistUrl()!"
                             [transcriptSegments]="transcriptSegments()"
                             [initialTimestamp]="targetTimestamp()"
-                            (activeSlideNumberChange)="onVideoSlideNumberChange($event)"
+                            (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
                         />
                     </div>
                 } @else if (youtubeVideoId() && !youtubePlayerFailed()) {
@@ -86,7 +86,7 @@
                             [videoId]="youtubeVideoId()!"
                             [transcriptSegments]="transcriptSegments()"
                             [initialTimestamp]="targetTimestamp()"
-                            (activeSlideNumberChange)="onVideoSlideNumberChange($event)"
+                            (currentSlideNumberChange)="onVideoSlideNumberChange($event)"
                             (playerFailed)="onYouTubePlayerFailed()"
                         />
                     </div>

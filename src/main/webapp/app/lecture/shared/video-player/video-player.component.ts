@@ -39,7 +39,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     initialTimestamp = input<number | undefined>(undefined);
 
     /** Active slide/page number inferred from the transcript */
-    activeSlideNumberChange = output<number | undefined>();
+    currentSlideNumberChange = output<number | undefined>();
 
     /** The HLS.js instance */
     private hls: Hls | undefined = undefined;
@@ -344,7 +344,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         }
 
         this.currentSlideNumber.set(slideNumber);
-        this.activeSlideNumberChange.emit(slideNumber);
+        this.currentSlideNumberChange.emit(slideNumber);
     }
 
     /** Clean up on destroy. */

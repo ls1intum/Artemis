@@ -33,7 +33,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     initialTimestamp = input<number | undefined>(undefined);
 
     playerFailed = output<void>();
-    activeSlideNumberChange = output<number | undefined>();
+    currentSlideNumberChange = output<number | undefined>();
 
     protected readonly playerVars = { origin: typeof window !== 'undefined' ? window.location.origin : undefined };
     protected readonly startSeconds = computed(() => {
@@ -277,6 +277,6 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         }
 
         this.currentSlideNumber.set(slideNumber);
-        this.activeSlideNumberChange.emit(slideNumber);
+        this.currentSlideNumberChange.emit(slideNumber);
     }
 }
