@@ -77,6 +77,14 @@ public class PublicProgrammingExerciseResultResource {
         this.artemisAuthenticationTokenHash = hashSha256(artemisAuthenticationTokenValue);
     }
 
+    /**
+     * POST /programming-exercises/new-result?participationId={participationId} : Receives a new build result from Hades identified by participation ID.
+     *
+     * @param authorizationToken the authorization token from the CI system
+     * @param participationId    the ID of the participation the result belongs to
+     * @param requestBody        the build result from the CI system
+     * @return a ResponseEntity with status 200 (OK) or 403 (Forbidden) if the token is invalid
+     */
     @PostMapping(value = "programming-exercises/new-result", params = "participationId")
     @EnforceNothing
     public ResponseEntity<Void> processNewProgrammingExerciseResultWithParticipationID(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationToken,
