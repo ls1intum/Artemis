@@ -24,6 +24,10 @@ describe('no-bootstrap-classes', () => {
                 { code: '<div class="w-auto h-auto"></div>' },
                 // A realistic mix of valid Tailwind utilities in one attribute.
                 { code: '<div class="flex gap-2 mb-3 me-1 text-right col-span-3"></div>' },
+                // Custom class names that merely contain a Bootstrap family word are not flagged (anchored, exact `nav`).
+                { code: '<li class="nav-group-header"></li>' },
+                { code: '<a class="nav-link-sidebar"></a>' },
+                { code: '<div class="my-modal-wrapper"></div>' },
                 // Bound class binding whose target is a valid Tailwind utility.
                 { code: '<div [class.flex]="isFlex"></div>' },
                 { code: '<div [ngClass]="{ \'text-right\': aligned }"></div>' },
@@ -47,6 +51,14 @@ describe('no-bootstrap-classes', () => {
                 { code: '<div class="row"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'row' } }] },
                 { code: '<div class="col-md-3"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'col-md-3' } }] },
                 { code: '<div class="d-flex"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'd-flex' } }] },
+                // Bootstrap component families.
+                { code: '<div class="modal"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'modal' } }] },
+                { code: '<div class="dropdown-menu"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'dropdown-menu' } }] },
+                { code: '<div class="navbar-brand"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'navbar-brand' } }] },
+                { code: '<div class="nav-link"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'nav-link' } }] },
+                { code: '<li class="list-group-item"></li>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'list-group-item' } }] },
+                { code: '<div class="spinner-border"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'spinner-border' } }] },
+                { code: '<a class="page-link"></a>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'page-link' } }] },
                 { code: '<input class="form-control" />', errors: [{ messageId: 'bootstrapClass', data: { cls: 'form-control' } }] },
                 { code: '<table class="table-striped"></table>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'table-striped' } }] },
                 { code: '<div class="h-100"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'h-100' } }] },

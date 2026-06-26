@@ -20,6 +20,7 @@
 @layer theme, base, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
+
 /*
  * `source(none)` disables Tailwind v4's automatic whole-project content detection; only the explicit `@source`
  * paths below are scanned. THE COLLISION THIS AVOIDS (the rationale the two guards further down also serve):

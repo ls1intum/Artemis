@@ -65,6 +65,25 @@ export const BANNED = [
     // Bootstrap `.h-100{height:100%!important}` beats Tailwind's `h-100` (= 25rem), so a stray `h-100` silently
     // renders the Bootstrap value. Only 25/50/75/100 are matched; `h-auto`/`w-auto` are shared (width:auto) and stay.
     /^[hw]-(25|50|75|100)$/,
+    // Bootstrap component families with no Tailwind-utility name clash — each migrates to a PrimeNG component
+    // (modal -> DialogService/p-dialog, dropdown/nav -> p-menu, toast -> p-toast, etc.). Anchored whole-token, so
+    // a custom class that merely contains the word (e.g. `my-modal-wrapper`) is unaffected.
+    /^modal(-.+)?$/,
+    /^dropdown(-.+)?$/,
+    /^navbar(-.+)?$/,
+    // `nav` is matched by EXACT Bootstrap class only, not the `nav-*` prefix — custom names like the admin
+    // sidebar's `nav-group-header` / `nav-link-sidebar` (styled by its own SCSS) must not be flagged.
+    /^nav$/,
+    /^nav-(link|item|tabs|pills|fill|justified|underline)$/,
+    /^list-group(-.+)?$/,
+    /^spinner-(border|grow)(-sm)?$/,
+    /^accordion(-.+)?$/,
+    /^breadcrumb(-.+)?$/,
+    /^(pagination|page-link|page-item)$/,
+    /^toast(-.+)?$/,
+    /^popover(-.+)?$/,
+    /^carousel(-.+)?$/,
+    /^offcanvas(-.+)?$/,
     // Misc Bootstrap-only widgets / utilities
     /^(close|btn-close)$/,
     /^visually-hidden(-focusable)?$/,
