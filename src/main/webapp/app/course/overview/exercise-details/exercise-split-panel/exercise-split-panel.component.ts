@@ -1,5 +1,4 @@
-import { Component, Type, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { NgComponentOutlet } from '@angular/common';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -32,6 +31,7 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
@@ -71,7 +71,7 @@ function isQuizComponentRef(component: unknown): component is QuizComponentRef {
         ResetRepoButtonComponent,
         ComplaintsStudentViewComponent,
         RatingComponent,
-        NgComponentOutlet,
+        ModelingEditorComponent,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         CompetencyContributionComponent,
         LtiInitializerComponent,
@@ -93,26 +93,6 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizEnded = signal(false);
     private readonly _quizHasStarted = signal(false);
     private readonly _quizComponent = signal<QuizComponentRef | undefined>(undefined);
-    /**
-     * Lazily loaded ModelingEditorComponent type — populated by a runtime dynamic import the first time
-     * a modeling example solution is displayed. The static import was removed to prevent @tumaet/apollon
-     * from entering the ExerciseSplitPanelComponent bundle for non-modeling exercises (Vite eagerly
-     * resolves all static imports regardless of @defer blocks in the template).
-     */
-    protected readonly _modelingEditorCmp = signal<Type<unknown> | undefined>(undefined);
-
-    /** Inputs forwarded to the lazily created ModelingEditorComponent via NgComponentOutlet. */
-    protected readonly modelingEditorInputs = computed(() => {
-        const info = this.exampleSolutionInfo();
-        return {
-            readOnly: true,
-            diagramType: info?.modelingExercise?.diagramType,
-            umlModel: info?.exampleSolutionUML,
-            withExplanation: !!info?.modelingExercise?.exampleSolutionExplanation,
-            explanation: info?.modelingExercise?.exampleSolutionExplanation ?? '',
-        };
-    });
-
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
     private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
@@ -253,14 +233,6 @@ export class ExerciseSplitPanelComponent {
         // Keep _quizBatchStarted / _quizEnded in sync with the exercise input.
         // Effects (unlike computed signals) do not throw NG0950 when reading required inputs,
         // so this is safe even during the initial evaluation before inputs are fully bound.
-        // Trigger a one-time dynamic import of ModelingEditorComponent (+ Apollon) only when
-        // an example solution UML is actually present — keeps apollon out of the initial bundle.
-        effect(() => {
-            const info = this.exampleSolutionInfo();
-            if (info?.exampleSolutionUML && info?.modelingExercise && !untracked(() => this._modelingEditorCmp())) {
-                import('app/modeling/shared/modeling-editor/modeling-editor.component').then((m) => this._modelingEditorCmp.set(m.ModelingEditorComponent));
-            }
-        });
         effect(() => {
             const exercise = this.exercise();
             const isQuiz = exercise.type === ExerciseType.QUIZ;
