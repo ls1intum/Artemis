@@ -12,13 +12,16 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { IMPORT_DIALOG_BACK, ImportDialogFooterComponent } from 'app/core/course/manage/exercises-experimental/create-modal/import-dialog-footer.component';
+import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export type AddModalMode = 'create' | 'import' | 'export' | 'unified';
 
 interface ExerciseTypeCard {
     type: ExerciseType;
-    label: string;
-    description: string;
+    labelKey: string;
+    descriptionKey: string;
     icon: typeof faKeyboard;
     accentClass: string;
     routeSegment: string;
@@ -41,40 +44,40 @@ const MOCK_IMPORT_GROUPS: MockImportGroup[] = [
 const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     {
         type: ExerciseType.PROGRAMMING,
-        label: 'Programming',
-        description: 'Automated grading with test suites. Supports Java, Python, C, and more.',
+        labelKey: 'artemisApp.exerciseManagement.type.PROGRAMMING',
+        descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.PROGRAMMING',
         icon: faKeyboard,
         accentClass: 'card--programming',
         routeSegment: 'programming-exercises/new',
     },
     {
         type: ExerciseType.QUIZ,
-        label: 'Quiz',
-        description: 'Multiple choice, short answer, and drag-and-drop questions.',
+        labelKey: 'artemisApp.exerciseManagement.type.QUIZ',
+        descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.QUIZ',
         icon: faCheckDouble,
         accentClass: 'card--quiz',
         routeSegment: 'quiz-exercises/new',
     },
     {
         type: ExerciseType.MODELING,
-        label: 'Modeling',
-        description: 'UML diagrams and model-based exercises with semi-automatic assessment.',
+        labelKey: 'artemisApp.exerciseManagement.type.MODELING',
+        descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.MODELING',
         icon: faProjectDiagram,
         accentClass: 'card--modeling',
         routeSegment: 'modeling-exercises/new',
     },
     {
         type: ExerciseType.TEXT,
-        label: 'Text',
-        description: 'Free-text essays and open-ended questions with manual review.',
+        labelKey: 'artemisApp.exerciseManagement.type.TEXT',
+        descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.TEXT',
         icon: faFont,
         accentClass: 'card--text',
         routeSegment: 'text-exercises/new',
     },
     {
         type: ExerciseType.FILE_UPLOAD,
-        label: 'File Upload',
-        description: 'Worksheet or document submissions reviewed by instructors.',
+        labelKey: 'artemisApp.exerciseManagement.type.FILE_UPLOAD',
+        descriptionKey: 'artemisApp.exerciseManagement.addModal.cardDescription.FILE_UPLOAD',
         icon: faFileUpload,
         accentClass: 'card--fileupload',
         routeSegment: 'file-upload-exercises/new',
@@ -85,7 +88,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
     styleUrl: './exercise-add-modal.component.scss',
-    imports: [DialogModule, ButtonModule, CheckboxModule, FormsModule, FaIconComponent],
+    imports: [DialogModule, ButtonModule, CheckboxModule, FormsModule, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ExerciseAddModalComponent {
     readonly visible = input<boolean>(false);
@@ -120,7 +123,7 @@ export class ExerciseAddModalComponent {
     }
 
     get dialogHeader(): string {
-        return 'Manage Exercises';
+        return this.translateService.instant('artemisApp.exerciseManagement.addModal.header');
     }
 
     close(): void {
@@ -151,12 +154,11 @@ export class ExerciseAddModalComponent {
     startImport(type: ExerciseType): void {
         this.close();
 
-        const dialogData: ExerciseImportDialogData = { exerciseType: type };
         const headerKey = type === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${type}Exercise.home.importLabel`;
+        const dialogData: ExerciseImportDialogData & { headerKey: string } = { exerciseType: type, headerKey };
         const componentToOpen: Type<any> = type === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
 
         const dialogRef = this.dialogService.open(componentToOpen, {
-            header: this.translateService.instant(headerKey),
             width: '50rem',
             modal: true,
             closable: true,
@@ -164,8 +166,9 @@ export class ExerciseAddModalComponent {
             dismissableMask: false,
             draggable: false,
             data: dialogData,
-            // A "Back" button in the dialog footer returns to this modal's exercise-type selection (see onClose).
-            templates: { footer: ImportDialogFooterComponent },
+            // Reactive title (re-translates on a language switch) and a "Back" button in the footer that returns to this
+            // modal's exercise-type selection (see onClose). PrimeNG's static `header` string would not re-translate.
+            templates: { header: DialogTranslateHeaderComponent, footer: ImportDialogFooterComponent },
         });
 
         dialogRef?.onClose.subscribe((result: Exercise | string | undefined) => {

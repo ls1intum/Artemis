@@ -1,25 +1,33 @@
-<p-dialog header="Edit Group" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" [modal]="true" appendTo="body" [style]="{ width: '780px' }" [closable]="true">
+<p-dialog
+    [header]="'artemisApp.exerciseManagement.groupEdit.header' | artemisTranslate"
+    [visible]="visible()"
+    (visibleChange)="visibleChange.emit($event)"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '780px' }"
+    [closable]="true"
+>
     <div class="d-flex flex-column gap-4">
         <!-- Name + Points -->
         <div class="d-flex flex-wrap gap-3">
             <div class="flex-grow-1">
-                <label class="fw-semibold d-block mb-1" for="group-edit-title">Name</label>
+                <label class="fw-semibold d-block mb-1" for="group-edit-title" jhiTranslate="artemisApp.exerciseManagement.groupEdit.name"></label>
                 <input
                     id="group-edit-title"
                     pInputText
                     class="w-100"
                     [ngModel]="draftTitle()"
                     (ngModelChange)="draftTitle.set($event)"
-                    placeholder="Group name"
+                    [placeholder]="'artemisApp.exerciseManagement.groupEdit.namePlaceholder' | artemisTranslate"
                     [class.ng-invalid]="!isTitleValid()"
                 />
             </div>
             <div>
                 <div class="d-flex align-items-center gap-1 fw-semibold mb-1">
-                    <span>Max points</span>
+                    <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.maxPoints"></span>
                     <fa-icon
                         [icon]="faCircleInfo"
-                        pTooltip="Caps the total points this group contributes to the course score. Students earn at most this value from the group, regardless of which variant they complete."
+                        [pTooltip]="'artemisApp.exerciseManagement.groupEdit.maxPointsTooltip' | artemisTranslate"
                         tooltipPosition="top"
                         class="text-muted"
                     />
@@ -28,7 +36,7 @@
                     [ngModel]="draftMaxPoints() ?? null"
                     (ngModelChange)="draftMaxPoints.set($event ?? undefined)"
                     [min]="0"
-                    placeholder="No cap"
+                    [placeholder]="'artemisApp.exerciseManagement.groupEdit.maxPointsPlaceholder' | artemisTranslate"
                     styleClass="group-pts-input"
                 />
             </div>
@@ -36,16 +44,16 @@
 
         <!-- Dates -->
         <div>
-            <div class="fw-semibold mb-2">Dates</div>
+            <div class="fw-semibold mb-2" jhiTranslate="artemisApp.exerciseManagement.groupEdit.dates"></div>
             <div class="alert alert-warning py-1 px-2 small d-flex align-items-center gap-2 mb-2">
                 <i class="pi pi-exclamation-triangle"></i>
-                Group dates override individual exercise dates.
+                <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesOverrideWarning"></span>
             </div>
             <jhi-exercise-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.set($event)" />
             @if (!timelineStatus().valid) {
                 <div class="alert alert-danger py-1 px-2 small d-flex align-items-center gap-2 mt-2">
                     <i class="pi pi-times-circle"></i>
-                    The dates are not in a valid order.
+                    <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesInvalidOrder"></span>
                 </div>
             }
         </div>
@@ -53,8 +61,8 @@
 
     <ng-template pTemplate="footer">
         <div class="d-flex justify-content-end gap-2">
-            <p-button severity="secondary" [text]="true" label="Cancel" (onClick)="onCancel()" />
-            <p-button label="Save" [disabled]="isSaveDisabled()" (onClick)="onSave()" />
+            <p-button severity="secondary" [text]="true" [label]="'entity.action.cancel' | artemisTranslate" (onClick)="onCancel()" />
+            <p-button [label]="'entity.action.save' | artemisTranslate" [disabled]="isSaveDisabled()" (onClick)="onSave()" />
         </div>
     </ng-template>
 </p-dialog>

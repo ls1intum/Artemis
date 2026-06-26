@@ -10,11 +10,24 @@ import { TooltipModule } from 'primeng/tooltip';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exercise-group-edit-modal',
     templateUrl: './exercise-group-edit-modal.component.html',
-    imports: [FormsModule, DialogModule, InputTextModule, InputNumberModule, ButtonModule, TooltipModule, FaIconComponent, ExerciseTimelineComponent],
+    imports: [
+        FormsModule,
+        DialogModule,
+        InputTextModule,
+        InputNumberModule,
+        ButtonModule,
+        TooltipModule,
+        FaIconComponent,
+        ExerciseTimelineComponent,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
 })
 export class ExerciseGroupEditModalComponent {
     protected readonly faCircleInfo = faCircleInfo;

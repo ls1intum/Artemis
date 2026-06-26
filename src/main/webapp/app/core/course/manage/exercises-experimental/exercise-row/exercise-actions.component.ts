@@ -41,6 +41,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -85,7 +86,7 @@ const SAFETY_MARGIN_PX = 8;
     selector: 'jhi-exercise-actions',
     templateUrl: './exercise-actions.component.html',
     styleUrl: './exercise-actions.component.scss',
-    imports: [RouterLink, NgTemplateOutlet, FaIconComponent, PopoverModule, ArtemisTranslatePipe, DeleteButtonDirective, QuizExerciseLifecycleButtonsComponent],
+    imports: [RouterLink, NgTemplateOutlet, FaIconComponent, PopoverModule, ArtemisTranslatePipe, TranslateDirective, DeleteButtonDirective, QuizExerciseLifecycleButtonsComponent],
 })
 export class ExerciseActionsComponent {
     readonly exercise = input.required<Exercise>();

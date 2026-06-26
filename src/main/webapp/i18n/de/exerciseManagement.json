@@ -1,0 +1,113 @@
+{
+    "artemisApp": {
+        "exerciseManagement": {
+            "title": "Aufgaben",
+            "moreActions": "Weitere Aktionen",
+            "action": {
+                "import": "Importieren",
+                "export": "Exportieren"
+            },
+            "error": {
+                "onlyIndividualQuiz": "Nur Quizze im Einzelmodus können einer Aufgabengruppe hinzugefügt werden."
+            },
+            "view": {
+                "list": "Liste",
+                "type": "Typ",
+                "week": "Woche",
+                "group": "Gruppe"
+            },
+            "noExercisesMatch": "Keine Aufgaben stimmen mit \"{{ search }}\" überein.",
+            "selection": {
+                "count": "{{ count }} ausgewählt",
+                "deselectAll": "Auswahl aufheben",
+                "editSelected": "Auswahl bearbeiten",
+                "downloadRepos": "Repositories herunterladen",
+                "consistencyCheck": "Konsistenzprüfung",
+                "deleteSelected": "Auswahl löschen"
+            },
+            "bucket": {
+                "all": "Alle Aufgaben",
+                "ungrouped": "Ohne Gruppe",
+                "unscheduled": "Ohne Termin",
+                "week": "Woche {{ number }}",
+                "group": "Gruppe {{ id }}"
+            },
+            "type": {
+                "PROGRAMMING": "Programmierung",
+                "QUIZ": "Quiz",
+                "MODELING": "Modellierung",
+                "TEXT": "Text",
+                "FILE_UPLOAD": "Datei-Upload"
+            },
+            "groupMeta": {
+                "release": "Veröffentlichung:",
+                "start": "Start:",
+                "due": "Abgabe:",
+                "feedbackDue": "Feedback bis:",
+                "maxPoints": "Maximale Punkte:",
+                "maxPointsTooltip": "Begrenzt die Gesamtpunkte, die diese Gruppe zur Kursnote beiträgt.",
+                "none": "keine"
+            },
+            "table": {
+                "dates": "Termine",
+                "group": "Gruppe",
+                "noGroup": "Keine Gruppe",
+                "none": "keine",
+                "empty": "Keine Aufgaben",
+                "dragTooltip": "Ziehen, um neu zu sortieren oder zwischen Gruppen zu verschieben",
+                "nonIndividualQuizTooltip": "Synchronisierte und Batch-Quizze haben einen einzigen gemeinsamen Durchlauf und können keiner Gruppe hinzugefügt werden."
+            },
+            "addModal": {
+                "header": "Aufgaben verwalten",
+                "tab": {
+                    "create": "Erstellen",
+                    "import": "Importieren",
+                    "export": "Exportieren"
+                },
+                "createHint": "Wähle einen Aufgabentyp. Alle Details kannst du im nächsten Schritt anpassen.",
+                "importHint": "Wähle aus, was du importieren möchtest.",
+                "cta": {
+                    "create": "Erstellen",
+                    "select": "Auswählen"
+                },
+                "group": {
+                    "title": "Aufgabengruppe",
+                    "createDescription": "Eine Reihe von Aufgabenvarianten zum selben Thema. Studierende üben mit beliebigen Varianten und wählen, welche sie zur Bewertung einreichen.",
+                    "importDescription": "Importiere eine Gruppe von Aufgabenvarianten aus einem anderen Kurs, einschließlich aller enthaltenen Aufgaben."
+                },
+                "import": {
+                    "groupHeader": "Aufgabengruppe importieren",
+                    "groupHint": "Wähle Gruppen zum Importieren aus. Alle Aufgaben der Gruppe werden eingeschlossen.",
+                    "exerciseCount": "{{ count }} Aufgaben",
+                    "confirm": "Importieren",
+                    "confirmCount": "Importieren ({{ count }})"
+                },
+                "cardDescription": {
+                    "PROGRAMMING": "Automatische Bewertung mit Testsuiten. Unterstützt Java, Python, C und mehr.",
+                    "QUIZ": "Multiple-Choice-, Kurzantwort- und Drag-and-Drop-Fragen.",
+                    "MODELING": "UML-Diagramme und modellbasierte Aufgaben mit halbautomatischer Bewertung.",
+                    "TEXT": "Freitext-Essays und offene Fragen mit manueller Bewertung.",
+                    "FILE_UPLOAD": "Arbeitsblatt- oder Dokumenteinreichungen, die von Lehrenden bewertet werden."
+                }
+            },
+            "groupEdit": {
+                "header": "Gruppe bearbeiten",
+                "name": "Name",
+                "namePlaceholder": "Gruppenname",
+                "maxPoints": "Maximale Punkte",
+                "maxPointsTooltip": "Begrenzt die Gesamtpunkte, die diese Gruppe zur Kursnote beiträgt. Studierende erhalten höchstens diesen Wert aus der Gruppe, unabhängig davon, welche Variante sie abschließen.",
+                "maxPointsPlaceholder": "Keine Begrenzung",
+                "dates": "Termine",
+                "datesOverrideWarning": "Gruppentermine überschreiben die Termine einzelner Aufgaben.",
+                "datesInvalidOrder": "Die Termine sind nicht in einer gültigen Reihenfolge."
+            },
+            "batch": {
+                "label": "Batch {{ id }}",
+                "password": "PW: {{ password }}",
+                "done": "Beendet",
+                "running": "Läuft",
+                "empty": "Noch keine Batches."
+            }
+        }
+    }
+}

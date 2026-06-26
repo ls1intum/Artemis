@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -28,8 +29,10 @@ import { ExerciseVariantGroupService, toCourseExerciseGroup } from 'app/core/cou
 import { ExerciseTableComponent, TableGroupChange } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-table.component';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-add-modal.component';
 import { ExerciseGroupEditModalComponent } from 'app/core/course/manage/exercises-experimental/group-edit-modal/exercise-group-edit-modal.component';
+import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarToolbarDirective } from 'app/course/shared/directives/course-title-bar-toolbar.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -49,12 +52,12 @@ interface Bucket {
 }
 
 const TYPE_ORDER: ExerciseType[] = [ExerciseType.PROGRAMMING, ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD];
-const TYPE_TITLES: Record<string, string> = {
-    [ExerciseType.PROGRAMMING]: 'Programming',
-    [ExerciseType.QUIZ]: 'Quiz',
-    [ExerciseType.MODELING]: 'Modeling',
-    [ExerciseType.TEXT]: 'Text',
-    [ExerciseType.FILE_UPLOAD]: 'File Upload',
+const TYPE_TITLE_KEYS: Record<string, string> = {
+    [ExerciseType.PROGRAMMING]: 'artemisApp.exerciseManagement.type.PROGRAMMING',
+    [ExerciseType.QUIZ]: 'artemisApp.exerciseManagement.type.QUIZ',
+    [ExerciseType.MODELING]: 'artemisApp.exerciseManagement.type.MODELING',
+    [ExerciseType.TEXT]: 'artemisApp.exerciseManagement.type.TEXT',
+    [ExerciseType.FILE_UPLOAD]: 'artemisApp.exerciseManagement.type.FILE_UPLOAD',
 };
 
 @Component({
@@ -73,6 +76,7 @@ const TYPE_TITLES: Record<string, string> = {
         ExerciseGroupEditModalComponent,
         SearchFilterComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
         CourseTitleBarTitleDirective,
         CourseTitleBarToolbarDirective,
         TranslateDirective,
@@ -88,11 +92,11 @@ export class CourseManagementExercisesComponent implements OnInit {
     protected readonly faLayerGroup = faLayerGroup;
     protected readonly ExerciseType = ExerciseType;
 
-    readonly viewOptions: { label: string; value: View; icon: IconProp }[] = [
-        { label: 'List', value: 'list', icon: faList },
-        { label: 'Type', value: 'type', icon: faCode },
-        { label: 'Week', value: 'week', icon: faCalendarDays },
-        { label: 'Group', value: 'group', icon: faLayerGroup },
+    readonly viewOptions: { labelKey: string; value: View; icon: IconProp }[] = [
+        { labelKey: 'artemisApp.exerciseManagement.view.list', value: 'list', icon: faList },
+        { labelKey: 'artemisApp.exerciseManagement.view.type', value: 'type', icon: faCode },
+        { labelKey: 'artemisApp.exerciseManagement.view.week', value: 'week', icon: faCalendarDays },
+        { labelKey: 'artemisApp.exerciseManagement.view.group', value: 'group', icon: faLayerGroup },
     ];
 
     readonly view = signal<View>('type');
@@ -143,10 +147,16 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
     private readonly deleteDialogService = inject(DeleteDialogService);
     private readonly alertService = inject(AlertService);
+    private readonly destroyRef = inject(DestroyRef);
 
     private readonly groupDeleteError = new Subject<string>();
 
     ngOnInit(): void {
+        // Bucket titles are resolved eagerly via TranslateService.instant (the view view-mode and type labels), so in
+        // this zoneless app they must be rebuilt when the language changes — otherwise they keep the previous language
+        // until the next user interaction rebuilds the buckets.
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.buildBuckets());
+
         this.route.parent!.data.subscribe(({ course }) => {
             if (course) {
                 this.course.set(course);
@@ -219,7 +229,7 @@ export class CourseManagementExercisesComponent implements OnInit {
             // Mirrors the server-side rejection: synchronized/batched quizzes have a single shared run and cannot
             // share a group's timeline with other variants. The UI already disables the control for these exercises;
             // this is a defensive fallback (e.g. drag-and-drop in the group view).
-            this.alertService.addErrorAlert('Only individual-mode quizzes can be added to an exercise group.');
+            this.alertService.addErrorAlert('artemisApp.exerciseManagement.error.onlyIndividualQuiz');
             return;
         }
         const courseId = this.course()?.id;
@@ -276,7 +286,9 @@ export class CourseManagementExercisesComponent implements OnInit {
             return;
         }
         const dialogRef = this.dialogService.open(QuizExerciseExportComponent, {
-            header: this.translateService.instant('artemisApp.exercise.exportAction'),
+            // Reactive title (re-translates on a language switch) instead of the static `header` string, which PrimeNG
+            // resolves only once when the dialog opens.
+            templates: { header: DialogTranslateHeaderComponent },
             width: '60rem',
             height: '40rem',
             // Let the component own its internal layout (scrollable table + pinned footer); the dialog content must not
@@ -286,7 +298,7 @@ export class CourseManagementExercisesComponent implements OnInit {
             closable: true,
             closeOnEscape: true,
             draggable: false,
-            data: { courseId: id },
+            data: { courseId: id, headerKey: 'artemisApp.exercise.exportAction' },
         });
         dialogRef?.onClose.subscribe((result: string | undefined) => {
             // "Back" in the export dialog returns to the manage-exercises modal (its default Create view).
@@ -398,7 +410,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private buildListBuckets(): Bucket[] {
         const exercises = this.sortExercises(this.visibleExercises());
         if (exercises.length === 0) return [];
-        return [{ id: 'all', title: 'All Exercises', exercises }];
+        return [{ id: 'all', title: this.translateService.instant('artemisApp.exerciseManagement.bucket.all'), exercises }];
     }
 
     private buildGroupBuckets(): Bucket[] {
@@ -412,7 +424,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                 members.forEach((exercise) => exercise.id !== undefined && groupedIds.add(exercise.id));
                 return {
                     id: `group-${group.id}`,
-                    title: group.title ?? `Group ${group.id}`,
+                    title: group.title ?? this.translateService.instant('artemisApp.exerciseManagement.bucket.group', { id: group.id }),
                     group,
                     exercises: this.sortExercises(members.filter((exercise) => this.matches(exercise))),
                 };
@@ -421,7 +433,7 @@ export class CourseManagementExercisesComponent implements OnInit {
 
         const ungrouped = this.sortExercises(this.visibleExercises().filter((exercise) => exercise.id === undefined || !groupedIds.has(exercise.id)));
         if (ungrouped.length > 0) {
-            buckets.push({ id: 'ungrouped', title: 'Ungrouped', exercises: ungrouped });
+            buckets.push({ id: 'ungrouped', title: this.translateService.instant('artemisApp.exerciseManagement.bucket.ungrouped'), exercises: ungrouped });
         }
         return buckets;
     }
@@ -429,7 +441,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     private buildTypeBuckets(): Bucket[] {
         return TYPE_ORDER.map((type) => ({
             id: `type-${type}`,
-            title: TYPE_TITLES[type] ?? type,
+            title: TYPE_TITLE_KEYS[type] ? this.translateService.instant(TYPE_TITLE_KEYS[type]) : type,
             icon: getIcon(type),
             exerciseType: type,
             exercises: this.sortExercises(this.visibleExercises().filter((exercise) => exercise.type === type)),
@@ -462,10 +474,14 @@ export class CourseManagementExercisesComponent implements OnInit {
 
         const buckets: Bucket[] = [...byWeek.keys()]
             .sort((a, b) => a - b)
-            .map((weekIndex) => ({ id: `week-${weekIndex}`, title: `Week ${weekIndex + 1}`, exercises: this.sortExercises(byWeek.get(weekIndex)!) }));
+            .map((weekIndex) => ({
+                id: `week-${weekIndex}`,
+                title: this.translateService.instant('artemisApp.exerciseManagement.bucket.week', { number: weekIndex + 1 }),
+                exercises: this.sortExercises(byWeek.get(weekIndex)!),
+            }));
 
         if (undated.length > 0) {
-            buckets.push({ id: 'unscheduled', title: 'Unscheduled', exercises: this.sortExercises(undated) });
+            buckets.push({ id: 'unscheduled', title: this.translateService.instant('artemisApp.exerciseManagement.bucket.unscheduled'), exercises: this.sortExercises(undated) });
         }
         return buckets;
     }

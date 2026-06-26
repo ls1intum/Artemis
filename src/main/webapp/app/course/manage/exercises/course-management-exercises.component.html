@@ -2,7 +2,7 @@
     <div *titleBarTitle>
         <div class="d-flex align-items-center">
             <h5 class="mb-0">
-                <span>{{ course()!.title }} — Exercises ({{ exerciseCount() }})</span>
+                <span>{{ course()!.title }} — <span jhiTranslate="artemisApp.exerciseManagement.title"></span> ({{ exerciseCount() }})</span>
             </h5>
         </div>
     </div>
@@ -13,43 +13,49 @@
             <p-selectbutton size="small" [options]="viewOptions" [ngModel]="view()" (ngModelChange)="onViewChange($event)" optionValue="value" [allowEmpty]="false">
                 <ng-template #item let-item>
                     <fa-icon [icon]="item.icon" />
-                    <span class="ms-1 d-none d-md-inline">{{ item.label }}</span>
+                    <span class="ms-1 d-none d-md-inline" [jhiTranslate]="item.labelKey"></span>
                 </ng-template>
             </p-selectbutton>
             <jhi-search-filter class="flex-grow-1" (newSearchEvent)="onSearchChange($event)" />
             <p-button size="small" severity="secondary" (onClick)="openImportModal()">
                 <fa-icon [icon]="faFileImport" />
-                <span class="ms-1">Import</span>
+                <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
             </p-button>
             <p-button size="small" severity="secondary" (onClick)="openQuizExportDialog()">
                 <fa-icon [icon]="faFileExport" />
-                <span class="ms-1">Export</span>
+                <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
             </p-button>
             <p-button size="small" (onClick)="openCreateModal()">
                 <fa-icon [icon]="faPlus" />
-                <span class="ms-1">Create</span>
+                <span class="ms-1" jhiTranslate="global.generic.create"></span>
             </p-button>
         </div>
 
         <!-- Mass actions row -->
         @if (selectedCount() > 0) {
             <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
-                <span class="text-muted small">{{ selectedCount() }} selected</span>
-                <p-button size="small" severity="secondary" [outlined]="true" (onClick)="clearSelection()">Deselect all</p-button>
+                <span class="text-muted small">{{ 'artemisApp.exerciseManagement.selection.count' | artemisTranslate: { count: selectedCount() } }}</span>
+                <p-button size="small" severity="secondary" [outlined]="true" (onClick)="clearSelection()" jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll" />
                 @if (allSelectedAreProgramming()) {
-                    <p-button size="small" severity="warn" [outlined]="true" (onClick)="editSelectedExercises()"> <i class="pi pi-wrench me-1"></i>Edit Selected </p-button>
-                    <p-button size="small" severity="secondary" [outlined]="true" (onClick)="downloadReposSelected()"> <i class="pi pi-download me-1"></i>Download Repos </p-button>
+                    <p-button size="small" severity="warn" [outlined]="true" (onClick)="editSelectedExercises()">
+                        <i class="pi pi-wrench me-1"></i><span jhiTranslate="artemisApp.exerciseManagement.selection.editSelected"></span>
+                    </p-button>
+                    <p-button size="small" severity="secondary" [outlined]="true" (onClick)="downloadReposSelected()">
+                        <i class="pi pi-download me-1"></i><span jhiTranslate="artemisApp.exerciseManagement.selection.downloadRepos"></span>
+                    </p-button>
                     <p-button size="small" severity="secondary" [outlined]="true" (onClick)="consistencyCheckSelected()">
-                        <i class="pi pi-verified me-1"></i>Consistency Check
+                        <i class="pi pi-verified me-1"></i><span jhiTranslate="artemisApp.exerciseManagement.selection.consistencyCheck"></span>
                     </p-button>
                 }
-                <p-button size="small" severity="danger" (onClick)="deleteSelected()"> <i class="pi pi-trash me-1"></i>Delete selected </p-button>
+                <p-button size="small" severity="danger" (onClick)="deleteSelected()">
+                    <i class="pi pi-trash me-1"></i><span jhiTranslate="artemisApp.exerciseManagement.selection.deleteSelected"></span>
+                </p-button>
             </div>
         }
     </ng-template>
 
     @if (buckets().length === 0) {
-        <div class="alert alert-secondary" role="alert">No exercises match "{{ search() }}".</div>
+        <div class="alert alert-secondary" role="alert">{{ 'artemisApp.exerciseManagement.noExercisesMatch' | artemisTranslate: { search: search() } }}</div>
     }
     <div class="d-flex flex-column gap-3">
         @for (bucket of buckets(); track bucket.id) {
@@ -94,45 +100,49 @@
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-3">
                             <div class="d-flex flex-wrap gap-3 small text-muted">
                                 <span>
-                                    <span class="fw-semibold">Release:</span>
+                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.release"></span>
                                     @if (bucket.group.releaseDate) {
                                         {{ bucket.group.releaseDate | artemisDate: 'short-date' }}
                                     } @else {
-                                        <span class="fst-italic">none</span>
+                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span>
-                                    <span class="fw-semibold">Start:</span>
+                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.start"></span>
                                     @if (bucket.group.startDate) {
                                         {{ bucket.group.startDate | artemisDate: 'short-date' }}
                                     } @else {
-                                        <span class="fst-italic">none</span>
+                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span>
-                                    <span class="fw-semibold">Due:</span>
+                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.due"></span>
                                     @if (bucket.group.dueDate) {
                                         {{ bucket.group.dueDate | artemisDate: 'short-date' }}
                                     } @else {
-                                        <span class="fst-italic">none</span>
+                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span>
-                                    <span class="fw-semibold">Feedback due:</span>
+                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.feedbackDue"></span>
                                     @if (bucket.group.assessmentDueDate) {
                                         {{ bucket.group.assessmentDueDate | artemisDate: 'short-date' }}
                                     } @else {
-                                        <span class="fst-italic">none</span>
+                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
                                 </span>
                                 <span class="d-flex align-items-center gap-1">
-                                    <span class="fw-semibold">Max points:</span>
+                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.maxPoints"></span>
                                     @if (bucket.group.maxPoints !== undefined) {
                                         {{ bucket.group.maxPoints }}p
                                     } @else {
-                                        <span class="fst-italic">none</span>
+                                        <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
-                                    <fa-icon [icon]="faCircleInfo" pTooltip="Caps the total points this group contributes to the course score." tooltipPosition="top" />
+                                    <fa-icon
+                                        [icon]="faCircleInfo"
+                                        [pTooltip]="'artemisApp.exerciseManagement.groupMeta.maxPointsTooltip' | artemisTranslate"
+                                        tooltipPosition="top"
+                                    />
                                 </span>
                             </div>
                             <div class="d-flex align-items-center gap-2">

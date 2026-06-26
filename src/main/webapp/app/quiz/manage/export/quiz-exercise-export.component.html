@@ -49,7 +49,9 @@
             <div class="edit-quiz-footer-content">
                 <div class="form-group">
                     @if (isDialog) {
-                        <p-button severity="secondary" [outlined]="true" size="small" (onClick)="back()"> <fa-icon [icon]="faArrowLeft" class="me-1" />Back </p-button>
+                        <p-button severity="secondary" [outlined]="true" size="small" (onClick)="back()">
+                            <fa-icon [icon]="faArrowLeft" class="me-1" /><span jhiTranslate="entity.action.back"></span>
+                        </p-button>
                     }
                 </div>
                 <div class="form-group">

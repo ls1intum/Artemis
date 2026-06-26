@@ -8,24 +8,36 @@
     [draggable]="false"
 >
     <div class="tab-bar mb-3">
-        <button class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('create')">Create</button>
-        <button class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}" (click)="setActiveTab('import')">Import</button>
-        <button class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}" (click)="requestExport()">Export</button>
+        <button
+            class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}"
+            (click)="setActiveTab('create')"
+            jhiTranslate="artemisApp.exerciseManagement.addModal.tab.create"
+        ></button>
+        <button
+            class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}"
+            (click)="setActiveTab('import')"
+            jhiTranslate="artemisApp.exerciseManagement.addModal.tab.import"
+        ></button>
+        <button
+            class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}"
+            (click)="requestExport()"
+            jhiTranslate="artemisApp.exerciseManagement.addModal.tab.export"
+        ></button>
     </div>
 
     <!-- ── Create tab ── -->
     @if (activeTab() === 'create') {
-        <p class="text-muted small mb-3">Select an exercise type. You can customise all details in the next step.</p>
+        <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.createHint"></p>
         <div class="exercise-grid">
             @for (card of exerciseTypeCards; track card.type) {
                 <button class="exercise-card {{ card.accentClass }}" (click)="navigateToCreate(card)" type="button">
                     <div class="card-icon-wrapper">
                         <fa-icon [icon]="card.icon" />
                     </div>
-                    <h6>{{ card.label }}</h6>
-                    <p>{{ card.description }}</p>
+                    <h6>{{ card.labelKey | artemisTranslate }}</h6>
+                    <p>{{ card.descriptionKey | artemisTranslate }}</p>
                     <span class="card-cta">
-                        Create
+                        <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
                         <fa-icon [icon]="faArrowRight" class="ms-1" />
                     </span>
                 </button>
@@ -34,10 +46,10 @@
                 <div class="card-icon-wrapper">
                     <fa-icon [icon]="faLayerGroup" />
                 </div>
-                <h6>Exercise Group</h6>
-                <p>A set of variant exercises on the same topic. Students practice any variant and choose which to submit for grading.</p>
+                <h6 jhiTranslate="artemisApp.exerciseManagement.addModal.group.title"></h6>
+                <p jhiTranslate="artemisApp.exerciseManagement.addModal.group.createDescription"></p>
                 <span class="card-cta">
-                    Create
+                    <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
                     <fa-icon [icon]="faArrowRight" class="ms-1" />
                 </span>
             </button>
@@ -47,17 +59,17 @@
     <!-- ── Import tab ── -->
     @if (activeTab() === 'import') {
         @if (importSelectedType() === null) {
-            <p class="text-muted small mb-3">Select what you want to import.</p>
+            <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.importHint"></p>
             <div class="exercise-grid">
                 @for (card of exerciseTypeCards; track card.type) {
                     <button class="exercise-card {{ card.accentClass }}" (click)="startImport(card.type)" type="button">
                         <div class="card-icon-wrapper">
                             <fa-icon [icon]="card.icon" />
                         </div>
-                        <h6>{{ card.label }}</h6>
-                        <p>{{ card.description }}</p>
+                        <h6>{{ card.labelKey | artemisTranslate }}</h6>
+                        <p>{{ card.descriptionKey | artemisTranslate }}</p>
                         <span class="card-cta">
-                            Select
+                            <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.select"></span>
                             <fa-icon [icon]="faArrowRight" class="ms-1" />
                         </span>
                     </button>
@@ -66,20 +78,22 @@
                     <div class="card-icon-wrapper">
                         <fa-icon [icon]="faLayerGroup" />
                     </div>
-                    <h6>Exercise Group</h6>
-                    <p>Import a group of variant exercises from another course, including all its exercises.</p>
+                    <h6 jhiTranslate="artemisApp.exerciseManagement.addModal.group.title"></h6>
+                    <p jhiTranslate="artemisApp.exerciseManagement.addModal.group.importDescription"></p>
                     <span class="card-cta">
-                        Select
+                        <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.select"></span>
                         <fa-icon [icon]="faArrowRight" class="ms-1" />
                     </span>
                 </button>
             </div>
         } @else if (importSelectedType() === 'group') {
             <div class="d-flex align-items-center gap-2 mb-3">
-                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="backToImportTypeSelection()"> <fa-icon [icon]="faArrowLeft" class="me-1" />Back </p-button>
-                <span class="fw-semibold">Import Exercise Group</span>
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="backToImportTypeSelection()">
+                    <fa-icon [icon]="faArrowLeft" class="me-1" /><span jhiTranslate="entity.action.back"></span>
+                </p-button>
+                <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.addModal.import.groupHeader"></span>
             </div>
-            <p class="text-muted small mb-2">Select groups to import. All exercises in the group are included.</p>
+            <p class="text-muted small mb-2" jhiTranslate="artemisApp.exerciseManagement.addModal.import.groupHint"></p>
             <div class="import-list">
                 @for (grp of importGroups(); track grp.id) {
                     <label class="import-item d-flex align-items-center gap-2 py-2 px-2 border-bottom">
@@ -87,7 +101,9 @@
                         <div class="flex-grow-1 min-width-0">
                             <div class="d-flex align-items-center gap-2">
                                 <span class="fw-semibold small">{{ grp.title }}</span>
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis small">{{ grp.exerciseCount }} exercises</span>
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis small">{{
+                                    'artemisApp.exerciseManagement.addModal.import.exerciseCount' | artemisTranslate: { count: grp.exerciseCount }
+                                }}</span>
                             </div>
                             <div class="text-muted" style="font-size: 0.75rem">{{ grp.course }}</div>
                         </div>
@@ -95,9 +111,13 @@
                 }
             </div>
             <div class="d-flex justify-content-end gap-2 mt-3">
-                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()">Cancel</p-button>
+                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()" jhiTranslate="entity.action.cancel" />
                 <p-button severity="primary" size="small" [disabled]="importGroupSelectedIds().size === 0" (onClick)="confirmImport()">
-                    Import {{ importGroupSelectedIds().size > 0 ? '(' + importGroupSelectedIds().size + ')' : '' }}
+                    @if (importGroupSelectedIds().size > 0) {
+                        {{ 'artemisApp.exerciseManagement.addModal.import.confirmCount' | artemisTranslate: { count: importGroupSelectedIds().size } }}
+                    } @else {
+                        {{ 'artemisApp.exerciseManagement.addModal.import.confirm' | artemisTranslate }}
+                    }
                 </p-button>
             </div>
         }

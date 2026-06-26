@@ -3,6 +3,7 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ButtonModule } from 'primeng/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /** Sentinel the import dialog closes with when the user presses "Back", so the caller can reopen the manage-exercises modal. */
 export const IMPORT_DIALOG_BACK = '__import_dialog_back__';
@@ -16,10 +17,12 @@ export const IMPORT_DIALOG_BACK = '__import_dialog_back__';
     selector: 'jhi-import-dialog-footer',
     // Full-width flex pushes the button to the left edge of the dialog footer (PrimeNG right-aligns footers by default).
     template: `<div class="d-flex justify-content-start w-100">
-        <p-button severity="secondary" [outlined]="true" size="small" (onClick)="back()"> <fa-icon [icon]="faArrowLeft" class="me-1" />Back </p-button>
+        <p-button severity="secondary" [outlined]="true" size="small" (onClick)="back()">
+            <fa-icon [icon]="faArrowLeft" class="me-1" /><span jhiTranslate="entity.action.back"></span>
+        </p-button>
     </div>`,
     styles: [':host { width: 100%; }'],
-    imports: [ButtonModule, FaIconComponent],
+    imports: [ButtonModule, FaIconComponent, TranslateDirective],
 })
 export class ImportDialogFooterComponent {
     private readonly dialogRef = inject(DynamicDialogRef);

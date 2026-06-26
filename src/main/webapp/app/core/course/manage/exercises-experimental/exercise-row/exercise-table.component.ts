@@ -1,6 +1,7 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCaretDown, faCaretUp, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TableModule } from 'primeng/table';
@@ -10,6 +11,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { DifficultyLevel, Exercise, ExerciseType, IncludedInOverallScore, getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
@@ -49,11 +51,14 @@ export interface TableGroupChange {
         CdkDragHandle,
         TranslateDirective,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
         ExerciseCategoriesComponent,
         ExerciseActionsComponent,
     ],
 })
 export class ExerciseTableComponent {
+    private readonly translateService = inject(TranslateService);
+
     readonly exercises = input.required<Exercise[]>();
     readonly group = input<CourseExerciseGroup | undefined>(undefined);
     readonly courseId = input.required<number>();
@@ -133,8 +138,11 @@ export class ExerciseTableComponent {
     });
 
     readonly groupOptions = computed(() => [
-        { label: 'No group', value: undefined as number | undefined },
-        ...this.groups().map((g) => ({ label: g.title ?? `Group ${g.id}`, value: g.id as number | undefined })),
+        { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: undefined as number | undefined },
+        ...this.groups().map((g) => ({
+            label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.bucket.group', { id: g.id }),
+            value: g.id as number | undefined,
+        })),
     ]);
 
     sortBy(col: SortColumn): void {
@@ -238,22 +246,28 @@ export class ExerciseTableComponent {
     }
 
     nonIndividualQuizTooltip(exercise: Exercise): string | undefined {
-        return this.isQuizNonIndividual(exercise) ? 'Synchronized and batched quizzes have a single shared run and cannot be added to a group.' : undefined;
+        return this.isQuizNonIndividual(exercise) ? this.translateService.instant('artemisApp.exerciseManagement.table.nonIndividualQuizTooltip') : undefined;
     }
 
+    /** Translation key for the quiz status badge, or `undefined` when no badge should be shown. */
     quizStatusLabel(exercise: QuizExercise): string | undefined {
         switch (exercise.status) {
             case QuizStatus.INVISIBLE:
-                return 'Invisible';
+                return 'artemisApp.quizExercise.quizStatus.invisible';
             case QuizStatus.VISIBLE:
-                return 'Visible';
+                return 'artemisApp.quizExercise.quizStatus.visible';
             case QuizStatus.ACTIVE:
-                return 'Active';
+                return 'artemisApp.quizExercise.quizStatus.active';
             case QuizStatus.OPEN_FOR_PRACTICE:
-                return 'Practice';
+                return 'artemisApp.quizExercise.practiceMode';
             default:
                 return undefined;
         }
+    }
+
+    /** Translation key for the quiz mode badge (e.g. `artemisApp.quizExercise.quizMode.synchronized`). */
+    quizModeKey(exercise: QuizExercise): string {
+        return `artemisApp.quizExercise.quizMode.${(exercise.quizMode ?? '').toLowerCase()}`;
     }
 
     quizStatusClass(exercise: QuizExercise): string {

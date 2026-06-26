@@ -17,17 +17,25 @@
                 @if (showDragHandle()) {
                     <th style="width: 2.5rem"></th>
                 }
-                <th class="sort-col" (click)="sortBy('title')">Title <fa-icon [icon]="sortIcon('title')" class="text-muted ms-1" /></th>
-                <th class="sort-col col-dates" (click)="sortBy('dueDate')">Dates <fa-icon [icon]="sortIcon('dueDate')" class="text-muted ms-1" /></th>
-                <th class="sort-col" (click)="sortBy('points')">Points <fa-icon [icon]="sortIcon('points')" class="text-muted ms-1" /></th>
+                <th class="sort-col" (click)="sortBy('title')">
+                    <span jhiTranslate="artemisApp.exercise.title"></span> <fa-icon [icon]="sortIcon('title')" class="text-muted ms-1" />
+                </th>
+                <th class="sort-col col-dates" (click)="sortBy('dueDate')">
+                    <span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span> <fa-icon [icon]="sortIcon('dueDate')" class="text-muted ms-1" />
+                </th>
+                <th class="sort-col" (click)="sortBy('points')">
+                    <span jhiTranslate="artemisApp.exercise.points"></span> <fa-icon [icon]="sortIcon('points')" class="text-muted ms-1" />
+                </th>
                 @if (!showGroupSelector()) {
-                    <th class="sort-col" (click)="sortBy('difficulty')">Difficulty <fa-icon [icon]="sortIcon('difficulty')" class="text-muted ms-1" /></th>
+                    <th class="sort-col" (click)="sortBy('difficulty')">
+                        <span jhiTranslate="artemisApp.exercise.difficulty"></span> <fa-icon [icon]="sortIcon('difficulty')" class="text-muted ms-1" />
+                    </th>
                 }
                 @if (showGroupSelector()) {
-                    <th>Group</th>
+                    <th jhiTranslate="artemisApp.exerciseManagement.table.group"></th>
                 }
-                <th>Categories</th>
-                <th class="text-end col-actions">Actions</th>
+                <th jhiTranslate="artemisApp.exercise.categories"></th>
+                <th class="text-end col-actions" jhiTranslate="artemisApp.exercise.actions"></th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-exercise>
@@ -54,7 +62,7 @@
                             [cdkDragHandleDisabled]="isQuizNonIndividual(exercise)"
                             class="pi pi-bars drag-handle"
                             [class.disabled]="isQuizNonIndividual(exercise)"
-                            [title]="nonIndividualQuizTooltip(exercise) ?? 'Drag to reorder or move between groups'"
+                            [title]="nonIndividualQuizTooltip(exercise) ?? ('artemisApp.exerciseManagement.table.dragTooltip' | artemisTranslate)"
                         ></span>
                     </td>
                 }
@@ -112,7 +120,7 @@
                         @if (exercise.difficulty) {
                             <span class="badge {{ difficultyBadgeClass(exercise) }}">{{ exercise.difficulty }}</span>
                         } @else {
-                            <span class="text-muted fst-italic small">none</span>
+                            <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
                         }
                     </td>
                 }
@@ -138,16 +146,16 @@
                         @let q = asQuiz(exercise);
                         @let statusLabel = quizStatusLabel(q);
                         @if (statusLabel) {
-                            <span class="badge {{ quizStatusClass(q) }} small me-1">{{ statusLabel }}</span>
+                            <span class="badge {{ quizStatusClass(q) }} small me-1">{{ statusLabel | artemisTranslate }}</span>
                         }
                         @if (q.quizMode) {
-                            <span class="badge bg-light text-dark border small me-1">{{ q.quizMode }}</span>
+                            <span class="badge bg-light text-dark border small me-1">{{ quizModeKey(q) | artemisTranslate }}</span>
                         }
                     }
                     @if (exercise.categories && exercise.categories.length > 0) {
                         <jhi-exercise-categories [exercise]="exercise" />
                     } @else if (exercise.type !== ExerciseType.QUIZ || (!asQuiz(exercise).quizMode && !quizStatusLabel(asQuiz(exercise)))) {
-                        <span class="text-muted fst-italic small">none</span>
+                        <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
                     }
                 </td>
                 <td class="col-actions">
@@ -163,7 +171,11 @@
         </ng-template>
         <ng-template pTemplate="emptymessage">
             <tr>
-                <td [attr.colspan]="8 + (showDragHandle() ? 1 : 0) + (showCheckbox() ? 1 : 0) + (showGroupSelector() ? 1 : 0)" class="text-center text-muted py-3">No exercises</td>
+                <td
+                    [attr.colspan]="8 + (showDragHandle() ? 1 : 0) + (showCheckbox() ? 1 : 0) + (showGroupSelector() ? 1 : 0)"
+                    class="text-center text-muted py-3"
+                    jhiTranslate="artemisApp.exerciseManagement.table.empty"
+                ></td>
             </tr>
         </ng-template>
     </p-table>
