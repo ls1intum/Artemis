@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// IMPORTANT: The mock must be defined before '@tumaet/apollon' imports to prevent flaky client tests
+// IMPORTANT: The mock must be defined before '@tumaet/apollon/external' imports to prevent flaky client tests
 // Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
 const { MockApollonEditor } = vi.hoisted(() => {
     const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
@@ -29,6 +29,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
         });
 
         destroy = vi.fn();
+
+        setElementHighlights = vi.fn();
 
         addOrUpdateAssessment = vi.fn((assessment: any) => {
             if (this._model) {
@@ -65,8 +67,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 // Mock the entire ApollonEditor class to prevent React initialization,
 // which causes unhandled errors from async React scheduler callbacks
 // ("Should not already be working", "document global was defined") in jsdom.
-vi.mock('@tumaet/apollon', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
+vi.mock('@tumaet/apollon/external', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@tumaet/apollon/external')>();
     return {
         ...actual,
         ApollonEditor: MockApollonEditor,
@@ -77,7 +79,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon/external';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -393,34 +395,25 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
     });
 
-    it('should highlight elements', async () => {
-        const highlightedElements = new Map<string, string>();
-        highlightedElements.set(ELEMENT_ID_1, 'red');
-        highlightedElements.set(RELATIONSHIP_ID, 'blue');
-
-        const v4Model = createV4ModelWithNodes();
-
+    it('forwards the highlight overlay map (including an empty map) to the editor', async () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
-        fixture.componentRef.setInput('highlightedElements', highlightedElements);
-
+        fixture.componentRef.setInput('highlightedElements', new Map<string, string>());
         fixture.detectChanges();
         await waitForApollonInitialization();
 
-        expect(comp.apollonEditor).not.toBeNull();
+        const setHighlights = comp.apollonEditor!.setElementHighlights as unknown as ReturnType<typeof vi.fn>;
 
-        // Mock the apollonEditor.model to return our v4 model with populated nodes/edges
-        const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
+        const highlights = new Map<string, string>([
+            [ELEMENT_ID_1, 'red'],
+            [RELATIONSHIP_ID, 'blue'],
+        ]);
+        setHighlights.mockClear();
+        (comp as any).updateHighlightedElements(highlights);
+        expect(setHighlights).toHaveBeenCalledWith(highlights);
 
-        // Call updateHighlightedElements which sets highlight property on nodes/edges
-        await (comp as any).updateHighlightedElements(highlightedElements);
-
-        // Verify the highlight property was actually set on the model elements
-        const updatedModel = getCapturedModel();
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
-        expect(findElementById(updatedModel.edges as any[], RELATIONSHIP_ID).highlight).toBe('blue');
-
-        // Verify elements not in highlightedElements don't have highlight set
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBeUndefined();
+        setHighlights.mockClear();
+        (comp as any).updateHighlightedElements(new Map<string, string>());
+        expect(setHighlights).toHaveBeenCalledWith(new Map<string, string>());
     });
 
     it('should update model', async () => {
@@ -449,44 +442,6 @@ describe('ModelingAssessmentComponent', () => {
         // Verify the apollon editor is still valid and has the correct diagram type
         const apollonModel = comp.apollonEditor!.model;
         expect(apollonModel.type).toBe(newModel.type);
-    });
-
-    it('should update highlighted elements', async () => {
-        const initialHighlights = new Map<string, string>();
-        initialHighlights.set(ELEMENT_ID_1, 'red');
-        initialHighlights.set(ELEMENT_ID_2, 'blue');
-
-        const v4Model = createV4ModelWithNodes();
-
-        fixture.componentRef.setInput('umlModel', makeMockModel());
-        fixture.componentRef.setInput('highlightedElements', initialHighlights);
-
-        fixture.detectChanges();
-        await waitForApollonInitialization();
-
-        expect(comp.apollonEditor).not.toBeNull();
-
-        // Mock the apollonEditor.model to return our v4 model with populated nodes/edges
-        const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
-
-        // Apply initial highlights
-        await (comp as any).updateHighlightedElements(initialHighlights);
-
-        let updatedModel = getCapturedModel();
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('blue');
-
-        // Now update with different highlights - only ELEMENT_ID_2 should be green
-        const newHighlights = new Map<string, string>();
-        newHighlights.set(ELEMENT_ID_2, 'green');
-
-        await (comp as any).updateHighlightedElements(newHighlights);
-
-        updatedModel = getCapturedModel();
-        // ELEMENT_ID_1 should now have undefined highlight (removed)
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBeUndefined();
-        // ELEMENT_ID_2 should have green highlight (updated)
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('green');
     });
 
     it('should update highlighted assessments first round', async () => {

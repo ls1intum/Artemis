@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { UMLDiagramType } from '@tumaet/apollon/external';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 

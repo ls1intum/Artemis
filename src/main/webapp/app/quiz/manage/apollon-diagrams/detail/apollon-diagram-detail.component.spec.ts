@@ -17,7 +17,7 @@ import { MockLanguageHelper, MockTranslateService } from 'src/test/javascript/sp
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import * as testClassDiagramV3 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
 import * as testClassDiagramV4 from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram-v4.json';
-import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon/external';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';

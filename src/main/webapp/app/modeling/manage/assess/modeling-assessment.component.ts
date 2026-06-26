@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output } from '@angular/core';
-import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon/external';
 import { captureException } from '@sentry/angular';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
@@ -117,7 +117,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.initializeApollonEditor();
         const highlightedElements = this.highlightedElements();
         if (highlightedElements) {
-            await this.updateHighlightedElements(highlightedElements);
+            this.updateHighlightedElements(highlightedElements);
         }
         const elementCounts = this.elementCounts();
         if (elementCounts) {
@@ -125,7 +125,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
         // Ensure assessments are added after editor initialization
         await this.updateApollonAssessments(this.referencedFeedbacks);
-        await this.applyStateConfiguration();
+        this.applyStateConfiguration();
     }
 
     ngOnDestroy() {
@@ -147,7 +147,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      */
     private async runHighlightUpdate() {
         await this.updateApollonAssessments(this.referencedFeedbacks);
-        await this.applyStateConfiguration();
+        this.applyStateConfiguration();
     }
 
     /**
@@ -183,10 +183,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
     }
 
-    private async applyStateConfiguration() {
+    private applyStateConfiguration() {
         const highlightedElements = this.highlightedElements();
         if (highlightedElements) {
-            await this.updateHighlightedElements(highlightedElements);
+            this.updateHighlightedElements(highlightedElements);
         }
     }
 
@@ -293,33 +293,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     /**
-     * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
+     * Applies the host-driven highlight overlay (element id -> CSS color) to the editor. Highlights are an
+     * ephemeral view overlay, not persisted in the model; an empty map clears them.
      *
      * @param newElements a map of elementIds -> highlight color
      */
-    private async updateHighlightedElements(newElements: Map<string, string>) {
-        if (!newElements) {
-            newElements = new Map<string, string>();
-        }
-
-        if (this.apollonEditor != undefined) {
-            const model: UMLModel = this.apollonEditor.model;
-            for (const node of model.nodes) {
-                const highlight = newElements.get(node.id);
-                (node as any).highlight = highlight;
-                if (node.data) {
-                    (node.data as Record<string, unknown>).highlight = highlight;
-                }
-            }
-            for (const edge of model.edges) {
-                const highlight = newElements.get(edge.id);
-                (edge as any).highlight = highlight;
-                if (edge.data) {
-                    (edge.data as Record<string, unknown>).highlight = highlight;
-                }
-            }
-            this.apollonEditor.model = model;
-        }
+    private updateHighlightedElements(newElements: Map<string, string>): void {
+        this.apollonEditor?.setElementHighlights(newElements ?? null);
     }
 
     /**

@@ -9,7 +9,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { UMLDiagramType } from '@tumaet/apollon/external';
 
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseResolver implements Resolve<ModelingExercise> {

@@ -15,7 +15,7 @@ import * as helper from 'app/foundation/util/download.util';
 import { Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { lastValueFrom } from 'rxjs';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { UMLDiagramType } from '@tumaet/apollon/external';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ModelingExercise Service', () => {

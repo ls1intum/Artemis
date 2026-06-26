@@ -38,6 +38,21 @@ const noNgZoneImport = {
         'NgZone is forbidden: the client is zoneless (provideZonelessChangeDetection). Drive change detection with signals (signal/computed/effect), markForCheck, afterNextRender, or output emits — NgZone.run/runOutsideAngular are no-ops under zoneless.',
 };
 
+// Shared `no-restricted-imports` paths applied across every client + test block. Each block that sets
+// `no-restricted-imports` must spread this in, because flat config REPLACES (not merges) the rule when a
+// later, more specific block redefines it (the foundation/ and shared-ui/ blocks do) — so restrictions
+// declared only once would silently not apply to those layers.
+const restrictedImportPaths = [
+    { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
+    { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+    {
+        name: '@tumaet/apollon',
+        message:
+            "Import from '@tumaet/apollon/external' instead. The default entry inlines React/MUI/etc. (a second React copy, invisible to the client SBOM); the /external entry leaves them external for the host to provide.",
+    },
+    noNgZoneImport,
+];
+
 // Existing `ngOnChanges` migration backlog. Keep the new rule baseline-clean by excluding unchanged
 // files that still need a focused computed()/effect() migration. Remove entries as the hooks are migrated.
 const remainingNgOnChangesMigrationBacklog = [
@@ -197,17 +212,7 @@ export default tseslint.config(
             'no-restricted-imports': [
                 'error',
                 {
-                    paths: [
-                        {
-                            name: 'dayjs',
-                            message: "Please import from 'dayjs/esm' instead.",
-                        },
-                        {
-                            name: 'lodash',
-                            message: "Please import from 'lodash-es' instead.",
-                        },
-                        noNgZoneImport,
-                    ],
+                    paths: restrictedImportPaths,
                 },
             ],
             'no-restricted-syntax': [
@@ -267,11 +272,7 @@ export default tseslint.config(
             'no-restricted-imports': [
                 'error',
                 {
-                    paths: [
-                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
-                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
-                        noNgZoneImport,
-                    ],
+                    paths: restrictedImportPaths,
                     patterns: [
                         {
                             // Block both absolute (app/shared-ui/**) and relative (../shared-ui, ../../shared-ui, …) imports
@@ -297,11 +298,7 @@ export default tseslint.config(
             'no-restricted-imports': [
                 'error',
                 {
-                    paths: [
-                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
-                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
-                        noNgZoneImport,
-                    ],
+                    paths: restrictedImportPaths,
                     patterns: [
                         {
                             // Block both absolute (app/editor/**) and relative (../editor, ../../editor, …) imports.
@@ -317,6 +314,7 @@ export default tseslint.config(
     {
         files: ['src/test/javascript/**', 'src/main/webapp/app/**/*.spec.ts'],
         rules: {
+            'no-restricted-imports': ['error', { paths: restrictedImportPaths }],
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',

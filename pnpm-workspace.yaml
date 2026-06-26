@@ -19,6 +19,12 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
+# Supply-chain guard: pnpm rejects dependencies published too recently. @tumaet/apollon is our own
+# org's package (ls1intum/tumaet) and we intentionally consume its just-released versions, so exempt
+# it from the minimum-release-age delay. The third-party deps stay under the guard.
+minimumReleaseAgeExclude:
+    - '@tumaet/apollon'
+
 # Tell pnpm that Angular 21 is an acceptable peer for packages whose published
 # peerDependencies range still lists only "18.x || 19.x || 20.x".
 # We already pin every relevant @angular/* dep under ng-mocks
@@ -77,9 +83,10 @@ overrides:
     piscina: '5.2.0'
     postcss: '8.5.14'
     punycode: '2.3.1'
-    # @tumaet/apollon 4.7.0 requires react/react-dom ^19 as peers. Artemis embeds
-    # Apollon but has no direct React code, so force the whole React subtree to 19
-    # (matches the version used in the documentation/ project).
+    # @tumaet/apollon (>=4.7) requires react/react-dom ^19 as peers, and its /external
+    # build entry leaves React (plus @mui/@emotion/@xyflow) external for the host to
+    # provide. Artemis declares those peers directly but has no React code of its own;
+    # force the whole React subtree to a single 19.x so @mui/@xyflow can't pull React 18.
     react: '19.2.7'
     react-dom: '19.2.7'
     semver: '7.8.0'

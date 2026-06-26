@@ -11,7 +11,7 @@ import { Observable, Subscription } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
-import { ApollonEditor } from '@tumaet/apollon';
+import { ApollonEditor } from '@tumaet/apollon/external';
 
 @Component({
     selector: 'jhi-team-submission-sync',

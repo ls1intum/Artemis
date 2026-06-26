@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { UMLDiagramType } from '@tumaet/apollon';
+import { UMLDiagramType } from '@tumaet/apollon/external';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

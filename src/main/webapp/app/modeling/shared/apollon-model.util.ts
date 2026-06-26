@@ -1,4 +1,4 @@
-import { ApollonEdge, ApollonNode, UMLModel } from '@tumaet/apollon';
+import { ApollonEdge, ApollonNode, UMLModel } from '@tumaet/apollon/external';
 
 /**
  * Apollon v3 used a different data structure with elements/relationships as Record<string, T>.

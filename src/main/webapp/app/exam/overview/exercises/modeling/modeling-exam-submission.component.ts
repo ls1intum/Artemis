@@ -1,4 +1,4 @@
-import { UMLModel, importDiagram } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon/external';
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';

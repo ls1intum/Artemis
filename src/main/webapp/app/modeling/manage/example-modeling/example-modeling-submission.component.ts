@@ -4,7 +4,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { UMLModel, importDiagram } from '@tumaet/apollon';
+import { UMLModel, importDiagram } from '@tumaet/apollon/external';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -119,7 +119,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     highlightedElements = signal<Map<string, string>>(new Map<string, string>());
     referencedExampleFeedback: Feedback[] = [];
-    highlightColor = computed(() => (this.themeService.userPreference() === Theme.DARK ? 'darkblue' : 'lightblue'));
+    // Translucent so the overlay (setElementHighlights paints over the element) stays visible without
+    // obscuring its text: a light blue on the dark theme, a medium blue on the light theme.
+    highlightColor = computed(() => (this.themeService.userPreference() === Theme.DARK ? 'rgba(135, 206, 250, 0.4)' : 'rgba(0, 123, 255, 0.35)'));
 
     // Icons
     faSave = faSave;

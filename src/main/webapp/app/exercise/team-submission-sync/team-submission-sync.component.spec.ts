@@ -27,7 +27,7 @@ import { SubmissionPatchPayload } from 'app/exercise/shared/entities/submission/
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ConnectionState } from 'app/foundation/service/websocket.service';
-import { ApollonEditor } from '@tumaet/apollon';
+import { ApollonEditor } from '@tumaet/apollon/external';
 
 describe('Team Submission Sync Component', () => {
     setupTestBed({ zoneless: true });

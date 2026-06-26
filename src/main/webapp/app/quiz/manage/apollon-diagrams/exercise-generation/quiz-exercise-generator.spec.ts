@@ -4,7 +4,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { ApollonEditor, UMLModel } from '@tumaet/apollon';
+import { ApollonEditor, UMLModel } from '@tumaet/apollon/external';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
