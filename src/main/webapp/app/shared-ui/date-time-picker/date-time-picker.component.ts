@@ -1,4 +1,4 @@
-import { Component, computed, forwardRef, input, model, output, signal } from '@angular/core';
+import { AfterViewInit, Component, computed, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -27,7 +27,7 @@ export enum DateTimePickerType {
     ],
     imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, TranslateDirective, ArtemisTranslatePipe],
 })
-export class FormDateTimePickerComponent implements ControlValueAccessor {
+export class FormDateTimePickerComponent implements ControlValueAccessor, AfterViewInit {
     protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
     protected readonly faQuestionCircle = faQuestionCircle;
@@ -103,6 +103,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     private onChange?: (val?: dayjs.Dayjs) => void;
 
+    private readonly innerPicker = viewChild(DatePicker);
+
     /**
      * Emits the value change from component.
      */
@@ -128,6 +130,32 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         }
         this.value.set(next);
         this.updateSignals();
+        this.reflectValueInPicker(next);
+    }
+
+    /**
+     * Imperatively push a programmatically-written value into the inner p-datepicker.
+     *
+     * The inner `[ngModel]="value()"` one-way binding does NOT reliably update the OnPush p-datepicker
+     * when this wrapper lives inside an OnPush parent under zoneless change detection: the parent is not
+     * re-checked after `writeValue`, so an edit form opens with the picker blank (PR #13009 review — the
+     * tutorial free-period form). This only runs on the programmatic (form patch / reset) path; user
+     * typing flows through `updateField` and must NOT be reformatted here (it would erase keepInvalid text).
+     */
+    private reflectValueInPicker(next: Date | null) {
+        this.innerPicker()?.writeControlValue(next);
+    }
+
+    /**
+     * The inner picker's viewChild is not yet resolved during the initial `writeValue` (which runs while
+     * the form control is wired up), so push the already-written value once the view exists. This is what
+     * makes edit forms that are created with a value (e.g. each tutorial free-period tab) show it.
+     */
+    ngAfterViewInit() {
+        const current = this.value();
+        if (current != undefined) {
+            this.reflectValueInPicker(this.convertToDate(dayjs(current)));
+        }
     }
 
     /** True when both values represent the same instant (or are both empty). */
