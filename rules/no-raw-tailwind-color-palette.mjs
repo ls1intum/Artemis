@@ -132,18 +132,22 @@ export default {
         schema: [],
     },
     create(context) {
+        // `class` plus PrimeNG class inputs (`styleClass`, component-specific `*StyleClass`), which render their
+        // classes onto the host — migrated templates pass Tailwind colour utilities through them, so raw palette /
+        // primitives there must be caught too.
+        const isClassListAttr = (name) => name === 'class' || name === 'styleClass' || name.endsWith('StyleClass');
         return {
-            // Static class="...".
+            // Static class="..." / styleClass="...".
             TextAttribute(node) {
-                if (node.name === 'class') {
+                if (isClassListAttr(node.name)) {
                     scanClasses(node.value, node, context);
                 }
             },
             // [class.<palette>]="x": the palette token is the attribute name itself.
-            // [class]="…" / [ngClass]="…": the palette lives in the bound expression source.
+            // [class]/[ngClass]/[styleClass]="…": the palette lives in the bound expression source.
             // Any binding: catch `var(--p-<palette>-NNN)` in the expression source ([style.color], [color], …).
             BoundAttribute(node) {
-                if (node.name === 'class' || node.name === 'ngClass') {
+                if (isClassListAttr(node.name) || node.name === 'ngClass') {
                     scanClasses(node.value?.source, node, context);
                 } else if (node.keySpan?.details?.startsWith('class.')) {
                     // [class.<palette>]="x" — the token is the attribute name. Gate on the `class.` key so a

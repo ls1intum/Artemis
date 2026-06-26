@@ -10,6 +10,7 @@ describe('no-raw-tailwind-color-palette', () => {
             valid: [
                 // Brand/neutral semantic tokens (tailwindcss-primeui) and Artemis NAMED state tokens.
                 { code: '<div class="text-primary"></div>' },
+                { code: '<p-message styleClass="text-primary"></p-message>' },
                 { code: '<div class="bg-primary"></div>' },
                 { code: '<div class="text-surface-100"></div>' },
                 { code: '<div class="text-muted-color"></div>' },
@@ -27,6 +28,9 @@ describe('no-raw-tailwind-color-palette', () => {
             ],
             invalid: [
                 { code: '<div class="text-green-500"></div>', errors: [{ messageId: 'rawPalette', data: { cls: 'text-green-500' } }] },
+                // PrimeNG styleClass passes colour utilities through to the host — scan it too.
+                { code: '<p-message styleClass="text-green-500"></p-message>', errors: [{ messageId: 'rawPalette', data: { cls: 'text-green-500' } }] },
+                { code: '<p-message [styleClass]="\'text-(--p-red-500)\'"></p-message>', errors: [{ messageId: 'primitivePalette', data: { cls: 'text-(--p-red-500)' } }] },
                 { code: '<div class="bg-red-100"></div>', errors: [{ messageId: 'rawPalette', data: { cls: 'bg-red-100' } }] },
                 // Arbitrary hex color value.
                 { code: '<div class="bg-[#f00]"></div>', errors: [{ messageId: 'rawPalette', data: { cls: 'bg-[#f00]' } }] },

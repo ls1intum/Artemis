@@ -61,6 +61,7 @@
                     <td>{{ node.port }}</td>
                     <td>
                         <p-tag
+                            styleClass="whitespace-nowrap"
                             [severity]="node.liteMember ? 'secondary' : 'info'"
                             [value]="(node.liteMember ? 'artemisApp.websocketAdmin.buildAgent' : 'artemisApp.websocketAdmin.coreNode') | artemisTranslate"
                             data-testid="node-type-tag"
@@ -69,6 +70,7 @@
                     <td>
                         @if (!node.liteMember) {
                             <p-tag
+                                styleClass="whitespace-nowrap"
                                 [severity]="node.brokerConnected ? 'success' : 'warn'"
                                 [value]="(node.brokerConnected ? 'artemisApp.websocketAdmin.connected' : 'artemisApp.websocketAdmin.disconnected') | artemisTranslate"
                                 data-testid="broker-status-tag"
@@ -79,7 +81,12 @@
                     </td>
                     <td>
                         @if (node.local) {
-                            <p-tag severity="success" [value]="'artemisApp.websocketAdmin.thisNode' | artemisTranslate" data-testid="local-node-tag" />
+                            <p-tag
+                                styleClass="whitespace-nowrap"
+                                severity="success"
+                                [value]="'artemisApp.websocketAdmin.thisNode' | artemisTranslate"
+                                data-testid="local-node-tag"
+                            />
                         }
                     </td>
                     <td>

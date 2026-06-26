@@ -79,16 +79,19 @@ export default {
         schema: [],
     },
     create(context) {
+        // `class` plus PrimeNG class inputs (`styleClass`, component-specific `*StyleClass`): a root class
+        // hand-painted via styleClass (`<p-message styleClass="p-button">`) hits the same lazy-CSS footgun.
+        const isClassListAttr = (name) => name === 'class' || name === 'styleClass' || name.endsWith('StyleClass');
         return {
-            // Static class="...".
+            // Static class="..." / styleClass="...".
             TextAttribute(node) {
-                if (node.name === 'class') {
+                if (isClassListAttr(node.name)) {
                     scan(node.value, node, context);
                 }
             },
-            // [class.p-button]="x" (root is the attribute name); [class]/[ngClass] (root is in the bound source).
+            // [class.p-button]="x" (root is the attribute name); [class]/[ngClass]/[styleClass] (root in the source).
             BoundAttribute(node) {
-                if (node.name === 'class' || node.name === 'ngClass') {
+                if (isClassListAttr(node.name) || node.name === 'ngClass') {
                     scan(node.value?.source, node, context);
                 } else if (node.keySpan?.details?.startsWith('class.')) {
                     // [class.p-button]="x" — the root is the attribute name. Gate on the `class.` key so a

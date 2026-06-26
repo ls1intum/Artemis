@@ -10,7 +10,7 @@
  * Both reuse the EXACT curated matcher from the no-bootstrap-classes ESLint rule (isBanned), so counts agree with
  * the lint gate instead of a naive grep that over-reports shared spacing utilities (mb-*, gap-*, ...).
  */
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, relative } from 'node:path';
 import { isBanned, bannedClassesInBindingExpression } from '../../rules/no-bootstrap-classes.mjs';
@@ -19,6 +19,7 @@ const APP = resolve(dirname(fileURLToPath(import.meta.url)), '../../src/main/web
 
 function walk(dir, ext) {
     if (!existsSync(dir)) return [];
+    if (statSync(dir).isFile()) return dir.endsWith(ext) ? [dir] : [];
     return readdirSync(dir, { recursive: true })
         .filter((p) => p.endsWith(ext))
         .map((p) => resolve(dir, p));
@@ -30,9 +31,16 @@ function walk(dir, ext) {
 // `migrate:check` "ready to lock" can't disagree with the lint. Approximate by design — a burndown trend.
 function bootstrapClassesInHtml(text) {
     const found = [];
-    for (const m of text.matchAll(/\sclass="([^"]*)"/g)) for (const t of m[1].split(/\s+/)) if (t && isBanned(t)) found.push(t);
+    const scanList = (value) => {
+        for (const t of value.split(/\s+/)) if (t && isBanned(t)) found.push(t);
+    };
+    // static class="..." and PrimeNG styleClass="..." / *StyleClass="..."
+    for (const m of text.matchAll(/\sclass="([^"]*)"/g)) scanList(m[1]);
+    for (const m of text.matchAll(/\s[\w-]*[Ss]tyleClass="([^"]*)"/g)) scanList(m[1]);
+    // [class.token]
     for (const m of text.matchAll(/\[class\.([\w-]+)\]/g)) if (isBanned(m[1])) found.push(m[1]);
-    for (const m of text.matchAll(/\[(?:ngClass|class)\]="([^"]*)"/g)) found.push(...bannedClassesInBindingExpression(m[1]));
+    // bound [class]/[ngClass]/[styleClass]/[*StyleClass] expressions
+    for (const m of text.matchAll(/\[(?:ngClass|class|[\w-]*[Ss]tyleClass)\]="([^"]*)"/g)) found.push(...bannedClassesInBindingExpression(m[1]));
     return found;
 }
 
