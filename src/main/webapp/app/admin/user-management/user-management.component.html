@@ -30,6 +30,10 @@
                 <div class="flex items-center justify-center gap-2 md:justify-end">
                     <jhi-delete-users-button (deletionCompleted)="this.deleteNotEnrolledUsersComplete()" />
                     <button
+                        pButton
+                        severity="danger"
+                        size="small"
+                        [renderButtonStyle]="false"
                         jhiDeleteButton
                         [entityTitle]="selectedUsers().length.toString()"
                         deleteQuestion="artemisApp.userManagement.batch.delete.question"
@@ -189,6 +193,10 @@
                                 <p-button size="small" severity="success" (onClick)="ldapSync(user.id!)" [label]="'entity.action.ldap' | artemisTranslate" />
                             }
                             <button
+                                pButton
+                                severity="danger"
+                                size="small"
+                                [renderButtonStyle]="false"
                                 jhiDeleteButton
                                 [entityTitle]="user.login!"
                                 deleteQuestion="artemisApp.userManagement.delete.question"

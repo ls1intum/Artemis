@@ -37,6 +37,10 @@
                     </p-button>
                 }
                 <button
+                    pButton
+                    severity="danger"
+                    size="small"
+                    [renderButtonStyle]="false"
                     jhiDeleteButton
                     [entityTitle]="knowledgeArea().title ?? ''"
                     [deleteQuestion]="'artemisApp.knowledgeArea.manage.deleteModal.question'"

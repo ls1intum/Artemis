@@ -6,36 +6,6 @@ import { ActionType, DeleteDialogData, EntitySummary, EntitySummaryCategory } fr
 import { Observable } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
-/**
- * Maps the legacy Bootstrap {@link ButtonType} values to PrimeNG button severity classes so that the
- * delete button matches the `pButton` directive's output (e.g. View/Edit buttons rendered with
- * `severity="info"` / `severity="warn"`), including inside a `<p-buttongroup>`.
- */
-const BUTTON_TYPE_TO_PRIME_SEVERITY_CLASS: Record<ButtonType, string | undefined> = {
-    [ButtonType.DEFAULT]: undefined,
-    [ButtonType.PRIMARY]: undefined, // PrimeNG primary is the default (no severity class)
-    [ButtonType.SECONDARY]: 'p-button-secondary',
-    [ButtonType.SUCCESS]: 'p-button-success',
-    [ButtonType.WARNING]: 'p-button-warn',
-    [ButtonType.ERROR]: 'p-button-danger',
-    [ButtonType.INFO]: 'p-button-info',
-    [ButtonType.PRIMARY_OUTLINE]: 'p-button-outlined',
-    [ButtonType.SUCCESS_OUTLINE]: 'p-button-success p-button-outlined',
-    [ButtonType.ERROR_OUTLINE]: 'p-button-danger p-button-outlined',
-};
-
-/**
- * Maps the legacy Bootstrap {@link ButtonSize} values to PrimeNG button size classes.
- * PrimeNG has no explicit "medium" size class — medium is the default, so it maps to no class.
- */
-const BUTTON_SIZE_TO_PRIME_SIZE_CLASS: Record<ButtonSize, string | undefined> = {
-    [ButtonSize.SMALL]: 'p-button-sm',
-    // PrimeNG has no "medium"; map it to small so delete buttons match the small admin/PrimeNG toolbar norm
-    // and the btn-sm Bootstrap siblings the few MEDIUM callers sit next to (instead of rendering taller).
-    [ButtonSize.MEDIUM]: 'p-button-sm',
-    [ButtonSize.LARGE]: 'p-button-lg',
-};
-
 @Directive({ selector: '[jhiDeleteButton]', host: { '(click)': 'onClick($event)' } })
 export class DeleteButtonDirective implements OnInit {
     private deleteDialogService = inject(DeleteDialogService);
@@ -65,53 +35,26 @@ export class DeleteButtonDirective implements OnInit {
     deleteTextSpan?: HTMLElement;
 
     /**
-     * Styles the host as a PrimeNG button (matching what the `pButton` directive emits) and appends a
-     * label span with the localized action text. We deliberately use a directive rather than a component
-     * so the host stays a plain <button>, which keeps `<p-buttongroup>` working (a wrapping component tag
-     * would break the group's joined-button layout).
+     * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.
+     * We can't use component, as Angular would wrap it in its own tag and this will break button grouping that we are using for other buttons.
      */
     ngOnInit() {
-        // ERROR is the common row-action case: hide the label on narrow viewports (it reappears from md up),
-        // mirroring the `hidden md:inline` label on neighbouring pButton actions. The button keeps NORMAL
-        // padding (not icon-only) so it stays geometrically identical to those View/Edit siblings.
-        const hidesTextOnNarrowViewport = this.buttonType() === ButtonType.ERROR && this.renderButtonText();
-        // Square icon-only padding applies ONLY when text is never rendered — matching the pButton directive,
-        // which becomes icon-only only when it has no label/text at all.
-        const isEffectivelyIconOnly = !this.renderButtonText();
-
+        // set button classes and submit property
         if (this.renderButtonStyle()) {
-            // Bootstrap is still globally loaded; strip any btn* classes the consumer hardcoded on the host so
-            // they do not double-style on top of the PrimeNG classes added below (enum values ARE the bootstrap classes).
-            ['btn', ...Object.values(ButtonType), ...Object.values(ButtonSize)].forEach((cls) => this.renderer.removeClass(this.elementRef.nativeElement, cls));
-
-            this.renderer.addClass(this.elementRef.nativeElement, 'p-button');
-            this.renderer.addClass(this.elementRef.nativeElement, 'p-component');
-
-            const sizeClass = BUTTON_SIZE_TO_PRIME_SIZE_CLASS[this.buttonSize()];
-            if (sizeClass) {
-                sizeClass.split(' ').forEach((cls) => this.renderer.addClass(this.elementRef.nativeElement, cls));
-            }
-
-            const severityClass = BUTTON_TYPE_TO_PRIME_SEVERITY_CLASS[this.buttonType()];
-            if (severityClass) {
-                severityClass.split(' ').forEach((cls) => this.renderer.addClass(this.elementRef.nativeElement, cls));
-            }
-
-            if (isEffectivelyIconOnly) {
-                this.renderer.addClass(this.elementRef.nativeElement, 'p-button-icon-only');
-            }
+            this.renderer.addClass(this.elementRef.nativeElement, 'btn');
+            this.renderer.addClass(this.elementRef.nativeElement, this.buttonType());
+            this.renderer.addClass(this.elementRef.nativeElement, this.buttonSize());
+            this.renderer.addClass(this.elementRef.nativeElement, 'me-1');
         }
         this.renderer.setProperty(this.elementRef.nativeElement, 'type', 'submit');
 
         // create a span with delete text
         if (this.renderButtonText()) {
             this.deleteTextSpan = this.renderer.createElement('span');
-            this.renderer.addClass(this.deleteTextSpan, 'p-button-label');
-            if (hidesTextOnNarrowViewport) {
-                // Hidden below md, shown from md upwards — consistent with sibling pButton View/Edit labels.
-                this.renderer.addClass(this.deleteTextSpan, 'hidden');
-                this.renderer.addClass(this.deleteTextSpan, 'md:inline');
+            if (this.buttonType() === ButtonType.ERROR) {
+                this.renderer.addClass(this.deleteTextSpan, 'd-none');
             }
+            this.renderer.addClass(this.deleteTextSpan, 'd-xl-inline');
             this.setTextContent();
             this.renderer.appendChild(this.elementRef.nativeElement, this.deleteTextSpan);
 

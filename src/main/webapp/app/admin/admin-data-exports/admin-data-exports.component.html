@@ -53,6 +53,10 @@
                             }
                             @if (canCancel(dataExport)) {
                                 <button
+                                    pButton
+                                    severity="danger"
+                                    size="small"
+                                    [renderButtonStyle]="false"
                                     jhiDeleteButton
                                     [entityTitle]="dataExport.userLogin ?? ''"
                                     [deleteQuestion]="'artemisApp.dataExport.admin.cancelConfirmation'"

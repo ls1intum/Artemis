@@ -66,6 +66,10 @@
 
 <ng-template #userActions let-user>
     <button
+        pButton
+        severity="danger"
+        size="small"
+        [renderButtonStyle]="false"
         jhiDeleteButton
         [actionType]="ActionType.Remove"
         [entityTitle]="user.login || user.email || ''"

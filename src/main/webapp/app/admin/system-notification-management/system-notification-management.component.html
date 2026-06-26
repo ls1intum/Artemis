@@ -80,6 +80,10 @@
                                 <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                             </a>
                             <button
+                                pButton
+                                severity="danger"
+                                size="small"
+                                [renderButtonStyle]="false"
                                 jhiDeleteButton
                                 [entityTitle]="!!notification.title ? notification.title : ''"
                                 deleteQuestion="artemisApp.systemNotification.delete.question"

@@ -107,7 +107,16 @@
                                         <fa-icon [icon]="faPencil" />
                                         <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
-                                    <button jhiDeleteButton (delete)="deleteLtiPlatform(platform.id!)" [dialogError]="dialogError$" data-testid="delete-platform-button">
+                                    <button
+                                        pButton
+                                        severity="danger"
+                                        size="small"
+                                        [renderButtonStyle]="false"
+                                        jhiDeleteButton
+                                        (delete)="deleteLtiPlatform(platform.id!)"
+                                        [dialogError]="dialogError$"
+                                        data-testid="delete-platform-button"
+                                    >
                                         <fa-icon [icon]="faTrash" />
                                     </button>
                                 </div>

@@ -27,6 +27,10 @@
             <!-- do not display the delete button when creating new competencies -->
             @if (competency().id) {
                 <button
+                    pButton
+                    severity="danger"
+                    size="small"
+                    [renderButtonStyle]="false"
                     jhiDeleteButton
                     [entityTitle]="competency().title ?? ''"
                     [deleteQuestion]="'artemisApp.standardizedCompetency.manage.deleteModal.question'"

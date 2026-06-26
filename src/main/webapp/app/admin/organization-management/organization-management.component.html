@@ -41,6 +41,10 @@
             <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
         </button>
         <button
+            pButton
+            severity="danger"
+            size="small"
+            [renderButtonStyle]="false"
             jhiDeleteButton
             [entityTitle]="organization.name"
             deleteQuestion="artemisApp.organizationManagement.delete.question"
