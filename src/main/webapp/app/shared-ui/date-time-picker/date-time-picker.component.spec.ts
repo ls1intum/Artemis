@@ -167,7 +167,7 @@ describe('FormDateTimePickerComponent', () => {
             fixture.detectChanges(false);
         }
 
-        it('shows a Done button for the time-only picker that closes the open panel', async () => {
+        it('commits the shown time and closes when the time-only confirm button is clicked (one-click apply)', async () => {
             fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
             fixture.detectChanges();
             const picker = innerPicker();
@@ -175,12 +175,29 @@ describe('FormDateTimePickerComponent', () => {
 
             const button = document.body.querySelector('.p-datepicker-buttonbar button') as HTMLButtonElement | null;
             expect(button).not.toBeNull();
+            expect(component.value()).toBeUndefined(); // nothing applied yet
 
             const hideSpy = vi.spyOn(picker, 'hideOverlay');
             button!.click();
 
             expect(hideSpy).toHaveBeenCalledOnce();
             expect(picker.overlayVisible).toBe(false);
+            // The displayed (default / current) time is committed in a single click, instead of requiring
+            // the user to first nudge a spinner field.
+            expect(component.value()).toBeDefined();
+        });
+
+        it('does not overwrite an already-selected time when the confirm button is clicked', async () => {
+            fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
+            const chosen = new Date('2022-01-02T22:15:00');
+            component.writeValue(chosen);
+            fixture.detectChanges();
+            const picker = innerPicker();
+            await openPanel(picker);
+
+            (document.body.querySelector('.p-datepicker-buttonbar button') as HTMLButtonElement).click();
+
+            expect(dayjs(component.value() as Date).isSame(chosen)).toBe(true);
         });
 
         it('does not render a button bar for the date-only (CALENDAR) picker', async () => {

@@ -4,7 +4,7 @@ import { faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fort
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DatePickerModule } from 'primeng/datepicker';
+import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -239,6 +239,44 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         // An empty field is valid (the required check is handled separately); a present-but-unparseable value is not.
         this.isInputValid.set(parsed == undefined || parsed.isValid());
         this.dateInputValue.set(parsed?.isValid() ? parsed.toISOString() : '');
+    }
+
+    /**
+     * p-datepicker accepts a valid *prefix* and silently ignores trailing characters, so
+     * "13.06.2026 18:30adasdasdsad" parses to 13.06.2026 18:30 and looks valid (PR #13009 review).
+     * On blur, reject input whose full text does not match the field's display format so such entries
+     * are flagged instead of accepted. Time-only pickers keep PrimeNG's lenient parsing (decided
+     * separately in review), and empty input is handled as valid-but-missing elsewhere.
+     */
+    onInputBlur(event: Event) {
+        if (this.timeOnly()) {
+            return;
+        }
+        const raw = (event.target as HTMLInputElement).value?.trim() ?? '';
+        if (raw === '') {
+            return;
+        }
+        const fullPattern = this.showTime() ? /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/ : /^\d{2}\.\d{2}\.\d{4}$/;
+        if (!fullPattern.test(raw)) {
+            this.isInputValid.set(false);
+            this.dateInputValue.set(raw);
+            this.needsParentSync = true;
+            this.onChange?.(undefined);
+            this.valueChanged();
+        }
+    }
+
+    /**
+     * Confirm button for the time picker. A time-only picker shows the default time (startAt / current
+     * time) in its spinner but does not write it to the model until the user nudges a spinner field, so
+     * applying the shown time previously took two clicks (nudge + close). When the field is still empty,
+     * commit the displayed time here so a single click applies it; otherwise just close (PR #13009 review).
+     */
+    applyAndClose(picker: DatePicker) {
+        if (this.timeOnly() && this.value() == undefined) {
+            this.updateField(this.startDate());
+        }
+        picker.hideOverlay();
     }
 
     /**

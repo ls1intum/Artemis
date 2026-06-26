@@ -24,6 +24,7 @@
         [ngModel]="value() ?? null"
         [ngModelOptions]="{ standalone: true }"
         (ngModelChange)="updateField($event)"
+        (onBlur)="onInputBlur($event)"
         name="datePicker"
         [showTime]="showTime()"
         [timeOnly]="timeOnly()"
@@ -46,11 +47,11 @@
         [showButtonBar]="showTime() || timeOnly()"
         [invalid]="showErrorBorder()"
     >
-        <!-- The picker applies a time selection immediately, but (unlike the legacy picker) leaves the
-             panel open. Provide an explicit confirm/close affordance for the modes with a time spinner. -->
+        <!-- The picker leaves the panel open after a time selection (unlike the legacy picker). Provide an
+             explicit confirm button that also commits the currently shown time, so applying it is one click. -->
         <ng-template #buttonbar>
             <div class="d-flex justify-content-end w-100">
-                <button type="button" class="btn btn-primary btn-sm" (click)="datePicker.hideOverlay()" jhiTranslate="entity.action.done"></button>
+                <button type="button" class="btn btn-primary btn-sm" (click)="applyAndClose(datePicker)" jhiTranslate="entity.action.done"></button>
             </div>
         </ng-template>
     </p-datepicker>
