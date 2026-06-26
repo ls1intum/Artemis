@@ -81,6 +81,7 @@
 @source './app/localci/build-agent-details';
 @source './app/localci/build-job-statistics';
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
+
 /*
  * Exclude test files: their prose ("should collapse the sidebar", "renders a table") would trip the same name
  * collisions (Tailwind scans full file text), and specs never carry runtime classes anyway.
