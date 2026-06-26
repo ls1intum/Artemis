@@ -133,6 +133,7 @@
                         [multiple]="true"
                         [unique]="true"
                         [suggestions]="groupSuggestions()"
+                        [completeOnFocus]="true"
                         [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
                         (completeMethod)="onGroupComplete($event)"
                         (onSelect)="onGroupSelect($event)"

@@ -365,10 +365,9 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     private addGroup(user: User, groupString: string) {
         if (groupString && this.allGroups.includes(groupString) && !user.groups?.includes(groupString)) {
-            if (!user.groups) {
-                user.groups = [];
-            }
-            user.groups.push(groupString);
+            // Assign a NEW array (rather than mutating in place) so the one-way `[ngModel]="user().groups"` sees a
+            // changed reference and PrimeNG's AutoComplete re-renders the chip for the freshly added group.
+            user.groups = [...(user.groups ?? []), groupString];
             this.commitUser(user);
         }
     }

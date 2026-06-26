@@ -5,6 +5,7 @@
     [multiple]="true"
     [unique]="true"
     [suggestions]="categorySuggestions()"
+    [completeOnFocus]="true"
     [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"
     (completeMethod)="onComplete($event)"
     (onSelect)="onItemSelect($event)"

@@ -11,6 +11,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { PaginatorState } from 'primeng/paginator';
 import { Subject } from 'rxjs';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -146,6 +147,13 @@ examples.forEach((activeConversation) => {
             component.transition();
             vi.advanceTimersByTime(301);
             expectSearchPerformed('', ConversationMemberSearchFilter.ALL);
+        });
+
+        it('onPageChange converts the 0-indexed PrimeNG page to a 1-indexed page and reloads', () => {
+            const transitionSpy = vi.spyOn(component, 'transition');
+            component.onPageChange({ page: 1 } as PaginatorState);
+            expect(component.page()).toBe(2);
+            expect(transitionSpy).toHaveBeenCalled();
         });
 
         it('should open add users dialog when button is pressed', () => {

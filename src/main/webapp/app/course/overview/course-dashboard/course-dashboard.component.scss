@@ -53,3 +53,9 @@
     min-height: min-content;
     width: 100%;
 }
+
+/* Let the overlaid "points / max (progress%)" label spill out of the (possibly narrow) value bar so it stays
+ * readable at low scores, matching the previous ng-bootstrap progress bar's `overflow-visible` behavior. */
+::ng-deep .points-progressbar .p-progressbar-value {
+    overflow: visible;
+}

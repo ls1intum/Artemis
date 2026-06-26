@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackAnalysisComponent, FeedbackAnalysisState } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.component';
+import { PaginatorState } from 'primeng/paginator';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
@@ -289,6 +290,12 @@ describe('FeedbackAnalysisComponent', () => {
             component.setPage(2);
             expect(component.page()).toBe(2);
             expect(loadDataSpy).toHaveBeenCalledOnce();
+        });
+
+        it('onPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+            const setPageSpy = vi.spyOn(component, 'setPage');
+            component.onPageChange({ page: 1 } as PaginatorState);
+            expect(setPageSpy).toHaveBeenCalledWith(2);
         });
     });
 

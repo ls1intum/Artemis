@@ -147,6 +147,7 @@ export class PostingContentPartComponent implements OnInit {
             data: { slideToReference },
             modal: true,
             dismissableMask: true,
+            closeOnEscape: true,
             style: { 'max-width': '95vw' },
         });
     }

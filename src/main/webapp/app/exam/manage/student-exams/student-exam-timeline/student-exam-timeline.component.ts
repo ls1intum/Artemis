@@ -349,6 +349,19 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     }
 
     /**
+     * p-slider commits keyboard adjustments to the value but, unlike the old mat-slider `(change)`, does NOT emit
+     * `(onSlideEnd)` for keyboard input. Navigate on keyup for the navigation keys so keyboard users get the same
+     * timeline update as a pointer release — without the per-step churn that binding `(onChange)` (which also fires
+     * continuously during a pointer drag) would cause.
+     */
+    onSliderKeyup(event: KeyboardEvent): void {
+        const navigationKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'];
+        if (navigationKeys.includes(event.key)) {
+            this.onSliderInputChange();
+        }
+    }
+
+    /**
      * Finds the submission for the current timestamp.
      * @param timestamp The timestamp for which the submission should be found.
      */

@@ -1,6 +1,7 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
+import { PaginatorState } from 'primeng/paginator';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -115,6 +116,12 @@ describe('LearningPathsTableComponent', () => {
         expect(onPageChangeSpy).toHaveBeenLastCalledWith(2);
         expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, { ...pageable, page: 2 });
         expect(getAverageProgressSpy).toHaveBeenCalledWith(courseId);
+    });
+
+    it('onPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+        const setPageSpy = vi.spyOn(component, 'setPage').mockResolvedValue();
+        component.onPageChange({ page: 1 } as PaginatorState);
+        expect(setPageSpy).toHaveBeenCalledWith(2);
     });
 
     it('should search for learning paths when the search term changes', async () => {

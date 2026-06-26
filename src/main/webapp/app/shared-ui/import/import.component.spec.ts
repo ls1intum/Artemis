@@ -3,6 +3,7 @@ import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { PaginatorState } from 'primeng/paginator';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ImportComponent } from 'app/shared-ui/import/import.component';
@@ -200,6 +201,14 @@ describe('ImportComponent', () => {
 
         // Number of times onPageChange is called with a truthy value.
         expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('onPaginatorPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+        const onPageChangeSpy = vi.spyOn(comp, 'onPageChange');
+        comp.onPaginatorPageChange({ page: 2 } as PaginatorState);
+        expect(onPageChangeSpy).toHaveBeenCalledWith(3);
+        comp.onPaginatorPageChange({} as PaginatorState);
+        expect(onPageChangeSpy).toHaveBeenCalledWith(1);
     });
 
     it('should sort rows with default values', () => {

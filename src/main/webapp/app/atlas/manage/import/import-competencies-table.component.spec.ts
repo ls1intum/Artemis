@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MockDirective } from 'ng-mocks';
 import { ImportCompetenciesTableComponent } from 'app/atlas/manage/import/import-competencies-table.component';
+import { PaginatorState } from 'primeng/paginator';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -43,6 +44,11 @@ describe('ImportCompetenciesTableComponent', () => {
 
     it('should change page', () => {
         component.onPageChange(5);
+        expect(component.search().page).toBe(5);
+    });
+
+    it('onPaginatorPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+        component.onPaginatorPageChange({ page: 4 } as PaginatorState);
         expect(component.search().page).toBe(5);
     });
 

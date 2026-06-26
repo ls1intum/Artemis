@@ -185,6 +185,10 @@ export class CategorySelectorPrimengComponent {
             const updated = [...this.selectedCategoryItems(), category];
             this.selectedCategoryItems.set(updated);
             this.selectedCategories.emit(updated);
+        } else {
+            // The selection was rejected (duplicate or MAX_CATEGORIES reached). PrimeNG has already added the option
+            // to its internal model, so resync it back to the accepted labels to avoid leaving a phantom chip.
+            this.autoComplete().writeValue(this.selectedCategoryLabels());
         }
     }
 
