@@ -11,6 +11,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildStepDTO;
  * Implementation of StatelessCIService for Hades. Contains methods to communicate with Hades.
  */
 
+@Lazy
 @Service
 @Profile(PROFILE_HADES)
 public class HadesService implements StatelessCIService {
@@ -69,7 +71,7 @@ public class HadesService implements StatelessCIService {
 
     private static final String assignmentPath = "./assignment";
 
-    private static final List<HadesBuildStepDTO.VolumeMount> volumeMounts = List.of(new HadesBuildStepDTO.VolumeMount("shared", "/shared"));
+    private static final List<HadesBuildStepDTO.VolumeMountDTO> volumeMounts = List.of(new HadesBuildStepDTO.VolumeMountDTO("shared", "/shared"));
 
     private static final String testOrder = "1";
 

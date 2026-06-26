@@ -14,11 +14,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -77,10 +77,10 @@ public class PublicProgrammingExerciseResultResource {
         this.artemisAuthenticationTokenHash = hashSha256(artemisAuthenticationTokenValue);
     }
 
-    @PostMapping("programming-exercises/new-result/{participationId}")
+    @PostMapping(value = "programming-exercises/new-result", params = "participationId")
     @EnforceNothing
     public ResponseEntity<Void> processNewProgrammingExerciseResultWithParticipationID(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationToken,
-            @PathVariable Long participationId, @RequestBody Object requestBody) {
+            @RequestParam Long participationId, @RequestBody Object requestBody) {
         log.debug("Received new programming exercise result from Hades");
         if (!matches(authorizationToken)) {
             log.info("Cancelling request with invalid authorizationToken {}", authorizationToken);
@@ -93,22 +93,8 @@ public class PublicProgrammingExerciseResultResource {
                 .findProgrammingExerciseParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
         log.debug("Successfully retrieved participation via ID: {}", participationId);
 
-        // Process the new result from the build result.
-        Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
+        processNewResultFromBuildResult(participation, requestBody, participation.getId().toString());
 
-        // Only notify the user about the new result if the result was created successfully.
-        if (result != null) {
-            if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                // If the solution participation was updated, also trigger the template participation build.
-                // This method will return without triggering the build if the submission is not of type TEST.
-                var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
-                triggerTemplateBuildIfTestCasesChanged(participation.getProgrammingExercise().getId(), programmingSubmission);
-            }
-
-            programmingMessagingService.notifyUserAboutNewResult(result, participation);
-
-            log.info("The new result for {} was saved successfully", participation);
-        }
         return ResponseEntity.ok().build();
     }
 
@@ -158,12 +144,17 @@ public class PublicProgrammingExerciseResultResource {
             throw new EntityNotFoundException("Participation for build plan " + planKey + " does not exist");
         }
 
+        processNewResultFromBuildResult(participation, requestBody, planKey);
+
+        return ResponseEntity.ok().build();
+    }
+
+    private void processNewResultFromBuildResult(ProgrammingExerciseParticipation participation, Object requestBody, String planKey) {
         // Process the new result from the build result.
         Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, requestBody);
 
         // Only notify the user about the new result if the result was created successfully.
         if (result != null) {
-
             if (participation instanceof SolutionProgrammingExerciseParticipation) {
                 // If the solution participation was updated, also trigger the template participation build.
                 // This method will return without triggering the build if the submission is not of type TEST.
@@ -175,7 +166,6 @@ public class PublicProgrammingExerciseResultResource {
 
             log.info("The new result for {} was saved successfully", planKey);
         }
-        return ResponseEntity.ok().build();
     }
 
     private boolean matches(String incomingToken) {

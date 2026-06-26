@@ -119,10 +119,11 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
     /**
      * Generates the build script for the given participation by resolving active build phases
      * and concatenating their scripts into a single shell command.
-     * <p>
-     * `@param` buildConfig the build configuration containing build phases
-     * `@param` participation the programming exercise participation
-     * `@param` programmingExercise the programming exercise
+     *
+     * @param buildConfig         the build configuration containing build phases
+     * @param participation       the programming exercise participation
+     * @param programmingExercise the programming exercise
+     * @return the concatenated shell script for all active build phases
      */
     public String getBuildScript(ProgrammingExerciseBuildConfig buildConfig, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise) {
         programmingExercise.setBuildConfig(buildConfig);

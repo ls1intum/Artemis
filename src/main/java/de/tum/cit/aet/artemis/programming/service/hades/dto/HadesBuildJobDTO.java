@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -14,13 +17,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * The API Specification for Hades can be found here: <a href="https://github.com/ls1intum/hades/blob/main/shared/payload/payload.go">...</a>
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record HadesBuildJobDTO(String name, List<Volume> volumes, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps)
-        implements Serializable {
+public record HadesBuildJobDTO(@NotBlank String name, List<VolumeDTO> volumes, HashMap<String, String> metadata, String timestamp, Integer priority,
+        @NotEmpty List<HadesBuildStepDTO> steps) implements Serializable {
 
-    public record Volume(String name, EmptyDir emptyDir) {
+    public record VolumeDTO(String name, EmptyDirDTO emptyDir) {
     }
 
-    public record EmptyDir() {
+    public record EmptyDirDTO() {
     }
 
     public HadesBuildJobDTO(String name, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps) {
@@ -28,7 +31,7 @@ public record HadesBuildJobDTO(String name, List<Volume> volumes, HashMap<String
             steps = List.of();
         }
 
-        List<Volume> volumes = List.of(new Volume("shared", new EmptyDir()));
+        List<VolumeDTO> volumes = List.of(new VolumeDTO("shared", new EmptyDirDTO()));
         this(name, volumes, metadata, timestamp, priority, steps);
     }
 }
