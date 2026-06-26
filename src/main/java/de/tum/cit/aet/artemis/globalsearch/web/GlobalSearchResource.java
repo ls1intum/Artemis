@@ -110,12 +110,16 @@ public class GlobalSearchResource {
         int effectiveLimit = Math.clamp(limit, 1, 25);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
+        log.info("[search] user={} query='{}' types={} courseId={} limit={}", user.getLogin(), query, requestedTypes, courseId, effectiveLimit);
+
         GlobalSearchService.FilterBuildResult filterResult = globalSearchService.buildFilter(user, courseId, requestedTypes);
         if (!filterResult.hasAccess()) {
+            log.info("[search] user={} has no accessible courses — returning empty", user.getLogin());
             return ResponseEntity.ok(List.of());
         }
 
         List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
+        log.info("[search] user={} query='{}' — Weaviate returned {} raw results", user.getLogin(), query, rawResults.size());
 
         Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;

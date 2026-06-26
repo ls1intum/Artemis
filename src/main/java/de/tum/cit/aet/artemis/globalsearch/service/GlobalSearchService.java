@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,8 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 @Service
 @Conditional(WeaviateEnabled.class)
 public class GlobalSearchService {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalSearchService.class);
 
     /** Entity types handled by the Iris answer pipeline (lectures are handled by a separate retriever). */
     public static final Set<String> IRIS_ENTITY_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.FAQ,
@@ -104,7 +108,10 @@ public class GlobalSearchService {
         boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
 
+        log.info("[filter] user={} isAdmin={} courseId={} types={}", user.getLogin(), isAdmin, courseId, requestedTypes);
+
         if (isAdmin && courseId == null && !needsCommFiltering) {
+            log.info("[filter] user={} is admin with no courseId — skipping access filter", user.getLogin());
             return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null, null);
         }
 
@@ -283,6 +290,7 @@ public class GlobalSearchService {
     @Nullable
     public Filter buildLectureUnitDisjunct(CourseRoleSets roleSets) {
         OffsetDateTime now = OffsetDateTime.now();
+        log.info("[filter] lecture_unit staffCourseIds={} studentCourseIds={} filterTime={}", roleSets.staffCourseIds(), roleSets.studentCourseIds(), now);
         List<Filter> sub = new ArrayList<>();
         if (!roleSets.staffCourseIds().isEmpty()) {
             sub.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
