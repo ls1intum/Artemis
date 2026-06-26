@@ -84,8 +84,7 @@ export const courseRoutes: Routes = [
         children: [
             {
                 path: CourseOverviewRoutePath.EXERCISES,
-                loadComponent: () =>
-                    import('app/core/course/overview/course-exercises-experimental/course-exercises-experimental.component').then((m) => m.CourseExercisesExperimentalComponent),
+                loadComponent: () => import('app/course/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.exercises',
@@ -105,9 +104,7 @@ export const courseRoutes: Routes = [
                         },
                         canActivate: [UserRouteAccessService],
                         loadComponent: () =>
-                            import('app/core/course/overview/course-exercises-experimental/group-detail/course-exercise-group-detail.component').then(
-                                (m) => m.CourseExerciseGroupDetailComponent,
-                            ),
+                            import('app/course/overview/course-exercises/group-detail/course-exercise-group-detail.component').then((m) => m.CourseExerciseGroupDetailComponent),
                     },
                     {
                         path: ':exerciseId',

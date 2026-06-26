@@ -205,8 +205,9 @@ export class CourseExercisesComponent {
     processExercises(exercises: Exercise[]): void {
         const sortedExercises = this.courseOverviewService.sortExercises(exercises);
         this._sortedExercises.set(sortedExercises);
-        this._sidebarExercises.set(this.courseOverviewService.mapExercisesToSidebarCardElements(sortedExercises));
-        this._accordionExerciseGroups.set(this.courseOverviewService.groupExercisesByDueDate(sortedExercises));
+        const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises, this._courseId());
+        this._sidebarExercises.set(ungroupedData);
+        this._accordionExerciseGroups.set(groupedData);
         this.updateSidebarData();
     }
 
