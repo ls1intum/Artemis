@@ -69,7 +69,8 @@ export default {
     meta: {
         type: 'problem',
         docs: {
-            description: 'Forbid hand-writing PrimeNG component root classes onto elements; render the real PrimeNG component (its CSS is injected lazily, so a bare class renders non-deterministically).',
+            description:
+                'Forbid hand-writing PrimeNG component root classes onto elements; render the real PrimeNG component (its CSS is injected lazily, so a bare class renders non-deterministically).',
         },
         messages: {
             handPaintedRoot:
@@ -89,7 +90,9 @@ export default {
             BoundAttribute(node) {
                 if (node.name === 'class' || node.name === 'ngClass') {
                     scan(node.value?.source, node, context);
-                } else if (typeof node.name === 'string') {
+                } else if (node.keySpan?.details?.startsWith('class.')) {
+                    // [class.p-button]="x" — the root is the attribute name. Gate on the `class.` key so a
+                    // component INPUT that happens to share the name is not scanned as a class.
                     scan(node.name, node, context);
                 }
             },

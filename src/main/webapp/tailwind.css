@@ -36,9 +36,9 @@
  * and the utility follows (a non-inline `@theme` would snapshot the light value). Named `state-*` (not `danger`)
  * ON PURPOSE: a `--color-danger` token generates `.text-danger`, which collides with Bootstrap's unlayered
  * `!important` `.text-danger` and would silently lose during coexistence. `state-*` collides with nothing, so it
- * works now AND survives Bootstrap removal with no rename. Usage: `text-state-danger`, `bg-state-success`,
- * `border-state-warning`. info is CYAN (--info), never blue. For DYNAMIC color, bind `[style.color]` to the raw
- * var instead, e.g. `[style.color]="'var(--danger)'"`.
+ * works now AND survives Bootstrap removal with no rename. Usage: `text-state-danger` (the `bg-`/`border-`
+ * variants generate on demand from the same token when a surface/border actually needs one). info is CYAN
+ * (--info), never blue. For DYNAMIC color, bind `[style.color]` to the raw var, e.g. `[style.color]="'var(--danger)'"`.
  */
 @theme inline {
     --color-state-danger: var(--danger);

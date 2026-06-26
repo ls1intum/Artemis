@@ -120,9 +120,9 @@ export class DeleteDialogComponent implements OnInit {
         }
         this.useFaCheckIcon.set(this.buttonType() !== ButtonType.ERROR);
         if (ButtonType.ERROR !== this.buttonType()) {
-            this.warningTextColor = 'text-default';
+            this.warningTextColor = '';
         } else {
-            this.warningTextColor = 'text-danger';
+            this.warningTextColor = 'text-state-danger';
         }
     }
 

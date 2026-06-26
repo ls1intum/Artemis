@@ -30,6 +30,9 @@ describe('no-bootstrap-classes', () => {
                 // [class] string concat whose literals are valid Tailwind utilities — no false positive
                 // (the identifier `extra` is an expression, not a class list).
                 { code: '<div [class]="\'flex gap-2 \' + extra"></div>' },
+                // Component INPUTS that share a Bootstrap class name are not class bindings — must not be flagged.
+                { code: '<my-dialog [close]="onClose" [card]="data"></my-dialog>' },
+                { code: '<div [attr.role]="\'row\'"></div>' },
             ],
             invalid: [
                 { code: '<div class="btn"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'btn' } }] },

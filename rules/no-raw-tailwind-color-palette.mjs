@@ -145,7 +145,9 @@ export default {
             BoundAttribute(node) {
                 if (node.name === 'class' || node.name === 'ngClass') {
                     scanClasses(node.value?.source, node, context);
-                } else if (typeof node.name === 'string') {
+                } else if (node.keySpan?.details?.startsWith('class.')) {
+                    // [class.<palette>]="x" — the token is the attribute name. Gate on the `class.` key so a
+                    // component INPUT that happens to share the name is not scanned as a class.
                     scanClasses(node.name, node, context);
                 }
                 scanWith(PRIMITIVE_VAR, 'primitivePalette', node.value?.source, node, context);

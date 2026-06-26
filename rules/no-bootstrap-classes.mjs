@@ -126,8 +126,9 @@ export default {
                     // `[class]`/`[ngClass]` bind an expression (object map or string concat), not a raw
                     // class list — scan the string literals inside it.
                     scanBindingExpression(node.value?.source, node, context);
-                } else if (typeof node.name === 'string') {
-                    // [class.btn]="..." -> the class token is the attribute name
+                } else if (node.keySpan?.details?.startsWith('class.')) {
+                    // [class.btn]="..." -> the class token is the attribute name. Gate on the `class.` key so a
+                    // component INPUT sharing a Bootstrap name ([card], [close], [row]) is not mistaken for a class.
                     scanClassList(node.name, node, context);
                 }
             },
