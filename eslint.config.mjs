@@ -402,6 +402,7 @@ export default tseslint.config(
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
             'src/main/webapp/app/localci/build-queue/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
+            'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
         ],
         languageOptions: {
             parser: angularTemplateParser,

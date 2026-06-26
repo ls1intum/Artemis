@@ -1,5 +1,10 @@
 @if (!collapsed()) {
-    <div class="expanded-instructions instructions-container">
+    <div
+        class="expanded-instructions instructions-container"
+        jhiResizable
+        [resizableEdges]="{ left: '.draggable-left' }"
+        [resizableConstraints]="{ minWidth: 215, maxWidth: 1000 }"
+    >
         <div class="draggable-left"><fa-icon [icon]="faGripLinesVertical" /></div>
         <div class="card">
             <div class="card-header text-white bg-primary" (click)="collapsed.set(!collapsed())">
