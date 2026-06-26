@@ -106,10 +106,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     selectedElementIds: string[] = [];
 
-    /**
-     * Local user information passed to Apollon collaboration awareness.
-     * Used for presence indicator and remote selection highlights in team exercises.
-     */
+    /** Local user passed to Apollon collaboration awareness (presence + remote selection highlights in team exercises). */
     protected readonly apollonCollaborationUser = signal<CollaborationUser | undefined>(undefined);
 
     readonly submission = signal<ModelingSubmission>(undefined!);
@@ -207,9 +204,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private initializeApollonCollaborationUser(): void {
-        // Ensure we have the current user identity available (cached in AccountService).
         this.accountService.identity().then((user: User | undefined) => {
             if (!user) {
+                // Without an identity the editor cannot mount its collaboration layer; surface it instead of failing silently.
+                captureException('Modeling team exercise: no user identity available for Apollon collaboration.');
                 return;
             }
             this.apollonCollaborationUser.set(this.buildApollonCollaborationUser(user));
@@ -217,11 +215,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private buildApollonCollaborationUser(user: User): CollaborationUser {
-        const name = (user.name ?? [user.firstName, user.lastName].filter(Boolean).join(' ').trim()) || user.login || 'User';
-        const id = user.login ?? (user.id !== undefined ? String(user.id) : undefined) ?? name;
-        const imageUrl = this.accountService.getImageUrl();
-        const color = collabColorFromName(name);
-        return { id, name, imageUrl, color };
+        const name = user.name || user.login || 'User';
+        return { id: user.login, name, color: collabColorFromName(name), imageUrl: this.accountService.getImageUrl() };
     }
 
     private setupMode(): void {
@@ -721,7 +716,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     onTeamSyncReconnected() {
-        this.modelingEditor()?.broadcastFullState();
+        const editor = this.modelingEditor();
+        editor?.broadcastFullState();
+        editor?.reannounceLocalAwareness();
     }
 
     private isModelEmpty(model?: string): boolean {

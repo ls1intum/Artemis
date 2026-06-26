@@ -200,7 +200,6 @@ describe('ModelingEditorComponent', () => {
             showCursors: true,
             showSelectionHighlights: true,
         });
-        expect(editor.setLocalAwarenessUser).toHaveBeenCalledWith(collaborationUser);
     });
 
     it('ngOnChanges', async () => {
@@ -386,6 +385,22 @@ describe('ModelingEditorComponent', () => {
         const editor = component['apollonEditor'] as any;
         component.broadcastFullState();
         expect(editor.broadcastFullState).toHaveBeenCalledOnce();
+    });
+
+    it('reannounceLocalAwareness re-pushes the local user and no-ops when not yet mounted', () => {
+        const collaborationUser = { id: 'student1', name: 'Student One', color: '#123456' };
+        // Before mount: calling must be a safe no-op
+        fixture.componentRef.setInput('collaborationUser', collaborationUser);
+        expect(() => component.reannounceLocalAwareness()).not.toThrow();
+
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.componentRef.setInput('collaborationEnabled', true);
+        fixture.detectChanges();
+
+        const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
+        editor.setLocalAwarenessUser.mockClear();
+        component.reannounceLocalAwareness();
+        expect(editor.setLocalAwarenessUser).toHaveBeenCalledExactlyOnceWith(collaborationUser);
     });
 
     it('should subscribe to model change patches and emit them.', async () => {

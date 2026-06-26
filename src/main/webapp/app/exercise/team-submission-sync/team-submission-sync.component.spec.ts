@@ -187,45 +187,29 @@ describe('Team Submission Sync Component', () => {
         generateInitialSyncSpy.mockRestore();
     });
 
-    it('should re-broadcast initial Yjs sync + awareness sync for modeling exercises on every STOMP (re)connect', () => {
+    it('additionally re-broadcasts the awareness sync for modeling exercises on every STOMP (re)connect', () => {
+        // The shared (re)connect lifecycle is covered by the test above; this asserts only the modeling delta:
+        // modeling sends a second patch carrying the initial awareness sync, on the first connect and on every reconnect.
         const mock = websocketService as unknown as MockWebsocketService;
         fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
         const expectedTopic = '/topic/participations/3/team/modeling-submissions/patch';
         const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
         const generateInitialAwarenessSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialAwarenessSyncMessage').mockReturnValue('initial-awareness-stub');
-
-        const reconnectedSpy = vi.fn();
-        component.reconnected.subscribe(reconnectedSpy);
         fixture.componentRef.setInput('submissionObservable', undefined);
         const sendSpy = vi.spyOn(websocketService, 'send');
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
 
         component.ngOnInit();
 
-        // Initial connect: initial sync + awareness sync + one reconnect emission
-        expect(sendSpy).toHaveBeenCalledTimes(2);
-        expect(sendSpy.mock.calls[0][0]).toBe(expectedTopic);
-        expect((sendSpy.mock.calls[0][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
-        expect(sendSpy.mock.calls[1][0]).toBe(expectedTopic);
-        expect((sendSpy.mock.calls[1][1] as SubmissionPatch).patch).toBe('initial-awareness-stub');
-        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
+        expect(sendSpy.mock.calls.map((call) => [call[0], (call[1] as SubmissionPatch).patch])).toEqual([
+            [expectedTopic, 'initial-sync-stub'],
+            [expectedTopic, 'initial-awareness-stub'],
+        ]);
 
-        // Disconnect — no fresh sync, no fresh reconnect signal
         mock.setConnectionState(new ConnectionState(false, true));
-        expect(sendSpy).toHaveBeenCalledTimes(2);
-        expect(reconnectedSpy).toHaveBeenCalledTimes(1);
-
-        // Reconnect — both initial messages + reconnect signal fire again
         mock.setConnectionState(new ConnectionState(true, true));
         expect(sendSpy).toHaveBeenCalledTimes(4);
-        expect((sendSpy.mock.calls[2][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
         expect((sendSpy.mock.calls[3][1] as SubmissionPatch).patch).toBe('initial-awareness-stub');
-        expect(reconnectedSpy).toHaveBeenCalledTimes(2);
-
-        // A duplicate connected=true must not re-fire
-        mock.setConnectionState(new ConnectionState(true, true));
-        expect(sendSpy).toHaveBeenCalledTimes(4);
-        expect(reconnectedSpy).toHaveBeenCalledTimes(2);
 
         generateInitialSyncSpy.mockRestore();
         generateInitialAwarenessSyncSpy.mockRestore();

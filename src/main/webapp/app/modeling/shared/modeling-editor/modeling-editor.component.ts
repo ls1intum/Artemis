@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewEncapsulation, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { ApollonEditor, ApollonMode, type CollaborationUser, SVG, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { DialogModule } from 'primeng/dialog';
 import { isFullScreen } from 'app/foundation/util/fullscreen.util';
@@ -79,7 +79,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             try {
                 this.apollonEditor.setLocalAwarenessUser(user);
             } catch (err) {
-                // Editor may not be fully initialized yet or already destroyed
                 captureException(err);
             }
         });
@@ -123,8 +122,10 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * This function initializes the Apollon editor in Modeling mode.
      */
     private initializeApollonEditor(): void {
-        const collaborationEnabled = this.collaborationEnabled() && !this.readOnly();
-        const collaborationUser = collaborationEnabled ? this.collaborationUser() : undefined;
+        // Read collaboration inputs untracked: the dedicated collaboration effect owns mount-on-user-resolve,
+        // so construction must not also re-trigger (and rebuild the editor) when the local user signal arrives.
+        const collaborationEnabled = untracked(() => this.collaborationEnabled()) && !this.readOnly();
+        const collaborationUser = collaborationEnabled ? untracked(() => this.collaborationUser()) : undefined;
 
         // Apollon determines whether to mount its collaboration UI from the initial options.
         // Wait for the local user instead of constructing an editor whose presence layer stays inactive.
@@ -139,8 +140,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             this.apollonEditor.destroy();
         }
 
-        // Apollon doesn't need assessments in Modeling mode
-        const umlModel = this.umlModel();
+        // Read the seed model untracked so construction (owned by the diagramType effect) does not re-run on
+        // every model update — that would tear down the live Yjs/collaboration session. Ongoing updates are
+        // applied to the existing editor by the dedicated umlModel effect. Assessments are stripped because
+        // Apollon doesn't need them in Modelling mode.
+        const umlModel = untracked(() => this.umlModel());
         if (umlModel) {
             ModelingEditorComponent.removeAssessments(umlModel);
         }
@@ -153,7 +157,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 readonly: this.readOnly(),
                 scrollLock: this.scrollLock(),
                 type: this.diagramType() || UMLDiagramType.ClassDiagram,
-                collaborationEnabled,
                 collaboration: collaborationEnabled
                     ? {
                           enabled: true,
@@ -182,15 +185,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 }
                 this.onModelPatch.emit(patch);
             });
-
-            if (collaborationEnabled && collaborationUser) {
-                // Ensure local awareness state is set even if the editor was re-mounted.
-                try {
-                    this.apollonEditor.setLocalAwarenessUser(collaborationUser);
-                } catch (err) {
-                    captureException(err);
-                }
-            }
         }
     }
 
@@ -300,5 +294,20 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     // stay out of sync until the next local edit.
     broadcastFullState(): void {
         this.apollonEditor?.broadcastFullState();
+    }
+
+    // Re-announce the local user's presence to peers. Apollon emits awareness only on local awareness
+    // changes, so after a reconnect a peer that pruned us on the awareness timeout would not see us again
+    // until our next cursor or selection change.
+    reannounceLocalAwareness(): void {
+        const user = this.collaborationUser();
+        if (!user) {
+            return;
+        }
+        try {
+            this.apollonEditor?.setLocalAwarenessUser(user);
+        } catch (err) {
+            captureException(err);
+        }
     }
 }
