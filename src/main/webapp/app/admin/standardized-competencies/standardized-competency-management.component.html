@@ -54,40 +54,32 @@
         </p-button>
     </div>
     @if (dataSource.data?.length || selectedKnowledgeArea() || selectedCompetency()) {
-        @if (dataSource.data?.length && (selectedCompetency() || selectedKnowledgeArea())) {
-            <!-- both tree and detail visible: resizable splitter -->
-            <p-splitter
-                styleClass="h-[calc(100vh-var(--sidebar-header-footer-combined-height,105px))]"
-                panelStyleClass="overflow-auto"
-                [dt]="{ root: { background: 'transparent', borderColor: 'transparent' } }"
-                layout="horizontal"
-                [panelSizes]="splitterPanelSizes()"
-                [minSizes]="[20, 20]"
-                (onResizeEnd)="onSplitterResizeEnd($event)"
-                data-testid="sc-splitter"
-            >
-                <ng-template #panel>
-                    <div class="h-full overflow-auto" data-testid="tree-panel">
-                        <ng-container [ngTemplateOutlet]="treeTemplate" />
+        <div class="flex items-start">
+            @if (dataSource.data?.length) {
+                <div class="grow overflow-auto" data-testid="tree-panel">
+                    <ng-container [ngTemplateOutlet]="treeTemplate" />
+                </div>
+            }
+            @if (selectedCompetency() || selectedKnowledgeArea()) {
+                <div
+                    class="sc-detail-panel"
+                    [style.width.px]="detailPanelWidth()"
+                    jhiResizable
+                    [resizableEdges]="{ left: '.draggable-left' }"
+                    [resizableConstraints]="{ minWidth: 250, maxWidth: 1100 }"
+                    [resizableApplyInlineSize]="false"
+                    (resizeMove)="detailPanelWidth.set($event.width)"
+                    data-testid="sc-detail-panel"
+                >
+                    <div class="draggable-left" data-testid="sc-detail-resize-handle">
+                        <fa-icon [icon]="faGripLinesVertical" />
                     </div>
-                </ng-template>
-                <ng-template #panel>
-                    <div class="h-full overflow-auto p-1" data-testid="sc-detail-panel">
+                    <div class="detail-content">
                         <ng-container [ngTemplateOutlet]="detailTemplate" />
                     </div>
-                </ng-template>
-            </p-splitter>
-        } @else if (dataSource.data?.length) {
-            <!-- only the tree is visible -->
-            <div class="w-full overflow-auto" data-testid="tree-panel">
-                <ng-container [ngTemplateOutlet]="treeTemplate" />
-            </div>
-        } @else {
-            <!-- only the detail panel is visible -->
-            <div class="w-full overflow-auto p-1" data-testid="sc-detail-panel">
-                <ng-container [ngTemplateOutlet]="detailTemplate" />
-            </div>
-        }
+                </div>
+            }
+        </div>
     } @else if (isLoading()) {
         <div class="flex justify-center" role="status">
             <p-progressSpinner [ariaLabel]="'loading' | artemisTranslate" data-testid="loading-spinner" />
@@ -170,7 +162,7 @@
     }
 </ng-template>
 
-<!-- Cancel confirmation dialog (replaced the legacy ng-bootstrap confirm modal) -->
+<!-- Cancel confirmation dialog -->
 <p-dialog
     [(visible)]="confirmDialogVisible"
     [modal]="true"

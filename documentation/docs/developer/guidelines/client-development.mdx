@@ -1,5 +1,5 @@
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 # Client Development
 
@@ -11,21 +11,22 @@ The Artemis client is an Angular project. Follow the official Angular style guid
 
 Key principles:
 
-* Use lazy loading to keep the initial bundle size small.
-* Prioritize code quality and test coverage. Reuse code and avoid duplication. Write meaningful tests.
+- Use lazy loading to keep the initial bundle size small.
+- Prioritize code quality and test coverage. Reuse code and avoid duplication. Write meaningful tests.
 
 **Angular 21 Best Practices**
 
 <Callout variant={CalloutVariant.danger}>
-**Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code.**
-Use Angular's signal-based APIs instead. An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules and will fail the build if legacy decorators are reintroduced. In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components.
+    **Legacy Angular decorators (`@Input`, `@Output`, `@ViewChild`, `@ViewChildren`, `@ContentChild`, `@ContentChildren`) must not be used in new code.** Use Angular's signal-based
+    APIs instead. An ESLint rule (`enforce-signal-apis-in-migrated-modules`) enforces this in fully migrated modules and will fail the build if legacy decorators are reintroduced.
+    In modules not yet fully migrated, prefer signal-based APIs for new components but maintain consistency within existing components.
 </Callout>
 
-* Use **standalone components** instead of Angular modules: https://angular.dev/reference/migrations/standalone
-* Use **signals** for reactive state management. Signals allow Angular to granularly track how and where state is used, enabling optimized rendering updates: https://angular.dev/guide/signals
-* Find out more in the following guide: https://blog.angular-university.io/angular-signal-components
+- Use **standalone components** instead of Angular modules: https://angular.dev/reference/migrations/standalone
+- Use **signals** for reactive state management. Signals allow Angular to granularly track how and where state is used, enabling optimized rendering updates: https://angular.dev/guide/signals
+- Find out more in the following guide: https://blog.angular-university.io/angular-signal-components
 
-* Use `input()` / `input.required()` instead of `@Input()`, and `output()` instead of `@Output()`:
+- Use `input()` / `input.required()` instead of `@Input()`, and `output()` instead of `@Output()`:
 
     ```ts
     // Don't - legacy decorators are forbidden
@@ -38,7 +39,7 @@ Use Angular's signal-based APIs instead. An ESLint rule (`enforce-signal-apis-in
     myOutput = output<string>();
     ```
 
-* Use `viewChild()` / `viewChild.required()` instead of `@ViewChild()`, and `viewChildren()` instead of `@ViewChildren()`:
+- Use `viewChild()` / `viewChild.required()` instead of `@ViewChild()`, and `viewChildren()` instead of `@ViewChildren()`:
 
     ```ts
     // Don't - legacy decorators are forbidden
@@ -51,7 +52,7 @@ Use Angular's signal-based APIs instead. An ESLint rule (`enforce-signal-apis-in
     myRefs = viewChildren<MyComponent>(MyComponent);
     ```
 
-* Use `signal()`, `computed()`, and `effect()` for component state instead of plain class fields:
+- Use `signal()`, `computed()`, and `effect()` for component state instead of plain class fields:
 
     ```ts
     // Don't - plain fields don't integrate with Angular's change detection
@@ -63,24 +64,28 @@ Use Angular's signal-based APIs instead. An ESLint rule (`enforce-signal-apis-in
     doubled = computed(() => this.count() * 2);
     ```
 
-* Use the `inject()` function for dependency injection instead of constructor injection: https://angular.dev/reference/migrations/inject-function
-* Prefer `OnPush` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
-* See the migration example: https://github.com/ls1intum/Artemis/pull/9299
+- Use the `inject()` function for dependency injection instead of constructor injection: https://angular.dev/reference/migrations/inject-function
+- Prefer `OnPush` change detection for components: https://blog.angular-university.io/onpush-change-detection-how-it-works
+- See the migration example: https://github.com/ls1intum/Artemis/pull/9299
 
 **UI Component Library: PrimeNG**
 
 <Callout variant={CalloutVariant.danger}>
-**`@ng-bootstrap/ng-bootstrap` is deprecated.** Do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, or any other ng-bootstrap component in new code. ng-bootstrap is incompatible with Angular signal inputs (`input()`/`input.required()`) — assigning to a signal input via `modalRef.componentInstance.X = Y` silently fails. We are removing the dependency entirely; existing usages are being migrated to PrimeNG incrementally.
+    **`@ng-bootstrap/ng-bootstrap` is deprecated.** Do not use `NgbModal`, `NgbActiveModal`, `NgbModalRef`, `NgbTooltip`, `NgbDropdown`, or any other ng-bootstrap component in new
+    code. ng-bootstrap is incompatible with Angular signal inputs (`input()`/`input.required()`) — assigning to a signal input via `modalRef.componentInstance.X = Y` silently
+    fails. We are removing the dependency entirely; existing usages are being migrated to PrimeNG incrementally.
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-**We are migrating from Bootstrap to [Tailwind CSS v4](https://tailwindcss.com/) (utilities) + [PrimeNG](https://primeng.org/) (components).** All new UI elements must use PrimeNG components for behavior and Tailwind utilities for layout/spacing/color. Do not introduce new Bootstrap components or Bootstrap CSS classes. Existing Bootstrap usage is migrated module by module.
+    **We are migrating from Bootstrap to [Tailwind CSS v4](https://tailwindcss.com/) (utilities) + [PrimeNG](https://primeng.org/) (components).** All new UI elements must use
+    PrimeNG components for behavior and Tailwind utilities for layout/spacing/color. Do not introduce new Bootstrap components or Bootstrap CSS classes. Existing Bootstrap usage is
+    migrated module by module.
 </Callout>
 
-* Use PrimeNG components (buttons, tables, dialogs, inputs, etc.) for all new UI development.
-* For modals/dialogs, use PrimeNG's `DialogService` (`primeng/dynamicdialog`) — see `src/main/webapp/app/exam/manage/exam-management/exam-management.component.ts` for a reference implementation.
-* Use Tailwind utilities (not Bootstrap classes) for layout, spacing, and color; bind colors to semantic tokens only. See [Styling](#styling) for the decision rule, the Bootstrap→Tailwind/PrimeNG quick reference, and the coexistence rules.
-* In a module not yet migrated off Bootstrap, keep its existing Bootstrap classes consistent rather than mixing in Tailwind piecemeal — migrate the module as a unit (a Tailwind utility cannot reliably override an unlayered Bootstrap rule during coexistence).
+- Use PrimeNG components (buttons, tables, dialogs, inputs, etc.) for all new UI development.
+- For modals/dialogs, use PrimeNG's `DialogService` (`primeng/dynamicdialog`) — see `src/main/webapp/app/exam/manage/exam-management/exam-management.component.ts` for a reference implementation.
+- Use Tailwind utilities (not Bootstrap classes) for layout, spacing, and color; bind colors to semantic tokens only. See [Styling](#styling) for the decision rule, the Bootstrap→Tailwind/PrimeNG quick reference, and the coexistence rules.
+- In a module not yet migrated off Bootstrap, keep its existing Bootstrap classes consistent rather than mixing in Tailwind piecemeal — migrate the module as a unit (a Tailwind utility cannot reliably override an unlayered Bootstrap rule during coexistence).
 
 <Callout variant={CalloutVariant.danger}>
 **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
@@ -88,6 +93,7 @@ Use Angular's signal-based APIs instead. An ESLint rule (`enforce-signal-apis-in
 This also includes getter functions. The only exception is the use of [signals](https://angular.dev/guide/signals).
 
 If you need more information/examples or methods to avoid function calls, have a look at this [article](https://dev.to/sandrocagara/angular-avoid-function-calls-in-templates-1mfa).
+
 </Callout>
 
 ### Zoneless change detection & signal-based state
@@ -109,6 +115,7 @@ This is enforced by the `localRules/prefer-signal-template-state` ESLint rule (a
 // eslint-disable-next-line localRules/prefer-signal-template-state -- [(ascending)] two-way to jhiSort; a signal cannot back [(x)]
 reverse = true;
 ```
+
 </Callout>
 
 **Why.** With zone.js, Angular re-ran change detection after _every_ async event (any `setTimeout`, XHR, event, promise) and re-checked the whole component tree. Without it, Angular only schedules a re-render when something it can actually observe changes: a **signal read in a template updates**, an `async` pipe emits, a template event handler `(click)` runs, or code explicitly calls `markForCheck()`. A plain field that you reassign inside an async callback changes _nothing Angular is watching_, so the template keeps showing the old value. Background: [Angular zoneless guide](https://angular.dev/guide/zoneless), [Angular signals guide](https://angular.dev/guide/signals).
@@ -204,16 +211,16 @@ constructor() {
 
 **The handful of legitimate non-signal cases** (an impure self-updating pipe such as a time-ago pipe; CD on dynamically injected components living outside the template tree) require an explicit, commented justification. If you ever think you need `NgZone`, you don't — it is a no-op under zoneless and is banned.
 
-| Member                                          | Signal API                                          |
-| ----------------------------------------------- | --------------------------------------------------- |
-| Local mutable state read by the template        | `signal()` + `.set()` / `.update()`                 |
-| Value derived from other signals/inputs         | `computed()`                                        |
-| Component input                                 | `input()` / `input.required()`                      |
-| Two-way bound input                             | `model()`                                           |
-| Derived value that is also locally settable     | `linkedSignal()`                                    |
+| Member                                           | Signal API                                          |
+| ------------------------------------------------ | --------------------------------------------------- |
+| Local mutable state read by the template         | `signal()` + `.set()` / `.update()`                 |
+| Value derived from other signals/inputs          | `computed()`                                        |
+| Component input                                  | `input()` / `input.required()`                      |
+| Two-way bound input                              | `model()`                                           |
+| Derived value that is also locally settable      | `linkedSignal()`                                    |
 | `@ViewChild` / `@ViewChildren` / `@ContentChild` | `viewChild()` / `viewChildren()` / `contentChild()` |
-| Sync state to a non-reactive API (rare)         | `effect()`                                          |
-| Constant (icon, enum, injected service)         | plain `readonly` field — no signal needed           |
+| Sync state to a non-reactive API (rare)          | `effect()`                                          |
+| Constant (icon, enum, injected service)          | plain `readonly` field — no signal needed           |
 
 Reference migration: [PR #12872 (zoneless migration)](https://github.com/ls1intum/Artemis/pull/12872). Further reading: [Angular signals](https://angular.dev/guide/signals), [zoneless](https://angular.dev/guide/zoneless), [signal queries](https://angular.dev/guide/components/queries), [linkedSignal](https://angular.dev/guide/signals/linked-signal), [signal-input migration](https://angular.dev/reference/migrations/signal-inputs).
 
@@ -227,21 +234,24 @@ Prefer reactive primitives over the `ngOnChanges` lifecycle hook in signal-based
 A belief carried over from Angular 17–18 holds that `ngOnChanges` is never called for signal inputs. **That is no longer true.** In Angular 21, `ngOnChanges` **does** fire for signal inputs (`input()` / `input.required()` / `model()`) with a full `SimpleChanges` record, and the first `ngOnChanges` still runs before `ngOnInit`. (Internally, signal-input writes are routed through `NgOnChangesFeature` → `ngOnChangesSetInput`, which records a `SimpleChange` and applies the value to the input signal; `ngOnChanges` is registered as a per-change-detection pre-order check hook. See [`OnChanges`](https://angular.dev/api/core/OnChanges).)
 
 So `ngOnChanges` is functional and not a correctness bug — but the Angular docs still recommend `computed`/`effect`, and a signal-first code base avoids a whole class of "I forgot to keep the derived field in sync" bugs.
+
 </Callout>
 
 **Pick the right reactive primitive.** Angular's guidance is `computed` first, `effect` last — [effects are for syncing signals to non-reactive APIs](https://angular.dev/guide/signals/effect), not for general reactivity:
 
-| Old `ngOnChanges` shape | Idiomatic signal replacement |
-| --- | --- |
-| Recompute a value derived from inputs/state | `computed()` — lazy, memoised, cannot go stale |
-| Derived value that can also be set locally | `linkedSignal()` |
-| Genuine side effect (subscribe, imperative / 3rd-party API, DOM) | `effect()` — use sparingly; it is the *last* API to reach for |
-| Need `SimpleChanges.previousValue` or `isFirstChange()` | keep `ngOnChanges` for now — signals don't expose these directly; document why with a comment (still a future-removal target) |
-| Logic that must run **before** child components initialise | keep `ngOnChanges` for now — it runs before `ngOnInit`, an `effect()` runs afterwards; document why with a comment (still a future-removal target) |
+| Old `ngOnChanges` shape                                          | Idiomatic signal replacement                                                                                                                       |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Recompute a value derived from inputs/state                      | `computed()` — lazy, memoised, cannot go stale                                                                                                     |
+| Derived value that can also be set locally                       | `linkedSignal()`                                                                                                                                   |
+| Genuine side effect (subscribe, imperative / 3rd-party API, DOM) | `effect()` — use sparingly; it is the _last_ API to reach for                                                                                      |
+| Need `SimpleChanges.previousValue` or `isFirstChange()`          | keep `ngOnChanges` for now — signals don't expose these directly; document why with a comment (still a future-removal target)                      |
+| Logic that must run **before** child components initialise       | keep `ngOnChanges` for now — it runs before `ngOnInit`, an `effect()` runs afterwards; document why with a comment (still a future-removal target) |
 
 ```ts
 // Don't - derive state imperatively in ngOnChanges (has to be kept in sync by hand)
-@Component({ /* ... */ })
+@Component({
+    /* ... */
+})
 export class ExampleComponent implements OnChanges {
     value = input.required<number>();
     doubled = 0;
@@ -251,7 +261,9 @@ export class ExampleComponent implements OnChanges {
 }
 
 // Do - derive declaratively; it can never go stale
-@Component({ /* ... */ })
+@Component({
+    /* ... */
+})
 export class ExampleComponent {
     value = input.required<number>();
     doubled = computed(() => this.value() * 2);
@@ -266,46 +278,46 @@ The goal is to **remove `ngOnChanges` entirely**: migrate every usage to `comput
 
 ### Naming Conventions
 
-* Use PascalCase for type and enum names.
-* Do not prefix interfaces with "I".
-* Use camelCase for functions, properties, and local variables.
-* Use SCREAMING_SNAKE_CASE for constants (readonly properties).
-* Do not prefix private properties with "_".
-* Use descriptive, whole words for names.
+- Use PascalCase for type and enum names.
+- Do not prefix interfaces with "I".
+- Use camelCase for functions, properties, and local variables.
+- Use SCREAMING_SNAKE_CASE for constants (readonly properties).
+- Do not prefix private properties with "\_".
+- Use descriptive, whole words for names.
 
 ### Type Usage
 
-* Do not export types/functions unless you need to share it across multiple components.
-* Do not introduce new types/values to the global namespace.
-* Shared types/interfaces should be defined in 'types.ts'.
-* Within a file, type definitions should come first.
-* Interfaces and types offer almost the same functionality. To ensure consistency, choose `interface` over `type` whenever possible.
+- Do not export types/functions unless you need to share it across multiple components.
+- Do not introduce new types/values to the global namespace.
+- Shared types/interfaces should be defined in 'types.ts'.
+- Within a file, type definitions should come first.
+- Interfaces and types offer almost the same functionality. To ensure consistency, choose `interface` over `type` whenever possible.
 
     ```ts
     // Dont do
     type AngularLink = {
         text: string;
-        routerLink: (string | number) [];
-    }
+        routerLink: (string | number)[];
+    };
 
     // Do
     interface AngularLink {
         text: string;
-        routerLink: (string | number) [];
+        routerLink: (string | number)[];
     }
 
     // And this is also allowed (because interface is not possible here)
     type RouterLinkPart = string | number;
     ```
 
-* Use strict typing to avoid type errors: **Never** use `any`.
+- Use strict typing to avoid type errors: **Never** use `any`.
 
-* Do not use anonymous data structures.
+- Do not use anonymous data structures.
 
     ```ts
     interface AngularLink {
         text: string;
-        routerLink: (string | number) [];
+        routerLink: (string | number)[];
     }
 
     // Do not do this because the type error will not be recognized during compile time.
@@ -321,9 +333,8 @@ Use **undefined**. **Never** use `null`.
 
 ### General Assumptions
 
-* Consider objects like Nodes, Symbols, etc. as immutable outside the component that created them. Do not change them.
-* Consider arrays as immutable by default after creation.
-
+- Consider objects like Nodes, Symbols, etc. as immutable outside the component that created them. Do not change them.
+- Consider arrays as immutable by default after creation.
 
 ## Components & Template Guidelines
 
@@ -341,20 +352,19 @@ More info about standalone components: https://angular.dev/guide/components/impo
 
 ### Comments & Documentation
 
-* Use JSDoc style comments for functions, interfaces, enums, and classes.
-* Provide extensive documentation inline and using JSDoc to make sure other developers can understand the code and the rationale behind the implementation without having to read the code.
+- Use JSDoc style comments for functions, interfaces, enums, and classes.
+- Provide extensive documentation inline and using JSDoc to make sure other developers can understand the code and the rationale behind the implementation without having to read the code.
 
 ### Strings
 
-* Use single quotes for strings.
-* All strings visible to the user need to be localized (see next section).
-
+- Use single quotes for strings.
+- All strings visible to the user need to be localized (see next section).
 
 ### Localization
 
-* Make an entry in the corresponding `i18n/{language}/{area}.json` files for all languages Artemis supports (currently English and German).
-* To display the string in HTML files, use the `jhiTranslate` directive or the `artemisTranslate` pipe.
-* To ensure consistency, always choose the directive over the pipe whenever possible.
+- Make an entry in the corresponding `i18n/{language}/{area}.json` files for all languages Artemis supports (currently English and German).
+- To display the string in HTML files, use the `jhiTranslate` directive or the `artemisTranslate` pipe.
+- To ensure consistency, always choose the directive over the pipe whenever possible.
 
 Do:
 
@@ -380,9 +390,9 @@ Don't do:
 
 ### Buttons and Links
 
-* Be aware that Buttons navigate only in the same tab while Links provide the option to use the context menu or a middle-click to open the page in a new tab. Therefore:
-* Buttons are best used to trigger certain functionalities (e.g. `<button (click)='deleteExercise(exercise)'>...</button`)
-* Links are best for navigating on Artemis (e.g. `<a [routerLink]='getLinkForExerciseEditor(exercise)' [queryParams]='getQueryParamsForEditor(exercise)'>...</a>`)
+- Be aware that Buttons navigate only in the same tab while Links provide the option to use the context menu or a middle-click to open the page in a new tab. Therefore:
+- Buttons are best used to trigger certain functionalities (e.g. `<button (click)='deleteExercise(exercise)'>...</button`)
+- Links are best for navigating on Artemis (e.g. `<a [routerLink]='getLinkForExerciseEditor(exercise)' [queryParams]='getQueryParamsForEditor(exercise)'>...</a>`)
 
 ### Icons with Text
 
@@ -391,8 +401,7 @@ If you use icons next to text (for example for a button or link), make sure that
 Do this:
 
 ```html
-<fa-icon [icon]="'times'"></fa-icon>
-<span>Text</span>
+<fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
 ```
 
 Don't do one of these or any other combination of whitespaces:
@@ -400,8 +409,7 @@ Don't do one of these or any other combination of whitespaces:
 ```html
 <fa-icon [icon]="'times'"></fa-icon><span>Text</span>
 
-<fa-icon [icon]="'times'"></fa-icon><span> Text</span>
-<fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
+<fa-icon [icon]="'times'"></fa-icon><span> Text</span> <fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
 
 <fa-icon [icon]="'times'"></fa-icon>
 <span> Text</span>
@@ -411,18 +419,17 @@ Ignoring this will lead to inconsistent spacing between icons and text.
 
 ### Labels
 
-* Use labels to caption inputs like text fields and checkboxes.
-* Associated labels help screen readers to read out the text of the label when the input is focused.
-* Additionally they allow the label to act as an input itself (e.g. the label also activates the checkbox).
-* Make sure to associate them by putting the input inside the label component or by adding the for attribute in the label referencing the id of the input.
+- Use labels to caption inputs like text fields and checkboxes.
+- Associated labels help screen readers to read out the text of the label when the input is focused.
+- Additionally they allow the label to act as an input itself (e.g. the label also activates the checkbox).
+- Make sure to associate them by putting the input inside the label component or by adding the for attribute in the label referencing the id of the input.
 
 Do one of these:
 
 ```html
 <!-- always prefer this solution -->
 <input id="inputId" class="form-check-input" type="checkbox" (click)="foo()" />
-<label class="form-check-label" for="inputId" jhiTranslate="artemisApp.labelText">
-</label>
+<label class="form-check-label" for="inputId" jhiTranslate="artemisApp.labelText"> </label>
 
 <!-- only do this if the first solution does not work -->
 <label class="form-check-label">
@@ -431,36 +438,35 @@ Do one of these:
 </label>
 ```
 
-
 ## Code Style & Quality
 
 ### Code Style
 
-* Use arrow functions over anonymous function expressions.
-* Always surround arrow function parameters.
-    For example, `x => x + x` is wrong but the following are correct:
+- Use arrow functions over anonymous function expressions.
+- Always surround arrow function parameters.
+  For example, `x => x + x` is wrong but the following are correct:
 
     1. `(x) => x + x`
     2. `(x,y) => x + y`
     3. `<T>(x: T, y: T) => x === y`
 
-* Always surround loop and conditional bodies with curly braces. Statements on the same line are allowed to omit braces.
-* Open curly braces always go on the same line as whatever necessitates them.
-* Parenthesized constructs should have no surrounding whitespace.
-    A single space follows commas, colons, and semicolons in those constructs. For example:
+- Always surround loop and conditional bodies with curly braces. Statements on the same line are allowed to omit braces.
+- Open curly braces always go on the same line as whatever necessitates them.
+- Parenthesized constructs should have no surrounding whitespace.
+  A single space follows commas, colons, and semicolons in those constructs. For example:
 
     1. `for (var i = 0, n = str.length; i < 10; i++) { }`
     2. `if (x < 10) { }`
     3. `function f(x: number, y: string): void { }`
 
-* Use a single declaration per variable statement (i.e. use `var x = 1; var y = 2;` over `var x = 1, y = 2;`).
-* `else` goes on the same line from the closing curly brace.
-* Use 4 spaces per indentation.
+- Use a single declaration per variable statement (i.e. use `var x = 1; var y = 2;` over `var x = 1, y = 2;`).
+- `else` goes on the same line from the closing curly brace.
+- Use 4 spaces per indentation.
 
 ### Prettier and ESLint
 
-* We use `prettier` to style code automatically and `eslint` to find additional issues.
-* You can find the corresponding commands to invoke those tools in `package.json`.
+- We use `prettier` to style code automatically and `eslint` to find additional issues.
+- You can find the corresponding commands to invoke those tools in `package.json`.
 
 ### Preventing Memory Leaks
 
@@ -472,27 +478,27 @@ A very good explanation that you should definitely read to understand the proble
 
 In essence:
 
-*  JS is a garbage-collected language
-*  Modern garbage collectors improve on this algorithm in different ways, but the essence is the same: **reachable pieces of memory are marked as such and the rest is considered garbage.**
-*  Unwanted references are references to pieces of memory that the developer knows they won't be needing
-   anymore but that for some reason are kept inside the tree of an active root. **In the context of JavaScript, unwanted references are variables kept somewhere in the code that will not be used anymore and point to a piece of memory that could otherwise be freed.**
+- JS is a garbage-collected language
+- Modern garbage collectors improve on this algorithm in different ways, but the essence is the same: **reachable pieces of memory are marked as such and the rest is considered garbage.**
+- Unwanted references are references to pieces of memory that the developer knows they won't be needing
+  anymore but that for some reason are kept inside the tree of an active root. **In the context of JavaScript, unwanted references are variables kept somewhere in the code that will not be used anymore and point to a piece of memory that could otherwise be freed.**
 
 **What are common reasons for memory leaks?**
 
 https://auth0.com/blog/four-types-of-leaks-in-your-javascript-code-and-how-to-get-rid-of-them/:
 
-*  Accidental global variables
-*  Forgotten timers or callbacks
-*  Out of DOM references
-*  Closures
+- Accidental global variables
+- Forgotten timers or callbacks
+- Out of DOM references
+- Closures
 
 RXJS subscriptions not being unsubscribed: https://www.twilio.com/blog/prevent-memory-leaks-angular-observable-ngondestroy
-
 
 ## UI/UX & Layout
 
 <Callout variant={CalloutVariant.info}>
-For design principles and standards, refer to the **[AET UI/UX Guidelines](https://ls1intum.github.io/ui-ux-guidelines/docs/intro)**. The guidelines below cover Artemis-specific implementation details.
+    For design principles and standards, refer to the **[AET UI/UX Guidelines](https://ls1intum.github.io/ui-ux-guidelines/docs/intro)**. The guidelines below cover
+    Artemis-specific implementation details.
 </Callout>
 
 ### Responsive Layout
@@ -509,7 +515,6 @@ Do not use the following for this purpose if it can be avoided:
     </div>
 </div>
 ```
-
 
 ### Styling
 
@@ -533,40 +538,44 @@ We are migrating off Bootstrap onto **[Tailwind CSS v4](https://tailwindcss.com/
 
 **Decision rule — what to reach for:**
 
-* **Tailwind utility** for pure presentation: layout, flexbox/grid, spacing, sizing, typography, and color application (`flex`, `grid grid-cols-12`, `gap-2`, `mb-3`, `text-end`, `font-semibold`, `w-full`).
-* **PrimeNG component** for anything with behavior, state, accessibility semantics, or that Bootstrap modeled as a *component*: `p-button`, `p-tag` (badges), `p-message` (alerts), `p-card`, `p-table`, `p-tabs`, `p-paginator`, `p-tooltip`, `p-progressbar`, dialogs (`DialogService`), form inputs (`pInputText`/`p-select`/`p-checkbox`), `p-menu`, `p-datepicker`.
-* **A small owned helper** only when neither fits and it recurs.
+- **Tailwind utility** for pure presentation: layout, flexbox/grid, spacing, sizing, typography, and color application (`flex`, `grid grid-cols-12`, `gap-2`, `mb-3`, `text-end`, `font-semibold`, `w-full`).
+- **PrimeNG component** for anything with behavior, state, accessibility semantics, or that Bootstrap modeled as a _component_: `p-button`, `p-tag` (badges), `p-message` (alerts), `p-card`, `p-table`, `p-tabs`, `p-paginator`, `p-tooltip`, `p-progressbar`, dialogs (`DialogService`), form inputs (`pInputText`/`p-select`/`p-checkbox`), `p-menu`, `p-datepicker`.
+- **A small owned helper** only when neither fits and it recurs.
 
 **Bootstrap → Tailwind/PrimeNG quick reference** (apply when migrating a module):
 
-| Bootstrap | Replacement |
-| --- | --- |
-| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group` | `p-button` (`severity`, `size="small"`, `[outlined]`, `<p-buttonGroup>`) |
-| `badge` / `bg-success` badge | `p-tag` (`severity`, `[rounded]`) |
-| `alert alert-*` | `p-message` (`severity`) |
-| `card` | `p-card` (or a Tailwind `rounded-lg border p-4` box for a static panel) |
-| `table table-striped table-responsive` | `p-table` |
-| `form-control` / `form-group` / `form-check` | PrimeNG inputs + `<div class="flex flex-col gap-2">` + `p-checkbox`/`p-radiobutton` |
-| `row` + `col-md-*` | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*` (or flex) |
-| `d-flex` / `d-none` | `flex` / `hidden` |
-| `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col` |
-| `text-right` / `text-left` | `text-end` / `text-start` (logical) |
-| `text-muted` | `text-muted-color` |
-| `text-danger` / `text-success` / `text-warning` / `text-info` | `text-(--danger)` / `text-(--success)` / `text-(--warning)` / `text-(--info)` (arbitrary form — see **Colors** below) |
-| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*` | same-named Tailwind utilities, but **the numeric scales differ** — Bootstrap's steps are rem-fixed (`mb-3` = 1rem) while Tailwind's are `0.25rem × n` (`mb-3` = 0.75rem). Convert by target rem (Bootstrap `mb-3` → Tailwind `mb-4`), never by copying the index. |
+| Bootstrap                                                       | Replacement                                                                                                                                                                                                                                                       |
+| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `btn btn-primary` / `btn-sm` / `btn-outline-*` / `btn-group`    | `p-button` (`severity`, `size="small"`, `[outlined]`, `<p-buttonGroup>`)                                                                                                                                                                                          |
+| `badge` / `bg-success` badge                                    | `p-tag` (`severity`, `[rounded]`)                                                                                                                                                                                                                                 |
+| `alert alert-*`                                                 | `p-message` (`severity`)                                                                                                                                                                                                                                          |
+| `card`                                                          | `p-card` (or a Tailwind `rounded-lg border p-4` box for a static panel)                                                                                                                                                                                           |
+| `table table-striped table-responsive`                          | `p-table`                                                                                                                                                                                                                                                         |
+| `form-control` / `form-group` / `form-check`                    | PrimeNG inputs + `<div class="flex flex-col gap-2">` + `p-checkbox`/`p-radiobutton`                                                                                                                                                                               |
+| `row` + `col-md-*`                                              | `grid grid-cols-1 md:grid-cols-12` + `md:col-span-*` (or flex)                                                                                                                                                                                                    |
+| `d-flex` / `d-none`                                             | `flex` / `hidden`                                                                                                                                                                                                                                                 |
+| `justify-content-center` / `align-items-center` / `flex-column` | `justify-center` / `items-center` / `flex-col`                                                                                                                                                                                                                    |
+| `text-right` / `text-left`                                      | `text-end` / `text-start` (logical)                                                                                                                                                                                                                               |
+| `text-muted`                                                    | `text-muted-color`                                                                                                                                                                                                                                                |
+| `text-danger` / `text-success` / `text-warning` / `text-info`   | `text-(--danger)` / `text-(--success)` / `text-(--warning)` / `text-(--info)` (arbitrary form — see **Colors** below)                                                                                                                                             |
+| `me-*` / `ms-*` / `mb-*` / `p-*` / `gap-*`                      | same-named Tailwind utilities, but **the numeric scales differ** — Bootstrap's steps are rem-fixed (`mb-3` = 1rem) while Tailwind's are `0.25rem × n` (`mb-3` = 0.75rem). Convert by target rem (Bootstrap `mb-3` → Tailwind `mb-4`), never by copying the index. |
 
-**Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a *primitive* token names a value (`red-500`); a *semantic* token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
+**Colors — use semantic tokens, never primitives.** Color follows the three-tier design-token model (primitive → semantic → component): a _primitive_ token names a value (`red-500`); a _semantic_ token names intent (`danger`). Always apply a **semantic** token; never apply a primitive directly — naming the value to express a role drifts and reads inconsistently (the documented design-token anti-pattern). Pick by what you are styling:
 
-| Need | Use | Never |
-| --- | --- | --- |
-| brand / neutral / surface | `text-primary`, `text-color`, `text-muted-color`, `bg-surface-*`, `border-surface-*` (tailwindcss-primeui — always available) | `text-blue-500`, `bg-[#…]` |
-| state on a **PrimeNG component** | the `severity` prop: `p-message` / `p-tag` / `p-button` `severity="error \| warn \| success \| info"` | a color class on the component |
-| state on **plain markup** (static) | the arbitrary semantic utility `text-(--danger)` / `bg-(--success)` / `border-(--warning)` / `text-(--info)` | `text-danger` (Bootstrap) or `text-(--p-red-500)` (primitive) |
-| state that is **dynamic / conditional** | `[style.color]="cond ? 'var(--danger)' : undefined"` | `[class.text-danger]`, `[style.color]="'var(--p-red-500)'"` |
+| Need                                    | Use                                                                                                                           | Never                                                         |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| brand / neutral / surface               | `text-primary`, `text-color`, `text-muted-color`, `bg-surface-*`, `border-surface-*` (tailwindcss-primeui — always available) | `text-blue-500`, `bg-[#…]`                                    |
+| state on a **PrimeNG component**        | the `severity` prop: `p-message` / `p-tag` / `p-button` `severity="error \| warn \| success \| info"`                         | a color class on the component                                |
+| state on **plain markup** (static)      | the arbitrary semantic utility `text-(--danger)` / `bg-(--success)` / `border-(--warning)` / `text-(--info)`                  | `text-danger` (Bootstrap) or `text-(--p-red-500)` (primitive) |
+| state that is **dynamic / conditional** | `[style.color]="cond ? 'var(--danger)' : undefined"`                                                                          | `[class.text-danger]`, `[style.color]="'var(--p-red-500)'"`   |
 
 The Artemis state tokens are `--danger` (red), `--success` (green), `--warning` (yellow) and `--info` (**cyan — never blue**). They are theme-aware (regenerated for light **and** dark by the `generate-css-vars` mixin) and are the same tokens `AuraArtemis` feeds into the PrimeNG palette, so plain markup, PrimeNG components and the theme share one source of truth — no `dark:` variant needed.
 
-Why the **arbitrary** form `text-(--danger)` rather than a named `text-danger`? While Bootstrap is still loaded **unlayered**, its `.text-danger { … !important }` beats any layered Tailwind utility unconditionally, so a named `text-danger` would silently render Bootstrap's color. The escaped class `.text-\(--danger\)` shares no selector with Bootstrap, so it wins cleanly. At the Bootstrap-removal exit gate, add `@theme inline { --color-danger: var(--danger); … }` and `sed` `text-(--danger)` → `text-danger` — a pure rename with zero visual change.
+Why the **arbitrary** form `text-(--danger)` rather than a named `text-danger`? While Bootstrap is still loaded **unlayered**, its `.text-danger { … !important }` beats any layered Tailwind utility unconditionally (an unlayered `!important` rule wins over any layered rule regardless of layer order — so even wrapping Bootstrap in a `@layer` does not help; only removing Bootstrap's colour utilities does). The escaped class `.text-\(--danger\)` shares no selector with Bootstrap, so it sidesteps the collision and resolves the same theme-aware token. `text-(--danger)` is therefore the **deliberate coexistence form**, not technical debt to refactor piecemeal — keep it consistent.
+
+**Do not** pre-emptively introduce a namespaced `@theme` (e.g. `--color-state-danger` → `text-state-danger`) to "look idiomatic" now: flat validation text and status glyphs do not need the autocomplete / `/opacity` features that `@theme` utilities add, and a namespace bakes in a throwaway name that has to be renamed twice. The idiomatic end state arrives in **one** pass at the Bootstrap-removal exit gate: add `@theme inline { --color-danger: var(--danger); … }` (the `inline` keyword forwards to the html-level theme-aware var so dark mode keeps working) and `sed` `text-(--danger)` → `text-danger` — a pure rename with zero visual change, because the tokens already exist.
+
+**Pick the tool by shape, not by syntax.** When status is a **labelled pill/badge** (the graded/practice result badge, …), render it with a PrimeNG `severity` component (`p-tag` / `p-badge` / `p-message`) — it carries its own dark-mode-correct colour and a11y, and needs no colour utility at all. The `text-(--state)` utility (or `[style.color]="…var(--state)…"` when the colour is a multi-state enum) is for **irreducible inline colour** with no component host: a translated validation `<small>`, a required-field asterisk, or a lone state-coloured `<fa-icon>` status glyph. Don't wrap a bare colour in a `severity` component just to avoid the utility — that adds markup for no gain.
 
 Accessibility: color is never the only signal (WCAG 1.4.1) — pair `--danger` / `--warning` with an icon or text cue.
 
@@ -601,10 +610,9 @@ The following is an example HTML template for a vertical bar chart:
         [yAxis]="true"
         [yScaleMax]="20"
         [roundEdges]="true"
-        [showDataLabel]="true">
-        <ng-template #tooltipTemplate let-model="model">
-            {{ labelTitle }}: {{ round((model.value / totalValue) * 100, 1) }}%
-        </ng-template>
+        [showDataLabel]="true"
+    >
+        <ng-template #tooltipTemplate let-model="model"> {{ labelTitle }}: {{ round((model.value / totalValue) * 100, 1) }}% </ng-template>
     </ngx-charts-bar-vertical>
 </div>
 ```
@@ -620,32 +628,34 @@ Here are a few tips when using this framework:
 2. In order to manipulate the content of the data label (e.g. the text floating above a chart bar), the framework provides a `[dataLabelFormatting]` property in the
    HTML template that can be assigned to a method. For example:
 
-   ```html
-   [dataLabelFormatting]="formatDataLabel"
-   ```
+    ```html
+    [dataLabelFormatting]="formatDataLabel"
+    ```
 
-   with
+    with
 
-   ```ts
-   formatDataLabel(averageScore: number): string {
-       return averageScore + '%';
-   }
-   ```
+    ```ts
+    formatDataLabel(averageScore: number): string {
+        return averageScore + '%';
+    }
+    ```
 
-   appends a percentage sign to the data label.
+    appends a percentage sign to the data label.
 
-   <Callout variant={CalloutVariant.info}>
-   The method is passed to the framework itself and executed there. This means that at runtime it does not have access to global variables of the component it is originally implemented in.
-   If this access is necessary, create a (readonly) variable assigned to this method and bind it to the component: `readonly bindFormatting = this.formatDataLabel.bind(this);`
-   </Callout>
+    <Callout variant={CalloutVariant.info}>
+        The method is passed to the framework itself and executed there. This means that at runtime it does not have access to global variables of the component it is originally
+        implemented in. If this access is necessary, create a (readonly) variable assigned to this method and bind it to the component: `readonly bindFormatting =
+        this.formatDataLabel.bind(this);`
+    </Callout>
 
 3. Some design properties are not directly configurable via the framework (e.g. the font-size and weight of the data labels).
    The tool `::ng-deep` is useful in these situations as it allows to change some of these properties by overwriting them in
    a corresponding style sheet. Adapting the font-size and weight of data labels would look like this:
 
-   <Callout variant={CalloutVariant.danger}>
-   `::ng-deep` **is deprecated**. Therefore, you should not use this tool anymore. For more information, refer to the [Angular documentation](https://angular.dev/guide/components/styling#ng-deep).
-   </Callout>
+    <Callout variant={CalloutVariant.danger}>
+        `::ng-deep` **is deprecated**. Therefore, you should not use this tool anymore. For more information, refer to the [Angular
+        documentation](https://angular.dev/guide/components/styling#ng-deep).
+    </Callout>
 
 4. In order to make the chart responsive in width, bind it to the width of its parent container.
    First, annotate the parent container with a reference (in the example `#containerRef`).
@@ -654,27 +664,25 @@ Here are a few tips when using this framework:
 
 5. There are two ways to keep axis labels and axis ticks translation-sensitive if they contain natural language:
 
-   * Axis labels are passed directly as property in the HTML template. Simply insert the translation string together with the translate pipe:
+    - Axis labels are passed directly as property in the HTML template. Simply insert the translation string together with the translate pipe:
 
-   ```html
-   [xAxisLabel]="'artemisApp.exam.charts.xAxisLabel' | artemisTranslate"
-   [yAxisLabel]="'artemisApp.exam.charts.yAxisLabel' | artemisTranslate"
-   ```
+    ```html
+    [xAxisLabel]="'artemisApp.exam.charts.xAxisLabel' | artemisTranslate" [yAxisLabel]="'artemisApp.exam.charts.yAxisLabel' | artemisTranslate"
+    ```
 
-   * For some chart types, the framework derives the ticks of one axis from the name property of the passed data objects.
-     So, these names have to be translated every time the user switches the language settings.
-     In this case, inject the `TranslateService` to the underlying component and subscribe to the `onLangChange` event emitter:
+    - For some chart types, the framework derives the ticks of one axis from the name property of the passed data objects.
+      So, these names have to be translated every time the user switches the language settings.
+      In this case, inject the `TranslateService` to the underlying component and subscribe to the `onLangChange` event emitter:
 
-   ```ts
-   constructor(private translateService: TranslateService) {
-       this.translateService.onLangChange.subscribe(() => {
-           this.updateXAxisLabel(); // a method re-assigning the names of the objects to the translated string
-       });
-   }
-   ```
+    ```ts
+    constructor(private translateService: TranslateService) {
+        this.translateService.onLangChange.subscribe(() => {
+            this.updateXAxisLabel(); // a method re-assigning the names of the objects to the translated string
+        });
+    }
+    ```
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
-
 
 ### Defining Routes and Breadcrumbs
 
@@ -709,7 +717,6 @@ addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
     }
 }
 ```
-
 
 ## Advanced Topics
 

@@ -480,14 +480,14 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(newParent.children).toContainEqual(expectedKnowledgeAreaInTree);
     });
 
-    it('should show the resizable splitter with the detail panel when a knowledge area is selected', () => {
+    it('should show the resizable detail panel with a drag handle when a knowledge area is selected', () => {
         component['selectedKnowledgeArea'].set({ id: 1, title: 'test' });
         componentFixture.detectChanges();
 
-        const splitter = componentFixture.debugElement.query(By.css('[data-testid="sc-splitter"]'));
-        expect(splitter).not.toBeNull();
         const detailPanel = componentFixture.debugElement.query(By.css('[data-testid="sc-detail-panel"]'));
         expect(detailPanel).not.toBeNull();
+        const resizeHandle = componentFixture.debugElement.query(By.css('[data-testid="sc-detail-resize-handle"]'));
+        expect(resizeHandle).not.toBeNull();
         const knowledgeAreaDetail = componentFixture.debugElement.query(By.css('[data-testid="knowledge-area-detail"]'));
         expect(knowledgeAreaDetail).not.toBeNull();
     });
@@ -499,13 +499,16 @@ describe('StandardizedCompetencyManagementComponent', () => {
         expect(detailPanel).toBeNull();
     });
 
-    it('should persist the splitter panel sizes on resize end', () => {
-        component['onSplitterResizeEnd']({ originalEvent: new Event('mouseup'), sizes: [30, 70] });
-        expect(component['splitterPanelSizes']()).toEqual([30, 70]);
+    it('should persist the detail panel width while resizing', () => {
+        component['selectedKnowledgeArea'].set({ id: 1, title: 'test' });
+        componentFixture.detectChanges();
 
-        // ignore malformed events (must keep two panel sizes)
-        component['onSplitterResizeEnd']({ originalEvent: new Event('mouseup'), sizes: [50] });
-        expect(component['splitterPanelSizes']()).toEqual([30, 70]);
+        const detailPanel = componentFixture.debugElement.query(By.css('[data-testid="sc-detail-panel"]'));
+        detailPanel.triggerEventHandler('resizeMove', { width: 420 });
+        componentFixture.detectChanges();
+
+        expect(component['detailPanelWidth']()).toBe(420);
+        expect((detailPanel.nativeElement as HTMLElement).style.width).toBe('420px');
     });
 
     it('should not deactivate with pending changes', () => {

@@ -19,6 +19,9 @@ describe('no-bootstrap-classes', () => {
                 { code: '<div class="gap-2"></div>' },
                 { code: '<div class="flex"></div>' },
                 { code: '<div class="col-span-3"></div>' },
+                { code: '<div class="h-full w-full"></div>' },
+                // `h-auto` / `w-auto` are shared (width:auto) and stay valid.
+                { code: '<div class="w-auto h-auto"></div>' },
                 // A realistic mix of valid Tailwind utilities in one attribute.
                 { code: '<div class="flex gap-2 mb-3 me-1 text-right col-span-3"></div>' },
                 // Bound class binding whose target is a valid Tailwind utility.
@@ -39,6 +42,8 @@ describe('no-bootstrap-classes', () => {
                 { code: '<div class="d-flex"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'd-flex' } }] },
                 { code: '<input class="form-control" />', errors: [{ messageId: 'bootstrapClass', data: { cls: 'form-control' } }] },
                 { code: '<table class="table-striped"></table>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'table-striped' } }] },
+                { code: '<div class="h-100"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'h-100' } }] },
+                { code: '<div class="w-50"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'w-50' } }] },
                 // [class.<bootstrap>] — the banned token is the attribute name itself.
                 { code: '<div [class.btn]="isButton"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'btn' } }] },
                 // [ngClass] object form — banned token lives in a quoted key inside the expression.

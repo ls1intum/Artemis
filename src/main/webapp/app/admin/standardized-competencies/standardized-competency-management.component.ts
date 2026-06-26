@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faGripLinesVertical, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -34,13 +34,13 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { SplitterModule } from 'primeng/splitter';
-import { SplitterResizeEndEvent } from 'primeng/splitter';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
     templateUrl: './standardized-competency-management.component.html',
+    styleUrls: ['./standardized-competency-management.component.scss'],
     host: {
         '(window:beforeunload)': 'unloadNotification($event)',
     },
@@ -62,8 +62,8 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
         AdminTitleBarActionsDirective,
         DialogModule,
         ButtonModule,
-        SplitterModule,
         ProgressSpinnerModule,
+        ResizableDirective,
     ],
 })
 export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -94,10 +94,10 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     private dialogErrorSource = new Subject<string>();
     protected dialogError = this.dialogErrorSource.asObservable();
 
-    /** splitter panel sizes (percentages) for [tree, detail], persisted across panel switches */
-    protected readonly splitterPanelSizes = signal<number[]>([60, 40]);
+    /** Width (px) of the resizable detail panel; persisted across competency/knowledge-area selections. */
+    protected readonly detailPanelWidth = signal<number | undefined>(undefined);
 
-    // Cancel confirmation dialog state (replaced the legacy ng-bootstrap confirm modal)
+    // Cancel confirmation dialog state
     protected readonly confirmDialogVisible = signal(false);
     protected readonly confirmDialogTitle = signal('');
     protected readonly confirmDialogTextKey = signal('');
@@ -111,6 +111,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly faEye = faEye;
     protected readonly faFileImport = faFileImport;
     protected readonly faFileExport = faFileExport;
+    protected readonly faGripLinesVertical = faGripLinesVertical;
     // Other constants for template
     protected readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'StandardizedCompetencies';
@@ -139,17 +140,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-    }
-
-    /**
-     * Persists the panel sizes (percentages) after the user resizes the splitter so the detail
-     * panel keeps its width when switching between selected competencies/knowledge areas.
-     * @param event the resize end event emitted by the PrimeNG splitter
-     */
-    protected onSplitterResizeEnd(event: SplitterResizeEndEvent): void {
-        if (event.sizes?.length === 2) {
-            this.splitterPanelSizes.set([Number(event.sizes[0]), Number(event.sizes[1])]);
-        }
     }
 
     exportStandardizedCompetencyCatalog() {

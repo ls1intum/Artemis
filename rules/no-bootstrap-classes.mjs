@@ -58,6 +58,10 @@ const BANNED = [
     /^(text|border|bg)-(danger|success|warning|info)$/,
     // Table component modifiers -> p-table (Tailwind's display `table` / `table-cell` are NOT matched)
     /^table-(striped|striped-columns|bordered|borderless|hover|active|sm|responsive|responsive-(sm|md|lg|xl|xxl)|group-divider)$/,
+    // Bootstrap percentage sizing -> Tailwind `h-full`/`w-full` or an explicit Tailwind size. These collide:
+    // Bootstrap `.h-100{height:100%!important}` beats Tailwind's `h-100` (= 25rem), so a stray `h-100` silently
+    // renders the Bootstrap value. Only 25/50/75/100 are matched; `h-auto`/`w-auto` are shared (width:auto) and stay.
+    /^[hw]-(25|50|75|100)$/,
     // Misc Bootstrap-only widgets / utilities
     /^(close|btn-close)$/,
     /^visually-hidden(-focusable)?$/,
