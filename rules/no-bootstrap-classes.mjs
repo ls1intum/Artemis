@@ -137,16 +137,20 @@ export default {
         schema: [],
     },
     create(context) {
+        // `class` plus PrimeNG class inputs (`styleClass` and component-specific `*StyleClass` like
+        // `contentStyleClass`), which render their classes onto the host at runtime — so Bootstrap in them must be
+        // caught too. These hold a raw class list (scanned like `class`); `[ngClass]` holds an expression.
+        const isClassListAttr = (name) => name === 'class' || name === 'styleClass' || name.endsWith('StyleClass');
         return {
             TextAttribute(node) {
-                if (node.name === 'class') {
+                if (isClassListAttr(node.name)) {
                     scanClassList(node.value, node, context);
                 }
             },
             BoundAttribute(node) {
-                if (node.name === 'class' || node.name === 'ngClass') {
-                    // `[class]`/`[ngClass]` bind an expression (object map or string concat), not a raw
-                    // class list — scan the string literals inside it.
+                if (isClassListAttr(node.name) || node.name === 'ngClass') {
+                    // `[class]`/`[ngClass]`/`[styleClass]` bind an expression (object map or string concat), not a
+                    // raw class list — scan the string literals inside it.
                     scanBindingExpression(node.value?.source, node, context);
                 } else if (node.keySpan?.details?.startsWith('class.')) {
                     // [class.btn]="..." -> the class token is the attribute name. Gate on the `class.` key so a

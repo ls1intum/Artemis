@@ -29,6 +29,8 @@ describe('no-bootstrap-classes', () => {
                 { code: '<div [ngClass]="{ \'text-right\': aligned }"></div>' },
                 // Unquoted Tailwind-utility key in an object binding is fine — only Bootstrap names are flagged.
                 { code: '<div [ngClass]="{ flex: active }"></div>' },
+                // PrimeNG styleClass holding Tailwind utilities is fine.
+                { code: '<p-message styleClass="flex gap-2"></p-message>' },
                 // [class] string concat whose literals are valid Tailwind utilities — no false positive
                 // (the identifier `extra` is an expression, not a class list).
                 { code: '<div [class]="\'flex gap-2 \' + extra"></div>' },
@@ -56,6 +58,10 @@ describe('no-bootstrap-classes', () => {
                 { code: '<div [ngClass]="{ \'btn\': isButton }"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'btn' } }] },
                 { code: '<div [ngClass]="{ btn: isButton }"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'btn' } }] },
                 { code: '<div [class]="{ card: isCard }"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'card' } }] },
+                // PrimeNG styleClass (and component-specific *StyleClass) render classes at runtime — scan them too.
+                { code: '<p-message styleClass="alert"></p-message>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'alert' } }] },
+                { code: '<p-button [styleClass]="\'btn \' + extra"></p-button>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'btn' } }] },
+                { code: '<p-tree contentStyleClass="d-flex"></p-tree>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'd-flex' } }] },
                 // [class] string-concat form — banned token lives in a quoted string literal segment.
                 { code: '<div [class]="\'d-flex \' + extra"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'd-flex' } }] },
                 // One offending token among valid Tailwind utilities is still reported exactly once.
