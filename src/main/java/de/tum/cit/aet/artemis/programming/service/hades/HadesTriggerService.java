@@ -85,9 +85,9 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
                     .getProgrammingExerciseBuildConfigElseThrow(participation.getProgrammingExercise());
             String buildScript = getBuildScript(buildConfig, participation, participation.getProgrammingExercise());
 
-            String assignmentHash = (triggeredByPushTo == null || triggeredByPushTo == RepositoryType.USER) ? gitService.getLastCommitHash(participation.getVcsRepositoryUri())
-                    : commitHash;
-            String testHash = triggeredByPushTo == RepositoryType.TESTS ? commitHash
+            String assignmentHash = (triggeredByPushTo == null || triggeredByPushTo == RepositoryType.USER) && commitHash != null ? commitHash
+                    : gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+            String testHash = triggeredByPushTo == RepositoryType.TESTS && commitHash != null ? commitHash
                     : gitService.getLastCommitHash(participation.getProgrammingExercise().getVcsTestRepositoryUri());
             var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), assignmentHash, null, null);
             var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), testHash, null, null);
