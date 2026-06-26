@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
@@ -13,6 +13,7 @@ import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from
 
 @Component({
     selector: 'jhi-admin-passkey-management',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './admin-passkey-management.component.html',
     imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, TableViewComponent, FormsModule, ToggleSwitchModule, AdminTitleBarTitleDirective],
 })

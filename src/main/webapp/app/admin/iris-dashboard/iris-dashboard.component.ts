@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, JsonPipe } from '@angular/common';
 import { TableModule } from 'primeng/table';
@@ -22,6 +22,7 @@ type TimeSpanOption = { label: string; value: IrisDashboardTimeSpan; days: numbe
 
 @Component({
     selector: 'jhi-iris-dashboard',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         DecimalPipe,
         JsonPipe,
