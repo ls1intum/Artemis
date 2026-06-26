@@ -97,17 +97,30 @@ const STRING_LITERAL = /'([^']*)'|"([^"]*)"/g;
 const UNQUOTED_OBJECT_KEY = /[{,]\s*([A-Za-z_$][\w$]*)\s*:/g;
 
 // The bound source of `[class]` / `[ngClass]` is an Angular expression, not a class list. Class names live in
-// string literals (`'btn'`) or as unquoted object keys (`{ btn: x }`); scan both with the per-token isBanned() check.
-function scanBindingExpression(source, node, context) {
+// string literals (`'btn'`) or as unquoted object keys (`{ btn: x }`). Returns the banned tokens found — pure (no
+// ESLint context) so tools like supporting_scripts/migration/migrate.mjs reuse the exact same binding extraction.
+export function bannedClassesInBindingExpression(source) {
     if (typeof source !== 'string') {
-        return;
+        return [];
     }
+    const found = [];
     for (const re of [STRING_LITERAL, UNQUOTED_OBJECT_KEY]) {
         re.lastIndex = 0;
         let match;
         while ((match = re.exec(source)) !== null) {
-            scanClassList(match[1] ?? match[2], node, context);
+            for (const token of (match[1] ?? match[2]).split(/\s+/)) {
+                if (token && isBanned(token)) {
+                    found.push(token);
+                }
+            }
         }
+    }
+    return found;
+}
+
+function scanBindingExpression(source, node, context) {
+    for (const cls of bannedClassesInBindingExpression(source)) {
+        context.report({ node, messageId: 'bootstrapClass', data: { cls } });
     }
 }
 

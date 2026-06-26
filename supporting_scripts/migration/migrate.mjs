@@ -13,7 +13,7 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, relative } from 'node:path';
-import { isBanned } from '../../rules/no-bootstrap-classes.mjs';
+import { isBanned, bannedClassesInBindingExpression } from '../../rules/no-bootstrap-classes.mjs';
 
 const APP = resolve(dirname(fileURLToPath(import.meta.url)), '../../src/main/webapp/app');
 
@@ -24,13 +24,16 @@ function walk(dir, ext) {
         .map((p) => resolve(dir, p));
 }
 
-// Bootstrap class tokens in a template: static class="..." and [class.token] (the latter naturally skips component
-// inputs like [card]). Approximate by design — a burndown trend, not an exact lint count.
+// Bootstrap class tokens in a template, matching what the no-bootstrap-classes ESLint rule checks: static
+// class="...", [class.token] (which naturally skips component inputs like [card]), and the bound [class]/[ngClass]
+// expression forms (`[class]="'btn ' + x"`, `[ngClass]="{ btn: cond }"`) via the rule's shared extractor — so a
+// `migrate:check` "ready to lock" can't disagree with the lint. Approximate by design — a burndown trend.
 function bootstrapClassesInHtml(text) {
-    const tokens = [];
-    for (const m of text.matchAll(/\sclass="([^"]*)"/g)) tokens.push(...m[1].split(/\s+/));
-    for (const m of text.matchAll(/\[class\.([\w-]+)\]/g)) tokens.push(m[1]);
-    return tokens.filter((t) => t && isBanned(t));
+    const found = [];
+    for (const m of text.matchAll(/\sclass="([^"]*)"/g)) for (const t of m[1].split(/\s+/)) if (t && isBanned(t)) found.push(t);
+    for (const m of text.matchAll(/\[class\.([\w-]+)\]/g)) if (isBanned(m[1])) found.push(m[1]);
+    for (const m of text.matchAll(/\[(?:ngClass|class)\]="([^"]*)"/g)) found.push(...bannedClassesInBindingExpression(m[1]));
+    return found;
 }
 
 // SCSS Bootstrap residue: --bs-* variables and hardcoded hex colours (what the stylelint override bans).

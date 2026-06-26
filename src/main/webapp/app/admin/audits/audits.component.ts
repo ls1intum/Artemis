@@ -133,7 +133,9 @@ export class AuditsComponent implements OnInit {
             return '';
         }
         const parsed = dayjs(value);
-        return parsed.isValid() ? parsed.format(this.dateFormat) : '';
+        // dayjs format tokens differ from Angular's DatePipe (`this.dateFormat`): year/day are UPPERCASE
+        // (`YYYY`/`DD`); the lowercase `yyyy`/`dd` would render literally / as the weekday and break the URL value.
+        return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
     }
 
     /** Converts a stored yyyy-MM-dd string to the native Date the shared date picker binds to. */
