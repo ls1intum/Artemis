@@ -100,7 +100,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
     private void enableAthenaForCourse() {
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setCourse(course);
-        athenaConfig.setGradingFeedbackEnabled(true);
+        athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
         courseRepository.save(course);
     }
@@ -317,7 +317,7 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             testExam.setEndDate(ZonedDateTime.now().plusHours(1));
             testExam = examRepository.save(testExam);
             TextExercise textExercise = addTextExerciseToExam(testExam);
-            // intentionally do NOT enable course-level Athena grading feedback
+            // intentionally do NOT enable course-level Athena formative feedback
 
             StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
             studentExam.addExercise(textExercise);

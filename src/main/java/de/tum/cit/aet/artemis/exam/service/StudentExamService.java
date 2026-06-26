@@ -218,18 +218,18 @@ public class StudentExamService {
 
     /**
      * Requests Athena AI feedback for all text and modeling participations of a submitted test exam whose course
-     * has Athena grading feedback enabled. Called explicitly by the student via the test exam summary button.
+     * has Athena formative feedback enabled. Called explicitly by the student via the test exam summary button.
      * <p>
      * Rejects the request if the student has already accumulated {@link #allowedFeedbackRequests} successful Athena
      * results across all of their test-exam attempts for this exam (cross-attempt cap), or if no exercise in the
-     * attempt has Athena grading feedback enabled at the course level. Individual submissions that already have an
+     * attempt has Athena formative feedback enabled at the course level. Individual submissions that already have an
      * Athena result are skipped silently inside the async dispatch in {@code generateAutomaticFeedbackForTestExamAsync},
      * so remaining unassessed submissions in the same attempt still get processed.
      *
      * @param studentExam the submitted student exam
      * @param currentUser the user requesting feedback
      * @throws BadRequestAlertException if the exam is not a test exam, not submitted, Athena is unavailable, the
-     *                                      request limit is reached, or no exercise has course-level Athena grading
+     *                                      request limit is reached, or no exercise has course-level Athena formative
      *                                      feedback enabled
      */
     public void requestAthenaFeedbackForTestExam(StudentExam studentExam, User currentUser) {
@@ -251,9 +251,9 @@ public class StudentExamService {
 
         // Use studentExam exercises (course.athenaConfig eagerly loaded) to determine eligible exercise IDs,
         // avoiding lazy-load traversal through StudentParticipation.exercise.exerciseGroup.exam.course.athenaConfig.
-        Set<Long> eligibleExerciseIds = studentExam.getExercises().stream().filter(Exercise::areFeedbackSuggestionsEnabled).map(Exercise::getId).collect(Collectors.toSet());
+        Set<Long> eligibleExerciseIds = studentExam.getExercises().stream().filter(Exercise::getAllowFeedbackRequests).map(Exercise::getId).collect(Collectors.toSet());
         if (eligibleExerciseIds.isEmpty()) {
-            throw new BadRequestAlertException("No exam exercises with course-level Athena grading feedback enabled", "StudentExam", "noCourseLevelAthenaGradingEnabled", true);
+            throw new BadRequestAlertException("No exam exercises with course-level Athena formative feedback enabled", "StudentExam", "noCourseLevelAthenaFormativeEnabled", true);
         }
 
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
