@@ -93,7 +93,7 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getVcsTestRepositoryUri().getURI().toString(), testHash, null, null);
 
             // Hades should use a Bash script
-            BuildTriggerRequestDTO.ScriptType scriptType = BuildTriggerRequestDTO.ScriptType.SHELL;
+            ScriptType scriptType = ScriptType.SHELL;
 
             var auxiliaryRepository = new ArrayList<RepositoryDTO>();
             var additionalProperties = new HashMap<String, String>();

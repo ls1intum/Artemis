@@ -93,9 +93,9 @@ public record HadesTestResultsDTO(@JsonProperty("jobName") String jobName, @Json
 
     /**
      * Parses Hades log entries into BuildLogEntry objects.
-     * <p>
-     * `@param` logEntries the list of Hades log entries
-     * `@return` the list of parsed build log entries
+     *
+     * @param logEntries the list of Hades log entries
+     * @return the list of parsed build log entries
      */
     public static List<BuildLogEntry> parseBuildLogsFromLogs(List<HadesLogEntryDTO> logEntries) {
         final List<BuildLogEntry> buildLogs = new ArrayList<>();
