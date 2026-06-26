@@ -50,7 +50,13 @@
     --color-state-info: var(--info);
 }
 
-/* The `source(none)` allowlist: the migrated paths Tailwind may scan. Add each module here as it goes Bootstrap-free. */
+/*
+ * The `source(none)` allowlist: the paths Tailwind may scan. This is a SUPERSET of the no-bootstrap-classes lint
+ * lock (eslint.config.mjs) — a module is added here as soon as it uses Tailwind utilities, which can precede being
+ * fully Bootstrap-free and lint-locked. Example: `editor/markdown-editor` is scanned (its migrated Imprint/Privacy
+ * editor needs utilities) but not yet locked, because its non-admin send button keeps one out-of-scope Bootstrap
+ * class. The migration-source-coverage test enforces the one-directional invariant: every locked path is scanned.
+ */
 @source './app/admin';
 @source './app/atlas/shared/standardized-competencies';
 @source './app/atlas/manage/import-standardized-competencies';
