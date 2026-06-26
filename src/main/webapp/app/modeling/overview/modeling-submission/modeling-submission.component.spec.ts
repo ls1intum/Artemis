@@ -117,11 +117,7 @@ describe('ModelingSubmissionComponent', () => {
                 imports: [ModelingEditorComponent, RatingComponent, ComplaintsStudentViewComponent],
             },
             add: {
-                imports: [
-                    StubModelingEditorComponent,
-                    MockComponent(RatingComponent),
-                    MockComponent(ComplaintsStudentViewComponent),
-                ],
+                imports: [StubModelingEditorComponent, MockComponent(RatingComponent), MockComponent(ComplaintsStudentViewComponent)],
             },
         });
 

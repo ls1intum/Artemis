@@ -36,7 +36,9 @@
                                                     (onModelPatch)="onModelPatch($event)"
                                                 />
                                                 <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"> <span></span></fa-icon>
-                                                @if (modelingExercise().teamMode) {
+                                                <!-- Gate team sync on the resolved collaboration user so it does not start the Yjs/awareness handshake
+                                                     before the (user-gated) Apollon editor exists — otherwise early peer replies would be dropped. -->
+                                                @if (modelingExercise().teamMode && apollonCollaborationUser()) {
                                                     <jhi-team-submission-sync
                                                         [exerciseType]="modelingExercise().type!"
                                                         [submissionObservable]="submissionObservable"
