@@ -15,8 +15,9 @@
  */
 
 // Each entry matches a single, whole class token (anchored). Grouped by Bootstrap concept with its
-// PrimeNG / Tailwind replacement noted for the reviewer.
-const BANNED = [
+// PrimeNG / Tailwind replacement noted for the reviewer. Exported so the migration burndown/check scripts
+// (supporting_scripts/migration/) reuse the exact same curated matcher — a naive grep over-reports massively.
+export const BANNED = [
     // Buttons -> p-button / p-buttonGroup
     /^btn(-.+)?$/,
     // Badges -> p-tag
@@ -70,7 +71,7 @@ const BANNED = [
     /^text-truncate$/, // -> Tailwind `truncate`
 ];
 
-function isBanned(token) {
+export function isBanned(token) {
     return BANNED.some((re) => re.test(token));
 }
 

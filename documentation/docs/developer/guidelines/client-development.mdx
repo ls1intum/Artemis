@@ -608,7 +608,7 @@ Enforced by `localRules/no-raw-tailwind-color-palette` across all templates — 
 4. **Convert ng-bootstrap → PrimeNG** (`NgbModal`→`DialogService`, `NgbTooltip`→`pTooltip`). Pass modal data via the `DialogService` `data` config — assigning `modalRef.componentInstance.X` silently no-ops for signal inputs.
 5. **Convert colours in `.html` AND `.scss` AND `.ts`.** The template lint is HTML-only, so colours set in TypeScript (`buttonClassName`, `[ngClass]` keys) or SCSS (hex, `--bs-*`) are invisible to it — grep them. `text-danger`→`text-state-danger`, `text-muted`→`text-muted-color`, SCSS hex → `var(--p-*)` / state tokens.
 6. **Strip dead SCSS** — prefer deleting component SCSS in favour of utilities; remove `::ng-deep` bandaids.
-7. **Drive Bootstrap hits to zero** across the closure — a module must be 100% converted before it renders correctly.
+7. **Drive Bootstrap hits to zero** across the closure — a module must be 100% converted before it renders correctly. Run `pnpm migrate:check <path>` to list what Bootstrap remains in a path and whether it is ready to lock; `pnpm migrate:status` shows the remaining-Bootstrap burndown by section to pick the next one.
 8. **Lock it** — add the path to the three lists the `migration-source-coverage` test keeps consistent (see above). `no-raw-tailwind-color-palette` and `no-primeng-component-classes` are already app-wide and need no per-section wiring.
 9. **Prove it** — `pnpm run test:rules && pnpm run lint && pnpm run stylelint && pnpm run prettier:check`.
 10. **Restart the dev server + verify light AND dark.** `@source` changes need a fresh Tailwind scan (`ng serve` does not reliably HMR `tailwind.css`); also check a _not-yet-migrated_ page that shares the same closure components, for spillover.
