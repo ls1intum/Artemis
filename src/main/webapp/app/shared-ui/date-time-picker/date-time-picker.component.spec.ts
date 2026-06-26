@@ -260,6 +260,25 @@ describe('FormDateTimePickerComponent', () => {
             fixture.componentRef.setInput('value', dayjs('2022-01-02'));
             expect(component.isValid()).toBe(true);
         });
+
+        it('should be invalid (gating external submit) when the value is before min, even when optional', () => {
+            fixture.componentRef.setInput('min', dayjs('2022-01-10'));
+            fixture.componentRef.setInput('value', dayjs('2022-01-05'));
+            expect(component.isValid()).toBe(false);
+        });
+
+        it('should be invalid when the value is after max', () => {
+            fixture.componentRef.setInput('max', dayjs('2022-01-10'));
+            fixture.componentRef.setInput('value', dayjs('2022-01-20'));
+            expect(component.isValid()).toBe(false);
+        });
+
+        it('should keep a programmatically preset in-range date valid (no false negative)', () => {
+            fixture.componentRef.setInput('min', dayjs('2022-01-01'));
+            fixture.componentRef.setInput('max', dayjs('2022-12-31'));
+            fixture.componentRef.setInput('value', dayjs('2022-06-15'));
+            expect(component.isValid()).toBe(true);
+        });
     });
 
     it('should clear the datepicker value', () => {

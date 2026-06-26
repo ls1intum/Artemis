@@ -78,7 +78,24 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         return value != undefined && (dayjs.isDayjs(value) ? value.isValid() : !isNaN(new Date(value).getTime()));
     });
 
-    isValid = computed(() => !(this.error() || this.warning() || (this.requiredField() && !this.hasValidValue())));
+    /**
+     * True when a value is PRESENT but not a valid, in-range date — i.e. unparseable, or outside the picker's
+     * `[min]`/`[max]` bounds. Mirrors what the inner p-datepicker `NgModel` reports invalid, but derived from the
+     * value/min/max signals so it stays reactive and preset-safe (a programmatic in-range date never trips it; an
+     * empty value is not "invalid" here — that case is the `requiredField()` check). Used by both `isValid()`
+     * (external submit gating) and the template error message, so the two never disagree.
+     */
+    protected hasInvalidValue = computed(() => {
+        const value = this.value();
+        if (value == undefined) return false;
+        if (!this.hasValidValue()) return true; // present but unparseable (even for an optional field)
+        const date = dayjs(value);
+        const min = this.min();
+        const max = this.max();
+        return Boolean((min?.isValid() && date.isBefore(min)) || (max?.isValid() && date.isAfter(max)));
+    });
+
+    isValid = computed(() => !(this.error() || this.warning() || (this.requiredField() && !this.hasValidValue()) || this.hasInvalidValue()));
 
     /**
      * Whether the underlying p-datepicker should render the time picker (hours/minutes).
