@@ -1,10 +1,8 @@
 import { Injectable, inject, isDevMode } from '@angular/core';
 import { Router } from '@angular/router';
-import { HttpEvent, HttpHandler, HttpHeaders, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
+import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { MockDataService } from 'app/core/interceptor/mock-data.service';
-import { getMockGroupChannel, getMockGroupPosts } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-communication';
 import {
     INTRO_JAVA_ALL_EXERCISES,
     INTRO_JAVA_FILE_UPLOAD_EXERCISES,
@@ -126,16 +124,6 @@ function mockQuizBatch(): { id: number; started: boolean; password: string } {
 // latter also avoids a 403 "not authorized" alert when a mock id collides with a real exercise.
 const COMPETENCY_CONTRIBUTIONS = /^api\/atlas\/exercises\/(\d+)\/contributions$/;
 
-// The group's Communication panel uses the real discussion component, which loads a channel for the
-// exercise and then its messages. Both are mocked so the panel shows a populated discussion thread.
-const GROUP_CHANNEL = /^\/?api\/communication\/courses\/\d+\/exercises\/\d+\/channel$/;
-const GROUP_MESSAGES = /^\/?api\/communication\/courses\/\d+\/messages$/;
-
-// The student exercise overview reads its exercises from the course returned by /for-dashboard,
-// not from the per-type endpoints the instructor view uses. We let the real request through and
-// graft the mock catalogue onto the course so the student view shows the same exercises.
-const FOR_DASHBOARD = /^api\/course\/courses\/\d+\/for-dashboard$/;
-
 // Clicking a mock exercise opens its detail (problem statement etc.) which is loaded from this
 // endpoint. The matching exercise from the mock catalogue is returned instead of hitting the backend.
 const EXERCISE_DETAILS = /^api\/exercise\/exercises\/(\d+)\/details$/;
@@ -173,22 +161,9 @@ export class MockCourseInterceptor implements HttpInterceptor {
             return next.handle(req);
         }
 
-        if (FOR_DASHBOARD.test(req.url)) {
-            return next.handle(req).pipe(map((event) => this.injectMockExercises(event)));
-        }
-
         const competencyMatch = COMPETENCY_CONTRIBUTIONS.exec(req.url);
         if (competencyMatch) {
             return mockResponse(getMockCompetencyContributions(Number(competencyMatch[1])));
-        }
-
-        if (GROUP_CHANNEL.test(req.url)) {
-            return mockResponse(getMockGroupChannel());
-        }
-
-        if (GROUP_MESSAGES.test(req.url)) {
-            const posts = getMockGroupPosts();
-            return of(new HttpResponse({ status: 200, body: toJson(posts), headers: new HttpHeaders({ 'X-Total-Count': String(posts.length) }) }));
         }
 
         const detailsMatch = EXERCISE_DETAILS.exec(req.url);
@@ -212,16 +187,5 @@ export class MockCourseInterceptor implements HttpInterceptor {
     private courseIdFromUrl(): number | undefined {
         const match = /\/courses\/(\d+)\//.exec(this.router.url);
         return match ? Number(match[1]) : undefined;
-    }
-
-    private injectMockExercises(event: HttpEvent<unknown>): HttpEvent<unknown> {
-        if (!(event instanceof HttpResponse) || !event.body) {
-            return event;
-        }
-        const body = toJson(event.body) as { course?: { exercises?: unknown[] } };
-        if (body.course) {
-            body.course.exercises = toJson(INTRO_JAVA_ALL_EXERCISES);
-        }
-        return event.clone({ body });
     }
 }
