@@ -48,6 +48,16 @@
 @source './app/course/request';
 @source './app/shared-ui/user-import';
 @source './app/shared-ui/user-registration-modal';
+@source './app/shared-ui/confirm-entity-name';
+@source './app/shared-ui/delete-dialog';
+@source './app/core/alert';
+@source './app/core/layouts/footer';
+@source './app/core/navbar/global-search/components/modal/global-search-modal.component.html';
+@source './app/course/overview/setup-passkey-modal';
+@source './app/notification/course-notification/course-notification-popup-overlay';
+@source './app/localci/build-agent-summary';
+@source './app/localci/build-agent-details';
+@source './app/localci/build-job-statistics';
 /*
  * Never scan test files. Tailwind detects class candidates from the FULL TEXT of scanned files, so test
  * descriptions ("should collapse the sidebar", "renders a table", ...) would emit utilities like

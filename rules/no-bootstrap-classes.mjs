@@ -23,8 +23,9 @@ const BANNED = [
     /^badge$/,
     // Cards -> p-card (or a Tailwind `rounded-lg border p-4` box)
     /^card(-.+)?$/,
-    // Alerts / callouts -> p-message
-    /^alert(-.+)?$/,
+    // Alerts / callouts -> p-message. Only Bootstrap's own alert classes — not custom `alert-*` names
+    // (e.g. the alert overlay's `alert-wrap` / `alert-inner` / `alert-animation-wrapper`).
+    /^alert(-(primary|secondary|success|danger|warning|info|light|dark|dismissible|link|heading))?$/,
     // Form controls -> PrimeNG inputs (pInputText / p-select / p-textarea / p-checkbox / p-radiobutton)
     /^form-(control|control-.+|group|select|label|text|range|floating|check|check-input|check-label|check-reverse|switch)$/,
     /^input-group(-.+)?$/,

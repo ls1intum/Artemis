@@ -20,7 +20,7 @@
     @if (buildAgent(); as agent) {
         <div class="mb-4">
             <div class="mb-3">
-                <span class="text-muted" id="build-agent-info">{{ agent.buildAgent?.name }} - {{ agent.buildAgent?.memberAddress }}</span>
+                <span class="text-muted-color" id="build-agent-info">{{ agent.buildAgent?.name }} - {{ agent.buildAgent?.memberAddress }}</span>
             </div>
             <div class="mb-4">
                 <div>
@@ -93,7 +93,7 @@
             <div>
                 <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName() }"></span>
                 <br />
-                <span class="text-muted" jhiTranslate="artemisApp.buildAgents.notFoundHint"></span>
+                <span class="text-muted-color" jhiTranslate="artemisApp.buildAgents.notFoundHint"></span>
             </div>
         </p-message>
     }

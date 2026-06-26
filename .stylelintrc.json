@@ -14,7 +14,16 @@
                 "src/main/webapp/app/atlas/shared/standardized-competencies/**/*.scss",
                 "src/main/webapp/app/localci/build-queue/**/*.scss",
                 "src/main/webapp/app/shared-ui/user-import/**/*.scss",
-                "src/main/webapp/app/shared-ui/user-registration-modal/**/*.scss"
+                "src/main/webapp/app/shared-ui/user-registration-modal/**/*.scss",
+                "src/main/webapp/app/shared-ui/confirm-entity-name/**/*.scss",
+                "src/main/webapp/app/shared-ui/delete-dialog/**/*.scss",
+                "src/main/webapp/app/core/alert/**/*.scss",
+                "src/main/webapp/app/core/layouts/footer/**/*.scss",
+                "src/main/webapp/app/course/overview/setup-passkey-modal/**/*.scss",
+                "src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.scss",
+                "src/main/webapp/app/localci/build-agent-summary/**/*.scss",
+                "src/main/webapp/app/localci/build-agent-details/**/*.scss",
+                "src/main/webapp/app/localci/build-job-statistics/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
             "rules": {

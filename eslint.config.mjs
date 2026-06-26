@@ -403,6 +403,18 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-queue/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
+            // Admin-reachable global shell + delete-dialog chain (rendered on every admin page / during admin deletes).
+            'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
+            'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
+            'src/main/webapp/app/core/alert/**/*.html',
+            'src/main/webapp/app/core/layouts/footer/**/*.html',
+            // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
+            'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
+            'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
+            'src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.html',
+            'src/main/webapp/app/localci/build-agent-summary/**/*.html',
+            'src/main/webapp/app/localci/build-agent-details/**/*.html',
+            'src/main/webapp/app/localci/build-job-statistics/**/*.html',
         ],
         languageOptions: {
             parser: angularTemplateParser,
