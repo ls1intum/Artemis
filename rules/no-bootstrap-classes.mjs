@@ -59,7 +59,13 @@ export const BANNED = [
     // banned by no-raw-tailwind-color-palette). Only danger/success/warning/info are matched: those are
     // Bootstrap-only, whereas `*-primary` / `*-surface-*` are PrimeNG tokens and stay allowed.
     /^(text|border|bg)-(danger|success|warning|info)$/,
-    // Table component modifiers -> p-table (Tailwind's display `table` / `table-cell` are NOT matched)
+    // Bare `table` and the `collapse` family double as Tailwind utility NAMES, so tailwind.css blocklists them
+    // from generation (`@source not inline("table"/"collapse")`) to avoid the Bootstrap collision. Because the
+    // Tailwind versions can never generate, ANY `table`/`collapse*` in a locked template is Bootstrap winning at
+    // runtime — ban them here so the lint stays symmetric with the @source blocklist.
+    /^table$/,
+    /^(collapse|collapse-horizontal|collapsing)$/,
+    // Table component modifiers -> p-table (Tailwind's `table-cell`/`table-fixed`/`table-auto` are NOT matched)
     /^table-(striped|striped-columns|bordered|borderless|hover|active|sm|responsive|responsive-(sm|md|lg|xl|xxl)|group-divider)$/,
     // Bootstrap percentage sizing -> Tailwind `h-full`/`w-full` or an explicit Tailwind size. These collide:
     // Bootstrap `.h-100{height:100%!important}` beats Tailwind's `h-100` (= 25rem), so a stray `h-100` silently

@@ -28,6 +28,9 @@ describe('no-bootstrap-classes', () => {
                 { code: '<li class="nav-group-header"></li>' },
                 { code: '<a class="nav-link-sidebar"></a>' },
                 { code: '<div class="my-modal-wrapper"></div>' },
+                // Tailwind's table display utilities still generate and stay valid (only bare `table` is banned).
+                { code: '<div class="table-fixed table-auto"></div>' },
+                { code: '<span class="table-cell"></span>' },
                 // Bound class binding whose target is a valid Tailwind utility.
                 { code: '<div [class.flex]="isFlex"></div>' },
                 { code: '<div [ngClass]="{ \'text-right\': aligned }"></div>' },
@@ -59,6 +62,11 @@ describe('no-bootstrap-classes', () => {
                 { code: '<li class="list-group-item"></li>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'list-group-item' } }] },
                 { code: '<div class="spinner-border"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'spinner-border' } }] },
                 { code: '<a class="page-link"></a>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'page-link' } }] },
+                // Bare `table` and the collapse family — blocklisted from Tailwind generation, so any usage is Bootstrap.
+                { code: '<table class="table"></table>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'table' } }] },
+                { code: '<div class="collapse"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'collapse' } }] },
+                { code: '<div class="collapsing"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'collapsing' } }] },
+                { code: '<div class="collapse-horizontal"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'collapse-horizontal' } }] },
                 { code: '<input class="form-control" />', errors: [{ messageId: 'bootstrapClass', data: { cls: 'form-control' } }] },
                 { code: '<table class="table-striped"></table>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'table-striped' } }] },
                 { code: '<div class="h-100"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'h-100' } }] },
