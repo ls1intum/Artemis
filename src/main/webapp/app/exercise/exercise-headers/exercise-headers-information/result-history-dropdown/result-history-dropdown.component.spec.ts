@@ -5,7 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ResultHistoryDropdownComponent } from './result-history-dropdown.component';
 import { MockProvider } from 'ng-mocks';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
-import { Badge, ResultService } from 'app/exercise/result/result.service';
+import { ResultService } from 'app/exercise/result/result.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';

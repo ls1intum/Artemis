@@ -58,7 +58,7 @@ describe('LogsComponent', () => {
 
     it('should change log level correctly', () => {
         const log = new Log('main', 'ERROR');
-        vi.spyOn(service, 'changeLevel').mockReturnValue(of({}));
+        vi.spyOn(service, 'changeLevel').mockReturnValue(of(undefined));
         vi.spyOn(service, 'findAll').mockReturnValue(
             of({
                 loggers: {

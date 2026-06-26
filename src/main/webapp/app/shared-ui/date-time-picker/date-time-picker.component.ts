@@ -172,6 +172,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         if (this.onChange) {
             this.onChange(undefined);
         }
+        // Emit valueChange so consumers (e.g. the audits / finished-builds filters) revalidate on clear,
+        // exactly as updateField() does for a normal edit.
+        this.valueChanged();
     }
 
     protected readonly DateTimePickerType = DateTimePickerType;

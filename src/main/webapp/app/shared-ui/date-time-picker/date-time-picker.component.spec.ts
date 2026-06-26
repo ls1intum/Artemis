@@ -266,11 +266,14 @@ describe('FormDateTimePickerComponent', () => {
         const resetSpy = vi.spyOn(component.dateInput, 'reset').mockImplementation(() => undefined);
         const onChangeSpy = vi.fn();
         component.registerOnChange(onChangeSpy);
+        const valueChangeSpy = vi.spyOn(component.valueChange, 'emit');
 
         component.clearDate();
 
         expect(resetSpy).toHaveBeenCalledWith(undefined);
         expect(component.value()).toBeUndefined();
         expect(onChangeSpy).toHaveBeenCalledWith(undefined);
+        // Clearing must notify consumers (audits / finished-builds filters) so they revalidate.
+        expect(valueChangeSpy).toHaveBeenCalledOnce();
     });
 });

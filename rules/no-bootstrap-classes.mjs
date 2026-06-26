@@ -87,20 +87,27 @@ function scanClassList(text, node, context) {
 }
 
 // Matches single- or double-quoted string literals (e.g. the keys of `[ngClass]="{ 'btn': x }"` or the
-// segments of `[class]="'d-flex ' + x"`). Class names only ever live inside string literals in a binding
-// expression, so scanning the literal contents avoids false positives from identifiers/operators.
+// segments of `[class]="'d-flex ' + x"`).
 const STRING_LITERAL = /'([^']*)'|"([^"]*)"/g;
 
-// The bound source of `[class]` / `[ngClass]` is an Angular expression, not a class list. Extract its
-// string literals and scan their whitespace-separated tokens with the same per-token isBanned() check.
+// Matches an UNQUOTED object-literal key, e.g. the `btn` of `[ngClass]="{ btn: active }"`. Prettier rewrites a
+// quoted `{ 'btn': x }` to this unquoted form, so without this the simplest Bootstrap key bypasses the rule after
+// formatting. A key is an identifier directly after `{` or `,` and before `:`; hyphenated class names (`btn-lg`)
+// are not valid unquoted identifiers, so they stay quoted and are covered by STRING_LITERAL.
+const UNQUOTED_OBJECT_KEY = /[{,]\s*([A-Za-z_$][\w$]*)\s*:/g;
+
+// The bound source of `[class]` / `[ngClass]` is an Angular expression, not a class list. Class names live in
+// string literals (`'btn'`) or as unquoted object keys (`{ btn: x }`); scan both with the per-token isBanned() check.
 function scanBindingExpression(source, node, context) {
     if (typeof source !== 'string') {
         return;
     }
-    STRING_LITERAL.lastIndex = 0;
-    let match;
-    while ((match = STRING_LITERAL.exec(source)) !== null) {
-        scanClassList(match[1] ?? match[2], node, context);
+    for (const re of [STRING_LITERAL, UNQUOTED_OBJECT_KEY]) {
+        re.lastIndex = 0;
+        let match;
+        while ((match = re.exec(source)) !== null) {
+            scanClassList(match[1] ?? match[2], node, context);
+        }
     }
 }
 
