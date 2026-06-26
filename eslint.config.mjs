@@ -375,8 +375,9 @@ export default tseslint.config(
         },
     },
     {
-        // Forbid raw Tailwind color palette classes (e.g. text-green-500) in ALL client templates: Tailwind is
-        // loaded app-wide, so raw palette is wrong everywhere — use semantic brand tokens instead. The stylelint
+        // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
+        // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
+        // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint
         // hex/--bs- guard (.stylelintrc.json) is scoped per migrated module. See client-development.mdx (### Styling).
         files: ['src/main/webapp/app/**/*.html'],
         languageOptions: {
@@ -387,6 +388,7 @@ export default tseslint.config(
         },
         rules: {
             'localRules/no-raw-tailwind-color-palette': 'error',
+            'localRules/no-primeng-component-classes': 'error',
         },
     },
     {

@@ -14,8 +14,8 @@
  * EXIT CRITERIA (global Bootstrap removal — tracked separately, see client-development.mdx ### Styling):
  * once Bootstrap is gone, replace the two scoped imports below with `@import 'tailwindcss';` (re-enables
  * Preflight), configure PrimeNG cssLayer ordering (`tailwind-base, primeng, tailwind-utilities`) in
- * app.config.ts, drop `source(none)` + the `@source` allowlist, and (optionally) reintroduce a brand-state
- * `@theme inline` block once it is no longer shadowed by Bootstrap's `!important` color utilities.
+ * app.config.ts, and drop `source(none)` + the `@source` allowlist. The brand state-color tokens below need
+ * no exit work — they are collision-free and permanent.
  */
 @layer theme, base, utilities;
 
@@ -29,6 +29,23 @@
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
 
 @plugin 'tailwindcss-primeui';
+
+/*
+ * Brand state-color tokens. Defined with `@theme inline` so each generated utility emits a `var(--<brand>)`
+ * REFERENCE that resolves at the element — dark-mode correct, because dark themes reassign --danger/--success/…
+ * and the utility follows (a non-inline `@theme` would snapshot the light value). Named `state-*` (not `danger`)
+ * ON PURPOSE: a `--color-danger` token generates `.text-danger`, which collides with Bootstrap's unlayered
+ * `!important` `.text-danger` and would silently lose during coexistence. `state-*` collides with nothing, so it
+ * works now AND survives Bootstrap removal with no rename. Usage: `text-state-danger`, `bg-state-success`,
+ * `border-state-warning`. info is CYAN (--info), never blue. For DYNAMIC color, bind `[style.color]` to the raw
+ * var instead, e.g. `[style.color]="'var(--danger)'"`.
+ */
+@theme inline {
+    --color-state-danger: var(--danger);
+    --color-state-success: var(--success);
+    --color-state-warning: var(--warning);
+    --color-state-info: var(--info);
+}
 
 /*
  * Scope Tailwind's content scanning to the migrated module(s) only. Tailwind generates a utility for every

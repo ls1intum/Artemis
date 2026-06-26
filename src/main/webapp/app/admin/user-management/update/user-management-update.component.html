@@ -23,21 +23,21 @@
                     @if (editForm.get('login')!.dirty && editForm.get('login')!.invalid) {
                         <div>
                             @if (editForm.get('login')!.errors?.required) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.required"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.required"></small>
                             }
                             @if (editForm.get('login')!.errors?.maxlength) {
                                 <small
-                                    class="text-(--danger)"
+                                    class="text-state-danger"
                                     jhiTranslate="artemisApp.userManagement.inputConstraints"
                                     [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
                                 ></small>
                             }
                             @if (editForm.get('login')!.errors?.pattern) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.patternLogin"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.patternLogin"></small>
                             }
                             @if (editForm.get('login')!.errors?.minlength) {
                                 <small
-                                    class="text-(--danger)"
+                                    class="text-state-danger"
                                     jhiTranslate="artemisApp.userManagement.inputConstraints"
                                     [translateValues]="{ min: USERNAME_MIN_LENGTH, max: USERNAME_MAX_LENGTH }"
                                 ></small>
@@ -51,7 +51,7 @@
                     @if (editForm.get('firstName')!.dirty && editForm.get('firstName')!.invalid) {
                         <div>
                             @if (editForm.get('firstName')!.errors?.maxlength) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
                             }
                         </div>
                     }
@@ -62,7 +62,7 @@
                     @if (editForm.get('lastName')!.dirty && editForm.get('lastName')!.invalid) {
                         <div>
                             @if (editForm.get('lastName')!.errors?.maxlength) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: USERNAME_MAX_LENGTH }"></small>
                             }
                         </div>
                     }
@@ -109,14 +109,14 @@
                                 <div>
                                     @if (editForm.get('password')!.errors?.maxlength) {
                                         <small
-                                            class="text-(--danger)"
+                                            class="text-state-danger"
                                             jhiTranslate="artemisApp.userManagement.inputConstraints"
                                             [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
                                         ></small>
                                     }
                                     @if (editForm.get('password')!.errors?.minlength) {
                                         <small
-                                            class="text-(--danger)"
+                                            class="text-state-danger"
                                             jhiTranslate="artemisApp.userManagement.inputConstraints"
                                             [translateValues]="{ min: PASSWORD_MIN_LENGTH, max: PASSWORD_MAX_LENGTH }"
                                         ></small>
@@ -175,24 +175,24 @@
                     @if (editForm.get('email')!.dirty && editForm.get('email')!.invalid) {
                         <div>
                             @if (editForm.get('email')!.errors?.required) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.required"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.required"></small>
                             }
                             @if (editForm.get('email')!.errors?.maxlength) {
                                 <small
-                                    class="text-(--danger)"
+                                    class="text-state-danger"
                                     jhiTranslate="artemisApp.userManagement.inputConstraints"
                                     [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
                                 ></small>
                             }
                             @if (editForm.get('email')!.errors?.minlength) {
                                 <small
-                                    class="text-(--danger)"
+                                    class="text-state-danger"
                                     jhiTranslate="artemisApp.userManagement.inputConstraints"
                                     [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
                                 ></small>
                             }
                             @if (editForm.get('email')!.errors?.email) {
-                                <small class="text-(--danger)" jhiTranslate="global.messages.validate.email.invalid"></small>
+                                <small class="text-state-danger" jhiTranslate="global.messages.validate.email.invalid"></small>
                             }
                         </div>
                     }
@@ -211,7 +211,7 @@
                     @if (editForm.get('visibleRegistrationNumber')!.invalid) {
                         <div>
                             @if (editForm.get('visibleRegistrationNumber')!.errors?.maxlength) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: REGISTRATION_NUMBER_MAX_LENGTH }"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: REGISTRATION_NUMBER_MAX_LENGTH }"></small>
                             }
                         </div>
                     }

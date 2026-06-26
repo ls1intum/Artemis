@@ -19,9 +19,9 @@
             <div class="flex items-center gap-3">
                 <span
                     [ngClass]="{
-                        'text-(--success)': jobStatus() === 'SUCCESSFUL',
-                        'text-(--warning)': jobStatus() === 'CANCELLED',
-                        'text-(--danger)': jobStatus() === 'FAILED' || jobStatus() === 'ERROR' || jobStatus() === 'TIMEOUT',
+                        'text-state-success': jobStatus() === 'SUCCESSFUL',
+                        'text-state-warning': jobStatus() === 'CANCELLED',
+                        'text-state-danger': jobStatus() === 'FAILED' || jobStatus() === 'ERROR' || jobStatus() === 'TIMEOUT',
                         'text-primary': jobStatus() === 'BUILDING',
                         'text-muted-color': jobStatus() === 'QUEUED',
                     }"

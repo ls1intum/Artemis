@@ -84,7 +84,7 @@
                         (valueChange)="filterDateChanged()"
                     />
                     @if (!finishedBuildJobFilter.areDatesValid) {
-                        <span class="text-(--danger)" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.invalidDate"></span>
+                        <span class="text-state-danger" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.invalidDate"></span>
                     }
                 </div>
             </div>
@@ -101,7 +101,7 @@
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.upperBound"></span>
                     <input pInputText type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound" (change)="filterDurationChanged()" />
                     @if (!finishedBuildJobFilter.areDurationFiltersValid) {
-                        <span class="text-(--danger)" jhiTranslate="artemisApp.buildQueue.filter.buildDuration.invalidState"></span>
+                        <span class="text-state-danger" jhiTranslate="artemisApp.buildQueue.filter.buildDuration.invalidState"></span>
                     }
                 </div>
             </div>

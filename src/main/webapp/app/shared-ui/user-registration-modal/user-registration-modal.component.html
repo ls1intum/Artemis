@@ -105,7 +105,7 @@
         <div class="flex items-center gap-1">
             <span class="user-name" [innerHTML]="cell.data.name | highlightMatch: searchTerm()"></span>
             @if (cell.data.isRegistered) {
-                <i class="pi pi-check-circle text-(--success) shrink-0"></i>
+                <i class="pi pi-check-circle text-state-success shrink-0"></i>
             }
         </div>
         <span class="user-login text-muted-color" [innerHTML]="cell.data.login | highlightMatch: searchTerm()"></span>

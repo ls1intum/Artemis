@@ -121,7 +121,7 @@
             <span id="test-late-no-feedback" class="text-muted-color leading-tight" jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseLateSubmission"></span>
         }
         @case (ResultTemplateStatus.MISSING) {
-            <span class="text-(--danger) leading-tight">
+            <span class="text-state-danger leading-tight">
                 <fa-icon class="me-1" [icon]="faExclamationCircle" size="lg" />
                 @switch (missingResultInfo()) {
                     @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE) {

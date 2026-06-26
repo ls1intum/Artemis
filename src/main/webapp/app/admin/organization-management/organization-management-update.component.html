@@ -9,13 +9,13 @@
                     @if (nameInput.dirty && nameInput.invalid) {
                         <div>
                             @if (nameInput.errors?.['required']) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.required"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.required"></small>
                             }
                             @if (nameInput.errors?.['maxlength']) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 100 }"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 100 }"></small>
                             }
                             @if (nameInput.errors?.['pattern']) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.patternLogin"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.patternLogin"></small>
                             }
                         </div>
                     }
@@ -37,13 +37,13 @@
                     @if (shortNameInput.dirty && shortNameInput.invalid) {
                         <div>
                             @if (shortNameInput.errors?.['required']) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.required"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.required"></small>
                             }
                             @if (shortNameInput.errors?.['maxlength']) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 50 }"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 50 }"></small>
                             }
                             @if (shortNameInput.errors?.['pattern']) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.patternLogin"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.patternLogin"></small>
                             }
                         </div>
                     }
@@ -71,7 +71,7 @@
                     @if (emailPattern?.dirty && emailPattern?.invalid) {
                         <div>
                             @if (emailPattern.errors?.['validPattern']) {
-                                <small class="text-(--danger)" jhiTranslate="entity.validation.invalidPattern"></small>
+                                <small class="text-state-danger" jhiTranslate="entity.validation.invalidPattern"></small>
                             }
                         </div>
                     }

@@ -288,7 +288,7 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
             return 'text-primary';
         }
         if (isAIResultAndFailed(result)) {
-            return 'text-(--danger)';
+            return 'text-state-danger';
         }
         return 'text-muted-color';
     }
@@ -298,7 +298,7 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
     }
 
     if (isBuildFailedAndResultIsAutomatic(result, participation)) {
-        return 'text-(--danger)';
+        return 'text-state-danger';
     }
 
     if (resultIsPreliminary(result, participation)) {
@@ -306,22 +306,22 @@ export const getTextColorClass = (result: Result | undefined, participation: Par
     }
 
     if (result?.score === undefined) {
-        return result?.successful ? 'text-(--success)' : 'text-(--danger)';
+        return result?.successful ? 'text-state-success' : 'text-state-danger';
     }
 
     if (isOnlyCompilationTested(result, participation, templateStatus)) {
-        return 'text-(--success)';
+        return 'text-state-success';
     }
 
     if (result.score >= MIN_SCORE_GREEN) {
-        return 'text-(--success)';
+        return 'text-state-success';
     }
 
     if (result.score >= MIN_SCORE_ORANGE) {
         return 'result-orange';
     }
 
-    return 'text-(--danger)';
+    return 'text-state-danger';
 };
 
 /**

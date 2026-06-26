@@ -175,7 +175,7 @@ describe('ResultUtils', () => {
             result: { submission: { submissionExerciseType: SubmissionExerciseType.PROGRAMMING, buildFailed: true }, assessmentType: AssessmentType.AUTOMATIC },
             participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: 'text-(--danger)',
+            expected: 'text-state-danger',
         },
         {
             result: {
@@ -189,7 +189,7 @@ describe('ResultUtils', () => {
             result: { score: undefined, successful: true },
             participation: {} as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: 'text-(--success)',
+            expected: 'text-state-success',
         },
         {
             result: { score: 0, successful: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
@@ -203,15 +203,20 @@ describe('ResultUtils', () => {
             templateStatus: ResultTemplateStatus.HAS_RESULT,
             expected: 'text-muted-color',
         },
-        { result: { score: undefined, successful: false }, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-(--danger)' },
-        { result: { score: MIN_SCORE_GREEN, testCaseCount: 1 }, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-(--success)' },
+        { result: { score: undefined, successful: false }, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-state-danger' },
+        {
+            result: { score: MIN_SCORE_GREEN, testCaseCount: 1 },
+            participation: {} as Participation,
+            templateStatus: ResultTemplateStatus.HAS_RESULT,
+            expected: 'text-state-success',
+        },
         { result: { score: MIN_SCORE_ORANGE, testCaseCount: 1 }, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'result-orange' },
-        { result: {}, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-(--danger)' },
+        { result: {}, participation: {} as Participation, templateStatus: ResultTemplateStatus.HAS_RESULT, expected: 'text-state-danger' },
         {
             result: { score: 1 } as Result,
             participation: { exercise: { type: ExerciseType.PROGRAMMING } as Exercise, submissions: [{ id: 1 }] } as Participation,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: 'text-(--success)',
+            expected: 'text-state-success',
         },
     ])('should correctly determine text color class', ({ result, participation, templateStatus, expected }) => {
         expect(getTextColorClass(result, participation, templateStatus!)).toBe(expected);

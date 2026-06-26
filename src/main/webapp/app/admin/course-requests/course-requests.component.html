@@ -170,7 +170,7 @@
                 <td class="break-words">{{ request.reason }}</td>
                 <td class="break-words">
                     @if (request.status === CourseRequestStatus.REJECTED) {
-                        <div class="text-(--danger) font-semibold">
+                        <div class="text-state-danger font-semibold">
                             {{ 'artemisApp.courseRequest.status.' + request.status | artemisTranslate }}
                         </div>
                         <div>{{ request.decisionReason }}</div>
