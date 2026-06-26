@@ -91,7 +91,7 @@ public class PublicProgrammingExerciseResultResource {
             @RequestParam Long participationId, @RequestBody Object requestBody) {
         log.debug("Received new programming exercise result from Hades");
         if (!matches(authorizationToken)) {
-            log.info("Cancelling request with invalid authorizationToken {}", authorizationToken);
+            log.info("Cancelling request due to invalid authorization token");
             throw new AccessForbiddenException(); // Only allow endpoint when using correct authorizationToken
         }
 
@@ -123,7 +123,7 @@ public class PublicProgrammingExerciseResultResource {
     public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorizationToken, @RequestBody Object requestBody) {
         log.debug("Received new programming exercise result from Jenkins");
         if (!matches(authorizationToken)) {
-            log.info("Cancelling request with invalid authorizationToken {}", authorizationToken);
+            log.info("Cancelling request due to invalid authorization token");
             throw new AccessForbiddenException(); // Only allow endpoint when using correct authorizationToken
         }
 
