@@ -164,6 +164,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                           showPresence: true,
                           showCursors: true,
                           showSelectionHighlights: true,
+                          showFollow: true,
                       }
                     : undefined,
             });

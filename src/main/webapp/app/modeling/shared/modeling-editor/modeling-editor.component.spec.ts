@@ -199,6 +199,7 @@ describe('ModelingEditorComponent', () => {
             showPresence: true,
             showCursors: true,
             showSelectionHighlights: true,
+            showFollow: true,
         });
     });
 
