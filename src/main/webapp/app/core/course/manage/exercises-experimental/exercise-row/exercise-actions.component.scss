@@ -1,6 +1,6 @@
 // Overlay the (position: relative) actions cell instead of sitting in its flow, so the
 // buttons never contribute to the column's intrinsic width and cannot widen the table.
-// The cell clips us (overflow: hidden); the measured host width is the real available space.
+// The cell clips us (overflow: hidden).
 :host {
     position: absolute;
     inset: 0;
@@ -9,14 +9,16 @@
     justify-content: flex-end;
 }
 
-// Off-screen measurement clone: laid out (so offsetWidth is real) but invisible and non-interactive.
-.actions-measure {
-    position: absolute;
-    top: 0;
-    left: 0;
-    visibility: hidden;
-    pointer-events: none;
-    white-space: nowrap;
+.inline-item {
+    display: inline-flex;
+}
+
+// Fixed width so the overflow calculation can reserve an exact amount for the ellipsis trigger (ELLIPSIS_WIDTH_PX).
+.action-more {
+    flex: none;
+    justify-content: center;
+    width: 40px;
+    padding-inline: 0;
 }
 
 .btn {

@@ -1,29 +1,35 @@
-<div class="d-flex gap-1 align-items-center justify-content-end flex-nowrap">
+<div #actionsRow class="d-flex gap-1 align-items-center justify-content-end flex-nowrap w-100">
     @if (quizExercise(); as quiz) {
         <!-- Rendered hidden: drives the quiz lifecycle logic; the visible buttons are the ActionItems below. -->
         <jhi-quiz-exercise-lifecycle-buttons hidden [quizExercise]="quiz" (handleNewQuizExercise)="onQuizLifecycleUpdate($event)" (loadOne)="onQuizReload()" />
     }
-    @for (action of visibleQuiz(); track action.id) {
-        <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+    <!-- Quiz lifecycle buttons always stay visible; grouped so their reserved width can be measured. -->
+    <span #quizGroup class="d-flex gap-1 align-items-center flex-nowrap">
+        @for (action of quizActions(); track action.id) {
+            <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+        }
+        @if (quizActions().length > 0 && mainActions().length > 0) {
+            <div class="vr mx-1"></div>
+        }
+    </span>
+
+    <!-- Main buttons: all rendered once (stable DOM). Overflowing ones get `d-none` and appear in the menu instead;
+         resizing only toggles that class, it never recreates buttons. -->
+    @for (action of mainActions(); track action.id) {
+        <span #inlineItem class="inline-item" [attr.data-signature]="signatureOf(action)" [class.d-none]="hiddenIds().has(action.id)">
+            <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+        </span>
     }
-    @if (visibleQuiz().length > 0 && visibleMain().length > 0) {
-        <div class="vr mx-1"></div>
-    }
-    @if (hasOverflow()) {
-        <button type="button" class="btn btn-outline-secondary" (click)="toggleMenu($event)" title="More actions">
-            <fa-icon [icon]="faEllipsis" />
-        </button>
-        <p-popover #menu appendTo="body">
-            <div class="d-flex flex-column gap-1" style="min-width: 11rem">
-                @for (action of overflowMain(); track action.id) {
-                    <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
-                }
-            </div>
-        </p-popover>
-    }
-    @for (action of visibleMain(); track action.id) {
-        <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
-    }
+    <button type="button" class="btn btn-outline-secondary action-more" [class.d-none]="!hasOverflow()" (click)="toggleMenu($event)" title="More actions">
+        <fa-icon [icon]="faEllipsis" />
+    </button>
+    <p-popover #menu appendTo="body">
+        <div class="d-flex flex-column gap-1" style="min-width: 11rem">
+            @for (action of hiddenActions(); track action.id) {
+                <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
+            }
+        </div>
+    </p-popover>
 </div>
 
 @if (showBatchMenu()) {
@@ -42,7 +48,7 @@
                             <span class="badge bg-success ms-auto" style="font-size: 0.75rem">Running</span>
                         } @else {
                             <button type="button" class="btn btn-success btn-sm ms-auto" (click)="startBatch(batch.id!)">
-                                <fa-icon [icon]="faPlayCircle" /><span class="ms-1">Start</span>
+                                <fa-icon [icon]="faPlayCircle" /><span class="ms-1">{{ 'artemisApp.quizExercise.startBatch' | artemisTranslate }}</span>
                             </button>
                         }
                     </div>
@@ -50,25 +56,11 @@
                     <span class="text-muted fst-italic">No batches yet.</span>
                 }
             </div>
-            <button type="button" class="btn btn-primary btn-sm" (click)="addBatch()"><fa-icon [icon]="faPlus" /><span class="ms-1">Add Batch</span></button>
+            <button type="button" class="btn btn-primary btn-sm" (click)="addBatch()">
+                <fa-icon [icon]="faPlus" /><span class="ms-1">{{ 'artemisApp.quizExercise.addBatch' | artemisTranslate }}</span>
+            </button>
         </div>
     </p-popover>
-}
-
-<!-- Hidden off-screen render used only to measure each button's natural width. Rendered only while this row
-     introduces a button width the shared cache hasn't measured yet; warm rows skip it entirely. -->
-@if (needsMeasure()) {
-    <div class="actions-measure d-flex gap-1" aria-hidden="true">
-        @for (action of allActions(); track action.id) {
-            <span #measureItem [attr.data-signature]="signatureOf(action)">
-                <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
-            </span>
-        }
-        <span #ellipsisMeasure>
-            <button type="button" class="btn btn-outline-secondary"><fa-icon [icon]="faEllipsis" /></button>
-        </span>
-        <span #separatorMeasure><div class="vr"></div></span>
-    </div>
 }
 
 <ng-template #actionTpl let-action let-inMenu="inMenu">
@@ -90,22 +82,22 @@
                 [class.text-start]="inMenu"
                 [class.w-100]="inMenu"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.label }}</span>
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate: action.labelArgs }}</span>
             </button>
         }
         @case ('button') {
             <button type="button" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="runAction(action)">
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.label }}</span>
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate: action.labelArgs }}</span>
             </button>
         }
         @case ('batches') {
             <button type="button" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="toggleBatchMenu($event)">
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.label }}</span>
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate: action.labelArgs }}</span>
             </button>
         }
         @default {
             <a [routerLink]="action.link" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="closeMenuIfOpen(inMenu)">
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.label }}</span>
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate: action.labelArgs }}</span>
             </a>
         }
     }

@@ -19,13 +19,16 @@
 }
 
 /*
- * Cap at the widest button set (60rem ≈ a full quiz row); without it the column absorbs all leftover
- * width as whitespace. Buttons are an absolute overlay (exercise-actions.component) so they never
- * inflate the column; overflow:hidden clips them and min-width keeps the ellipsis button reachable.
+ * Actions column sizing. `width: 100%` makes it greedily take the table's leftover width (after the fixed title/dates
+ * columns), so it is responsive: more space (wider viewport / zoomed out) ⇒ wider column ⇒ more buttons fit; less space
+ * ⇒ narrower column ⇒ buttons collapse into the ellipsis. `max-width` caps it at the widest button set (a full quiz
+ * row) so it never grows into pure whitespace. Buttons are an absolute overlay (exercise-actions.component) so they
+ * never inflate the column; overflow:hidden clips anything past it and min-width keeps the ellipsis reachable.
  */
 th.col-actions,
 td.col-actions {
-    width: 60rem;
+    width: 100%;
+    max-width: 60rem;
     min-width: 4rem;
     position: relative;
     overflow: hidden;
@@ -67,7 +70,7 @@ td.col-actions {
     background-color: var(--bs-body-bg);
     border: 1px solid var(--bs-border-color);
     border-radius: var(--bs-border-radius);
-    box-shadow: 0 5px 12px rgb(0 0 0 / 20%);
+    box-shadow: 0 5px 12px rgb(0 0 0 / 0.2);
 }
 
 /* Gap where the dragged row sits. */

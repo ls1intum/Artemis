@@ -157,6 +157,8 @@
             "openForPractice": "Release For Practice",
             "startQuiz": "Start Quiz",
             "startBatch": "Start Batch",
+            "endQuiz": "End",
+            "batches": "Batches ({{ count }})",
             "showNow": "Set Visible",
             "duration": "Duration",
             "hours": "hours",

@@ -157,6 +157,8 @@
             "openForPractice": "Zum Üben Freigeben",
             "startQuiz": "Quiz starten",
             "startBatch": "Gruppe starten",
+            "endQuiz": "Beenden",
+            "batches": "Gruppen ({{ count }})",
             "showNow": "Für Studierende Anzeigen",
             "duration": "Dauer",
             "hours": "Stunden",
