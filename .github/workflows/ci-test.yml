@@ -60,7 +60,9 @@ jobs:
           java-version: |
             17
             ${{ env.java }}
-          cache: 'gradle'
+          # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
       - name: Java Tests (module-affected)
         if: ${{ !inputs.run_all_tests }}
         env:

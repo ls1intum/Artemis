@@ -16,6 +16,7 @@ import { User } from 'app/account/user/user.model';
 import { firstValueFrom } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 describe('Organization Service', () => {
     setupTestBed({ zoneless: true });
@@ -131,6 +132,59 @@ describe('Organization Service', () => {
         const resultPromise = firstValueFrom(service.removeUserFromOrganization(elemDefault.id!, user1.login));
 
         const req = httpMock.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+
+        const result = await resultPromise;
+        expect(result.ok).toBe(true);
+    });
+
+    it('should bulk-add users to an organization in one request', async () => {
+        const resultPromise = firstValueFrom(service.addUsersToOrganization(elemDefault.id!, ['user1', 'user2']));
+
+        const req = httpMock.expectOne((r) => r.url.endsWith(`${elemDefault.id}/users`) && r.method === 'POST');
+        expect(req.request.body).toEqual({ logins: ['user1', 'user2'] });
+        req.flush(null, { status: 200, statusText: 'OK' });
+
+        const result = await resultPromise;
+        expect(result.ok).toBe(true);
+    });
+
+    it('should search users for organization registration and map isRegistered flag', async () => {
+        const orgId = 42;
+        const mockUsers: UserForRegistration[] = [
+            { id: 1, login: 'member', name: 'Member User', isRegistered: true },
+            { id: 2, login: 'nonmember', name: 'Non Member', isRegistered: false },
+        ];
+
+        const resultPromise = firstValueFrom(service.searchUsersForOrganizationRegistration(orgId, 'member', 0, 10));
+
+        const req = httpMock.expectOne((r) => r.url.includes(`${orgId}/users/search`) && r.method === 'GET');
+        expect(req.request.params.get('loginOrName')).toBe('member');
+        expect(req.request.params.get('pageIndex')).toBe('0');
+        expect(req.request.params.get('pageSize')).toBe('10');
+        req.flush(mockUsers, { headers: { 'X-Total-Count': '2' } });
+
+        const result = await resultPromise;
+        expect(result.content).toHaveLength(2);
+        expect(result.totalElements).toBe(2);
+        expect(result.content[0].isRegistered).toBe(true);
+        expect(result.content[1].isRegistered).toBe(false);
+    });
+
+    it('should add a course to an Organization', async () => {
+        const resultPromise = firstValueFrom(service.addCourseToOrganization(7, 42));
+
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/admin/organizations/7/courses/42' });
+        req.flush({ status: 200 });
+
+        const result = await resultPromise;
+        expect(result.ok).toBe(true);
+    });
+
+    it('should remove a course from an Organization', async () => {
+        const resultPromise = firstValueFrom(service.removeCourseFromOrganization(7, 42));
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/organizations/7/courses/42' });
         req.flush({ status: 200 });
 
         const result = await resultPromise;

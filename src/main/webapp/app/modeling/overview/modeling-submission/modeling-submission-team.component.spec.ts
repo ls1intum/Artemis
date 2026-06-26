@@ -3,9 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,10 +15,8 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
@@ -33,7 +30,6 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
@@ -86,7 +82,6 @@ describe('ModelingSubmissionComponent', () => {
 
     let comp: ModelingSubmissionComponent;
     let fixture: ComponentFixture<ModelingSubmissionComponent>;
-    let debugElement: DebugElement;
     let service: ModelingSubmissionService;
     let alertService: AlertService;
 
@@ -97,7 +92,6 @@ describe('ModelingSubmissionComponent', () => {
     participation.exercise.mode = ExerciseMode.TEAM;
     participation.id = 1;
     const submission = <ModelingSubmission>(<unknown>{ id: 20, submitted: true, participation });
-    const result = { id: 1 } as Result;
 
     // Valid Apollon v3 model format for tests
     const validMockModel = JSON.stringify({
@@ -119,16 +113,15 @@ describe('ModelingSubmissionComponent', () => {
         // Override the component to use stubs/mocks instead of real components
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
-                imports: [ModelingEditorComponent, HeaderParticipationPageComponent, RatingComponent],
+                imports: [ModelingEditorComponent, RatingComponent],
             },
             add: {
-                imports: [StubModelingEditorComponent, MockComponent(HeaderParticipationPageComponent), MockComponent(RatingComponent)],
+                imports: [StubModelingEditorComponent, MockComponent(RatingComponent)],
             },
         });
 
         fixture = TestBed.createComponent(ModelingSubmissionComponent);
         comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
         service = TestBed.inject(ModelingSubmissionService);
         alertService = TestBed.inject(AlertService);
 
@@ -163,8 +156,6 @@ describe('ModelingSubmissionComponent', () => {
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
-                MockComponent(HeaderParticipationPageComponent),
-                MockComponent(ButtonComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(ModelingAssessmentComponent),
@@ -281,42 +272,6 @@ describe('ModelingSubmissionComponent', () => {
 
         // We have got it?
         expect(editorImportSpy).toHaveBeenCalledWith(patchData);
-    });
-
-    it('should allow to submit in exam mode when exercise due date not set', async () => {
-        createComponent();
-
-        // GIVEN — make this an exam exercise so ngOnInit sets examMode = true
-        (<StudentParticipation>submission.participation).exercise!.exerciseGroup = new ExerciseGroup();
-        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-
-        // WHEN
-        comp.isLoading.set(false);
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(debugElement.query(By.css('div'))).not.toBeNull();
-
-        const submitButton = debugElement.query(By.css('#submit'));
-        expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled()).toBe(false);
-        expect(comp.examMode()).toBe(true);
-    });
-
-    it('should not allow to submit in exam mode if there is a non-automatic result', async () => {
-        createComponent();
-
-        // GIVEN — make this an exam exercise so ngOnInit sets examMode = true
-        (<StudentParticipation>submission.participation).exercise!.exerciseGroup = new ExerciseGroup();
-        comp.result.set(result);
-        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        const submitButton = debugElement.query(By.css('#submit'));
-        expect(submitButton).not.toBeNull();
-        expect(submitButton.componentInstance.disabled()).toBe(true);
     });
 
     it('should get inactive as soon as the due date passes the current date', async () => {

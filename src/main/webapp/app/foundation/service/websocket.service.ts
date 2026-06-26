@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { IWatchParams, ReconnectionTimeMode, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
 import { IMessage, StompHeaders } from '@stomp/stompjs';
-import { gzip, ungzip } from 'pako';
+import { gunzipSync, gzipSync, strFromU8, strToU8 } from 'fflate';
 import { BehaviorSubject, EMPTY, Observable, Subscription, of, timer } from 'rxjs';
 import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 
@@ -435,8 +435,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * @internal
      */
     private static compressAndEncode(payload: string): string {
-        // 1. Compress if larger than 1 KB
-        const compressedPayload = gzip(payload);
+        const compressedPayload = gzipSync(strToU8(payload));
         // 2. Convert binary data to base64 string
         return window.btoa(
             Array.from(compressedPayload)
@@ -463,8 +462,8 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private static decodeAndDecompress(payload: string): string {
         // 1. Decode the Base64 string to binary (ArrayBuffer) and convert to Uint8Array
         const binaryData = Uint8Array.from(window.atob(payload), (char) => char.charCodeAt(0));
-        // 2. Decompress using pako
-        return ungzip(binaryData, { to: 'string' });
+        // 2. Decompress using fflate
+        return strFromU8(gunzipSync(binaryData));
     }
 
     /**

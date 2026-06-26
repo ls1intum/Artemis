@@ -247,10 +247,14 @@ public abstract class BaseExercise extends DomainObject {
      **/
     @JsonIgnore
     public String getSanitizedExerciseTitle() {
-        if (title == null) {
-            return "exercise";
+        String sanitizedTitle = title == null ? "" : StringUtil.sanitizeStringForFileName(title);
+        if (sanitizedTitle.isBlank()) {
+            // The title may sanitize to an empty string when it consists only of non-ASCII letters (e.g. "テスト"),
+            // because sanitizeStringForFileName reduces the input to ASCII. Fall back to a stable, unique name so that
+            // exercise export directories derived from the title cannot collide.
+            return getId() != null ? "exercise_" + getId() : "exercise";
         }
-        return StringUtil.sanitizeStringForFileName(title);
+        return sanitizedTitle;
     }
 
     /**
