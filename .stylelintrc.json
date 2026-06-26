@@ -23,7 +23,9 @@
                 "src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.scss",
                 "src/main/webapp/app/localci/build-agent-summary/**/*.scss",
                 "src/main/webapp/app/localci/build-agent-details/**/*.scss",
-                "src/main/webapp/app/localci/build-job-statistics/**/*.scss"
+                "src/main/webapp/app/localci/build-job-statistics/**/*.scss",
+                "src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.scss",
+                "src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.scss"
             ],
             "customSyntax": "postcss-scss",
             "rules": {
