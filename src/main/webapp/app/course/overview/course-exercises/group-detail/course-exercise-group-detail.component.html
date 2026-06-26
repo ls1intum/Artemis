@@ -1,7 +1,7 @@
 @if (group(); as group) {
     <div class="exercise-page d-flex flex-column h-100 overflow-hidden">
         <div class="d-flex flex-column p-2 rounded-3 module-bg mb-2">
-            <div class="d-flex align-items-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2">
                 <h5 class="mb-0 py-1">
                     <fa-icon [icon]="faLayerGroup" />
                     {{ group.title }}
@@ -28,49 +28,44 @@
 
         <div class="d-flex flex-column h-100 overflow-hidden module-bg rounded-3 p-2">
             <div class="group-panel-scroll">
-                <div class="alert alert-info mb-4" role="alert">
-                    This exercise has several variants. You can work on <strong>all</strong> of them. Pick whichever variant you like and open it below.
-                    @if (group.maxPoints) {
-                        Your combined score from all variants counts towards a maximum of <strong>{{ group.maxPoints }} points</strong> in the course score.
-                    }
+                <div class="variant-callout rounded-3 p-3 mb-3">
+                    <div class="fw-semibold mb-1">Choose a variant to work on</div>
+                    <p class="mb-0 small text-body-secondary">
+                        This exercise has <strong>{{ exercises().length }} variants</strong> — you can work on <strong>all</strong> of them.
+                        @if (group.maxPoints) {
+                            Your combined score counts towards a maximum of <strong>{{ group.maxPoints }} points</strong>.
+                        }
+                        Hover over a variant to preview its problem statement, then click to open it.
+                    </p>
                 </div>
-                <h3 class="h5 mb-2">Variants</h3>
-                <div class="d-flex flex-column" [style.gap]="'calc(0.5rem - 2px)'">
+                <div class="variant-grid">
                     @for (exercise of exercises(); track exercise.id) {
-                        <ng-container [ngTemplateOutlet]="variantTile" [ngTemplateOutletContext]="{ $implicit: exercise }" />
+                        <div
+                            class="variant-card position-relative border rounded-3"
+                            [class.variant-card--easy]="exercise.difficulty === DifficultyLevel.EASY"
+                            [class.variant-card--medium]="exercise.difficulty === DifficultyLevel.MEDIUM"
+                            [class.variant-card--hard]="exercise.difficulty === DifficultyLevel.HARD"
+                        >
+                            <a class="variant-card__link" [routerLink]="exerciseLink(exercise)">
+                                <div class="d-flex align-items-center gap-2">
+                                    <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary" />
+                                    <span class="fw-semibold text-body">{{ exercise.title }}</span>
+                                </div>
+
+                                <hr class="my-2" />
+
+                                <jhi-exercise-headers-information class="mb-2" [exercise]="exercise" [course]="course()" [studentParticipation]="exerciseParticipation(exercise)" />
+
+                                @if (renderedStatements().get(exercise.id!); as renderedPs) {
+                                    <div class="variant-card__ps markdown-preview" [innerHTML]="renderedPs"></div>
+                                } @else {
+                                    <p class="text-body-tertiary small fst-italic mb-0">No problem statement configured.</p>
+                                }
+                            </a>
+                        </div>
                     }
                 </div>
             </div>
         </div>
     </div>
 }
-
-<!-- Compact read-only variant tile linking to the variant's exercise page. -->
-<ng-template #variantTile let-exercise>
-    <div
-        class="multiselect-tile position-relative border rounded-3"
-        [class.multiselect-tile--easy]="exercise.difficulty === DifficultyLevel.EASY"
-        [class.multiselect-tile--medium]="exercise.difficulty === DifficultyLevel.MEDIUM"
-        [class.multiselect-tile--hard]="exercise.difficulty === DifficultyLevel.HARD"
-    >
-        <a class="multiselect-tile__link" [routerLink]="exerciseLink(exercise)">
-            <div class="fw-semibold text-truncate small">
-                <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary me-1" />
-                {{ exercise.title }}
-            </div>
-            <div class="d-flex align-items-center gap-2 small text-secondary mt-1">
-                @if (exercise.maxPoints) {
-                    <span>{{ exercise.maxPoints }} Points</span>
-                }
-                @if (exercise.dueDate) {
-                    <span>Due {{ exercise.dueDate | artemisDate: 'short-date' }}</span>
-                }
-            </div>
-            @if (problemStatementPreview(exercise); as problemStatement) {
-                <p class="ps-quote">
-                    {{ problemStatement | slice: 0 : previewSliceEnd }}
-                </p>
-            }
-        </a>
-    </div>
-</ng-template>

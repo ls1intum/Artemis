@@ -1,48 +1,53 @@
-// Definite host height so the inner element's percentage min-height resolves and the white fills vertically.
 :host {
     display: block;
     height: 100%;
 }
 
-// Fills the pane like the exercise detail view (header + scrollable selection).
 .exercise-page {
     height: 100%;
 }
 
-// The selection scrolls while the related competencies stay pinned to the bottom.
 .group-panel-scroll {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
 }
 
-// Header information boxes fit their text, like the real exercise header (jhi-information-box .mw-content).
 .info-box {
     max-width: fit-content;
 }
 
-// Compact read-only variant tile (exercise page): a difficulty-coloured left stripe, the title +
-// points/due date, and a short indented quote of the problem statement (mirroring the exercise-variant
-// generation preview).
-.multiselect-tile {
+// Callout banner explaining the variant mechanic.
+.variant-callout {
+    background-color: var(--bs-info-bg-subtle, rgba(13, 110, 253, 0.08));
+    border-left: 4px solid var(--bs-info, #0dcaf0);
+}
+
+// Responsive grid: fills as many 480px columns as fit, collapsing to one on narrow viewports.
+// 480px chosen so cards are wide enough that PS prose doesn't need horizontal scrolling.
+.variant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    gap: 0.75rem;
+}
+
+// Variant card: exercise-header-like layout with a problem statement that expands on hover.
+.variant-card {
     overflow: hidden;
-    position: relative;
     background-color: var(--module-bg);
     border: 1px solid var(--bs-border-color);
-    border-right-width: 2px;
-    border-top-width: 2px;
-    border-bottom-width: 2px;
     transition:
         border-color 0.15s ease-in-out,
         background-color 0.15s ease-in-out;
 
-    // Difficulty colour stripe down the left edge (clipped to the rounded corners by overflow: hidden).
+    // Difficulty colour stripe on the left edge; invisible when no difficulty is set.
     &::before {
         content: '';
         position: absolute;
         inset: 0 auto 0 0;
         width: 5px;
-        background-color: var(--bs-border-color);
+        background-color: var(--bs-secondary);
+        pointer-events: none;
     }
 
     &--easy::before {
@@ -57,15 +62,13 @@
         background-color: var(--bs-danger);
     }
 
-    // Darken (don't underline) on hover, like the exercise sidebar cards.
     &:hover {
         background-color: var(--link-item-bg);
     }
 
     &__link {
-        // Tight vertical padding to match the sidebar cards; left padding clears the difficulty stripe.
         display: block;
-        padding: 0.4rem 0.6rem 0.4rem 1rem;
+        padding: 0.75rem 0.75rem 0.75rem 1.25rem;
         color: inherit;
         text-decoration: none;
 
@@ -74,25 +77,81 @@
         }
     }
 
-    // global.scss's `a:not(.btn):not(.tab-link):hover { text-decoration: underline !important }` has
-    // specificity (0,3,1) — one element type plus three pseudo-class/class selectors. The nested selector
-    // here compiles to `.multiselect-tile[_ng] a.multiselect-tile__link[_ng]:hover`, giving (0,5,1), which
-    // beats the global rule even when both carry !important.
-    a.multiselect-tile__link:hover {
+    // High-specificity selectors to beat the global `a:not(.btn):not(.tab-link):hover`
+    // rule (specificity 0,3,1). Angular's _ngcontent attribute raises this to 0,4,1.
+    a.variant-card__link:hover,
+    a.variant-card__link:focus,
+    a.variant-card__link:active {
+        color: inherit !important;
         text-decoration: none !important;
+    }
+
+    // Problem statement: collapsed with no scrollbar by default; expands and reveals
+    // a scrollbar on card hover so long statements remain accessible without navigation.
+    &__ps {
+        position: relative;
+        max-height: 9rem;
+        overflow: hidden;
+        overflow-x: hidden;
+        transition: max-height 0.35s ease;
+        font-size: 0.85rem;
+
+        // Fade-out gradient at the bottom of the PS area (not the full card).
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3rem;
+            background: linear-gradient(to bottom, transparent, var(--module-bg));
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+    }
+
+    &:hover &__ps {
+        max-height: 22rem;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        &::after {
+            opacity: 0;
+            background: linear-gradient(to bottom, transparent, var(--link-item-bg));
+        }
     }
 }
 
-// Problem-statement excerpt as an indented quote. Fixed at two lines.
-.ps-quote {
-    margin: 0.4rem 0 0;
-    padding-left: 0.6rem;
-    border-left: 3px solid var(--bs-border-color);
-    color: var(--bs-secondary-color);
-    font-size: 0.8rem;
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+// Scale down heading sizes in the rendered problem statement.
+// ::ng-deep is needed because [innerHTML] content doesn't receive Angular's _ngcontent attributes.
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+:host ::ng-deep .variant-card__ps {
+    h1,
+    h2,
+    h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        margin-top: 0.5rem;
+    }
+
+    h4,
+    h5,
+    h6 {
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    p {
+        margin-bottom: 0.4rem;
+    }
+}
+
+// Neutralise Bootstrap's .pe-auto (pointer-events: auto !important) on the result-history
+// trigger inside exercise-headers-information so the tooltip and popover don't fire on hover.
+// Higher specificity (.variant-card .pe-auto = 0,2,0) beats Bootstrap's class rule (0,1,0).
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+:host ::ng-deep .variant-card .pe-auto {
+    pointer-events: none !important;
+    cursor: default !important;
 }

@@ -1,22 +1,28 @@
-import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { Component, DestroyRef, EnvironmentInjector, afterNextRender, computed, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { NgTemplateOutlet, SlicePipe } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faLayerGroup } from '@fortawesome/free-solid-svg-icons';
 import { DifficultyLevel, Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
-import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { forkJoin } from 'rxjs';
+import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
+import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
+import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-course-exercise-group-detail',
     templateUrl: './course-exercise-group-detail.component.html',
     styleUrls: ['./course-exercise-group-detail.component.scss'],
-    imports: [RouterLink, NgTemplateOutlet, SlicePipe, FaIconComponent, ArtemisDatePipe],
+    imports: [RouterLink, FaIconComponent, ArtemisDatePipe, ExerciseHeadersInformationComponent],
 })
 export class CourseExerciseGroupDetailComponent {
     private readonly route = inject(ActivatedRoute);
@@ -24,6 +30,9 @@ export class CourseExerciseGroupDetailComponent {
     private readonly exerciseService = inject(ExerciseService);
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly plantUmlWrapper = inject(ProgrammingExercisePlantUmlExtensionWrapper);
+    private readonly sanitizer = inject(DomSanitizer);
+    private readonly injector = inject(EnvironmentInjector);
 
     protected readonly faLayerGroup = faLayerGroup;
     protected readonly getIcon = getIcon;
@@ -31,9 +40,13 @@ export class CourseExerciseGroupDetailComponent {
 
     private readonly groupId = signal<number | undefined>(undefined);
     private readonly courseExercises = signal<Exercise[]>([]);
+    protected readonly course = signal<Course | undefined>(undefined);
 
     private readonly problemStatements = signal<Map<number, string>>(new Map());
     private readonly problemStatementsRequested = new Set<number>();
+
+    protected readonly renderedStatements = signal<Map<number, SafeHtml>>(new Map());
+    private plantUmlCallbacks: Array<() => void> = [];
 
     protected readonly group = computed<CourseExerciseGroup | undefined>(() => {
         const groupId = this.groupId();
@@ -44,18 +57,32 @@ export class CourseExerciseGroupDetailComponent {
     });
     protected readonly exercises = computed<Exercise[]>(() => this.group()?.exercises ?? []);
 
-    protected readonly previewSliceEnd = 403;
-
     protected courseId = 0;
 
     constructor() {
         this.courseId = Number(this.route.parent?.parent?.snapshot.params['courseId']);
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => this.groupId.set(Number(params['groupId'])));
 
+        this.plantUmlWrapper
+            .subscribeForInjectableElementsFound()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((cb) => this.plantUmlCallbacks.push(cb));
+
+        effect(() => {
+            const exercises = this.exercises();
+            const statements = this.problemStatements();
+            untracked(() => this.renderProblemStatements(exercises, statements));
+        });
+
         this.courseManagementService
             .findOneForDashboard(this.courseId)
             .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({ next: (response) => this.courseExercises.set(response.body?.exercises ?? []) });
+            .subscribe({
+                next: (response) => {
+                    this.course.set(response.body ?? undefined);
+                    this.courseExercises.set(response.body?.exercises ?? []);
+                },
+            });
 
         toObservable(this.group)
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -87,9 +114,35 @@ export class CourseExerciseGroupDetailComponent {
         });
     }
 
-    protected problemStatementPreview(exercise: Exercise): string | undefined {
-        const statement = exercise.problemStatement ?? (exercise.id !== undefined ? this.problemStatements().get(exercise.id) : undefined);
-        return statement?.replace(/^\s*#{1,6}\s*/, '');
+    private renderProblemStatements(exercises: Exercise[], statements: Map<number, string>): void {
+        this.plantUmlCallbacks = [];
+        const map = new Map<number, SafeHtml>();
+
+        for (const exercise of exercises) {
+            if (exercise.id === undefined) continue;
+            const ps = exercise.problemStatement ?? statements.get(exercise.id);
+            if (!ps) continue;
+
+            // Strip task syntax — [task][Name](tests) → Name — so it renders as plain text instead of a link.
+            const preprocessed = ps.replace(taskRegex, (_match, name: string) => name);
+            this.plantUmlWrapper.setExerciseId(exercise.id);
+            const html = htmlForMarkdown(preprocessed, [this.plantUmlWrapper.getExtension()]);
+            map.set(exercise.id, this.sanitizer.bypassSecurityTrustHtml(html));
+        }
+
+        this.renderedStatements.set(map);
+
+        afterNextRender(
+            () => {
+                this.plantUmlCallbacks.forEach((cb) => cb());
+                this.plantUmlCallbacks = [];
+            },
+            { injector: this.injector },
+        );
+    }
+
+    protected exerciseParticipation(exercise: Exercise): StudentParticipation | undefined {
+        return exercise.studentParticipations?.[0];
     }
 
     protected exerciseLink(exercise: Exercise): string {

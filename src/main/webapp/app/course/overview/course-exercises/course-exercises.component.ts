@@ -152,8 +152,16 @@ export class CourseExercisesComponent {
             const url = this.router.url;
             const urlParts = url.split('/');
             const indexOfExercise = urlParts.indexOf('exercises');
-            if (indexOfExercise !== -1 && urlParts.length === indexOfExercise + 2) {
-                exerciseId = urlParts[indexOfExercise + 1];
+            if (indexOfExercise !== -1 && urlParts.length > indexOfExercise + 1) {
+                const segment = urlParts[indexOfExercise + 1];
+                // Already on a group detail page — treat as selected, no redirect needed.
+                if (segment === 'group') {
+                    this._exerciseSelected.set(true);
+                    return;
+                }
+                if (urlParts.length === indexOfExercise + 2) {
+                    exerciseId = segment;
+                }
             }
         }
 
