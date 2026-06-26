@@ -453,7 +453,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             .subscribe((submission: ModelingSubmission) => {
                 if (submission.submitted) {
                     this.submission.set(submission);
-                    if (this.submission().model) {
+                    // Team mode: leave the live collaborative editor (Yjs) untouched — see submit().
+                    if (!this.modelingExercise().teamMode && this.submission().model) {
                         this.umlModel.set(importDiagram(JSON.parse(this.submission().model!)));
                         this.hasElements.set(hasModelElements(this.umlModel()));
                     }
@@ -642,7 +643,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.update(this.submission(), this.modelingExercise().id!).subscribe({
                 next: (response) => {
                     this.submission.set(response.body!);
-                    if (this.submission().model) {
+                    // In team mode the live collaborative editor is the single source of truth (Yjs); re-importing
+                    // the saved snapshot would reset the shared document and discard a teammate's concurrent edits.
+                    if (!this.modelingExercise().teamMode && this.submission().model) {
                         this.umlModel.set(importDiagram(JSON.parse(this.submission().model!)));
                         this.hasElements.set(hasModelElements(this.umlModel()));
                     }
@@ -698,12 +701,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private onSaveError() {
         this.alertService.error('artemisApp.modelingEditor.error');
         this.isSaving.set(false);
-    }
-
-    onReceiveSubmissionFromTeam(submission: ModelingSubmission) {
-        submission.participation!.exercise = this.modelingExercise();
-        submission.participation!.submissions = [submission];
-        this.updateModelingSubmission(submission);
     }
 
     /**
