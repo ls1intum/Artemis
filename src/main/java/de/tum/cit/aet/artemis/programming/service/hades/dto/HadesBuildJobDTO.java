@@ -20,9 +20,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record HadesBuildJobDTO(@NotBlank String name, List<VolumeDTO> volumes, HashMap<String, String> metadata, String timestamp, Integer priority,
         @NotEmpty List<HadesBuildStepDTO> steps) implements Serializable {
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record VolumeDTO(String name, EmptyDirDTO emptyDir) {
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record EmptyDirDTO() {
     }
 
