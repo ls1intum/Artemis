@@ -582,7 +582,7 @@ Why the **named** `state-*` form (`text-state-danger`) rather than a bare `text-
 }
 ```
 
-`@theme inline` is load-bearing: each generated utility emits a `var(--danger)` **reference** that resolves at the element, so dark mode keeps working (dark themes reassign `--danger` and the utility follows). A non-`inline` `@theme` would snapshot the light value into a new global and break dark mode. There is no exit-gate rename — these tokens survive Bootstrap removal as-is.
+`@theme inline` emits each utility as a direct `var(--danger)` **reference** (e.g. `.text-state-danger { color: var(--danger) }`) instead of also creating a redundant `--color-state-*` global. Both `@theme` and `@theme inline` are dark-mode-correct — CSS variables resolve lazily at the element, so `--danger`'s dark value wins either way — so `inline` is a cleanliness choice (no extra indirection), not a correctness one. There is no exit-gate rename — these tokens survive Bootstrap removal as-is.
 
 **Pick the tool by shape, not by syntax.** When status is a **labelled pill/badge** (the graded/practice result badge, …), render it with a PrimeNG `severity` component (`p-tag` / `p-badge` / `p-message`) — it carries its own dark-mode-correct colour and a11y, and needs no colour utility at all. The `text-state-*` utility (or `[style.color]="…var(--state)…"` when the colour is a multi-state enum) is for **irreducible inline colour** with no component host: a translated validation `<small>`, a required-field asterisk, or a lone state-coloured `<fa-icon>` status glyph. Don't wrap a bare colour in a `severity` component just to avoid the utility — that adds markup for no gain.
 

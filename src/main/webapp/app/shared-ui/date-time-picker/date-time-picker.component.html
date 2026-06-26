@@ -36,7 +36,7 @@
         [appendTo]="'body'"
         (ngModelChange)="updateField($event)"
     />
-    <button type="button" class="relative cursor-pointer border-0 bg-transparent p-1 text-muted-color" (click)="clearDate()">
+    <button type="button" class="relative cursor-pointer border-0 bg-transparent p-1 text-muted-color" [disabled]="disabled()" (click)="clearDate()">
         <fa-icon [icon]="faCircleXmark" />
     </button>
 </div>

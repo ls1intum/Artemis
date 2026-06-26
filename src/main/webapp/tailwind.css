@@ -21,20 +21,23 @@
 
 @import 'tailwindcss/theme.css' layer(theme);
 /*
- * `source(none)` disables Tailwind v4's automatic whole-project content detection; only the explicit
- * `@source` below is scanned. Without this, Tailwind scans every template and emits a utility for any
- * candidate class it finds — including Bootstrap component class names that double as Tailwind utilities
- * (e.g. `.collapse` -> `visibility: collapse`, which hides expanded Bootstrap collapse panels app-wide).
+ * `source(none)` disables Tailwind v4's automatic whole-project content detection; only the explicit `@source`
+ * paths below are scanned. THE COLLISION THIS AVOIDS (the rationale the two guards further down also serve):
+ * Tailwind emits a utility for any candidate class it finds in scanned text, and some Bootstrap component class
+ * names double as Tailwind utility names — most damagingly `.collapse` -> `visibility: collapse` (which hides the
+ * navbar's `.navbar-collapse` app-wide) and `.table` -> `display: table`. Scanning only migrated paths keeps them out.
  */
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
 
 @plugin 'tailwindcss-primeui';
 
 /*
- * Brand state-color tokens. Defined with `@theme inline` so each generated utility emits a `var(--<brand>)`
- * REFERENCE that resolves at the element — dark-mode correct, because dark themes reassign --danger/--success/…
- * and the utility follows (a non-inline `@theme` would snapshot the light value). Named `state-*` (not `danger`)
- * ON PURPOSE: a `--color-danger` token generates `.text-danger`, which collides with Bootstrap's unlayered
+ * Brand state-color tokens. Defined with `@theme inline` so each utility emits a direct `var(--<brand>)`
+ * reference (e.g. `.text-state-danger { color: var(--danger) }`) instead of ALSO creating a redundant
+ * `--color-state-*` global custom property. Both `@theme` and `@theme inline` are dark-mode-correct — CSS
+ * variables resolve lazily at the element, so `--danger`'s dark value wins either way; `inline` just keeps the
+ * extra indirection out of the token surface. Named `state-*` (not `danger`) ON PURPOSE: a `--color-danger`
+ * token generates `.text-danger`, which collides with Bootstrap's unlayered
  * `!important` `.text-danger` and would silently lose during coexistence. `state-*` collides with nothing, so it
  * works now AND survives Bootstrap removal with no rename. Usage: `text-state-danger` (the `bg-`/`border-`
  * variants generate on demand from the same token when a surface/border actually needs one). info is CYAN
@@ -47,12 +50,7 @@
     --color-state-info: var(--info);
 }
 
-/*
- * Scope Tailwind's content scanning to the migrated module(s) only. Tailwind generates a utility for every
- * candidate class it finds in the scanned sources; scanning the whole app would emit utilities whose names
- * collide with Bootstrap component classes still used elsewhere (e.g. `.collapse` -> `visibility: collapse`
- * would hide every expanded Bootstrap collapse panel app-wide). Add each module here as it is migrated.
- */
+/* The `source(none)` allowlist: the migrated paths Tailwind may scan. Add each module here as it goes Bootstrap-free. */
 @source './app/admin';
 @source './app/atlas/shared/standardized-competencies';
 @source './app/atlas/manage/import-standardized-competencies';
@@ -75,22 +73,17 @@
 @source './app/localci/build-agent-summary';
 @source './app/localci/build-agent-details';
 @source './app/localci/build-job-statistics';
+@source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 /*
- * Never scan test files. Tailwind detects class candidates from the FULL TEXT of scanned files, so test
- * descriptions ("should collapse the sidebar", "renders a table", ...) would emit utilities like
- * `.collapse { visibility: collapse }` / `.table { display: table }` that collide with Bootstrap component
- * classes (the navbar's `.navbar-collapse` etc.) and break them. Spec files never carry runtime classes, so
- * excluding them removes that whole class of false-positive collisions at the source.
+ * Exclude test files: their prose ("should collapse the sidebar", "renders a table") would trip the same name
+ * collisions (Tailwind scans full file text), and specs never carry runtime classes anyway.
  */
 @source not './app/**/*.spec.ts';
 
 /*
- * Blocklist Tailwind utilities whose names collide with still-in-use Bootstrap component classes. Scanned
- * source legitimately contains these words (the feedback-collapse component, admin data tables, route/test
- * ids, ...), which would otherwise make Tailwind emit `.collapse { visibility: collapse }` — hiding the
- * Bootstrap `.navbar-collapse` and wiping the top navbar — and `.table { display: table }`. Excluding the
- * candidates by name is robust against any file mentioning them, unlike chasing per-file `@source not` rules.
- * Tailwind's own `table-*`/`collapse-*` modifier utilities are unaffected (only the bare names are excluded).
+ * Belt-and-braces: blocklist the bare `collapse`/`table` candidates by NAME, so a scanned migrated file that
+ * legitimately mentions them (the feedback-collapse component, data tables, …) still can't regenerate the
+ * colliding utility. Only the bare names — Tailwind's `table-*`/`collapse-*` modifier utilities still work.
  */
 @source not inline("collapse");
 @source not inline("table");

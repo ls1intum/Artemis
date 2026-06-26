@@ -53,9 +53,10 @@ const BANNED = [
     // Bootstrap semantic text colors with no brand-bound Tailwind equivalent -> text-muted-color / tokens
     /^text-muted$/,
     /^text-body(-secondary|-tertiary|-emphasis)?$/,
-    // Bootstrap semantic state colors (text/border/bg) -> semantic brand tokens via the arbitrary form,
-    // e.g. text-(--danger), text-(--success), text-(--warning), text-(--info). Only danger/success/warning/info are
-    // matched: those are Bootstrap-only, whereas `*-primary` / `*-surface-*` are PrimeNG tokens and stay allowed.
+    // Bootstrap semantic state colors (text/border/bg) -> named state tokens, e.g. text-state-danger,
+    // bg-state-success, border-state-warning, text-state-info (the arbitrary `text-(--danger)` form is itself
+    // banned by no-raw-tailwind-color-palette). Only danger/success/warning/info are matched: those are
+    // Bootstrap-only, whereas `*-primary` / `*-surface-*` are PrimeNG tokens and stay allowed.
     /^(text|border|bg)-(danger|success|warning|info)$/,
     // Table component modifiers -> p-table (Tailwind's display `table` / `table-cell` are NOT matched)
     /^table-(striped|striped-columns|bordered|borderless|hover|active|sm|responsive|responsive-(sm|md|lg|xl|xxl)|group-divider)$/,

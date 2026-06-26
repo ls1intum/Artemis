@@ -417,6 +417,7 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-agent-summary/**/*.html',
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
+            'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
         ],
         languageOptions: {
             parser: angularTemplateParser,
