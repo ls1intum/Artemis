@@ -128,7 +128,9 @@ export class CategorySelectorPrimengComponent {
      * (PrimeNG does not add free text natively while typeahead is enabled, so we wire it via a keydown handler).
      * @param event the keyboard event coming from the input
      */
-    onEnter(event: Event): void {
+    onEnter(event: KeyboardEvent): void {
+        event.preventDefault();
+        event.stopPropagation();
         const input = event.target as HTMLInputElement;
         this.addCategoryByString(input.value);
         // Clear the input and close the suggestion overlay so the next add starts fresh.

@@ -50,7 +50,12 @@ describe('CategorySelectorPrimengComponent', () => {
     const selectEvent = (value: string) => ({ value }) as AutoCompleteSelectEvent;
 
     /** Builds a keydown event with the typed free-text value, as the input element would emit on Enter. */
-    const enterEvent = (value: string) => ({ target: { value } }) as unknown as KeyboardEvent;
+    const enterEvent = (value: string) =>
+        ({
+            target: { value },
+            preventDefault: vi.fn(),
+            stopPropagation: vi.fn(),
+        }) as unknown as KeyboardEvent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -203,6 +208,17 @@ describe('CategorySelectorPrimengComponent', () => {
         const categoryColor = comp.selectedCategoryItems()[0].color;
         expect(comp.selectedCategoryItems()).toEqual([{ category: 'category6', color: categoryColor }]);
         expect(emitSpy).toHaveBeenCalledWith([{ category: 'category6', color: categoryColor }]);
+    });
+
+    it('should cancel the Enter event to prevent form submission', () => {
+        fixture.componentRef.setInput('existingCategories', []);
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        const event = enterEvent('newcat');
+        comp.onEnter(event);
+
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(event.stopPropagation).toHaveBeenCalledOnce();
     });
 
     it('should set suggestions for autocomplete on complete with empty query', () => {
