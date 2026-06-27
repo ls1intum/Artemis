@@ -2,7 +2,7 @@ import { test } from '../../support/fixtures';
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import type { Page } from '@playwright/test';
-import { generateUUID, setMonacoEditorContent } from '../../support/utils';
+import { fillDateTimePicker, generateUUID, setMonacoEditorContent } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
 import { admin } from '../../support/users';
 
@@ -39,22 +39,11 @@ async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: num
 
     const input = picker.locator('input#date-input-field');
     await expect(input).toBeVisible();
-    await input.click();
 
-    const panel = page.locator('.owl-dt-container:visible');
-    try {
-        await expect(panel).toBeVisible({ timeout: 2000 });
-    } catch {
-        await picker.getByRole('button').first().click();
-        await expect(panel).toBeVisible();
-    }
-
-    for (let i = 0; i < monthsAhead; i++) {
-        await panel.getByRole('button', { name: 'Next month' }).click();
-    }
-
+    // The CALENDAR-mode p-datepicker renders dates as DD.MM.YYYY. Type the value (the picker ignores
+    // programmatic fills that aren't preceded by a keydown) and tab out to commit it to the form.
     const targetDate = dayjs().add(monthsAhead, 'months').date(day);
-    await panel.getByRole('cell', { name: targetDate.date().toString() }).click();
+    await fillDateTimePicker(input, targetDate, 'DD.MM.YYYY');
 }
 
 async function setMarkdownDescription(page: Page, text: string) {
