@@ -14,6 +14,8 @@ artemis:
             enabled: false
     hyperion:
         enabled: false
+    deimos:
+        enabled: false
     exam:
         enabled: false
     plagiarism:
