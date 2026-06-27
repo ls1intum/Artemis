@@ -108,7 +108,6 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
                 control.setValue(originalValue);
             }
         };
-        restoreIfEmpty('startDate', formData.startDate);
         if (timeFrame === TimeFrame.Period) {
             restoreIfEmpty('endDate', formData.endDate);
         } else if (timeFrame === TimeFrame.PeriodWithinDay) {
