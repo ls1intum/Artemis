@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -91,8 +92,18 @@ public class RepositoryVcsAccessTokenService {
      */
     public RepositoryVCSAccessToken getOrCreateToken(User user, ProgrammingExercise exercise, RepositoryType repositoryType, Long auxiliaryRepositoryId) {
         BaseRepository baseRepository = resolveBaseRepository(exercise, repositoryType, auxiliaryRepositoryId);
-        return repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), baseRepository.repositoryUri())
-                .orElseGet(() -> createToken(user, exercise, baseRepository));
+        Optional<RepositoryVCSAccessToken> existingToken = repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), baseRepository.repositoryUri());
+        if (existingToken.isPresent()) {
+            return existingToken.get();
+        }
+        try {
+            return createToken(user, exercise, baseRepository);
+        }
+        catch (DataIntegrityViolationException e) {
+            // A concurrent request (e.g. a double-clicked clone dialog or a racing eager-provisioning path) inserted the token for the same (user, repository URI) first and
+            // tripped the unique constraint. Re-read and return the now-existing token instead of failing the user-facing request.
+            return repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), baseRepository.repositoryUri()).orElseThrow(() -> e);
+        }
     }
 
     /**

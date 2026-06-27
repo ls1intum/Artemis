@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.localvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +11,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
@@ -50,6 +54,13 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         participationRepository.save(exercise.getTemplateParticipation());
         participationRepository.save(exercise.getSolutionParticipation());
         programmingExerciseRepository.save(exercise);
+    }
+
+    @AfterEach
+    void tearDown() {
+        // The base repository URIs are reused across test methods, but tokens are unique per (user, repository URI). Remove this test's tokens (scoped to its exercise) so they do
+        // not leak into the next method and make an otherwise-empty lookup return a stale token.
+        repositoryVcsAccessTokenService.deleteByExerciseId(exercise.getId());
     }
 
     @Test
@@ -142,5 +153,58 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
         request.get(url, HttpStatus.FORBIDDEN, String.class);
         request.put(url, null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOrCreateToken_forAuxiliaryRepository_isScopedToTheAuxiliaryRepository() {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        AuxiliaryRepository auxiliaryRepository = persistAuxiliaryRepository("http://localhost/git/TESTREPOVCSAT/testrepovcsat-aux.git");
+
+        RepositoryVCSAccessToken token = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.AUXILIARY, auxiliaryRepository.getId());
+        assertThat(token.getVcsAccessToken()).startsWith("vcpat-").hasSize(50);
+        assertThat(token.getRepositoryType()).isEqualTo(RepositoryType.AUXILIARY);
+        assertThat(token.getRepositoryUri()).isEqualTo(auxiliaryRepository.getRepositoryUri());
+        assertThat(token.getAuxiliaryRepository()).isNotNull();
+        assertThat(token.getAuxiliaryRepository().getId()).isEqualTo(auxiliaryRepository.getId());
+
+        // The auxiliary token is separate from the template token (scope is exactly one repository), and idempotent on a second call.
+        RepositoryVCSAccessToken templateToken = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
+        assertThat(templateToken.getId()).isNotEqualTo(token.getId());
+        RepositoryVCSAccessToken again = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.AUXILIARY, auxiliaryRepository.getId());
+        assertThat(again.getId()).isEqualTo(token.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOrCreateToken_forUnknownAuxiliaryRepository_throws() {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        // No auxiliary repository with this id is attached to the exercise.
+        assertThatThrownBy(() -> repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.AUXILIARY, 999999L)).isInstanceOf(EntityNotFoundException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getAndCreateRepositoryVcsAccessToken_forAuxiliaryRepository_asTutor() throws Exception {
+        AuxiliaryRepository auxiliaryRepository = persistAuxiliaryRepository("http://localhost/git/TESTREPOVCSAT/testrepovcsat-aux2.git");
+        String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=AUXILIARY&auxiliaryRepositoryId="
+                + auxiliaryRepository.getId();
+        // No token exists yet.
+        request.get(url, HttpStatus.NOT_FOUND, String.class);
+        // Create it via PUT.
+        String token = request.putWithResponseBody(url, null, String.class, HttpStatus.OK);
+        assertThat(token).startsWith("vcpat-");
+        // GET now returns the same token.
+        assertThat(request.get(url, HttpStatus.OK, String.class)).isEqualTo(token);
+    }
+
+    /**
+     * Attaches an auxiliary repository with the given canonical URI to the exercise. Goes through the util helper (which writes the {@code @OrderColumn} index by saving the
+     * exercise) and keeps the in-memory exercise object consistent so the service can resolve the auxiliary repository by id.
+     */
+    private AuxiliaryRepository persistAuxiliaryRepository(String repositoryUri) {
+        AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(exercise);
+        auxiliaryRepository.setRepositoryUri(repositoryUri);
+        return auxiliaryRepositoryRepository.save(auxiliaryRepository);
     }
 }

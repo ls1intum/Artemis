@@ -273,6 +273,66 @@ describe('CodeButtonComponent', () => {
             expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
             expect(fixture.debugElement.query(By.css('.alert-warning'))).toBeNull();
         });
+
+        it('should embed the repository-scoped token as the password in the clone URL', async () => {
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            // The non-masked clone URL must embed the repository-scoped staff token as the password (not a participation or user token).
+            const cloneUrl = component.getHttpOrSshRepositoryUri(false);
+            expect(cloneUrl).toContain(`:${repoToken}@`);
+            expect(component.copyEnabled()).toBe(true);
+        });
+
+        it('should warn when fetching the repository token is forbidden (403) and not attempt to create one', async () => {
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            // Select the token method so the copy button state reflects the (failed) token, not SSH.
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
+            expect(createRepoTokenSpy).not.toHaveBeenCalled();
+            expect(component.repositoryAccessToken()).toBeUndefined();
+            expect(component.copyEnabled()).toBe(false);
+        });
+
+        it('should show an error when fetching the repository token fails unexpectedly', async () => {
+            const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenError');
+            expect(createRepoTokenSpy).not.toHaveBeenCalled();
+        });
+
+        it('should warn when creating the repository token (after a 404) is forbidden (403)', async () => {
+            const warningSpy = vi.spyOn(TestBed.inject(AlertService), 'warning');
+            getRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            createRepoTokenSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            fixture.componentRef.setInput('repositoryType', 'SOLUTION');
+            fixture.componentRef.setInput('exerciseId', 7);
+            await component.ngOnInit();
+            component.onClick();
+            fixture.detectChanges();
+
+            expect(createRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(warningSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
+            expect(component.repositoryAccessToken()).toBeUndefined();
+        });
     });
 
     it('should create new vcsAccessToken when it does not exist', async () => {
