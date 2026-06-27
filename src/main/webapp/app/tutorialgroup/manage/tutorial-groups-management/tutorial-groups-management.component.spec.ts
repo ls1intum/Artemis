@@ -23,7 +23,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
@@ -78,7 +77,7 @@ describe('TutorialGroupsManagementComponent', () => {
             getTutorialGroupsForCourse: vi.fn(),
         };
         await TestBed.configureTestingModule({
-            imports: [TutorialGroupsManagementComponent, OwlNativeDateTimeModule],
+            imports: [TutorialGroupsManagementComponent],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
