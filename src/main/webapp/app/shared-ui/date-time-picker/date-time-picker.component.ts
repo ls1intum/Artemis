@@ -270,14 +270,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
      */
     onPickerPaste(event: ClipboardEvent) {
         const picker = this.innerPicker();
-        const isContextMenuPaste = !picker?.isKeydown;
-        if (isContextMenuPaste) {
-            const input = event.target as HTMLInputElement;
-            if (input?.tagName === 'INPUT' && input.selectionStart === input.selectionEnd) {
-                input.select();
-            }
-        }
         if (picker) {
+            if (!picker.isKeydown) {
+                const input = event.target as HTMLInputElement;
+                if (input.tagName === 'INPUT' && input.selectionStart === input.selectionEnd) {
+                    input.select();
+                }
+            }
             picker.isKeydown = true;
         }
     }
