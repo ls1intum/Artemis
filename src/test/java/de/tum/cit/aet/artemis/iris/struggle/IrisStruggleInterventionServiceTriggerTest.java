@@ -154,10 +154,10 @@ class IrisStruggleInterventionServiceTriggerTest {
     }
 
     private static IrisCourseSettings enabledSettings() {
-        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null);
+        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, true);   // Iris + proactive ON
     }
 
     private static IrisCourseSettings disabledSettings() {
-        return new IrisCourseSettings(false, null, IrisPipelineVariant.DEFAULT, null);
+        return new IrisCourseSettings(false, null, IrisPipelineVariant.DEFAULT, null, false);  // Iris OFF
     }
 }

@@ -46,6 +46,24 @@ class IrisCourseSettingsTest {
     }
 
     @Test
+    void proactiveStruggle_defaultsOff_andRoundtripsWhenEnabled() throws JsonProcessingException {
+        assertThat(IrisCourseSettings.of(true, null, null, null).proactiveStruggleEnabled()).isFalse();
+
+        var enabled = IrisCourseSettings.of(true, null, IrisPipelineVariant.DEFAULT, null, true);
+        var json = objectMapper.writeValueAsString(enabled);
+        assertThat(objectMapper.readValue(json, IrisCourseSettings.class).proactiveStruggleEnabled()).isTrue();
+    }
+
+    @Test
+    void proactiveStruggle_legacyRowWithoutKey_deserializesOff() throws JsonProcessingException {
+        // A course persisted before this field existed has no proactiveStruggleEnabled key; the primitive boolean
+        // must deserialize to false so existing courses stay off until an admin opts them in (spec §13). This is the
+        // actual default-off guarantee (independent of how a false is serialized on the way back out).
+        var legacyJson = "{\"enabled\":true,\"variant\":\"default\"}";
+        assertThat(objectMapper.readValue(legacyJson, IrisCourseSettings.class).proactiveStruggleEnabled()).isFalse();
+    }
+
+    @Test
     void rateLimitConfiguration_detectsOverrides() {
         var empty = IrisRateLimitConfiguration.empty();
         assertThat(empty.hasOverride()).isFalse();
