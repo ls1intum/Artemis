@@ -45,7 +45,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * Orchestrates the proactive struggle-intervention feature (spec §4): the trigger (this task) + the downstream
  * decision (Task 11). Detection stays in the client engine; this service ships the live code + signal to the
- * dedicated Pyris pipeline and applies Iris's gated result. The session is materialized only on {@code active}.
+ * dedicated Pyris pipeline and applies Iris's gated result. After unify-persistence (spec §7) both {@code ambient}
+ * and {@code active} persist a proactive message into the shared exercise-chat session; only {@code active} also
+ * pushes it live over the socket this slice.
  */
 @Lazy
 @Service
@@ -224,8 +226,14 @@ public class IrisStruggleInterventionService {
                 irisChatWebsocketService.sendStruggleEvent(user,
                         new StruggleInterventionEventDTO(job.exerciseId(), "active", null, p.session().getId(), p.saved().getId(), confidence));
             }
-            case "ambient" ->
-                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "ambient", statusUpdate.result(), null, null, confidence));
+            case "ambient" -> {
+                var p = persistProactiveMessage(user, job.exerciseId(), statusUpdate.result());
+                if (p == null) {
+                    return;
+                }
+                irisChatWebsocketService.sendStruggleEvent(user,
+                        new StruggleInterventionEventDTO(job.exerciseId(), "ambient", statusUpdate.result(), p.session().getId(), p.saved().getId(), confidence));
+            }
             default -> {
                 // silent (or downgraded): surface nothing, materialize nothing.
             }

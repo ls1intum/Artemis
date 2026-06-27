@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -45,7 +44,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  * Plain Mockito unit test for the decision side of {@link IrisStruggleInterventionService#handleDecision}. The four
  * behaviors are the contract: active >= threshold materializes the session, persists an origin-tagged LLM message and
  * pushes both the chat message and an {@code active} event; active < threshold downgrades to silent (no session, no
- * save, no event); ambient >= threshold pushes a session-less {@code ambient} event only; an active outcome whose
+ * save, no event); ambient >= threshold persists an origin-tagged LLM message into the shared session and emits an
+ * {@code ambient} event carrying its sessionId + messageId (no live push this slice); an active outcome whose
  * resolved session is not exercise-bound is defensively dropped (no save).
  */
 @ExtendWith(MockitoExtension.class)
@@ -130,13 +130,24 @@ class IrisStruggleInterventionDecisionTest {
     }
 
     @Test
-    void ambient_aboveThreshold_pushesSessionlessEventOnly() {
+    void ambient_aboveThreshold_persistsAndEmitsSessionAndMessageId() {
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
+            IrisMessage m = inv.getArgument(0);
+            m.setId(556L);
+            return m;
+        });
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, List.of(), List.of());
+
         service.handleDecision(job, update);
-        verify(irisChatWebsocketService).sendStruggleEvent(any(),
-                argThat(e -> "ambient".equals(e.action()) && e.message().contains("logic") && e.sessionId() == null && Objects.equals(e.confidence(), 0.7)));
-        verify(irisChatSessionService, never()).getCurrentSessionOrCreateIfNotExists(any(), anyLong(), any());
-        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+
+        // unify-persistence: ambient now saves an origin-tagged LLM message into the shared exercise-chat session
+        verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE), eq(session), eq(IrisMessageSender.LLM));
+        // but it does NOT push the bubble live in this slice (surfacing is deferred)
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action()) && Objects.equals(e.message(), "Re-check the logic.")
+                && Objects.equals(e.sessionId(), 99L) && Objects.equals(e.messageId(), 556L) && Objects.equals(e.confidence(), 0.7)));
     }
 
     @Test
