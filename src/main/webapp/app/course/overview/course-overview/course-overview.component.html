@@ -38,16 +38,6 @@
                             [isExamStarted]="isExamStarted()"
                             (toggleSidebar)="toggleSidebar()"
                         >
-                            @if (course()?.isAtLeastTutor) {
-                                <div id="manage-button">
-                                    <a
-                                        class="btn btn-sm btn-outline-secondary"
-                                        [ngClass]="{ 'd-none d-sm-block': pageTitle() === 'communication' }"
-                                        [routerLink]="manageViewLink()"
-                                        jhiTranslate="artemisApp.courseOverview.manage"
-                                    ></a>
-                                </div>
-                            }
                             @if (showRefreshButton()) {
                                 <button class="btn btn-sm btn-outline-primary" (click)="loadCourse(true)" [disabled]="refreshingCourse()">
                                     <fa-icon [icon]="faSync" [animation]="refreshingCourse() ? 'spin' : undefined" />

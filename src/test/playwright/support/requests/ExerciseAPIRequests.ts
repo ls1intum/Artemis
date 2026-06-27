@@ -359,6 +359,9 @@ export class ExerciseAPIRequests {
      * @param releaseDate - The release date of the exercise (optional, default: current date).
      * @param dueDate - The due date of the exercise (optional, default: current date + 1 day).
      * @param assessmentDueDate - The assessment due date of the exercise (optional, default: current date + 2 days).
+     * @param options - Optional extra configuration:
+     *   - mode: INDIVIDUAL (default, backward compatible) or TEAM for team modeling exercises.
+     *   - teamAssignmentConfig: min/max team size; only relevant when mode is TEAM.
      * @returns A Promise<ModelingExercise> representing the modeling exercise created.
      */
     async createModelingExercise(
@@ -367,11 +370,15 @@ export class ExerciseAPIRequests {
         releaseDate = dayjs(),
         dueDate = dayjs().add(1, 'days'),
         assessmentDueDate = dayjs().add(2, 'days'),
+        options: { mode?: ExerciseMode; teamAssignmentConfig?: TeamAssignmentConfig } = {},
     ): Promise<ModelingExercise> {
+        const { mode = ExerciseMode.INDIVIDUAL, teamAssignmentConfig } = options;
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
+            mode,
+            ...(teamAssignmentConfig ? { teamAssignmentConfig } : {}),
         };
         const dates = {
             releaseDate: dayjsToString(releaseDate),
