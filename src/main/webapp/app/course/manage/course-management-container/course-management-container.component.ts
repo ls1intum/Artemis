@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith } from 'rxjs/operators';
@@ -70,7 +70,6 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
     providers: [MetisConversationService],
     imports: [
         NgClass,
-        RouterLink,
         RouterOutlet,
         NgTemplateOutlet,
         CourseSidebarComponent,

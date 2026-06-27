@@ -126,9 +126,10 @@ export class CategorySelectorPrimengComponent {
     /**
      * Adds the typed free-text value as a new category. Triggered by the Enter key on the p-autoComplete input
      * (PrimeNG does not add free text natively while typeahead is enabled, so we wire it via a keydown handler).
-     * @param event the keyboard event coming from the input
+     * @param event the keyboard event coming from the input (typed as the base `Event` because Angular types the
+     * `(keydown.enter)` `$event` as `Event`; only `Event` members — `preventDefault`/`stopPropagation`/`target` — are used)
      */
-    onEnter(event: KeyboardEvent): void {
+    onEnter(event: Event): void {
         event.preventDefault();
         event.stopPropagation();
         const input = event.target as HTMLInputElement;

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -45,7 +45,6 @@ import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/c
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
     imports: [
         NgClass,
-        RouterLink,
         RouterOutlet,
         NgTemplateOutlet,
         FaIconComponent,
