@@ -7,8 +7,7 @@ import { AppComponent } from './app.component';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { registerLocaleData } from '@angular/common';
 import locale from '@angular/common/locales/en';
-import dayjs from 'dayjs/esm';
-import { NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
 import { artemisIconPack } from 'app/foundation/icons/icons';
 
 ProdConfig();
@@ -19,13 +18,11 @@ bootstrapApplication(AppComponent, appConfig)
         // TODO: potentially move this code into AppComponent
         const library = app.injector.get(FaIconLibrary);
         library.addIconPacks(artemisIconPack);
-        const dpConfig = app.injector.get(NgbDatepickerConfig);
         const tooltipConfig = app.injector.get(NgbTooltipConfig);
         const breakpointObserver = app.injector.get(BreakpointObserver);
 
         // Perform initialization logic
         registerLocaleData(locale);
-        dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
         tooltipConfig.container = 'body';
 
         tooltipConfig.disableTooltip = breakpointObserver.isMatched(Breakpoints.Handset);

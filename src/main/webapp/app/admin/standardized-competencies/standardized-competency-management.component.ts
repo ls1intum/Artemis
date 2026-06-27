@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import {
     faChevronRight,
     faDownLeftAndUpRightToCenter,
@@ -9,8 +9,6 @@ import {
     faPlus,
     faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons';
-import interact from 'interactjs';
-import type { ResizeEvent } from '@interactjs/actions/resize/plugin';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,
@@ -45,6 +43,7 @@ import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-com
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { DialogModule } from 'primeng/dialog';
+import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
@@ -68,9 +67,10 @@ import { DialogModule } from 'primeng/dialog';
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
         DialogModule,
+        ResizableDirective,
     ],
 })
-export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, AfterViewInit, OnDestroy, ComponentCanDeactivate {
+export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
     private standardizedCompetencyService = inject(StandardizedCompetencyService);
     private alertService = inject(AlertService);
@@ -145,33 +145,8 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         });
     }
 
-    ngAfterViewInit() {
-        interact('.sc-detail-panel')
-            .resizable({
-                edges: { left: '.draggable-left', right: false, bottom: false, top: false },
-                modifiers: [
-                    interact.modifiers.restrictSize({
-                        min: { width: 250, height: 0 },
-                        max: { width: 1100, height: 2000 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', (event: ResizeEvent) => {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', (event: ResizeEvent) => {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', (event: ResizeEvent) => {
-                (event.target as HTMLElement).style.width = event.rect.width + 'px';
-                this.detailPanelWidth.set(event.rect.width);
-            });
-    }
-
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-        interact('.sc-detail-panel').unset();
     }
 
     exportStandardizedCompetencyCatalog() {

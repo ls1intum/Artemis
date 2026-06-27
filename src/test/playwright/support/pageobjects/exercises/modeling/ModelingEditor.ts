@@ -81,6 +81,70 @@ export class ModelingEditor {
         await this.addElementViaEditorAPI(selector, posX, posY);
     }
 
+    /**
+     * Waits until the modeling editor for the given exercise is fully initialized on this page:
+     * the Apollon sidebar is visible AND the ApollonEditor instance is exposed on
+     * `element.__apollonEditor`. Use this before reading the live model on a page that did not
+     * itself add an element (e.g. the second collaborator in a team exercise).
+     */
+    async waitForEditorReady(exerciseID: number) {
+        const exerciseElement = getExercise(this.page, exerciseID);
+        const sidebar = exerciseElement.locator('jhi-modeling-editor aside');
+        await sidebar.waitFor({ state: 'visible', timeout: 30000 });
+        await this.waitForApollonEditor(`#exercise-${exerciseID} jhi-modeling-editor`);
+    }
+
+    /**
+     * Reads the current number of UML nodes in the live Apollon model for the given exercise.
+     *
+     * Mirrors the `__apollonEditor` access used by {@link addComponentToModel}: the Angular
+     * ModelingEditorComponent exposes the ApollonEditor instance on the host DOM element, and the
+     * Apollon v4 model keeps its elements in a `nodes[]` array. Because the editor is Yjs-backed,
+     * this reflects the live, websocket-synced state — so it can be polled on a *second* page to
+     * observe an element another collaborator added.
+     *
+     * Returns -1 when the editor is not initialized yet (so callers can distinguish "not ready"
+     * from "ready with zero nodes").
+     */
+    async getModelNodeCount(exerciseID: number): Promise<number> {
+        const selector = `#exercise-${exerciseID} jhi-modeling-editor`;
+        return this.page.evaluate((sel) => {
+            const editorEl = document.querySelector(sel);
+            const editor = editorEl && (editorEl as any).__apollonEditor;
+            if (!editor) {
+                return -1;
+            }
+            const nodes = editor.model?.nodes;
+            return Array.isArray(nodes) ? nodes.length : 0;
+        }, selector);
+    }
+
+    /**
+     * Polls the live Apollon model until it contains at least `expected` UML nodes (or the timeout
+     * elapses). Used to assert that a change made by one team member has propagated to another
+     * member's editor via the Yjs patch relay across the cluster. Deterministic — backed by
+     * `waitForFunction`, not a fixed sleep.
+     *
+     * @param exerciseID - The exercise whose editor to observe.
+     * @param expected - The minimum node count to wait for.
+     * @param timeout - Maximum time to wait in milliseconds (default 30s, generous for cross-node WS propagation).
+     */
+    async waitForModelNodeCount(exerciseID: number, expected: number, timeout = 30000) {
+        await this.page.waitForFunction(
+            ({ sel, expectedCount }) => {
+                const editorEl = document.querySelector(sel);
+                const editor = editorEl && (editorEl as any).__apollonEditor;
+                if (!editor) {
+                    return false;
+                }
+                const nodes = editor.model?.nodes;
+                return Array.isArray(nodes) && nodes.length >= expectedCount;
+            },
+            { sel: `#exercise-${exerciseID} jhi-modeling-editor`, expectedCount: expected },
+            { timeout },
+        );
+    }
+
     getModelingCanvas() {
         return this.page.locator('jhi-modeling-editor aside').locator('..');
     }
