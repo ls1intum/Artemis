@@ -9,10 +9,8 @@ import { GitCloneMethod } from '../../../support/pageobjects/exercises/programmi
 
 const course = { id: SEED_COURSES.programmingParticipation.id } as any;
 
-// Verifies that course staff get a repository-scoped VCS access token in the clone dialog of a base repository,
-// instead of having to fall back to their account password. The TEMPLATE and SOLUTION staff repository views and the
-// exercise detail page are exercised here through the UI; the TESTS and AUXILIARY repositories are covered end-to-end
-// (real git clone / REST) by LocalVCFetchAndPushIntegrationTest and RepositoryVcsAccessTokenIntegrationTest.
+// Verifies that course staff get a repository-scoped VCS access token in the clone dialog of every base repository
+// (template, solution, tests, auxiliary), instead of having to fall back to their account password.
 test.describe('Programming exercise staff repository access token', { tag: '@fast' }, () => {
     let exercise: ProgrammingExercise;
 
@@ -25,6 +23,7 @@ test.describe('Programming exercise staff repository access token', { tag: '@fas
     const baseRepositories = [
         { repositoryType: 'TEMPLATE', slugSuffix: '-exercise.git' },
         { repositoryType: 'SOLUTION', slugSuffix: '-solution.git' },
+        { repositoryType: 'TESTS', slugSuffix: '-tests.git' },
     ];
 
     for (const { repositoryType, slugSuffix } of baseRepositories) {
@@ -41,6 +40,26 @@ test.describe('Programming exercise staff repository access token', { tag: '@fas
             expect(cloneUrl).toContain(slugSuffix);
         });
     }
+
+    test('Instructor obtains a repository-scoped token in the auxiliary repository clone dialog', async ({ login, exerciseAPIRequests, programmingExerciseOverview }) => {
+        // The auxiliary repository needs its own exercise: the name "auxrepo" must not collide with the reserved repository type names (exercise, solution, tests, auxiliary, user).
+        await login(admin);
+        const exerciseWithAux = await exerciseAPIRequests.createProgrammingExercise({
+            course,
+            programmingLanguage: ProgrammingLanguage.C,
+            auxiliaryRepositories: [{ name: 'auxrepo', checkoutDirectory: 'auxrepo', description: 'Auxiliary repository' }],
+        });
+        const auxiliaryRepositoryId = exerciseWithAux.auxiliaryRepositories![0].id!;
+
+        await login(instructor, `/course-management/${course.id}/programming-exercises/${exerciseWithAux.id}/repository/AUXILIARY/${auxiliaryRepositoryId}`);
+
+        await programmingExerciseOverview.openCloneMenu(GitCloneMethod.httpsWithToken);
+        const cloneUrl = await programmingExerciseOverview.copyCloneUrl(GitCloneMethod.httpsWithToken);
+
+        expect(cloneUrl).toContain('vcpat-');
+        expect(cloneUrl).toContain(instructor.username);
+        expect(cloneUrl).toContain('-auxrepo.git');
+    });
 
     test('Instructor obtains a repository-scoped token on the exercise detail page without configuring a personal token', async ({ login, page, programmingExerciseOverview }) => {
         // Regression test: on the exercise detail page the clone dialog used to show a "set up your VCS token manually"

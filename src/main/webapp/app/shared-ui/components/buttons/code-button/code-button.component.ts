@@ -141,7 +141,9 @@ export class CodeButtonComponent implements OnInit {
         return practice && !exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
     });
     activeParticipation = computed<ProgrammingExerciseStudentParticipation | undefined>(() => {
-        const participations = this.participations();
+        // Filter out undefined entries: callers that render a base repository without a student participation (e.g. the
+        // staff tests/auxiliary repository view) pass `[undefined]`, which would otherwise crash getSpecificStudentParticipation.
+        const participations = this.participations().filter((participation) => !!participation);
         if (!participations.length) {
             return undefined;
         }

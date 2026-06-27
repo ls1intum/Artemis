@@ -333,6 +333,28 @@ describe('CodeButtonComponent', () => {
             expect(warningSpy).toHaveBeenCalledWith('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
             expect(component.repositoryAccessToken()).toBeUndefined();
         });
+
+        it('should not crash for a base repository whose view passes a participation-less array (tests/auxiliary repo)', async () => {
+            // The staff tests/auxiliary repository view has no student participation and renders the code button with a
+            // participation-less array. activeParticipation must tolerate that instead of dereferencing undefined (regression).
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TESTS');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-tests.git');
+            fixture.componentRef.setInput('participations', [undefined as unknown as ProgrammingExerciseStudentParticipation]);
+            await component.ngOnInit();
+
+            expect(() => component.activeParticipation()).not.toThrow();
+            expect(component.activeParticipation()).toBeUndefined();
+
+            component.onClick();
+            fixture.detectChanges();
+
+            // The clone URL is built from the base repository URI plus the repository-scoped token, with no participation involved.
+            const cloneUrl = component.getHttpOrSshRepositoryUri(false);
+            expect(cloneUrl).toContain('test-tests.git');
+            expect(cloneUrl).toContain(`:${repoToken}@`);
+        });
     });
 
     it('should create new vcsAccessToken when it does not exist', async () => {

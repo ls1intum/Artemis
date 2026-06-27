@@ -1616,5 +1616,49 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                         .hasMessageContaining(FORBIDDEN);
             }
         }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testRepositoryVcsAccessToken_forgedTokenIsRejected() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-forged-token");
+            String projectKey = exercise.getProjectKey();
+            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
+
+            // A syntactically valid but never-issued token (correct prefix and length) must not authenticate anyone.
+            String forgedToken = "vcpat-" + "x".repeat(44);
+
+            // Disable the LDAP/password fallback so a clone can only succeed via a genuine repository-scoped token.
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            String forgedTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), forgedToken, projectKey, templateRepoSlug);
+            Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-forged-token-clone-");
+            clonedRepoPaths.add(clonePath);
+            assertThatThrownBy(() -> Git.cloneRepository().setURI(forgedTokenUri).setDirectory(clonePath.toFile()).call()).isInstanceOf(TransportException.class)
+                    .hasMessageContaining(NOT_AUTHORIZED);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testRepositoryVcsAccessToken_isBoundToOwningUser() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-token-owner-binding");
+            String projectKey = exercise.getProjectKey();
+            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
+
+            // The instructor obtains their own repository-scoped token for the template repository.
+            String tokenUrl = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
+            String instructorToken = request.putWithResponseBody(tokenUrl, null, String.class, HttpStatus.OK);
+            assertThat(instructorToken).startsWith("vcpat-").hasSize(50);
+
+            // Disable the LDAP/password fallback so authentication can only succeed via a genuine token owned by the requesting user.
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            // A DIFFERENT staff user (the editor) presenting the instructor's token must NOT be authenticated: the token is looked up by the
+            // requesting user's id, so it only ever authenticates its owner.
+            String stolenTokenUri = buildRepositoryUriWithToken(editor1.getLogin(), instructorToken, projectKey, templateRepoSlug);
+            Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-stolen-token-clone-");
+            clonedRepoPaths.add(clonePath);
+            assertThatThrownBy(() -> Git.cloneRepository().setURI(stolenTokenUri).setDirectory(clonePath.toFile()).call()).isInstanceOf(TransportException.class)
+                    .hasMessageContaining(NOT_AUTHORIZED);
+        }
     }
 }

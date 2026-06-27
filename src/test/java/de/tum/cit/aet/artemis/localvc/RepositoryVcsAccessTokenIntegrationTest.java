@@ -156,6 +156,17 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void repositoryVcsAccessTokenEndpoints_auxiliaryIdNotBelongingToExerciseIsNotFound() throws Exception {
+        // An auxiliaryRepositoryId that is not one of THIS exercise's auxiliary repositories (a non-existent id, or one belonging to a different exercise) must not resolve to a
+        // token. The service only ever looks at the requested exercise's own auxiliary repositories, so a foreign id cannot be used to mint a token for a repository the caller
+        // should not reach.
+        String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=AUXILIARY&auxiliaryRepositoryId=999999";
+        request.get(url, HttpStatus.NOT_FOUND, String.class);
+        request.put(url, null, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getOrCreateToken_forAuxiliaryRepository_isScopedToTheAuxiliaryRepository() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
