@@ -49,14 +49,15 @@ describe('CategorySelectorPrimengComponent', () => {
     /** Builds an AutoComplete select event carrying the picked suggestion label. */
     const selectEvent = (value: string) => ({ value }) as AutoCompleteSelectEvent;
 
-    /** Builds a keydown event carrying a key and the typed free-text value, as the input element would emit. */
-    const separatorEvent = (key: string, value: string) =>
-        ({
-            key,
-            target: { value },
-            preventDefault: vi.fn(),
-            stopPropagation: vi.fn(),
-        }) as unknown as KeyboardEvent;
+    /** Builds a real keydown event carrying the key, on a real input target so the onSeparatorKeydown
+     * HTMLInputElement guard passes (mirrors a keydown emitted by the autocomplete input). */
+    const separatorEvent = (key: string, value: string): KeyboardEvent => {
+        const input = document.createElement('input');
+        input.value = value;
+        const event = new KeyboardEvent('keydown', { key, cancelable: true });
+        Object.defineProperty(event, 'target', { value: input });
+        return event;
+    };
 
     /** Builds a plain Enter keydown event, as the input element would emit on Enter. */
     const enterEvent = (value: string) => separatorEvent('Enter', value);
@@ -105,12 +106,13 @@ describe('CategorySelectorPrimengComponent', () => {
         fixture.detectChanges();
         fixture.componentRef.setInput('categories', [category1, category2, category3]);
         fixture.changeDetectorRef.detectChanges();
-        const event = { stopPropagation: vi.fn() } as unknown as Event;
+        const event = new MouseEvent('click');
+        const stopSpy = vi.spyOn(event, 'stopPropagation');
 
         comp.removeChip('category2', event);
 
         expect(comp.selectedCategoryItems()).toEqual([category1, category3]);
-        expect(event.stopPropagation).toHaveBeenCalledOnce();
+        expect(stopSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
     });
 
@@ -127,8 +129,25 @@ describe('CategorySelectorPrimengComponent', () => {
         expect(button).toBeTruthy();
         // type="button" so it never submits a surrounding (ngSubmit) form
         expect(button.getAttribute('type')).toBe('button');
-        // accessible name identifies which category it removes
-        expect(button.getAttribute('aria-label')).toContain('category1');
+        // accessible name carries both the action and the category (MockTranslateService returns the raw key)
+        expect(button.getAttribute('aria-label')).toBe('entity.action.remove category1');
+    });
+
+    it('removes the category and emits when the rendered remove button is clicked', async () => {
+        fixture.detectChanges();
+        fixture.componentRef.setInput('categories', [category1, category2]);
+        comp.autoComplete().writeValue([category1.category, category2.category]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const buttons = fixture.nativeElement.querySelectorAll('.custom-tag button.category-chip-remove');
+        expect(buttons.length).toBe(2);
+        buttons[0].click();
+        fixture.detectChanges();
+
+        expect(comp.selectedCategoryItems()).toEqual([category2]);
+        expect(emitSpy).toHaveBeenCalledWith([category2]);
     });
 
     it('should open color selector', () => {
@@ -249,10 +268,11 @@ describe('CategorySelectorPrimengComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
         const event = enterEvent('newcat');
+        const stopSpy = vi.spyOn(event, 'stopPropagation');
         comp.onEnter(event);
 
-        expect(event.preventDefault).toHaveBeenCalledOnce();
-        expect(event.stopPropagation).toHaveBeenCalledOnce();
+        expect(event.defaultPrevented).toBe(true);
+        expect(stopSpy).toHaveBeenCalledOnce();
     });
 
     it('should commit the typed category on a comma separator key', () => {
@@ -292,7 +312,17 @@ describe('CategorySelectorPrimengComponent', () => {
         comp.onSeparatorKeydown(event);
 
         expect(comp.selectedCategoryItems()).toEqual([]);
-        expect(event.preventDefault).not.toHaveBeenCalled();
+        expect(event.defaultPrevented).toBe(false);
+    });
+
+    it('ignores a keydown bubbling from a non-input target (e.g. the remove button) so it does not block activation', () => {
+        const event = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true });
+        Object.defineProperty(event, 'target', { value: document.createElement('button') });
+
+        comp.onSeparatorKeydown(event);
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(comp.selectedCategoryItems()).toEqual([]);
     });
 
     it('should set suggestions for autocomplete on complete with empty query', () => {

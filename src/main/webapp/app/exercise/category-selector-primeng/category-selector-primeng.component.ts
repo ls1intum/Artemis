@@ -130,12 +130,16 @@ export class CategorySelectorPrimengComponent {
      * @param event the keydown event coming from the input
      */
     onSeparatorKeydown(event: KeyboardEvent): void {
+        // Only the text input commits separators. Ignore keydowns bubbling up from chip controls (e.g. the
+        // remove button), otherwise Enter on such a control would be preventDefault'd here and never activate it.
+        if (!(event.target instanceof HTMLInputElement)) {
+            return;
+        }
         if (event.key !== 'Enter' && event.key !== ',' && event.key !== 'Tab') {
             return;
         }
-        const input = event.target as HTMLInputElement;
         // Let an empty field tab to the next control instead of trapping focus.
-        if (event.key === 'Tab' && !(input.value ?? '').trim()) {
+        if (event.key === 'Tab' && !event.target.value.trim()) {
             return;
         }
         this.onEnter(event);
