@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -133,6 +134,11 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
 
         activateIrisFor(course);
         activateIrisFor(exercise);
+
+        // activateIrisFor leaves proactive struggle OFF (the §13 default); this end-to-end run needs it ON.
+        var courseSettings = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(),
+                IrisCourseSettings.of(courseSettings.enabled(), courseSettings.customInstructions(), courseSettings.variant(), courseSettings.rateLimit(), true), true);
     }
 
     private void createSubmission(ProgrammingExerciseStudentParticipation studentParticipation) {

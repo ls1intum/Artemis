@@ -99,52 +99,54 @@ public class IrisStruggleInterventionService {
     }
 
     /**
-     * Trigger a proactive struggle intervention (spec §5.2). Returns the job token if accepted, or empty if the
-     * course feature is off OR a run is already in flight for this {@code (user, exercise)}. The sync part runs on
-     * the request thread; only the heavy DTO build + POST is off-thread.
+     * Trigger a proactive struggle intervention (spec §5.2). Returns a typed outcome: accepted (with job token), or
+     * rejected carrying whether the rejection was a deliberate course-off (spec §13) versus a transient in-flight skip
+     * for this {@code (user, exercise)}. The sync part runs on the request thread; only the heavy DTO build + POST is
+     * off-thread.
      *
      * @param exerciseId       the programming exercise id
      * @param signal           the struggle signal from the client engine
      * @param uncommittedFiles the student's live (uncommitted) working copy, merged on top of the latest submission
      * @param user             the requesting student
-     * @return the minted job token if the run was accepted, empty otherwise
+     * @return the trigger outcome (accepted + job token, or rejected with the course-off flag for the 202)
      */
-    public Optional<String> requestStruggleIntervention(long exerciseId, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles, User user) {
+    public StruggleTriggerOutcome requestStruggleIntervention(long exerciseId, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles, User user) {
         var prepared = prepareTrigger(exerciseId, user);
-        if (prepared.isEmpty()) {
-            return Optional.empty();
+        if (!prepared.accepted()) {
+            return new StruggleTriggerOutcome(false, prepared.courseDisabled(), null);
         }
-        var p = prepared.get();
+        var p = prepared.trigger();
         CompletableFuture.runAsync(() -> sendToPyris(p, signal, uncommittedFiles)).exceptionally(e -> {
             log.error("Error sending struggle intervention to Iris for exercise {} user {}", p.exerciseId(), p.userId(), e);
             pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
             return null;
         });
-        return Optional.of(p.jobToken());
+        return new StruggleTriggerOutcome(true, false, p.jobToken());
     }
 
     /**
-     * Synchronous core: light exercise load (id only), STUDENT-role + iris-enabled gate, then reserve the
-     * single-flight slot by minting the job. Returns empty if disabled or already in flight.
+     * Synchronous core: light exercise load (id only), STUDENT-role gate, then the iris-enabled + proactive gate
+     * (spec §13), then reserve the single-flight slot by minting the job. A SINGLE settings read distinguishes a
+     * deliberate course-off (Iris or proactive disabled) from a transient in-flight skip, both of which reject.
      *
      * @param exerciseId the programming exercise id
      * @param user       the requesting student
-     * @return the prepared trigger snapshot if the slot was reserved, empty otherwise
+     * @return a typed preparation: the reserved trigger, or a rejection tagged course-off vs in-flight
      */
-    public Optional<PreparedTrigger> prepareTrigger(long exerciseId, User user) {
+    public TriggerPreparation prepareTrigger(long exerciseId, User user) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         var settings = irisSettingsService.getSettingsForCourse(course);
-        if (!settings.enabled()) {
-            return Optional.empty();
+        if (!settings.enabled() || !settings.proactiveStruggleEnabled()) {
+            return TriggerPreparation.courseOff();
         }
         var tokenOpt = pyrisJobService.addStruggleInterventionJobIfNonePending(course.getId(), user.getId(), exerciseId);
         if (tokenOpt.isEmpty()) {
             log.info("Struggle intervention already in flight for user {} exercise {}, skipping", user.getId(), exerciseId);
-            return Optional.empty();
+            return TriggerPreparation.inFlight();
         }
-        return Optional.of(new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), tokenOpt.get()));
+        return TriggerPreparation.triggered(new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), tokenOpt.get()));
     }
 
     /**
@@ -268,5 +270,35 @@ public class IrisStruggleInterventionService {
 
     /** Immutable snapshot of the synchronously-prepared trigger (ids + payload only - NO entity crosses threads). */
     public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String jobToken) {
+    }
+
+    /**
+     * Why a trigger was (not) prepared, from a SINGLE settings read: a reserved trigger, or a rejection that is either
+     * a deliberate course-off (Iris/proactive disabled, spec §13) or a transient in-flight skip (single-flight, §11).
+     * Distinguishing the two lets the 202 carry an exact {@code courseDisabled} so a slow in-flight job is never
+     * mis-read by the client as a course disable.
+     */
+    public record TriggerPreparation(@Nullable PreparedTrigger trigger, boolean courseDisabled) {
+
+        public boolean accepted() {
+            return trigger != null;
+        }
+
+        static TriggerPreparation triggered(PreparedTrigger trigger) {
+            return new TriggerPreparation(trigger, false);
+        }
+
+        // NB: named courseOff() (not courseDisabled()) to avoid clashing with the auto-generated courseDisabled() accessor.
+        static TriggerPreparation courseOff() {
+            return new TriggerPreparation(null, true);
+        }
+
+        static TriggerPreparation inFlight() {
+            return new TriggerPreparation(null, false);
+        }
+    }
+
+    /** Outcome surfaced to the REST layer: accepted (with job token) or rejected, course-off carried for the 202. */
+    public record StruggleTriggerOutcome(boolean accepted, boolean courseDisabled, @Nullable String jobToken) {
     }
 }

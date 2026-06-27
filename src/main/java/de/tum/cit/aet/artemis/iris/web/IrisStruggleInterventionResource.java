@@ -56,7 +56,7 @@ public class IrisStruggleInterventionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Explicit server-side AI opt-in gate (spec §10), before any pipeline work.
         user.hasOptedIntoLLMUsageElseThrow();
-        var jobId = struggleInterventionService.requestStruggleIntervention(exerciseId, requestDTO.struggleSignal(), requestDTO.uncommittedFiles(), user);
-        return ResponseEntity.accepted().body(new StruggleInterventionAcceptedDTO(jobId.isPresent(), exerciseId, jobId.orElse(null)));
+        var outcome = struggleInterventionService.requestStruggleIntervention(exerciseId, requestDTO.struggleSignal(), requestDTO.uncommittedFiles(), user);
+        return ResponseEntity.accepted().body(new StruggleInterventionAcceptedDTO(outcome.accepted(), outcome.courseDisabled(), exerciseId, outcome.jobToken()));
     }
 }

@@ -40,7 +40,7 @@ class StruggleInterventionEventDTOTest {
 
     @Test
     void acceptedDtoCarriesJobIdOrNull() {
-        assertThat(new StruggleInterventionAcceptedDTO(true, 42, "tok").jobId()).isEqualTo("tok");
-        assertThat(new StruggleInterventionAcceptedDTO(false, 42, null).accepted()).isFalse();
+        assertThat(new StruggleInterventionAcceptedDTO(true, false, 42, "tok").jobId()).isEqualTo("tok");
+        assertThat(new StruggleInterventionAcceptedDTO(false, true, 42, null).courseDisabled()).isTrue();
     }
 }

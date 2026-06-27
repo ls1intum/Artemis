@@ -115,7 +115,19 @@ class IrisStruggleInterventionServiceTriggerTest {
 
         var result = service.prepareTrigger(EX, user);
 
-        assertThat(result).isEmpty();
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.courseDisabled()).isTrue();   // Iris disabled => course-off for proactive purposes
+        verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong());
+    }
+
+    @Test
+    void proactiveDisabled_marksCourseDisabled() {
+        when(irisSettingsService.getSettingsForCourse(course)).thenReturn(proactiveOffSettings());
+
+        var result = service.prepareTrigger(EX, user);
+
+        assertThat(result.accepted()).isFalse();
+        assertThat(result.courseDisabled()).isTrue();
         verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong());
     }
 
@@ -126,8 +138,8 @@ class IrisStruggleInterventionServiceTriggerTest {
 
         var result = service.prepareTrigger(EX, user);
 
-        assertThat(result).isPresent();
-        assertThat(result.get().jobToken()).isEqualTo("tok");
+        assertThat(result.accepted()).isTrue();
+        assertThat(result.trigger().jobToken()).isEqualTo("tok");
         verify(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(eq(Role.STUDENT), eq(exercise), eq(user));
     }
 
@@ -136,7 +148,10 @@ class IrisStruggleInterventionServiceTriggerTest {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
         when(pyrisJobService.addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong())).thenReturn(Optional.empty());
 
-        assertThat(service.prepareTrigger(EX, user)).isEmpty();
+        var skipped = service.prepareTrigger(EX, user);
+
+        assertThat(skipped.accepted()).isFalse();
+        assertThat(skipped.courseDisabled()).isFalse();  // in-flight, NOT course-off
     }
 
     @Test
@@ -159,5 +174,9 @@ class IrisStruggleInterventionServiceTriggerTest {
 
     private static IrisCourseSettings disabledSettings() {
         return new IrisCourseSettings(false, null, IrisPipelineVariant.DEFAULT, null, false);  // Iris OFF
+    }
+
+    private static IrisCourseSettings proactiveOffSettings() {
+        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, false);   // Iris ON, proactive OFF
     }
 }

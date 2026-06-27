@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionAcceptedDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
@@ -62,6 +63,12 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
 
         activateIrisFor(course);
         activateIrisFor(exercise);
+
+        // activateIrisFor leaves proactive struggle OFF (the §13 default). The accepted-path test needs it ON;
+        // the course-off test below flips it back off for its own case.
+        var courseSettings = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(),
+                IrisCourseSettings.of(courseSettings.enabled(), courseSettings.customInstructions(), courseSettings.variant(), courseSettings.rateLimit(), true), true);
     }
 
     private long exerciseId() {
@@ -82,11 +89,25 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         var accepted = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), StruggleInterventionAcceptedDTO.class,
                 HttpStatus.ACCEPTED);
         assertThat(accepted.accepted()).isTrue();
+        assertThat(accepted.courseDisabled()).isFalse();
         assertThat(accepted.exerciseId()).isEqualTo(exerciseId());
         assertThat(accepted.jobId()).isNotNull();
 
         // executeStruggleInterventionPipeline(variant, jobToken, user, signal, exercise, submission, course, chatHistory, exerciseId)
         verify(pyrisPipelineService, timeout(3000)).executeStruggleInterventionPipeline(any(), anyString(), any(), any(), any(), any(), any(), any(), anyLong());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void courseProactiveDisabled_returnsAcceptedFalseCourseDisabled() throws Exception {
+        var settings = irisSettingsService.getSettingsForCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
+        irisSettingsService.updateCourseSettings(exercise.getCourseViaExerciseGroupOrCourseMember().getId(),
+                IrisCourseSettings.of(settings.enabled(), settings.customInstructions(), settings.variant(), settings.rateLimit(), false), true);
+
+        var body = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), StruggleInterventionAcceptedDTO.class,
+                HttpStatus.ACCEPTED);
+        assertThat(body.accepted()).isFalse();
+        assertThat(body.courseDisabled()).isTrue();
     }
 
     @Test
