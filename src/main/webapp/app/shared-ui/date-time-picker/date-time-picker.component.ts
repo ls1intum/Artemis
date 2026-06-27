@@ -56,6 +56,10 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     // keepInvalid). Without this flag the `unchanged` guard in updateField would swallow the
     // re-emission when the user corrects the input back to the previously held date.
     private needsParentSync = false;
+    // Set by onPickerKeydown when Ctrl/Cmd+V is detected; cleared in onPickerPaste.
+    // Avoids relying on PrimeNG's picker.isKeydown, which is set by ANY keydown (arrow, Home/End…)
+    // and would remain stale-true when a context-menu paste follows a non-paste keydown.
+    private isKeyboardPaste = false;
 
     /** DEFAULT renders date + time; CALENDAR renders date only; TIMER renders time only. */
     protected showTime = computed(() => this.pickerType() === DateTimePickerType.DEFAULT);
@@ -256,27 +260,34 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
         this.valueChanged();
     }
 
+    /** Records whether the current paste was triggered by Ctrl/Cmd+V (not context-menu). */
+    onPickerKeydown(event: KeyboardEvent) {
+        this.isKeyboardPaste = event.key === 'v' && (event.ctrlKey || event.metaKey);
+    }
+
     /**
      * Context-menu paste has no preceding keydown, so PrimeNG's `isKeydown` guard in `onUserInput`
      * is never set and the pasted text is silently ignored. We fix two things here:
      *
      * 1. If no text is currently selected in the input (cursor is just positioned), select all first
      *    so the browser's native paste replaces the entire field value instead of inserting at the
-     *    cursor. We only do this for context-menu paste (picker.isKeydown is null/false at the time
-     *    the paste event fires) — Ctrl+V already sets isKeydown via keydown, so we leave the user's
-     *    cursor/selection intact in that case.
+     *    cursor. We only do this for context-menu paste — Ctrl/Cmd+V is tracked separately via
+     *    onPickerKeydown so we leave the user's cursor/selection intact in that case.
+     *    We intentionally avoid relying on picker.isKeydown here: PrimeNG sets that flag for ANY
+     *    keydown (including Arrow/Home/End), leaving it stale-true until the next input event.
      *
      * 2. Set isKeydown = true so PrimeNG's onUserInput actually processes the pasted text.
      */
     onPickerPaste(event: ClipboardEvent) {
         const picker = this.innerPicker();
         if (picker) {
-            if (!picker.isKeydown) {
+            if (!this.isKeyboardPaste) {
                 const input = event.target as HTMLInputElement;
                 if (input.tagName === 'INPUT' && input.selectionStart === input.selectionEnd) {
                     input.select();
                 }
             }
+            this.isKeyboardPaste = false;
             picker.isKeydown = true;
         }
     }

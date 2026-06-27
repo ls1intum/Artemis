@@ -406,6 +406,25 @@ describe('FormDateTimePickerComponent', () => {
             input.selectionEnd = 8;
             const selectSpy = vi.spyOn(input, 'select');
 
+            // No preceding keydown → context-menu paste
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).toHaveBeenCalledOnce();
+        });
+
+        it('selects all text for a context-menu paste even when PrimeNG isKeydown is stale-true (arrow key pressed before paste)', () => {
+            fixture.detectChanges();
+            // PrimeNG sets isKeydown=true on every keydown, including arrow keys.
+            // A context-menu paste after a caret-move keydown must still select-all.
+            stubPicker({ isKeydown: true });
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            input.selectionStart = 8;
+            input.selectionEnd = 8;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            component.onPickerKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
             component.onPickerPaste(makePasteEvent(input));
 
             expect(selectSpy).toHaveBeenCalledOnce();
@@ -426,10 +445,9 @@ describe('FormDateTimePickerComponent', () => {
             expect(selectSpy).not.toHaveBeenCalled();
         });
 
-        it('does not select-all for a Ctrl+V paste (isKeydown already true)', () => {
+        it('does not select-all for a Ctrl+V paste', () => {
             fixture.detectChanges();
-            // Ctrl+V: PrimeNG sets isKeydown=true before the paste event fires
-            const picker: Partial<DatePicker> = { isKeydown: true };
+            const picker: Partial<DatePicker> = { isKeydown: false };
             stubPicker(picker);
 
             const input = document.createElement('input');
@@ -438,6 +456,7 @@ describe('FormDateTimePickerComponent', () => {
             input.selectionEnd = 8;
             const selectSpy = vi.spyOn(input, 'select');
 
+            component.onPickerKeydown(new KeyboardEvent('keydown', { key: 'v', ctrlKey: true }));
             component.onPickerPaste(makePasteEvent(input));
 
             expect(selectSpy).not.toHaveBeenCalled();

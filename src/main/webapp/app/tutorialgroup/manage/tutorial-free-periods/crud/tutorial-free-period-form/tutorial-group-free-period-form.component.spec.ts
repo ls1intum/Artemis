@@ -381,6 +381,64 @@ describe('TutorialFreePeriodFormComponent', () => {
         expect(component.isStartBeforeEnd).toBe(false);
     });
 
+    describe('edit-mode tab-switch restore', () => {
+        it('restores endDate when switching Day → Period in edit mode', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: validEndDateBerlinFreePeriod,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            component.setTimeFrame(TimeFrame.Day);
+            expect(component.form.get('endDate')!.value).toBeFalsy();
+
+            component.setTimeFrame(TimeFrame.Period);
+            expect(component.form.get('endDate')!.value).toBe(validEndDateBerlinFreePeriod);
+            expect(component.form.get('startDate')!.value).toBe(validStartDateBerlin);
+        });
+
+        it('restores startTime and endTime when switching Day → PeriodWithinDay in edit mode', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: validStartTimeBerlin,
+                endTime: validEndTimeBerlin,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            component.setTimeFrame(TimeFrame.Day);
+            expect(component.form.get('startTime')!.value).toBeFalsy();
+            expect(component.form.get('endTime')!.value).toBeFalsy();
+
+            component.setTimeFrame(TimeFrame.PeriodWithinDay);
+            expect(component.form.get('startTime')!.value).toBe(validStartTimeBerlin);
+            expect(component.form.get('endTime')!.value).toBe(validEndTimeBerlin);
+        });
+
+        it('does not restore startDate when the user has deliberately cleared it', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            component.startDateControl!.setValue(undefined);
+
+            component.setTimeFrame(TimeFrame.Period);
+            expect(component.form.get('startDate')!.value).toBeFalsy();
+        });
+    });
+
     // === helper functions ===
     const setFormValues = (startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined, reason: string) => {
         component.startDateControl!.setValue(startDate);
