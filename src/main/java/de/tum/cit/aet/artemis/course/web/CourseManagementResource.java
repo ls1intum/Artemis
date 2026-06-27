@@ -108,7 +108,7 @@ public class CourseManagementResource {
     @EnforceAtLeastTutor
     public ResponseEntity<List<Course>> getCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all courses the user has access to");
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         List<Course> courses = courseForUserGroupService.getCoursesForTutors(user, onlyActive);
         return ResponseEntity.ok(courses);
     }
@@ -123,7 +123,7 @@ public class CourseManagementResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get a list of courses for import.");
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         var coursePage = courseService.getAllOnPageWithSize(search, user);
         var resultsOnPage = coursePage.getResultsOnPage().stream().map(CourseForImportDTO::new).toList();
         return ResponseEntity.ok(new SearchResultPageDTO<>(resultsOnPage, coursePage.getNumberOfPages()));
@@ -137,13 +137,12 @@ public class CourseManagementResource {
     @GetMapping("courses/courses-with-quiz")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Course>> getCoursesWithQuizExercises() {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         if (authCheckService.isAdmin(user)) {
             return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises());
         }
         else {
-            var userGroups = new ArrayList<>(user.getGroups());
-            return ResponseEntity.ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups));
+            return ResponseEntity.ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(user.getId()));
         }
     }
 
@@ -234,7 +233,7 @@ public class CourseManagementResource {
     public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);
         Course course = courseRepository.findWithEagerExercisesById(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
         List<Submission> submissions = submissionService.getLockedSubmissions(courseId);
@@ -257,7 +256,7 @@ public class CourseManagementResource {
     public ResponseEntity<Set<Exercise>> getAllExercisesWithDueDatesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all exercises with due dates and categories in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         Set<Exercise> exercises = exerciseRepository.findByCourseIdWithFutureDueDatesAndCategories(courseId);
         return ResponseEntity.ok(exercises);

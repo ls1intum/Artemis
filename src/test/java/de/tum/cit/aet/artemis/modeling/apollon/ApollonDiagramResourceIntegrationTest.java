@@ -23,7 +23,10 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "repositoryintegration";
+    private static final String TEST_PREFIX = "apollondiagramresource";
+
+    // Outsider users — different prefix so enrollPrefixedUsersInCourse(course, TEST_PREFIX) never picks them up
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @Autowired
     private ApollonDiagramRepository apollonDiagramRepository;
@@ -37,15 +40,16 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor2");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor2");
+        userUtilService.addUsers(OTHER_PREFIX, 0, 1, 0, 1); // outsider tutor and instructor — never enrolled in course
 
         apollonDiagram = ModelingExerciseFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
 
-        course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course2 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
+        course2 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         courseRepository.save(course1);
         courseRepository.save(course2);
+        userUtilService.enrollPrefixedUsersInCourse(course1, TEST_PREFIX);
+        userUtilService.enrollPrefixedUsersInCourse(course2, TEST_PREFIX);
     }
 
     @AfterEach
@@ -72,7 +76,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testCreateApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         request.postWithResponseBody("/api/modeling/courses/" + course1.getId() + "/apollon-diagrams", apollonDiagram, ApollonDiagram.class, HttpStatus.FORBIDDEN);
@@ -100,7 +104,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testUpdateApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
@@ -138,7 +142,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testGetDiagramsByCourse_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         apollonDiagramRepository.save(apollonDiagram);
@@ -158,7 +162,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    @WithMockUser(username = OTHER_PREFIX + "tutor1", roles = "TA")
     void testGetApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
@@ -176,7 +180,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);

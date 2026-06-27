@@ -15,15 +15,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -53,9 +54,6 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     private ExamUserRepository examUserRepository;
 
     @Autowired
-    private UserTestRepository userRepository;
-
-    @Autowired
     private StudentExamTestRepository studentExamRepository;
 
     @Autowired
@@ -66,6 +64,9 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -108,19 +109,16 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void init() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 2);
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         User instructor2 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor2");
+        userUtilService.removeUserFromAllCourses(instructor1);
+        userUtilService.removeUserFromAllCourses(instructor2);
+        userUtilService.enrollUserInCourse(instructor1, course1, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(instructor2, course2, CourseRole.INSTRUCTOR);
+
         student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        instructor1.setGroups(Set.of("course1InstructorGroup"));
-        instructor2.setGroups(Set.of("course2InstructorGroup"));
-        userRepository.save(instructor1);
-        userRepository.save(instructor2);
-        course1 = courseUtilService.addEmptyCourse();
-        course2 = courseUtilService.addEmptyCourse();
-        course1.setInstructorGroupName("course1InstructorGroup");
-        course2.setInstructorGroupName("course2InstructorGroup");
-        courseRepository.save(course1);
-        courseRepository.save(course2);
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         exam2 = examUtilService.addExamWithExerciseGroup(course2, true);
         testExam1 = examUtilService.addTestExamWithExerciseGroup(course1, true);
@@ -334,9 +332,8 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckAndGetCourseAndExamAccessForConduction_isStudentInCourse() {
+        // addEmptyCourse() creates a course with no UCR enrollments; student1 is not enrolled → AccessForbiddenException expected
         Course course = courseUtilService.addEmptyCourse();
-        course.setStudentGroupName("another");
-        courseRepository.save(course);
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 
@@ -417,9 +414,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOrCreateStudentExamAccess() {
-        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setGroups(Set.of());
-        userRepository.save(student1);
+        userUtilService.unenrollUserFromCourse(student1, course1);
         assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
     }
 

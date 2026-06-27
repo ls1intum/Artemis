@@ -70,25 +70,25 @@ export class UserManagementDropdownComponent {
         return [
             {
                 icon: faSchool,
-                routerLink: [`/course-management/${id}/groups/students`],
+                routerLink: [`/course-management/${id}/members/students`],
                 label: 'entity.action.addStudent',
                 id: 'add-student',
             },
             {
                 icon: faPersonChalkboard,
-                routerLink: [`/course-management/${id}/groups/tutors`],
+                routerLink: [`/course-management/${id}/members/tutors`],
                 label: 'entity.action.addTutor',
                 id: 'add-tutor',
             },
             {
                 icon: faListAlt,
-                routerLink: [`/course-management/${id}/groups/editors`],
+                routerLink: [`/course-management/${id}/members/editors`],
                 label: 'entity.action.addEditor',
                 id: 'add-editor',
             },
             {
                 icon: faGraduationCap,
-                routerLink: [`/course-management/${id}/groups/instructors`],
+                routerLink: [`/course-management/${id}/members/instructors`],
                 label: 'entity.action.addInstructor',
                 id: 'add-instructor',
             },

@@ -79,7 +79,7 @@ public class GradingScaleService {
             gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(searchTerm, pageable);
         }
         else {
-            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getGroups(), pageable);
+            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getId(), pageable);
         }
         List<GradingScaleDTO> dtoContent = gradingScalePage.getContent().stream().map(GradingScaleDTO::of).toList();
         return new SearchResultPageDTO<>(dtoContent, gradingScalePage.getTotalPages());

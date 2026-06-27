@@ -127,7 +127,7 @@ public class GlobalSearchResource {
         }
 
         int effectiveLimit = Math.clamp(limit, 1, 25);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         FilterBuildResult filterResult = buildSearchableItemFilter(user, courseId, requestedTypes);
         if (!filterResult.hasAccess()) {
@@ -324,7 +324,7 @@ public class GlobalSearchResource {
             accessibleCourses = List.of(course);
         }
         else {
-            accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
+            accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false);
             if (accessibleCourses.isEmpty()) {
                 return new FilterBuildResult(null, false, null, null, null);
             }

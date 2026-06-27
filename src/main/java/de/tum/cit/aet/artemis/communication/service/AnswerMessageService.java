@@ -107,7 +107,7 @@ public class AnswerMessageService extends PostingService {
      * @return created answer message that was persisted
      */
     public AnswerPost createAnswerMessage(Long courseId, CreateAnswerPostDTO answerMessage) {
-        final User author = this.userRepository.getUserWithGroupsAndAuthorities();
+        final User author = this.userRepository.getUserWithAuthorities();
 
         var newAnswerMessage = new AnswerPost();
         newAnswerMessage.setContent(answerMessage.content());
@@ -198,7 +198,7 @@ public class AnswerMessageService extends PostingService {
      * @return updated answer message that was persisted
      */
     public AnswerPost updateAnswerMessage(Long courseId, Long answerMessageId, UpdatePostingDTO answerMessage) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         // checks
         if (!Objects.equals(answerMessage.id(), answerMessageId)) {
@@ -262,7 +262,7 @@ public class AnswerMessageService extends PostingService {
      * @param answerMessageId id of the answer message to delete
      */
     public void deleteAnswerMessageById(Long courseId, Long answerMessageId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         // checks
         AnswerPost answerMessage = this.findById(answerMessageId);

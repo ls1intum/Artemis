@@ -56,7 +56,7 @@ class CourseStatsServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGetActiveStudents(long weeks) {
         ZonedDateTime date = ZonedDateTime.now().minusWeeks(weeks);
         SecurityUtils.setAuthorizationObject();
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = TextExerciseFactory.generateTextExercise(date, date, date, course);
         course.addExercises(exercise);
         exercise = exerciseRepository.save(exercise);
@@ -117,7 +117,7 @@ class CourseStatsServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGetActiveStudents_UTCConversion() {
         ZonedDateTime date = ZonedDateTime.of(2022, 1, 2, 0, 0, 0, 0, ZonedDateTime.now().getZone());
         SecurityUtils.setAuthorizationObject();
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = TextExerciseFactory.generateTextExercise(date, date, date, course);
         course.addExercises(exercise);
         exercise = exerciseRepository.save(exercise);

@@ -124,7 +124,7 @@ public class PlagiarismResource {
     @EnforceAtLeastStudent
     public ResponseEntity<PlagiarismComparison> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);

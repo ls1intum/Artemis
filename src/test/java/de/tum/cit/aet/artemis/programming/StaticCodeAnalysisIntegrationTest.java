@@ -46,7 +46,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        programmingExerciseSCAEnabled = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        programmingExerciseSCAEnabled = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(TEST_PREFIX);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExerciseSCAEnabled);
         programmingExerciseSCAEnabled = programmingExerciseRepository.save(programmingExerciseSCAEnabled);
         course = courseRepository.findWithEagerExercisesById(programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -115,7 +115,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "TA")
     void testGetStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
-        userUtilService.addTeachingAssistant("other-tas", TEST_PREFIX + "other-ta1");
+        userUtilService.addTeachingAssistant(TEST_PREFIX + "other-ta1");
         request.getList(endpoint, HttpStatus.FORBIDDEN, StaticCodeAnalysisCategory.class);
     }
 
@@ -130,7 +130,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) throws Exception {
-        var programmingExSCAEnabled = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
+        var programmingExSCAEnabled = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage, TEST_PREFIX);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExSCAEnabled);
         programmingExSCAEnabled = programmingExerciseRepository.save(programmingExSCAEnabled);
         programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).orElseThrow();
@@ -169,7 +169,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @Test
     @WithMockUser(username = TEST_PREFIX + "other-instructor1", roles = "INSTRUCTOR")
     void testResetCategories_instructorInWrongCourse_forbidden() throws Exception {
-        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "other-instructor1");
+        userUtilService.addInstructor(TEST_PREFIX + "other-instructor1");
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories/reset", programmingExerciseSCAEnabled);
         request.patch(endpoint, "{}", HttpStatus.FORBIDDEN);
     }
@@ -179,7 +179,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
         // Create a programming exercise with real categories
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true, programmingLanguage);
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(true, programmingLanguage, TEST_PREFIX);
         ProgrammingExercise exercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(course.getExercises().iterator().next().getId()).orElseThrow();
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
@@ -220,7 +220,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "other-ta1", roles = "TA")
     void testUpdateStaticCodeAnalysisCategories_notAtLeastTAInCourse_forbidden() throws Exception {
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExerciseSCAEnabled);
-        userUtilService.addTeachingAssistant("other-tas", TEST_PREFIX + "other-ta");
+        userUtilService.addTeachingAssistant(TEST_PREFIX + "other-ta");
         request.patch(endpoint, programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories(), HttpStatus.FORBIDDEN);
     }
 
@@ -378,9 +378,6 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportCategories_asEditor_wrongCourse() throws Exception {
         Course otherCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true);
-        otherCourse.setEditorGroupName("otherEditorGroup");
-        otherCourse.setInstructorGroupName("otherInstructorGroup");
-        courseRepository.save(otherCourse);
         Exercise sourceExercise = otherCourse.getExercises().iterator().next();
 
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);

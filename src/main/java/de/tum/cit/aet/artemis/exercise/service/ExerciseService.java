@@ -267,7 +267,7 @@ public class ExerciseService {
 
         final DueDateStat[] numberOfLockedAssessmentByOtherTutorsOfCorrectionRound;
         numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = resultRepository.countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRounds(exercise,
-                numberOfCorrectionRounds, userRepository.getUserWithGroupsAndAuthorities());
+                numberOfCorrectionRounds, userRepository.getUserWithAuthorities());
         stats.setNumberOfLockedAssessmentByOtherTutorsOfCorrectionRound(numberOfLockedAssessmentByOtherTutorsOfCorrectionRound);
 
         final DueDateStat numberOfAutomaticAssistedAssessments = resultRepository.countNumberOfAutomaticAssistedAssessmentsForExercise(exerciseId);
@@ -626,8 +626,7 @@ public class ExerciseService {
                 exerciseStatisticsDTO.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
             }
             else {
-                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId(),
-                        exercise.getCourseViaExerciseGroupOrCourseMember().getStudentGroupName());
+                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId(), exercise.getCourseViaExerciseGroupOrCourseMember().getId());
                 var participations = studentParticipations == null ? 0 : Math.toIntExact(studentParticipations);
                 exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
 

@@ -116,7 +116,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let lockAndGetProgrammingSubmissionParticipationStub: ReturnType<typeof vi.spyOn>;
     let findWithParticipationsStub: ReturnType<typeof vi.spyOn>;
 
-    const user = <User>{ id: 99, groups: ['instructorGroup'] };
+    const user = <User>{ id: 99 };
     const result: Result = {
         feedbacks: [new Feedback()],
         score: 80,
@@ -139,7 +139,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         },
         maxPoints: 100,
         gradingInstructions: 'Grading Instructions',
-        course: <Course>{ instructorGroupName: 'instructorGroup' },
+        course: <Course>{},
     } as unknown as ProgrammingExercise;
 
     const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
@@ -316,7 +316,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should update assessor correctly if the manual assessment is overridden', async () => {
-        const user2 = <User>{ id: 100, groups: ['instructorGroup'] };
+        const user2 = <User>{ id: 100 };
         const discardPendingSubmissionsWithConfirmationStub = vi.spyOn(comp, 'discardPendingSubmissionsWithConfirmation').mockReturnValue(Promise.resolve(true));
         const updateAfterNewAssessment = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(of(overrideEntityResponse));
         result.assessor = user2;

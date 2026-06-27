@@ -130,7 +130,7 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
 
         if (quizExercise.isExamExercise()) {
             throw new BadRequestAlertException("These actions are not allowed for exam exercises", ENTITY_NAME, "notAllowedInExam");

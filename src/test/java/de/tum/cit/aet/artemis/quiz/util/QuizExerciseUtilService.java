@@ -112,6 +112,19 @@ public class QuizExerciseUtilService {
     }
 
     /**
+     * Creates and saves a course with one quiz exercise with the given title and enrolls the users identified by the given prefix.
+     *
+     * @param title      The title of the quiz exercise.
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The newly created course with the quiz, with prefix users enrolled.
+     */
+    public Course addEnrolledCourseWithOneQuizExercise(String title, String userPrefix) {
+        Course course = addCourseWithOneQuizExercise(title);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a course with one quiz exercise with the given title.
      * The quiz is synchronized and has a duration of 120 seconds.
      *
@@ -119,7 +132,7 @@ public class QuizExerciseUtilService {
      * @return The newly created course with the quiz.
      */
     public Course addCourseWithOneQuizExercise(String title) {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, QuizMode.SYNCHRONIZED);
         quizExercise.setTitle(title);
         quizExercise.setDuration(120);
@@ -209,6 +222,41 @@ public class QuizExerciseUtilService {
     }
 
     /**
+     * Creates and saves a course and a quiz exercise, enrolling all test users identified by the given prefix.
+     * <p>
+     * This is the enrollment-aware counterpart of {@link #createQuiz(ZonedDateTime, ZonedDateTime, QuizMode)}.
+     * Use this whenever the acting test user must pass the course-membership access check (i.e. whenever the
+     * expected response is anything other than {@code 403 FORBIDDEN}).
+     *
+     * @param userPrefix  The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @param releaseDate The release date of the quiz, also used to derive the course start date.
+     * @param dueDate     The due date of the quiz, also used to derive the course end date.
+     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @return The created quiz exercise (unsaved — call {@code quizExerciseService.save()} or {@code exerciseRepository.save()} as needed).
+     */
+    public QuizExercise createEnrolledQuiz(String userPrefix, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
+        userUtilService.enrollPrefixedUsersInCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember(), userPrefix);
+        return quizExercise;
+    }
+
+    /**
+     * Creates, enrolls users, and immediately persists a quiz exercise — the enrollment-aware counterpart of
+     * {@link #createAndSaveQuiz(ZonedDateTime, ZonedDateTime, QuizMode)}.
+     *
+     * @param userPrefix  The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @param releaseDate The release date of the quiz.
+     * @param dueDate     The due date of the quiz.
+     * @param quizMode    The mode of the quiz. SYNCHRONIZED, BATCHED, or INDIVIDUAL.
+     * @return The saved quiz exercise.
+     */
+    public QuizExercise createAndSaveEnrolledQuiz(String userPrefix, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = createEnrolledQuiz(userPrefix, releaseDate, dueDate, quizMode);
+        quizExerciseRepository.save(quizExercise);
+        return quizExercise;
+    }
+
+    /**
      * Creates and saves a new course.
      *
      * @param id        The id of the course.
@@ -218,21 +266,24 @@ public class QuizExerciseUtilService {
      * @return Created and saved course.
      */
     public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
-        Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(id, startDate, endDate, exercises);
         courseRepo.save(course);
         return course;
     }
 
     /**
      * Creates and saves a course and an exam. An exam quiz exercise is created and saved.
+     * Users with the given prefix are enrolled in the course.
      *
-     * @param startDate The start date of the exam, also used to set the start date of the course the exam is in.
-     * @param endDate   The end date of the exam, also used to set the end date of the course the exam is in.
+     * @param userPrefix The prefix of the users to enroll in the course (e.g. "test-prefix-")
+     * @param startDate  The start date of the exam, also used to set the start date of the course the exam is in.
+     * @param endDate    The end date of the exam, also used to set the end date of the course the exam is in.
      * @return The created exam quiz exercise.
      */
     @NonNull
-    public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
+    public QuizExercise createAndSaveEnrolledExamQuiz(String userPrefix, ZonedDateTime startDate, ZonedDateTime endDate) {
         Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
 
         Exam exam = ExamFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam);

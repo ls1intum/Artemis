@@ -75,7 +75,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 1, 1);
 
-        course = courseUtilService.addEmptyCourse();
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         course.addExercises(programmingExercise);
@@ -139,7 +139,7 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCreateExamTextExercise_useAthena_badRequest() throws Exception {
-        ExerciseGroup group = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        ExerciseGroup group = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(group);
         examTextExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 

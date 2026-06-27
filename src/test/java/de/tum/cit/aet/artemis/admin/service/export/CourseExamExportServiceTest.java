@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,8 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -42,9 +39,6 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentBa
     @Autowired
     private UserUtilService userUtilService;
 
-    @Autowired
-    private UserTestRepository userRepository;
-
     @BeforeEach
     void setup() {
         // setup users
@@ -54,7 +48,7 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentBa
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseForArchiveExams() throws IOException {
-        var course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
+        var course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().orElseThrow();
         List<String> exportErrors = new ArrayList<>();
         assertThatNoException().isThrownBy(() -> courseExamExportService.exportExam(exam, submissionExportPath, exportErrors));
@@ -65,13 +59,11 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentBa
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportCourseForArchive() throws IOException {
-        // Add tutor for complaint response
-        User tutor = userUtilService.createAndSaveUser(TEST_PREFIX + "tutor5");
-        tutor.setGroups(Set.of("tutor"));
-        userRepository.save(tutor);
+        // Add tutor for complaint response — created before course so prefix enrollment picks them up
+        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor5");
 
-        var course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
-        var courseWithExercises = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 3, 2, 1, 1, true, 1, "");
+        var course = courseUtilService.createEnrolledCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
+        var courseWithExercises = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 3, 2, 1, 1, true, 1, "");
         var exercises = courseWithExercises.getExercises();
         exercises.forEach(exercise -> {
             exercise.setCourse(course);

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.account.security;
 
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
@@ -95,7 +94,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
             // this is an edge case which could happen when the user email changed or the user has multiple email addresses and used a secondary email to login
             // therefore, double check if the Artemis User with the LDAP login (based on the given email) exists. If yes, we will use this user and update the LDAP values below
             // without this code a second user would be created in Artemis which is not what we want (additionally this would fail because of unique constraints)
-            optionalUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(ldapUserDto.getLogin());
+            optionalUser = userRepository.findOneWithAuthoritiesByLogin(ldapUserDto.getLogin());
         }
 
         // Use the given password to authenticate the user in the LDAP
@@ -117,16 +116,15 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
     /**
      * Creates a new Artemis user based on the given LDAP user DTO and stores it in the database.
-     * Initially, the user does not belong to any groups and has only the STUDENT authority assigned
+     * Initially, the user has only the STUDENT authority assigned.
      *
      * @param ldapUserDto The LDAP user DTO containing the user information
      * @return The created Artemis user
      */
     private User createUser(LdapUserDto ldapUserDto) {
-        User newUser = userCreationService.createUser(ldapUserDto.getLogin(), null, null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
+        User newUser = userCreationService.createUser(ldapUserDto.getLogin(), null, ldapUserDto.getFirstName(), ldapUserDto.getLastName(), ldapUserDto.getEmail(),
                 ldapUserDto.getRegistrationNumber(), null, "en", false);
 
-        newUser.setGroups(new HashSet<>());
         newUser.setAuthorities(authorityService.buildAuthorities(newUser));
 
         if (!newUser.getActivated()) {
@@ -187,9 +185,9 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
     private Optional<User> findArtemisUser(boolean isEmail, String loginOrEmail) {
         return isEmail ?
         // It's an email, try to find the Artemis user in the database based on the email
-                userRepository.findOneWithGroupsAndAuthoritiesByEmail(loginOrEmail) :
+                userRepository.findOneWithAuthoritiesByEmail(loginOrEmail) :
                 // It's a login, try to find the Artemis user in the database based on the login
-                userRepository.findOneWithGroupsAndAuthoritiesByLogin(loginOrEmail);
+                userRepository.findOneWithAuthoritiesByLogin(loginOrEmail);
     }
 
     /**

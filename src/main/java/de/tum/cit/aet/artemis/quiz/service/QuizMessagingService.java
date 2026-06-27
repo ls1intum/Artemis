@@ -70,12 +70,12 @@ public class QuizMessagingService {
                 var course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
                 // Create a group notification if actions is 'start-now'. The fan-out to (potentially thousands of)
                 // students runs asynchronously so it does not block the HTTP response of the lifecycle action that
-                // triggered this broadcast (see GroupNotificationService#notifyStudentGroupAboutQuizExerciseStartAsync).
+                // triggered this broadcast (see GroupNotificationService#notifyStudentsAboutQuizExerciseStartAsync).
                 // Primitives are resolved here on the caller's session before the async handoff. The surrounding
                 // isCourseExercise() guard already excludes exam exercises, so no extra exam check is needed here.
                 if (quizChange == QuizAction.START_NOW) {
-                    groupNotificationService.notifyStudentGroupAboutQuizExerciseStartAsync(course.getId(), course.getTitle(), course.getCourseIcon(), course.getStudentGroupName(),
-                            quizExercise.getId(), quizExercise.getExerciseNotificationTitle());
+                    groupNotificationService.notifyStudentsAboutQuizExerciseStartAsync(course.getId(), course.getTitle(), course.getCourseIcon(), quizExercise.getId(),
+                            quizExercise.getExerciseNotificationTitle());
                 }
                 // Send quiz via websocket.
                 String destination = "/topic/courses/" + course.getId() + "/quizExercises";

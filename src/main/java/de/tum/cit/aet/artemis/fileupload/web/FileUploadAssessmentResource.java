@@ -108,7 +108,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Result> updateFileUploadAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findByIdWithEagerResultAndAssessorAndFeedbackElseThrow(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         long exerciseId = studentParticipation.getExercise().getId();

@@ -92,7 +92,7 @@ public class FileUtil {
      * </ul>
      *
      * @param filename the original filename string to sanitize
-     * @return the sanitized filename, with invalid characters replaced and multiple dots reduced
+     * @return the sanitized filename, with invalid characters replaced
      */
     public static String sanitizeFilename(String filename) {
         return filename.replaceAll("[^a-zA-Z\\d.\\-]", "_").replaceAll("\\.+", ".");

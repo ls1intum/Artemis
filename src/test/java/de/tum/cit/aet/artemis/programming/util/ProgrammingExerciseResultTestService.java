@@ -155,7 +155,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) throws GitAPIException, IOException {
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(false, programmingLanguage, userPrefix);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
@@ -172,8 +172,8 @@ public class ProgrammingExerciseResultTestService {
         // We are either in the middle of the 2h exam or at the end of the exam
         var startDate = now.minusHours(isExamOver ? 2 : 1);
         var endDate = now.plusHours(isExamOver ? 0 : 1);
-        programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), startDate, endDate,
-                now.plusHours(10), userPrefix + "student1", 120 * 60);
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithProgrammingExerciseAndExamDates(now.minusHours(10), startDate, endDate,
+                now.plusHours(10), userPrefix + "student1", 120 * 60, userPrefix);
         course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");

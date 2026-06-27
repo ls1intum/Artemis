@@ -116,7 +116,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithoutExercises() {
-        Course course = courseUtilService.addEmptyCourse();
+        Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 

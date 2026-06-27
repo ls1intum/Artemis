@@ -57,6 +57,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     private static final String TEST_PREFIX = "lectureintegrationtest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private LectureTestRepository lectureRepository;
 
@@ -115,7 +117,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
         int numberOfTutors = 2;
         userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
 
         var lectures = this.course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
@@ -127,8 +129,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = lectureUtilService.createExerciseUnit(textExercise, lecture1);
@@ -263,7 +265,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_lectureFromUnauthorizedCourseWithAuthorizedCourseInBody_shouldReturnForbidden() throws Exception {
-        Course otherCourse = courseUtilService.addEmptyCourse("other-students", "other-tutors", "other-editors", "other-instructors");
+        Course otherCourse = courseUtilService.addEmptyCourse();
         Lecture otherLecture = lectureUtilService.createLecture(otherCourse);
         String originalDescription = otherLecture.getDescription();
 
@@ -280,7 +282,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_mismatchedCourseInBody_shouldReturnBadRequest() throws Exception {
-        Course otherAuthorizedCourse = courseUtilService.addEmptyCourse();
+        Course otherAuthorizedCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
 
         LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Mismatched Update", "Updated with mismatched course",
@@ -353,7 +355,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void getLecture_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
         request.get("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN, Lecture.class);
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.FORBIDDEN, LectureDetailsDTO.class);
@@ -493,7 +495,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureWithChannel() throws Exception {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         Channel lectureChannel = lectureUtilService.addLectureChannel(lecture);
 
         request.delete("/api/lecture/lectures/" + lecture.getId(), HttpStatus.OK);
@@ -503,7 +505,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLecture_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
     }
@@ -551,7 +553,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
         final var result = request.getSearchResult("/api/lecture/lectures", HttpStatus.OK, Lecture.class, pageableSearchUtilService.searchMapping(search));
@@ -577,7 +579,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImport() throws Exception {
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
 
         var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import?sourceLectureId=" + lecture1.getId() + "&courseId=" + course2.getId(), null,

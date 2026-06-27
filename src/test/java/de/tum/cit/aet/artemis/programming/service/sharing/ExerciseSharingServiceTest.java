@@ -218,13 +218,13 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test
     @WithMockUser(username = INSTRUCTOR1, roles = "INSTRUCTOR")
     void testImportProgrammingExerciseFromSharing() throws URISyntaxException, IOException, GitAPIException, SharingException {
-        userUtilService.addInstructor("Sharing", INSTRUCTOR1);
+        userUtilService.addInstructor(INSTRUCTOR1);
         mockSampleBasketZipForToken(SAMPLE_BASKET_TOKEN);
 
         SecurityContextHolder.getContext().setAuthentication(AuthenticationFactory.createUsernamePasswordAuthentication(INSTRUCTOR1.toLowerCase()));
 
         ProgrammingExercise exercise = getExerciseInfoFromBasket();
-        Course course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        Course course1 = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         SharingInfoDTO sharingInfo = new SharingInfoDTO(SAMPLE_BASKET_TOKEN, TEST_RETURN_URL, SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN,
                 SharingPlatformMockProvider.calculateCorrectChecksum(sharingPlatformMockProvider.getTestSharingApiKey(), "returnURL", TEST_RETURN_URL, "apiBaseURL",
                         SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN),

@@ -212,7 +212,7 @@ public class TextExerciseResource {
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long exerciseId) {
         log.info("REST request to delete TextExercise : {}", exerciseId);
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
 
         // Notify AtlasML about the exercise deletion before actual deletion
@@ -236,7 +236,7 @@ public class TextExerciseResource {
     @GetMapping({ "participations/{participationId}/text-editor", "text-editor/{participationId}" })
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> getDataForTextEditor(@PathVariable Long participationId, @RequestParam(value = "resultId", required = false) Long resultId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         if (!(participation.getExercise() instanceof TextExercise textExercise)) {
             throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
@@ -332,7 +332,7 @@ public class TextExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(SearchTermPageableSearchDTO<String> search,
             @RequestParam(defaultValue = "true") boolean isCourseFilter, @RequestParam(defaultValue = "true") boolean isExamFilter) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 

@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.account.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
@@ -36,12 +35,14 @@ import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -52,7 +53,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
@@ -112,6 +112,9 @@ public class UserTestService {
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
 
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
     private String TEST_PREFIX;
 
     public User student;
@@ -132,7 +135,7 @@ public class UserTestService {
         student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
         student = userTestRepository.save(student);
-        student = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        student = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         final var event = new ScienceEvent();
         event.setIdentity(student.getLogin());
@@ -229,11 +232,9 @@ public class UserTestService {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        var users = Stream.of("student1", "tutor1", "editor1", "instructor1").map(login -> {
-            final User user = userUtilService.getUserByLogin(TEST_PREFIX + login);
-            user.getGroups().clear();
-            return userTestRepository.save(user);
-        }).collect(Collectors.toSet());
+        var users = Stream.of("student1", "tutor1", "editor1", "instructor1")
+                .map(login -> userTestRepository.findOneByLogin(TEST_PREFIX + login).orElseThrow(() -> new IllegalArgumentException("User not found: " + TEST_PREFIX + login)))
+                .collect(Collectors.toSet());
 
         var logins = users.stream().map(User::getLogin).toList();
         request.delete("/api/account/admin/users", HttpStatus.OK, logins);
@@ -257,7 +258,6 @@ public class UserTestService {
         final var newPassword = "bonobo42";
         final var newEmail = "bonobo42@tum.com";
         final var newFirstName = "Bruce";
-        final var newGroups = Set.of("foo", "bar");
         final var newLastName = "Wayne";
         final var newImageUrl = "foobar.png";
         final var newLangKey = "DE";
@@ -266,7 +266,6 @@ public class UserTestService {
         student.setAuthorities(newAuthorities);
         student.setEmail(newEmail);
         student.setFirstName(newFirstName);
-        student.setGroups(newGroups);
         student.setLastName(newLastName);
         student.setImageUrl(newImageUrl);
         student.setLangKey(newLangKey);
@@ -276,7 +275,7 @@ public class UserTestService {
         var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
         final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, UserDTO.class, HttpStatus.OK);
-        final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserIndDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(response).isNotNull();
         assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
@@ -301,7 +300,7 @@ public class UserTestService {
         assertThat(response).isNotNull();
 
         // do not allow empty authorities
-        final var updatedUserInDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserInDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
         assertThat(updatedUserInDB.getAuthorities()).containsExactly(new Authority(Role.STUDENT.getAuthority()));
     }
 
@@ -327,28 +326,9 @@ public class UserTestService {
         assertThat(userInDB.getId()).isEqualTo(student.getId());
     }
 
-    // Test
-    public void updateUserGroups() throws Exception {
-        var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        courseRepository.save(course);
-
-        // First we create a new user with group
-        student.setGroups(Set.of("instructor"));
-        student = userTestRepository.save(student);
-
-        // We will then update the user by modifying the groups
-        var updatedUser = student;
-        updatedUser.setGroups(Set.of("tutor"));
-        request.put("/api/account/admin/users", new ManagedUserVM(updatedUser, "this is a password"), HttpStatus.OK);
-
-        var updatedUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
-        assertThat(updatedUserOrEmpty).isPresent();
-
-        updatedUser = updatedUserOrEmpty.get();
-        assertThat(updatedUser.getId()).isEqualTo(student.getId());
-        assertThat(updatedUser.getGroups()).hasSize(1).contains("tutor");
-    }
+    // NOTE: updateUserGroups test removed — the admin user update API (ManagedUserVM) no longer
+    // carries group strings (UserDTO dropped the groups field in Phase 6). Course membership is
+    // now managed via user_course_role; see UserUtilService.enrollUserInCourse().
 
     // Test
     public User createExternalUser_asAdmin_isSuccessful() throws Exception {
@@ -499,39 +479,7 @@ public class UserTestService {
     }
 
     // Test
-    public void createUserWithGroups() throws Exception {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
-
-        var course = courseUtilService.addEmptyCourse();
-        programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        course = courseUtilService.addEmptyCourse();
-        course.setInstructorGroupName("instructor2");
-        courseRepository.save(course);
-
-        userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
-
-        var newUser = student;
-        newUser.setId(null);
-        newUser.setLogin("batman");
-        newUser.setEmail("foobar@tum.com");
-        newUser.setGroups(Set.of("tutor", "instructor2"));
-
-        request.post("/api/account/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
-
-        var createdUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(newUser.getLogin());
-        assertThat(createdUserOrEmpty).isPresent();
-
-        var createdUser = createdUserOrEmpty.get();
-        assertThat(createdUser.getId()).isNotNull();
-        assertThat(createdUser.getGroups()).hasSize(2).isEqualTo(newUser.getGroups());
-    }
-
-    // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalse().stream().peek(user -> user.setGroups(Set.of())).toList();
-        userTestRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -568,8 +516,6 @@ public class UserTestService {
 
     // Test
     public void getUserViaFilter_asAdmin_isSuccessful() throws Exception {
-        student.setGroups(Set.of());
-        userTestRepository.save(student);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -661,7 +607,7 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
-        repoUser.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
+        repoUser.setLtiCreated(true);   // mark as LTI-created (replaces legacy LTI_GROUP_NAME group)
         userTestRepository.save(repoUser);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -683,7 +629,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
-        user.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
+        user.setLtiCreated(true);   // mark as LTI-created (replaces legacy LTI_GROUP_NAME group)
         userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -742,7 +688,7 @@ public class UserTestService {
         // try to get token for non existent participation
         request.get("/api/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
 
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         courseRepository.save(course);
 
@@ -769,7 +715,7 @@ public class UserTestService {
     // Test
     public void getAndCreateParticipationVcsAccessTokenForTeamExercise() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         exercise.setMode(ExerciseMode.TEAM);
         exerciseTestRepository.save(exercise);
@@ -834,7 +780,7 @@ public class UserTestService {
      * @return params for request
      */
     private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumbers, String status,
-            boolean findWithoutUserGroups) {
+            boolean findWithoutCourseEnrollment) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "1000");
@@ -845,7 +791,7 @@ public class UserTestService {
         params.add("origins", origins);
         params.add("registrationNumbers", registrationNumbers);
         params.add("status", status);
-        params.add("findWithoutUserGroups", Boolean.toString(findWithoutUserGroups));
+        params.add("findWithoutCourseEnrollment", Boolean.toString(findWithoutCourseEnrollment));
         return params;
     }
 
@@ -873,7 +819,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
         for (Integer[] number : numbers) {
@@ -882,16 +828,13 @@ public class UserTestService {
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            user1.setGroups(Set.of());
-            user2.setGroups(Set.of("tumuser"));
-            userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin(), user2.getLogin());
         }
     }
 
     // Test
-    public void testUserWithoutGroups() throws Exception {
+    public void testUserWithoutCourseEnrollment() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         courseRepository.save(course);
 
@@ -906,9 +849,9 @@ public class UserTestService {
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            user1.setGroups(Set.of());
-            user2.setGroups(Set.of("tumuser"));
-            userTestRepository.saveAll(List.of(user1, user2));
+            // Enroll user2 in the course — the filter excludes users that have any UCR entry.
+            // user1 has no UCR entry and must appear; user2 is enrolled and must be excluded.
+            userCourseRoleTestRepository.save(new UserCourseRole(user2, course, CourseRole.STUDENT));
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(user1.getLogin()).doesNotContain(user2.getLogin());
         }
@@ -942,7 +885,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -965,7 +908,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -989,7 +932,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -1020,7 +963,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -1047,7 +990,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
@@ -1074,7 +1017,7 @@ public class UserTestService {
 
         List<UserDTO> result;
 
-        courseUtilService.addEmptyCourse();
+        courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {

@@ -38,7 +38,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
-        course = courseUtilService.createCourse();
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
         activateIrisGlobally();
         activateIrisFor(course);
     }

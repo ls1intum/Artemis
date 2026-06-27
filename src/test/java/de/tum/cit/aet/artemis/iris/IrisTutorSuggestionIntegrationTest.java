@@ -101,7 +101,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
 
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         course.addExercises(textExerciseUtilService.createSampleTextExercise(course));
         course = courseRepository.save(course);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

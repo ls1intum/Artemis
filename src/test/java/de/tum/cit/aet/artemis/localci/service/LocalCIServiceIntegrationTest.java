@@ -73,7 +73,7 @@ class LocalCIServiceIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testReturnCorrectBuildStatus() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
 
@@ -111,7 +111,7 @@ class LocalCIServiceIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
     @Test
     void testRecreateBuildPlanForExercise() throws IOException {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.getBuildConfig().setBuildPlanConfiguration(null);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);

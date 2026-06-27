@@ -174,7 +174,7 @@ public class LectureService {
             lecturePage = lectureRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
         }
         else {
-            lecturePage = lectureRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            lecturePage = lectureRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getId(), pageable);
         }
         return new SearchResultPageDTO<>(lecturePage.getContent(), lecturePage.getTotalPages());
     }
@@ -323,8 +323,7 @@ public class LectureService {
     }
 
     private LectureDetailsDTO.CourseDTO mapCourse(Course course) {
-        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                course.getEditorGroupName(), course.getInstructorGroupName());
+        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName());
     }
 
     private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment) {

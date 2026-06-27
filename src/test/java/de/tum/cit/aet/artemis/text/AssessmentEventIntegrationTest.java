@@ -55,7 +55,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 1, 1);
-        course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
+        course = courseUtilService.createEnrolledCourseWithTextExercise(TEST_PREFIX);
         tutor = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
         // we exactly create 1 exercise, 1 participation and 1 submission (which was submitted), so the following code should be fine
         exercise = course.getExercises().iterator().next();

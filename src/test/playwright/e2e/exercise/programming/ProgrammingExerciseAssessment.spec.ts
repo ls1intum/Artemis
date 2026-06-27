@@ -25,7 +25,7 @@ test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
 
     test.beforeEach('Creates a programming exercise and makes a student submission', async ({ login, page, courseManagementAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
+        course = await courseManagementAPIRequests.createCourse();
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addTutorToCourse(course, tutor);
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);

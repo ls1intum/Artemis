@@ -171,12 +171,10 @@ public class LectureResource {
                     channelName, course == null ? null : CourseDTO.from(course));
         }
 
-        public record CourseDTO(Long id, String title, String shortName, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
-                String instructorGroupName) {
+        public record CourseDTO(Long id, String title, String shortName) {
 
             public static CourseDTO from(@NonNull Course course) {
-                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
-                        course.getEditorGroupName(), course.getInstructorGroupName());
+                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName());
             }
         }
     }
@@ -268,7 +266,7 @@ public class LectureResource {
     @GetMapping("lectures")
     @EnforceAtLeastEditor
     public ResponseEntity<SearchResultPageDTO<Lecture>> getAllLecturesOnPage(SearchTermPageableSearchDTO<String> search) {
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(lectureService.getAllOnPageWithSize(search, user));
     }
 
@@ -447,7 +445,7 @@ public class LectureResource {
     public ResponseEntity<SimpleLectureDTO> importLecture(@RequestParam(name = "sourceLectureId", required = false) Long sourceLectureIdQuery,
             @PathVariable(name = "sourceLectureId", required = false) Long sourceLectureIdPath, @RequestParam long courseId) throws URISyntaxException {
         long sourceLectureId = sourceLectureIdQuery != null ? sourceLectureIdQuery : (sourceLectureIdPath != null ? sourceLectureIdPath : -1L);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
 
@@ -477,7 +475,7 @@ public class LectureResource {
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<LectureDetailsDTO> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         return ResponseEntity.ok(lectureService.getForDetails(lectureId, user));
     }
 

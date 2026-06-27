@@ -340,7 +340,7 @@ class IrisChatSessionResourceTest extends AbstractIrisChatSessionTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCurrent_forbiddenWhenStudentNotEnrolledInCourse() throws Exception {
-        Course otherCourse = courseUtilService.createCourseWithCustomStudentGroupName("iris-resource-restricted", "restricted-students");
+        Course otherCourse = courseUtilService.createCourse();
         activateIrisFor(otherCourse);
 
         request.postWithResponseBody(currentUrl(IrisChatMode.COURSE_CHAT, otherCourse.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.FORBIDDEN);

@@ -47,6 +47,8 @@ import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -55,10 +57,12 @@ import de.tum.cit.aet.artemis.core.exception.AccountRegistrationBlockedException
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.sshuserkeys.UserSshPublicKeyService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingService;
@@ -89,6 +93,8 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final PasswordService passwordService;
 
     private final AuthorityService authorityService;
@@ -117,13 +123,15 @@ public class UserService {
 
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
-    public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService, PasswordService passwordService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
-            Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
-            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
+    public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
+            AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
+            InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
+            UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
             UserCourseNotificationStatusService userCourseNotificationStatusService, GlobalNotificationSettingService globalNotificationSettingService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
@@ -170,7 +178,7 @@ public class UserService {
     public void ensureInternalAdminExists(String internalAdminUsername, String internalAdminPassword) {
         log.debug("Ensuring internal admin user exists: {}", internalAdminUsername);
 
-        Optional<User> existingInternalAdmin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(internalAdminUsername);
+        Optional<User> existingInternalAdmin = userRepository.findOneWithAuthoritiesByLogin(internalAdminUsername);
         if (existingInternalAdmin.isPresent()) {
             log.info("Update internal admin user {}", internalAdminUsername);
             existingInternalAdmin.get().setActivated(true);
@@ -199,7 +207,6 @@ public class UserService {
         userDto.setLastModifiedBy("system");
         // needs to be mutable --> new HashSet<>(Set.of(...))
         userDto.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN.getAuthority(), STUDENT.getAuthority())));
-        userDto.setGroups(new HashSet<>());
         return userDto;
     }
 
@@ -211,7 +218,7 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneWithGroupsByActivationKey(key).map(user -> {
+        return userRepository.findOneByActivationKey(key).map(user -> {
             activateUser(user);
             return user;
         });
@@ -307,14 +314,14 @@ public class UserService {
         newUser.setAuthorities(authorities);
 
         // Find user that has the same login
-        Optional<User> optionalExistingUser = userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase());
+        Optional<User> optionalExistingUser = userRepository.findOneByLogin(userDTO.getLogin().toLowerCase());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
         // Find user that has the same email
-        optionalExistingUser = userRepository.findOneWithGroupsByEmailIgnoreCase(userDTO.getEmail());
+        optionalExistingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
 
@@ -421,8 +428,8 @@ public class UserService {
 
                 // handle edge case, the user already exists in Artemis, but for some reason the values differ
                 if (StringUtils.hasText(ldapUser.getLogin())) {
-                    // load the user with groups and authorities because they might be needed later
-                    var existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(ldapUser.getLogin());
+                    // load the user with authorities because they might be needed later
+                    var existingUser = userRepository.findOneWithAuthoritiesByLogin(ldapUser.getLogin());
                     if (existingUser.isPresent()) {
                         LdapUserService.syncUserDetails(existingUser.get(), ldapUser);
                         saveUser(existingUser.get());
@@ -431,10 +438,10 @@ public class UserService {
                 }
 
                 // Use empty password, so that we don't store the credentials of external users in the Artemis DB
-                User user = userCreationService.createUser(ldapUser.getLogin(), "", null, ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
+                User user = userCreationService.createUser(ldapUser.getLogin(), "", ldapUser.getFirstName(), ldapUser.getLastName(), ldapUser.getEmail(),
                         ldapUser.getRegistrationNumber(), null, "en", false);
-                // load the user with groups and authorities because they might be needed later
-                return userRepository.findOneWithGroupsAndAuthoritiesById(user.getId());
+                // load the user with authorities because they might be needed later
+                return userRepository.findOneWithAuthoritiesById(user.getId());
             }
             else {
                 log.warn("Ldap User with userIdentifier '{}' not found", userIdentifier);
@@ -449,11 +456,12 @@ public class UserService {
      * @param login user login string
      */
     public void softDeleteUser(String login) {
-        userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
+        userRepository.findOneByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             userSshPublicKeyService.deleteAllByUserId(user.getId());
             globalNotificationSettingService.deleteAllByUserId(user.getId());
+            userCourseRoleRepository.deleteByUser_Id(user.getId());
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);
@@ -481,7 +489,6 @@ public class UserService {
         user.setRegistrationNumber(null);
         user.setImageUrl(null);
         user.setActivated(false);
-        user.setGroups(Set.of());
 
         List<SavedPost> savedPostsOfUser = savedPostRepository.findSavedPostsByUserId(user.getId());
 
@@ -576,47 +583,35 @@ public class UserService {
     }
 
     /**
-     * Removes the passed group from all users in the Artemis database using a single bulk delete query.
-     * This is more efficient than loading, modifying, and saving each user individually.
+     * Add the user to a course with the given role.
      *
-     * @param groupName the group that should be removed from all existing users
+     * @param user   the user to add
+     * @param course the course to add the user to
+     * @param role   the role the user should have in the course
      */
-    public void removeGroupFromAllUsers(String groupName) {
-        log.info("Remove group {} from all users", groupName);
-        int deletedCount = userRepository.removeGroupFromAllUsers(groupName);
-        log.info("Removed group {} from {} user-group associations", groupName, deletedCount);
+    public void addUserToCourse(User user, Course course, CourseRole role) {
+        log.debug("Add user {} to course {} with role {}", user.getLogin(), course.getId(), role);
+        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
+            userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+        }
+        user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        user.setAuthorities(authorityService.buildAuthorities(user));
+        saveUser(user);
     }
 
     /**
-     * Add the user to the specified group and update in CIS (like Jenkins) if used, and registers the user to necessary channels
+     * Remove the user from a course role.
      *
-     * @param user  the user
-     * @param group the group
+     * @param user   the user to remove
+     * @param course the course from which the user should be removed
+     * @param role   the role to revoke
      */
-    public void addUserToGroup(User user, String group) {
-        // internal Artemis database
-        log.debug("Add user {} to group {}", user.getLogin(), group);
-        if (!user.getGroups().contains(group)) {
-            user.getGroups().add(group);
-            user.setAuthorities(authorityService.buildAuthorities(user));
-            saveUser(user);
-        }
-    }
-
-    /**
-     * remove the user from the specified group
-     *
-     * @param user  the user
-     * @param group the group
-     */
-    public void removeUserFromGroup(User user, String group) {
-        // internal Artemis database
-        log.info("Remove user {} from group {}", user.getLogin(), group);
-        if (user.getGroups().contains(group)) {
-            user.getGroups().remove(group);
-            user.setAuthorities(authorityService.buildAuthorities(user));
-            saveUser(user);
-        }
+    public void removeUserFromCourse(User user, Course course, CourseRole role) {
+        log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
+        userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
+        user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        user.setAuthorities(authorityService.buildAuthorities(user));
+        saveUser(user);
     }
 
     /**
@@ -661,23 +656,20 @@ public class UserService {
     }
 
     /**
-     * This method first tries to find the user and then adds the user to the course
+     * This method first tries to find the user and then enrolls them in the course with the given role.
      *
      * @param registrationNumber the registration number of the user
      * @param login              the login of the user
      * @param email              the email of the user
-     * @param courseGroupName    the courseGroup the user has to be added to
+     * @param course             the course the user should be added to
+     * @param role               the role the user should have in the course
      * @return the found user, otherwise returns an empty optional
      */
-    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, String courseGroupName) {
+    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, Course course, CourseRole role) {
         var optionalUser = findUser(registrationNumber, login, email);
 
         if (optionalUser.isPresent()) {
-            var user = optionalUser.get();
-            // we only need to add the user to the course group, if the user is not yet part of it, otherwise the user cannot access the course
-            if (!user.getGroups().contains(courseGroupName)) {
-                this.addUserToGroup(user, courseGroupName);
-            }
+            this.addUserToCourse(optionalUser.get(), course, role);
             return optionalUser;
         }
 
@@ -687,13 +679,13 @@ public class UserService {
     private Optional<User> findUserInDatabase(@Nullable String registrationNumber, @Nullable String login, @Nullable String email) {
         Optional<User> optionalUser = Optional.empty();
         if (StringUtils.hasText(login)) {
-            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
+            optionalUser = userRepository.findUserWithAuthoritiesByLogin(login);
         }
         if (optionalUser.isEmpty() && StringUtils.hasText(email)) {
-            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email);
+            optionalUser = userRepository.findUserWithAuthoritiesByEmail(email);
         }
         if (optionalUser.isEmpty() && StringUtils.hasText(registrationNumber)) {
-            optionalUser = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+            optionalUser = userRepository.findUserWithAuthoritiesByRegistrationNumber(registrationNumber);
         }
         return optionalUser;
     }

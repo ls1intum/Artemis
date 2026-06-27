@@ -91,6 +91,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
 
     private User tutor2;
 
+    private Course examCourse;
+
     private TextExercise examTextExercise;
 
     private ModelingExercise examModelingExercise;
@@ -129,8 +131,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         tutor2 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor2");
 
-        Course course = courseUtilService.createCourse();
-        Exam exam = examUtilService.addExam(course);
+        examCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+        Exam exam = examUtilService.addExam(examCourse);
 
         exam.setNumberOfCorrectionRoundsInExam(2);
         exam = examRepository.save(exam);
@@ -163,8 +165,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowanceGroupCheck() {
-        student1.setGroups(Set.of("another-group"));
-        userRepository.save(student1);
+        // Remove student1 from the course so they have no enrollment — access should be denied
+        userUtilService.unenrollUserFromCourse(student1, examCourse);
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> submissionService.checkSubmissionAllowanceElseThrow(examTextExercise, null, student1));
     }
 

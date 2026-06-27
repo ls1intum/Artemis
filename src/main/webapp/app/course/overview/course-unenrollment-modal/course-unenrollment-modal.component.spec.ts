@@ -44,7 +44,7 @@ describe('CourseUnenrollmentModalComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('course', testCourse);
         courseService = TestBed.inject(CourseManagementService);
-        unenrollFromCourseStub = vi.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(of(new HttpResponse({ body: ['student-group-name'] })));
+        unenrollFromCourseStub = vi.spyOn(courseService, 'unenrollFromCourse').mockReturnValue(of(new HttpResponse<void>()));
         alertService = TestBed.inject(AlertService);
         successAlertStub = vi.spyOn(alertService, 'success');
         errorAlertStub = vi.spyOn(alertService, 'error');

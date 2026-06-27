@@ -115,7 +115,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(long exerciseId, FileUploadSubmission fileUploadSubmission, MultipartFile file) {
         long start = System.currentTimeMillis();
         checkFileLength(file);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
 
         checkFilePattern(file, exercise);
@@ -185,7 +185,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         var studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
         var fileUploadExercise = (FileUploadExercise) studentParticipation.getExercise();
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         authCheckService.checkIsAllowedToAssessExerciseElseThrow(fileUploadExercise, user, resultId);
 
         // load submission with results either by resultId or by correctionRound
@@ -253,7 +253,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         if (!(fileUploadExercise instanceof FileUploadExercise)) {
             throw new BadRequestAlertException("The requested exercise was not found.", "exerciseId", "400");
         }
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, fileUploadExercise, user);
 
         // Check if tutors can start assessing the students submission

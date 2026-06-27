@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
@@ -92,39 +93,36 @@ public class CourseAccessResource {
 
     /**
      * POST /courses/{courseId}/enroll : Enroll in an existing course. This method enrolls the current user for the given course id in case the course has already started
-     * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
-     * database.
+     * and not finished yet.
      *
      * @param courseId to find the course
-     * @return response entity for groups of user who has been enrolled in the course
+     * @return 200 OK on success
      */
     @PostMapping("courses/{courseId}/enroll")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<String>> enrollInCourse(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+    public ResponseEntity<Void> enrollInCourse(@PathVariable Long courseId) {
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
         Course course = courseRepository.findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPathsElseThrow(courseId);
         log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
         courseAccessService.enrollUserForCourseOrThrow(user, course);
-        return ResponseEntity.ok(user.getGroups());
+        return ResponseEntity.ok().build();
     }
 
     /**
      * POST /courses/{courseId}/unenroll : Unenroll from an existing course. This method unenrolls the current user for the given course id in case the student is currently
      * enrolled.
-     * The user is removed from the course student group in the Authentication System and the course student group is removed from the user's groups in the Artemis
-     * database.
      *
      * @param courseId to find the course
-     * @return response entity for groups of user who has been unenrolled from the course
+     * @return 200 OK on success
      */
     @PostMapping("courses/{courseId}/unenroll")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<String>> unenrollFromCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Void> unenrollFromCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
         log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
         courseAccessService.unenrollUserForCourseOrThrow(user, course);
-        return ResponseEntity.ok(user.getGroups());
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -137,7 +135,7 @@ public class CourseAccessResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Course> getCourseForEnrollment(@PathVariable long courseId) {
         log.debug("REST request to get a currently active course for enrollment");
-        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
         enrollmentService.checkUserAllowedToEnrollInCourseElseThrow(user, course);
@@ -155,7 +153,7 @@ public class CourseAccessResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Course>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
-        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
         final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course))
                 .toList();
         return ResponseEntity.ok(courses);
@@ -172,7 +170,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getStudentsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all students in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getAllUsersInGroup(course, course.getStudentGroupName());
+        return courseAccessService.getUsersWithRole(course, CourseRole.STUDENT);
     }
 
     /**
@@ -192,7 +190,8 @@ public class CourseAccessResource {
         if (loginOrName.length() < 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
-        final Page<UserDTO> page = userRepository.searchAllUsersByLoginOrNameInGroupAndConvertToDTO(PageRequest.of(0, 25), loginOrName, course.getStudentGroupName());
+        final Page<UserDTO> page = userRepository.searchUsersByLoginOrNameInCourseWithRolesAndConvertToDTO(PageRequest.of(0, 25), loginOrName, courseId,
+                Set.of(CourseRole.STUDENT));
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -217,9 +216,10 @@ public class CourseAccessResource {
         if (loginOrName.length() < 3 && requestedRoles.contains(Role.STUDENT)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer if you search for students.");
         }
-        final var relevantCourseGroupNames = getRelevantCourseGroupNames(requestedRoles, course);
+        final var relevantCourseRoles = getRelevantCourseRoles(requestedRoles);
         User searchingUser = userRepository.getUser();
-        var originalPage = userRepository.searchAllWithGroupsByLoginOrNameInGroupsNotUserId(PageRequest.of(0, 25), loginOrName, relevantCourseGroupNames, searchingUser.getId());
+        var originalPage = userRepository.searchAllWithCourseRolesByLoginOrNameInCourseNotUserId(PageRequest.of(0, 25), loginOrName, course.getId(), relevantCourseRoles,
+                searchingUser.getId());
 
         var resultDTOs = new ArrayList<UserPublicInfoDTO>();
         for (var user : originalPage) {
@@ -234,20 +234,20 @@ public class CourseAccessResource {
         return new ResponseEntity<>(dtoPage.getContent(), headers, HttpStatus.OK);
     }
 
-    private static HashSet<String> getRelevantCourseGroupNames(Set<Role> requestedRoles, Course course) {
-        var groups = new HashSet<String>();
+    private static Set<CourseRole> getRelevantCourseRoles(Set<Role> requestedRoles) {
+        var roles = new HashSet<CourseRole>();
         if (requestedRoles.contains(Role.STUDENT)) {
-            groups.add(course.getStudentGroupName());
+            roles.add(CourseRole.STUDENT);
         }
         if (requestedRoles.contains(Role.TEACHING_ASSISTANT)) {
-            groups.add(course.getTeachingAssistantGroupName());
+            roles.add(CourseRole.TEACHING_ASSISTANT);
             // searching for tutors also searches for editors
-            groups.add(course.getEditorGroupName());
+            roles.add(CourseRole.EDITOR);
         }
         if (requestedRoles.contains(Role.INSTRUCTOR)) {
-            groups.add(course.getInstructorGroupName());
+            roles.add(CourseRole.INSTRUCTOR);
         }
-        return groups;
+        return roles;
     }
 
     /**
@@ -261,7 +261,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getTutorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getAllUsersInGroup(course, course.getTeachingAssistantGroupName());
+        return courseAccessService.getUsersWithRole(course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -275,7 +275,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getEditorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all editors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getAllUsersInGroup(course, course.getEditorGroupName());
+        return courseAccessService.getUsersWithRole(course, CourseRole.EDITOR);
     }
 
     /**
@@ -289,7 +289,7 @@ public class CourseAccessResource {
     public ResponseEntity<Set<User>> getInstructorsInCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all instructors in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        return courseAccessService.getAllUsersInGroup(course, course.getInstructorGroupName());
+        return courseAccessService.getUsersWithRole(course, CourseRole.INSTRUCTOR);
     }
 
     /**
@@ -329,8 +329,8 @@ public class CourseAccessResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
-        List<UserNameAndLoginDTO> searchResults = userRepository.searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable.ofSize(10), searchTerm, course.getId()).stream()
-                .map(UserNameAndLoginDTO::of).toList();
+        List<UserNameAndLoginDTO> searchResults = userRepository.searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable.ofSize(10), searchTerm, course.getId())
+                .getContent().stream().map(UserNameAndLoginDTO::of).toList();
 
         return ResponseEntity.ok().body(searchResults);
     }
@@ -347,7 +347,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addStudentToCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to add {} as student to course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+        return addUserToCourseWithRole(studentLogin, userRepository.getUserWithAuthorities(), course, CourseRole.STUDENT);
     }
 
     /**
@@ -362,7 +362,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addTutorToCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to add {} as tutors to course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+        return addUserToCourseWithRole(tutorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -377,8 +377,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addEditorToCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to add {} as editors to course : {}", editorLogin, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        courseAccessService.checkIfEditorGroupsNeedsToBeCreated(course);
-        return addUserToCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
+        return addUserToCourseWithRole(editorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.EDITOR);
     }
 
     /**
@@ -393,27 +392,27 @@ public class CourseAccessResource {
     public ResponseEntity<Void> addInstructorToCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to add {} as instructors to course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return addUserToCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+        return addUserToCourseWithRole(instructorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.INSTRUCTOR);
     }
 
     /**
-     * adds the userLogin to the group (student, tutors or instructors) of the given course
+     * Adds the user identified by userLogin to the course with the given role.
      *
-     * @param userLogin         the user login of the student, tutor or instructor who should be added to the group
-     * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
-     * @param course            the course which is only passes to check if the instructorOrAdmin is an instructor of the course
-     * @param group             the group to which the userLogin should be added
-     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
+     * @param userLogin         the login of the user to add
+     * @param instructorOrAdmin the requesting user, must be at least instructor in the course
+     * @param course            the course to which the user should be added
+     * @param role              the course role to grant
+     * @return empty ResponseEntity with status 200 (OK), 404 (Not Found), or 403 (Forbidden)
      */
     @NonNull
-    private ResponseEntity<Void> addUserToCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+    private ResponseEntity<Void> addUserToCourseWithRole(String userLogin, User instructorOrAdmin, Course course, CourseRole role) {
         if (authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
-            Optional<User> userToAddToGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
+            Optional<User> userToAddToGroup = userRepository.findOneWithAuthoritiesByLogin(userLogin);
             if (userToAddToGroup.isEmpty()) {
                 throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
             }
             User user = userToAddToGroup.get();
-            courseAccessService.addUserToGroup(user, group, course);
+            courseAccessService.addUserToCourse(user, course, role);
             return ResponseEntity.ok().body(null);
         }
         else {
@@ -433,7 +432,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
+        return removeUserFromCourseWithRole(studentLogin, userRepository.getUserWithAuthorities(), course, CourseRole.STUDENT);
     }
 
     /**
@@ -448,7 +447,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
+        return removeUserFromCourseWithRole(tutorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.TEACHING_ASSISTANT);
     }
 
     /**
@@ -463,7 +462,7 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
+        return removeUserFromCourseWithRole(editorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.EDITOR);
     }
 
     /**
@@ -479,49 +478,48 @@ public class CourseAccessResource {
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
+        return removeUserFromCourseWithRole(instructorLogin, userRepository.getUserWithAuthorities(), course, CourseRole.INSTRUCTOR);
     }
 
     /**
-     * removes the userLogin from the group (student, tutors or instructors) of the given course
+     * Removes the user identified by userLogin from the given role in the course.
      *
-     * @param userLogin         the user login of the student, tutor or instructor who should be removed from the group
-     * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
-     * @param course            the course which is only passes to check if the instructorOrAdmin is an instructor of the course
-     * @param group             the group from which the userLogin should be removed
-     * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
+     * @param userLogin         the login of the user to remove
+     * @param instructorOrAdmin the requesting user, must be at least instructor in the course
+     * @param course            the course from which the user's role should be revoked
+     * @param role              the course role to revoke
+     * @return empty ResponseEntity with status 200 (OK), 404 (Not Found), or 403 (Forbidden)
      */
     @NonNull
-    private ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
+    private ResponseEntity<Void> removeUserFromCourseWithRole(String userLogin, User instructorOrAdmin, Course course, CourseRole role) {
         if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             throw new AccessForbiddenException();
         }
-        Optional<User> userToRemoveFromGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userLogin);
+        Optional<User> userToRemoveFromGroup = userRepository.findOneWithAuthoritiesByLogin(userLogin);
         if (userToRemoveFromGroup.isEmpty()) {
             throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
         }
-        courseAccessService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
+        courseAccessService.removeUserFromCourse(userToRemoveFromGroup.get(), course, role);
         return ResponseEntity.ok().body(null);
     }
 
     /**
-     * POST /courses/:courseId/:courseGroup : Add multiple users to the user group of the course so that they can access the course
-     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login)
-     * <p>
-     * This method first tries to find the student in the internal Artemis user database (because the user is probably already using Artemis).
-     * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
+     * POST /courses/:courseId/:courseRoleSlug : Add multiple users to the course with the given role.
+     * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
+     * The courseRoleSlug path variable is the role string as used in the REST URL ('students', 'tutors', 'editors', 'instructors')
+     * and is converted to a {@link de.tum.cit.aet.artemis.core.domain.CourseRole} internally.
      *
-     * @param courseId    the id of the course
-     * @param studentDtos the list of students (with at one unique user identifier) who should get access to the course
-     * @param courseGroup the group, the user has to be added to, either 'students', 'tutors', 'instructors' or 'editors'
-     * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the connected LDAP
+     * @param courseId       the id of the course
+     * @param studentDtos    the list of users (with at least one unique identifier) to register
+     * @param courseRoleSlug the role path segment — one of 'students', 'tutors', 'editors', 'instructors'
+     * @return the list of users who could not be registered because they were not found in the Artemis database
      */
-    @PostMapping("courses/{courseId}/{courseGroup}")
+    @PostMapping("courses/{courseId}/{courseRoleSlug}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<StudentDTO>> addUsersToCourseGroup(@PathVariable Long courseId, @PathVariable String courseGroup, @RequestBody List<StudentDTO> studentDtos) {
+    public ResponseEntity<List<StudentDTO>> addUsersToCourseRole(@PathVariable Long courseId, @PathVariable String courseRoleSlug, @RequestBody List<StudentDTO> studentDtos) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseRepository.findByIdElseThrow(courseId), null);
-        log.debug("REST request to add {} as {} to course {}", studentDtos, courseGroup, courseId);
-        List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourseGroup(courseId, studentDtos, courseGroup);
+        log.debug("REST request to add {} as {} to course {}", studentDtos, courseRoleSlug, courseId);
+        List<StudentDTO> notFoundStudentsDtos = courseAccessService.registerUsersForCourse(courseId, studentDtos, courseRoleSlug);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 }

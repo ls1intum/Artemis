@@ -72,7 +72,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @BeforeEach
     void init() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 10, 2, 1, 2);
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
         exercise = programmingExerciseRepository.save(exercise);
@@ -131,7 +131,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerBuildStudentSubmissionNotFound() throws Exception {
         String login = TEST_PREFIX + "student1";
-        Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithDifferentModelingExercises(TEST_PREFIX);
         ModelingExercise classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ParticipationFactory
                 .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);
@@ -454,7 +454,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildSubmissionNotFound() throws Exception {
         String login = TEST_PREFIX + "student1";
-        Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
+        Course course = modelingExerciseUtilService.addEnrolledCourseWithDifferentModelingExercises(TEST_PREFIX);
         ModelingExercise classExercise = ExerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         ModelingSubmission modelingSubmission = ParticipationFactory
                 .generateModelingSubmission(TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json"), true);

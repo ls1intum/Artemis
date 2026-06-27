@@ -21,8 +21,7 @@ public record LectureDetailsDTO(Long id, String title, String description, Zoned
         implements LectureDTO {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CourseDTO(Long id, String title, String shortName, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
-            String instructorGroupName) {
+    public record CourseDTO(Long id, String title, String shortName) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

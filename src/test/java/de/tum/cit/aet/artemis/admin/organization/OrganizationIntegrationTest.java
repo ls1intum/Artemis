@@ -26,10 +26,12 @@ import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.dto.OrganizationMemberDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.admin.organization.util.OrganizationUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -47,6 +49,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     /**
      * Builds a search DTO with the given search term and page size.
@@ -86,8 +91,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
         course1.setEnrollmentEnabled(true);
         course1.setEnrollmentStartDate(pastTimestamp);
         course1.setEnrollmentEndDate(futureTimestamp);
@@ -121,9 +126,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
-        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        Course course3 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course2 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
+        Course course3 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
 
         course1.setEnrollmentEnabled(true);
         course1.setEnrollmentStartDate(pastTimestamp);
@@ -138,13 +143,15 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         course2 = courseRepository.save(course2);
         course3 = courseRepository.save(course3);
 
-        Set<String> updatedGroups = request.postWithResponseBody("/api/course/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
-        assertThat(updatedGroups).as("User is enrolled in course").contains(course1.getStudentGroupName());
+        request.postWithoutLocation("/api/course/courses/" + course1.getId() + "/enroll", null, HttpStatus.OK, null);
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course1.getId(), CourseRole.STUDENT))
+                .as("User is enrolled in course1 as student").isTrue();
 
-        updatedGroups = request.postWithResponseBody("/api/course/courses/" + course2.getId() + "/enroll", null, Set.class, HttpStatus.OK);
-        assertThat(updatedGroups).as("User is enrolled in course").contains(course2.getStudentGroupName());
+        request.postWithoutLocation("/api/course/courses/" + course2.getId() + "/enroll", null, HttpStatus.OK, null);
+        assertThat(userCourseRoleTestRepository.existsByUser_IdAndCourse_IdAndRole(student.getId(), course2.getId(), CourseRole.STUDENT))
+                .as("User is enrolled in course2 as student").isTrue();
 
-        request.postWithResponseBody("/api/course/courses/" + course3.getId() + "/enroll", null, Set.class, HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/course/courses/" + course3.getId() + "/enroll", null, HttpStatus.FORBIDDEN, null);
     }
 
     /**
@@ -156,7 +163,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
         request.postWithoutLocation("/api/core/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
@@ -174,7 +181,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemoveCourseToOrganization() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
@@ -301,7 +308,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOrganization() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();
@@ -431,7 +438,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         String uniqueName = "userAndCourseCount";
         Organization organization = organizationUtilService.createOrganization(uniqueName, "shortname", "url", "desc", null, "emailpattern");
 
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "name", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
@@ -544,12 +551,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetOrganizationCoursesPaginated() throws Exception {
         Organization organization = organizationUtilService.createOrganization();
-        Course course1 = courseRepository
-                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "PagedCourse1", "tutor", "editor", "instructor"));
-        Course course2 = courseRepository
-                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "PagedCourse2", "tutor", "editor", "instructor"));
-        Course course3 = courseRepository
-                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "PagedCourse3", "tutor", "editor", "instructor"));
+        Course course1 = courseRepository.save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>()));
+        Course course2 = courseRepository.save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>()));
+        Course course3 = courseRepository.save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>()));
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
         courseRepository.addOrganizationToCourse(course2.getId(), organization);
         courseRepository.addOrganizationToCourse(course3.getId(), organization);
@@ -585,11 +589,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     void testGetOrganizationCoursesPaginated_filterBySearchTerm() throws Exception {
         String uniqueTitle = "uniqueCourseFilter";
         Organization organization = organizationUtilService.createOrganization();
-        Course matchingCourse = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tutor", "tutor", "editor", "instructor");
+        Course matchingCourse = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         matchingCourse.setTitle(uniqueTitle + " Matching");
         matchingCourse = courseRepository.save(matchingCourse);
-        Course nonMatchingCourse = courseRepository
-                .save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "tutor", "tutor", "editor", "instructor"));
+        Course nonMatchingCourse = courseRepository.save(CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>()));
         courseRepository.addOrganizationToCourse(matchingCourse.getId(), organization);
         courseRepository.addOrganizationToCourse(nonMatchingCourse.getId(), organization);
 
@@ -609,7 +612,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
         Organization organization = organizationUtilService.createOrganization();
         organization = organizationRepo.save(organization);
 
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
         courseRepository.addOrganizationToCourse(course1.getId(), organization);
 
@@ -643,7 +646,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetAllOrganizationByCourse() throws Exception {
-        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = CourseFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>());
         course1 = courseRepository.save(course1);
 
         Organization organization = organizationUtilService.createOrganization();

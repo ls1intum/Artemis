@@ -131,7 +131,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // creating the users student1, tutor1 and instructors1
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
 
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+        Lecture lecture = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         course = lecture.getCourse();
 
         courseId = course.getId();

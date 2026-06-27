@@ -61,7 +61,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 1);
-        course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
+        course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         afterReleaseFileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
     }
 

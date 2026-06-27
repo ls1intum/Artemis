@@ -161,7 +161,7 @@ public class Lti13Service {
         }
 
         String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
-        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
+        User user = userRepository.findOneWithAuthoritiesByLogin(username).orElseThrow();
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
         if (targetExercise.isPresent()) {

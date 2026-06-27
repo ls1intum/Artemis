@@ -41,6 +41,9 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private static final String TEST_PREFIX = "plagiarismcaseintegration";
 
+    /** Instructor not enrolled in the test course; exercises the wrong-course branch. */
+    private static final String OTHER_PREFIX = "plagiarismcaseother";
+
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
@@ -73,14 +76,15 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         // Per case, we have always 2 students
         int numberOfPlagiarismCases = 5;
         userUtilService.addUsers(TEST_PREFIX, numberOfPlagiarismCases * 2, 1, 1, 1);
-        course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
+        userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1); // outsider instructor — never enrolled in course
+        course = textExerciseUtilService.addEnrolledCourseWithOneFinishedTextExercise(TEST_PREFIX);
 
         // We need at least 3 cases
         textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
         coursePlagiarismCases = createPlagiarismCases(numberOfPlagiarismCases, textExercise);
         plagiarismCase1 = coursePlagiarismCases.getFirst();
 
-        examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
         examPlagiarismCases = createPlagiarismCases(2, examTextExercise);
     }
 
@@ -400,10 +404,8 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
-        courseUtilService.updateCourseGroups("abc", course, "");
         request.get("/api/plagiarism/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-cases-count", HttpStatus.FORBIDDEN, Long.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 }

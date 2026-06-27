@@ -198,14 +198,6 @@
                 "title": "More feedback request due date in days after result date",
                 "description": "This number refers to days after the result is available (assessment due date or result date, depending on which one is later). Students will not be able to request more feedback after this due date."
             },
-            "customizeGroupNames": {
-                "title": "Customize Group Names",
-                "description": "Customizing the group names should not be necessary and may cause users to lose access to this course. Make sure you have a good reason for customizing the group names."
-            },
-            "studentGroupName": "Students",
-            "teachingAssistantGroupName": "Tutors",
-            "editorGroupName": "Editors",
-            "instructorGroupName": "Instructors",
             "description": "Course Description",
             "organizations": "Course Organizations",
             "startDate": "Start",

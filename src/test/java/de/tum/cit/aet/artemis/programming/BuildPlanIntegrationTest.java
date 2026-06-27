@@ -23,7 +23,7 @@ class BuildPlanIntegrationTest extends AbstractProgrammingIntegrationJenkinsLoca
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);

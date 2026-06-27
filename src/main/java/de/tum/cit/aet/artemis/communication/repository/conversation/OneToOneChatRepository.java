@@ -35,14 +35,14 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
                 LEFT JOIN oneToOneChat.conversationParticipants matchingParticipant
                 LEFT JOIN FETCH oneToOneChat.conversationParticipants allParticipants
                 LEFT JOIN FETCH allParticipants.user user
-                LEFT JOIN FETCH user.groups
+                LEFT JOIN FETCH user.courseRoles
                 LEFT JOIN FETCH oneToOneChat.course
             WHERE oneToOneChat.course.id = :courseId
                 AND (oneToOneChat.lastMessageDate IS NOT NULL OR oneToOneChat.creator.id = :userId)
                 AND matchingParticipant.user.id = :userId
             ORDER BY oneToOneChat.lastMessageDate DESC
             """)
-    List<OneToOneChat> findAllWithParticipantsAndUserGroupsByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    List<OneToOneChat> findAllWithParticipantsAndUserCourseRolesByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     /**
      * Find a one-to-one chat between two users in a given course.
@@ -60,7 +60,7 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
             FROM OneToOneChat o
                 LEFT JOIN FETCH o.conversationParticipants p
                 LEFT JOIN FETCH p.user u
-                LEFT JOIN FETCH u.groups
+                LEFT JOIN FETCH u.courseRoles
             WHERE o.course.id = :courseId
                 AND u.id = :userIdA
                 AND EXISTS (
@@ -73,7 +73,8 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
     // Exist checks required because we have a many-to-many relationship and hibernate doesn't allow multiple joins on the same table anymore.
     // We only execute the exists check for the second user, because we can filter the chats by the first user. This reduces the amounts of existence checks to the number of
     // one-to-one chats userA has in that specific course.
-    Optional<OneToOneChat> findWithParticipantsAndUserGroupsInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
+    Optional<OneToOneChat> findWithParticipantsAndUserCourseRolesInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA,
+            @Param("userIdB") Long userIdB);
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 

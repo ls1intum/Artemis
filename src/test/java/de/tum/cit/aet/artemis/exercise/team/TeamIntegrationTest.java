@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
@@ -75,14 +76,14 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
 
         // Make exercise team-based and already released to students
         exercise = course.getExercises().iterator().next();
         exercise.setMode(ExerciseMode.TEAM);
         exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         exercise = exerciseRepository.save(exercise);
-        students = new HashSet<>(userTestRepository.searchByLoginOrNameInGroup("tumuser", TEST_PREFIX + "student"));
+        students = new HashSet<>(userTestRepository.findAllByUserPrefix(TEST_PREFIX + "student"));
         tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
     }
 
@@ -174,9 +175,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
-        // If the TA is not part of the correct course TA group anymore, they should not be able to create a team for an exercise of that course
-        course.setTeachingAssistantGroupName("Different group name");
-        courseRepository.save(course);
+        // Revoke the tutor's UCR entry so they no longer have TA access to this course
+        userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
 
         Team team = new Team();
         team.setName("Team");
@@ -255,9 +255,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
-        // If the TA is not part of the correct course TA group anymore, they should not be able to update a team for an exercise of that course
-        course.setTeachingAssistantGroupName("Different group name");
-        courseRepository.save(course);
+        // Revoke the tutor's UCR entry so they no longer have TA access to this course
+        userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
 
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         team.setName("Updated Team Name");
@@ -296,7 +295,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeam_BadRequest() throws Exception {
-        Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         Exercise wrongExercise = ExerciseUtilService.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
         // Try getting a team with an exercise specified that does not match the exercise id param in the route
@@ -326,9 +325,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTeamsForExercise_Forbidden() throws Exception {
-        // If the TA is not part of the correct course TA group anymore, they should not be able to get the teams for an exercise of that course
-        course.setTeachingAssistantGroupName("Different group name");
-        courseRepository.save(course);
+        // Revoke the tutor's UCR entry so they no longer have TA access to this course
+        userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
         teamUtilService.addTeamsForExercise(exercise, 3, tutor);
         request.getList(resourceUrl(), HttpStatus.FORBIDDEN, Team.class);
     }
@@ -354,11 +352,10 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteTeam_Forbidden_AsInstructorOfDifferentCourse() throws Exception {
-        // If the instructor is not part of the correct course instructor group anymore,
-        // they should not be able to delete a team for an exercise of that course
-        course.setInstructorGroupName("Different group name");
-        courseRepository.save(course);
+    void testDeleteTeam_Forbidden_WhenNotInstructorInCourse() throws Exception {
+        // Revoke the instructor's UCR entry so they no longer have access to this course
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.unenrollUserFromCourseByRole(instructor, course, CourseRole.INSTRUCTOR);
 
         Team team = teamUtilService.addTeamForExercise(exercise, tutor);
         request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.FORBIDDEN);
@@ -410,6 +407,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
 
         // Check whether a student from a team is found but marked as "assignedToTeam"
         Team team = teamUtilService.addTeamForExercise(exercise, tutor, TEST_PREFIX);
+        team.getStudents().forEach(s -> userUtilService.enrollUserInCourse(s, course, CourseRole.STUDENT));
         User teamStudent = team.getStudents().iterator().next();
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);
@@ -427,9 +425,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSearchUsersInCourse_Forbidden_AsTutorOfDifferentCourse() throws Exception {
-        // If the TA is not part of the correct course TA group anymore, they should not be able to search for users in the course
-        course.setTeachingAssistantGroupName("Different group name");
-        courseRepository.save(course);
+        // Revoke the tutor's UCR entry so they no longer have TA access to this course
+        userUtilService.unenrollUserFromCourseByRole(tutor, course, CourseRole.TEACHING_ASSISTANT);
 
         request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student"), HttpStatus.FORBIDDEN, TeamSearchUserDTO.class);
     }
@@ -459,13 +456,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
-        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student.setGroups(Set.of(TEST_PREFIX + "student" + "assignedTeam"));
-        userTestRepository.save(student);
-
-        course.setStudentGroupName(TEST_PREFIX + "student" + "assignedTeam");
-        courseRepository.save(course);
-
+        // student1 is already enrolled as STUDENT via prefix enrollment in initTestCase
         // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
         Team team = new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
                 .students(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow());
@@ -497,7 +488,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.getFirst();
 
         ProgrammingExercise programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

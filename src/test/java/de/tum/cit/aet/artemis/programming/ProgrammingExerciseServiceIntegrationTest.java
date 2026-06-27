@@ -38,9 +38,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        userUtilService.addInstructor("other-instructors", TEST_PREFIX + "instructorother1");
-        additionalEmptyCourse = courseUtilService.addEmptyCourse();
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        userUtilService.addInstructor(TEST_PREFIX + "other" + "instructor42");
+        additionalEmptyCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // Needed, as we need the test cases for the next steps
         programmingExercise = programmingExerciseUtilService.loadProgrammingExerciseWithEagerReferences(programmingExercise);
@@ -109,7 +109,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructorother1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "other" + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
         final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(search));
@@ -139,7 +139,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     private void testSearchTermMatchesId() throws Exception {
-        final Course course = courseUtilService.addEmptyCourse();
+        final Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         final var now = ZonedDateTime.now();
         ProgrammingExercise exercise = ProgrammingExerciseFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
         exercise.setTitle("LoremIpsum");
@@ -167,8 +167,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     }
 
     private void testCourseAndExamFilters(boolean withSCA, String programmingExerciseTitle) throws Exception {
-        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
-        programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork", false);
+        programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA, TEST_PREFIX);
+        programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork",
+                TEST_PREFIX);
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/programming/programming-exercises", programmingExerciseTitle);
         testSCAFilter(programmingExerciseTitle, withSCA);
     }
@@ -193,9 +194,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
-        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
-        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
-        programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
+        programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13", TEST_PREFIX);
+        programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Python", TEST_PREFIX);
+        programmingExerciseUtilService.addEnrolledCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12", TEST_PREFIX);
         final var searchPython = pageableSearchUtilService.configureSearch("Python");
         final var resultPython = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, pageableSearchUtilService.searchMapping(searchPython));
         assertThat(resultPython.getResultsOnPage()).hasSize(1);
@@ -217,7 +218,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         programmingExercise.setTitle(title);
         programmingExerciseRepository.save(programmingExercise);
 
-        var otherCourse = courseUtilService.addCourseInOtherInstructionGroupAndExercise("Programming");
+        var otherCourse = courseUtilService.addCourseWithExercise("Programming");
         var otherProgrammingExercise = ExerciseUtilService.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
         otherProgrammingExercise.setTitle(title);
         programmingExerciseRepository.save(otherProgrammingExercise);

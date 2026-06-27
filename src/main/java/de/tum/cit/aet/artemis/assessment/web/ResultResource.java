@@ -273,7 +273,7 @@ public class ResultResource {
                     "External submissions are not supported for Quiz exercises.")).build();
         }
 
-        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
+        Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(studentLogin);
         if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), student.get())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();

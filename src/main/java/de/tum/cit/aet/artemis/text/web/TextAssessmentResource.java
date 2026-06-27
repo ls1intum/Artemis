@@ -203,7 +203,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Void> deleteTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId) {
         log.debug("REST request to delete text example assessment : {}", exampleSubmissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
         Exercise exercise = exampleSubmission.getExercise();
@@ -285,7 +285,7 @@ public class TextAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> updateTextAssessmentAfterComplaint(@PathVariable Long participationId, @PathVariable Long submissionId,
             @RequestBody TextAssessmentUpdateDTO assessmentUpdate) {
         log.debug("REST request to update the assessment of submission {} after complaint.", submissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submissionId);
         StudentParticipation studentParticipation = (StudentParticipation) textSubmission.getParticipation();
         if (!studentParticipation.getId().equals(participationId)) {
@@ -362,7 +362,7 @@ public class TextAssessmentResource extends AssessmentResource {
         var textSubmission = textSubmissionRepository.findByIdWithParticipationExerciseResultAssessorAssessmentNoteElseThrow(submissionId);
         final Participation participation = textSubmission.getParticipation();
         final var exercise = participation.getExercise();
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         checkAuthorization(exercise, user);
         final boolean isAtLeastInstructorForExercise = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
@@ -434,7 +434,7 @@ public class TextAssessmentResource extends AssessmentResource {
     @GetMapping("exercises/{exerciseId}/submissions/{submissionId}/example-result")
     @EnforceAtLeastTutor
     public ResponseEntity<Result> getExampleResultForTutor(@PathVariable long exerciseId, @PathVariable long submissionId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         final var textExercise = exampleSubmission.getExercise();

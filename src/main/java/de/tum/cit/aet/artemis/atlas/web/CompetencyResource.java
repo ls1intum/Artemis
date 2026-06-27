@@ -119,7 +119,7 @@ public class CompetencyResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getCompetenciesWithProgress(@PathVariable long courseId) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         final var competencies = competencyService.findCompetenciesWithProgressForUserByCourseId(courseId, user.getId());
         return ResponseEntity.ok(competencies.stream().map(CourseCompetencyResponseDTO::of).toList());
     }
@@ -136,7 +136,7 @@ public class CompetencyResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> getCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to get Competency : {}", competencyId);
-        var currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        var currentUser = userRepository.getUserWithAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var competency = competencyService.findCompetencyWithExercisesAndLectureUnitsAndProgressForUser(competencyId, currentUser.getId());
         checkCourseForCompetency(course, competency);
@@ -257,7 +257,7 @@ public class CompetencyResource {
 
         Set<CourseCompetency> competenciesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(importOptions.competencyIds());
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         competenciesToImport.forEach(competencyToImport -> {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), user);
             if (competencyToImport.getCourse().getId().equals(courseId)) {

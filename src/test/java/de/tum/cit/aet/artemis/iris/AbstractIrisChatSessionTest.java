@@ -67,7 +67,7 @@ public abstract class AbstractIrisChatSessionTest extends AbstractIrisIntegratio
             userTestRepository.save(user);
         }
 
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(prefix, true, true, 1);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(prefix, true, true, 1);
         course = courses.getFirst();
 
         textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now(), ZonedDateTime.of(2040, 9, 9, 12, 12, 0, 0, ZoneId.of("Europe/Berlin")),

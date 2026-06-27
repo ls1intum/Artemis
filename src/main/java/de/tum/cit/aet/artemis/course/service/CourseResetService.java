@@ -13,16 +13,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.communication.service.ConversationDataCleanupService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
@@ -134,12 +133,6 @@ public class CourseResetService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
-    private final CourseRepository courseRepository;
-
-    private final UserRepository userRepository;
-
-    private final UserService userService;
-
     private final CourseOperationProgressService progressService;
 
     private final CourseAdminService courseAdminService;
@@ -148,14 +141,16 @@ public class CourseResetService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     public CourseResetService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<ExamDeletionApi> examDeletionApi,
             Optional<ExamRepositoryApi> examRepositoryApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<LearnerProfileApi> learnerProfileApi,
             Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi, ConversationDataCleanupService conversationDataCleanupService,
             CourseNotificationRepository courseNotificationRepository, UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
-            LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository,
-            UserRepository userRepository, UserService userService, CourseOperationProgressService progressService, CourseAdminService courseAdminService,
-            ParticipationRepository participationRepository, SubmissionRepository submissionRepository) {
+            LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository,
+            CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
+            SubmissionRepository submissionRepository, UserCourseRoleRepository userCourseRoleRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.examDeletionApi = examDeletionApi;
@@ -170,13 +165,11 @@ public class CourseResetService {
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
-        this.courseRepository = courseRepository;
-        this.userRepository = userRepository;
-        this.userService = userService;
         this.progressService = progressService;
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
+        this.userCourseRoleRepository = userCourseRoleRepository;
     }
 
     /**
@@ -471,32 +464,12 @@ public class CourseResetService {
     }
 
     /**
-     * Unenrolls all students, tutors, and editors from the course by removing them from their groups.
+     * Unenrolls all students, tutors, and editors from the course.
      * Only instructors are preserved.
-     * <p>
-     * This method uses bulk database operations to efficiently remove group associations
-     * in a single query per group, rather than loading and saving each user individually.
-     * The user cache is properly evicted for all affected users.
      *
      * @param courseId the ID of the course whose students, tutors, and editors should be unenrolled
      */
     private void unenrollStudentsTutorsAndEditors(long courseId) {
-        // Remove students using bulk operation
-        String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
-        if (studentGroupName != null) {
-            userService.removeGroupFromAllUsers(studentGroupName);
-        }
-
-        // Remove tutors (teaching assistants) using bulk operation
-        String tutorGroupName = courseRepository.getTeachingAssistantGroupNameById(courseId);
-        if (tutorGroupName != null) {
-            userService.removeGroupFromAllUsers(tutorGroupName);
-        }
-
-        // Remove editors using bulk operation
-        String editorGroupName = courseRepository.getEditorGroupNameById(courseId);
-        if (editorGroupName != null) {
-            userService.removeGroupFromAllUsers(editorGroupName);
-        }
+        userCourseRoleRepository.deleteByCourse_IdAndRoleIn(courseId, List.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR));
     }
 }

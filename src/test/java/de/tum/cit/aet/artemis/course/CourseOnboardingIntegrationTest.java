@@ -27,7 +27,7 @@ class CourseOnboardingIntegrationTest extends AbstractSpringIntegrationIndepende
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
 
-        course = courseUtilService.createCourseWithUserPrefix(TEST_PREFIX);
+        course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
     }
 
     private Course updateCourse(Course courseToUpdate) throws Exception {

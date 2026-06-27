@@ -82,7 +82,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 5, 1, 0, 1);
-        programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
 
         programmingExercise = generateDefaultProgrammingExercise();
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
@@ -122,14 +122,14 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         @Override
         ProgrammingExercise generateDefaultProgrammingExercise() {
-            Course course = super.courseUtilService.addEmptyCourse();
+            Course course = super.courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
             Long programmingExerciseId = super.programmingExerciseUtilService.addProgrammingExerciseToCourse(course).getId();
             return super.programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
         }
 
         @Override
         ProgrammingExercise generateScaProgrammingExercise() {
-            Long programmingExerciseId = super.programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories().getId();
+            Long programmingExerciseId = super.programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(TEST_PREFIX).getId();
             return super.programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
         }
 
@@ -159,7 +159,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         }
 
         private ProgrammingExercise newExamProgrammingExercise() {
-            ExerciseGroup group = super.examUtilService.addExerciseGroupWithExamAndCourse(true);
+            ExerciseGroup group = super.examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
             ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(group);
             // Adjust settings so that exam and course exercises can use the same tests
             programmingExercise.setMaxPoints(42.0);
@@ -753,7 +753,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateScoresWithSCAAndLongFeedbackText(boolean templateParticipation) {
-        programmingExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA);
+        programmingExercise = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(ProgrammingLanguage.JAVA, TEST_PREFIX);
         Result result;
 
         if (templateParticipation) {

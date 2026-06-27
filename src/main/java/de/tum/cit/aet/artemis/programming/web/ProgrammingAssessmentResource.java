@@ -83,7 +83,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Result> updateProgrammingManualResultAfterComplaint(@RequestBody AssessmentUpdateDTO assessmentUpdate, @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
@@ -133,7 +133,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         log.debug("REST request to save a new result : {}", newManualResult);
         final var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+        User user = userRepository.getUserWithAuthorities();
 
         // based on the locking mechanism we take the most recent manual result
         Result existingManualResult = participation.getSubmissions().stream()

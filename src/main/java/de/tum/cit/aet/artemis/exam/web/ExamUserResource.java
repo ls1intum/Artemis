@@ -99,7 +99,7 @@ public class ExamUserResource {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
 
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
-        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUserDTO.login())
+        var student = userRepository.findOneWithAuthoritiesByLogin(examUserDTO.login())
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + examUserDTO.login() + "\" does not exist"));
 
         ExamUser examUser = examUserRepository.findByExamIdAndUserId(examId, student.getId())

@@ -46,6 +46,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
 
     private static final String TEST_PREFIX = "lectureunitintegration";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private TextUnitRepository textUnitRepository;
 
@@ -78,16 +80,16 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         var sortedLectures = course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getId)).toList();
         this.lecture1 = sortedLectures.getFirst();
         var lecture2 = sortedLectures.get(1);
 
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         this.textUnit = lectureUtilService.createTextUnit(lecture1);
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
@@ -168,7 +170,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLectureUnit_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().getFirst().getId();
         request.delete("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.FORBIDDEN);
@@ -230,7 +232,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         request.put("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
     }
@@ -283,7 +285,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void setLectureUnitCompletion_shouldReturnForbidden() throws Exception {
         // User is not in same course as lecture unit
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/completion?completed=true",
@@ -299,7 +301,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
+    @WithMockUser(username = OTHER_PREFIX + "student42", roles = "USER")
     void testGetLectureUnitForLearningPathNodeDetailsAsStudentNotInCourse() throws Exception {
         request.get("/api/lecture/lecture-units/" + textUnit.getId() + "/for-learning-path-node-details", HttpStatus.FORBIDDEN, LectureUnitForLearningPathNodeDetailsDTO.class);
     }
@@ -411,7 +413,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void getUnitStatuses_asInstructorNotInCourse_shouldBeForbidden() throws Exception {
         request.getList("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/statuses", HttpStatus.FORBIDDEN, LectureUnitCombinedStatusDTO.class);
     }

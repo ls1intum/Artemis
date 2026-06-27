@@ -157,7 +157,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
     @BeforeEach
     void initTestCase() throws IOException {
         userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
-        userUtilService.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 2, 5, 0, 1);
 
         apollonRequestMockProvider.enableMockingOfRequests();
 
@@ -263,10 +262,11 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         }
         Course course1;
         if (assessmentDueDateInTheFuture) {
-            course1 = courseUtilService.addCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(courseShortName, TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
+            course1 = courseUtilService.addEnrolledCourseWithExercisesAndSubmissionsWithAssessmentDueDatesInTheFuture(courseShortName, TEST_PREFIX, "", 4, 2, 1, 1, true, 1,
+                    validModel);
         }
         else {
-            course1 = courseUtilService.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
+            course1 = courseUtilService.addEnrolledCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, true, 1, validModel);
         }
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
@@ -346,8 +346,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             Files.createDirectories(repoDownloadClonePath);
         }
         var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(userForExport, TEST_PREFIX + "student",
-                courseShortName, true, true);
+        var course = courseUtilService.createCourseWithExamAndExerciseGroupsAndGradingScale(userForExport, courseShortName, true, true);
         programmingExerciseTestService.setup(this, versionControlService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
@@ -869,9 +868,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var course = prepareCourseDataForDataExportCreation(assessmentDueDateInTheFuture, courseShortName);
         conversationUtilService.addOneMessageForUserInCourse(TEST_PREFIX + "student1", course, "only one post");
         var dataExport = initDataExport();
-        // by setting the course groups to a different value, we simulate unenrollment
-        // because the user is no longer part of the user group and hence, the course.
-        courseUtilService.updateCourseGroups("abc", course, "");
+        // Unenroll student1 to simulate losing course access
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.unenrollUserFromCourse(student1, course);
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
         Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());

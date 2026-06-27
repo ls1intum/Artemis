@@ -260,7 +260,7 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testCopyBuildPlan() throws IOException {
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         ProgrammingExercise sourceExercise = new ProgrammingExercise();
         course.addExercises(sourceExercise);
@@ -292,7 +292,7 @@ class JenkinsServiceIntegrationTest extends AbstractProgrammingIntegrationJenkin
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testCopyLegacyBuildPlan() throws IOException {
-        var course = courseUtilService.addEmptyCourse();
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
 
         ProgrammingExercise sourceExercise = new ProgrammingExercise();
         course.addExercises(sourceExercise);

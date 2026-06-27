@@ -24,8 +24,10 @@ import de.tum.cit.aet.artemis.assessment.dto.GradingScaleDTO;
 import de.tum.cit.aet.artemis.assessment.dto.GradingScaleUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -52,6 +54,9 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
     private GradingScale courseGradingScale;
 
     private GradingScale examGradingScale;
@@ -69,12 +74,9 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentBa
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        instructor.setGroups(Set.of("gradingscaleintegrationinstructors"));
-        userTestRepository.save(instructor);
 
-        course = courseUtilService.addEmptyCourse();
-        course.setInstructorGroupName("gradingscaleintegrationinstructors");
-        courseRepository.save(course);
+        course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         exam = examUtilService.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();

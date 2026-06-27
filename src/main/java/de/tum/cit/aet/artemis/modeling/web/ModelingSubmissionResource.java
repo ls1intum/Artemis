@@ -137,7 +137,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @NonNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
@@ -204,7 +204,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var studentParticipation = (StudentParticipation) modelingSubmission.getParticipation();
         var modelingExercise = (ModelingExercise) studentParticipation.getExercise();
 
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
 
         if (!authCheckService.isAtLeastStudentForExercise(modelingExercise, user)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this modeling submission.");
@@ -275,7 +275,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         log.debug("REST request to get a modeling submission without assessment");
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
 
         if (!(exercise instanceof final ModelingExercise modelingExercise)) {
@@ -341,7 +341,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     private ValidationResult validateParticipation(long participationId) {
         var studentParticipation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         var exercise = studentParticipation.getExercise();
 
         if (exercise == null) {

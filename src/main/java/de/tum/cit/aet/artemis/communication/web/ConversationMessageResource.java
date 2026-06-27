@@ -123,7 +123,7 @@ public class ConversationMessageResource {
         long timeNanoStart = System.nanoTime();
         Page<Post> posts;
 
-        final var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        final var requestingUser = userRepository.getUserWithAuthorities();
         final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 

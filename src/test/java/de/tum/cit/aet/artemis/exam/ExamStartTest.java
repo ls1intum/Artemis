@@ -101,7 +101,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void initTestCase() throws GitAPIException {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, 1);
 
-        course1 = courseUtilService.addEmptyCourse();
+        course1 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         exam = examUtilService.addExamWithExerciseGroup(course1, true);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;

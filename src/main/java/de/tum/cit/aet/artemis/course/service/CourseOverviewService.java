@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.course.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -42,7 +41,7 @@ public class CourseOverviewService {
      * @return A list of Courses for the course management overview
      */
     public List<Course> getAllCoursesForManagementOverview(boolean onlyActive) {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userRepository.getUserWithAuthorities();
         boolean isAdmin = authCheckService.isAdmin(user);
         if (isAdmin && !onlyActive) {
             // TODO: we should avoid using findAll() here, as it might return a huge amount of data
@@ -52,12 +51,10 @@ public class CourseOverviewService {
         if (isAdmin) {
             return courseRepository.findAllNotEnded(ZonedDateTime.now());
         }
-        var userGroups = new ArrayList<>(user.getGroups());
-
         if (onlyActive) {
-            return courseRepository.findAllNotEndedCoursesByManagementGroupNames(ZonedDateTime.now(), userGroups);
+            return courseRepository.findAllNotEndedCoursesByManagementRole(ZonedDateTime.now(), user.getId());
         }
 
-        return courseRepository.findAllCoursesByManagementGroupNames(userGroups);
+        return courseRepository.findAllCoursesByManagementRole(user.getId());
     }
 }

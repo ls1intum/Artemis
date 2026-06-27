@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
@@ -75,25 +76,17 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         Course course = new Course();
         course.setTitle("Hyperion Test Course");
-        course.setStudentGroupName(TEST_PREFIX + "student");
-        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
-        course.setEditorGroupName(TEST_PREFIX + "editor");
-        course.setInstructorGroupName(TEST_PREFIX + "instructor");
         course = courseRepository.save(course);
         persistedCourseId = course.getId();
 
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student.getGroups().add(course.getStudentGroupName());
-        userTestRepository.save(student);
+        userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
         var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        tutor.getGroups().add(course.getTeachingAssistantGroupName());
-        userTestRepository.save(tutor);
+        userUtilService.enrollUserInCourse(tutor, course, CourseRole.TEACHING_ASSISTANT);
         var editor = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
-        editor.getGroups().add(course.getEditorGroupName());
-        userTestRepository.save(editor);
+        userUtilService.enrollUserInCourse(editor, course, CourseRole.EDITOR);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        instructor.getGroups().add(course.getInstructorGroupName());
-        userTestRepository.save(instructor);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
 
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setTitle("Hyperion Test Exercise");
@@ -620,7 +613,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         // Create a second course with its own exercise
         Course otherCourse = new Course();
         otherCourse.setTitle("Other Course");
-        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other");
         otherCourse = courseRepository.save(otherCourse);
 
         ProgrammingExercise otherExercise = new ProgrammingExercise();
@@ -721,7 +713,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     void shouldReturnBadRequestForChecklistSectionAnalysisCourseMismatch() throws Exception {
         Course otherCourse = new Course();
         otherCourse.setTitle("Other Course Section");
-        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other-section");
         otherCourse = courseRepository.save(otherCourse);
 
         ProgrammingExercise otherExercise = new ProgrammingExercise();

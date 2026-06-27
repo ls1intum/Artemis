@@ -44,7 +44,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBa
 
 class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
-    private static final String TEST_PREFIX = "attachmentunitsintegrationtest";
+    private static final String TEST_PREFIX = "attachmentunits";
+
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
@@ -74,14 +76,14 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        this.lecture1 = lectureUtilService.createCourseWithLecture(true);
+        this.lecture1 = lectureUtilService.createEnrolledCourseWithLecture(TEST_PREFIX, true);
         this.invalidLecture = lectureUtilService.createLecture(null);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
         this.lectureUnitSplits = new LectureUnitSplitInformationDTO(units, 1, "Break");
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
 
         slideRepository.deleteAll();
     }
@@ -104,7 +106,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testAll_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         this.testAllPreAuthorize();
     }

@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -83,7 +83,7 @@ public class CourseRequestService {
      * @return the persisted request as DTO
      */
     public CourseRequestDTO createCourseRequest(CourseRequestCreateDTO createDTO) {
-        var requester = userRepository.getUserWithGroupsAndAuthorities();
+        var requester = userRepository.getUserWithAuthorities();
         validateShortNameUniqueness(createDTO.shortName(), createDTO.title(), createDTO.semester(), null);
 
         if (createDTO.title().length() > MAX_TITLE_LENGTH) {
@@ -328,8 +328,6 @@ public class CourseRequestService {
             log.warn("Could not load code of conduct template from path: {}", templatePath, e);
         }
 
-        courseAccessService.setDefaultGroupsIfNotSet(course);
-
         course.validateShortName();
         course.validateStartAndEndDate();
         course.validateEnrollmentStartAndEndDate();
@@ -343,8 +341,8 @@ public class CourseRequestService {
         channelService.createDefaultChannels(createdCourse);
 
         if (request.getRequester() != null) {
-            User requesterWithGroups = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(request.getRequester().getId());
-            courseAccessService.addUserToGroup(requesterWithGroups, createdCourse.getInstructorGroupName(), createdCourse);
+            User requester = userRepository.findByIdWithAuthoritiesElseThrow(request.getRequester().getId());
+            courseAccessService.addUserToCourse(requester, createdCourse, CourseRole.INSTRUCTOR);
         }
         return createdCourse;
     }
@@ -455,10 +453,6 @@ public class CourseRequestService {
         if (requester == null) {
             return null;
         }
-        Set<String> groups = requester.getGroups();
-        if (groups == null || groups.isEmpty()) {
-            return 0;
-        }
-        return (int) courseRepository.countCoursesForInstructorWithGroups(groups);
+        return (int) courseRepository.countCoursesForInstructor(requester.getId());
     }
 }

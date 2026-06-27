@@ -168,7 +168,7 @@ public class AdminUserResource {
     @PatchMapping("users/{userId}/activate")
     public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to activate User {}", userId);
-        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(userToBeActivated -> {
+        return userRepository.findOneWithCourseRolesAndAuthoritiesById(userId).map(userToBeActivated -> {
             if (IRIS_BOT_LOGIN.equals(userToBeActivated.getLogin())) {
                 throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
             }
@@ -188,7 +188,7 @@ public class AdminUserResource {
     @PatchMapping("users/{userId}/deactivate")
     public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to deactivate User {}", userId);
-        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(userToBeDeactivated -> {
+        return userRepository.findOneWithCourseRolesAndAuthoritiesById(userId).map(userToBeDeactivated -> {
             if (IRIS_BOT_LOGIN.equals(userToBeDeactivated.getLogin())) {
                 throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
             }
@@ -221,12 +221,12 @@ public class AdminUserResource {
             throw new BadRequestAlertException("The login '" + IRIS_BOT_LOGIN + "' is reserved and cannot be used.", "userManagement", "loginReserved");
         }
 
-        var existingUserByLogin = userRepository.findOneWithGroupsAndAuthoritiesByLogin(managedUserVM.getLogin().toLowerCase());
+        var existingUserByLogin = userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase());
         if (existingUserByLogin.isPresent() && (!existingUserByLogin.get().getId().equals(managedUserVM.getId()))) {
             throw new LoginAlreadyUsedException();
         }
 
-        var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
+        var existingUser = userRepository.findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
         if (IRIS_BOT_LOGIN.equals(existingUser.getLogin())) {
             throw new BadRequestAlertException("The Iris bot user cannot be modified via the API.", "userManagement", "cannotModifyIrisBot");
         }
@@ -290,7 +290,7 @@ public class AdminUserResource {
     @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
     public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
         log.debug("REST request to get User : {}", login);
-        return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(user -> {
+        return ResponseUtil.wrapOrNotFound(userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(login).map(user -> {
             user.setVisibleRegistrationNumber();
             return new UserDTO(user);
         }));
@@ -326,7 +326,7 @@ public class AdminUserResource {
         LdapUserService service = ldapUserService
                 .orElseThrow(() -> new BadRequestAlertException("LDAP is not enabled on this Artemis instance.", "userManagement", "ldapNotEnabled"));
 
-        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+        var user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(userId);
         service.loadUserDetailsFromLdap(user);
         var updatedUser = userCreationService.saveUser(user);
 
@@ -383,7 +383,7 @@ public class AdminUserResource {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
         }
 
-        User userToBeDeleted = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        User userToBeDeleted = userRepository.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
         checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeleted.getAuthorities()));
         userService.softDeleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
@@ -412,7 +412,7 @@ public class AdminUserResource {
         logins.remove(currentUser.getLogin());
 
         // Check if non-super-admin is trying to delete admin users
-        Set<User> usersToDelete = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(new HashSet<>(logins));
+        Set<User> usersToDelete = userRepository.findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(new HashSet<>(logins));
         boolean containsAdminUser = usersToDelete.stream().anyMatch(user -> AuthorizationCheckService.isAdmin(user.getAuthorities()));
         checkSuperAdminAuthorizationToManageAdmin(containsAdminUser);
 

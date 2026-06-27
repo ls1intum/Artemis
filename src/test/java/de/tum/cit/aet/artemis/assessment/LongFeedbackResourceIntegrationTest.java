@@ -37,7 +37,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 0);
 
-        final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        final Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         final ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         resultStudent1 = participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");

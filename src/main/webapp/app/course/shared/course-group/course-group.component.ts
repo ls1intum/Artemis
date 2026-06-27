@@ -2,7 +2,7 @@ import { Component, ViewEncapsulation, computed, effect, input, model, output, s
 import { Observable, Subject, of } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/account/user/user.model';
-import { Course, CourseGroup } from 'app/course/shared/entities/course.model';
+import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { catchError, map } from 'rxjs/operators';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
@@ -64,7 +64,7 @@ export class CourseGroupComponent {
     readonly isAdmin = input(false);
     readonly course = input.required<Course>();
     readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
-    readonly courseGroup = input.required<CourseGroup>();
+    readonly courseRoleSlug = input.required<CourseRoleSlug>();
     readonly exportFileName = input.required<string>();
 
     readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));

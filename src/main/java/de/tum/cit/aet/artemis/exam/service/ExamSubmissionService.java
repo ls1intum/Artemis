@@ -125,7 +125,7 @@ public class ExamSubmissionService {
      */
     private boolean isExamTestRunSubmission(Exercise exercise, User user, Exam exam) {
         // Check if user is an instructor or admin
-        if (user.getGroups().contains(exam.getCourse().getInstructorGroupName()) || authorizationCheckService.isAdmin(user)) {
+        if (authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user)) {
             // fetch all testRuns for the instructor
             List<StudentExam> testRuns = studentExamRepository.findAllTestRunsWithExercisesByExamIdForUser(exam.getId(), user.getId());
             // if a test run contains the exercise, then the instructor is allowed to submit

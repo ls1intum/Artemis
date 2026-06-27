@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.account.repository;
 
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.distinct;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getActivatedOrDeactivatedSpecification;
-import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAllUsersWithoutUserGroups;
+import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAllUsersWithoutCourseEnrollment;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getAuthoritySpecification;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getInternalOrExternalSpecification;
 import static de.tum.cit.aet.artemis.account.repository.UserSpecs.getSearchTermSpecification;
@@ -13,9 +13,9 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,9 +42,10 @@ import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
@@ -80,52 +81,69 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     String FILTER_WITHOUT_REG_NO = "WITHOUT_REG_NO";
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    Optional<User> findOneWithGroupsByActivationKey(String activationKey);
-
     Optional<User> findOneByResetKey(String resetKey);
 
     Optional<User> findOneByEmailIgnoreCase(String email);
 
     List<User> findByVcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    Optional<User> findOneWithGroupsByEmailIgnoreCase(String email);
-
     Optional<User> findOneByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber);
+    Optional<User> findOneByActivationKey(String activationKey);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    Optional<User> findOneWithGroupsByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Set<User> findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesById(Long id);
+
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByRegistrationNumber(String registrationNumber);
+
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesById(Long id);
+
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByEmail(String email);
+
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByLoginAndInternal(String login, boolean internal);
+
+    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
+    Optional<User> findOneWithAuthoritiesByEmailAndInternal(String email, boolean internal);
+
+    @EntityGraph(type = LOAD, attributePaths = { "authorities", "organizations" })
+    Optional<User> findOneWithAuthoritiesAndOrganizationsByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities", "organizations" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesAndOrganizationsById(Long id);
 
     @Query("""
-            SELECT u
+            SELECT DISTINCT u
             FROM User u
-            LEFT JOIN FETCH u.groups
             LEFT JOIN FETCH u.authorities
             LEFT JOIN FETCH u.learnerProfile lp
             LEFT JOIN FETCH lp.courseLearnerProfiles clp
             WHERE u.login = :login
                 AND clp.course.id = :courseId
             """)
-    Optional<User> findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
+    Optional<User> findOneWithAuthoritiesAndLearnerProfileByLogin(@Param("login") String login, @Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndInternal(String login, boolean internal);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByEmailAndInternal(String email, boolean internal);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
+    @Query("""
+            SELECT u FROM User u
+                JOIN u.courseRoles ucr
+            WHERE u.login = :login
+                AND u.deleted = FALSE
+                AND ucr.course.id = :courseId
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+            """)
+    Optional<User> findStudentByLoginAndCourseId(@Param("login") String login, @Param("courseId") long courseId);
 
     /**
      * Retrieves a list of user roles within a specified course based on the provided user IDs. This method is highly optimized for performance.
@@ -155,23 +173,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                    CASE
                        WHEN :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
                        WHEN :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
-                       WHEN course.instructorGroupName MEMBER OF user.groups THEN 'INSTRUCTOR'
-                       WHEN course.editorGroupName MEMBER OF user.groups THEN 'TUTOR'
-                       WHEN course.teachingAssistantGroupName MEMBER OF user.groups THEN 'TUTOR'
-                       WHEN course.studentGroupName MEMBER OF user.groups THEN 'USER'
+                       WHEN EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                           AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR) THEN 'INSTRUCTOR'
+                       WHEN EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                           AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                               de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT)) THEN 'TUTOR'
+                       WHEN EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                           AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT) THEN 'USER'
                    END)
             FROM User user
-            INNER JOIN Course course
-            ON course.id = :courseId
             WHERE user.id IN :userIds
             """)
     Set<UserRoleDTO> findUserRolesInCourse(@Param("userIds") Collection<Long> userIds, @Param("courseId") long courseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long id);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
 
     @Query("""
             SELECT user
@@ -180,8 +193,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE organization.id = :organizationId
             """)
     Set<User> findAllByOrganizationId(@Param("organizationId") Long organizationId);
-
-    Long countByDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
             SELECT DISTINCT user
@@ -194,26 +205,27 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(String groupName);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "learnerProfile" })
-    Set<User> findAllWithGroupsAndAuthoritiesAndLearnerProfileByDeletedIsFalseAndGroupsContains(String groupName);
-
+    /**
+     * Fetches all non-deleted users enrolled in a course with the given role, eagerly loading their
+     * authorities and learner profile (including course learner profiles).
+     *
+     * @param courseId the ID of the course
+     * @param role     the course role to filter by
+     * @return set of matching users (authorities and learner profile initialized)
+     */
     @Query("""
             SELECT DISTINCT user
             FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-                LEFT JOIN FETCH user.authorities userAuthority
+                LEFT JOIN FETCH user.authorities
+                LEFT JOIN FETCH user.learnerProfile
             WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user
+                    AND ucr.course.id = :courseId AND ucr.role = :role)
             """)
-    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(@Param("groupNames") Set<String> groupNames);
-
-    Set<User> findAllByDeletedIsFalseAndGroupsContains(String groupName);
+    Set<User> findAllWithAuthoritiesAndLearnerProfileByCourseIdAndRole(@Param("courseId") long courseId, @Param("role") CourseRole role);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary (
+            SELECT DISTINCT new de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary (
                 user.id,
                 user.login,
                 user.firstName,
@@ -222,209 +234,57 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 user.email,
                 CASE WHEN cp.isMuted = TRUE THEN TRUE ELSE FALSE END,
                 CASE WHEN cp.isHidden = TRUE THEN TRUE ELSE FALSE END,
-                CASE WHEN ug.group = :teachingAssistantGroupName
-                    OR ug.group = :editorGroupName
-                    OR ug.group = :instructorGroupName
-                THEN TRUE ELSE FALSE END
+                CASE WHEN EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
+                    AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                        de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)) THEN TRUE ELSE FALSE END
             )
             FROM User user
-                JOIN UserGroup ug ON ug.userId = user.id
+                JOIN user.courseRoles memberRole ON memberRole.course.id = :courseId
                 LEFT JOIN ConversationParticipant cp ON cp.user = user AND cp.conversation.id = :conversationId
             WHERE user.deleted = FALSE
-                AND (
-                    ug.group = :studentGroupName
-                    OR ug.group = :teachingAssistantGroupName
-                    OR ug.group = :editorGroupName
-                    OR ug.group = :instructorGroupName
-                )
             """)
     Set<ConversationNotificationRecipientSummary> findAllNotificationRecipientsInCourseForConversation(@Param("conversationId") long conversationId,
-            @Param("studentGroupName") String studentGroupName, @Param("teachingAssistantGroupName") String teachingAssistantGroupName,
-            @Param("editorGroupName") String editorGroupName, @Param("instructorGroupName") String instructorGroupName);
+            @Param("courseId") long courseId);
 
     /**
-     * Searches for users in a group by their login or full name.
+     * Searches for users in a course with a specific role by their login or full name.
      *
-     * @param groupName   Name of group in which to search for users
+     * @param courseId    ID of the course to search within
+     * @param role        the {@link CourseRole} to filter by
      * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
      * @return list of found users that match the search criteria
      */
     @Query("""
             SELECT DISTINCT user
             FROM User user
-                LEFT JOIN FETCH user.groups userGroup
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role = :role
             WHERE user.deleted = FALSE
-                AND :groupName = userGroup
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
             """)
-    List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
+    List<User> searchByLoginOrNameInCourseWithRole(@Param("courseId") long courseId, @Param("role") CourseRole role, @Param("loginOrName") String loginOrName);
 
     /**
-     * Searches for users in groups by their full name.
+     * Searches for users by their full name in a course (any role).
      *
-     * @param groupNames List of names of groups in which to search for users
-     * @param nameOfUser Name (e.g. Max Mustermann) by which to search
+     * @param courseId   ID of the course in which to search
+     * @param nameOfUser name (e.g. Max Mustermann) by which to search
      * @return list of found users that match the search criteria
      */
     @Query("""
             SELECT user
             FROM User user
-                LEFT JOIN user.groups userGroup
             WHERE user.deleted = FALSE
-                AND (
-                    userGroup IN :groupNames
-                    AND CONCAT(user.firstName, ' ', user.lastName) LIKE %:nameOfUser%
-                 )
+                AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId)
+                AND CONCAT(user.firstName, ' ', user.lastName) LIKE %:nameOfUser%
             ORDER BY CONCAT(user.firstName, ' ', user.lastName)
             """)
-    List<User> searchByNameInGroups(@Param("groupNames") Set<String> groupNames, @Param("nameOfUser") String nameOfUser);
-
-    @Query("""
-            SELECT user.id
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND :groupName = userGroup
-                AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-                )
-            """)
-    List<Long> findUserIdsByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName, Pageable pageable);
-
-    @EntityGraph(type = LOAD, attributePaths = "groups")
-    List<User> findUsersWithGroupsByIdIn(List<Long> ids);
-
-    @Query("""
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND :groupName = userGroup
-                AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-                )
-            """)
-    long countUsersByLoginOrNameInGroup(@Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
-
-    /**
-     * Search for all users by login or name in a group
-     *
-     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
-     * @param loginOrName Search query that will be searched for in login and name field
-     * @param groupName   Name of group in which to search for users
-     * @return all users matching search criteria in the group converted to DTOs
-     */
-    default Page<User> searchAllWithGroupsByLoginOrNameInGroup(Pageable pageable, String loginOrName, String groupName) {
-        List<Long> ids = findUserIdsByLoginOrNameInGroup(loginOrName, groupName, pageable);
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
-        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroup(loginOrName, groupName));
-    }
-
-    @Query("""
-            SELECT user.id
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-                ) AND user.id <> :idOfUser
-            """)
-    List<Long> findUserIdsByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser,
-            Pageable pageable);
-
-    @Query("""
-            SELECT user
-            FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-            WHERE user.id IN :ids
-            ORDER BY CONCAT(user.firstName, ' ', user.lastName)
-            """)
-    List<User> findUsersByIdsWithGroupsOrdered(@Param("ids") List<Long> ids);
-
-    @Query("""
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE %:loginOrName%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
-                ) AND user.id <> :idOfUser
-            """)
-    long countUsersByLoginOrNameInGroupsNotUserId(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, @Param("idOfUser") long idOfUser);
-
-    /**
-     * Searches for {@link User} entities by login or name within specified groups, excluding a specific user ID.
-     * The results are paginated.
-     *
-     * @param pageable    the pagination information.
-     * @param loginOrName the login or name to search for.
-     * @param groupNames  the set of group names to limit the search within.
-     * @param idOfUser    the ID of the user to exclude from the search results.
-     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
-     */
-    default Page<User> searchAllWithGroupsByLoginOrNameInGroupsNotUserId(Pageable pageable, String loginOrName, Set<String> groupNames, long idOfUser) {
-        List<Long> ids = findUserIdsByLoginOrNameInGroupsNotUserId(loginOrName, groupNames, idOfUser, pageable);
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<User> users = findUsersByIdsWithGroupsOrdered(ids);
-        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroupsNotUserId(loginOrName, groupNames, idOfUser));
-    }
-
-    @Query("""
-            SELECT user.id
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    List<Long> findUserIdsByLoginOrNameInGroups(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames, Pageable pageable);
-
-    @Query("""
-            SELECT COUNT(user)
-            FROM User user
-                LEFT JOIN user.groups userGroup
-            WHERE user.deleted = FALSE
-                AND userGroup IN :groupNames
-                AND (
-                    user.login LIKE :#{#loginOrName}%
-                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                )
-            """)
-    long countUsersByLoginOrNameInGroups(@Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames);
-
-    /**
-     * Search for all users by login or name within the provided groups
-     *
-     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
-     * @param loginOrName Search query that will be searched for in login and name field
-     * @param groupNames  Names of groups in which to search for users
-     * @return All users matching search criteria
-     */
-    default Page<User> searchAllWithGroupsByLoginOrNameInGroups(Pageable pageable, String loginOrName, Set<String> groupNames) {
-        List<Long> ids = findUserIdsByLoginOrNameInGroups(loginOrName, groupNames, pageable);
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
-        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInGroups(loginOrName, groupNames));
-    }
+    List<User> searchByNameInCourse(@Param("courseId") long courseId, @Param("nameOfUser") String nameOfUser);
 
     @Query("""
             SELECT DISTINCT user
@@ -465,74 +325,74 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param conversationId the ID of the conversation to limit the search within.
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default Page<User> searchAllWithGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
         List<Long> ids = findUsersByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
         long total = countUsersByLoginOrNameInConversation(loginOrName, conversationId);
         return new PageImpl<>(users, pageable, total);
     }
 
     @Query("""
-            SELECT DISTINCT user
+            SELECT DISTINCT user.id
             FROM User user
-                JOIN user.groups userGroup
-                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+                JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
+                JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
             WHERE user.deleted = FALSE
-                AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND userGroup IN :groupNames
+                )
+            ORDER BY user.id ASC
             """)
-    List<User> findUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
-            @Param("groupNames") Set<String> groupNames, Pageable pageable);
+    List<Long> findUserIdsByLoginOrNameInConversationWithCourseRoles(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+            @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles, Pageable pageable);
 
     @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-                JOIN user.groups userGroup
-                JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
-                JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+                JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
+                JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId AND ucr.role IN :roles
             WHERE user.deleted = FALSE
-                AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
                     OR user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
-                ) AND userGroup IN :groupNames
+                )
             """)
-    long countUsersByLoginOrNameInConversationWithCourseGroups(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
-            @Param("groupNames") Set<String> groupNames);
+    long countUsersByLoginOrNameInConversationWithCourseRoles(@Param("loginOrName") String loginOrName, @Param("conversationId") long conversationId,
+            @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
 
     /**
-     * Searches for {@link User} entities by login or name within a specific conversation and course groups.
+     * Searches for {@link User} entities by login or name within a specific conversation, filtered by their course roles.
      * The results are paginated.
      *
      * @param pageable       the pagination information.
      * @param loginOrName    the login or name to search for.
      * @param conversationId the ID of the conversation to limit the search within.
-     * @param groupNames     the set of course group names to limit the search within.
+     * @param courseId       the ID of the course to filter by.
+     * @param roles          the set of course roles to filter by.
      * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default Page<User> searchAllWithCourseGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, Set<String> groupNames) {
-        List<Long> ids = findUsersByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames, pageable).stream().map(DomainObject::getId).toList();
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId, long courseId, Set<CourseRole> roles) {
+        // Use an unsorted pageable for the ID lookup: SELECT DISTINCT user.id cannot ORDER BY firstName/lastName (not in SELECT)
+        // The final result ordering is applied by findUsersByIdsWithCourseRolesOrdered.
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        List<Long> ids = findUserIdsByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles, unsortedPageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
-        long total = countUsersByLoginOrNameInConversationWithCourseGroups(loginOrName, conversationId, groupNames);
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
+        long total = countUsersByLoginOrNameInConversationWithCourseRoles(loginOrName, conversationId, courseId, roles);
         return new PageImpl<>(users, pageable, total);
     }
 
     @Query("""
             SELECT DISTINCT user
             FROM User user
-                JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.deleted = FALSE
@@ -548,7 +408,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-                JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE user.deleted = FALSE
@@ -570,37 +429,99 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param conversationId the ID of the conversation to limit the search within.
      * @return a paginated list of channel moderator {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default Page<User> searchChannelModeratorsWithGroupsByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
+    default Page<User> searchChannelModeratorsWithCourseRolesByLoginOrNameInConversation(Pageable pageable, String loginOrName, long conversationId) {
         List<Long> ids = findModeratorsByLoginOrNameInConversation(loginOrName, conversationId, pageable).stream().map(DomainObject::getId).toList();
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<User> users = findDistinctUsersWithGroupsByIdIn(ids); // these users are moderators
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids); // these users are moderators
         long total = countModeratorsByLoginOrNameInConversation(loginOrName, conversationId);
         return new PageImpl<>(users, pageable, total);
     }
 
     /**
-     * Search for all users by login or name in a group and convert them to {@link UserDTO}
+     * Finds all non-deleted users enrolled in a course with the given role whose login is in the given set.
      *
-     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
-     * @param loginOrName Search query that will be searched for in login and name field
-     * @param groupName   Name of group in which to search for users
-     * @return all users matching search criteria in the group converted to {@link UserDTO}
+     * @param courseId the ID of the course
+     * @param role     the course role to filter by
+     * @param logins   the set of logins to search for
+     * @return list of matching users
      */
-    default Page<UserDTO> searchAllUsersByLoginOrNameInGroupAndConvertToDTO(Pageable pageable, String loginOrName, String groupName) {
-        Page<User> users = searchAllWithGroupsByLoginOrNameInGroup(pageable, loginOrName, groupName);
-        return users.map(UserDTO::new);
-    }
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role = :role
+                AND user.login IN :logins
+                AND user.deleted = FALSE
+            """)
+    List<User> findAllByCourseIdAndRoleAndLoginIn(@Param("courseId") long courseId, @Param("role") CourseRole role, @Param("logins") Set<String> logins);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    List<User> findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(String groupName, Set<String> registrationNumbers);
+    /**
+     * Finds all non-deleted users enrolled in a course with the given role whose registration number is in the given set.
+     *
+     * @param courseId            the ID of the course
+     * @param role                the course role to filter by
+     * @param registrationNumbers the set of registration numbers to search for
+     * @return list of matching users
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role = :role
+                AND user.registrationNumber IN :registrationNumbers
+                AND user.deleted = FALSE
+            """)
+    List<User> findAllByCourseIdAndRoleAndRegistrationNumberIn(@Param("courseId") long courseId, @Param("role") CourseRole role,
+            @Param("registrationNumbers") Set<String> registrationNumbers);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    List<User> findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(String groupName, Set<String> logins);
+    /**
+     * Fetches all non-deleted users enrolled in a course with any of the given roles.
+     *
+     * @param courseId the ID of the course
+     * @param roles    the set of {@link CourseRole} values to filter by
+     * @return set of matching users
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role IN :roles
+                AND user.deleted = FALSE
+            """)
+    Set<User> findAllByCourseIdAndCourseRolesIn(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
+    /**
+     * Fetches all non-deleted users enrolled in a course with any of the given roles, with their {@code authorities} collection eagerly initialized.
+     * Use this variant when the callers need to access {@code user.getAuthorities()} without an open Hibernate session (e.g. to call {@link AuthorizationCheckService#isAdmin}).
+     *
+     * @param courseId the ID of the course
+     * @param roles    the set of {@link CourseRole} values to filter by
+     * @return set of matching users (authorities initialized)
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                LEFT JOIN FETCH user.authorities
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role IN :roles
+                AND user.deleted = FALSE
+            """)
+    Set<User> findAllByCourseIdAndCourseRolesInWithAuthorities(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
+
+    @Query("""
+            SELECT COUNT(DISTINCT ucr.user)
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role = :role
+                AND ucr.user.deleted = FALSE
+            """)
+    long countByCourseIdAndRole(@Param("courseId") long courseId, @Param("role") CourseRole role);
 
     List<User> findAllByIdIn(Collection<Long> ids);
 
@@ -669,83 +590,176 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> findAllByLoginsWithOrganizations(@Param("logins") Collection<String> logins);
 
     @Query("""
-            SELECT DISTINCT user
+            SELECT DISTINCT user.id
             FROM User user
-                JOIN user.groups userGroup
-                JOIN Course course ON course.id = :courseId
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId
             WHERE user.deleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
-                AND (course.studentGroupName = userGroup
-                    OR course.teachingAssistantGroupName = userGroup
-                    OR course.editorGroupName = userGroup
-                    OR course.instructorGroupName = userGroup
-               )
             """)
-    List<User> findUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
-
-    @EntityGraph(type = LOAD, attributePaths = "groups")
-    List<User> findDistinctUsersWithGroupsByIdIn(List<Long> ids);
+    List<Long> findUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
 
     @Query("""
             SELECT COUNT(DISTINCT user)
             FROM User user
-                JOIN user.groups userGroup
-                JOIN Course course ON course.id = :courseId
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id AND ucr.course.id = :courseId
             WHERE user.deleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
                 )
-                AND (course.studentGroupName = userGroup
-                    OR course.teachingAssistantGroupName = userGroup
-                    OR course.editorGroupName = userGroup
-                    OR course.instructorGroupName = userGroup
-                )
             """)
-    long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
+    long countUserIdsByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
 
     /**
-     * Searches for users by login or name within a course and returns a list of distinct users along with their groups.
-     * This method avoids in-memory paging by retrieving the user IDs directly from the database.
+     * Searches for {@link User} entities by login or name within a specific course, eager-loading their course roles.
+     * The results are paginated.
      *
-     * @param pageable    the pagination information
-     * @param loginOrName the login or name of the users to search for
-     * @param courseId    the ID of the course to search within
-     * @return a list of distinct users with their groups, or an empty list if no users are found
+     * @param pageable    the pagination information.
+     * @param loginOrName the login or name to search for.
+     * @param courseId    the ID of the course to limit the search within.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
      */
-    default List<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable pageable, String loginOrName, long courseId) {
-        List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
-
-        if (userIds.isEmpty()) {
-            return List.of();
-        }
-
-        return findDistinctUsersWithGroupsByIdIn(userIds);
-    }
-
-    /**
-     * Searches for users by login or name within a course and returns a paginated list of distinct users along with their groups.
-     * This method avoids in-memory paging by retrieving the user IDs directly from the database.
-     *
-     * @param pageable    the pagination information
-     * @param loginOrName the login or name of the users to search for
-     * @param courseId    the ID of the course to search within
-     * @return a {@code Page} containing a list of distinct users with their groups, or an empty page if no users are found
-     */
-    default Page<User> searchAllWithGroupsByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
-        List<Long> userIds = findUsersByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();
-
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
+        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable);
         if (userIds.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, 0);
         }
-
-        List<User> users = findDistinctUsersWithGroupsByIdIn(userIds);
-        long total = countUsersByLoginOrNameInCourse(loginOrName, courseId);
-
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(userIds);
+        long total = countUserIdsByLoginOrNameInCourse(loginOrName, courseId);
         return new PageImpl<>(users, pageable, total);
+    }
+
+    @Query("""
+            SELECT DISTINCT user.id
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role IN :roles
+            WHERE user.deleted = FALSE
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
+            """)
+    List<Long> findUserIdsByLoginOrNameInCourseWithRoles(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
+            Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(DISTINCT user)
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role IN :roles
+            WHERE user.deleted = FALSE
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
+            """)
+    long countUsersByLoginOrNameInCourseWithRoles(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles);
+
+    /**
+     * Searches for users by login or name within a course filtered by specific roles.
+     *
+     * @param pageable    the pagination information
+     * @param loginOrName the login or name to search for
+     * @param courseId    the ID of the course to search within
+     * @param roles       the set of {@link CourseRole} values to filter by
+     * @return a paginated list of matching {@link User} entities, or an empty page if none found
+     */
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInCourse(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles) {
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
+        long total = countUsersByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles);
+        return new PageImpl<>(users, pageable, total);
+    }
+
+    /**
+     * Searches for users by login or name within a course filtered by specific roles and converts results to {@link UserDTO}.
+     *
+     * @param pageable    the pagination information
+     * @param loginOrName the login or name to search for
+     * @param courseId    the ID of the course to search within
+     * @param roles       the set of {@link CourseRole} values to filter by
+     * @return a paginated list of matching users as {@link UserDTO}, or an empty page if none found
+     */
+    default Page<UserDTO> searchUsersByLoginOrNameInCourseWithRolesAndConvertToDTO(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles) {
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
+        long total = countUsersByLoginOrNameInCourseWithRoles(loginOrName, courseId, roles);
+        return new PageImpl<>(users, pageable, total).map(UserDTO::new);
+    }
+
+    // --- courseRoles-based search variants ---
+
+    @Query("""
+            SELECT DISTINCT user.id
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role IN :roles
+            WHERE user.deleted = FALSE
+                AND user.id <> :idOfUser
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
+            """)
+    List<Long> findUserIdsByLoginOrNameInCourseWithRolesNotUserId(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
+            @Param("idOfUser") long idOfUser, Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(DISTINCT user)
+            FROM User user
+            JOIN UserCourseRole ucr ON ucr.user.id = user.id
+                AND ucr.course.id = :courseId
+                AND ucr.role IN :roles
+            WHERE user.deleted = FALSE
+                AND user.id <> :idOfUser
+                AND (
+                    user.login LIKE %:loginOrName%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:loginOrName%
+                )
+            """)
+    long countUsersByLoginOrNameInCourseWithRolesNotUserId(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles,
+            @Param("idOfUser") long idOfUser);
+
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                LEFT JOIN FETCH user.courseRoles
+            WHERE user.id IN :ids
+            ORDER BY user.firstName, user.lastName
+            """)
+    List<User> findUsersByIdsWithCourseRolesOrdered(@Param("ids") List<Long> ids);
+
+    /**
+     * Searches for {@link User} entities by login or name within a specific course, filtered by course roles,
+     * excluding a specific user. The results are paginated.
+     *
+     * @param pageable    the pagination information.
+     * @param loginOrName the login or name to search for.
+     * @param courseId    the ID of the course to limit the search within.
+     * @param roles       the set of course roles to filter by.
+     * @param idOfUser    the ID of the user to exclude from the results.
+     * @return a paginated list of {@link User} entities matching the search criteria. If no entities are found, returns an empty page.
+     */
+    default Page<User> searchAllWithCourseRolesByLoginOrNameInCourseNotUserId(Pageable pageable, String loginOrName, long courseId, Set<CourseRole> roles, long idOfUser) {
+        List<Long> ids = findUserIdsByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser, pageable);
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        List<User> users = findUsersByIdsWithCourseRolesOrdered(ids);
+        return new PageImpl<>(users, pageable, countUsersByLoginOrNameInCourseWithRolesNotUserId(loginOrName, courseId, roles, idOfUser));
     }
 
     @Modifying
@@ -815,7 +829,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.login
             FROM User user
-            WHERE user.groups IS EMPTY AND NOT user.deleted
+            WHERE NOT user.deleted
+                AND NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user)
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             ORDER BY user.login
@@ -855,8 +870,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(modifiedAuthorities))
                 .and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
 
-        if (userSearch.isFindWithoutUserGroups()) {
-            specification = specification.and(getAllUsersWithoutUserGroups());
+        if (userSearch.isFindWithoutCourseEnrollment()) {
+            specification = specification.and(getAllUsersWithoutCourseEnrollment());
         }
 
         return findAll(specification, sorted).map(user -> {
@@ -932,40 +947,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
-     * Get user with user groups and authorities of currently logged-in user
-     *
-     * @return currently logged-in user
-     */
-    @NonNull
-    default User getUserWithGroupsAndAuthorities() {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(currentUserLogin));
-    }
-
-    /**
-     * Get user with user groups and authorities of currently logged-in user
-     *
-     * @param courseId the id of the course for which to load the user and the course learner profile
-     * @return currently logged-in user
-     */
-    @NonNull
-    default User getUserWithGroupsAndAuthoritiesAndLearnerProfile(long courseId) {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
-    }
-
-    /**
-     * Get user with user groups, authorities and organizations of currently logged-in user
-     *
-     * @return currently logged-in user
-     */
-    @NonNull
-    default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
-    }
-
-    /**
      * Get the login of the currently logged-in user.
      * If no user is logged in, an exception is thrown.
      *
@@ -980,70 +961,95 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         throw new EntityNotFoundException("ERROR: No current user login found!");
     }
 
-    /**
-     * Get user with user groups and authorities with the username (i.e. user.getLogin() or principal.name())
-     *
-     * @param username the username of the user who should be retrieved from the database
-     * @return the user that belongs to the given principal with eagerly loaded groups and authorities
-     */
     @NonNull
-    default User getUserWithGroupsAndAuthorities(@NonNull String username) {
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
+    default User getUserWithAuthorities() {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithAuthoritiesByLogin(currentUserLogin));
+    }
+
+    @NonNull
+    default User getUserWithAuthorities(@NonNull String login) {
+        return getValueElseThrow(findOneWithAuthoritiesByLogin(login));
     }
 
     /**
-     * Finds a single user with groups and authorities using the registration number
+     * Get user with authorities and organizations of currently logged-in user (no courseRoles loaded).
+     * Use this when the caller needs org-membership checks but not courseRoles (e.g. enrollment eligibility).
      *
-     * @param registrationNumber user registration number as string
-     * @return the user with groups and authorities
+     * @return currently logged-in user with authorities and organizations
      */
-    default Optional<User> findUserWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber) {
+    @NonNull
+    default User getUserWithAuthoritiesAndOrganizations() {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithAuthoritiesAndOrganizationsByLogin(currentUserLogin));
+    }
+
+    /**
+     * Get user with authorities and learner profile of currently logged-in user (no courseRoles loaded).
+     *
+     * @param courseId the id of the course for which to load the course learner profile
+     * @return currently logged-in user with authorities and learner profile
+     */
+    @NonNull
+    default User getUserWithAuthoritiesAndLearnerProfile(long courseId) {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithAuthoritiesAndLearnerProfileByLogin(currentUserLogin, courseId));
+    }
+
+    default Optional<User> findUserWithAuthoritiesByRegistrationNumber(String registrationNumber) {
         if (!StringUtils.hasText(registrationNumber)) {
             return Optional.empty();
         }
-        return findOneWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+        return findOneWithAuthoritiesByRegistrationNumber(registrationNumber);
     }
 
     /**
-     * Finds a single user with groups and authorities using the login name
+     * Finds a single user with authorities using the login name.
+     * Returns {@link Optional#empty()} if the login is null or blank.
      *
      * @param login user login string
-     * @return the user with groups and authorities
+     * @return the user with authorities, or empty if login is blank or user not found
      */
-    default Optional<User> findUserWithGroupsAndAuthoritiesByLogin(String login) {
+    default Optional<User> findUserWithAuthoritiesByLogin(String login) {
         if (!StringUtils.hasText(login)) {
             return Optional.empty();
         }
-        return findOneWithGroupsAndAuthoritiesByLogin(login);
+        return findOneWithAuthoritiesByLogin(login);
     }
 
     /**
-     * Finds a single user with groups and authorities using the email
+     * Finds a single user with authorities using the email address.
+     * Returns {@link Optional#empty()} if the email is null or blank.
      *
      * @param email user email string
-     * @return the user with groups and authorities
+     * @return the user with authorities, or empty if email is blank or user not found
      */
-    default Optional<User> findUserWithGroupsAndAuthoritiesByEmail(String email) {
+    default Optional<User> findUserWithAuthoritiesByEmail(String email) {
         if (!StringUtils.hasText(email)) {
             return Optional.empty();
         }
-        return findOneWithGroupsAndAuthoritiesByEmail(email);
+        return findOneWithAuthoritiesByEmail(email);
     }
 
     @NonNull
-    default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId), userId);
+    default User findByIdWithCourseRolesAndAuthoritiesElseThrow(long userId) {
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesById(userId), userId);
+    }
+
+    @NonNull
+    default User findByIdWithAuthoritiesElseThrow(long userId) {
+        return getValueElseThrow(findOneWithAuthoritiesById(userId), userId);
     }
 
     /**
-     * Find user with eagerly loaded groups, authorities and organizations by its id
+     * Find user with eagerly loaded course roles, authorities and organizations by its id
      *
      * @param userId the id of the user to find
-     * @return the user with groups, authorities and organizations if it exists, else throw exception
+     * @return the user with course roles, authorities and organizations if it exists, else throw exception
      */
     @NonNull
-    default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
+    default User findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(long userId) {
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesAndOrganizationsById(userId), userId);
     }
 
     /**
@@ -1053,7 +1059,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return students for given course
      */
     default Set<User> getStudents(Course course) {
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.STUDENT));
     }
 
     /**
@@ -1063,7 +1069,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return students for given course
      */
     default Set<User> getStudentsWithLearnerProfile(Course course) {
-        return findAllWithGroupsAndAuthoritiesAndLearnerProfileByDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
+        return findAllWithAuthoritiesAndLearnerProfileByCourseIdAndRole(course.getId(), CourseRole.STUDENT);
     }
 
     /**
@@ -1073,7 +1079,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return tutors for given course
      */
     default Set<User> getTutors(Course course) {
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName());
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.TEACHING_ASSISTANT));
     }
 
     /**
@@ -1083,7 +1089,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return editors for given course
      */
     default Set<User> getEditors(Course course) {
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName());
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.EDITOR));
     }
 
     /**
@@ -1093,7 +1099,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return instructors for the given course
      */
     default Set<User> getInstructors(Course course) {
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName());
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.INSTRUCTOR));
     }
 
     /**
@@ -1103,83 +1109,67 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return all users in the course
      */
     default Set<User> getUsersInCourse(Course course) {
-        // NOTE: we cannot use Set.of(), because the group names might be identical and then the ImmutableCollections$SetN would throw an exception
-        Set<String> groupNames = new HashSet<>();
-        groupNames.add(course.getStudentGroupName());
-        groupNames.add(course.getTeachingAssistantGroupName());
-        groupNames.add(course.getEditorGroupName());
-        groupNames.add(course.getInstructorGroupName());
-        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
-    }
-
-    default Long countUserInGroup(String groupName) {
-        return countByDeletedIsFalseAndGroupsContains(groupName);
+        return findAllByCourseIdAndCourseRolesIn(course.getId(), Set.of(CourseRole.STUDENT, CourseRole.TEACHING_ASSISTANT, CourseRole.EDITOR, CourseRole.INSTRUCTOR));
     }
 
     /**
-     * Counts non-deleted users in multiple groups with a single query.
-     * This avoids the N+1 query problem when counting users for multiple groups.
+     * Batch-counts non-deleted users with the given role across multiple courses.
      *
-     * @param groupNames the set of group names to count users for
-     * @return a list of StudentGroupCountDTO with group name and count of users
+     * @param courseIds the course ids to count for
+     * @param role      the role to count
+     * @return list of (courseId, role, count) triples — courses with zero members are omitted
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO(
-                g,
-                COUNT(DISTINCT user.id)
-            )
-            FROM User user
-                JOIN user.groups g
-            WHERE user.deleted = FALSE
-                AND g IN :groupNames
-            GROUP BY g
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO(ucr.course.id, ucr.role, COUNT(DISTINCT ucr.user))
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role = :role
+                AND ucr.user.deleted = FALSE
+            GROUP BY ucr.course.id, ucr.role
             """)
-    List<StudentGroupCountDTO> countUsersInGroups(@Param("groupNames") Set<String> groupNames);
+    List<CourseRoleCountDTO> countByCourseIdsAndRole(@Param("courseIds") Set<Long> courseIds, @Param("role") CourseRole role);
 
     /**
-     * Counts non-deleted users for all role groups of a course and sets the counts on the course object.
+     * Counts non-deleted users for every role across multiple courses in a single query.
+     *
+     * @param courseIds the course ids to count for
+     * @return list of (courseId, role, count) triples — courses/roles with zero members are omitted
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO(ucr.course.id, ucr.role, COUNT(DISTINCT ucr.user))
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.user.deleted = FALSE
+            GROUP BY ucr.course.id, ucr.role
+            """)
+    List<CourseRoleCountDTO> countAllRolesByCourseIds(@Param("courseIds") Set<Long> courseIds);
+
+    /**
+     * Counts non-deleted users for all roles of a course and sets the counts on the course object.
      *
      * @param course the course to set user counts for
      */
     default void setUserCountsForCourse(Course course) {
-        Set<String> groupNames = new HashSet<>();
-        groupNames.add(course.getStudentGroupName());
-        groupNames.add(course.getTeachingAssistantGroupName());
-        groupNames.add(course.getEditorGroupName());
-        groupNames.add(course.getInstructorGroupName());
-
-        var counts = countUsersInGroups(groupNames);
-        var countMap = counts.stream().collect(Collectors.toMap(StudentGroupCountDTO::studentGroupName, StudentGroupCountDTO::count, Long::sum));
-
-        course.setNumberOfInstructors(countMap.getOrDefault(course.getInstructorGroupName(), 0L));
-        course.setNumberOfTeachingAssistants(countMap.getOrDefault(course.getTeachingAssistantGroupName(), 0L));
-        course.setNumberOfEditors(countMap.getOrDefault(course.getEditorGroupName(), 0L));
-        course.setNumberOfStudents(countMap.getOrDefault(course.getStudentGroupName(), 0L));
+        setUserCountsForCourses(List.of(course));
     }
 
     /**
-     * Counts non-deleted users for all role groups of multiple courses and sets the counts on each course object.
-     * Uses a single query for all courses combined.
+     * Counts non-deleted users for all roles of multiple courses and sets the counts on each course object.
+     * Uses a single query for all courses and all roles combined.
      *
      * @param courses the courses to set user counts for
      */
     default void setUserCountsForCourses(List<Course> courses) {
-        Set<String> allGroupNames = new HashSet<>();
-        for (Course course : courses) {
-            allGroupNames.add(course.getStudentGroupName());
-            allGroupNames.add(course.getTeachingAssistantGroupName());
-            allGroupNames.add(course.getEditorGroupName());
-            allGroupNames.add(course.getInstructorGroupName());
-        }
-
-        var counts = countUsersInGroups(allGroupNames);
-        var countMap = counts.stream().collect(Collectors.toMap(StudentGroupCountDTO::studentGroupName, StudentGroupCountDTO::count, Long::sum));
+        Set<Long> courseIds = courses.stream().map(Course::getId).collect(Collectors.toSet());
+        Map<Long, Map<CourseRole, Long>> countMap = countAllRolesByCourseIds(courseIds).stream()
+                .collect(Collectors.groupingBy(CourseRoleCountDTO::courseId, Collectors.toMap(CourseRoleCountDTO::role, CourseRoleCountDTO::count)));
 
         for (Course course : courses) {
-            course.setNumberOfInstructors(countMap.getOrDefault(course.getInstructorGroupName(), 0L));
-            course.setNumberOfTeachingAssistants(countMap.getOrDefault(course.getTeachingAssistantGroupName(), 0L));
-            course.setNumberOfEditors(countMap.getOrDefault(course.getEditorGroupName(), 0L));
-            course.setNumberOfStudents(countMap.getOrDefault(course.getStudentGroupName(), 0L));
+            var roleCounts = countMap.getOrDefault(course.getId(), Map.of());
+            course.setNumberOfStudents(roleCounts.getOrDefault(CourseRole.STUDENT, 0L));
+            course.setNumberOfTeachingAssistants(roleCounts.getOrDefault(CourseRole.TEACHING_ASSISTANT, 0L));
+            course.setNumberOfEditors(roleCounts.getOrDefault(CourseRole.EDITOR, 0L));
+            course.setNumberOfInstructors(roleCounts.getOrDefault(CourseRole.INSTRUCTOR, 0L));
         }
     }
 
@@ -1198,7 +1188,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param organization the organization to add to the user
      */
     default void addOrganizationToUser(Long userId, Organization organization) {
-        User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
+        User user = findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (!user.getOrganizations().contains(organization)) {
             user.getOrganizations().add(organization);
             save(user);
@@ -1212,7 +1202,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param organization the organization to remove from the user
      */
     default void removeOrganizationFromUser(Long userId, Organization organization) {
-        User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
+        User user = findByIdWithCourseRolesAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (user.getOrganizations().contains(organization)) {
             user.getOrganizations().remove(organization);
             save(user);
@@ -1240,324 +1230,179 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Set<String> findAllActiveAdminLogins();
 
     @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-            WHERE user.login = :login
-                AND (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
-                    OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            SELECT EXISTS (
+                FROM User user
+                WHERE user.login = :login
+                    AND (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            )
             """)
     boolean isAdmin(@Param("login") String login);
 
     @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-            WHERE user.login = :login
-                AND :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+            SELECT EXISTS (
+                FROM User user
+                WHERE user.login = :login
+                    AND :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+            )
             """)
     boolean isSuperAdmin(@Param("login") String login);
 
     @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Course course ON user.login = :login AND course.id = :courseId
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            SELECT EXISTS (
+                FROM User user
+                WHERE user.login = :login
+                    AND (
+                        EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId AND ucr.role IN :roles)
+                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+                    )
+            )
             """)
-    boolean isAtLeastStudentInCourse(@Param("login") String login, @Param("courseId") long courseId);
+    boolean existsByLoginInCourseWithMinRoleOrAdmin(@Param("login") String login, @Param("courseId") long courseId, @Param("roles") Collection<CourseRole> roles);
+
+    default boolean isAtLeastStudentInCourse(String login, long courseId) {
+        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+    }
+
+    default boolean isAtLeastTeachingAssistantInCourse(String login, long courseId) {
+        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+    }
+
+    default boolean isAtLeastEditorInCourse(String login, long courseId) {
+        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+    }
+
+    default boolean isAtLeastInstructorInCourse(String login, long courseId) {
+        return existsByLoginInCourseWithMinRoleOrAdmin(login, courseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+    }
 
     @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Course course ON user.login = :login AND course.id = :courseId
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            SELECT EXISTS (
+                FROM User user
+                    INNER JOIN Exercise exercise ON user.login = :login AND exercise.id = :exerciseId
+                    LEFT JOIN exercise.course course
+                    LEFT JOIN exercise.exerciseGroup.exam.course examCourse
+                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
+                    OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse AND ucr.role IN :roles))
+                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            )
             """)
-    boolean isAtLeastTeachingAssistantInCourse(@Param("login") String login, @Param("courseId") long courseId);
+    boolean existsByLoginInExerciseWithMinRoleOrAdmin(@Param("login") String login, @Param("exerciseId") long exerciseId, @Param("roles") Collection<CourseRole> roles);
+
+    default boolean isAtLeastStudentInExercise(String login, long exerciseId) {
+        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+    }
+
+    default boolean isAtLeastTeachingAssistantInExercise(String login, long exerciseId) {
+        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+    }
+
+    default boolean isAtLeastEditorInExercise(String login, long exerciseId) {
+        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+    }
+
+    default boolean isAtLeastInstructorInExercise(String login, long exerciseId) {
+        return existsByLoginInExerciseWithMinRoleOrAdmin(login, exerciseId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+    }
 
     @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Course course ON user.login = :login AND course.id = :courseId
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            SELECT EXISTS (
+                FROM User user
+                    INNER JOIN Participation participation ON user.login = :login AND participation.id = :participationId
+                    LEFT JOIN participation.exercise exercise
+                    LEFT JOIN exercise.course course
+                    LEFT JOIN exercise.exerciseGroup.exam.course examCourse
+                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
+                    OR (examCourse IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = examCourse AND ucr.role IN :roles))
+                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            )
             """)
-    boolean isAtLeastEditorInCourse(@Param("login") String login, @Param("courseId") long courseId);
+    boolean existsByLoginInParticipationWithMinRoleOrAdmin(@Param("login") String login, @Param("participationId") long participationId,
+            @Param("roles") Collection<CourseRole> roles);
+
+    default boolean isAtLeastStudentInParticipation(String login, long participationId) {
+        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+    }
+
+    default boolean isAtLeastTeachingAssistantInParticipation(String login, long participationId) {
+        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+    }
+
+    default boolean isAtLeastEditorInParticipation(String login, long participationId) {
+        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+    }
+
+    default boolean isAtLeastInstructorInParticipation(String login, long participationId) {
+        return existsByLoginInParticipationWithMinRoleOrAdmin(login, participationId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+    }
 
     @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Course course ON user.login = :login AND course.id = :courseId
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            SELECT EXISTS (
+                FROM User user
+                    INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
+                    LEFT JOIN lectureUnit.lecture.course course
+                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
+                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            )
             """)
-    boolean isAtLeastInstructorInCourse(@Param("login") String login, @Param("courseId") long courseId);
+    boolean existsByLoginInLectureUnitWithMinRoleOrAdmin(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId, @Param("roles") Collection<CourseRole> roles);
+
+    default boolean isAtLeastStudentInLectureUnit(String login, long lectureUnitId) {
+        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+    }
+
+    default boolean isAtLeastTeachingAssistantInLectureUnit(String login, long lectureUnitId) {
+        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+    }
+
+    default boolean isAtLeastEditorInLectureUnit(String login, long lectureUnitId) {
+        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+    }
+
+    default boolean isAtLeastInstructorInLectureUnit(String login, long lectureUnitId) {
+        return existsByLoginInLectureUnitWithMinRoleOrAdmin(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+    }
 
     @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Exercise exercise ON user.login = :login AND exercise.id = :exerciseId
-                LEFT JOIN exercise.course course
-                LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.studentGroupName MEMBER OF user.groups)
-                OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            SELECT EXISTS (
+                FROM User user
+                    INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
+                    LEFT JOIN lecture.course course
+                WHERE (course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles))
+                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
+                    OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
+            )
             """)
-    boolean isAtLeastStudentInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
+    boolean existsByLoginInLectureWithMinRoleOrAdmin(@Param("login") String login, @Param("lectureId") long lectureId, @Param("roles") Collection<CourseRole> roles);
 
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Exercise exercise ON user.login = :login AND exercise.id = :exerciseId
-                LEFT JOIN exercise.course course
-                LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastTeachingAssistantInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
+    default boolean isAtLeastStudentInLecture(String login, long lectureId) {
+        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.STUDENT));
+    }
 
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Exercise exercise ON user.login = :login AND exercise.id = :exerciseId
-                LEFT JOIN exercise.course course
-                LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastEditorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
+    default boolean isAtLeastTeachingAssistantInLecture(String login, long lectureId) {
+        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+    }
 
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Exercise exercise ON user.login = :login AND exercise.id = :exerciseId
-                LEFT JOIN exercise.course course
-                LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastInstructorInExercise(@Param("login") String login, @Param("exerciseId") long exerciseId);
+    default boolean isAtLeastEditorInLecture(String login, long lectureId) {
+        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.EDITOR));
+    }
 
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Participation participation ON user.login = :login AND participation.id = :participationId
-                LEFT JOIN participation.exercise exercise
-                LEFT JOIN exercise.course course
-                LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.studentGroupName MEMBER OF user.groups)
-                OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastStudentInParticipation(@Param("login") String login, @Param("participationId") long participationId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Participation participation ON user.login = :login AND participation.id = :participationId
-                LEFT JOIN participation.exercise exercise
-                LEFT JOIN exercise.course course
-                LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastTeachingAssistantInParticipation(@Param("login") String login, @Param("participationId") long participationId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Participation participation ON user.login = :login AND participation.id = :participationId
-                LEFT JOIN participation.exercise exercise
-                LEFT JOIN exercise.course course
-                LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.editorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastEditorInParticipation(@Param("login") String login, @Param("participationId") long participationId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Participation participation ON user.login = :login AND participation.id = :participationId
-                LEFT JOIN participation.exercise exercise
-                LEFT JOIN exercise.course course
-                LEFT JOIN exercise.exerciseGroup.exam.course examCourse
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
-                OR (examCourse.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastInstructorInParticipation(@Param("login") String login, @Param("participationId") long participationId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
-                LEFT JOIN lectureUnit.lecture.course course
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastStudentInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
-                LEFT JOIN lectureUnit.lecture.course course
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastTeachingAssistantInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
-                LEFT JOIN lectureUnit.lecture.course course
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastEditorInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
-                LEFT JOIN lectureUnit.lecture.course course
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastInstructorInLectureUnit(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
-                LEFT JOIN lecture.course course
-            WHERE (course.studentGroupName MEMBER OF user.groups)
-                OR (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastStudentInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
-                LEFT JOIN lecture.course course
-            WHERE (course.teachingAssistantGroupName MEMBER OF user.groups)
-                OR (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastTeachingAssistantInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
-                LEFT JOIN lecture.course course
-            WHERE (course.editorGroupName MEMBER OF user.groups)
-                OR (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastEditorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
-
-    @Query("""
-            SELECT COUNT(user) > 0
-            FROM User user
-                INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
-                LEFT JOIN lecture.course course
-            WHERE (course.instructorGroupName MEMBER OF user.groups)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities)
-                OR (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
-            """)
-    boolean isAtLeastInstructorInLecture(@Param("login") String login, @Param("lectureId") long lectureId);
+    default boolean isAtLeastInstructorInLecture(String login, long lectureId) {
+        return existsByLoginInLectureWithMinRoleOrAdmin(login, lectureId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
+    }
 
     @Query("""
             SELECT jhiUser
             FROM CalendarSubscriptionTokenStore store
                 JOIN store.user jhiUser
-                LEFT JOIN FETCH jhiUser.groups
                 LEFT JOIN FETCH jhiUser.authorities
             WHERE store.token = :token
             """)
-    Optional<User> findOneWithGroupsAndAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
-
-    /**
-     * Removes the specified group from all users in a single database operation.
-     * This is more efficient than loading each user, modifying, and saving individually.
-     *
-     * @param groupName the name of the group to remove from all users
-     * @return the number of rows deleted
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query(value = """
-            DELETE FROM user_groups ug
-            WHERE ug.user_groups = :groupName
-            """, nativeQuery = true)
-    int removeGroupFromAllUsers(@Param("groupName") String groupName);
+    Optional<User> findOneWithAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
 
     /**
      * Get the IDs of users who have submitted at least one submission since the given date.
@@ -1581,25 +1426,22 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Set<Long> findActiveUserIdsSince(@Param("activeSince") ZonedDateTime activeSince);
 
     /**
-     * Count users per student group name, filtering to only the specified user IDs.
-     * <p>
-     * This is used as the second step in the optimized active students count,
+     * Count non-deleted students per course, filtering to only the specified user IDs.
+     * Used as the second step in the optimized active students count,
      * after getting active user IDs via {@link #findActiveUserIdsSince}.
      *
-     * @param studentGroupNames the set of student group names to check
-     * @param userIds           the set of user IDs to count (typically active users)
-     * @return a list of StudentGroupCountDTO with group name and count of users
+     * @param courseIds the set of course ids to count students for
+     * @param userIds   the set of user IDs to count (typically active users)
+     * @return a list of CourseRoleCountDTO with course id and count of matching students
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.StudentGroupCountDTO(
-                g,
-                COUNT(DISTINCT user.id)
-            )
-            FROM User user
-                JOIN user.groups g
-            WHERE g IN :studentGroupNames
-                AND user.id IN :userIds
-            GROUP BY g
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO(ucr.course.id, ucr.role, COUNT(DISTINCT ucr.user))
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id IN :courseIds
+                AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.STUDENT
+                AND ucr.user.id IN :userIds
+                AND ucr.user.deleted = FALSE
+            GROUP BY ucr.course.id, ucr.role
             """)
-    List<StudentGroupCountDTO> countUsersByStudentGroupNamesAndUserIds(@Param("studentGroupNames") Set<String> studentGroupNames, @Param("userIds") Set<Long> userIds);
+    List<CourseRoleCountDTO> countStudentsByCourseIdsAndUserIds(@Param("courseIds") Set<Long> courseIds, @Param("userIds") Set<Long> userIds);
 }

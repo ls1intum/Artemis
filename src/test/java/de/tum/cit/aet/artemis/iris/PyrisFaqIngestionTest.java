@@ -35,6 +35,8 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "pyrisfaqingestiontest";
 
+    private static final String OTHER_PREFIX = TEST_PREFIX + "other";
+
     @Autowired
     private PyrisWebhookService pyrisWebhookService;
 
@@ -57,14 +59,14 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.faq1 = generateFaq(course1, FaqState.ACCEPTED, "Faq 1 title", "Faq 1 content");
         faqRepository.save(faq1);
         // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "student42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "tutor42");
+        userUtilService.createAndSaveUser(OTHER_PREFIX + "instructor42");
     }
 
     @Test

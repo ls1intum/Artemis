@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -116,8 +117,8 @@ public class ExamRegistrationService {
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email(),
-                    course.getStudentGroupName());
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email(), course,
+                    CourseRole.STUDENT);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(examUserDto);
             }
@@ -156,7 +157,7 @@ public class ExamRegistrationService {
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
         try {
-            User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+            User currentUser = userRepository.getUserWithAuthorities();
             Map<String, Object> userData = new HashMap<>();
             userData.put("exam", exam.getTitle());
             for (var i = 0; i < examUserDTOs.size(); i++) {
@@ -210,9 +211,7 @@ public class ExamRegistrationService {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
-        if (!student.getGroups().contains(course.getStudentGroupName())) {
-            userService.addUserToGroup(student, course.getStudentGroupName());
-        }
+        userService.addUserToCourse(student, course, CourseRole.STUDENT);
 
         Optional<ExamUser> registeredExamUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
 
@@ -235,7 +234,7 @@ public class ExamRegistrationService {
             return;
         }
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "exam=" + exam.getTitle(), "student=" + student.getLogin());
         auditEventRepository.add(auditEvent);
         log.info("User {} has added user {} to the exam {} with id {}", currentUser.getLogin(), student.getLogin(), exam.getTitle(), exam.getId());
@@ -296,7 +295,7 @@ public class ExamRegistrationService {
         optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_USER_FROM_EXAM, "exam=" + exam.getTitle(), "user=" + student.getLogin());
         auditEventRepository.add(auditEvent);
         log.info("User {} has removed user {} from the exam {} with id {}. This also deleted a potentially existing student exam with all its participations and submissions.",
@@ -337,7 +336,7 @@ public class ExamRegistrationService {
         studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
-        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        User currentUser = userRepository.getUserWithAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_ALL_USERS_FROM_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
         log.info("User {} has removed all users from the exam {} with id {}. This also deleted potentially existing student exams with all its participations and submissions.",
@@ -352,7 +351,10 @@ public class ExamRegistrationService {
      */
     public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        var students = new ArrayList<>(userRepository.getStudents(course));
+        // Load students with their authorities eagerly so that isAdmin() can access
+        // user.getAuthorities() without triggering a LazyInitializationException on
+        // the detached entity after the Hibernate session has been closed.
+        var students = new ArrayList<>(userRepository.findAllByCourseIdAndCourseRolesInWithAuthorities(course.getId(), Set.of(CourseRole.STUDENT)));
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());

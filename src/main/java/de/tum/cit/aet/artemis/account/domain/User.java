@@ -11,9 +11,7 @@ import java.util.Locale;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -48,6 +46,7 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -150,10 +149,12 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "vcs_access_token_expiry_date")
     private ZonedDateTime vcsAccessTokenExpiryDate = null;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "user_groups")
-    private Set<String> groups = new HashSet<>();
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @JsonIgnore
+    private Set<UserCourseRole> courseRoles = new HashSet<>();
+
+    @Column(name = "lti_created", nullable = false)
+    private boolean ltiCreated = false; // default value
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private final Set<SavedPost> savedPosts = new HashSet<>();
@@ -363,12 +364,20 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.visibleRegistrationNumberTransient = this.getRegistrationNumber();
     }
 
-    public Set<String> getGroups() {
-        return groups;
+    public Set<UserCourseRole> getCourseRoles() {
+        return courseRoles;
     }
 
-    public void setGroups(Set<String> groups) {
-        this.groups = groups;
+    public void setCourseRoles(Set<UserCourseRole> courseRoles) {
+        this.courseRoles = courseRoles;
+    }
+
+    public boolean isLtiCreated() {
+        return ltiCreated;
+    }
+
+    public void setLtiCreated(boolean ltiCreated) {
+        this.ltiCreated = ltiCreated;
     }
 
     public Set<Authority> getAuthorities() {

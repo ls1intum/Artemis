@@ -18,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -54,6 +56,8 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
+    private Course course;
+
     private ModelingExercise modelingExercise;
 
     private TextExercise textExercise;
@@ -83,8 +87,8 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
-        Course course1 = courseUtilService.addCourseWithModelingAndTextAndFileUploadExercise();
-        course1.getExercises().forEach(exercise -> {
+        course = courseUtilService.addEnrolledCourseWithModelingAndTextAndFileUploadExercise(TEST_PREFIX);
+        course.getExercises().forEach(exercise -> {
             participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
             participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
             participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student3");
@@ -186,11 +190,10 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testNoSubmissionsForStudent_asInstructorNotInGroup() throws Exception {
+    void testNoSubmissionsForStudent_asInstructorNotInCourse() throws Exception {
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.unenrollUserFromCourseByRole(instructor, course, CourseRole.INSTRUCTOR);
         var exportOptions = new SubmissionExportOptionsDTO(false, false, null, "nonexistentstudent");
-        Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setInstructorGroupName("abc");
-        courseUtilService.saveCourse(course);
         request.post("/api/text/text-exercises/" + textExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/modeling/modeling-exercises/" + modelingExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);
         request.post("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", exportOptions, HttpStatus.FORBIDDEN);

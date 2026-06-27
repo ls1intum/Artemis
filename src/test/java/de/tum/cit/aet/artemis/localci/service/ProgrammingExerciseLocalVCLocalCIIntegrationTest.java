@@ -128,9 +128,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @BeforeEach
     void setup() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
 
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
@@ -168,7 +168,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         competency = competencyUtilService.createCompetency(course);
 
-        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
         programmingExerciseTestService.setup(this, versionControlService);
     }
 
@@ -453,7 +452,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
 
         // Import the exercise and load all referenced entities
         var params = new LinkedMultiValueMap<String, String>();
@@ -518,7 +517,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportADDTitle", "addimport", programmingExercise,
-                courseUtilService.addEmptyCourse());
+                courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
         exerciseToBeImported.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
         // Explicitly set the field to null to trigger computation on the server
         exerciseToBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(null);
@@ -554,7 +553,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void importFromFile_tutor_forbidden() throws Exception {
         programmingExerciseTestService.importFromFile_tutor_forbidden();
     }

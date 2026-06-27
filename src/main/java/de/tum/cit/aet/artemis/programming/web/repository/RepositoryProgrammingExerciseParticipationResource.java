@@ -130,8 +130,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // Add submission policy to the programming exercise.
         programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId()));
 
-        repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise,
-                repositoryActionType);
+        repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithAuthorities(), programmingExercise, repositoryActionType);
 
         return repositoryParticipationService.getRepositoryFromGitService(pullOnGet, programmingParticipation);
     }
@@ -230,7 +229,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
-        repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
+        repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithAuthorities(), programmingExercise, RepositoryActionType.READ);
 
         return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation)));
     }

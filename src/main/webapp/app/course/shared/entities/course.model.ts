@@ -57,10 +57,6 @@ export class Course implements BaseEntity {
     public description?: string;
     public studentCourseAnalyticsDashboardEnabled?: boolean;
     public shortName?: string;
-    public studentGroupName?: string;
-    public teachingAssistantGroupName?: string;
-    public editorGroupName?: string;
-    public instructorGroupName?: string;
     public startDate?: dayjs.Dayjs;
     public endDate?: dayjs.Dayjs;
     public enrollmentStartDate?: dayjs.Dayjs;
@@ -181,11 +177,15 @@ export class CourseForImportDTO {
     semester?: string;
 }
 
-export const enum CourseGroup {
+/**
+ * URL path segments used by the REST API and Angular router to identify course roles.
+ * These are the string values sent to/from the server; they are distinct from the {@link CourseRole} Java enum.
+ */
+export const enum CourseRoleSlug {
     STUDENTS = 'students',
     TUTORS = 'tutors',
     EDITORS = 'editors',
     INSTRUCTORS = 'instructors',
 }
 
-export const courseGroups = [CourseGroup.STUDENTS, CourseGroup.TUTORS, CourseGroup.EDITORS, CourseGroup.INSTRUCTORS];
+export const courseRoleSegments = [CourseRoleSlug.STUDENTS, CourseRoleSlug.TUTORS, CourseRoleSlug.EDITORS, CourseRoleSlug.INSTRUCTORS];

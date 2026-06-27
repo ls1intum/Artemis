@@ -49,7 +49,7 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        Course course = textExerciseUtilService.addEnrolledCourseWithOneReleasedTextExercise("Text", TEST_PREFIX);
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         exerciseVersionService.createExerciseVersion(textExercise);
     }
@@ -110,7 +110,7 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTextExercise_createsExerciseVersion() throws Exception {
-        Course course2 = courseUtilService.addEmptyCourse();
+        Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         textExercise.setCourse(course2);
         textExercise.setTitle("New title");
 

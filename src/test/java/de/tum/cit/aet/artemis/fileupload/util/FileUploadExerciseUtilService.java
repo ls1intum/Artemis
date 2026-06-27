@@ -108,13 +108,30 @@ public class FileUploadExerciseUtilService {
     }
 
     /**
+     * Creates and saves a new Course and an Exam with one mandatory FileUploadExercise, enrolling the users identified by the given prefix.
+     * <p>
+     * This is the enrollment-aware counterpart of {@link #addCourseExamExerciseGroupWithOneFileUploadExercise(boolean)}.
+     * Use this whenever the acting test user must pass the course-membership access check.
+     *
+     * @param userPrefix                 The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @param startDateBeforeCurrentTime True, if the start date of the created Exam should be before the current time, needed for examLiveEvent tests
+     * @return The created FileUploadExercise with prefix users enrolled in the course
+     */
+    public FileUploadExercise addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(String userPrefix, boolean startDateBeforeCurrentTime) {
+        FileUploadExercise fileUploadExercise = addCourseExamExerciseGroupWithOneFileUploadExercise(startDateBeforeCurrentTime);
+        userUtilService.enrollPrefixedUsersInCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember(), userPrefix);
+        return fileUploadExercise;
+    }
+
+    /**
      * Creates and saves a new Course with one released, one finished, and one assessed FileUploadExercise. Does not save the exercises.
      *
      * @return A List containing the created FileUploadExercises
      */
-    public List<FileUploadExercise> createFileUploadExercisesWithCourse() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+    public List<FileUploadExercise> createEnrolledFileUploadExercisesWithCourse(String userPrefix) {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
 
         FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
                 course);
@@ -133,12 +150,13 @@ public class FileUploadExerciseUtilService {
     }
 
     /**
-     * Creates and saves a new Course with one released, one finished, and one assessed FileUploadExercise.
+     * Creates and saves a new Course with one released, one finished, and one assessed FileUploadExercise and enrolls the users identified by the given prefix.
      *
-     * @return The created Course
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
      */
-    public Course addCourseWithThreeFileUploadExercise() {
-        var fileUploadExercises = createFileUploadExercisesWithCourse();
+    public Course addEnrolledCourseWithThreeFileUploadExercise(String userPrefix) {
+        var fileUploadExercises = createEnrolledFileUploadExercisesWithCourse(userPrefix);
         assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
         exerciseRepository.saveAll(fileUploadExercises);
         long courseId = fileUploadExercises.getFirst().getCourseViaExerciseGroupOrCourseMember().getId();
@@ -150,12 +168,24 @@ public class FileUploadExerciseUtilService {
     }
 
     /**
+     * Creates and saves a new Course with one released, one finished, one assessed, and one no-due-date FileUploadExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithFourFileUploadExercise(String userPrefix) {
+        Course course = addCourseWithFourFileUploadExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a new Course with one released, one finished, one assessed, and one no-due-date FileUploadExercise.
      *
      * @return The created Course
      */
     public Course addCourseWithFourFileUploadExercise() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         course = courseRepo.save(course);
 
         FileUploadExercise releasedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, FUTURE_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, "png,pdf",
@@ -180,12 +210,24 @@ public class FileUploadExerciseUtilService {
     }
 
     /**
+     * Creates and saves a new Course with one assessed FileUploadExercise and enrolls the users identified by the given prefix.
+     *
+     * @param userPrefix The login prefix used when the test users were created via {@code addUsers(userPrefix, ...)}; enrolls those users in the course
+     * @return The created Course with prefix users enrolled
+     */
+    public Course addEnrolledCourseWithFileUploadExercise(String userPrefix) {
+        Course course = addCourseWithFileUploadExercise();
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
+    }
+
+    /**
      * Creates and saves a new Course with one assessed FileUploadExercise.
      *
      * @return The created Course
      */
     public Course addCourseWithFileUploadExercise() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>());
         FileUploadExercise assessedFileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP, "png,pdf", course);
         assessedFileUploadExercise.setTitle("assessed");
         course.addExercises(assessedFileUploadExercise);

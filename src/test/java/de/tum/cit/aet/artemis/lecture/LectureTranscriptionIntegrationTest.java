@@ -49,7 +49,7 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 2, 0, 2);
-        List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
+        List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1);
         Course course = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         this.lecture = course.getLectures().stream().findFirst().orElseThrow();
         this.lecture.setTitle("Lecture " + lecture.getId());

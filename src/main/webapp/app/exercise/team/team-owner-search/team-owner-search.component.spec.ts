@@ -51,7 +51,7 @@ describe('Team Owner Search Component', () => {
         const searchingSpy = vi.spyOn(comp.searching, 'emit');
         const searchNoResultsSpy = vi.spyOn(comp.searchNoResults, 'emit');
 
-        const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseGroup');
+        const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseRole');
         courseServiceSpy.mockReturnValue(of(new HttpResponse({ body: [owner] })));
 
         const searchText = owner.login!;
@@ -79,7 +79,7 @@ describe('Team Owner Search Component', () => {
         const searchingSpy = vi.spyOn(comp.searching, 'emit');
         const searchNoResultsSpy = vi.spyOn(comp.searchNoResults, 'emit');
 
-        const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseGroup');
+        const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseRole');
         courseServiceSpy.mockReturnValue(of(new HttpResponse({ body: [owner] })));
 
         const searchText = 'SearchText';
@@ -106,8 +106,8 @@ describe('Team Owner Search Component', () => {
     it('should handle error when loading owner options', () => {
         const searchFailedSpy = vi.spyOn(comp.searchFailed, 'emit');
 
-        const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseGroup');
-        courseServiceSpy.mockReturnValue(throwError(() => new Error('getAllUsersInCourseGroup failed')));
+        const courseServiceSpy = vi.spyOn(courseService, 'getAllUsersInCourseRole');
+        courseServiceSpy.mockReturnValue(throwError(() => new Error('getAllUsersInCourseRole failed')));
 
         fixture.componentRef.setInput('course', { id: 1 });
 

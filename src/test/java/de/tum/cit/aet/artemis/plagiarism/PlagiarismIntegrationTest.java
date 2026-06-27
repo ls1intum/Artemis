@@ -35,6 +35,9 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     private static final String TEST_PREFIX = "plagiarismintegration";
 
+    /** Instructor not enrolled in the test course; exercises the wrong-course branch. */
+    private static final String OTHER_PREFIX = "plagiarismintegrationother";
+
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
@@ -66,7 +69,8 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
-        course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
+        userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1); // outsider instructor — never enrolled in course
+        course = textExerciseUtilService.addEnrolledCourseWithOneFinishedTextExercise(TEST_PREFIX);
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textPlagiarismResult = textExerciseUtilService.createPlagiarismResultForExercise(textExercise);
         var textSubmission = ParticipationFactory.generateTextSubmission("", Language.GERMAN, true);
@@ -247,10 +251,8 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNumberOfPlagiarismResultsForExercise_instructorNotInCourse_forbidden() throws Exception {
-        courseUtilService.updateCourseGroups("abc", course, "");
         request.get("/api/plagiarism/exercises/" + textExercise.getId() + "/potential-plagiarism-count", HttpStatus.FORBIDDEN, Long.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 }

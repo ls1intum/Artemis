@@ -10,23 +10,14 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
-import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
-import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
-import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { MatFormField } from '@angular/material/form-field';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MatOption } from '@angular/material/core';
-import { AsyncPipe } from '@angular/common';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -47,16 +38,7 @@ import { Authority } from 'app/foundation/constants/authority.constants';
         TranslateDirective,
         TooltipModule,
         HelpIconComponent,
-        MatFormField,
-        MatChipGrid,
-        MatChipRow,
-        MatChipRemove,
         FaIconComponent,
-        MatAutocompleteTrigger,
-        MatChipInput,
-        MatAutocomplete,
-        MatOption,
-        AsyncPipe,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
@@ -65,7 +47,6 @@ import { Authority } from 'app/foundation/constants/authority.constants';
 export class UserManagementUpdateComponent implements OnInit {
     private readonly languageHelper = inject(JhiLanguageHelper);
     private readonly userService = inject(AdminUserService);
-    private readonly courseAdminService = inject(CourseAdminService);
     private readonly route = inject(ActivatedRoute);
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly dialogService = inject(DialogService);
@@ -119,18 +100,6 @@ export class UserManagementUpdateComponent implements OnInit {
     /** Whether the form is currently being submitted */
     readonly isSaving = signal(false);
 
-    /** All available groups for autocomplete */
-    allGroups: string[];
-
-    /** Filtered groups based on input */
-    readonly filteredGroups = signal<Observable<string[]>>(undefined!);
-
-    /** Separator key codes for chip input */
-    readonly separatorKeysCodes = [ENTER, COMMA, TAB];
-
-    /** Form control for group autocomplete */
-    readonly groupCtrl = new FormControl();
-
     /** Authority to translation key mapping */
     private readonly authorityTranslationKeys: Record<string, string> = {
         ROLE_SUPER_ADMIN: 'artemisApp.userManagement.roles.superAdmin',
@@ -166,22 +135,6 @@ export class UserManagementUpdateComponent implements OnInit {
                 });
             }
         });
-        this.courseAdminService.getAllGroupsForAllCourses().subscribe((groups) => {
-            this.allGroups = [];
-            if (groups.body) {
-                groups.body.forEach((group) => {
-                    if (group != undefined) {
-                        this.allGroups.push(group);
-                    }
-                });
-            }
-            this.filteredGroups.set(
-                this.groupCtrl.valueChanges.pipe(
-                    startWith(undefined),
-                    map((value) => (value ? this.filter(value) : this.allGroups.slice())),
-                ),
-            );
-        });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.userService.authorities().subscribe((authorities) => {
             this.authorities.set(
@@ -189,10 +142,6 @@ export class UserManagementUpdateComponent implements OnInit {
             );
         });
         this.languages.set(this.languageHelper.getAll());
-        // Empty array for new user
-        if (!this.user().id) {
-            this.user().groups = [];
-        }
         // Set password to undefined. ==> If it still is undefined on save, it won't be changed for existing users. It will be random for new users
         this.user().password = undefined;
         this.initializeForm();
@@ -217,11 +166,9 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     save(): void {
         this.isSaving.set(true);
-        // temporarily store the user groups and organizations in variables, because they are not part of the edit form
-        const userGroups = this.user().groups;
+        // temporarily store the user organizations because they are not part of the edit form
         const userOrganizations = this.user().organizations;
         const updatedUser: User = this.editForm.getRawValue();
-        updatedUser.groups = userGroups;
         updatedUser.organizations = userOrganizations;
         this.user.set(updatedUser);
         if (updatedUser.id) {
@@ -284,38 +231,6 @@ export class UserManagementUpdateComponent implements OnInit {
         );
     }
 
-    /**
-     * Adds a group to the user
-     * @param user to add the group to
-     * @param event chip input event
-     */
-    onGroupAdd(user: User, event: MatChipInputEvent) {
-        const groupString = (event.value || '').trim();
-        this.addGroup(user, groupString);
-        this.groupCtrl.setValue('');
-        event.chipInput!.clear();
-    }
-
-    /**
-     * Removes a group from the user
-     * @param user to remove the group from
-     * @param group to remove
-     */
-    onGroupRemove(user: User, group: string) {
-        user.groups = user.groups?.filter((userGroup) => userGroup !== group);
-        this.commitUser(user);
-    }
-
-    /**
-     * Adds the selected group from panel to the user
-     * @param event autocomplete event
-     */
-    onSelected(event: MatAutocompleteSelectedEvent): void {
-        const groupString = (event.option.viewValue || '').trim();
-        this.addGroup(this.user(), groupString);
-        this.groupCtrl.setValue('');
-    }
-
     private initializeForm() {
         if (this.editForm) {
             return;
@@ -358,38 +273,7 @@ export class UserManagementUpdateComponent implements OnInit {
     }
 
     /**
-     * Filter the groups based on the input value
-     * @param value input value
-     */
-    private filter(value: string): string[] {
-        const filterValue = value.toLowerCase();
-        return this.allGroups.filter((group) => group != undefined && group.toLowerCase().includes(filterValue));
-    }
-
-    /**
-     * Adds a group to the user if it is valid
-     * @param user to add the group to
-     * @param groupString group to add
-     */
-    private addGroup(user: User, groupString: string) {
-        if (groupString && this.allGroups.includes(groupString) && !user.groups?.includes(groupString)) {
-            if (!user.groups) {
-                user.groups = [];
-            }
-            user.groups.push(groupString);
-            this.commitUser(user);
-        }
-    }
-
-    /**
-     * Rebuild the user signal reference after an in-place mutation so the dependent template (chip list) re-renders under zoneless.
-     * Only rebuilds when the mutated object is the currently held user to avoid clobbering unrelated state.
-     */
-    private commitUser(user: User) {
-        this.user.update((currentUser) => (currentUser === user ? ({ ...currentUser } as User) : currentUser));
-    }
-
-    /**
+     /**
      * Get the translation key for an authority
      * @param authority the authority string (e.g., ROLE_ADMIN)
      */

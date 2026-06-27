@@ -227,7 +227,13 @@ export const courseManagementRoutes: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
+                        // Legacy redirect: keep old "groups/..." bookmarks working
                         path: 'groups/:courseGroup',
+                        redirectTo: 'members/:courseGroup',
+                        pathMatch: 'full',
+                    },
+                    {
+                        path: 'members/:courseRoleSlug',
                         loadComponent: () => import('app/course/manage/course-group-membership/course-group-membership.component').then((m) => m.CourseGroupMembershipComponent),
                         data: {
                             authorities: IS_AT_LEAST_INSTRUCTOR,

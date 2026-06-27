@@ -11,7 +11,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import jakarta.servlet.http.Cookie;
 
@@ -34,6 +33,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -79,7 +79,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
-        student = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).orElseThrow();
+        student = userTestRepository.findOneWithAuthoritiesByLogin(USERNAME).orElseThrow();
         final var encodedPassword = passwordService.hashPassword(USER_PASSWORD);
         student.setPassword(encodedPassword);
         student.setInternal(true);
@@ -93,11 +93,12 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         final var pastTimestamp = ZonedDateTime.now().minusDays(5);
         final var futureTimestamp = ZonedDateTime.now().plusDays(5);
-        var course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        var course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>());
         course1.setEnrollmentEnabled(true);
         course1 = courseRepository.save(course1);
-        Set<String> updatedGroups = request.postSetWithResponseBody("/api/course/courses/" + course1.getId() + "/enroll", null, String.class, HttpStatus.OK);
-        assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());
+        // enroll endpoint returns Void; verify enrollment via UCR
+        request.postWithoutLocation("/api/course/courses/" + course1.getId() + "/enroll", null, HttpStatus.OK, null);
+        assertThat(userTestRepository.countByCourseIdAndRole(course1.getId(), CourseRole.STUDENT)).as("User is registered for course as STUDENT").isGreaterThan(0);
     }
 
     @Test
@@ -162,14 +163,14 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
-        final var newGroups = Set.of("foo", "bar");
-        student.setGroups(newGroups);
+    void updateUser_internalAuth_successful() throws Exception {
+        // Note: ManagedUserVM no longer carries group strings (UserDTO dropped groups in Phase 6);
+        // the admin update API does not modify user_groups — course membership is via user_course_role.
         final var managedUserVM = new ManagedUserVM(student);
         managedUserVM.setPassword("12345678");
 
         final var response = request.putWithResponseBody("/api/account/admin/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserIndDB = userTestRepository.findOneWithAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(passwordService.checkPasswordMatch(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();
 

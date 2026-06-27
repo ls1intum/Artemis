@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.calendar.dto.CalendarEventDTO;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -294,7 +295,7 @@ public class TutorialGroupService {
         Set<User> foundStudents = new HashSet<>();
         List<TutorialGroupStudentImportDataDTO> notFoundStudentDTOs = new LinkedList<>();
         for (var studentDto : studentDTOs) {
-            findStudent(studentDto.login(), tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
+            findStudent(studentDto.login(), tutorialGroup.getCourse().getId()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType, responsibleUser, true);
         return notFoundStudentDTOs;
@@ -311,7 +312,7 @@ public class TutorialGroupService {
     public void registerMultipleStudentsViaLogin(TutorialGroup tutorialGroup, List<String> logins, TutorialGroupRegistrationType registrationType, User responsibleUser) {
         Set<User> students = new HashSet<>();
         for (var login : logins) {
-            var student = findStudent(login, tutorialGroup.getCourse().getStudentGroupName()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
+            var student = findStudent(login, tutorialGroup.getCourse().getId()).orElseThrow(() -> new BadRequestException("Some students do not exist!"));
             students.add(student);
         }
         registerMultipleStudentsToTutorialGroup(students, tutorialGroup, registrationType, responsibleUser, true);
@@ -429,7 +430,7 @@ public class TutorialGroupService {
 
     private Set<TutorialGroup> findOrCreateTutorialGroups(Course course, Set<TutorialGroupImportDataDTO> registrations) {
         var titlesMentionedInRegistrations = registrations.stream().map(TutorialGroupImportDataDTO::title).filter(Objects::nonNull).map(String::trim).collect(Collectors.toSet());
-        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithAuthorities();
 
         var foundTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId()).stream()
                 .filter(tutorialGroup -> titlesMentionedInRegistrations.contains(tutorialGroup.getTitle())).collect(Collectors.toSet());
@@ -549,9 +550,8 @@ public class TutorialGroupService {
         }
 
         // ToDo: Discuss if we should allow to register course members who are not students
-        var result = new HashSet<>(
-                userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(course.getStudentGroupName(), registrationNumbersToSearchFor));
-        result.addAll(new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(course.getStudentGroupName(), loginsToSearchFor)));
+        var result = new HashSet<>(userRepository.findAllByCourseIdAndRoleAndRegistrationNumberIn(course.getId(), CourseRole.STUDENT, registrationNumbersToSearchFor));
+        result.addAll(new HashSet<>(userRepository.findAllByCourseIdAndRoleAndLoginIn(course.getId(), CourseRole.STUDENT, loginsToSearchFor)));
         return result;
     }
 
@@ -636,9 +636,8 @@ public class TutorialGroupService {
         return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(user));
     }
 
-    private Optional<User> findStudent(String login, String studentCourseGroupName) {
-        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
-        return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
+    private Optional<User> findStudent(String login, long courseId) {
+        return userRepository.findStudentByLoginAndCourseId(login, courseId);
     }
 
     /**

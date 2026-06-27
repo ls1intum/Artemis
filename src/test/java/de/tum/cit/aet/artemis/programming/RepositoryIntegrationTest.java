@@ -46,6 +46,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -134,7 +135,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @BeforeEach
     void setup() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+        course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
@@ -295,9 +296,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesAtCommitInstructorNotInCourseForbidden() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
-        courseUtilService.updateCourseGroups("abc", course, "");
+        User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.unenrollUserFromCourse(instructor1, course);
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
     @Test
@@ -305,9 +306,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesAtCommitTutorNotInCourseForbidden() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
-        courseUtilService.updateCourseGroups("abc", course, "");
+        User tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        userUtilService.unenrollUserFromCourse(tutor1, course);
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
     @Test
@@ -315,9 +316,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testGetFilesAtCommitEditorNotInCourseForbidden() throws Exception {
         prepareRepository();
         String commitHash = getCommitHash(studentRepository.workingCopyGitRepo);
-        courseUtilService.updateCourseGroups("abc", course, "");
+        User editor1 = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
+        userUtilService.unenrollUserFromCourse(editor1, course);
         request.getMap(filesContentBaseUrl + commitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course, "");
     }
 
     @Disabled
@@ -1094,7 +1095,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     private ProgrammingExercise createProgrammingExerciseForExam() {
         // Create an exam programming exercise
-        var programmingExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = programmingExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
         programmingExerciseRepository.save(programmingExercise);
         participation.setExercise(programmingExercise);
         studentParticipationRepository.save(participation);

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.UserSummaryDTO;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepo
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -70,6 +72,12 @@ public class ConversationUtilService {
 
     @Autowired
     private CourseTestRepository courseRepo;
+
+    @Autowired
+    private UserTestRepository userRepo;
+
+    @Autowired
+    private UserCourseRoleTestRepository userCourseRoleTestRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseRepo;
@@ -113,9 +121,21 @@ public class ConversationUtilService {
      * @return The created Course
      */
     public Course createCourseWithPostsDisabled() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        return createCourseWithPostsDisabled("");
+    }
+
+    /**
+     * Creates and saves a Course with disabled posts, enrolling users by login prefix.
+     *
+     * @param userPrefix The login prefix of the test users to enroll (e.g. "examint").
+     * @return The created Course
+     */
+    public Course createCourseWithPostsDisabled(String userPrefix) {
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>());
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
-        return courseRepo.save(course);
+        course = courseRepo.save(course);
+        userUtilService.enrollPrefixedUsersInCourse(course, userPrefix);
+        return course;
     }
 
     /**
@@ -202,7 +222,7 @@ public class ConversationUtilService {
         participant2.setUnreadMessagesCount(0L);
         participant2.setLastRead(ZonedDateTime.now().minusYears(2));
         conversationParticipantRepository.save(participant2);
-        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).orElseThrow();
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUsers(chat.getId()).orElseThrow();
 
         var posts = new ArrayList<Post>();
         for (int i = 0; i < numberOfPosts; i++) {
