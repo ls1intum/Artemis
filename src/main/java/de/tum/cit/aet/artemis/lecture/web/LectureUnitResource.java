@@ -133,8 +133,11 @@ public class LectureUnitResource {
 
         lecture.reorderLectureUnits(orderedLectureUnitIds);
 
-        lecture = lectureRepository.save(lecture);
-        return ResponseEntity.ok(lecture.getLectureUnits().stream().map(LectureUnitDTO::of).toList());
+        lectureRepository.save(lecture);
+
+        // Reload with competency links eagerly fetched so the polymorphic LectureUnitDTO mapping can read them outside the persistence context (no open-session-in-view).
+        Lecture reorderedLecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
+        return ResponseEntity.ok(reorderedLecture.getLectureUnits().stream().map(LectureUnitDTO::of).toList());
     }
 
     /**
