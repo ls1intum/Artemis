@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,13 +19,21 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisFeedbackDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageContentBaseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextMessageContentDTO;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -96,6 +107,80 @@ public class PyrisDTOService {
      */
     public List<PyrisMessageDTO> toPyrisMessageDTOList(List<IrisMessage> messages) {
         return messages.stream().map(PyrisMessageDTO::of).toList();
+    }
+
+    /**
+     * Like {@link #toPyrisMessageDTOList}, but tags each proactive (origin PROACTIVE_STRUGGLE) message with how
+     * the student reacted, so the struggle gate can avoid repeating a dismissed/ignored hint (spec §7.4). Builds
+     * fresh DTOs — it never mutates the stored IrisMessage entities — and preserves id/sentAt/sender.
+     *
+     * @param messages the chat-history messages, in chronological order
+     * @return the converted DTOs with proactive messages outcome-tagged
+     */
+    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> messages) {
+        var out = new ArrayList<PyrisMessageDTO>(messages.size());
+        for (int i = 0; i < messages.size(); i++) {
+            var m = messages.get(i);
+            if (m.getOrigin() != IrisMessageOrigin.PROACTIVE_STRUGGLE) {
+                out.add(PyrisMessageDTO.of(m));
+            }
+            else {
+                out.add(annotatedProactiveDTO(m, proactiveOutcomeTag(m, messages, i)));
+            }
+        }
+        return out;
+    }
+
+    /** The IMMEDIATELY following USER reply counts as engagement only if it lands within this window of the hint (spec §7.4; ENG). */
+    private static final Duration ENGAGED_REPLY_WINDOW = Duration.ofMinutes(10);
+
+    /** The wire tag for a proactive message based on its persisted outcome and surrounding messages. */
+    private static String proactiveOutcomeTag(IrisMessage m, List<IrisMessage> all, int i) {
+        if (m.getProactiveOutcome() == IrisProactiveOutcome.DISMISSED) {
+            return "(proactive hint, dismissed) ";
+        }
+        // Engagement is attributed only when the IMMEDIATELY following message is a USER reply within the window:
+        // if an assistant turn intervenes, a later user reply is more plausibly a response to that turn, not this hint.
+        boolean replied = i + 1 < all.size() && all.get(i + 1).getSender() == IrisMessageSender.USER && isWithinEngagedWindow(m.getSentAt(), all.get(i + 1).getSentAt());
+        if (m.getHelpful() != null || replied) {
+            return "(proactive hint, engaged) ";
+        }
+        boolean superseded = all.subList(i + 1, all.size()).stream().anyMatch(x -> x.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        return superseded ? "(proactive hint, ignored) " : "(proactive hint) ";
+    }
+
+    /**
+     * True when the reply follows the hint within {@link #ENGAGED_REPLY_WINDOW} (so a much-later manual message is
+     * not misread as engagement with this hint).
+     */
+    private static boolean isWithinEngagedWindow(ZonedDateTime hintAt, ZonedDateTime replyAt) {
+        if (hintAt == null || replyAt == null) {
+            return false;
+        }
+        // The reply must come AT or AFTER the hint and within the window; a reply timestamped before the hint
+        // (clock skew / reordering) is not engagement with it.
+        var delta = Duration.between(hintAt, replyAt);
+        return !delta.isNegative() && delta.compareTo(ENGAGED_REPLY_WINDOW) <= 0;
+    }
+
+    /**
+     * Build the wire DTO for a proactive message WITHOUT touching the stored entity: same id/sentAt/sender, the
+     * first text content prefixed with {@code tag}, every other content mapped verbatim (mirrors PyrisMessageDTO.of).
+     */
+    private static PyrisMessageDTO annotatedProactiveDTO(IrisMessage m, String tag) {
+        boolean[] prefixed = { false };
+        var contents = m.getContent().stream().<PyrisMessageContentBaseDTO>map(c -> {
+            if (c instanceof IrisTextMessageContent text) {
+                String body = (!prefixed[0] ? tag : "") + text.getContentAsString();
+                prefixed[0] = true;
+                return new PyrisTextMessageContentDTO(body);
+            }
+            if (c instanceof IrisJsonMessageContent json) {
+                return new PyrisJsonMessageContentDTO(json.getContentAsString());
+            }
+            return null;
+        }).filter(Objects::nonNull).toList();
+        return new PyrisMessageDTO(m.getId(), toInstant(m.getSentAt()), m.getSender(), contents);
     }
 
     /**

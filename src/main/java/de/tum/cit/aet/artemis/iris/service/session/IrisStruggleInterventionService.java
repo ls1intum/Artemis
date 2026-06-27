@@ -179,7 +179,7 @@ public class IrisStruggleInterventionService {
         var courseDTO = new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember());
         var chatHistory = irisChatSessionRepository
                 .findLatestByEntityIdAndChatModeAndUserIdWithMessages(p.exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, p.userId(), Pageable.ofSize(1)).stream().findFirst()
-                .map(s -> pyrisDTOService.toPyrisMessageDTOList(s.getMessages())).orElse(List.of());
+                .map(s -> pyrisDTOService.toPyrisMessageDTOListForStruggle(s.getMessages())).orElse(List.of());
         pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory, p.exerciseId());
     }
 
