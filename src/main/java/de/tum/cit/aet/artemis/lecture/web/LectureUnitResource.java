@@ -113,7 +113,8 @@ public class LectureUnitResource {
     @EnforceAtLeastEditorInLecture
     public ResponseEntity<List<LectureUnitDTO>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+        // Fetch competency links and their competencies eagerly: the polymorphic LectureUnitDTO mapping below reads them and there is no open-session-in-view to load them lazily.
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
 
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
@@ -132,8 +133,9 @@ public class LectureUnitResource {
         }
 
         lecture.reorderLectureUnits(orderedLectureUnitIds);
+        lectureRepository.save(lecture);
 
-        lecture = lectureRepository.save(lecture);
+        // reorderLectureUnits already re-sorted the in-memory units, whose competency links were eagerly fetched above, so map them directly without another round trip.
         return ResponseEntity.ok(lecture.getLectureUnits().stream().map(LectureUnitDTO::of).toList());
     }
 
