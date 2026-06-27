@@ -20,13 +20,14 @@ import dayjs from 'dayjs/esm';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { HttpResponse } from '@angular/common/http';
 import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseTutorialGroupsComponent {
+export class CourseTutorialGroupsComponent implements SidebarView {
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
         allGroups: true,
         registeredGroups: false,

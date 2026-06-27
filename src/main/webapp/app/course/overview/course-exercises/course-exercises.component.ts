@@ -14,6 +14,7 @@ import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, Sideba
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 /**
  * Minimal contract for exercise-details route components activated in the inner outlet.
@@ -59,7 +60,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     styleUrls: ['../course-overview/course-overview.scss'],
     imports: [SidebarComponent, NgStyle, RouterOutlet, TranslateDirective],
 })
-export class CourseExercisesComponent {
+export class CourseExercisesComponent implements SidebarView {
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);

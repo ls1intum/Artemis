@@ -32,7 +32,7 @@ import { CourseNotificationSettingService } from 'app/notification/course-notifi
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { CourseView, isCourseView } from 'app/course/shared/course-view.interface';
+import { SidebarView, hasSidebar } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -84,7 +84,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
     showRefreshButton = signal<boolean>(false);
-    activatedComponentReference = signal<CourseView | undefined>(undefined);
+    activatedComponentReference = signal<SidebarView | undefined>(undefined);
     // True for all tabs except exercises.
     protected readonly showCourseTitleBar = computed(() => {
         this.navigationEnd(); // re-evaluate after each navigation
@@ -268,7 +268,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     protected handleComponentActivation(componentRef: any): void {
-        if (isCourseView(componentRef)) {
+        if (hasSidebar(componentRef)) {
             this.activatedComponentReference.set(componentRef);
         }
 

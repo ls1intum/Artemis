@@ -41,7 +41,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { CourseView, isCourseView } from 'app/course/shared/course-view.interface';
+import { SidebarView, hasSidebar } from 'app/course/shared/sidebar-view.interface';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { CourseOperationProgressDTO, CourseOperationType } from 'app/course/shared/entities/course-operation-progress.model';
@@ -134,7 +134,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    activatedComponentReference = signal<CourseView | undefined>(undefined);
+    activatedComponentReference = signal<SidebarView | undefined>(undefined);
 
     async ngOnInit() {
         this.route.firstChild?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params: { courseId: string }) => {
@@ -262,7 +262,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     protected handleComponentActivation(componentRef: any): void {
-        const courseView = isCourseView(componentRef) ? componentRef : undefined;
+        const courseView = hasSidebar(componentRef) ? componentRef : undefined;
         this.activatedComponentReference.set(courseView);
         if (courseView) {
             const isCollapsed = typeof courseView.isCollapsed === 'function' ? courseView.isCollapsed() : courseView.isCollapsed;
