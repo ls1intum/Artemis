@@ -140,7 +140,7 @@ describe('KnowledgeAreaTreeComponent (rendering via host)', () => {
         const filteredNodes = convertToTreeNodes(knowledgeAreas, () => true);
         // sanity: the filtered competency is gone from the rendered children, but the raw array is still there
         expect(filteredNodes[0].children).toHaveLength(0);
-        expect(filteredNodes[0].data!.competencies).toHaveLength(1);
+        expect((filteredNodes[0].data as KnowledgeAreaForTree).competencies).toHaveLength(1);
 
         host.nodes.set(filteredNodes);
         hostFixture.detectChanges();
