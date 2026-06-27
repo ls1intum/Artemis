@@ -132,6 +132,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.courseId.set(id);
             // In-place navigation to a different course (without destroying this container) must reload the course
             if (previousCourseId && previousCourseId !== id) {
+                this.courseStorageService.clearFullyLoaded(previousCourseId);
                 this.loadCourseSubscription?.unsubscribe();
                 this.loadCourseSubscription = this.loadCourse().subscribe({
                     next: () => this.sidebarItems.set(this.getSidebarItems()),
