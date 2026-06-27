@@ -18,7 +18,15 @@
             <span class="category-name" (click)="openColorSelectorForLabel($event, label)">
                 {{ label }}
             </span>
-            <fa-icon [icon]="faTimes" class="category-chip-remove" (click)="removeChip(label, $event)" />
+            <button
+                type="button"
+                class="category-chip-remove"
+                [attr.aria-label]="('entity.action.remove' | artemisTranslate) + ' ' + label"
+                [title]="('entity.action.remove' | artemisTranslate) + ' ' + label"
+                (click)="removeChip(label, $event)"
+            >
+                <fa-icon [icon]="faTimes" />
+            </button>
         </div>
     </ng-template>
     <!-- PrimeNG's default per-chip remove icon is hidden via CSS (.p-chip-remove-icon); the remove control lives inside .custom-tag above -->

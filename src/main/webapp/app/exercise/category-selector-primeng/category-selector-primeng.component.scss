@@ -53,9 +53,16 @@ jhi-category-selector-primeng {
                 }
             }
 
+            // Native <button> reset: it is just the remove icon inside the colored pill.
             .category-chip-remove {
-                // Color is inherited from .custom-tag (#fff); the fa-icon fills with currentColor.
+                display: inline-flex;
+                align-items: center;
+                padding: 0;
+                border: 0;
+                background: none;
+                color: inherit; // inherit #fff from .custom-tag; the fa-icon fills with currentColor
                 font-size: 0.7rem;
+                line-height: 1;
                 cursor: pointer;
             }
         }

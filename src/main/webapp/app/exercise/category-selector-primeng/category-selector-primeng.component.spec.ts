@@ -114,6 +114,23 @@ describe('CategorySelectorPrimengComponent', () => {
         expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
     });
 
+    it('renders the in-chip remove control as a non-submitting, labelled button inside the colored pill', async () => {
+        fixture.detectChanges();
+        fixture.componentRef.setInput('categories', [category1]);
+        // Push the value into PrimeNG's AutoComplete so it renders the chip token via the selecteditem template.
+        comp.autoComplete().writeValue([category1.category]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const button = fixture.nativeElement.querySelector('.custom-tag button.category-chip-remove');
+        expect(button).toBeTruthy();
+        // type="button" so it never submits a surrounding (ngSubmit) form
+        expect(button.getAttribute('type')).toBe('button');
+        // accessible name identifies which category it removes
+        expect(button.getAttribute('aria-label')).toContain('category1');
+    });
+
     it('should open color selector', () => {
         fixture.detectChanges();
         const mouseEvent = new MouseEvent('click', {
