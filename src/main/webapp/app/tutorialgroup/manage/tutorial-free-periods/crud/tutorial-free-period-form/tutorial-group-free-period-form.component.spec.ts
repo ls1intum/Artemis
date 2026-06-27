@@ -421,6 +421,27 @@ describe('TutorialFreePeriodFormComponent', () => {
             expect(component.form.get('endTime')!.value).toBe(validEndTimeBerlin);
         });
 
+        it('restores user-edited endDate (not original formData value) after a tab round-trip', () => {
+            const editedEndDate = dayjs('2021-03-15T00:00:00').tz('Europe/Berlin').toDate();
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: validEndDateBerlinFreePeriod,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            component.form.get('endDate')!.setValue(editedEndDate);
+
+            component.setTimeFrame(TimeFrame.Day);
+            expect(component.form.get('endDate')!.value).toBeFalsy();
+
+            component.setTimeFrame(TimeFrame.Period);
+            expect(component.form.get('endDate')!.value).toBe(editedEndDate);
+        });
+
         it('does not restore startDate when the user has deliberately cleared it', () => {
             fixture.componentRef.setInput('isEditMode', true);
             fixture.componentRef.setInput('formData', {

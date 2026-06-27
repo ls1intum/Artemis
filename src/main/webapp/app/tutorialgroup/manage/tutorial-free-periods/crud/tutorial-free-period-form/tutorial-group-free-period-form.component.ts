@@ -58,6 +58,11 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
     // TimeFrame to store the current time frame of the form.
     protected readonly timeFrame = signal(TimeFrame.Day);
 
+    // Caches the last non-null value of each tab-switchable control before a reset, so that a user
+    // edit (e.g. changing endDate while on the Period tab) is not lost when the user switches away
+    // and back. Falls back to formData() only if no cached value exists. Reset on each new edit load.
+    private preResetCache: Record<string, Date | undefined> = {};
+
     // Enum Object to be used for Comparing different TimeFrames in the template.
     protected readonly TimeFrame = TimeFrame;
 
@@ -68,6 +73,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
             const editMode = this.isEditMode();
             this.initializeForm();
             if (editMode && formData) {
+                this.preResetCache = {};
                 this.setFormValues(formData);
                 this.setFirstTimeFrameInEditMode(formData);
             }
@@ -79,6 +85,13 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
      * @param {TimeFrame} timeFrame - The time frame to set. This should be one of the values from the TimeFrame enum.
      */
     setTimeFrame(timeFrame: TimeFrame) {
+        // Snapshot non-null values before reset so user edits survive a tab round-trip.
+        for (const name of ['endDate', 'startTime', 'endTime']) {
+            const val: Date | undefined = this.form.get(name)?.value ?? undefined;
+            if (val) {
+                this.preResetCache[name] = val;
+            }
+        }
         const resetControls = ['endDate', 'endTime', 'startTime'];
         resetControls.forEach((control) => {
             if (timeFrame === TimeFrame.Day || (timeFrame === TimeFrame.Period && control !== 'endDate') || (timeFrame === TimeFrame.PeriodWithinDay && control === 'endDate')) {
@@ -88,7 +101,7 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
         this.timeFrame.set(timeFrame);
         // In edit mode, a prior tab switch may have cleared controls that are relevant to the
         // newly-selected timeFrame (e.g. switching Day→Period leaves endDate empty because
-        // setTimeFrame(Day) reset it). Restore the original formData value for any such control
+        // setTimeFrame(Day) reset it). Restore the cached/original value for any such control
         // so the user sees the pre-existing data again when switching back.
         if (this.isEditMode()) {
             this.restoreVisibleControlsFromFormData(timeFrame);
@@ -97,22 +110,24 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
 
     /**
      * For each control that is shown in the new timeFrame, if the control is currently empty
-     * (it was cleared by a prior tab switch), restore the original formData value.
+     * (it was cleared by a prior tab switch), restore the best-known value: the pre-reset cache
+     * (preserving the user's in-session edits) or, if absent, the original formData value.
      * Controls the user intentionally cleared are left alone (guard: only restore when empty).
      */
     private restoreVisibleControlsFromFormData(timeFrame: TimeFrame) {
         const formData = this.formData();
-        const restoreIfEmpty = (controlName: string, originalValue: Date | undefined) => {
+        const restoreIfEmpty = (controlName: string) => {
             const control = this.form.get(controlName);
-            if (control && !control.value && originalValue) {
-                control.setValue(originalValue);
+            const valueToRestore = this.preResetCache[controlName] ?? (formData[controlName as keyof TutorialGroupFreePeriodFormData] as Date | undefined);
+            if (control && !control.value && valueToRestore) {
+                control.setValue(valueToRestore);
             }
         };
         if (timeFrame === TimeFrame.Period) {
-            restoreIfEmpty('endDate', formData.endDate);
+            restoreIfEmpty('endDate');
         } else if (timeFrame === TimeFrame.PeriodWithinDay) {
-            restoreIfEmpty('startTime', formData.startTime);
-            restoreIfEmpty('endTime', formData.endTime);
+            restoreIfEmpty('startTime');
+            restoreIfEmpty('endTime');
         }
     }
 

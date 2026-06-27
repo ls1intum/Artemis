@@ -260,9 +260,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
         this.valueChanged();
     }
 
-    /** Records whether the current paste was triggered by Ctrl/Cmd+V (not context-menu). */
+    /** Records whether the current paste was triggered by a keyboard shortcut (Ctrl/Cmd+V or Shift+Insert). */
     onPickerKeydown(event: KeyboardEvent) {
-        this.isKeyboardPaste = event.key.toLowerCase() === 'v' && (event.ctrlKey || event.metaKey);
+        this.isKeyboardPaste = (event.key.toLowerCase() === 'v' && (event.ctrlKey || event.metaKey)) || (event.key === 'Insert' && event.shiftKey);
     }
 
     /**

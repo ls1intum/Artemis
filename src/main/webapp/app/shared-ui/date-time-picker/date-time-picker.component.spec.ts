@@ -462,5 +462,22 @@ describe('FormDateTimePickerComponent', () => {
             expect(selectSpy).not.toHaveBeenCalled();
             expect(picker.isKeydown).toBe(true);
         });
+
+        it('does not select-all for Shift+Insert (treated as keyboard paste)', () => {
+            const picker: Partial<DatePicker> = { isKeydown: false };
+            stubPicker(picker);
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            input.selectionStart = 8;
+            input.selectionEnd = 8;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            component.onPickerKeydown(new KeyboardEvent('keydown', { key: 'Insert', shiftKey: true }));
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).not.toHaveBeenCalled();
+            expect(picker.isKeydown).toBe(true);
+        });
     });
 });
