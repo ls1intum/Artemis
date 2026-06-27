@@ -25,7 +25,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TooltipModule } from 'primeng/tooltip';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -130,6 +130,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
     protected readonly orchestrationRunning = signal(false);
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+    protected readonly deimosModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS);
 
     protected deimosDateRangeModal = viewChild.required<DeimosDateRangeModalComponent>('deimosDateRangeModal');
     protected deimosSubmitting = signal(false);

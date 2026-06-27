@@ -97,14 +97,16 @@
                             @if (isExportToSharingEnabled()) {
                                 <jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="programmingExercise().id!" class="me-1" />
                             }
-                            <jhi-button
-                                class="me-1"
-                                [jhiFeatureToggleHide]="FeatureToggle.Deimos"
-                                [btnType]="ButtonType.SECONDARY"
-                                [btnSize]="ButtonSize.SMALL"
-                                [title]="'artemisApp.deimos.button.exerciseTrigger'"
-                                (onClick)="openDeimosBatchDialog()"
-                            />
+                            @if (deimosModuleEnabled) {
+                                <jhi-button
+                                    class="me-1"
+                                    [jhiFeatureToggleHide]="FeatureToggle.Deimos"
+                                    [btnType]="ButtonType.SECONDARY"
+                                    [btnSize]="ButtonSize.SMALL"
+                                    [title]="'artemisApp.deimos.button.exerciseTrigger'"
+                                    (onClick)="openDeimosBatchDialog()"
+                                />
+                            }
                         }
                         @if (programmingExercise().programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise().isAtLeastEditor) {
                             <span class="me-1">

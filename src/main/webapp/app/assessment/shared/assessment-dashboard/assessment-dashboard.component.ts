@@ -35,7 +35,7 @@ import { ExamAssessmentButtonsComponent } from 'app/assessment/shared/assessment
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
-import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
@@ -92,6 +92,7 @@ export class AssessmentDashboardComponent implements OnInit {
     readonly documentationType: DocumentationType = 'Assessment';
 
     readonly plagiarismEnabled = signal<boolean>(false);
+    readonly deimosModuleEnabled = signal<boolean>(false);
 
     // Signal-backed reactive state: these are populated from async subscriptions (and recomputed in place previously),
     // so under zoneless they are signals — each write schedules change detection without markForCheck.
@@ -159,6 +160,7 @@ export class AssessmentDashboardComponent implements OnInit {
         this.loadAll();
         this.accountService.identity().then((user) => this.tutor.set(user!));
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
+        this.deimosModuleEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS));
     }
 
     /**

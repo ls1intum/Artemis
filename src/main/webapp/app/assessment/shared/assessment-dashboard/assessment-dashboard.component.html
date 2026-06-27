@@ -39,10 +39,12 @@
                             </a>
                         </jhi-feature-overlay>
 
-                        <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" class="tab-item btn btn-sm btn-info ms-1" (click)="openDeimosBatchDialog()">
-                            <fa-icon [icon]="faShieldAlt" />
-                            <span jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
-                        </button>
+                        @if (deimosModuleEnabled()) {
+                            <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" class="tab-item btn btn-sm btn-info ms-1" (click)="openDeimosBatchDialog()">
+                                <fa-icon [icon]="faShieldAlt" />
+                                <span jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
+                            </button>
+                        }
                     }
                 </div>
             }
