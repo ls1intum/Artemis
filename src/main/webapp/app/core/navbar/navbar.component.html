@@ -161,42 +161,9 @@
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed()">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical()">
-            @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
-                <li class="nav-item">
-                    <jhi-global-search-navbar />
-                </li>
-            }
-            <li *jhiHasAnyAuthority="IS_AT_LEAST_TUTOR" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-                @if (!isExamActive() && !isExamStarted()) {
-                    <a class="nav-link py-0" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
-                        <span>
-                            <fa-icon [icon]="faThList" />
-                            <span jhiTranslate="global.menu.course"></span>
-                        </span>
-                    </a>
-                }
-            </li>
-            <jhi-server-administration class="nav-item" [isExamActive]="isExamActive()" [isExamStarted]="isExamStarted()" (collapseNavbarListener)="collapseNavbar()" />
-            @if (isStudentCourseView()) {
+            @if (currentCourse()?.id && !isExamActive() && !isExamStarted()) {
                 <li class="nav-item d-flex align-items-center">
                     <jhi-course-notification-overview [courseId]="currentCourse()!.id!" />
-                </li>
-            }
-            @if (!currAccount() && languages && languages.length > 1) {
-                <li ngbDropdown class="nav-item dropdown pointer" display="dynamic">
-                    <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
-                        <span>
-                            <fa-icon [icon]="faFlag" />
-                            <span jhiTranslate="global.menu.language"></span>
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu" ngbDropdownMenu>
-                        @for (language of languages; track language) {
-                            <li>
-                                <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{ language | findLanguageFromKey }}</a>
-                            </li>
-                        }
-                    </ul>
                 </li>
             }
         </ul>

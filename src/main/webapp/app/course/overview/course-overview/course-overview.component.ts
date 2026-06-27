@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -7,7 +8,7 @@ import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
@@ -66,11 +67,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesSubscription?: Subscription;
     private examStartedSubscription: Subscription;
 
-    protected readonly selectableSettingPresets = signal<CourseNotificationSettingPreset[] | undefined>(undefined);
-    protected readonly selectedSettingPreset = signal<CourseNotificationSettingPreset | undefined>(undefined);
-    private info?: CourseNotificationInfo;
-    private settingInfo?: CourseNotificationSettingInfo;
-
     showUnenrollModal = signal<boolean>(false);
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
@@ -86,6 +82,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     >(undefined);
     protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
+    readonly showRefreshButton = toSignal(this.route.data.pipe(map((data) => !!data['showRefreshButton'])), { initialValue: false });
+
     // Icons
     faTimes = faTimes;
     faWrench = faWrench;
@@ -95,6 +93,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
+    faSync = faSync;
 
     async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
@@ -121,29 +120,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
         await this.initAfterCourseLoad();
-    }
-
-    /**
-     * Initializes component values once both settingInfo and info are available.
-     * Sets up selectable presets, and the currently selected preset.
-     */
-    private initializeCourseNotificationValues() {
-        this.selectableSettingPresets.set(this.info!.presets);
-
-        this.selectedSettingPreset.set(
-            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,
-        );
-    }
-
-    /**
-     * Handles selection of a notification preset.
-     *
-     * @param presetTypeId - The ID of the selected preset (0 for custom settings)
-     */
-    presetSelected(presetTypeId: number) {
-        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset());
-
-        this.selectedSettingPreset.set(presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId)!);
     }
 
     protected handleNavigationEndActions() {}

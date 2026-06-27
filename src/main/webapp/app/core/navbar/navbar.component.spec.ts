@@ -1035,34 +1035,31 @@ describe('NavbarComponent', () => {
             expect(component.isStudentCourseView()).toBe(false);
         });
 
-        it('should only show the manage button to at least tutors', () => {
-            component.currentUrl.set('/courses/1/exercises');
-
-            currentCourseContextService.setCourse({ id: 1, isAtLeastTutor: true } as Course);
-            expect(component.showManageButton()).toBe(true);
-
-            currentCourseContextService.setCourse({ id: 1, isAtLeastTutor: false } as Course);
-            expect(component.showManageButton()).toBe(false);
-        });
-
-        it('should render the manage button and notification overview in the navbar for a student course view', () => {
-            currentCourseContextService.setCourse({ id: 1, isAtLeastTutor: true } as Course);
+        it('should render the notification overview when a course is active', () => {
+            currentCourseContextService.setCourse({ id: 1 } as Course);
             router.setUrl('/courses/1/exercises');
 
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('#manage-button')).not.toBeNull();
             expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
         });
 
-        it('should not render the manage button when the user is not at least tutor', () => {
-            currentCourseContextService.setCourse({ id: 1, isAtLeastTutor: false } as Course);
-            router.setUrl('/courses/1/exercises');
+        it('should render the notification overview for instructors in course management view', () => {
+            currentCourseContextService.setCourse({ id: 1, isAtLeastTutor: true } as Course);
+            router.setUrl('/course-management/1/exercises');
 
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('#manage-button')).toBeNull();
             expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).not.toBeNull();
+        });
+
+        it('should not render the notification overview when no course is active', () => {
+            currentCourseContextService.clearCourse();
+            router.setUrl('/courses');
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('jhi-course-notification-overview')).toBeNull();
         });
 
         it.each([
@@ -1070,7 +1067,7 @@ describe('NavbarComponent', () => {
             { url: '/course-management/123/exercises/new', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'exercises'] },
             { url: '/course-management/123/lectures/1/details', course: { id: 123, isAtLeastEditor: true }, expected: ['/course-management', '123', 'lectures'] },
             { url: '/course-management/123/communication?conversationId=123', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'communication'] },
-            { url: '/course-management/123/learning-path', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'learning-paths-management'] },
+            { url: '/course-management/123/learning-path', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'learning-path-management'] },
             { url: '/course-management/123/competencies', course: { id: 123, isAtLeastInstructor: true }, expected: ['/course-management', '123', 'competency-management'] },
             { url: '/course-management/123/faq', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'faqs'] },
             { url: '/course-management/123/statistics', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123', 'course-statistics'] },
@@ -1081,18 +1078,18 @@ describe('NavbarComponent', () => {
                 expected: ['/course-management', '123', 'tutorial-groups-checklist'],
             },
             { url: '/courses/123/settings', course: { id: 123, isAtLeastTutor: true }, expected: ['/course-management', '123'] },
-        ])('should compute the correct manage view link for $url', ({ url, course, expected }) => {
+        ])('should compute the correct management view link for $url', ({ url, course, expected }) => {
             currentCourseContextService.setCourse(course as Course);
-            component.currentUrl.set(url);
+            router.setUrl(url);
 
-            expect(component.manageViewLink()).toEqual(expected);
+            expect(component.managementViewLink()).toEqual(expected);
         });
 
-        it('should fall back to an empty link when there is no current course', () => {
+        it('should fall back to course management without a course id when there is no current course', () => {
             currentCourseContextService.clearCourse();
-            component.currentUrl.set('/courses/1/exercises');
+            router.setUrl('/courses/1/exercises');
 
-            expect(component.manageViewLink()).toEqual(['']);
+            expect(component.managementViewLink()).toEqual(['/course-management', 'exercises']);
         });
     });
 
