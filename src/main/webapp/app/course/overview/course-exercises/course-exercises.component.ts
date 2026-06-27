@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
@@ -56,6 +56,7 @@ export class CourseExercisesComponent {
     private exerciseService = inject(ExerciseService);
     private sessionStorageService = inject(SessionStorageService);
     private destroyRef = inject(DestroyRef);
+    private changeDetectorRef = inject(ChangeDetectorRef);
 
     private readonly _course = signal<Course | undefined>(undefined);
     private readonly _courseId = signal<number>(0);
@@ -129,6 +130,12 @@ export class CourseExercisesComponent {
                 this._course.set(course);
                 this.prepareSidebarData();
                 this.onCourseLoad();
+                // This update can arrive from an async, non-template-event source (e.g. a started exercise's
+                // participation propagated into the cached course while the student is navigating to the code editor).
+                // Under zoneless change detection that signal write does not reliably schedule a render in time, so the
+                // sidebar card could stay at "Not yet started" until an unrelated event ticked CD. Explicitly mark for
+                // check so the live re-map paints immediately.
+                this.changeDetectorRef.markForCheck();
             });
 
         // If no exercise is selected navigate to the lastSelected or upcoming exercise

@@ -1,5 +1,30 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical(), 'in-menu': iconsMovedToMenu() }">
+        <div *jhiHasAnyAuthority="IS_AT_LEAST_TUTOR" class="perspective-switch">
+            <a [routerLink]="studentViewLink()" [class.subtle]="routeIsAtStudentCourseView()" (click)="collapseNavbar()" jhiTranslate="global.menu.student">Student</a>
+            <span class="perspective-switch-divider" aria-hidden="true">|</span>
+            <a [routerLink]="managementViewLink()" [class.subtle]="routeIsAtCourseManagementView()" (click)="collapseNavbar()" jhiTranslate="global.menu.course">Management</a>
+        </div>
+        @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
+            <jhi-global-search-navbar />
+        }
+        @if (!currAccount() && languages && languages.length > 1) {
+            <div ngbDropdown class="dropdown pointer" display="dynamic">
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
+                    <span>
+                        <fa-icon [icon]="faFlag" />
+                        <span jhiTranslate="global.menu.language"></span>
+                    </span>
+                </a>
+                <ul class="dropdown-menu" ngbDropdownMenu>
+                    @for (language of languages; track language) {
+                        <li>
+                            <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{ language | findLanguageFromKey }}</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu() ? 'bottom' : 'bottom-right'" />
         @if (isAuthenticated()) {
             <div
@@ -36,6 +61,14 @@
                             <span jhiTranslate="global.menu.settings"></span>
                         </a>
                     </li>
+                    @if (!isExamActive() && !isExamStarted()) {
+                        <li *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN">
+                            <a class="dropdown-item" routerLink="/admin" routerLinkActive="active" (click)="collapseNavbar()" id="admin-menu">
+                                <fa-icon [icon]="faUserShield" [fixedWidth]="true" />
+                                <span jhiTranslate="global.menu.admin.main"></span>
+                            </a>
+                        </li>
+                    }
                     <div class="dropdown-divider"></div>
                     <li>
                         <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.language"></h6>

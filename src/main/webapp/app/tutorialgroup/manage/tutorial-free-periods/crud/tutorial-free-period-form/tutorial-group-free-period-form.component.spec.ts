@@ -5,7 +5,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
     TimeFrame,
     TutorialGroupFreePeriodFormComponent,
@@ -41,8 +40,6 @@ describe('TutorialFreePeriodFormComponent', () => {
             imports: [
                 ReactiveFormsModule,
                 FormsModule,
-                OwlDateTimeModule,
-                OwlNativeDateTimeModule,
                 TranslateModule.forRoot(),
                 TutorialGroupFreePeriodFormComponent,
                 MockPipe(ArtemisTranslatePipe),

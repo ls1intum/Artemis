@@ -66,6 +66,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesSubscription?: Subscription;
     private examStartedSubscription: Subscription;
 
+    protected readonly selectableSettingPresets = signal<CourseNotificationSettingPreset[] | undefined>(undefined);
+    protected readonly selectedSettingPreset = signal<CourseNotificationSettingPreset | undefined>(undefined);
+    private info?: CourseNotificationInfo;
+    private settingInfo?: CourseNotificationSettingInfo;
+
     showUnenrollModal = signal<boolean>(false);
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
@@ -116,6 +121,29 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
         await this.initAfterCourseLoad();
+    }
+
+    /**
+     * Initializes component values once both settingInfo and info are available.
+     * Sets up selectable presets, and the currently selected preset.
+     */
+    private initializeCourseNotificationValues() {
+        this.selectableSettingPresets.set(this.info!.presets);
+
+        this.selectedSettingPreset.set(
+            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,
+        );
+    }
+
+    /**
+     * Handles selection of a notification preset.
+     *
+     * @param presetTypeId - The ID of the selected preset (0 for custom settings)
+     */
+    presetSelected(presetTypeId: number) {
+        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset());
+
+        this.selectedSettingPreset.set(presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId)!);
     }
 
     protected handleNavigationEndActions() {}

@@ -19,9 +19,18 @@ import { SEED_COURSES } from '../../support/seedData';
  * both restored in the UI and successfully re-sent to the server.
  */
 const course = { id: SEED_COURSES.examParticipation.id } as any;
-const quizSaveUrl = '**/api/quiz/exercises/*/submissions/exam';
+// Matcher for the quiz exam-save endpoint (PUT /api/quiz/exercises/{id}/submissions/exam), used to inject the failed
+// save below. A RegExp keeps the match unambiguous against the absolute request URL.
+const quizSaveUrl = /\/api\/quiz\/exercises\/\d+\/submissions\/exam/;
 
 test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, () => {
+    // Block the Angular service worker for this test. The production WAR registers ngsw-worker.js, which handles the
+    // quiz exam-save fetch; Playwright's page.route does NOT intercept service-worker-handled requests (the default
+    // serviceWorkers: 'allow'), so the 503 outage we inject below was silently bypassed and the save reached the real
+    // server (200). Blocking the SW lets page.route intercept the save directly; the answer-restore-on-reload logic
+    // under test lives in the client (local storage), not the SW, so this does not change what the test verifies.
+    test.use({ serviceWorkers: 'block' });
+
     let exam: Exam;
     let quizExercise: Exercise;
 
@@ -38,12 +47,15 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         await examParticipation.startParticipation(studentTwo, course, exam);
         await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
 
+        // Simulate a failed save (as during an outage) BEFORE touching the answer: make the quiz exam save endpoint fail.
+        // Installing it before the first answer change guarantees no save can succeed first (e.g. a coincidental 30s
+        // autosave) and silently mark the answer synced, which would make the forced save below a no-op.
+        await page.route(quizSaveUrl, (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
+
         // Tick an answer option; the exercise becomes unsynced.
         await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
         await expect(getExercise(page, quizExercise.id!).locator('#answer-option-0')).toHaveClass(/selected/);
 
-        // Simulate a failed save (as during an outage): make the quiz exam save endpoint fail.
-        await page.route(quizSaveUrl, (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
         // Force a save attempt and wait deterministically for the failed (503) save instead of a fixed timeout.
         // The answer is written to local storage but the server submission stays empty.
         const failedSave = page.waitForResponse((response) => response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.status() === 503, {

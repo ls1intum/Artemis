@@ -1,63 +1,4 @@
 <div [id]="'exercise-' + modelingExercise()?.id">
-    @if (displayHeader() && examMode()) {
-        <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExerciseHeader()" [participation]="modelingParticipationHeader()">
-            <span pagetitle>
-                {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
-                <span class="font-weight-normal">{{ examMode() ? modelingExercise()?.exerciseGroup?.title : modelingExercise()?.title }}</span>
-            </span>
-            <ng-container submitbutton>
-                @if (isOwnerOfParticipation()) {
-                    @if (isFeedbackView()) {
-                        @if ((sortedSubmissionHistory()?.length || 0) > 1) {
-                            <jhi-button
-                                id="toggleTimeline"
-                                [icon]="faTimeline"
-                                [title]="showResultHistory() ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
-                                (click)="showResultHistory.set(!showResultHistory())"
-                            />
-                        }
-                        @if (isActive || !modelingExercise().dueDate) {
-                            <jhi-button
-                                id="Continue"
-                                [title]="'entity.action.continueSubmission'"
-                                [routerLink]="['/courses', course()?.id, 'exercises', 'modeling-exercises', modelingExercise()?.id!, 'participate', participation()?.id!]"
-                            />
-                        }
-                    }
-                }
-                @if (!isFeedbackView()) {
-                    <jhi-exercise-submit-button
-                        id="submit"
-                        class="submission-button"
-                        [exercise]="modelingExercise()"
-                        [disabled]="(!examMode() && !isActive && !isLate()) || !submission() || (!!result() && !isAutomaticResult) || (isLate() && !!submission().submitted)"
-                        [title]="!isLate() ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                        (onSubmit)="submit()"
-                        [isLoading]="isSaving()"
-                        [isSubmitted]="!!submission()?.submitted"
-                        [btnType]="!isLate() ? ButtonType.PRIMARY : ButtonType.WARNING"
-                        [tooltip]="submitButtonTooltip"
-                        [isGeneratingFeedback]="isGeneratingFeedback()"
-                        (generatingFeedback)="isGeneratingFeedback.set(true)"
-                    />
-                }
-            </ng-container>
-        </jhi-header-participation-page>
-    }
-
-    @if (isFeedbackView() && showResultHistory()) {
-        <div class="mb-4">
-            <div id="result-history" class="row mb-2">
-                <jhi-result-history
-                    [results]="sortedResultHistory()"
-                    [exercise]="modelingExercise()"
-                    [participationInput]="participation()"
-                    [selectedResultId]="submission().latestResult?.id!"
-                />
-            </div>
-        </div>
-    }
-
     @if (modelingExercise()) {
         <jhi-resizeable-container
             [isExerciseParticipation]="true"
@@ -71,18 +12,6 @@
                 @if (!submission() || submission().submitted || !isExamSummary()) {
                     <div class="w-100">
                         <div class="submission-container d-flex flex-column w-100">
-                            <div class="d-flex flex-column flex-md-row">
-                                @if (modelingExercise().teamMode && (isActive || isLate())) {
-                                    <div class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
-                                        <jhi-team-participate-info-box
-                                            [exercise]="modelingExercise()"
-                                            [participation]="participation()"
-                                            [typing$]="submissionObservable"
-                                            [dockedToRightSide]="true"
-                                        />
-                                    </div>
-                                }
-                            </div>
                             <jhi-fullscreen>
                                 <div class="column" style="display: flex; flex-direction: column; flex-grow: 1">
                                     <div class="row" style="flex-grow: 1; display: flex">
@@ -99,19 +28,22 @@
                                                     [umlModel]="umlModel()"
                                                     [diagramType]="modelingExercise().diagramType!"
                                                     [withExplanation]="true"
+                                                    [collaborationEnabled]="modelingExercise().teamMode ?? false"
+                                                    [collaborationUser]="apollonCollaborationUser()"
                                                     [(explanation)]="explanation"
                                                     [resizeOptions]="resizeOptions"
                                                     [savedStatus]="{ isChanged: isChanged(), isSaving: isSaving() }"
                                                     (onModelPatch)="onModelPatch($event)"
                                                 />
                                                 <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"> <span></span></fa-icon>
-                                                @if (modelingExercise().teamMode) {
+                                                <!-- Gate team sync on the resolved collaboration user so it does not start the Yjs/awareness handshake
+                                                     before the (user-gated) Apollon editor exists — otherwise early peer replies would be dropped. -->
+                                                @if (modelingExercise().teamMode && apollonCollaborationUser()) {
                                                     <jhi-team-submission-sync
                                                         [exerciseType]="modelingExercise().type!"
                                                         [submissionObservable]="submissionObservable"
                                                         [submissionPatchObservable]="submissionPatchObservable"
                                                         [participation]="participation()"
-                                                        (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
                                                         (receiveSubmissionPatch)="onReceiveSubmissionPatchFromTeam($event)"
                                                         (reconnected)="onTeamSyncReconnected()"
                                                     />

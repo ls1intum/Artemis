@@ -246,6 +246,43 @@ describe('markdown.conversion.util', () => {
                 const result = htmlForMarkdown('> [!WARNING]\n> This is a warning');
                 expect(result).toContain('markdown-alert');
             });
+
+            it('should emit the alert wrapper, default title and octicon for each alert type', () => {
+                const cases: { marker: string; type: string; title: string }[] = [
+                    { marker: 'NOTE', type: 'note', title: 'Note' },
+                    { marker: 'TIP', type: 'tip', title: 'Tip' },
+                    { marker: 'IMPORTANT', type: 'important', title: 'Important' },
+                    { marker: 'WARNING', type: 'warning', title: 'Warning' },
+                    { marker: 'CAUTION', type: 'caution', title: 'Caution' },
+                ];
+                for (const { marker, type, title } of cases) {
+                    const result = htmlForMarkdown(`> [!${marker}]\n> Body text`);
+                    expect(result).toContain(`<div class="markdown-alert markdown-alert-${type}">`);
+                    expect(result).toContain(`<p class="markdown-alert-title">`);
+                    expect(result).toContain('class="octicon');
+                    expect(result).toContain(title);
+                    // the marker line itself is stripped, the body is kept
+                    expect(result).toContain('Body text');
+                    expect(result).not.toContain(`[!${marker}]`);
+                }
+            });
+
+            it('should use a custom alert title when provided', () => {
+                const result = htmlForMarkdown('> [!NOTE] Custom heading\n> Body');
+                expect(result).toContain('<div class="markdown-alert markdown-alert-note">');
+                expect(result).toContain('Custom heading');
+            });
+
+            it('should be case-insensitive for the alert marker', () => {
+                const result = htmlForMarkdown('> [!note]\n> Body');
+                expect(result).toContain('<div class="markdown-alert markdown-alert-note">');
+            });
+
+            it('should leave a normal blockquote untouched', () => {
+                const result = htmlForMarkdown('> Just a quote');
+                expect(result).toContain('<blockquote>');
+                expect(result).not.toContain('markdown-alert');
+            });
         });
 
         describe('custom extensions', () => {

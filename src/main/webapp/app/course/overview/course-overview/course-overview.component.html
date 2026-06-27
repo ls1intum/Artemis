@@ -37,7 +37,25 @@
                             [pageTitle]="pageTitle()"
                             [isExamStarted]="isExamStarted()"
                             (toggleSidebar)="toggleSidebar()"
-                        />
+                        >
+                            @if (showRefreshButton()) {
+                                <button class="btn btn-sm btn-outline-primary" (click)="loadCourse(true)" [disabled]="refreshingCourse()">
+                                    <fa-icon [icon]="faSync" [animation]="refreshingCourse() ? 'spin' : undefined" />
+                                    <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+                                </button>
+                            }
+                            @if (selectableSettingPresets()) {
+                                <jhi-course-notification-preset-picker
+                                    [availableCourseSettingPresets]="selectableSettingPresets()!"
+                                    [selectedCourseSettingPreset]="selectedSettingPreset()"
+                                    [isSmallButton]="true"
+                                    (onPresetSelected)="presetSelected($event)"
+                                />
+                            }
+                            @if (course()!.id) {
+                                <jhi-course-notification-overview [courseId]="course()!.id!" />
+                            }
+                        </jhi-course-title-bar>
                     }
 
                     <div
