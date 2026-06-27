@@ -86,6 +86,35 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
             }
         });
         this.timeFrame.set(timeFrame);
+        // In edit mode, a prior tab switch may have cleared controls that are relevant to the
+        // newly-selected timeFrame (e.g. switching Day→Period leaves endDate empty because
+        // setTimeFrame(Day) reset it). Restore the original formData value for any such control
+        // so the user sees the pre-existing data again when switching back.
+        if (this.isEditMode()) {
+            this.restoreVisibleControlsFromFormData(timeFrame);
+        }
+    }
+
+    /**
+     * For each control that is shown in the new timeFrame, if the control is currently empty
+     * (it was cleared by a prior tab switch), restore the original formData value.
+     * Controls the user intentionally cleared are left alone (guard: only restore when empty).
+     */
+    private restoreVisibleControlsFromFormData(timeFrame: TimeFrame) {
+        const formData = this.formData();
+        const restoreIfEmpty = (controlName: string, originalValue: Date | undefined) => {
+            const control = this.form.get(controlName);
+            if (control && !control.value && originalValue) {
+                control.setValue(originalValue);
+            }
+        };
+        restoreIfEmpty('startDate', formData.startDate);
+        if (timeFrame === TimeFrame.Period) {
+            restoreIfEmpty('endDate', formData.endDate);
+        } else if (timeFrame === TimeFrame.PeriodWithinDay) {
+            restoreIfEmpty('startTime', formData.startTime);
+            restoreIfEmpty('endTime', formData.endTime);
+        }
     }
 
     /**

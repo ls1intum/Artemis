@@ -371,4 +371,73 @@ describe('FormDateTimePickerComponent', () => {
         expect(dayjs(component.maxDate())).toEqual(expectedMaxDate);
         expect(dayjs(component.startDate())).toEqual(expectedStartDate);
     });
+
+    describe('onPickerPaste', () => {
+        function makePasteEvent(target: HTMLInputElement): ClipboardEvent {
+            // ClipboardEvent is unavailable in jsdom; only `target` is accessed by onPickerPaste.
+            return { target } as unknown as ClipboardEvent;
+        }
+
+        it('sets isKeydown=true on the inner picker so PrimeNG processes the pasted text', () => {
+            fixture.detectChanges();
+            const picker = { isKeydown: null as boolean | null };
+            (component as any).innerPicker = vi.fn().mockReturnValue(picker);
+
+            const input = document.createElement('input');
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(picker.isKeydown).toBe(true);
+        });
+
+        it('selects all text for a context-menu paste when cursor is just positioned (no selection)', () => {
+            fixture.detectChanges();
+            const picker = { isKeydown: null as boolean | null };
+            (component as any).innerPicker = vi.fn().mockReturnValue(picker);
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            // Simulate cursor positioned mid-field (no selection: selectionStart === selectionEnd)
+            input.selectionStart = 8;
+            input.selectionEnd = 8;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).toHaveBeenCalledOnce();
+        });
+
+        it('does not select-all for a context-menu paste when text is already selected', () => {
+            fixture.detectChanges();
+            const picker = { isKeydown: null as boolean | null };
+            (component as any).innerPicker = vi.fn().mockReturnValue(picker);
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            input.selectionStart = 0;
+            input.selectionEnd = 16;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).not.toHaveBeenCalled();
+        });
+
+        it('does not select-all for a Ctrl+V paste (isKeydown already true)', () => {
+            fixture.detectChanges();
+            // Ctrl+V: PrimeNG sets isKeydown=true before the paste event fires
+            const picker = { isKeydown: true };
+            (component as any).innerPicker = vi.fn().mockReturnValue(picker);
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            input.selectionStart = 8;
+            input.selectionEnd = 8;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).not.toHaveBeenCalled();
+            expect(picker.isKeydown).toBe(true);
+        });
+    });
 });

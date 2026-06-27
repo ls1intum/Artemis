@@ -257,6 +257,32 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     }
 
     /**
+     * Context-menu paste has no preceding keydown, so PrimeNG's `isKeydown` guard in `onUserInput`
+     * is never set and the pasted text is silently ignored. We fix two things here:
+     *
+     * 1. If no text is currently selected in the input (cursor is just positioned), select all first
+     *    so the browser's native paste replaces the entire field value instead of inserting at the
+     *    cursor. We only do this for context-menu paste (picker.isKeydown is null/false at the time
+     *    the paste event fires) — Ctrl+V already sets isKeydown via keydown, so we leave the user's
+     *    cursor/selection intact in that case.
+     *
+     * 2. Set isKeydown = true so PrimeNG's onUserInput actually processes the pasted text.
+     */
+    onPickerPaste(event: ClipboardEvent) {
+        const picker = this.innerPicker();
+        const isContextMenuPaste = !picker?.isKeydown;
+        if (isContextMenuPaste) {
+            const input = event.target as HTMLInputElement;
+            if (input?.tagName === 'INPUT' && input.selectionStart === input.selectionEnd) {
+                input.select();
+            }
+        }
+        if (picker) {
+            picker.isKeydown = true;
+        }
+    }
+
+    /**
      * Recomputes the validity signals from the currently bound value. Called after `writeValue`,
      * and exposed publicly so parents can refresh validation after programmatically patching the
      * bound form value (e.g. `exam-update` does this after a CD cycle).
