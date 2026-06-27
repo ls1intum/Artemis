@@ -1,6 +1,9 @@
 {
     "artemisApp": {
         "exerciseVariantGroup": {
+            "detail": {
+                "variants": "Variants"
+            },
             "edit": "Edit group",
             "delete": "Delete group",
             "deleted": "Deleted group with identifier {{ param }}",

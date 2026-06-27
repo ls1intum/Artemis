@@ -286,7 +286,7 @@ export class CourseOverviewService {
             id: group.id ?? '',
             targetComponentSubRoute: 'group',
             icon: faLayerGroup,
-            subtitleLeft: dueDate?.format('MMM DD, YYYY'),
+            subtitleLeft: dueDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDueDate'),
             startDate: dueDate,
             size: 'M',
             groupHeaderStyle: 'card',
