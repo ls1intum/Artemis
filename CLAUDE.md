@@ -10,7 +10,7 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 
 - **Server**: Spring Boot 4.1 (Java 25), MySQL, Hibernate, Hazelcast
 - **Client**: Angular 21, TypeScript, SCSS
-- **Build**: Gradle 9.3, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
+- **Build**: Gradle 9.6, pnpm 11 / Node 24 (pnpm version pinned via the `packageManager` field in package.json; activate with `corepack enable`)
 - **Testing**: JUnit 6, Vitest, Playwright
 
 ## Build & Development Commands
@@ -23,7 +23,7 @@ Artemis is an interactive learning platform for programming exercises, quizzes, 
 ./gradlew -Pprod -Pwar -Psbom clean bootWar # Production WAR including server + client SBOM
 ```
 
-SBOM generation (`cyclonedxBom` + `generateClientSbom`) is gated behind the `-Psbom` Gradle property. CI release-eligible jobs (pushes to `develop`/`main`/`release/*`, version tags, and published releases) set it automatically in `.github/workflows/build.yml`. Local builds and PR CI ship a WAR without the SBOM — `AdminSbomResource` returns 404 and the admin UI renders an informational banner in that case.
+SBOM generation (`cyclonedxBom` + `generateClientSbom`) is gated behind the `-Psbom` Gradle property. CI release-eligible jobs (pushes to `develop`/`main`/`release/*`, version tags, and published releases) set it automatically in `.github/workflows/ci-build.yml`. Local builds and PR CI ship a WAR without the SBOM — `AdminSbomResource` returns 404 and the admin UI renders an informational banner in that case.
 
 ### Client
 ```bash

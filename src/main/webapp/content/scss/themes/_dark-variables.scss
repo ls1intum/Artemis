@@ -203,7 +203,6 @@ $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;
 $ng-valid-border: green;
 $ng-invalid-border: red;
-$gutter-background: #bbb;
 $error-color: white;
 $error-background: red;
 $readonly-background: #eee;
@@ -262,9 +261,6 @@ $fo-wrapper-background: $neutral-dark;
 $fo-container-box-icon-background: $neutral-dark-l-10;
 $fo-blue-font-color: #4188d3;
 $fo-box-overlay-background: $neutral-dark-l-5;
-
-// Header Participation
-$header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 5%), 15%);
 
 // Markdown Editor
 $md-wrapper-body-bg: $body-bg;

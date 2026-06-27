@@ -70,12 +70,12 @@ describe('ProgrammingExercise Docker Image', () => {
         } as unknown as ProfileInfo);
 
         comp.ngOnInit();
-        expect(comp.timeoutMinValue).toBe(10);
-        expect(comp.timeoutMaxValue).toBe(240);
-        expect(comp.timeoutDefaultValue).toBe(120);
-        expect(comp.cpuCount).toBeUndefined();
-        expect(comp.memory).toBeUndefined();
-        expect(comp.memorySwap).toBeUndefined();
+        expect(comp.timeoutMinValue()).toBe(10);
+        expect(comp.timeoutMaxValue()).toBe(240);
+        expect(comp.timeoutDefaultValue()).toBe(120);
+        expect(comp.cpuCount()).toBeUndefined();
+        expect(comp.memory()).toBeUndefined();
+        expect(comp.memorySwap()).toBeUndefined();
 
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             buildTimeoutMin: 0,
@@ -86,12 +86,12 @@ describe('ProgrammingExercise Docker Image', () => {
             defaultContainerMemorySwapLimitInMB: 2048,
         } as unknown as ProfileInfo);
         comp.ngOnInit();
-        expect(comp.timeoutMinValue).toBe(0);
-        expect(comp.timeoutMaxValue).toBe(360);
-        expect(comp.timeoutDefaultValue).toBe(60);
-        expect(comp.cpuCount).toBe(1);
-        expect(comp.memory).toBe(1024);
-        expect(comp.memorySwap).toBe(2048);
+        expect(comp.timeoutMinValue()).toBe(0);
+        expect(comp.timeoutMaxValue()).toBe(360);
+        expect(comp.timeoutDefaultValue()).toBe(60);
+        expect(comp.cpuCount()).toBe(1);
+        expect(comp.memory()).toBe(1024);
+        expect(comp.memorySwap()).toBe(2048);
 
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
             buildTimeoutMin: 100,
@@ -100,13 +100,13 @@ describe('ProgrammingExercise Docker Image', () => {
         } as unknown as ProfileInfo);
 
         comp.ngOnInit();
-        expect(comp.timeoutMinValue).toBe(100);
-        expect(comp.timeoutMaxValue).toBe(240);
-        expect(comp.timeoutDefaultValue).toBe(120);
+        expect(comp.timeoutMinValue()).toBe(100);
+        expect(comp.timeoutMaxValue()).toBe(240);
+        expect(comp.timeoutDefaultValue()).toBe(120);
     });
 
     it('should parse docker flags correctly', () => {
-        comp.envVars = [['key', 'value']];
+        comp.envVars.set([['key', 'value']]);
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"}}');
 
@@ -115,7 +115,7 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"},"network":"custom"}');
 
-        comp.removeEnvVar(0);
+        comp.removeEnvVar(comp.envVars()[0]);
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"network":"custom"}');
 
         comp.addEnvVar();
@@ -130,19 +130,19 @@ describe('ProgrammingExercise Docker Image', () => {
     });
 
     it('should update environment variable rows with new array references when adding and removing rows', () => {
-        comp.envVars = [];
+        comp.envVars.set([]);
 
-        const envVarsBeforeAdd = comp.envVars;
+        const envVarsBeforeAdd = comp.envVars();
         comp.addEnvVar();
 
-        expect(comp.envVars).not.toBe(envVarsBeforeAdd);
-        expect(comp.envVars).toEqual([['', '']]);
+        expect(comp.envVars()).not.toBe(envVarsBeforeAdd);
+        expect(comp.envVars()).toEqual([['', '']]);
 
-        const envVarsBeforeRemove = comp.envVars;
-        comp.removeEnvVar(0);
+        const envVarsBeforeRemove = comp.envVars();
+        comp.removeEnvVar(comp.envVars()[0]);
 
-        expect(comp.envVars).not.toBe(envVarsBeforeRemove);
-        expect(comp.envVars).toEqual([]);
+        expect(comp.envVars()).not.toBe(envVarsBeforeRemove);
+        expect(comp.envVars()).toEqual([]);
     });
 
     it('should omit network when default is selected', () => {
@@ -152,10 +152,10 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toContain('"network":"someNet"');
 
         comp.onNetworkChange('');
-        comp.envVars = [];
-        comp.cpuCount = undefined;
-        comp.memory = undefined;
-        comp.memorySwap = undefined;
+        comp.envVars.set([]);
+        comp.cpuCount.set(undefined);
+        comp.memory.set(undefined);
+        comp.memorySwap.set(undefined);
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{}}');
     });
@@ -164,7 +164,7 @@ describe('ProgrammingExercise Docker Image', () => {
         programmingExercise.buildConfig!.dockerFlags = '{"env":{"key":"value"}, "network":"none"}';
         comp.ngOnInit();
         expect(comp.network()).toBe('none');
-        expect(comp.envVars).toEqual([['key', 'value']]);
+        expect(comp.envVars()).toEqual([['key', 'value']]);
     });
 
     it('should show warning when network none is selected', () => {
@@ -190,10 +190,10 @@ describe('ProgrammingExercise Docker Image', () => {
     it('should set supported languages', () => {
         programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;
         comp.setIsLanguageSupported();
-        expect(comp.isLanguageSupported).toBe(false);
+        expect(comp.isLanguageSupported()).toBe(false);
 
         programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
         comp.setIsLanguageSupported();
-        expect(comp.isLanguageSupported).toBe(true);
+        expect(comp.isLanguageSupported()).toBe(true);
     });
 });

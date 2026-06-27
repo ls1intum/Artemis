@@ -38,7 +38,7 @@ public class StatisticsEntry {
     }
 
     public StatisticsEntry(int year, int month, int day, String username) {
-        this.date = String.format("%04d-%02d-%02d", year, month, day);
+        this.date = "%04d-%02d-%02d".formatted(year, month, day);
         this.amount = 1L;
         this.username = username;
     }

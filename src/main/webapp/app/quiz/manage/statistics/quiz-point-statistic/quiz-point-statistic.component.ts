@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,6 +19,7 @@ import { ChartModule } from 'primeng/chart';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
+import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -36,7 +37,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     readonly round = round;
 
-    quizExercise: QuizExercise;
+    readonly quizExercise = signal<QuizExercise>(undefined!);
     quizPointStatistic: QuizPointStatistic;
 
     labels: string[] = [];
@@ -44,7 +45,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     label: string[] = [];
     backgroundColor: string[] = [];
 
-    maxScore: number;
+    readonly maxScore = signal<number>(undefined!);
     websocketChannelForData: string;
     quizExerciseChannel: string;
     private quizExerciseSubscription?: Subscription;
@@ -52,8 +53,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     // timer
     waitingForQuizStart = false;
-    remainingTimeText = '?';
-    remainingTimeSeconds = 0;
+    readonly remainingTimeText = signal('?');
+    readonly remainingTimeSeconds = signal(0);
     interval: any;
 
     // Icons
@@ -105,21 +106,21 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
         // update remaining time
-        if (this.quizExercise && this.quizExercise.dueDate) {
-            const endDate = this.quizExercise.dueDate;
+        if (this.quizExercise() && this.quizExercise().dueDate) {
+            const endDate = this.quizExercise().dueDate!;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
-                this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
+                this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
+                this.remainingTimeText.set(this.relativeTimeText(this.remainingTimeSeconds()));
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
+                this.remainingTimeSeconds.set(-1);
+                this.remainingTimeText.set(this.translateService.instant(translationBasePath + 'quizHasEnded'));
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds = 0;
-            this.remainingTimeText = '?';
+            this.remainingTimeSeconds.set(0);
+            this.remainingTimeText.set('?');
         }
     }
 
@@ -130,13 +131,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      * @return humanized text for the given amount of seconds
      */
     relativeTimeText(remainingTimeSeconds: number) {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
+        return formatQuizRelativeTime(remainingTimeSeconds);
     }
 
     ngOnDestroy() {
@@ -171,10 +166,10 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['courses']);
         }
-        this.quizExercise = quizExercise;
-        this.waitingForQuizStart = !this.quizExercise.quizStarted;
-        this.quizPointStatistic = this.quizExercise.quizPointStatistic!;
-        this.maxScore = calculateMaxScore(this.quizExercise);
+        this.quizExercise.set(quizExercise);
+        this.waitingForQuizStart = !this.quizExercise().quizStarted;
+        this.quizPointStatistic = this.quizExercise().quizPointStatistic!;
+        this.maxScore.set(calculateMaxScore(this.quizExercise()));
 
         this.loadData();
     }
@@ -199,7 +194,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
             (no negative points are achievable and the maximum points are defined by the quiz itself)
             Lastly, the last bar in the chart also covers the maximum points, that is why we change the upper border notation in this case from ')' to ']'
              */
-            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore);
+            let label = '[' + Math.max(pointCounter.points! - 0.5, 0) + ' - ' + Math.min(pointCounter.points! + 0.5, this.maxScore());
             label += index !== this.quizPointStatistic.pointCounters!.length - 1 ? ')' : ']';
             this.label.push(label);
             this.ratedData.push(pointCounter.ratedCounter!);
@@ -232,7 +227,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      *
      */
     recalculate() {
-        this.quizExerciseService.recalculate(this.quizExercise.id!).subscribe((res) => {
+        this.quizExerciseService.recalculate(this.quizExercise().id!).subscribe((res) => {
             this.loadQuizSuccess(res.body!);
         });
     }

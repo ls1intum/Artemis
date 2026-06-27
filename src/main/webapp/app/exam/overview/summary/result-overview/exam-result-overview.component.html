@@ -1,4 +1,4 @@
-@if (showResultOverview) {
+@if (showResultOverview()) {
     <div>
         <h3 jhiTranslate="artemisApp.exam.examSummary.points.overview"></h3>
 
@@ -11,7 +11,7 @@
                         <tr>
                             <th scope="col">#</th>
                             <th scope="col" jhiTranslate="artemisApp.exam.examSummary.points.exercise"></th>
-                            @if (showIncludedInScoreColumn) {
+                            @if (showIncludedInScoreColumn()) {
                                 <th scope="col" jhiTranslate="artemisApp.exercise.includedInOverallScore"></th>
                             }
                             <th scope="col" jhiTranslate="artemisApp.exam.examSummary.points.yourPoints"></th>
@@ -43,7 +43,7 @@
                                     &nbsp;
                                     <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
                                 </td>
-                                @if (showIncludedInScoreColumn) {
+                                @if (showIncludedInScoreColumn()) {
                                     <td class="text-center">{{ exerciseService.isIncludedInScore(exercise) }}</td>
                                 }
                                 <td class="text-center">
@@ -76,18 +76,18 @@
                     <tfoot class="total-footer">
                         <tr>
                             <th scope="row" colspan="2" jhiTranslate="artemisApp.exam.examSummary.points.total"></th>
-                            @if (showIncludedInScoreColumn) {
+                            @if (showIncludedInScoreColumn()) {
                                 <td class="text-center">-</td>
                             }
                             <th class="text-center">
-                                {{ overallAchievedPoints }}
+                                {{ overallAchievedPoints() }}
                             </th>
                             <th class="text-center">
-                                {{ maxPoints }}
+                                {{ maxPoints() }}
                             </th>
                             <th class="text-center">
                                 @if (studentExamWithGrade().studentResult.overallScoreAchieved !== undefined) {
-                                    <span [class]="hasPassed ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings }} % </span>
+                                    <span [class]="hasPassed() ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings() }} % </span>
                                 } @else {
                                     <jhi-no-data />
                                 }
@@ -107,8 +107,8 @@
                                 'artemisApp.exam.examSummary.points.youAchievedWithBonus'
                                     | artemisTranslate
                                         : {
-                                              achievedPoints: overallAchievedPoints,
-                                              normalPoints: maxPoints,
+                                              achievedPoints: overallAchievedPoints(),
+                                              normalPoints: maxPoints(),
                                           }
                             }}
                         }
@@ -117,8 +117,8 @@
                                 'artemisApp.exam.examSummary.points.youAchieved'
                                     | artemisTranslate
                                         : {
-                                              achievedPoints: overallAchievedPoints,
-                                              normalPoints: maxPoints,
+                                              achievedPoints: overallAchievedPoints(),
+                                              normalPoints: maxPoints(),
                                           }
                             }}
                         }
@@ -152,7 +152,7 @@
             </div>
         </jhi-collapsible-card>
 
-        @if (gradingScaleExists) {
+        @if (gradingScaleExists()) {
             <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-key']" [toggleCollapse]="toggleCollapse('grading-key')">
                 <div class="header h5">
                     <fa-icon [icon]="faClipboard" /> &nbsp;
@@ -160,11 +160,11 @@
                 </div>
 
                 <div class="collapsible-content">
-                    <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="grade" />
+                    <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="grade()" />
                 </div>
             </jhi-collapsible-card>
 
-            @if (isBonusGradingKeyDisplayed) {
+            @if (isBonusGradingKeyDisplayed()) {
                 <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['bonus-grading-key']" [toggleCollapse]="toggleCollapse('bonus-grading-key')">
                     <div class="header h5">
                         <fa-icon [icon]="faAward" />&nbsp;

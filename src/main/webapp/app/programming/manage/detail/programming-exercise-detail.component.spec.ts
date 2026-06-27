@@ -73,7 +73,6 @@ import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestrati
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { HttpHeaders } from '@angular/common/http';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
@@ -153,7 +152,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), OwlNativeDateTimeModule],
+            imports: [TranslateModule.forRoot()],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
@@ -226,7 +225,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
     it('should reload on participation change', async () => {
         const fetchRepositoryFilesSpy = vi.spyOn(comp, 'fetchRepositoryFiles');
         vi.spyOn(exerciseService, 'getLatestResult').mockReturnValue({ successful: true });
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.set(mockProgrammingExercise);
         comp.programmingExerciseBuildConfig = mockProgrammingExercise.buildConfig;
         comp.onParticipationChange();
         // Allow the synchronous observable chain and the from(handleDiff()) promise to settle
@@ -258,13 +257,13 @@ describe('ProgrammingExerciseDetailComponent', () => {
             // Allow the from(handleDiff()) promise chain to settle
             await new Promise((r) => setTimeout(r, 0));
             // Verify that the route exercise is preserved but participations are updated from API
-            expect(comp.programmingExercise.id).toBe(programmingExercise.id);
-            expect(comp.programmingExercise.templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
-            expect(comp.programmingExercise.solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
-            expect(comp.isExamExercise).toBe(false);
-            expect(comp.doughnutStats.participationsInPercent).toBe(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
+            expect(comp.programmingExercise().id).toBe(programmingExercise.id);
+            expect(comp.programmingExercise().templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
+            expect(comp.programmingExercise().solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
+            expect(comp.isExamExercise()).toBe(false);
+            expect(comp.doughnutStats().participationsInPercent).toBe(100);
+            expect(comp.doughnutStats().resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats().absoluteAveragePoints).toBe(5);
             expect(comp.repositoryDiffInformation).toBeDefined();
             expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
         });
@@ -345,11 +344,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
             await new Promise((r) => setTimeout(r, 0));
 
             // Verify that the route exercise is preserved but participations are updated from API
-            expect(comp.programmingExercise.id).toBe(programmingExercise.id);
-            expect(comp.programmingExercise.exerciseGroup).toEqual(exerciseGroup);
-            expect(comp.programmingExercise.templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
-            expect(comp.programmingExercise.solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
-            expect(comp.isExamExercise).toBe(true);
+            expect(comp.programmingExercise().id).toBe(programmingExercise.id);
+            expect(comp.programmingExercise().exerciseGroup).toEqual(exerciseGroup);
+            expect(comp.programmingExercise().templateParticipation).toEqual(mockProgrammingExercise.templateParticipation);
+            expect(comp.programmingExercise().solutionParticipation).toEqual(mockProgrammingExercise.solutionParticipation);
+            expect(comp.isExamExercise()).toBe(true);
             expect(comp.repositoryDiffInformation).toBeDefined();
             expect(comp.repositoryDiffInformation!.diffInformations).toHaveLength(1);
         });
@@ -361,7 +360,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
          * This simulates what happens when route data is received.
          */
         const computeCanAccessParticipationsAndScores = () => {
-            comp.canAccessParticipationsAndScores = (comp.programmingExercise?.isAtLeastTutor && !comp.isExamExercise) || !!comp.programmingExercise?.isAtLeastInstructor;
+            comp.canAccessParticipationsAndScores.set((comp.programmingExercise()?.isAtLeastTutor && !comp.isExamExercise()) || !!comp.programmingExercise()?.isAtLeastInstructor);
         };
 
         it('should return true for course exercise when user is at least tutor', () => {
@@ -370,11 +369,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
             programmingExercise.isAtLeastTutor = true;
             programmingExercise.isAtLeastInstructor = false;
 
-            comp.programmingExercise = programmingExercise;
-            comp.isExamExercise = false;
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(false);
             computeCanAccessParticipationsAndScores();
 
-            expect(comp.canAccessParticipationsAndScores).toBe(true);
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
         });
 
         it('should return false for course exercise when user is not at least tutor', () => {
@@ -383,11 +382,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
             programmingExercise.isAtLeastTutor = false;
             programmingExercise.isAtLeastInstructor = false;
 
-            comp.programmingExercise = programmingExercise;
-            comp.isExamExercise = false;
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(false);
             computeCanAccessParticipationsAndScores();
 
-            expect(comp.canAccessParticipationsAndScores).toBe(false);
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
         });
 
         it('should return false for exam exercise when user is only tutor', () => {
@@ -396,11 +395,11 @@ describe('ProgrammingExerciseDetailComponent', () => {
             programmingExercise.isAtLeastTutor = true;
             programmingExercise.isAtLeastInstructor = false;
 
-            comp.programmingExercise = programmingExercise;
-            comp.isExamExercise = true;
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(true);
             computeCanAccessParticipationsAndScores();
 
-            expect(comp.canAccessParticipationsAndScores).toBe(false);
+            expect(comp.canAccessParticipationsAndScores()).toBe(false);
         });
 
         it('should return true for exam exercise when user is at least instructor', () => {
@@ -409,18 +408,18 @@ describe('ProgrammingExerciseDetailComponent', () => {
             programmingExercise.isAtLeastTutor = true;
             programmingExercise.isAtLeastInstructor = true;
 
-            comp.programmingExercise = programmingExercise;
-            comp.isExamExercise = true;
+            comp.programmingExercise.set(programmingExercise);
+            comp.isExamExercise.set(true);
             computeCanAccessParticipationsAndScores();
 
-            expect(comp.canAccessParticipationsAndScores).toBe(true);
+            expect(comp.canAccessParticipationsAndScores()).toBe(true);
         });
     });
 
     it('should create details', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
+        comp.programmingExercise.set(programmingExercise);
 
         const sections = comp.getExerciseDetails();
         expect(sections).toBeDefined();
@@ -433,13 +432,13 @@ describe('ProgrammingExerciseDetailComponent', () => {
         comp.ngOnInit();
 
         expect(profileInfoStub).toHaveBeenCalled();
-        expect(comp.isBuildPlanEditable).toBe(editable);
+        expect(comp.isBuildPlanEditable()).toBe(editable);
     });
 
     it('should delete programming exercise', () => {
         const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
         vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.set(mockProgrammingExercise);
         comp.deleteProgrammingExercise({});
         expect(routerNavigateSpy).toHaveBeenCalledOnce();
     });
@@ -447,8 +446,8 @@ describe('ProgrammingExerciseDetailComponent', () => {
     it('should delete exam programming exercise', () => {
         const routerNavigateSpy = vi.spyOn(router, 'navigateByUrl');
         vi.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
-        comp.programmingExercise = mockProgrammingExercise;
-        comp.isExamExercise = true;
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.isExamExercise.set(true);
         comp.deleteProgrammingExercise({});
         expect(routerNavigateSpy).toHaveBeenCalledOnce();
     });
@@ -456,7 +455,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
     it('should generate structure oracle', async () => {
         const alertSpy = vi.spyOn(alertService, 'addAlert');
         vi.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(of('success'));
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.set(mockProgrammingExercise);
         comp.generateStructureOracle();
         expect(alertSpy).toHaveBeenCalledWith({
             type: AlertType.SUCCESS,
@@ -510,7 +509,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 },
             ],
         });
-        comp.programmingExercise = buildInstructorExerciseForDialog();
+        comp.programmingExercise.set(buildInstructorExerciseForDialog());
         await comp.triggerAtlasOrchestrator();
         fixture.detectChanges();
 
@@ -539,7 +538,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 },
             ],
         });
-        comp.programmingExercise = buildInstructorExerciseForDialog();
+        comp.programmingExercise.set(buildInstructorExerciseForDialog());
         await comp.triggerAtlasOrchestrator();
         fixture.detectChanges();
 
@@ -565,7 +564,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 error: { status: CompetencyOrchestrationStatus.Failed, summary: 'model not configured' },
             }),
         );
-        comp.programmingExercise = buildInstructorExerciseForDialog();
+        comp.programmingExercise.set(buildInstructorExerciseForDialog());
         await comp.triggerAtlasOrchestrator();
         fixture.detectChanges();
 
@@ -578,7 +577,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
         const addAlertSpy = vi.spyOn(alertService, 'addAlert');
         const apiService = TestBed.inject(CompetencyOrchestrationApiService);
         vi.spyOn(apiService, 'runForProgrammingExercise').mockRejectedValue(new Error('boom'));
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.set(mockProgrammingExercise);
         await comp.triggerAtlasOrchestrator();
         // The catch path uses onError(), which addAlerts the underlying error message.
         expect(addAlertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'boom', disableTranslation: true });
@@ -596,7 +595,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
                     }),
             ),
         );
-        comp.programmingExercise = mockProgrammingExercise;
+        comp.programmingExercise.set(mockProgrammingExercise);
         comp.generateStructureOracle();
         expect(alertSpy).toHaveBeenCalledWith({
             type: AlertType.DANGER,

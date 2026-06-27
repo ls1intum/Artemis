@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
@@ -28,6 +29,11 @@ class StubLoadingNotificationComponent {}
 class StubThemeSwitchComponent {
     popoverPlacement = input<string>();
 }
+
+@Component({ selector: 'jhi-image', template: '' })
+class StubImageComponent {
+    src = input<string>();
+}
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -53,6 +59,14 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
 import { BehaviorSubject } from 'rxjs';
+import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
+import { ImageComponent } from 'app/shared-ui/image/image.component';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { LoginService } from 'app/core/login/login.service';
 
 class MockBreadcrumb {
     label: string;
@@ -68,6 +82,7 @@ describe('NavbarComponent', () => {
     let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
     let entityTitleService: EntityTitleService;
     let examParticipationService: ExamParticipationService;
+    let currentCourseContextService: CurrentCourseContextService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -118,22 +133,28 @@ describe('NavbarComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({ id: 123 }) },
                 { provide: WebsocketService, useClass: MockWebsocketService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: LoginService, useValue: { logout: vi.fn() } },
                 { provide: LoadingNotificationService, useValue: { loadingStatus: new BehaviorSubject(false) } },
             ],
         })
             .overrideComponent(NavbarComponent, {
                 remove: {
-                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent],
+                    imports: [ThemeSwitchComponent, JhiConnectionWarningComponent, LoadingNotificationComponent, ImageComponent],
                 },
                 add: {
-                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent],
+                    imports: [StubThemeSwitchComponent, StubConnectionWarningComponent, StubLoadingNotificationComponent, StubImageComponent],
                 },
             })
             .compileComponents();
         fixture = TestBed.createComponent(NavbarComponent);
         component = fixture.componentInstance;
+        router.navigate.mockClear();
+        router.navigateByUrl.mockClear();
         examParticipationService = TestBed.inject(ExamParticipationService);
         entityTitleService = TestBed.inject(EntityTitleService);
+        currentCourseContextService = TestBed.inject(CurrentCourseContextService);
+        currentCourseContextService.clearCourse();
         entityTitleServiceStub = vi.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
         const profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
@@ -146,6 +167,125 @@ describe('NavbarComponent', () => {
     it('should initialize component', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
+    });
+
+    it('should display the current course next to the logo', () => {
+        const course = { id: 1, title: 'Course1', courseIconPath: 'path/to/icon.png' } as Course;
+        currentCourseContextService.setCourse(course);
+
+        fixture.detectChanges();
+
+        const titleElement = fixture.debugElement.query(By.css('#test-course-title'));
+        expect(titleElement).toBeTruthy();
+        expect(titleElement.nativeElement.textContent).toBe('Course1');
+        expect(fixture.nativeElement.querySelector('jhi-image')).not.toBeNull();
+    });
+
+    it('should display a course initial if the current course has no icon', () => {
+        currentCourseContextService.setCourse({ id: 1, title: 'Course1' } as Course);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-image')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.course-circle')?.textContent.trim()).toBe('C');
+    });
+
+    it('should link the current course to the management overview when in a management route', () => {
+        router.setUrl('/course-management/1/exercises');
+
+        expect(component.getCourseLink(1)).toEqual(['/course-management', 1]);
+    });
+
+    it('should link the current course to the student overview when in a student route', () => {
+        router.setUrl('/courses/1/exercises');
+
+        expect(component.getCourseLink(1)).toEqual(['/courses', 1]);
+    });
+
+    describe('perspective switch links', () => {
+        const course = {
+            id: 123,
+            title: 'Course1',
+            isAtLeastEditor: true,
+            isAtLeastInstructor: true,
+            tutorialGroupsConfiguration: {},
+        } as Course;
+
+        beforeEach(() => {
+            currentCourseContextService.setCourse(course);
+        });
+
+        it.each([
+            ['/course-management/123/exams/1/edit', ['/courses', '123', 'exams']],
+            ['/course-management/123/exercises/new', ['/courses', '123', 'exercises']],
+            ['/course-management/123/lectures/1/details', ['/courses', '123', 'lectures']],
+            ['/course-management/123/communication?conversationId=123', ['/courses', '123', 'communication']],
+            ['/course-management/123/learning-path-management', ['/courses', '123', 'learning-path']],
+            ['/course-management/123/competency-management', ['/courses', '123', 'competencies']],
+            ['/course-management/123/faqs/new', ['/courses', '123', 'faq']],
+            ['/course-management/123/tutorial-groups/configuration/new', ['/courses', '123', 'tutorial-groups']],
+            ['/course-management/123/tutorial-groups-checklist', ['/courses', '123', 'tutorial-groups']],
+            ['/course-management/123/course-statistics', ['/courses', '123', 'statistics']],
+        ])('should link from management route %s to corresponding student route', (url, expectedLink) => {
+            router.setUrl(url);
+
+            expect(component.studentViewLink()).toEqual(expectedLink);
+        });
+
+        it('should default student view link to the course overview when route has no student equivalent', () => {
+            router.setUrl('/course-management/123/build-overview');
+
+            expect(component.studentViewLink()).toEqual(['/courses', '123']);
+        });
+
+        it.each([
+            ['/courses/123/exams/1', ['/course-management', '123', 'exams']],
+            ['/courses/123/exercises/programming-exercises/1', ['/course-management', '123', 'exercises']],
+            ['/courses/123/lectures/1', ['/course-management', '123', 'lectures']],
+            ['/courses/123/communication?conversationId=123', ['/course-management', '123', 'communication']],
+            ['/courses/123/learning-path', ['/course-management', '123', 'learning-path-management']],
+            ['/courses/123/competencies', ['/course-management', '123', 'competency-management']],
+            ['/courses/123/faq', ['/course-management', '123', 'faqs']],
+            ['/courses/123/tutorial-groups', ['/course-management', '123', 'tutorial-groups-checklist']],
+            ['/courses/123/statistics', ['/course-management', '123', 'course-statistics']],
+        ])('should link from student route %s to corresponding management route', (url, expectedLink) => {
+            router.setUrl(url);
+
+            expect(component.managementViewLink()).toEqual(expectedLink);
+        });
+
+        it('should default management view link to the course management overview when route has no management equivalent', () => {
+            router.setUrl('/courses/123/settings');
+
+            expect(component.managementViewLink()).toEqual(['/course-management', '123']);
+        });
+
+        it.each([
+            [{ isAtLeastEditor: false }, '/courses/123/lectures/1'],
+            [{ isAtLeastInstructor: false }, '/courses/123/learning-path'],
+            [{ isAtLeastInstructor: false }, '/courses/123/competencies'],
+            [{ isAtLeastInstructor: false, tutorialGroupsConfiguration: undefined }, '/courses/123/tutorial-groups'],
+        ])('should default management view link to the course management overview when access is missing', (courseOverrides, url) => {
+            currentCourseContextService.setCourse({ ...course, ...courseOverrides });
+            router.setUrl(url);
+
+            expect(component.managementViewLink()).toEqual(['/course-management', '123']);
+        });
+
+        it('should link to tutorial group management for non-instructors when tutorial group configuration exists', () => {
+            currentCourseContextService.setCourse({ ...course, isAtLeastInstructor: false, tutorialGroupsConfiguration: {} });
+            router.setUrl('/courses/123/tutorial-groups');
+
+            expect(component.managementViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
+        });
+
+        it('should omit the course id from base perspective links when no current course is available', () => {
+            currentCourseContextService.clearCourse();
+            router.setUrl('/courses');
+
+            expect(component.studentViewLink()).toEqual(['/courses']);
+            expect(component.managementViewLink()).toEqual(['/course-management']);
+        });
     });
 
     it('should make api call when logged in user changes language', () => {
@@ -168,7 +308,7 @@ describe('NavbarComponent', () => {
         const languageChangeSpy = vi.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();
-        component.currAccount = undefined;
+        component.currAccount.set(undefined);
         fixture.changeDetectorRef.detectChanges();
         component.changeLanguage('elvish');
 
@@ -182,7 +322,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(3);
+        expect(component.breadcrumbs()).toHaveLength(3);
     });
 
     it('should build breadcrumbs for course management', () => {
@@ -191,8 +331,8 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(1);
-        expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+        expect(component.breadcrumbs()).toHaveLength(1);
+        expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
     });
 
     it('should ignore query parameters', () => {
@@ -201,8 +341,8 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(1);
-        expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
+        expect(component.breadcrumbs()).toHaveLength(1);
+        expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
     });
 
     it('should build breadcrumbs for system notification management', () => {
@@ -211,24 +351,24 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(4);
+        expect(component.breadcrumbs()).toHaveLength(4);
 
-        expect(component.breadcrumbs[0]).toEqual({
+        expect(component.breadcrumbs()[0]).toEqual({
             label: 'global.menu.admin.main',
             translate: true,
             uri: '/admin/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        expect(component.breadcrumbs()[1]).toEqual({
             label: 'global.menu.admin.sidebar.notifications',
             translate: true,
             uri: '/admin/system-notification-management/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[2]).toEqual({
+        expect(component.breadcrumbs()[2]).toEqual({
             label: '1',
             translate: false,
             uri: '/admin/system-notification-management/1/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[3]).toEqual({
+        expect(component.breadcrumbs()[3]).toEqual({
             label: 'global.generic.edit',
             translate: true,
             uri: '/admin/system-notification-management/1/edit/',
@@ -241,19 +381,19 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(3);
+        expect(component.breadcrumbs()).toHaveLength(3);
 
-        expect(component.breadcrumbs[0]).toEqual({
+        expect(component.breadcrumbs()[0]).toEqual({
             label: 'global.menu.admin.main',
             translate: true,
             uri: '/admin/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        expect(component.breadcrumbs()[1]).toEqual({
             label: 'global.menu.admin.sidebar.users',
             translate: true,
             uri: '/admin/user-management/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[2]).toEqual({
+        expect(component.breadcrumbs()[2]).toEqual({
             label: 'test_user',
             translate: false,
             uri: '/admin/user-management/test_user/',
@@ -268,22 +408,41 @@ describe('NavbarComponent', () => {
 
         expect(entityTitleServiceStub).toHaveBeenCalledOnce();
         expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.ORGANIZATION, [1]);
-        expect(component.breadcrumbs).toHaveLength(3);
+        expect(component.breadcrumbs()).toHaveLength(3);
 
-        expect(component.breadcrumbs[0]).toEqual({
+        expect(component.breadcrumbs()[0]).toEqual({
             label: 'global.menu.admin.main',
             translate: true,
             uri: '/admin/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        expect(component.breadcrumbs()[1]).toEqual({
             label: 'global.menu.admin.sidebar.organizations',
             translate: true,
             uri: '/admin/organization-management/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[2]).toEqual({
+        expect(component.breadcrumbs()[2]).toEqual({
             label: 'Test Organization',
             translate: false,
             uri: '/admin/organization-management/1/',
+        } as MockBreadcrumb);
+    });
+
+    it('should show user management breadcrumbs for the admin root', () => {
+        const testUrl = '/admin';
+        router.setUrl(testUrl);
+
+        fixture.detectChanges();
+
+        expect(component.breadcrumbs()).toHaveLength(2);
+        expect(component.breadcrumbs()[0]).toEqual({
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs()[1]).toEqual({
+            label: 'global.menu.admin.sidebar.users',
+            translate: true,
+            uri: '/admin/user-management/',
         } as MockBreadcrumb);
     });
 
@@ -293,14 +452,14 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(2);
+        expect(component.breadcrumbs()).toHaveLength(2);
 
-        expect(component.breadcrumbs[0]).toEqual({
+        expect(component.breadcrumbs()[0]).toEqual({
             label: 'global.menu.admin.main',
             translate: true,
             uri: '/admin/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        expect(component.breadcrumbs()[1]).toEqual({
             label: 'route-without-translation',
             translate: false,
             uri: '/admin/route-without-translation/',
@@ -313,12 +472,12 @@ describe('NavbarComponent', () => {
         router.setUrl(testUrl);
 
         fixture.detectChanges();
-        component.isExamActive = true;
+        component.isExamActive.set(true);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.breadcrumb')).toBeNull();
 
-        component.isExamStarted = false;
-        component.isExamActive = false;
+        component.isExamStarted.set(false);
+        component.isExamActive.set(false);
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.breadcrumb')).not.toBeNull();
     });
@@ -329,10 +488,10 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.gitCommitId).toBe('95ef2a');
-        expect(component.gitBranchName).toBe('code-button');
-        expect(component.gitTimestamp).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
-        expect(component.gitUsername).toBe('Max Musterman');
+        expect(component.gitCommitId()).toBe('95ef2a');
+        expect(component.gitBranchName()).toBe('code-button');
+        expect(component.gitTimestamp()).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
+        expect(component.gitUsername()).toBe('Max Musterman');
     });
 
     it('should set the exam active state correctly', async () => {
@@ -356,13 +515,13 @@ describe('NavbarComponent', () => {
         } as StudentExam);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.isExamActive).toBe(false);
+        expect(component.isExamActive()).toBe(false);
         await vi.advanceTimersByTimeAsync(61000);
-        expect(component.isExamActive).toBe(true);
+        expect(component.isExamActive()).toBe(true);
         await vi.advanceTimersByTimeAsync(61000);
-        expect(component.isExamActive).toBe(true);
+        expect(component.isExamActive()).toBe(true);
         await vi.advanceTimersByTimeAsync(180000);
-        expect(component.isExamActive).toBe(false);
+        expect(component.isExamActive()).toBe(false);
         vi.useRealTimers();
     });
 
@@ -382,12 +541,12 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/import/2/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs).toHaveLength(4);
+            expect(component.breadcrumbs()).toHaveLength(4);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual(programmingExercisesCrumb);
-            expect(component.breadcrumbs[3]).toEqual(importCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual(programmingExercisesCrumb);
+            expect(component.breadcrumbs()[3]).toEqual(importCrumb);
         });
 
         it('programming exercise grading', () => {
@@ -406,17 +565,17 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/2/grading/test-cases/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs).toHaveLength(5);
+            expect(component.breadcrumbs()).toHaveLength(5);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual(programmingExercisesCrumb);
-            expect(component.breadcrumbs[3]).toEqual({
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual(programmingExercisesCrumb);
+            expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Test Exercise',
                 translate: false,
                 uri: '/course-management/1/programming-exercises/2/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[4]).toEqual(gradingCrumb);
+            expect(component.breadcrumbs()[4]).toEqual(gradingCrumb);
         });
 
         it('programming exercise new assessment', () => {
@@ -435,17 +594,17 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/2/code-editor/new/assessment/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs).toHaveLength(5);
+            expect(component.breadcrumbs()).toHaveLength(5);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual(programmingExercisesCrumb);
-            expect(component.breadcrumbs[3]).toEqual({
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual(programmingExercisesCrumb);
+            expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Test Exercise',
                 translate: false,
                 uri: '/course-management/1/programming-exercises/2/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[4]).toEqual(assessmentCrumb);
+            expect(component.breadcrumbs()[4]).toEqual(assessmentCrumb);
         });
 
         it('exercise assessment dashboard', () => {
@@ -460,19 +619,37 @@ describe('NavbarComponent', () => {
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [courseId]);
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [exerciseId]);
 
-            expect(component.breadcrumbs).toHaveLength(4);
+            expect(component.breadcrumbs()).toHaveLength(4);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.assessmentDashboard.home.title',
                 translate: true,
                 uri: '/course-management/1/assessment-dashboard/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({
+            expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Test Exercise',
                 translate: false,
                 uri: '/course-management/1/assessment-dashboard/2/',
+            } as MockBreadcrumb);
+        });
+
+        it('should show the exercise title and correct exercise link for generic exercise routes', () => {
+            const exerciseService = TestBed.inject(ExerciseService);
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { title: 'Programming Exercise', type: ExerciseType.PROGRAMMING } as Exercise })));
+            const testUrl = '/course-management/1/exercises/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(exerciseService.find).toHaveBeenCalledOnce();
+            expect(exerciseService.find).toHaveBeenCalledWith(2);
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[3]).toEqual({
+                label: 'Programming Exercise',
+                translate: false,
+                uri: '/course-management/1/programming-exercises/2/',
             } as MockBreadcrumb);
         });
 
@@ -498,22 +675,22 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/modeling-exercises/2/example-submissions/new/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs).toHaveLength(6);
+            expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.course.exercises',
                 translate: true,
                 uri: '/course-management/1/modeling-exercises/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({
+            expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Test Exercise',
                 translate: false,
                 uri: '/course-management/1/modeling-exercises/2/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[4]).toEqual(submissionCrumb);
-            expect(component.breadcrumbs[5]).toEqual(editorSubmissionCrumb);
+            expect(component.breadcrumbs()[4]).toEqual(submissionCrumb);
+            expect(component.breadcrumbs()[5]).toEqual(editorSubmissionCrumb);
         });
 
         it('existing modeling exercise example submission', () => {
@@ -538,22 +715,22 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/modeling-exercises/2/example-submissions/3/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs).toHaveLength(6);
+            expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.course.exercises',
                 translate: true,
                 uri: '/course-management/1/modeling-exercises/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({
+            expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Test Exercise',
                 translate: false,
                 uri: '/course-management/1/modeling-exercises/2/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[4]).toEqual(submissionCrumb);
-            expect(component.breadcrumbs[5]).toEqual(editorSubmissionCrumb);
+            expect(component.breadcrumbs()[4]).toEqual(submissionCrumb);
+            expect(component.breadcrumbs()[5]).toEqual(editorSubmissionCrumb);
         });
 
         it('lecture units', () => {
@@ -578,22 +755,22 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/lectures/2/unit-management/text-units/create/',
             };
 
-            expect(component.breadcrumbs).toHaveLength(6);
+            expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.lecture.home.title',
                 translate: true,
                 uri: '/course-management/1/lectures/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({
+            expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Test Lecture',
                 translate: false,
                 uri: '/course-management/1/lectures/2/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[4]).toEqual(unitManagementCrumb);
-            expect(component.breadcrumbs[5]).toEqual(createCrumb);
+            expect(component.breadcrumbs()[4]).toEqual(unitManagementCrumb);
+            expect(component.breadcrumbs()[5]).toEqual(createCrumb);
         });
 
         it('apollon diagrams', () => {
@@ -606,16 +783,16 @@ describe('NavbarComponent', () => {
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.DIAGRAM, [2]);
 
-            expect(component.breadcrumbs).toHaveLength(4);
+            expect(component.breadcrumbs()).toHaveLength(4);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.apollonDiagram.home.title',
                 translate: true,
                 uri: '/course-management/1/apollon-diagrams/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({
+            expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Test Diagram',
                 translate: false,
                 uri: '/course-management/1/apollon-diagrams/2/',
@@ -643,22 +820,22 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/new/',
             };
 
-            expect(component.breadcrumbs).toHaveLength(6);
+            expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.examManagement.title',
                 translate: true,
                 uri: '/course-management/1/exams/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({
+            expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Test Exam',
                 translate: false,
                 uri: '/course-management/1/exams/2/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[4]).toEqual(exerciseGroupsCrumb);
-            expect(component.breadcrumbs[5]).toEqual(createCrumb);
+            expect(component.breadcrumbs()[4]).toEqual(exerciseGroupsCrumb);
+            expect(component.breadcrumbs()[5]).toEqual(createCrumb);
         });
 
         it('exam exercise plagiarism', () => {
@@ -688,23 +865,23 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/4/plagiarism/',
             };
 
-            expect(component.breadcrumbs).toHaveLength(7);
+            expect(component.breadcrumbs()).toHaveLength(7);
 
-            expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
-            expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
-            expect(component.breadcrumbs[2]).toEqual({
+            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
+            expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.examManagement.title',
                 translate: true,
                 uri: '/course-management/1/exams/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({
+            expect(component.breadcrumbs()[3]).toEqual({
                 label: 'Test Exam',
                 translate: false,
                 uri: '/course-management/1/exams/2/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[4]).toEqual(exerciseGroupsCrumb);
-            expect(component.breadcrumbs[5]).toEqual(exerciseCrumb);
-            expect(component.breadcrumbs[6]).toEqual(plagiarismCrumb);
+            expect(component.breadcrumbs()[4]).toEqual(exerciseGroupsCrumb);
+            expect(component.breadcrumbs()[5]).toEqual(exerciseCrumb);
+            expect(component.breadcrumbs()[6]).toEqual(plagiarismCrumb);
         });
     });
 
@@ -736,12 +913,67 @@ describe('NavbarComponent', () => {
             router.setUrl(url);
 
             fixture.detectChanges();
-            expect(component.breadcrumbs).toHaveLength(5);
-            expect(component.breadcrumbs[4]).toMatchObject({ uri: url + '/', label: label });
+            expect(component.breadcrumbs()).toHaveLength(5);
+            expect(component.breadcrumbs()[4]).toMatchObject({ uri: url + '/', label: label });
         });
     });
 
     describe('Special student route breadcrumb cases', () => {
+        it.each([
+            {
+                url: '/courses/1/code-editor/2',
+                label: 'artemisApp.editor.breadCrumbTitle',
+            },
+            {
+                url: '/courses/1/exams/test-exam/2',
+                label: 'artemisApp.courseOverview.menu.testExam',
+            },
+            {
+                url: '/courses/1/exercises/2/participate/3',
+                label: 'artemisApp.submission.detail.title',
+            },
+        ])('should use translated labels for student route id segment %s', ({ url, label }) => {
+            router.setUrl(url);
+
+            fixture.detectChanges();
+
+            expect(component.breadcrumbs().at(-1)).toMatchObject({
+                label,
+                translate: true,
+                uri: url + '/',
+            });
+        });
+
+        it('should resolve a student exercise route without an exercise type segment', () => {
+            const testUrl = '/courses/1/exercises/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[3]).toEqual({
+                label: 'Test Exercise',
+                translate: false,
+                uri: '/courses/1/exercises/2/',
+            } as MockBreadcrumb);
+        });
+
+        it('should resolve a student tutorial lecture route', () => {
+            const testUrl = '/courses/1/tutorial-lectures/2';
+            router.setUrl(testUrl);
+
+            fixture.detectChanges();
+
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.LECTURE, [2]);
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[3]).toEqual({
+                label: 'Test Lecture',
+                translate: false,
+                uri: '/courses/1/tutorial-lectures/2/',
+            } as MockBreadcrumb);
+        });
+
         it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])('should not show exercise types in URI on backlinking breadcrumbs', (exType: string) => {
             const testUrl = `/courses/1/exercises/${exType}/2`;
             router.setUrl(testUrl);
@@ -752,15 +984,40 @@ describe('NavbarComponent', () => {
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
             expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
 
-            expect(component.breadcrumbs).toHaveLength(4);
-            expect(component.breadcrumbs[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
-            expect(component.breadcrumbs[1]).toMatchObject({ uri: '/courses/1/', label: 'Test Course' });
-            expect(component.breadcrumbs[2]).toMatchObject({
+            expect(component.breadcrumbs()).toHaveLength(4);
+            expect(component.breadcrumbs()[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
+            expect(component.breadcrumbs()[1]).toMatchObject({ uri: '/courses/1/', label: 'Test Course' });
+            expect(component.breadcrumbs()[2]).toMatchObject({
                 uri: '/courses/1/exercises/',
                 label: 'artemisApp.courseOverview.menu.exercises',
             });
-            expect(component.breadcrumbs[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
+            expect(component.breadcrumbs()[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
         });
+    });
+
+    it('should collapse and toggle the navbar', () => {
+        component.isNavbarCollapsed.set(false);
+
+        component.collapseNavbar();
+        expect(component.isNavbarCollapsed()).toBe(true);
+
+        component.toggleNavbar();
+        expect(component.isNavbarCollapsed()).toBe(false);
+    });
+
+    it('should collapse navbar, navigate to sign-in, and clear participation state on logout', async () => {
+        const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        const loginService = TestBed.inject(LoginService);
+        const resetLocalCacheSpy = vi.spyOn(participationWebsocketService, 'resetLocalCache');
+        const logoutSpy = vi.spyOn(loginService, 'logout');
+
+        component.logout();
+        await Promise.resolve();
+
+        expect(router.navigate).toHaveBeenCalledWith(['/sign-in']);
+        expect(resetLocalCacheSpy).toHaveBeenCalledOnce();
+        expect(logoutSpy).toHaveBeenCalledWith(true);
+        expect(component.isNavbarCollapsed()).toBe(true);
     });
 
     it.each([
@@ -774,7 +1031,7 @@ describe('NavbarComponent', () => {
             width: 1100,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false },
+            expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false },
         },
         {
             width: 600,
@@ -786,7 +1043,7 @@ describe('NavbarComponent', () => {
             width: 550,
             account: { login: 'test' },
             roles: [Authority.ADMIN],
-            expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true },
+            expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true },
         },
         {
             width: 1000,
@@ -864,15 +1121,15 @@ describe('NavbarComponent', () => {
         const accountService = TestBed.inject(AccountService);
         vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as Authority[]).includes(auth)));
 
-        component.currAccount = account as User;
+        component.currAccount.set(account as User);
         window['innerWidth'] = width;
 
         component.onResize();
 
         expect({
-            isCollapsed: component.isCollapsed,
-            isNavbarNavVertical: component.isNavbarNavVertical,
-            iconsMovedToMenu: component.iconsMovedToMenu,
+            isCollapsed: component.isCollapsed(),
+            isNavbarNavVertical: component.isNavbarNavVertical(),
+            iconsMovedToMenu: component.iconsMovedToMenu(),
         }).toEqual(expected);
     });
 });

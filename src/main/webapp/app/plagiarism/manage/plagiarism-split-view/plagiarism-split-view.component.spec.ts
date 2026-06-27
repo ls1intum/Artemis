@@ -20,16 +20,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PlagiarismComparison } from '../../shared/entities/PlagiarismComparison';
 import { FromToElement, PlagiarismSubmissionElement } from '../../shared/entities/PlagiarismSubmissionElement';
 
-const collapse = vi.fn();
-const setSizes = vi.fn();
-
-vi.mock('split.js', () => ({
-    default: vi.fn().mockImplementation(() => ({
-        collapse,
-        setSizes,
-    })),
-}));
-
 describe('Plagiarism Split View Component', () => {
     setupTestBed({ zoneless: true });
 
@@ -64,7 +54,7 @@ describe('Plagiarism Split View Component', () => {
         comp = fixture.componentInstance;
         plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
 
-        comp.plagiarismComparison = comparison;
+        comp.plagiarismComparison.set(comparison);
         fixture.componentRef.setInput('comparison', {
             submissionA,
             submissionB,
@@ -82,7 +72,7 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: textExercise } as SimpleChange,
         });
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
+        expect(comp.isProgrammingOrTextExercise()).toBe(true);
     });
 
     it('should parse text matches for comparison', async () => {
@@ -96,7 +86,7 @@ describe('Plagiarism Split View Component', () => {
 
         await Promise.resolve();
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
+        expect(comp.isProgrammingOrTextExercise()).toBe(true);
         expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     });
 
@@ -109,28 +99,34 @@ describe('Plagiarism Split View Component', () => {
         expect(subscribeSpy).toHaveBeenCalledOnce();
     });
 
-    it('should collapse the left pane', () => {
-        comp.split = { collapse } as unknown as Split.Instance;
-
+    it('should collapse the right pane so the left pane takes all space', () => {
         comp.handleSplitControl('left');
+        fixture.detectChanges();
 
-        expect(collapse).toHaveBeenCalledWith(1);
+        // collapse is applied via a CSS class (panelSizes can't hide a pane because p-splitter coerces 0 -> 50%)
+        expect(comp.collapsedSide()).toBe('right');
+        expect(fixture.nativeElement.querySelector('.plagiarism-splitter')?.classList.contains('collapsed-right')).toBe(true);
     });
 
-    it('should collapse the right pane', () => {
-        comp.split = { collapse } as unknown as Split.Instance;
-
+    it('should collapse the left pane so the right pane takes all space', () => {
         comp.handleSplitControl('right');
+        fixture.detectChanges();
 
-        expect(collapse).toHaveBeenCalledWith(0);
+        expect(comp.collapsedSide()).toBe('left');
+        expect(fixture.nativeElement.querySelector('.plagiarism-splitter')?.classList.contains('collapsed-left')).toBe(true);
     });
 
-    it('should reset the split panes', () => {
-        comp.split = { setSizes } as unknown as Split.Instance;
+    it('should reset the split panes and clear any collapse', () => {
+        comp.collapsedSide.set('right');
 
         comp.handleSplitControl('even');
+        fixture.detectChanges();
 
-        expect(setSizes).toHaveBeenCalledWith([50, 50]);
+        expect(comp.collapsedSide()).toBeUndefined();
+        expect(comp.panelSizes()).toEqual([50, 50]);
+        const splitter = fixture.nativeElement.querySelector('.plagiarism-splitter');
+        expect(splitter?.classList.contains('collapsed-left')).toBe(false);
+        expect(splitter?.classList.contains('collapsed-right')).toBe(false);
     });
 
     it('should get the first text submission', () => {
@@ -287,7 +283,7 @@ describe('Plagiarism Split View Component', () => {
         comp.ngOnChanges({ comparison: { currentValue: { id: 1 } } as SimpleChange });
 
         const originalPlagComp = createPlagiarismComparison();
-        const plagComp = comp.plagiarismComparison;
+        const plagComp = comp.plagiarismComparison()!;
 
         expect(plagiarismCasesServiceSpy).toHaveBeenCalledOnce();
 

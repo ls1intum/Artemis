@@ -11,7 +11,7 @@
                     name="timeFrame"
                     id="FreePeriod"
                     autocomplete="off"
-                    [checked]="timeFrame === TimeFrame.Period"
+                    [checked]="timeFrame() === TimeFrame.Period"
                     (click)="setTimeFrame(TimeFrame.Period)"
                 />
                 <label class="btn btn-outline-primary" for="FreePeriod" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.period"></label>
@@ -22,7 +22,7 @@
                     name="timeFrame"
                     id="FreeDay"
                     autocomplete="off"
-                    [checked]="timeFrame === TimeFrame.Day"
+                    [checked]="timeFrame() === TimeFrame.Day"
                     (click)="setTimeFrame(TimeFrame.Day)"
                 />
                 <label class="btn btn-outline-primary" for="FreeDay" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.day"></label>
@@ -33,7 +33,7 @@
                     name="timeFrame"
                     id="FreePeriodWithinDay"
                     autocomplete="off"
-                    [checked]="timeFrame === TimeFrame.PeriodWithinDay"
+                    [checked]="timeFrame() === TimeFrame.PeriodWithinDay"
                     (click)="setTimeFrame(TimeFrame.PeriodWithinDay)"
                 />
                 <label class="btn btn-outline-primary" for="FreePeriodWithinDay" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay"></label>
@@ -46,13 +46,13 @@
                 [pickerType]="DateTimePickerType.CALENDAR"
                 [requiredField]="true"
                 [labelName]="
-                    timeFrame !== TimeFrame.Period
+                    timeFrame() !== TimeFrame.Period
                         ? ('artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate)
                         : ('artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate)
                 "
             />
 
-            @if (timeFrame === TimeFrame.Period) {
+            @if (timeFrame() === TimeFrame.Period) {
                 <jhi-date-time-picker
                     id="endDate"
                     formControlName="endDate"
@@ -64,7 +64,7 @@
                 @if (!isStartBeforeEnd) {
                     <span class="text-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></span>
                 }
-            } @else if (timeFrame === TimeFrame.PeriodWithinDay) {
+            } @else if (timeFrame() === TimeFrame.PeriodWithinDay) {
                 <jhi-date-time-picker
                     id="startTime"
                     formControlName="startTime"

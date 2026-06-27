@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
@@ -28,13 +28,13 @@ export class ExerciseStatisticsComponent implements OnInit {
     // html properties
     SpanType = SpanType;
     graphTypes = [Graphs.SUBMISSIONS, Graphs.ACTIVE_USERS, Graphs.ACTIVE_TUTORS, Graphs.CREATED_RESULTS, Graphs.CREATED_FEEDBACKS];
-    currentSpan: SpanType = SpanType.WEEK;
+    readonly currentSpan = signal<SpanType>(SpanType.WEEK);
     statisticsView: StatisticsView = StatisticsView.EXERCISE;
     paramSub: Subscription;
 
-    exercise: Exercise;
-    course: Course;
-    exerciseStatistics: ExerciseManagementStatisticsDto;
+    readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly course = signal<Course | undefined>(undefined);
+    readonly exerciseStatistics = signal<ExerciseManagementStatisticsDto>(undefined!);
 
     ngOnInit() {
         let exerciseId = 0;
@@ -42,15 +42,16 @@ export class ExerciseStatisticsComponent implements OnInit {
             exerciseId = params['exerciseId'];
         });
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-            this.exercise = exerciseResponse.body!;
-            this.course = getCourseFromExercise(this.exercise)!;
+            const exercise = exerciseResponse.body!;
+            this.exercise.set(exercise);
+            this.course.set(getCourseFromExercise(exercise)!);
         });
         this.service.getExerciseStatistics(exerciseId).subscribe((res: ExerciseManagementStatisticsDto) => {
-            this.exerciseStatistics = res;
+            this.exerciseStatistics.set(res);
         });
     }
 
     onTabChanged(span: SpanType): void {
-        this.currentSpan = span;
+        this.currentSpan.set(span);
     }
 }
