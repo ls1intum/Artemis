@@ -1,5 +1,4 @@
 import { Component, Type, effect, inject, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -7,7 +6,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { CheckboxModule } from 'primeng/checkbox';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
@@ -26,20 +24,6 @@ interface ExerciseTypeCard {
     accentClass: string;
     routeSegment: string;
 }
-
-interface MockImportGroup {
-    id: number;
-    title: string;
-    course: string;
-    exerciseCount: number;
-}
-
-const MOCK_IMPORT_GROUPS: MockImportGroup[] = [
-    { id: 601, title: 'Loops', course: 'Intro to CS (WS 23/24)', exerciseCount: 3 },
-    { id: 602, title: 'Arrays and Lists', course: 'Intro to CS (WS 23/24)', exerciseCount: 2 },
-    { id: 603, title: 'OOP Fundamentals', course: 'Software Engineering (SS 24)', exerciseCount: 4 },
-    { id: 604, title: 'Sorting Algorithms', course: 'Algorithms (WS 24/25)', exerciseCount: 3 },
-];
 
 const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     {
@@ -88,7 +72,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
     styleUrl: './exercise-add-modal.component.scss',
-    imports: [DialogModule, ButtonModule, CheckboxModule, FormsModule, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [DialogModule, ButtonModule, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ExerciseAddModalComponent {
     readonly visible = input<boolean>(false);
@@ -102,8 +86,6 @@ export class ExerciseAddModalComponent {
     protected readonly exerciseTypeCards = EXERCISE_TYPE_CARDS;
 
     readonly activeTab = signal<'create' | 'import' | 'export'>('create');
-    readonly importSelectedType = signal<string | null>(null);
-    readonly importGroupSelectedIds = signal<Set<number>>(new Set());
 
     protected readonly faArrowRight = faArrowRight;
     protected readonly faArrowLeft = faArrowLeft;
@@ -115,9 +97,11 @@ export class ExerciseAddModalComponent {
 
     constructor() {
         effect(() => {
-            const m = this.mode();
-            if (m === 'create' || m === 'import' || m === 'export') {
-                this.setActiveTab(m);
+            if (this.visible()) {
+                const m = this.mode();
+                if (m === 'create' || m === 'import' || m === 'export') {
+                    this.setActiveTab(m);
+                }
             }
         });
     }
@@ -140,8 +124,6 @@ export class ExerciseAddModalComponent {
 
     setActiveTab(tab: 'create' | 'import' | 'export'): void {
         this.activeTab.set(tab);
-        this.importSelectedType.set(null);
-        this.importGroupSelectedIds.set(new Set());
     }
 
     /**
@@ -200,31 +182,6 @@ export class ExerciseAddModalComponent {
         } else {
             this.router.navigate(['/course-management', this.courseId(), 'programming-exercises', 'import', result.id]);
         }
-    }
-
-    selectImportType(type: string): void {
-        this.importSelectedType.set(type);
-        this.importGroupSelectedIds.set(new Set());
-    }
-
-    backToImportTypeSelection(): void {
-        this.importSelectedType.set(null);
-        this.importGroupSelectedIds.set(new Set());
-    }
-
-    importGroups(): MockImportGroup[] {
-        return MOCK_IMPORT_GROUPS;
-    }
-
-    toggleImportGroupSelection(id: number): void {
-        const next = new Set(this.importGroupSelectedIds());
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        this.importGroupSelectedIds.set(next);
-    }
-
-    confirmImport(): void {
-        this.close();
     }
 
     /**
