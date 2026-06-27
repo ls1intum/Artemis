@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Subscription, switchMap, tap } from 'rxjs';
@@ -81,6 +81,12 @@ export class CourseDashboardComponent implements OnDestroy {
     readonly competencies = this._competencies.asReadonly();
     readonly openedAccordionIndex = this._openedAccordionIndex.asReadonly();
     readonly course = this._course.asReadonly();
+    /**
+     * The value bound to the points `<p-progressbar>`, clamped to [0, 100]. Unlike the old `ngb-progressbar`, PrimeNG's
+     * progress bar does not clamp internally, so a raw percentage > 100 (reachable via bonus points, where accumulated
+     * `points` can exceed `maxPoints`) would overflow the track. Clamping here keeps the bar within its track.
+     */
+    readonly progressBarValue = computed(() => Math.min(100, Math.max(0, this.progress())));
     // isCollapsed is exposed as a getter for compatibility with CourseOverviewComponent
     get isCollapsed(): boolean {
         return this._isCollapsed();
@@ -197,7 +203,8 @@ export class CourseDashboardComponent implements OnDestroy {
 
         const maxPoints = relevantExercises.reduce((sum, exercise) => sum + exercise.maxPoints, 0);
         this._maxPoints.set(round(maxPoints, 1));
-        this._progress.set(round((points / maxPoints) * 100, 1));
+        // Guard against a division by zero (no relevant exercises / 0 max points) which would otherwise yield NaN in the label.
+        this._progress.set(maxPoints > 0 ? round((points / maxPoints) * 100, 1) : 0);
     }
 
     /**

@@ -6,7 +6,9 @@
     background-color: transparent;
     padding: 0;
 
-    // give the node rows the same light "card" background the previous Material tree cards had
+    // Give the node rows the same light "card" background the previous Material tree cards had.
+    // ::ng-deep is deprecated but is the only way to reach PrimeNG's internal `.p-tree-node-content` element from a
+    // component stylesheet; it is scoped under `.knowledge-area-tree` (the p-tree host) to avoid leaking.
     ::ng-deep .p-tree-node-content {
         background-color: var(--overview-light-background-color);
     }

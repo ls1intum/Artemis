@@ -32,6 +32,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { Course } from 'app/course/shared/entities/course.model';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockProvider } from 'ng-mocks';
+import { ProgressBar } from 'primeng/progressbar';
 
 // Manual mock for CourseChatbotComponent to avoid ng-mocks issues with signal queries (viewChild)
 @Component({
@@ -801,5 +802,80 @@ describe('CourseDashboardComponent', () => {
     it('should expose FeatureToggle and round for template usage', () => {
         expect((component as any).FeatureToggle).toBeDefined();
         expect((component as any).round).toBeDefined();
+    });
+
+    it('should clamp progressBarValue to 100 when points exceed maxPoints (bonus points)', () => {
+        // Bonus points let accumulated points exceed maxPoints, producing a raw progress > 100.
+        const exerciseMetrics = {
+            exerciseInformation: {
+                1: { id: 1, maxPoints: 100 },
+            },
+            score: {
+                1: 120, // 120% -> 120 points on a 100-point exercise
+            },
+        };
+
+        (component as any).setOverallPerformance([1], exerciseMetrics);
+
+        expect(component.points()).toBeCloseTo(120.0, 1);
+        expect(component.maxPoints()).toBeCloseTo(100.0, 1);
+        expect(component.progress()).toBeCloseTo(120.0, 1);
+        // The bar value itself must stay within the track.
+        expect(component.progressBarValue()).toBe(100);
+    });
+
+    it('should pass through progressBarValue unchanged for a normal in-range progress', () => {
+        const exerciseMetrics = {
+            exerciseInformation: {
+                1: { id: 1, maxPoints: 100 },
+            },
+            score: {
+                1: 50, // 50% -> 50 points
+            },
+        };
+
+        (component as any).setOverallPerformance([1], exerciseMetrics);
+
+        expect(component.progress()).toBeCloseTo(50.0, 1);
+        expect(component.progressBarValue()).toBe(50);
+    });
+
+    it('should guard against NaN and yield 0 progress when maxPoints resolves to 0', () => {
+        const exerciseMetrics = {
+            exerciseInformation: {},
+            score: {},
+        };
+
+        (component as any).setOverallPerformance([], exerciseMetrics);
+
+        expect(component.maxPoints()).toBe(0);
+        // Guard: maxPoints === 0 must not produce NaN (0 / 0) in the label.
+        expect(component.progress()).toBe(0);
+        expect(Number.isNaN(component.progress())).toBe(false);
+        expect(component.progressBarValue()).toBe(0);
+    });
+
+    it('should render the points progress bar with the clamped progressBarValue and the "X / Y (Z%)" label', () => {
+        // mockCourse enables the analytics dashboard and the default mockStudentMetrics already produced exercises
+        // (loadMetrics ran in beforeEach), so the @if (hasExercises()) / (points() > 0 || maxPoints() > 0) branch renders.
+        const exerciseMetrics = {
+            exerciseInformation: {
+                1: { id: 1, maxPoints: 100 },
+            },
+            score: {
+                1: 120,
+            },
+        };
+        (component as any).setOverallPerformance([1], exerciseMetrics);
+        fixture.changeDetectorRef.detectChanges();
+
+        const progressBar = debugElement.query(By.directive(ProgressBar));
+        expect(progressBar).not.toBeNull();
+        expect(progressBar.componentInstance.value).toBe(component.progressBarValue());
+        expect(progressBar.componentInstance.value).toBe(100);
+
+        const label = progressBar.query(By.css('span.fs-5'));
+        expect(label).not.toBeNull();
+        expect(label.nativeElement.textContent.trim()).toBe('120 / 100 (120%)');
     });
 });

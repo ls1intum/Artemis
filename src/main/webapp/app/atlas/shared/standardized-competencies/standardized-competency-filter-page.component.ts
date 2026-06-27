@@ -8,16 +8,16 @@ import { KnowledgeAreaTreeNode, TREE_NODE_TYPE_KNOWLEDGE_AREA, convertToTreeNode
  * Keeping the `data` getter/setter API means the consuming components (and their specs) keep working unchanged.
  */
 export class KnowledgeAreaTreeDataSource {
-    private _data: KnowledgeAreaForTree[] = [];
+    private currentData: KnowledgeAreaForTree[] = [];
 
     constructor(private readonly onChange: () => void) {}
 
     get data(): KnowledgeAreaForTree[] {
-        return this._data;
+        return this.currentData;
     }
 
     set data(data: KnowledgeAreaForTree[]) {
-        this._data = data ?? [];
+        this.currentData = data ?? [];
         this.onChange();
     }
 }
@@ -40,14 +40,17 @@ export class KnowledgeAreaTreeControl {
         private readonly onChange: () => void,
     ) {}
 
+    /** Whether the given knowledge area is currently expanded (by its id). */
     isExpanded(knowledgeArea: KnowledgeAreaForTree): boolean {
         return knowledgeArea.id !== undefined && this.expandedIds.has(knowledgeArea.id);
     }
 
+    /** Whether the knowledge area with the given id is currently expanded; used by {@link convertToTreeNodes} to seed each node's `expanded` flag. */
     isExpandedById(id: number | undefined): boolean {
         return id !== undefined && this.expandedIds.has(id);
     }
 
+    /** Expands the given knowledge area, first harvesting any manual p-tree toggles so they are not lost on the ensuing rebuild. */
     expand(knowledgeArea: KnowledgeAreaForTree): void {
         this.harvestLiveExpansion();
         if (knowledgeArea.id !== undefined && !this.expandedIds.has(knowledgeArea.id)) {
@@ -56,11 +59,13 @@ export class KnowledgeAreaTreeControl {
         this.onChange();
     }
 
+    /** Collapses every knowledge area and triggers a tree rebuild. */
     collapseAll(): void {
         this.expandedIds.clear();
         this.onChange();
     }
 
+    /** Expands every knowledge area (and descendants) and triggers a tree rebuild. */
     expandAll(): void {
         this.getData().forEach((knowledgeArea) => this.addSelfAndDescendants(knowledgeArea));
         this.onChange();

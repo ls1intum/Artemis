@@ -252,4 +252,74 @@ describe('CategorySelectorPrimengComponent', () => {
         comp.onComplete({ originalEvent: new Event('input'), query: 'category4' });
         expect(comp.categorySuggestions()).toEqual(['category4']);
     });
+
+    it('should reject free-text add via onEnter when MAX_CATEGORIES is reached', () => {
+        fixture.componentRef.setInput('categories', [category1, category2, category3]);
+        fixture.changeDetectorRef.detectChanges();
+        // sanity check: the preset matches the component's MAX
+        expect(comp.selectedCategoryItems()).toHaveLength(3);
+        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+
+        comp.onEnter(enterEvent('newCat'));
+
+        expect(comp.selectedCategoryItems()).toEqual([category1, category2, category3]);
+        expect(comp.selectedCategoryItems()).toHaveLength(3);
+        expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reject suggestion add via onItemSelect when MAX_CATEGORIES is reached', () => {
+        fixture.componentRef.setInput('categories', [category1, category2, category3]);
+        fixture.componentRef.setInput('existingCategories', [category4]);
+        fixture.changeDetectorRef.detectChanges();
+        expect(comp.selectedCategoryItems()).toHaveLength(3);
+        // resync target after rejection; stub so the rejection branch runs in isolation
+        const writeValueSpy = vi.spyOn(comp.autoComplete(), 'writeValue').mockImplementation(() => undefined);
+
+        comp.onItemSelect(selectEvent('newCat'));
+
+        expect(comp.selectedCategoryItems()).toEqual([category1, category2, category3]);
+        expect(comp.selectedCategoryItems()).toHaveLength(3);
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(writeValueSpy).toHaveBeenCalledWith(comp.selectedCategoryLabels());
+    });
+
+    it('should resync the autocomplete model when onItemSelect rejects a duplicate', () => {
+        fixture.componentRef.setInput('categories', [category6, category7]);
+        fixture.changeDetectorRef.detectChanges();
+        const writeValueSpy = vi.spyOn(comp.autoComplete(), 'writeValue').mockImplementation(() => undefined);
+
+        comp.onItemSelect(selectEvent('category6'));
+
+        expect(comp.selectedCategoryItems()).toEqual([category6, category7]);
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(writeValueSpy).toHaveBeenCalledWith(comp.selectedCategoryLabels());
+    });
+
+    it('should reject a case-insensitive duplicate on add via onEnter', () => {
+        fixture.componentRef.setInput('categories', [category6]);
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+
+        comp.onEnter(enterEvent('Category6'));
+
+        expect(comp.selectedCategoryItems()).toEqual([category6]);
+        expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it('should add the category, clear the input and hide the overlay on a valid onEnter', () => {
+        fixture.componentRef.setInput('categories', [category6]);
+        fixture.componentRef.setInput('existingCategories', []);
+        fixture.changeDetectorRef.detectChanges();
+        const hideSpy = vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+        const event = enterEvent('newValidCat');
+
+        comp.onEnter(event);
+
+        const addedColor = comp.selectedCategoryItems()[1].color;
+        expect(comp.selectedCategoryItems()).toEqual([category6, { category: 'newValidCat', color: addedColor }]);
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledWith([category6, { category: 'newValidCat', color: addedColor }]);
+        expect((event.target as HTMLInputElement).value).toBe('');
+        expect(hideSpy).toHaveBeenCalledOnce();
+    });
 });

@@ -12,6 +12,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ActivatedRoute } from '@angular/router';
 import { mockServerSessionHttpResponseWithId, mockWebsocketServerMessage } from 'test/helpers/sample/iris-sample-data';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
@@ -250,6 +251,21 @@ describe('ExerciseChatbotButtonComponent', () => {
 
             expect(component.chatOpen()).toBe(true);
             expect(mockDialogService.open).toHaveBeenCalled();
+        });
+
+        it('should open the chat widget dialog with the correct floating, non-modal config', () => {
+            component.openChat();
+
+            expect(mockDialogService.open).toHaveBeenCalledWith(
+                IrisChatbotWidgetComponent,
+                expect.objectContaining({
+                    modal: false,
+                    closable: false,
+                    dismissableMask: false,
+                    showHeader: false,
+                    styleClass: 'iris-chat-widget-dialog',
+                }),
+            );
         });
     });
 

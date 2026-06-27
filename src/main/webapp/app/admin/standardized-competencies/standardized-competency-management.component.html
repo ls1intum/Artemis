@@ -33,10 +33,10 @@
             class="me-1"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMinimize"
-            (onClick)="tree?.collapseAll()"
+            (onClick)="tree.collapseAll()"
             tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
         />
-        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="tree?.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
+        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="tree.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
     </div>
     @if (dataSource.data?.length || selectedKnowledgeArea() || selectedCompetency()) {
         <div class="split-container">

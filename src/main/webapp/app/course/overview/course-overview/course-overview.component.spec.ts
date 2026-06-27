@@ -679,6 +679,16 @@ describe('CourseOverviewComponent', () => {
         expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
     });
 
+    it('should hide the sidebar while an exam is started and show it otherwise', () => {
+        component.isExamStarted.set(true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(true);
+
+        component.isExamStarted.set(false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(false);
+    });
+
     it('should examStarted value to true when exam is started', async () => {
         (examParticipationService as any).examIsStarted$ = of(true);
         await component.ngOnInit();

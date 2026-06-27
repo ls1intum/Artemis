@@ -18,7 +18,7 @@
                         <h4 jhiTranslate="artemisApp.courseStudentDashboard.overallPerformance.title"></h4>
                         <div class="flex-grow-1">
                             <p-progressbar
-                                [value]="(points() / (maxPoints() || 1)) * 100"
+                                [value]="progressBarValue()"
                                 [showValue]="false"
                                 color="var(--bs-success, #28a745)"
                                 [style]="{ height: '1.75rem' }"

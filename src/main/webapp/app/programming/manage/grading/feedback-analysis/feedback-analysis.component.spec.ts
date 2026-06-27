@@ -297,6 +297,12 @@ describe('FeedbackAnalysisComponent', () => {
             component.onPageChange({ page: 1 } as PaginatorState);
             expect(setPageSpy).toHaveBeenCalledWith(2);
         });
+
+        it('onPageChange defaults an undefined PrimeNG page to the first page', () => {
+            const setPageSpy = vi.spyOn(component, 'setPage');
+            component.onPageChange({} as PaginatorState);
+            expect(setPageSpy).toHaveBeenCalledWith(1);
+        });
     });
 
     describe('setSortedColumn', () => {

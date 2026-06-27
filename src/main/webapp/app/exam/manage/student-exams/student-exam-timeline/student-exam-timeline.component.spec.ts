@@ -311,4 +311,25 @@ describe('Student Exam Timeline Component', () => {
             }
         },
     );
+
+    // p-slider does NOT emit (onSlideEnd) for keyboard navigation, so onSliderKeyup bridges keyboard input to
+    // onSliderInputChange for the navigation keys. This behaviour is the reason the slider migration introduced the method.
+    it.each(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'])(
+        'should call onSliderInputChange when a navigation key (%s) is released on the slider',
+        (key: string) => {
+            const inputChangeSpy = vi.spyOn(component, 'onSliderInputChange').mockImplementation(() => {});
+
+            component.onSliderKeyup({ key } as KeyboardEvent);
+
+            expect(inputChangeSpy).toHaveBeenCalledOnce();
+        },
+    );
+
+    it.each(['a', 'Tab'])('should not call onSliderInputChange when a non-navigation key (%s) is released on the slider', (key: string) => {
+        const inputChangeSpy = vi.spyOn(component, 'onSliderInputChange').mockImplementation(() => {});
+
+        component.onSliderKeyup({ key } as KeyboardEvent);
+
+        expect(inputChangeSpy).not.toHaveBeenCalled();
+    });
 });

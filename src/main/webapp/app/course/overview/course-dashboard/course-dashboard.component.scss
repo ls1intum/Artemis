@@ -54,8 +54,10 @@
     width: 100%;
 }
 
-/* Let the overlaid "points / max (progress%)" label spill out of the (possibly narrow) value bar so it stays
- * readable at low scores, matching the previous ng-bootstrap progress bar's `overflow-visible` behavior. */
+/* Let the overlaid "points / max (progress%)" label spill out of the (possibly narrow) filled value bar so it stays
+ * readable at low scores (it remains clipped at the full-width track edge, which is the desired behavior).
+ * ::ng-deep is deprecated but is the only way to reach PrimeNG's internal `.p-progressbar-value` element from a
+ * component stylesheet; it is scoped via the `points-progressbar` styleClass to avoid affecting other progress bars. */
 ::ng-deep .points-progressbar .p-progressbar-value {
     overflow: visible;
 }

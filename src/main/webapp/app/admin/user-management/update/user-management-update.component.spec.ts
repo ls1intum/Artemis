@@ -13,7 +13,7 @@ import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Title } from '@angular/platform-browser';
-import { AutoCompleteSelectEvent } from 'primeng/autocomplete';
+import { AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
 import * as Sentry from '@sentry/angular';
 
 import { UserManagementUpdateComponent } from 'app/admin/user-management/update/user-management-update.component';
@@ -389,6 +389,52 @@ describe('UserManagementUpdateComponent', () => {
         component.onGroupRemove(component.user(), group1);
 
         expect(component.user().groups).toEqual([group2]);
+    });
+
+    it('should remove the unselected group from the user via onGroupUnselect', () => {
+        const group1 = 'nicegroup';
+        const group2 = 'badgroup';
+        component.user.set({ groups: [group1, group2] } as unknown as User);
+
+        component.onGroupUnselect({ value: group1 } as AutoCompleteUnselectEvent);
+
+        expect(component.user().groups).not.toContain(group1);
+        expect(component.user().groups).toContain(group2);
+    });
+
+    // Zoneless-correctness guard: adding a group must rebuild BOTH the user object and the groups array with NEW
+    // references so the one-way [ngModel] binding sees a changed reference and PrimeNG re-renders the chip list.
+    it('should rebuild the user and groups references (not mutate in place) when adding a group', () => {
+        const newGroup = 'nicegroup';
+        component.allGroups = [newGroup];
+        component.user.set({ groups: [] } as unknown as User);
+
+        const prevUser = component.user();
+        const prevGroups = prevUser.groups;
+
+        component.onGroupSelect(groupSelectEvent(newGroup));
+
+        expect(component.user()).not.toBe(prevUser);
+        expect(component.user().groups).not.toBe(prevGroups);
+        expect(component.user().groups).toContain(newGroup);
+    });
+
+    // Zoneless-correctness guard: removing a group must also rebuild BOTH the user object and the groups array.
+    it('should rebuild the user and groups references (not mutate in place) when removing a group', () => {
+        const group1 = 'nicegroup';
+        const group2 = 'badgroup';
+        component.allGroups = [group1, group2];
+        component.user.set({ groups: [group1, group2] } as unknown as User);
+
+        const prevUser = component.user();
+        const prevGroups = prevUser.groups;
+
+        component.onGroupRemove(component.user(), group1);
+
+        expect(component.user()).not.toBe(prevUser);
+        expect(component.user().groups).not.toBe(prevGroups);
+        expect(component.user().groups).not.toContain(group1);
+        expect(component.user().groups).toContain(group2);
     });
 
     describe('previousState', () => {

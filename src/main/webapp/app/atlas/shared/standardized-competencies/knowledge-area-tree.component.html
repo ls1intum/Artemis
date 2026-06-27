@@ -4,7 +4,9 @@
         <div class="d-flex align-items-center knowledge-area-node">
             <h5 class="mb-0 me-2">{{ node.data.title }}</h5>
             <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate()" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
-            @if (!node.children?.length) {
+            <!-- Base the "empty" label on the raw domain arrays, not the (filtered) tree-node children: a knowledge area whose
+                 competencies are merely hidden by an active title/area filter is not empty and must not show this label. -->
+            @if (!node.data.children?.length && !node.data.competencies?.length) {
                 <h6 class="mb-0 ms-2 text-muted" jhiTranslate="artemisApp.knowledgeArea.empty"></h6>
             }
         </div>
