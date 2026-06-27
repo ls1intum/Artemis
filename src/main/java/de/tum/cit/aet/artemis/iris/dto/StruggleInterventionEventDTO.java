@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * them as an inline in-editor cue, falling back to the lamp when absent or the line is off-screen. Every payload field
  * beyond {@code exerciseId}/{@code action} is {@code @Nullable} so a partial push still serializes.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StruggleInterventionEventDTO(long exerciseId, String action, @Nullable String message, @Nullable Long sessionId, @Nullable Long messageId,
         @Nullable String anchorFile, @Nullable Integer anchorLine, @Nullable String inlineHint, @Nullable Double confidence) {
 }

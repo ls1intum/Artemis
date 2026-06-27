@@ -16,7 +16,7 @@ class StruggleInterventionEventDTOTest {
 
     @Test
     void nullSessionAndMessageIdsAreOmitted() throws Exception {
-        // NON_NULL serialization contract: a push without session/message ids (e.g. a partial payload) omits both.
+        // NON_EMPTY serialization contract: a push without session/message ids (e.g. a partial payload) omits both.
         var event = new StruggleInterventionEventDTO(42, "ambient", "Re-check the logic.", null, null, null, null, null, 0.7);
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("exerciseId").asLong()).isEqualTo(42);
