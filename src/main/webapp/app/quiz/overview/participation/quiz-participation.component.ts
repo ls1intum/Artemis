@@ -49,6 +49,7 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
 import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
+import { QuizParticipationBase } from './quiz-participation.base';
 
 @Component({
     selector: 'jhi-quiz',
@@ -71,7 +72,7 @@ import { QuizLiveHeaderInfo, quizLiveHeaderInfoEqual } from 'app/exercise/exerci
         ArtemisTranslatePipe,
     ],
 })
-export class QuizParticipationComponent implements OnInit, OnDestroy, ExerciseSubmission {
+export class QuizParticipationComponent extends QuizParticipationBase implements OnInit, OnDestroy, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
     private quizExerciseService = inject(QuizExerciseService);
     private participationService = inject(ParticipationService);
@@ -202,6 +203,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy, ExerciseSu
     protected readonly faCircleNotch = faCircleNotch;
 
     constructor() {
+        super();
         effect(() => {
             if (this.quizHeader() && this.stepWizard()) {
                 const headerHeight = this.quizHeader()!.nativeElement.offsetHeight;
