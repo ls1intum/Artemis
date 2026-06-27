@@ -124,10 +124,28 @@ export class CategorySelectorPrimengComponent {
     }
 
     /**
-     * Adds the typed free-text value as a new category. Triggered by the Enter key on the p-autoComplete input
+     * Commits the typed free-text category on Enter, comma, or Tab — restoring the separator behaviour of the
+     * previous Material chip input (`separatorKeysCodes = [ENTER, COMMA, TAB]`). PrimeNG's p-autoComplete does not
+     * add free text on these keys natively, so we wire it via a keydown handler. An empty field still tabs away.
+     * @param event the keydown event coming from the input
+     */
+    onSeparatorKeydown(event: KeyboardEvent): void {
+        if (event.key !== 'Enter' && event.key !== ',' && event.key !== 'Tab') {
+            return;
+        }
+        const input = event.target as HTMLInputElement;
+        // Let an empty field tab to the next control instead of trapping focus.
+        if (event.key === 'Tab' && !(input.value ?? '').trim()) {
+            return;
+        }
+        this.onEnter(event);
+    }
+
+    /**
+     * Adds the typed free-text value as a new category. Invoked by {@link onSeparatorKeydown} for a separator key
      * (PrimeNG does not add free text natively while typeahead is enabled, so we wire it via a keydown handler).
-     * @param event the keyboard event coming from the input (typed as the base `Event` because Angular types the
-     * `(keydown.enter)` `$event` as `Event`; only `Event` members — `preventDefault`/`stopPropagation`/`target` — are used)
+     * @param event the keyboard event coming from the input (typed as the base `Event` because only `Event` members —
+     * `preventDefault`/`stopPropagation`/`target` — are used)
      */
     onEnter(event: Event): void {
         event.preventDefault();
@@ -213,6 +231,17 @@ export class CategorySelectorPrimengComponent {
      */
     onItemRemove(categoryToRemove: ExerciseCategory): void {
         this.removeCategoryByLabel(categoryToRemove.category);
+    }
+
+    /**
+     * Removes the category via the in-chip remove icon. Stops propagation so the click does not also open the
+     * color selector on the surrounding tag.
+     * @param label the category label of the chip to remove
+     * @param event the originating click event
+     */
+    removeChip(label: string, event: Event): void {
+        event.stopPropagation();
+        this.removeCategoryByLabel(label);
     }
 
     private removeCategoryByLabel(label: string | undefined): void {

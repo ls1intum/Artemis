@@ -49,13 +49,17 @@ describe('CategorySelectorPrimengComponent', () => {
     /** Builds an AutoComplete select event carrying the picked suggestion label. */
     const selectEvent = (value: string) => ({ value }) as AutoCompleteSelectEvent;
 
-    /** Builds a keydown event with the typed free-text value, as the input element would emit on Enter. */
-    const enterEvent = (value: string) =>
+    /** Builds a keydown event carrying a key and the typed free-text value, as the input element would emit. */
+    const separatorEvent = (key: string, value: string) =>
         ({
+            key,
             target: { value },
             preventDefault: vi.fn(),
             stopPropagation: vi.fn(),
         }) as unknown as KeyboardEvent;
+
+    /** Builds a plain Enter keydown event, as the input element would emit on Enter. */
+    const enterEvent = (value: string) => separatorEvent('Enter', value);
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -94,6 +98,19 @@ describe('CategorySelectorPrimengComponent', () => {
 
         expect(comp.selectedCategoryItems()).toEqual([category1, category3]);
         expect(cancelColorSelectorSpy).toHaveBeenCalledOnce();
+        expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
+    });
+
+    it('should remove the category and stop propagation via the in-chip remove icon (removeChip)', () => {
+        fixture.detectChanges();
+        fixture.componentRef.setInput('categories', [category1, category2, category3]);
+        fixture.changeDetectorRef.detectChanges();
+        const event = { stopPropagation: vi.fn() } as unknown as Event;
+
+        comp.removeChip('category2', event);
+
+        expect(comp.selectedCategoryItems()).toEqual([category1, category3]);
+        expect(event.stopPropagation).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith([category1, category3]);
     });
 
@@ -219,6 +236,46 @@ describe('CategorySelectorPrimengComponent', () => {
 
         expect(event.preventDefault).toHaveBeenCalledOnce();
         expect(event.stopPropagation).toHaveBeenCalledOnce();
+    });
+
+    it('should commit the typed category on a comma separator key', () => {
+        fixture.componentRef.setInput('existingCategories', []);
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+
+        comp.onSeparatorKeydown(separatorEvent(',', 'newcat'));
+
+        expect(comp.selectedCategoryItems().map((c) => c.category)).toContain('newcat');
+    });
+
+    it('should commit the typed category on a Tab separator key', () => {
+        fixture.componentRef.setInput('existingCategories', []);
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(comp.autoComplete(), 'hide').mockImplementation(() => undefined);
+
+        comp.onSeparatorKeydown(separatorEvent('Tab', 'newcat'));
+
+        expect(comp.selectedCategoryItems().map((c) => c.category)).toContain('newcat');
+    });
+
+    it('should ignore a non-separator key', () => {
+        fixture.componentRef.setInput('existingCategories', []);
+        fixture.changeDetectorRef.detectChanges();
+
+        comp.onSeparatorKeydown(separatorEvent('a', 'newcat'));
+
+        expect(comp.selectedCategoryItems()).toEqual([]);
+    });
+
+    it('should let an empty field Tab away instead of committing or trapping focus', () => {
+        fixture.componentRef.setInput('existingCategories', []);
+        fixture.changeDetectorRef.detectChanges();
+
+        const event = separatorEvent('Tab', '   ');
+        comp.onSeparatorKeydown(event);
+
+        expect(comp.selectedCategoryItems()).toEqual([]);
+        expect(event.preventDefault).not.toHaveBeenCalled();
     });
 
     it('should set suggestions for autocomplete on complete with empty query', () => {

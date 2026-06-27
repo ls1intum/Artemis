@@ -30,14 +30,21 @@ jhi-category-selector-primeng {
             border-radius: 0.25rem !important;
             background: transparent !important;
 
+            // PrimeNG always renders a remove-icon slot for removable chips; hide it, since our remove control
+            // lives inside .custom-tag (otherwise it leaves an empty gap after the colored pill).
+            .p-chip-remove-icon {
+                display: none;
+            }
+
+            // The label and remove icon are flex children of .custom-tag, so they share the one colored pill.
             .custom-tag {
-                position: relative;
-                padding: 0.1rem 0 0.1rem 0.4rem;
+                display: flex;
+                align-items: center;
+                gap: 0.35rem;
+                padding: 0.1rem 0.5rem;
                 background: #ccc;
                 border-radius: 0.25rem;
                 color: #fff;
-                display: flex;
-                align-items: center;
                 font-size: 0.8rem;
                 height: 100%;
 
@@ -47,9 +54,8 @@ jhi-category-selector-primeng {
             }
 
             .category-chip-remove {
-                color: #fff;
+                // Color is inherited from .custom-tag (#fff); the fa-icon fills with currentColor.
                 font-size: 0.7rem;
-                margin: 0 0.4rem 0 0.25rem;
                 cursor: pointer;
             }
         }

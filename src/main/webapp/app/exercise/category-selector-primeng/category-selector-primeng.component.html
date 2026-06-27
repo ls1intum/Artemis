@@ -10,20 +10,18 @@
     (completeMethod)="onComplete($event)"
     (onSelect)="onItemSelect($event)"
     (onUnselect)="onItemUnselect($event)"
-    (keydown.enter)="onEnter($event)"
+    (keydown)="onSeparatorKeydown($event)"
 >
-    <!-- Colored chip token for each selected category -->
+    <!-- Colored chip token for each selected category: label + remove icon share one colored pill -->
     <ng-template #selecteditem let-label>
         <div class="custom-tag" [style.backgroundColor]="colorFor(label)">
             <span class="category-name" (click)="openColorSelectorForLabel($event, label)">
                 {{ label }}
             </span>
+            <fa-icon [icon]="faTimes" class="category-chip-remove" (click)="removeChip(label, $event)" />
         </div>
     </ng-template>
-    <!-- Use the FontAwesome times icon for the built-in chip remove control; removeCallback triggers the (onUnselect) event -->
-    <ng-template #removeicon let-removeCallback="removeCallback" let-index="index">
-        <fa-icon [icon]="faTimes" class="category-chip-remove" (click)="removeCallback($event, index)" />
-    </ng-template>
+    <!-- PrimeNG's default per-chip remove icon is hidden via CSS (.p-chip-remove-icon); the remove control lives inside .custom-tag above -->
     <ng-template #item let-category>
         <span class="tag-option">{{ category }}</span>
     </ng-template>
