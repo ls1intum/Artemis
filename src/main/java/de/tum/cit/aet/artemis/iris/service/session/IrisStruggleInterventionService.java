@@ -223,16 +223,16 @@ public class IrisStruggleInterventionService {
                     return;
                 }
                 irisChatWebsocketService.sendMessage(p.session(), p.saved(), statusUpdate.stages());
-                irisChatWebsocketService.sendStruggleEvent(user,
-                        new StruggleInterventionEventDTO(job.exerciseId(), "active", null, p.session().getId(), p.saved().getId(), confidence));
+                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "active", null, p.session().getId(), p.saved().getId(),
+                        statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence));
             }
             case "ambient" -> {
                 var p = persistProactiveMessage(user, job.exerciseId(), statusUpdate.result());
                 if (p == null) {
                     return;
                 }
-                irisChatWebsocketService.sendStruggleEvent(user,
-                        new StruggleInterventionEventDTO(job.exerciseId(), "ambient", statusUpdate.result(), p.session().getId(), p.saved().getId(), confidence));
+                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "ambient", statusUpdate.result(), p.session().getId(),
+                        p.saved().getId(), statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence));
             }
             default -> {
                 // silent (or downgraded): surface nothing, materialize nothing.

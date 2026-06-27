@@ -6,6 +6,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -18,7 +19,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisStruggleInterventionStatusUpdateDTO(@Nullable String result, @Nullable String action, @Nullable Double confidence, @Nullable String rationale,
-        @NonNull List<PyrisStageDTO> stages, @NonNull List<LLMRequest> tokens) {
+        @NonNull List<PyrisStageDTO> stages, @NonNull List<LLMRequest> tokens, @JsonProperty("anchor_file") @Nullable String anchorFile,
+        @JsonProperty("anchor_line") @Nullable Integer anchorLine, @JsonProperty("inline_hint") @Nullable String inlineHint) {
 
     public PyrisStruggleInterventionStatusUpdateDTO {
         stages = stages != null ? stages : List.of();

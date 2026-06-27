@@ -17,7 +17,7 @@ class StruggleInterventionEventDTOTest {
     @Test
     void nullSessionAndMessageIdsAreOmitted() throws Exception {
         // NON_NULL serialization contract: a push without session/message ids (e.g. a partial payload) omits both.
-        var event = new StruggleInterventionEventDTO(42, "ambient", "Re-check the logic.", null, null, 0.7);
+        var event = new StruggleInterventionEventDTO(42, "ambient", "Re-check the logic.", null, null, null, null, null, 0.7);
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("exerciseId").asLong()).isEqualTo(42);
         assertThat(node.get("action").asText()).isEqualTo("ambient");
@@ -31,7 +31,7 @@ class StruggleInterventionEventDTOTest {
     @Test
     void eventCarriesSessionIdMessageIdAndConfidence() throws Exception {
         // After unify-persistence (§7) both ambient and active carry sessionId + messageId of the saved message.
-        var event = new StruggleInterventionEventDTO(42, "active", null, 99L, 555L, 0.81);
+        var event = new StruggleInterventionEventDTO(42, "active", null, 99L, 555L, null, null, null, 0.81);
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("sessionId").asLong()).isEqualTo(99);
         assertThat(node.get("messageId").asLong()).isEqualTo(555);

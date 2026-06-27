@@ -62,8 +62,9 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * {@link IrisMessageOrigin#PROACTIVE_STRUGGLE}-origin LLM message, and pushes a per-user {@code active} event
  * (sessionId set, confidence 0.85) on {@code /topic/iris/struggle-intervention},</li>
  * <li>a trailing duplicate callback for the same run is rejected (403, idempotency),</li>
- * <li>an {@code ambient} decision pushes a session-less event (sessionId null, confidence 0.7) and creates no
- * session.</li>
+ * <li>an {@code ambient} decision (after unify-persistence, spec §7) also persists a
+ * {@link IrisMessageOrigin#PROACTIVE_STRUGGLE} message into the shared session and pushes an {@code ambient} event
+ * carrying that session id (confidence 0.7), without a live bubble push.</li>
  * </ol>
  */
 class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest {
@@ -169,7 +170,8 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         await().atMost(5, TimeUnit.SECONDS).until(() -> runId.get() != null);
 
         var terminalStage = new PyrisStageDTO("Thinking", 10, PyrisStageState.DONE, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Have you checked the empty-list case?", "active", 0.85, "FM", List.of(terminalStage), List.of());
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Have you checked the empty-list case?", "active", 0.85, "FM", List.of(terminalStage), List.of(), null, null,
+                null);
         sendStruggleStatus(runId.get(), update, HttpStatus.OK);
 
         // The active path lazily CREATED the exercise session and persisted a proactive-tagged LLM message into it.
@@ -194,7 +196,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void ambientDecision_pushesSessionlessEventAndCreatesNoSession() throws Exception {
+    void ambientDecision_persistsTaggedMessageAndPushesEventWithSession() throws Exception {
         AtomicReference<String> runId = new AtomicReference<>();
         irisRequestMockProvider.mockStruggleInterventionResponse(dto -> runId.set(dto.settings().authenticationToken()));
 
@@ -205,25 +207,32 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         await().atMost(5, TimeUnit.SECONDS).until(() -> runId.get() != null);
 
         var terminalStage = new PyrisStageDTO("Thinking", 10, PyrisStageState.DONE, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Step back and re-check the logic.", "ambient", 0.7, "STATE", List.of(terminalStage), List.of());
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Step back and re-check the logic.", "ambient", 0.7, "STATE", List.of(terminalStage), List.of(), null, null,
+                null);
         sendStruggleStatus(runId.get(), update, HttpStatus.OK);
 
-        // A session-less per-user 'ambient' event is pushed; NO exercise session is created.
-        await().pollDelay(java.time.Duration.ofMillis(500)).atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+        // unify-persistence (spec §7): ambient now persists an origin-tagged LLM message into the shared exercise session.
+        AtomicReference<Long> savedSessionId = new AtomicReference<>();
+        AtomicReference<Long> savedMessageId = new AtomicReference<>();
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             var session = irisChatSessionRepository
                     .findLatestByEntityIdAndChatModeAndUserIdWithMessages(exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, studentId(), Pageable.ofSize(1)).stream()
-                    .findFirst();
-            assertThat(session).isEmpty();   // ambient never materializes a session
+                    .findFirst().orElseThrow();
+            var proactive = session.getMessages().stream().filter(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE).findFirst().orElseThrow();
+            savedSessionId.set(session.getId());
+            savedMessageId.set(proactive.getId());
         });
 
-        // ...and the positive half of the contract: a session-less 'ambient' event WAS pushed on the per-user topic
-        // (this is the only place ambient is observable — it is never persisted as an LLM message).
+        // ...and a per-user 'ambient' event WAS pushed on the per-user topic, carrying the SAVED message's session +
+        // message ids (so a later slice can open/reveal exactly that message). The "no live bubble push" negative is
+        // locked down at the unit layer in IrisStruggleInterventionDecisionTest (verify(...never()).sendMessage).
         ArgumentCaptor<Object> ambientPayload = ArgumentCaptor.forClass(Object.class);
         verify(websocketMessagingService, timeout(5000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/struggle-intervention"), ambientPayload.capture());
         assertThat(ambientPayload.getValue()).isInstanceOf(StruggleInterventionEventDTO.class);
         var ambientEvent = (StruggleInterventionEventDTO) ambientPayload.getValue();
         assertThat(ambientEvent.action()).isEqualTo("ambient");
-        assertThat(ambientEvent.sessionId()).isNull();
+        assertThat(ambientEvent.sessionId()).isEqualTo(savedSessionId.get());
+        assertThat(ambientEvent.messageId()).isEqualTo(savedMessageId.get());
         assertThat(ambientEvent.message()).contains("logic");
         assertThat(ambientEvent.confidence()).isEqualTo(0.7);
     }

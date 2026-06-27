@@ -110,7 +110,7 @@ class IrisStruggleInterventionDecisionTest {
             m.setId(555L);
             return m;
         });
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.8, "FM", List.of(), List.of());
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.8, "FM", List.of(), List.of(), null, null, null);
         service.handleDecision(job, update);
         verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE), eq(session), eq(IrisMessageSender.LLM));
         verify(irisChatWebsocketService).sendMessage(eq(session), any(), any());
@@ -122,7 +122,7 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void active_belowThreshold_downgradesToSilent_noSessionCreated() {
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.4, "FM", List.of(), List.of());
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.4, "FM", List.of(), List.of(), null, null, null);
         service.handleDecision(job, update);
         verify(irisChatSessionService, never()).getCurrentSessionOrCreateIfNotExists(any(), eq(42L), any());
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
@@ -138,7 +138,7 @@ class IrisStruggleInterventionDecisionTest {
             m.setId(556L);
             return m;
         });
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, List.of(), List.of());
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, List.of(), List.of(), "Sort.java", 42, "off-by-one?");
 
         service.handleDecision(job, update);
 
@@ -146,15 +146,18 @@ class IrisStruggleInterventionDecisionTest {
         verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE), eq(session), eq(IrisMessageSender.LLM));
         // but it does NOT push the bubble live in this slice (surfacing is deferred)
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action()) && Objects.equals(e.message(), "Re-check the logic.")
-                && Objects.equals(e.sessionId(), 99L) && Objects.equals(e.messageId(), 556L) && Objects.equals(e.confidence(), 0.7)));
+        // the event also forwards the gate's anchor + inlineHint (spec §4/§8) for the inline surface
+        verify(irisChatWebsocketService).sendStruggleEvent(any(),
+                argThat(e -> "ambient".equals(e.action()) && Objects.equals(e.message(), "Re-check the logic.") && Objects.equals(e.sessionId(), 99L)
+                        && Objects.equals(e.messageId(), 556L) && "Sort.java".equals(e.anchorFile()) && Objects.equals(e.anchorLine(), 42) && "off-by-one?".equals(e.inlineHint())
+                        && Objects.equals(e.confidence(), 0.7)));
     }
 
     @Test
     void active_resolvedSessionNotExerciseBound_isDropped() {
         var session = exerciseSession(999L);   // defensive: resolved session not bound to job.exerciseId()
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.9, "FM", List.of(), List.of());
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.9, "FM", List.of(), List.of(), null, null, null);
         service.handleDecision(job, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
     }

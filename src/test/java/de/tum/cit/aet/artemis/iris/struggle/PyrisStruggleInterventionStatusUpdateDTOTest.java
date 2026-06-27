@@ -28,10 +28,23 @@ class PyrisStruggleInterventionStatusUpdateDTOTest {
         // Real silent-decision callback shape: result == null, action == "silent" — the record header is
         // (result, action, confidence, rationale, stages, tokens), so the "silent" literal MUST sit in the
         // action position. This is the exact shape Task 11's handleDecision keys on (action != null && result == null).
-        var dto = new PyrisStruggleInterventionStatusUpdateDTO(null, "silent", 0.1, null, null, null);
+        var dto = new PyrisStruggleInterventionStatusUpdateDTO(null, "silent", 0.1, null, null, null, null, null, null);
         assertThat(dto.action()).isEqualTo("silent");
         assertThat(dto.result()).isNull();
         assertThat(dto.stages()).isEmpty();
         assertThat(dto.tokens()).isEmpty();
+    }
+
+    @Test
+    void deserializesSnakeCaseAnchorFields() throws Exception {
+        // Pyris emits snake_case (model_dump by_alias); the @JsonProperty mapping must land on the camelCase accessors,
+        // otherwise the inline surface silently arrives null and never activates.
+        String json = """
+                {"result":"Look at the loop bound.","action":"ambient","confidence":0.7,"rationale":"FM",
+                 "stages":[],"tokens":[],"anchor_file":"Sort.java","anchor_line":42,"inline_hint":"off-by-one?"}""";
+        var dto = mapper.readValue(json, PyrisStruggleInterventionStatusUpdateDTO.class);
+        assertThat(dto.anchorFile()).isEqualTo("Sort.java");
+        assertThat(dto.anchorLine()).isEqualTo(42);
+        assertThat(dto.inlineHint()).isEqualTo("off-by-one?");
     }
 }
