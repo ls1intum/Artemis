@@ -19,13 +19,7 @@
                                 <fa-icon
                                     [icon]="faCircleInfo"
                                     class="text-body-tertiary"
-                                    [pTooltip]="
-                                        'The variants in this exercise total ' +
-                                        exerciseSumMaxPoints() +
-                                        ' pts, but only ' +
-                                        group.maxPoints +
-                                        ' pts count toward your course score.'
-                                    "
+                                    [pTooltip]="'artemisApp.exerciseVariantGroup.detail.pointsTooltip' | artemisTranslate: { total: exerciseSumMaxPoints(), cap: group.maxPoints }"
                                     tooltipPosition="top"
                                 />
                             }
@@ -51,11 +45,11 @@
         <div class="d-flex flex-column h-100 overflow-hidden module-bg rounded-3 p-2">
             <div class="group-panel-scroll">
                 <div class="variant-callout rounded-3 p-3 mb-3">
-                    <div class="fw-semibold mb-1">Choose a variant to work on</div>
+                    <div class="fw-semibold mb-1" jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.heading"></div>
                     <p class="mb-0 text-body-secondary">
-                        This exercise has {{ exercises().length }} variants. You can work on any or all of them.
+                        <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.body" [translateValues]="{ count: exercises().length }"></span>
                         @if (group.maxPoints) {
-                            Your combined score for this group is capped at <strong>{{ group.maxPoints }} points</strong>.
+                            <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.cappedScore" [translateValues]="{ maxPoints: group.maxPoints }"></span>
                         }
                     </p>
                 </div>
@@ -80,7 +74,7 @@
                                 @if (renderedStatements().get(exercise.id!); as renderedPs) {
                                     <div class="variant-card__ps markdown-preview" [innerHTML]="renderedPs"></div>
                                 } @else {
-                                    <p class="text-body-tertiary fst-italic mb-0">No problem statement configured.</p>
+                                    <p class="text-body-tertiary fst-italic mb-0" jhiTranslate="artemisApp.exerciseVariantGroup.detail.noProblemStatement"></p>
                                 }
                             </a>
                         </div>
