@@ -28,7 +28,6 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { UMLDiagramType } from '@tumaet/apollon/external';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -77,7 +76,7 @@ describe('ExamUpdateComponent', () => {
             course.id = 1;
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             TestBed.configureTestingModule({
-                imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
+                imports: [],
                 providers: [
                     provideHttpClient(),
                     provideHttpClientTesting(),
@@ -921,7 +920,7 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
+                imports: [],
                 providers: [
                     provideHttpClient(),
                     provideHttpClientTesting(),

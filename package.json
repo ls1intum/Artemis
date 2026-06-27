@@ -25,7 +25,6 @@
         "@angular/youtube-player": "21.2.14",
         "@ctrl/ngx-emoji-mart": "9.3.0",
         "@dagrejs/dagre": "3.0.0",
-        "@danielmoncada/angular-datetime-picker": "21.0.0",
         "@e965/xlsx": "0.20.3",
         "@emotion/react": "11.14.0",
         "@emotion/styled": "11.14.0",
