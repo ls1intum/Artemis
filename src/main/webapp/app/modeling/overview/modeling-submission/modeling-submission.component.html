@@ -12,18 +12,6 @@
                 @if (!submission() || submission().submitted || !isExamSummary()) {
                     <div class="w-100">
                         <div class="submission-container d-flex flex-column w-100">
-                            <div class="d-flex flex-column flex-md-row">
-                                @if (modelingExercise().teamMode && (isActive || isLate())) {
-                                    <div class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
-                                        <jhi-team-participate-info-box
-                                            [exercise]="modelingExercise()"
-                                            [participation]="participation()"
-                                            [typing$]="submissionObservable"
-                                            [dockedToRightSide]="true"
-                                        />
-                                    </div>
-                                }
-                            </div>
                             <jhi-fullscreen>
                                 <div class="column" style="display: flex; flex-direction: column; flex-grow: 1">
                                     <div class="row" style="flex-grow: 1; display: flex">
@@ -40,19 +28,22 @@
                                                     [umlModel]="umlModel()"
                                                     [diagramType]="modelingExercise().diagramType!"
                                                     [withExplanation]="true"
+                                                    [collaborationEnabled]="modelingExercise().teamMode ?? false"
+                                                    [collaborationUser]="apollonCollaborationUser()"
                                                     [(explanation)]="explanation"
                                                     [resizeOptions]="resizeOptions"
                                                     [savedStatus]="{ isChanged: isChanged(), isSaving: isSaving() }"
                                                     (onModelPatch)="onModelPatch($event)"
                                                 />
                                                 <fa-icon [icon]="faGripLines" class="rg-bottom text-lightgrey"> <span></span></fa-icon>
-                                                @if (modelingExercise().teamMode) {
+                                                <!-- Gate team sync on the resolved collaboration user so it does not start the Yjs/awareness handshake
+                                                     before the (user-gated) Apollon editor exists — otherwise early peer replies would be dropped. -->
+                                                @if (modelingExercise().teamMode && apollonCollaborationUser()) {
                                                     <jhi-team-submission-sync
                                                         [exerciseType]="modelingExercise().type!"
                                                         [submissionObservable]="submissionObservable"
                                                         [submissionPatchObservable]="submissionPatchObservable"
                                                         [participation]="participation()"
-                                                        (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
                                                         (receiveSubmissionPatch)="onReceiveSubmissionPatchFromTeam($event)"
                                                         (reconnected)="onTeamSyncReconnected()"
                                                     />

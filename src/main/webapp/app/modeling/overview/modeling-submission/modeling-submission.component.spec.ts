@@ -7,7 +7,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { type CollaborationUser, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -21,7 +21,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { routes } from 'app/modeling/overview/modeling-participation.route';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
@@ -59,6 +58,8 @@ class StubModelingEditorComponent {
     resizeOptions = input<{ verticalResize?: boolean }>({});
     showHelpButton = input<boolean>(true);
     withExplanation = input<boolean>(false);
+    collaborationEnabled = input(false);
+    collaborationUser = input<CollaborationUser | undefined>(undefined);
     savedStatus = input<{ isChanged?: boolean; isSaving?: boolean }>();
 
     savedStatusOutput = output<boolean>();
@@ -113,15 +114,10 @@ describe('ModelingSubmissionComponent', () => {
         // Override the component to use stubs/mocks instead of real components
         TestBed.overrideComponent(ModelingSubmissionComponent, {
             remove: {
-                imports: [ModelingEditorComponent, TeamParticipateInfoBoxComponent, RatingComponent, ComplaintsStudentViewComponent],
+                imports: [ModelingEditorComponent, RatingComponent, ComplaintsStudentViewComponent],
             },
             add: {
-                imports: [
-                    StubModelingEditorComponent,
-                    MockComponent(TeamParticipateInfoBoxComponent),
-                    MockComponent(RatingComponent),
-                    MockComponent(ComplaintsStudentViewComponent),
-                ],
+                imports: [StubModelingEditorComponent, MockComponent(RatingComponent), MockComponent(ComplaintsStudentViewComponent)],
             },
         });
 
@@ -161,7 +157,6 @@ describe('ModelingSubmissionComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockComponent(ResizeableContainerComponent),
-                MockComponent(TeamParticipateInfoBoxComponent),
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(ModelingAssessmentComponent),
                 MockComponent(FullscreenComponent),
