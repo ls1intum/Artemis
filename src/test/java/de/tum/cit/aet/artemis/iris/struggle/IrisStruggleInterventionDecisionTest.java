@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -104,7 +105,11 @@ class IrisStruggleInterventionDecisionTest {
     void active_aboveThreshold_materializesPersistsAndPushes() {
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> inv.getArgument(0));
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
+            IrisMessage m = inv.getArgument(0);
+            m.setId(555L);
+            return m;
+        });
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.8, "FM", List.of(), List.of());
         service.handleDecision(job, update);
         verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE), eq(session), eq(IrisMessageSender.LLM));
@@ -112,7 +117,7 @@ class IrisStruggleInterventionDecisionTest {
         // Objects.equals: sessionId is a @Nullable Long, so a regression to null fails as a clean assertion mismatch
         // rather than throwing NPE inside argThat. confidence is forwarded for the eval log (§12).
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
-                argThat(e -> "active".equals(e.action()) && Objects.equals(e.sessionId(), 99L) && Objects.equals(e.confidence(), 0.8)));
+                argThat(e -> "active".equals(e.action()) && Objects.equals(e.sessionId(), 99L) && Objects.equals(e.messageId(), 555L) && Objects.equals(e.confidence(), 0.8)));
     }
 
     @Test

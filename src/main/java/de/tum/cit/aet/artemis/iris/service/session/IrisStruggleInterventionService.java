@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -214,24 +216,46 @@ public class IrisStruggleInterventionService {
         }
         switch (finalAction) {
             case "active" -> {
-                var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, job.exerciseId(), user);
-                if (session.getMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT || !Objects.equals(session.getEntityId(), job.exerciseId())) {
-                    log.info("Dropping stale struggle intervention: resolved session for exercise {} is not exercise-bound", job.exerciseId());
+                var p = persistProactiveMessage(user, job.exerciseId(), statusUpdate.result());
+                if (p == null) {
                     return;
                 }
-                var message = new IrisMessage();
-                message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-                message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
-                var saved = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-                irisChatWebsocketService.sendMessage(session, saved, statusUpdate.stages());
-                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "active", null, session.getId(), confidence));
+                irisChatWebsocketService.sendMessage(p.session(), p.saved(), statusUpdate.stages());
+                irisChatWebsocketService.sendStruggleEvent(user,
+                        new StruggleInterventionEventDTO(job.exerciseId(), "active", null, p.session().getId(), p.saved().getId(), confidence));
             }
             case "ambient" ->
-                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "ambient", statusUpdate.result(), null, confidence));
+                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "ambient", statusUpdate.result(), null, null, confidence));
             default -> {
                 // silent (or downgraded): surface nothing, materialize nothing.
             }
         }
+    }
+
+    private record PersistedProactive(IrisChatSession session, IrisMessage saved) {
+    }
+
+    /**
+     * Resolve the shared exercise-chat session and persist an origin-tagged proactive message. Returns null when the
+     * resolved session is not exercise-bound (defensive drop). Shared by active and ambient (spec §7.2). Does NOT push
+     * the message over the socket - callers decide that.
+     *
+     * @param user       the student the proactive message belongs to
+     * @param exerciseId the programming exercise id the message is bound to
+     * @param result     the proactive message text returned by the gate
+     * @return the resolved session + saved message, or null if the resolved session is not exercise-bound
+     */
+    private @Nullable PersistedProactive persistProactiveMessage(User user, long exerciseId, String result) {
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId, user);
+        if (session.getMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT || !Objects.equals(session.getEntityId(), exerciseId)) {
+            log.info("Dropping stale struggle intervention: resolved session for exercise {} is not exercise-bound", exerciseId);
+            return null;
+        }
+        var message = new IrisMessage();
+        message.addContent(new IrisTextMessageContent(result));
+        message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        var saved = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+        return new PersistedProactive(session, saved);
     }
 
     /** Immutable snapshot of the synchronously-prepared trigger (ids + payload only - NO entity crosses threads). */

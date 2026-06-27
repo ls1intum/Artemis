@@ -15,23 +15,26 @@ class StruggleInterventionEventDTOTest {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
-    void ambientEventOmitsSessionIdButCarriesConfidence() throws Exception {
-        var event = new StruggleInterventionEventDTO(42, "ambient", "Re-check the logic.", null, 0.7);
+    void nullSessionAndMessageIdsAreOmitted() throws Exception {
+        // NON_NULL serialization contract: a push without session/message ids (e.g. a partial payload) omits both.
+        var event = new StruggleInterventionEventDTO(42, "ambient", "Re-check the logic.", null, null, 0.7);
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("exerciseId").asLong()).isEqualTo(42);
         assertThat(node.get("action").asText()).isEqualTo("ambient");
         assertThat(node.get("message").asText()).contains("logic");
         assertThat(node.hasNonNull("sessionId")).isFalse();
-        // confidence is forwarded for the client eval log (§12) on BOTH ambient and active — ambient is the only
-        // place ambient confidence is observable client-side (it is never persisted as an LLM message).
+        assertThat(node.hasNonNull("messageId")).isFalse();
+        // confidence is forwarded for the client eval log (§12) on both ambient and active.
         assertThat(node.get("confidence").asDouble()).isEqualTo(0.7);
     }
 
     @Test
-    void activeEventCarriesSessionIdAndConfidence() throws Exception {
-        var event = new StruggleInterventionEventDTO(42, "active", null, 99L, 0.81);
+    void eventCarriesSessionIdMessageIdAndConfidence() throws Exception {
+        // After unify-persistence (§7) both ambient and active carry sessionId + messageId of the saved message.
+        var event = new StruggleInterventionEventDTO(42, "active", null, 99L, 555L, 0.81);
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("sessionId").asLong()).isEqualTo(99);
+        assertThat(node.get("messageId").asLong()).isEqualTo(555);
         assertThat(node.get("confidence").asDouble()).isEqualTo(0.81);
     }
 
