@@ -1,4 +1,7 @@
 import { vi } from 'vitest';
+import type { ApollonOptions } from '@tumaet/apollon';
+
+type MockApollonOptions = Pick<ApollonOptions, 'model' | 'collaboration'>;
 
 // Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
 const { MockApollonEditor } = vi.hoisted(() => {
@@ -6,6 +9,7 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
     class MockApollonEditorClass {
         _model: any;
+        _options: MockApollonOptions | undefined;
         _subscriptions = new Map<number, (model: any) => void>();
         _subscriptionCounter = 0;
         _broadcastCallback: ((patch: string) => void) | undefined;
@@ -29,6 +33,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         broadcastFullState = vi.fn();
 
+        setLocalAwarenessUser = vi.fn();
+
         destroy = vi.fn(() => {
             this._destroyed = true;
             this._subscriptions.clear();
@@ -38,7 +44,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         nextRender = Promise.resolve();
 
-        constructor(_container: HTMLElement, options?: { model?: any }) {
+        constructor(_container: HTMLElement, options?: MockApollonOptions) {
+            this._options = options;
             this._model = options?.model ? deepClone(options.model) : {};
         }
 
@@ -171,6 +178,29 @@ describe('ModelingEditorComponent', () => {
         // verify teardown
         expect(component['apollonEditor']).toBeUndefined();
         expect(editor.destroy).toHaveBeenCalled();
+    });
+
+    it('should wait for the local user before mounting a collaborative editor', () => {
+        const collaborationUser = { id: 'student1', name: 'Student One', color: '#123456' };
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.componentRef.setInput('collaborationEnabled', true);
+        fixture.detectChanges();
+
+        expect(component['apollonEditor']).toBeUndefined();
+
+        fixture.componentRef.setInput('collaborationUser', collaborationUser);
+        fixture.detectChanges();
+
+        const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
+        expect(editor).toBeDefined();
+        expect(editor._options?.collaboration).toEqual({
+            enabled: true,
+            user: collaborationUser,
+            showPresence: true,
+            showCursors: true,
+            showSelectionHighlights: true,
+            showFollow: true,
+        });
     });
 
     it('ngOnChanges', async () => {
@@ -356,6 +386,22 @@ describe('ModelingEditorComponent', () => {
         const editor = component['apollonEditor'] as any;
         component.broadcastFullState();
         expect(editor.broadcastFullState).toHaveBeenCalledOnce();
+    });
+
+    it('reannounceLocalAwareness re-pushes the local user and no-ops when not yet mounted', () => {
+        const collaborationUser = { id: 'student1', name: 'Student One', color: '#123456' };
+        // Before mount: calling must be a safe no-op
+        fixture.componentRef.setInput('collaborationUser', collaborationUser);
+        expect(() => component.reannounceLocalAwareness()).not.toThrow();
+
+        fixture.componentRef.setInput('umlModel', classDiagram);
+        fixture.componentRef.setInput('collaborationEnabled', true);
+        fixture.detectChanges();
+
+        const editor = component['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
+        editor.setLocalAwarenessUser.mockClear();
+        component.reannounceLocalAwareness();
+        expect(editor.setLocalAwarenessUser).toHaveBeenCalledExactlyOnceWith(collaborationUser);
     });
 
     it('should subscribe to model change patches and emit them.', async () => {

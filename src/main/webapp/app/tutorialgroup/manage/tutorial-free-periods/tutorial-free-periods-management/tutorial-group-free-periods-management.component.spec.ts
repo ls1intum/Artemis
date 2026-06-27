@@ -25,7 +25,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
@@ -81,7 +80,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TutorialGroupFreePeriodsManagementComponent, OwlNativeDateTimeModule],
+            imports: [TutorialGroupFreePeriodsManagementComponent],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(AlertService),

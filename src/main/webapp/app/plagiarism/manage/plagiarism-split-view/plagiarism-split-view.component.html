@@ -1,39 +1,65 @@
 <div class="plagiarism-split-view">
-    <div class="plagiarism-split-pane" jhiPane>
-        @if (plagiarismComparison()) {
-            @if (isProgrammingOrTextExercise()) {
-                <jhi-text-submission-viewer
-                    [fileSelectedSubject]="this.fileSelectedSubject"
-                    [exercise]="exercise()"
-                    [matches]="matchesA()"
-                    [plagiarismSubmission]="getTextSubmissionA()"
-                    [isLockFilesEnabled]="isLockFilesEnabled()"
-                    [hideContent]="false"
-                    [dropdownHoverSubject]="this.dropdownHoverSubject"
-                    [showFilesSubject]="this.showFilesSubject"
-                />
-            }
-        }
-    </div>
-    <div class="split-pane-header-color">
-        <button class="btn btn-sm" (click)="toggleLockFiles()" [class.active]="isLockFilesEnabled()" data-qa="lock-files-toggle-button">
-            <fa-icon [icon]="isLockFilesEnabled() ? faLock : faUnlock" aria-label="Synchronize files while navigating on both sides" />
-        </button>
-    </div>
-    <div class="plagiarism-split-pane" jhiPane>
-        @if (plagiarismComparison()) {
-            @if (isProgrammingOrTextExercise()) {
-                <jhi-text-submission-viewer
-                    [fileSelectedSubject]="this.fileSelectedSubject"
-                    [exercise]="exercise()"
-                    [matches]="matchesB()"
-                    [plagiarismSubmission]="getTextSubmissionB()"
-                    [isLockFilesEnabled]="isLockFilesEnabled()"
-                    [hideContent]="forStudent() && dayjs(exercise()?.dueDate).isAfter(dayjs())"
-                    [dropdownHoverSubject]="this.dropdownHoverSubject"
-                    [showFilesSubject]="this.showFilesSubject"
-                />
-            }
-        }
-    </div>
+    <p-splitter
+        class="plagiarism-splitter"
+        [class.collapsed-left]="collapsedSide() === 'left'"
+        [class.collapsed-right]="collapsedSide() === 'right'"
+        layout="horizontal"
+        [gutterSize]="gutterSize"
+        [panelSizes]="panelSizes()"
+        [minSizes]="[10, 10]"
+    >
+        <ng-template #panel>
+            <div class="plagiarism-split-pane">
+                @if (plagiarismComparison()) {
+                    @if (isProgrammingOrTextExercise()) {
+                        <jhi-text-submission-viewer
+                            [fileSelectedSubject]="this.fileSelectedSubject"
+                            [exercise]="exercise()"
+                            [matches]="matchesA()"
+                            [plagiarismSubmission]="getTextSubmissionA()"
+                            [isLockFilesEnabled]="isLockFilesEnabled()"
+                            [hideContent]="false"
+                            [dropdownHoverSubject]="this.dropdownHoverSubject"
+                            [showFilesSubject]="this.showFilesSubject"
+                        />
+                    }
+                }
+            </div>
+        </ng-template>
+        <ng-template #panel>
+            <div class="plagiarism-split-pane">
+                @if (plagiarismComparison()) {
+                    @if (isProgrammingOrTextExercise()) {
+                        <jhi-text-submission-viewer
+                            [fileSelectedSubject]="this.fileSelectedSubject"
+                            [exercise]="exercise()"
+                            [matches]="matchesB()"
+                            [plagiarismSubmission]="getTextSubmissionB()"
+                            [isLockFilesEnabled]="isLockFilesEnabled()"
+                            [hideContent]="forStudent() && dayjs(exercise()?.dueDate).isAfter(dayjs())"
+                            [dropdownHoverSubject]="this.dropdownHoverSubject"
+                            [showFilesSubject]="this.showFilesSubject"
+                        />
+                    }
+                }
+            </div>
+        </ng-template>
+    </p-splitter>
+    <!-- Lock-files control: follows the gutter (gutterCenterPx) so it stays on the divider while dragging instead of
+         staying fixed at the centre. Hidden when one pane is fully collapsed (there is no gutter then). -->
+    @if (!collapsedSide()) {
+        <div class="split-pane-header-color" [style.left.px]="gutterCenterPx()">
+            <button
+                class="btn btn-sm"
+                (click)="toggleLockFiles()"
+                [class.active]="isLockFilesEnabled()"
+                [pTooltip]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
+                tooltipPosition="bottom"
+                [attr.aria-label]="'artemisApp.plagiarism.synchronizeFiles' | artemisTranslate"
+                data-qa="lock-files-toggle-button"
+            >
+                <fa-icon [icon]="isLockFilesEnabled() ? faLock : faUnlock" />
+            </button>
+        </div>
+    }
 </div>

@@ -526,12 +526,17 @@ pre {
     &-inner {
         position: relative;
         display: flex;
+
+        // Allow this flex chain to shrink below its content's min-content; otherwise a long, nowrap context label
+        // deeper down forces the whole input row wider than the (narrow) widget and pushes the send button out.
+        min-width: 0;
     }
 
     .textarea-wrapper {
         display: flex;
         flex-direction: column;
         flex: 1;
+        min-width: 0;
         position: relative;
         background-color: var(--iris-secondary-background);
         border: 1px solid var(--bs-border-color);
@@ -551,7 +556,21 @@ pre {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 6px;
+        min-width: 0;
         padding: 6px 6px 6px 8px;
+
+        // The context selector may shrink (its label truncates) so a long context never pushes the send button
+        // out; the send button keeps its size and stays clickable. min-width:0 is harmless in any layout (it only
+        // lets the selector shrink when actually constrained); the flex-grow that fills the row is widget-only
+        // (see :host.layout-widget below), so the wider client/embedded layouts keep the selector at content width.
+        jhi-context-selection {
+            min-width: 0;
+        }
+
+        #irisSendButton {
+            flex-shrink: 0;
+        }
     }
 
     // These values must stay in sync with the textarea padding (16px) and send button width (56px)
@@ -566,7 +585,7 @@ pre {
         font-family: var(--bs-body-font-family);
         font-size: inherit;
         line-height: inherit;
-        word-wrap: break-word;
+        overflow-wrap: break-word;
         overflow: hidden;
     }
 
@@ -585,6 +604,12 @@ pre {
         opacity: 1;
         white-space: pre-wrap;
     }
+}
+
+// Only in the narrow floating widget does the context selector grow to fill the row (so a long label uses the
+// available width before truncating). The wider client/embedded layouts keep it at content width.
+:host.layout-widget .chat-input .textarea-controls jhi-context-selection {
+    flex: 1 1 auto;
 }
 
 .new-chat-button {
