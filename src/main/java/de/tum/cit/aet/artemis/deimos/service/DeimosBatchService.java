@@ -197,7 +197,8 @@ public class DeimosBatchService {
                 log.warn("Omitting deep link in Deimos completion email: malicious participation {} has no exercise id", participationAnalysis.participationId());
                 continue;
             }
-            String participationUrl = base + "/course-management/" + courseId + "/programming-exercises/" + participationAnalysis.exerciseId() + "/scores";
+            String participationUrl = base + "/course-management/" + courseId + "/programming-exercises/" + participationAnalysis.exerciseId() + "/participations/"
+                    + participationAnalysis.participationId() + "/submissions";
             String rationale = participationAnalysis.rationale() != null ? participationAnalysis.rationale().strip() : "";
             maliciousParticipationLinks.add(new DeimosMaliciousParticipationLink(participationUrl, participationAnalysis.participationId(), rationale));
         }

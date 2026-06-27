@@ -481,7 +481,7 @@ export class AssessmentDashboardComponent implements OnInit {
     }
 
     triggerCourseDeimosBatch(selection: DeimosDateRangeSelection): void {
-        if (!this.courseId) {
+        if (!this.courseId()) {
             return;
         }
 

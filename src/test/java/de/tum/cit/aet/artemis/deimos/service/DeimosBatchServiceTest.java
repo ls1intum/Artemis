@@ -123,7 +123,8 @@ class DeimosBatchServiceTest {
         assertThat(emailData.analyzed()).isEqualTo(2L);
         assertThat(emailData.maliciousParticipationLinks()).hasSize(1);
         assertThat(emailData.maliciousParticipationLinks().getFirst().participationId()).isEqualTo(101L);
-        assertThat(emailData.maliciousParticipationLinks().getFirst().url()).isEqualTo("http://localhost:8080/course-management/7/programming-exercises/55/scores");
+        assertThat(emailData.maliciousParticipationLinks().getFirst().url())
+                .isEqualTo("http://localhost:8080/course-management/7/programming-exercises/55/participations/101/submissions");
         assertThat(emailData.maliciousParticipationLinks().getFirst().rationale()).isEqualTo("bad");
     }
 
