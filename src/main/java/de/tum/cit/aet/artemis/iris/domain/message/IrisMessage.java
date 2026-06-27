@@ -60,6 +60,11 @@ public class IrisMessage extends DomainObject {
     @Column(name = "origin")
     private IrisMessageOrigin origin;
 
+    @Nullable
+    @Enumerated(EnumType.STRING)
+    @Column(name = "proactive_outcome")
+    private IrisProactiveOutcome proactiveOutcome;
+
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
@@ -116,6 +121,15 @@ public class IrisMessage extends DomainObject {
 
     public void setOrigin(@Nullable IrisMessageOrigin origin) {
         this.origin = origin;
+    }
+
+    @Nullable
+    public IrisProactiveOutcome getProactiveOutcome() {
+        return proactiveOutcome;
+    }
+
+    public void setProactiveOutcome(@Nullable IrisProactiveOutcome proactiveOutcome) {
+        this.proactiveOutcome = proactiveOutcome;
     }
 
     public List<IrisMessageContent> getContent() {
