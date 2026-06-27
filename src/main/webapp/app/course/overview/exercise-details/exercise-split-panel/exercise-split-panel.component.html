@@ -55,7 +55,7 @@
                     </dl>
                 </p-panel>
             }
-            @if (showComplaintView()) {
+            @defer (when showComplaintView()) {
                 <jhi-complaint-student-view
                     class="mb-2 mt-2 ms-3"
                     [exercise]="exercise()"
@@ -63,7 +63,7 @@
                     [result]="resultWithComplaint() ? resultWithComplaint()! : latestRatedResult()!"
                 />
             }
-            @if (showRating()) {
+            @defer (when showRating()) {
                 <div class="row">
                     <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" />
                 </div>
@@ -82,7 +82,9 @@
             <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
         </ng-template>
         <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [iconTemplate]="irisLogoTpl" [startsCollapsed]="irisPanelStartsCollapsed()">
-            <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
+            @defer (on idle) {
+                <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
+            }
         </ng-template>
     }
 
