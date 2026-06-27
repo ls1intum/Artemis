@@ -46,4 +46,12 @@
             <column name="auxiliary_repository_id"/>
         </createIndex>
     </changeSet>
+
+    <changeSet id="20260620120000-2-index-repository-vcs-access-token-repository-uri" author="krusche">
+        <!-- Dedicated index for the repository_uri-only lookup (findUserIdsByRepositoryUri, used during eager token provisioning). The unique (user_id, repository_uri) constraint
+             cannot serve it because user_id is the leading column, so without this index the lookup scans the whole token table once per base repository on exercise create/update. -->
+        <createIndex indexName="idx_repository_vcs_access_token_repository_uri" tableName="repository_vcs_access_token">
+            <column name="repository_uri"/>
+        </createIndex>
+    </changeSet>
 </databaseChangeLog>
