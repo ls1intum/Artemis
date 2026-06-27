@@ -275,6 +275,10 @@ export class UserManagementUpdateComponent implements OnInit {
      * @param event the keyboard event coming from the input
      */
     onGroupAdd(user: User, event: Event) {
+        // Cancel the Enter key before reading the input so it does not also submit the surrounding
+        // (ngSubmit)="save()" user edit form (which would save and navigate away while adding a group).
+        event.preventDefault();
+        event.stopPropagation();
         const input = event.target as HTMLInputElement;
         const groupString = (input.value || '').trim();
         this.addGroup(user, groupString);

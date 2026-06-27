@@ -341,7 +341,7 @@ describe('UserManagementUpdateComponent', () => {
     /** Builds a keydown event with the typed group value, as the input element would emit on Enter. */
     const groupEnterEvent = (value: string) => {
         const input = { value } as HTMLInputElement;
-        return { target: input } as unknown as KeyboardEvent;
+        return { target: input, preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as KeyboardEvent;
     };
 
     it('should add selected group from autocomplete panel to user', () => {
@@ -365,6 +365,18 @@ describe('UserManagementUpdateComponent', () => {
 
         expect(component.user().groups).toEqual([newGroup]);
         expect((event.target as HTMLInputElement).value).toBe('');
+    });
+
+    it('should cancel the Enter event so adding a group does not submit the surrounding form', () => {
+        const newGroup = 'nicegroup';
+        component.allGroups = [newGroup];
+        component.user.set({ groups: [] } as unknown as User);
+
+        const event = groupEnterEvent(newGroup);
+        component.onGroupAdd(component.user(), event);
+
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(event.stopPropagation).toHaveBeenCalledOnce();
     });
 
     it('should not add group that is not in allowed groups list', () => {
