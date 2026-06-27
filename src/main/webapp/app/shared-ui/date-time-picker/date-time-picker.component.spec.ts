@@ -373,15 +373,21 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     describe('onPickerPaste', () => {
+        type WithInnerPicker = { innerPicker: () => Partial<DatePicker> | undefined };
+
         function makePasteEvent(target: HTMLInputElement): ClipboardEvent {
             // ClipboardEvent is unavailable in jsdom; only `target` is accessed by onPickerPaste.
             return { target } as unknown as ClipboardEvent;
         }
 
+        function stubPicker(picker: Partial<DatePicker> | undefined) {
+            vi.spyOn(component as unknown as WithInnerPicker, 'innerPicker').mockReturnValue(picker);
+        }
+
         it('sets isKeydown=true on the inner picker so PrimeNG processes the pasted text', () => {
             fixture.detectChanges();
-            const picker = { isKeydown: null as boolean | null };
-            (component as any).innerPicker = vi.fn().mockReturnValue(picker);
+            const picker: Partial<DatePicker> = { isKeydown: false };
+            stubPicker(picker);
 
             const input = document.createElement('input');
             component.onPickerPaste(makePasteEvent(input));
@@ -391,8 +397,7 @@ describe('FormDateTimePickerComponent', () => {
 
         it('selects all text for a context-menu paste when cursor is just positioned (no selection)', () => {
             fixture.detectChanges();
-            const picker = { isKeydown: null as boolean | null };
-            (component as any).innerPicker = vi.fn().mockReturnValue(picker);
+            stubPicker({ isKeydown: false });
 
             const input = document.createElement('input');
             input.value = '13.06.2026 08:00';
@@ -408,8 +413,7 @@ describe('FormDateTimePickerComponent', () => {
 
         it('does not select-all for a context-menu paste when text is already selected', () => {
             fixture.detectChanges();
-            const picker = { isKeydown: null as boolean | null };
-            (component as any).innerPicker = vi.fn().mockReturnValue(picker);
+            stubPicker({ isKeydown: false });
 
             const input = document.createElement('input');
             input.value = '13.06.2026 08:00';
@@ -425,8 +429,8 @@ describe('FormDateTimePickerComponent', () => {
         it('does not select-all for a Ctrl+V paste (isKeydown already true)', () => {
             fixture.detectChanges();
             // Ctrl+V: PrimeNG sets isKeydown=true before the paste event fires
-            const picker = { isKeydown: true };
-            (component as any).innerPicker = vi.fn().mockReturnValue(picker);
+            const picker: Partial<DatePicker> = { isKeydown: true };
+            stubPicker(picker);
 
             const input = document.createElement('input');
             input.value = '13.06.2026 08:00';
