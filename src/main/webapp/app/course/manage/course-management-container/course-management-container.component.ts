@@ -26,7 +26,6 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -74,7 +73,6 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
         RouterLink,
         RouterOutlet,
         NgTemplateOutlet,
-        TranslateDirective,
         CourseSidebarComponent,
         CourseExamArchiveButtonComponent,
         CourseTitleBarComponent,
@@ -125,7 +123,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private learningPathsActive = signal(false);
     courseBody = viewChild<ElementRef<HTMLElement>>('courseBodyContainer');
     isSettingsPage = signal(false);
-    studentViewLink = signal<string[]>([]);
 
     // Stream of finalized URLs (after redirects), seeded with the current URL for reloads
     private readonly finalizedUrl$ = this.router.events.pipe(
@@ -185,7 +182,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     protected handleNavigationEndActions(): void {
         this.checkIfSettingsPage();
-        this.determineStudentViewLink();
     }
 
     private checkIfSettingsPage() {
@@ -196,7 +192,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
-        this.determineStudentViewLink();
         this.subscribeToCourseUpdates(courseId);
         this.subscribeToOperationProgress(courseId);
     }
@@ -221,45 +216,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (progress?.operationType === CourseOperationType.DELETE) {
             this.router.navigate(['/course-management']);
         }
-    }
-
-    determineStudentViewLink() {
-        const courseIdString = this.courseId().toString();
-        const routerUrl = this.router.url;
-        const baseStudentPath = ['/courses', courseIdString];
-
-        const routeMappings = [
-            { urlPart: 'exams', targetPath: [...baseStudentPath, 'exams'] },
-            { urlPart: 'exercises', targetPath: [...baseStudentPath, 'exercises'] },
-            { urlPart: 'lectures', targetPath: [...baseStudentPath, 'lectures'] },
-            { urlPart: 'communication', targetPath: [...baseStudentPath, 'communication'] },
-            { urlPart: 'learning-path-management', targetPath: [...baseStudentPath, 'learning-path'] },
-            { urlPart: 'competency-management', targetPath: [...baseStudentPath, 'competencies'] },
-            { urlPart: 'faqs', targetPath: [...baseStudentPath, 'faq'] },
-            {
-                urlPart: ['tutorial-groups', 'tutorial-groups-checklist'],
-                targetPath: [...baseStudentPath, 'tutorial-groups'],
-                matcher: (url: string | string[], parts: string[]) => parts.some((part) => url.includes(part)),
-            },
-            { urlPart: 'course-statistics', targetPath: [...baseStudentPath, 'statistics'] },
-        ];
-
-        const defaultPath = [...baseStudentPath, 'dashboard'];
-
-        const matchedRoute = routeMappings.find((route) => {
-            if (route.matcher) {
-                return route.matcher(routerUrl, Array.isArray(route.urlPart) ? route.urlPart : [route.urlPart]);
-            }
-            return routerUrl.includes(route.urlPart);
-        });
-
-        // Hide Student View button for routes that have no corresponding student view
-        if (routerUrl.includes('build-overview')) {
-            this.studentViewLink.set([]);
-            return;
-        }
-
-        this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }
 
     private subscribeToCourseUpdates(courseId: number) {

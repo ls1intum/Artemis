@@ -15,7 +15,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 interface TutorialGroupApiServiceMock {
@@ -41,7 +40,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
             deleteTutorialGroup: vi.fn().mockReturnValue(of(undefined)),
         };
         await TestBed.configureTestingModule({
-            imports: [TutorialGroupRowButtonsComponent, OwlNativeDateTimeModule],
+            imports: [TutorialGroupRowButtonsComponent],
             providers: [
                 { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
                 { provide: Router, useValue: router },

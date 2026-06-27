@@ -75,7 +75,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesChannel: string;
     private quizExercisesSubscription?: Subscription;
     private examStartedSubscription: Subscription;
-    manageViewLink = signal<string[]>(['']);
 
     protected readonly selectableSettingPresets = signal<CourseNotificationSettingPreset[] | undefined>(undefined);
     protected readonly selectedSettingPreset = signal<CourseNotificationSettingPreset | undefined>(undefined);
@@ -180,10 +179,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.selectedSettingPreset.set(presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId)!);
     }
 
-    protected handleNavigationEndActions() {
-        this.determineManageViewLink();
-    }
-
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
     }
@@ -191,37 +186,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
-    }
-
-    determineManageViewLink() {
-        if (!this.course()) {
-            return;
-        }
-
-        const courseIdString = this.courseId().toString();
-        const routerUrl = this.router.url;
-        const baseManagementPath = ['/course-management', courseIdString];
-        const routeMappings = [
-            { urlPart: 'exams', targetPath: [...baseManagementPath, 'exams'] },
-            { urlPart: 'exercises', targetPath: [...baseManagementPath, 'exercises'] },
-            { urlPart: 'lectures', targetPath: [...baseManagementPath, 'lectures'], permissionCheck: () => this.course()?.isAtLeastEditor },
-            { urlPart: 'communication', targetPath: [...baseManagementPath, 'communication'] },
-            { urlPart: 'learning-path', targetPath: [...baseManagementPath, 'learning-paths-management'], permissionCheck: () => this.course()?.isAtLeastInstructor },
-            { urlPart: 'competencies', targetPath: [...baseManagementPath, 'competency-management'], permissionCheck: () => this.course()?.isAtLeastInstructor },
-            { urlPart: 'faq', targetPath: [...baseManagementPath, 'faqs'] },
-            { urlPart: 'statistics', targetPath: [...baseManagementPath, 'course-statistics'] },
-            {
-                urlPart: 'tutorial-groups',
-                targetPath: [...baseManagementPath, 'tutorial-groups-checklist'],
-                permissionCheck: () => this.course()?.isAtLeastInstructor || this.course()?.tutorialGroupsConfiguration,
-            },
-        ];
-
-        const matchedRoute = routeMappings.find((route) => {
-            return routerUrl.includes(route.urlPart) && (!route.permissionCheck || route.permissionCheck());
-        });
-
-        this.manageViewLink.set(matchedRoute ? matchedRoute.targetPath : baseManagementPath);
     }
 
     /**
