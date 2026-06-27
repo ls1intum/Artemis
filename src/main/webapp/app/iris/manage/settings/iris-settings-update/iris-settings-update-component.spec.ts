@@ -35,6 +35,7 @@ describe('IrisSettingsUpdateComponent', () => {
         customInstructions: 'Test instructions',
         variant: 'default',
         rateLimit: { requests: 100, timeframeHours: 24 },
+        proactiveStruggleEnabled: false,
     };
 
     const mockResponse: IrisCourseSettingsWithRateLimitDTO = {
@@ -375,6 +376,32 @@ describe('IrisSettingsUpdateComponent', () => {
             component.settings.set(undefined);
             component['originalSettings'].set(undefined);
             expect(() => component.setEnabled(true)).not.toThrow();
+        });
+    });
+
+    describe('updateProactiveStruggleEnabled', () => {
+        it('updateProactiveStruggleEnabled sets the flag on the settings signal', () => {
+            component.settings.set({ ...mockSettings, proactiveStruggleEnabled: false });
+            component.updateProactiveStruggleEnabled(true);
+            expect(component.settings()?.proactiveStruggleEnabled).toBe(true);
+        });
+
+        it('restores the admin-only flag for non-admins on save', async () => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            component.isAdmin.set(false);
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+
+            // A non-admin tries to flip the proactive flag on.
+            component.settings.set({ ...component.settings()!, proactiveStruggleEnabled: true });
+            component.saveSettings();
+            await fixture.whenStable();
+
+            // The flag is restored to the original (false), not the attempted true.
+            expect(updateSpy.mock.calls[0][1].proactiveStruggleEnabled).toBe(false);
         });
     });
 

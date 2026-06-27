@@ -40,6 +40,8 @@
                 "adminOnly": "Only administrators can see and modify these settings.",
                 "variant": "Pipeline Variant",
                 "variantHelp": "Select the AI pipeline variant to use for this course.",
+                "proactiveStruggle": "Proactive Struggle Detection",
+                "proactiveStruggleHelp": "When enabled, Iris proactively detects when a student is stuck and offers help. Off by default; enable only for courses in the proactive A/B condition.",
                 "rateLimit": "Rate Limit Override",
                 "rateLimitHelp": "Leave both fields empty to use application defaults. Set 0 requests to block all Iris usage. Timeframe must be at least 1 hour.",
                 "rateLimitRequests": "Maximum Requests",

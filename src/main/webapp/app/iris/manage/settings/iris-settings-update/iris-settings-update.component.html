@@ -70,6 +70,21 @@
                     <p class="form-text" jhiTranslate="artemisApp.iris.settings.variantHelp"></p>
                 </div>
 
+                <!-- Proactive struggle detection (A/B condition, spec §13) -->
+                <div class="mb-3 form-check">
+                    <input
+                        id="proactiveStruggleEnabled"
+                        type="checkbox"
+                        class="form-check-input"
+                        [ngModel]="settingsValue.proactiveStruggleEnabled"
+                        (ngModelChange)="updateProactiveStruggleEnabled($event)"
+                    />
+                    <label class="form-check-label" for="proactiveStruggleEnabled">
+                        <strong jhiTranslate="artemisApp.iris.settings.proactiveStruggle"></strong>
+                    </label>
+                    <p class="form-text" jhiTranslate="artemisApp.iris.settings.proactiveStruggleHelp"></p>
+                </div>
+
                 <!-- Rate Limit Overrides -->
                 <div class="mb-3">
                     <label class="form-label">
