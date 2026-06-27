@@ -15,7 +15,6 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockProvider } from 'ng-mocks';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -56,7 +55,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         };
 
         return TestBed.configureTestingModule({
-            imports: [FormDateTimePickerComponent, OwlNativeDateTimeModule],
+            imports: [FormDateTimePickerComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
