@@ -63,21 +63,6 @@ public class AnswerCounter extends QuizStatisticCounter {
         this.answerOptionId = answerOptionId;
     }
 
-    @JsonIgnore
-    public void setQuizQuestionStatistic(MultipleChoiceQuestionStatistic quizQuestionStatistic) {
-        setMultipleChoiceQuestionStatistic(quizQuestionStatistic);
-    }
-
-    @JsonIgnore
-    public AnswerOption getQuizQuestionComponent() {
-        return getAnswer();
-    }
-
-    @JsonIgnore
-    public void setQuizQuestionComponent(AnswerOption answerOption) {
-        setAnswer(answerOption);
-    }
-
     @Override
     public String toString() {
         return "AnswerCounter{" + "id=" + getId() + ", rated=" + getRatedCounter() + ", unrated=" + getUnRatedCounter() + "}";

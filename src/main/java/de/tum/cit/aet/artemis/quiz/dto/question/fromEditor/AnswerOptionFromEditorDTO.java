@@ -53,15 +53,4 @@ public record AnswerOptionFromEditorDTO(Long id, @NotBlank @Size(max = MAX_QUIZ_
         return answerOption;
     }
 
-    /**
-     * Applies the DTO values to an existing AnswerOption entity.
-     *
-     * @param answerOption the existing answer option to update
-     */
-    public void applyTo(AnswerOption answerOption) {
-        answerOption.setText(text);
-        answerOption.setHint(hint);
-        answerOption.setExplanation(explanation);
-        answerOption.setIsCorrect(isCorrect);
-    }
 }
