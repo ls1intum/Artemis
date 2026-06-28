@@ -237,9 +237,7 @@ export class LandingNavbarComponent {
     }));
 
     changeLanguage(languageKey: string): void {
-        // Switching language fetches the translation files asynchronously. This OnPush component would
-        // otherwise not re-run its (impure) translate pipes once the new language is active, so mark it
-        // for check on completion to refresh the rendered strings.
+        // Refresh this OnPush component once the async translation load completes.
         this.translateService.use(languageKey).subscribe(() => this.changeDetectorRef.markForCheck());
     }
 
