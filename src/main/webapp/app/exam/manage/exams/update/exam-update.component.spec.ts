@@ -12,7 +12,7 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 
 import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/update/exam-update.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -146,7 +146,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.course).toEqual(course);
             expect(component.exam.gracePeriod).toBe(180);
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
-            expect(component.exam.examType).toBe(ExamType.REAL);
+            expect(component.exam.examMode).toBe(ExamMode.REAL);
             expect(component.exam.workingTime).toBe(0);
         });
 
@@ -189,7 +189,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should show channel name input for test exams', async () => {
-            examWithoutExercises.examType = ExamType.TEST;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.channelName = 'test-exam';
             component.ngOnInit();
             await Promise.resolve();
@@ -320,7 +320,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a test Exams', () => {
-            examWithoutExercises.examType = ExamType.TEST;
+            examWithoutExercises.examMode = ExamMode.TEST;
             examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.changeDetectorRef.detectChanges();
 
@@ -332,7 +332,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should correctly validate the number of correction rounds in a realExam', () => {
-            examWithoutExercises.examType = ExamType.REAL;
+            examWithoutExercises.examMode = ExamMode.REAL;
 
             examWithoutExercises.numberOfCorrectionRoundsInExam = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -647,7 +647,7 @@ describe('ExamUpdateComponent', () => {
         const examForImport = new Exam();
         examForImport.id = 3;
         examForImport.title = 'RealExam for Testing';
-        examForImport.examType = ExamType.REAL;
+        examForImport.examMode = ExamMode.REAL;
         examForImport.examiner = 'Bruegge';
         examForImport.moduleNumber = 'IN0006';
         examForImport.courseName = 'Artemis';
@@ -736,7 +736,7 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam).not.toBeNull();
             expect(component.exam.id).toBeUndefined();
             expect(component.exam.title).toBe('RealExam for Testing');
-            expect(component.exam.examType).toBe(ExamType.REAL);
+            expect(component.exam.examMode).toBe(ExamMode.REAL);
             expect(component.exam.examiner).toBe('Bruegge');
             expect(component.exam.moduleNumber).toBe('IN0006');
             expect(component.exam.courseName).toBe('Artemis');

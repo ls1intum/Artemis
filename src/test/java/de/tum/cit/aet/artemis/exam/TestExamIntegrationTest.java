@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
@@ -186,16 +186,16 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Exam examA = ExamFactory.generateTestExam(course1);
         Exam createdExamA = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
         createdExamA.setNumberOfCorrectionRoundsInExam(1);
-        createdExamA.setExamType(ExamType.REAL);
+        createdExamA.setExamMode(ExamMode.REAL);
         request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
 
         // Case 2: real exam should be updated to test exam
         Exam examB = ExamFactory.generateTestExam(course1);
         examB.setNumberOfCorrectionRoundsInExam(1);
-        examB.setExamType(ExamType.REAL);
+        examB.setExamMode(ExamMode.REAL);
         examB.setChannelName("examB");
         Exam createdExamB = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
-        createdExamB.setExamType(ExamType.TEST);
+        createdExamB.setExamMode(ExamMode.TEST);
         createdExamB.setNumberOfCorrectionRoundsInExam(0);
         request.putWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams", createdExamB, Exam.class, HttpStatus.CONFLICT);
     }
@@ -205,7 +205,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testDeleteStudentForTestExam_badRequest() throws Exception {
         // Create an exam with registered students
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
-        exam.setExamType(ExamType.TEST);
+        exam.setExamMode(ExamMode.TEST);
         examRepository.save(exam);
 
         // Remove student1 from the exam

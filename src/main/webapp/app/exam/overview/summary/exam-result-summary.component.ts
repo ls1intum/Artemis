@@ -4,7 +4,7 @@ import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exe
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, hasTestExamMode } from 'app/exam/shared/entities/exam.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
@@ -149,7 +149,7 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly courseId = signal<number>(undefined!);
 
     readonly isTestRun = signal(false);
-    hasTestExamType = false;
+    hasTestExamMode = false;
 
     testRunConduction = false;
     readonly testExamConduction = signal(false);
@@ -184,9 +184,9 @@ export class ExamResultSummaryComponent implements OnInit {
         const studentExam = this.studentExam();
         // flags required to display test runs correctly
         this.isTestRun.set(this.route.snapshot.url[1]?.toString() === 'test-runs');
-        this.hasTestExamType = hasTestExamType(studentExam.exam);
+        this.hasTestExamMode = hasTestExamMode(studentExam.exam);
         this.testRunConduction = this.isTestRun() && this.route.snapshot.url[3]?.toString() === 'conduction';
-        this.testExamConduction.set(this.hasTestExamType && !studentExam.submitted);
+        this.testExamConduction.set(this.hasTestExamMode && !studentExam.submitted);
         this.courseId.set(Number(this.route.snapshot?.paramMap?.get('courseId') || this.route.parent?.parent?.snapshot.paramMap.get('courseId')));
         if (!studentExam?.id) {
             throw new Error('studentExam.id should be present to fetch grade info');
@@ -219,7 +219,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     get resultsArePublished(): boolean | any {
-        if (this.isTestRun() || this.hasTestExamType) {
+        if (this.isTestRun() || this.hasTestExamMode) {
             return true;
         }
 
@@ -349,7 +349,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsAfterStudentReviewStart() {
-        if (this.isTestRun() || this.hasTestExamType) {
+        if (this.isTestRun() || this.hasTestExamMode) {
             return true;
         }
         const studentExam = this.studentExam();
@@ -360,7 +360,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private getIsBeforeStudentReviewEnd() {
-        if (this.isTestRun() || this.hasTestExamType) {
+        if (this.isTestRun() || this.hasTestExamMode) {
             return true;
         }
         const studentExam = this.studentExam();

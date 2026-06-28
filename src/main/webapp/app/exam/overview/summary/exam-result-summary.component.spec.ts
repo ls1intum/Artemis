@@ -4,7 +4,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { User } from 'app/account/user/user.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
@@ -81,7 +81,7 @@ const exam = {
     publishResultsDate,
     examStudentReviewStart,
     examStudentReviewEnd,
-    examType: ExamType.REAL,
+    examMode: ExamMode.REAL,
     course,
 } as Exam;
 
@@ -91,7 +91,7 @@ const testExam = {
     visibleDate,
     startDate,
     endDate,
-    examType: ExamType.TEST,
+    examMode: ExamMode.TEST,
     course,
 } as Exam;
 
@@ -354,20 +354,20 @@ describe('ExamResultSummaryComponent', () => {
     it('should correctly identify a TestExam', () => {
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.hasTestExamType).toBe(true);
+        expect(component.hasTestExamMode).toBe(true);
         expect(component.testExamConduction()).toBe(true);
 
         studentExamForTestExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.hasTestExamType).toBe(true);
+        expect(component.hasTestExamMode).toBe(true);
         expect(component.testExamConduction()).toBe(false);
     });
 
     it('should correctly identify a RealExam', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.hasTestExamType).toBe(false);
+        expect(component.hasTestExamMode).toBe(false);
         expect(component.testExamConduction()).toBe(false);
         expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
@@ -375,7 +375,7 @@ describe('ExamResultSummaryComponent', () => {
         studentExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.hasTestExamType).toBe(false);
+        expect(component.hasTestExamMode).toBe(false);
         expect(component.testExamConduction()).toBe(false);
         expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
@@ -394,11 +394,11 @@ describe('ExamResultSummaryComponent', () => {
         component.testExamConduction.set(false);
         expect(component.resultsArePublished).toBe(true);
 
-        component.hasTestExamType = true;
+        component.hasTestExamMode = true;
         component.isTestRun.set(false);
         expect(component.resultsArePublished).toBe(true);
 
-        component.hasTestExamType = false;
+        component.hasTestExamMode = false;
         // const publishResultsDate is in the past
         expect(component.resultsArePublished).toBe(true);
 
@@ -421,11 +421,11 @@ describe('ExamResultSummaryComponent', () => {
         const now = dayjs();
         const dateSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
-        component.hasTestExamType = true;
+        component.hasTestExamMode = true;
         component.ngOnInit();
         expect(component.isAfterStudentReviewStart()).toBe(true);
 
-        component.hasTestExamType = false;
+        component.hasTestExamMode = false;
         component.isTestRun.set(true);
         component.ngOnInit();
         expect(component.isAfterStudentReviewStart()).toBe(true);
@@ -447,11 +447,11 @@ describe('ExamResultSummaryComponent', () => {
         const now = dayjs();
         const dateSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
-        component.hasTestExamType = true;
+        component.hasTestExamMode = true;
         component.ngOnInit();
         expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
-        component.hasTestExamType = false;
+        component.hasTestExamMode = false;
         component.isTestRun.set(true);
         component.ngOnInit();
         expect(component.isBeforeStudentReviewEnd()).toBe(true);

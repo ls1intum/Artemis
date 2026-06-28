@@ -10,7 +10,7 @@ import { Dialog } from 'primeng/dialog';
 import { MessageModule } from 'primeng/message';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode, hasTestExamMode } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -127,7 +127,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
 
                 // test exam only feature automatic assessment
-                if (hasTestExamType(exam)) {
+                if (hasTestExamMode(exam)) {
                     exam.numberOfCorrectionRoundsInExam = 0;
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
                     exam.numberOfCorrectionRoundsInExam = 1;
@@ -190,7 +190,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     onExamModeChange() {
-        if (hasTestExamType(this.exam)) {
+        if (hasTestExamMode(this.exam)) {
             this.exam.examWithAttendanceCheck = false;
             this.exam.numberOfCorrectionRoundsInExam = 0;
         } else if (!this.exam.numberOfCorrectionRoundsInExam) {
@@ -369,7 +369,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
-        if (hasTestExamType(this.exam)) {
+        if (hasTestExamMode(this.exam)) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
@@ -458,6 +458,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     get saveTitle(): string {
         return this.isImport() ? 'entity.action.import' : 'entity.action.save';
     }
+
+    protected readonly ExamMode = ExamMode;
 }
 
 /**

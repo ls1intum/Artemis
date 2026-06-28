@@ -1,4 +1,4 @@
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 
 /**
@@ -9,7 +9,7 @@ import { convertDateFromClient } from 'app/foundation/util/date.utils';
 export interface ExamUpdateDTO {
     id?: number;
     title: string;
-    examType: ExamType;
+    examMode: ExamMode;
     examWithAttendanceCheck: boolean;
     visibleDate?: string;
     startDate?: string;
@@ -46,7 +46,7 @@ export function toExamUpdateDTO(exam: Exam): ExamUpdateDTO {
     return {
         id: exam.id,
         title: exam.title!,
-        examType: exam.examType ?? ExamType.REAL,
+        examMode: exam.examMode ?? ExamMode.REAL,
         examWithAttendanceCheck: exam.examWithAttendanceCheck ?? false,
         visibleDate: convertDateFromClient(exam.visibleDate),
         startDate: convertDateFromClient(exam.startDate),

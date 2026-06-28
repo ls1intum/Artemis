@@ -10,8 +10,8 @@ import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
@@ -88,7 +88,7 @@ public class ExamFactory {
     public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam, String channelName) {
         Exam exam = new Exam();
         exam.setTitle((testExam ? "Test" : "Real") + " exam 1");
-        exam.setExamType(testExam ? ExamType.TEST : ExamType.REAL);
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);

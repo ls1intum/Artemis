@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -15,16 +15,16 @@ export class ExamModePickerComponent {
 
     examModeChanged = output();
 
-    protected readonly ExamType = ExamType;
+    protected readonly ExamMode = ExamMode;
 
     /**
-     * Set the exam type directly and emit changes
-     * @param examType
+     * Set the exam mode directly and emit changes
+     * @param examMode
      */
-    setExamType(examType: ExamType) {
-        if (!this.disableInput() && this.exam().examType !== examType) {
-            this.exam().examType = examType;
-            this.exam().numberOfCorrectionRoundsInExam = examType !== ExamType.REAL ? 0 : 1;
+    setExamMode(examMode: ExamMode) {
+        if (!this.disableInput() && this.exam().examMode !== examMode) {
+            this.exam().examMode = examMode;
+            this.exam().numberOfCorrectionRoundsInExam = examMode !== ExamMode.REAL ? 0 : 1;
             this.examModeChanged.emit();
         }
     }

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { TestExamParticipationMessageService } from 'app/exam/overview/services/test-exam-participation-message.service';
 
 describe('TestExamParticipationMessageService', () => {
@@ -16,7 +16,7 @@ describe('TestExamParticipationMessageService', () => {
 
     it('should show the generic missing student exam message for real exams', () => {
         const exam = new Exam();
-        exam.examType = ExamType.REAL;
+        exam.examMode = ExamMode.REAL;
 
         const message = service.getMessageKey(exam, 'noStudentExam');
 
@@ -25,7 +25,7 @@ describe('TestExamParticipationMessageService', () => {
 
     it('should show that the student should wait until the simulation exam ends', () => {
         const exam = new Exam();
-        exam.examType = ExamType.TEST_WITH_SIMULATION;
+        exam.examMode = ExamMode.TEST_WITH_SIMULATION;
 
         const message = service.getMessageKey(exam, 'simulationTestExamAttemptAlreadyExistsBeforePractice');
 
@@ -34,7 +34,7 @@ describe('TestExamParticipationMessageService', () => {
 
     it('should show that the practice phase is not open based on the server error key', () => {
         const exam = new Exam();
-        exam.examType = ExamType.TEST_WITH_SIMULATION;
+        exam.examMode = ExamMode.TEST_WITH_SIMULATION;
 
         const message = service.getMessageKey(exam, 'testExamPracticePhaseNotStarted');
 
@@ -43,7 +43,7 @@ describe('TestExamParticipationMessageService', () => {
 
     it('should fall back to no further attempts for an unknown simulation and practice error', () => {
         const exam = new Exam();
-        exam.examType = ExamType.TEST;
+        exam.examMode = ExamMode.TEST;
 
         const message = service.getMessageKey(exam, 'unknown');
 
@@ -52,7 +52,7 @@ describe('TestExamParticipationMessageService', () => {
 
     it('should show that the test exam has concluded based on the server error key', () => {
         const exam = new Exam();
-        exam.examType = ExamType.TEST;
+        exam.examMode = ExamMode.TEST;
 
         const message = service.getMessageKey(exam, 'examHasAlreadyEnded');
 
@@ -61,7 +61,7 @@ describe('TestExamParticipationMessageService', () => {
 
     it('should fall back to the generic no further attempts message', () => {
         const exam = new Exam();
-        exam.examType = ExamType.TEST;
+        exam.examMode = ExamMode.TEST;
 
         const message = service.getMessageKey(exam, 'unknown');
 

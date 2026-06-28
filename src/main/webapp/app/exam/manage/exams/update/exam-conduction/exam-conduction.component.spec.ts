@@ -7,7 +7,7 @@ import { ExamConductionComponent } from 'app/exam/manage/exams/update/exam-condu
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ExamType } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from 'app/exam/shared/entities/exam.model';
 
 describe('ExamConductionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -27,7 +27,7 @@ describe('ExamConductionComponent', () => {
         latestValidity = undefined;
         component.examTimelineStatusChange.subscribe((valid) => (latestValidity = valid));
         setInputs({
-            examType: ExamType.REAL,
+            examMode: ExamMode.REAL,
             visibleFrom: undefined,
             startOfWorkingTime: undefined,
             endOfWorkingTime: undefined,
@@ -38,7 +38,7 @@ describe('ExamConductionComponent', () => {
     });
 
     const setInputs = (inputs: {
-        examType?: ExamType;
+        examMode?: ExamMode;
         visibleFrom?: dayjs.Dayjs;
         startOfWorkingTime?: dayjs.Dayjs;
         endOfWorkingTime?: dayjs.Dayjs;
@@ -75,7 +75,7 @@ describe('ExamConductionComponent', () => {
 
     it('should not calculate the working time for practice test exams', () => {
         setInputs({
-            examType: ExamType.TEST,
+            examMode: ExamMode.TEST,
             workingTime: 3600,
             startOfWorkingTime: dayjs(),
             endOfWorkingTime: dayjs().add(12, 'hours'),
@@ -88,7 +88,7 @@ describe('ExamConductionComponent', () => {
     it('should not include simulation or practice dates when the simulation phase is checked', () => {
         const start = dayjs().startOf('minute');
         setInputs({
-            examType: ExamType.TEST_WITH_SIMULATION,
+            examMode: ExamMode.TEST_WITH_SIMULATION,
             workingTime: 3600,
             startOfWorkingTime: start,
         });
@@ -101,7 +101,7 @@ describe('ExamConductionComponent', () => {
         ]);
 
         setInputs({
-            examType: ExamType.TEST,
+            examMode: ExamMode.TEST,
             workingTime: 3600,
             startOfWorkingTime: start,
         });
@@ -115,16 +115,16 @@ describe('ExamConductionComponent', () => {
     });
 
     it('should clear the simulation mode when the exam is no longer a test exam', () => {
-        setInputs({ examType: ExamType.TEST_WITH_SIMULATION });
+        setInputs({ examMode: ExamMode.TEST_WITH_SIMULATION });
         fixture.detectChanges();
 
         expect(component.testExamWithSimulation()).toBe(true);
 
-        setInputs({ examType: ExamType.REAL });
+        setInputs({ examMode: ExamMode.REAL });
         fixture.detectChanges();
 
         expect(component.testExamWithSimulation()).toBe(false);
-        expect(component.examType()).toBe(ExamType.REAL);
+        expect(component.examMode()).toBe(ExamMode.REAL);
     });
 
     it('should use the correct timeline labels for real and test exams', () => {
@@ -134,7 +134,7 @@ describe('ExamConductionComponent', () => {
             'artemisApp.examManagement.endDate',
         ]);
 
-        setInputs({ examType: ExamType.TEST });
+        setInputs({ examMode: ExamMode.TEST });
         fixture.detectChanges();
 
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
@@ -145,7 +145,7 @@ describe('ExamConductionComponent', () => {
     });
 
     it('validates the working time for practice test exams correctly', () => {
-        setInputs({ examType: ExamType.TEST, workingTime: undefined });
+        setInputs({ examMode: ExamMode.TEST, workingTime: undefined });
         markTimeline({ valid: true, empty: false });
         expect(latestValidity).toBe(false);
 
@@ -173,7 +173,7 @@ describe('ExamConductionComponent', () => {
 
     it('should always show the working time validation message when working time is invalid', () => {
         const start = dayjs();
-        setInputs({ examType: ExamType.TEST, visibleFrom: start.subtract(1, 'hour'), startOfWorkingTime: start, endOfWorkingTime: start.add(2, 'hours'), workingTime: 0 });
+        setInputs({ examMode: ExamMode.TEST, visibleFrom: start.subtract(1, 'hour'), startOfWorkingTime: start, endOfWorkingTime: start.add(2, 'hours'), workingTime: 0 });
         fixture.detectChanges();
 
         expect(hasTranslationMessage('artemisApp.examManagement.workingTimeInvalid')).toBe(true);
@@ -218,7 +218,7 @@ describe('ExamConductionComponent', () => {
     it('should consider equal visible and start dates valid for test exams but invalid for real exams', () => {
         const start = dayjs();
         setInputs({
-            examType: ExamType.TEST,
+            examMode: ExamMode.TEST,
             visibleFrom: start,
             startOfWorkingTime: start,
             endOfWorkingTime: start.add(2, 'hours'),
@@ -230,7 +230,7 @@ describe('ExamConductionComponent', () => {
         expect(latestValidity).toBe(true);
 
         setInputs({
-            examType: ExamType.REAL,
+            examMode: ExamMode.REAL,
         });
         fixture.detectChanges();
 
@@ -294,7 +294,7 @@ describe('ExamConductionComponent', () => {
     });
 
     it('should clamp the maximum working time for practice exams', () => {
-        setInputs({ examType: ExamType.TEST, startOfWorkingTime: undefined, endOfWorkingTime: undefined });
+        setInputs({ examMode: ExamMode.TEST, startOfWorkingTime: undefined, endOfWorkingTime: undefined });
         fixture.detectChanges();
         expect(component.maxWorkingTimeInMinutes()).toBe(43200);
 
@@ -315,7 +315,7 @@ describe('ExamConductionComponent', () => {
     it('should correctly validate working time with upper limit of 30 days', () => {
         const start = dayjs();
         setInputs({
-            examType: ExamType.TEST,
+            examMode: ExamMode.TEST,
             visibleFrom: start.subtract(1, 'hour'),
             startOfWorkingTime: start,
             endOfWorkingTime: start.add(35, 'days'),

@@ -4,7 +4,7 @@ import { MockPipe } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -50,7 +50,7 @@ describe('ExamStatusComponent', () => {
         testExam.startDate = startDate;
         testExam.endDate = dayjs().add(endDateOffset, offsetType);
         testExam.examMaxPoints = 10;
-        testExam.examType = ExamType.TEST;
+        testExam.examMode = ExamMode.TEST;
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('course', {} as Course);
     };

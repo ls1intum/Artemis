@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { SortService } from 'app/foundation/service/sort.service';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -159,4 +159,6 @@ export class TestRunManagementComponent implements OnInit {
     sortRows() {
         this.sortService.sortByProperty(this.testRuns(), this.predicate(), this.ascending());
     }
+
+    protected readonly ExamMode = ExamMode;
 }

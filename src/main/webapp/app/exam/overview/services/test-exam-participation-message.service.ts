@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
-import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, hasTestExamMode } from 'app/exam/shared/entities/exam.model';
 
 const TRANSLATION_KEY_BASE = 'artemisApp.examParticipation.' as const;
 
 @Injectable({ providedIn: 'root' })
 export class TestExamParticipationMessageService {
     getMessageKey(exam: Exam | undefined, errorKey?: string): string {
-        if (!hasTestExamType(exam)) {
+        if (!hasTestExamMode(exam)) {
             return this.fullTranslationKey('noStudentExam');
         }
         switch (errorKey) {

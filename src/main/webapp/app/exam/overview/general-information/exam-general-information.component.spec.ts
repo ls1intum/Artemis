@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/account/user/user.model';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamGeneralInformationComponent } from 'app/exam/overview/general-information/exam-general-information.component';
 import dayjs from 'dayjs/esm';
@@ -22,7 +22,7 @@ let exam = {
     title: 'Test Exam',
     startDate,
     endDate,
-    examType: ExamType.REAL,
+    examMode: ExamMode.REAL,
 } as Exam;
 
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
@@ -31,7 +31,7 @@ describe('ExamGeneralInformationComponent', () => {
     setupTestBed({ zoneless: true });
 
     beforeEach(() => {
-        exam = { id: 1, title: 'ExamForTesting', startDate, endDate, examType: ExamType.REAL } as Exam;
+        exam = { id: 1, title: 'ExamForTesting', startDate, endDate, examMode: ExamMode.REAL } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
@@ -99,7 +99,7 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should detect an TestExam and set the currentDate correctly', () => {
-        const testExam = { ...exam, examType: ExamType.TEST } as Exam;
+        const testExam = { ...exam, examMode: ExamMode.TEST } as Exam;
         const minimumNowRange = dayjs();
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('studentExam', studentExam);

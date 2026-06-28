@@ -5,14 +5,14 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 
-export enum ExamType {
+export enum ExamMode {
     REAL = 'REAL',
     TEST = 'TEST',
     TEST_WITH_SIMULATION = 'TEST_WITH_SIMULATION',
 }
 
 export function isActingAsTestExam(exam?: Exam) {
-    return exam?.examType === ExamType.TEST || isInSimulationPhase(exam);
+    return exam?.examMode === ExamMode.TEST || isInSimulationPhase(exam);
 }
 
 function isInSimulationPhase(exam?: Exam): boolean {
@@ -24,20 +24,20 @@ function isInSimulationPhase(exam?: Exam): boolean {
 }
 
 export function testExamSimulationEndDate(exam?: Exam): dayjs.Dayjs | undefined {
-    if (!(exam?.examType === ExamType.TEST_WITH_SIMULATION) || !exam?.startDate || exam.workingTime === undefined) {
+    if (!(exam?.examMode === ExamMode.TEST_WITH_SIMULATION) || !exam?.startDate || exam.workingTime === undefined) {
         return undefined;
     }
     return dayjs(exam.startDate).add(exam.workingTime, 'seconds');
 }
 
-export function hasTestExamType(exam?: Pick<Exam, 'examType'>): boolean {
-    return exam?.examType !== undefined && exam.examType !== ExamType.REAL;
+export function hasTestExamMode(exam?: Pick<Exam, 'examMode'>): boolean {
+    return exam?.examMode !== undefined && exam.examMode !== ExamMode.REAL;
 }
 
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;
-    public examType?: ExamType;
+    public examMode?: ExamMode;
     public examWithAttendanceCheck?: boolean;
     public visibleDate?: dayjs.Dayjs;
     public startDate?: dayjs.Dayjs;
@@ -83,7 +83,7 @@ export class Exam implements BaseEntity {
         this.numberOfCorrectionRoundsInExam = 1; // default value
         this.examMaxPoints = 1; // default value
         this.workingTime = 0; // will be updated during creation
-        this.examType = ExamType.REAL; // default value
+        this.examMode = ExamMode.REAL; // default value
         this.examWithAttendanceCheck = false; // default value
 
         // helper attributes (calculated by the server at the time of the last request)

@@ -1,5 +1,5 @@
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamType } from '../../../support/constants';
+import { ExamMode } from '../../../support/constants';
 
 import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/build_error/submission.json';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../../support/constants';
@@ -25,7 +25,7 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
         const examConfig = {
             course,
             title: examTitle,
-            examType: ExamType.TEST,
+            examMode: ExamMode.TEST,
             examMaxPoints: 40,
             numberOfExercisesInExam: 4,
         };

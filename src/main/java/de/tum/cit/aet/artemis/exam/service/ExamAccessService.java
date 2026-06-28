@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -97,7 +97,7 @@ public class ExamAccessService {
             // students can always see their results during the exam.
             return;
         }
-        if (exam.getExamType().isTestExamType()) {
+        if (exam.getExamMode().isTestExamMode()) {
             // results for test exams are always visible
             return;
         }
@@ -135,9 +135,9 @@ public class ExamAccessService {
 
         final ZonedDateTime now = ZonedDateTime.now();
         final ZonedDateTime simulationEndDate = exam.getStartDate().plusSeconds(exam.getWorkingTime());
-        final boolean simulationPhaseActive = exam.getExamType() == ExamType.TEST_WITH_SIMULATION && now.isBefore(simulationEndDate);
+        final boolean simulationPhaseActive = exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && now.isBefore(simulationEndDate);
 
-        if (exam.getExamType().isTestExamType() && !simulationPhaseActive) {
+        if (exam.getExamMode().isTestExamMode() && !simulationPhaseActive) {
             studentExam = getOrCreateTestExam(exam, course, currentUser, now);
         }
         else if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {

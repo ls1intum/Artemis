@@ -257,7 +257,7 @@
             </table>
         </div>
         <hr />
-        <h3 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExamType() ? 'testExam.' : '' }}examConduction"></h3>
+        <h3 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExamMode() ? 'testExam.' : '' }}examConduction"></h3>
         <b
             jhiTranslate="artemisApp.examManagement.checklist.conductionPlannedFromTo"
             [translateValues]="{
@@ -380,7 +380,7 @@
             </table>
         </div>
         <hr />
-        @if (!isTestExamType()) {
+        @if (!isTestExamMode()) {
             <h3 jhiTranslate="artemisApp.examStatus.correction.examCorrection"></h3>
             <div class="table-responsive">
                 <table class="table table-striped">

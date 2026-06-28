@@ -3,7 +3,7 @@ import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamType } from '../../support/constants';
+import { ExamMode } from '../../support/constants';
 import { SEED_COURSES } from '../../support/seedData';
 import { admin } from '../../support/users';
 
@@ -137,7 +137,7 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
             expect(response.status()).toBe(200);
             const editedExam = await response.json();
 
-            expect(editedExam.examType).toBe(ExamType.REAL);
+            expect(editedExam.examMode).toBe(ExamMode.REAL);
             expect(trimDate(editedExam.visibleDate)).toBe(trimDate(dayjsToString(editedExamData.visibleDate)));
             expect(trimDate(editedExam.startDate)).toBe(trimDate(dayjsToString(editedExamData.startDate)));
             expect(trimDate(editedExam.endDate)).toBe(trimDate(dayjsToString(editedExamData.endDate)));

@@ -45,7 +45,7 @@ import { User } from 'app/account/user/user.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { ExamType } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from 'app/exam/shared/entities/exam.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -397,7 +397,7 @@ describe('NavbarComponent', () => {
             workingTime: 60,
             exam: {
                 id: 1,
-                examType: ExamType.REAL,
+                examMode: ExamMode.REAL,
                 startDate: now.add(1, 'minute'),
                 endDate: now.add(2, 'minutes'),
                 gracePeriod: 180,

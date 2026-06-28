@@ -36,8 +36,8 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -647,7 +647,7 @@ public class ExamUtilService {
         registeredExamUser.setExam(exam);
         registeredExamUser = examUserRepository.save(registeredExamUser);
         exam.addExamUser(registeredExamUser);
-        exam.setExamType(ExamType.REAL);
+        exam.setExamMode(ExamMode.REAL);
         examRepository.save(exam);
         var studentExam = new StudentExam();
         studentExam.setExam(exam);

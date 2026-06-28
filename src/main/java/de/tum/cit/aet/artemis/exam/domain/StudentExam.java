@@ -88,8 +88,8 @@ public class StudentExam extends AbstractAuditingEntity {
     }
 
     @JsonIgnore
-    public ExamType getExamType() {
-        return exam.getExamType();
+    public ExamMode getExamMode() {
+        return exam.getExamMode();
     }
 
     public void setTestRun(boolean testRun) {
@@ -210,7 +210,7 @@ public class StudentExam extends AbstractAuditingEntity {
         if (Boolean.TRUE.equals(testRun)) {
             return false;
         }
-        if (this.getExam().getExamType().isTestExamType() && !Boolean.TRUE.equals(this.started) && this.startedDate == null) {
+        if (this.getExam().getExamMode().isTestExamMode() && !Boolean.TRUE.equals(this.started) && this.startedDate == null) {
             return false;
         }
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
@@ -234,7 +234,7 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDate() {
-        if (exam.getExamType().isTestExamType()) {
+        if (exam.getExamMode().isTestExamMode()) {
             if (isStartedDuringSimulationPhase()) {
                 return exam.getStartDate().plusSeconds(workingTime);
             }
@@ -254,7 +254,7 @@ public class StudentExam extends AbstractAuditingEntity {
     @JsonIgnore
     public ZonedDateTime getIndividualEndDateWithGracePeriod() {
         int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
-        if (exam.getExamType().isTestExamType()) {
+        if (exam.getExamMode().isTestExamMode()) {
             if (isStartedDuringSimulationPhase()) {
                 return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
             }
@@ -268,7 +268,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     @JsonIgnore
     private boolean isStartedDuringSimulationPhase() {
-        return exam.getExamType() == ExamType.TEST_WITH_SIMULATION && startedDate != null && startedDate.isBefore(exam.getStartDate().plusSeconds(exam.getWorkingTime()));
+        return exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && startedDate != null && startedDate.isBefore(exam.getStartDate().plusSeconds(exam.getWorkingTime()));
     }
 
     /**
@@ -280,7 +280,7 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public boolean areResultsPublishedYet() {
-        if (this.exam.getExamType().isTestExamType()) {
+        if (this.exam.getExamMode().isTestExamMode()) {
             return (this.submitted != null && this.submitted);
         }
         else {

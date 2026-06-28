@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -514,7 +514,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam.setStartDate(startDate);
         exam.setWorkingTime(workingTime);
         exam.setGracePeriod(gracePeriod);
-        exam.setExamType(testExamWithSimulation ? ExamType.TEST_WITH_SIMULATION : ExamType.TEST);
+        exam.setExamMode(testExamWithSimulation ? ExamMode.TEST_WITH_SIMULATION : ExamMode.TEST);
         exam.setEndDate(endDate);
         examRepository.save(exam);
     }

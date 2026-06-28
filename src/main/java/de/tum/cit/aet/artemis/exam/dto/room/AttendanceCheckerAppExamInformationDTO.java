@@ -17,7 +17,7 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 
@@ -130,7 +130,7 @@ public record AttendanceCheckerAppExamInformationDTO(
     @NotBlank String examTitle,
     @NotNull ZonedDateTime startDate,
     @NotNull ZonedDateTime endDate,
-    @NotNull ExamType examType,
+    @NotNull ExamMode examMode,
     long courseId,
     @NotBlank String courseTitle,
     @NotNull Set<ExamRoomForAttendanceCheckerDTO> examRoomsUsedInExam,  // empty if legacy version
@@ -149,7 +149,7 @@ public record AttendanceCheckerAppExamInformationDTO(
             exam.getTitle(),
             exam.getStartDate(),
             exam.getEndDate(),
-            exam.getExamType(),
+            exam.getExamMode(),
             exam.getCourse().getId(),
             exam.getCourse().getTitle(),
             examRooms.stream().map(ExamRoomForAttendanceCheckerDTO::from).collect(Collectors.toSet()),

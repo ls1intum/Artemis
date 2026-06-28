@@ -88,7 +88,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                     OR c.teachingAssistantGroupName IN :groupNames
                     OR c.editorGroupName IN :groupNames
                     OR c.instructorGroupName IN :groupNames
-                    OR e.examType <> de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
+                    OR e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 )
             """)
     Set<Exam> findByCourseIdForUser(@Param("courseId") Long courseId, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
@@ -128,7 +128,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO(
-                e.id, e.title, e.startDate, e.endDate, (e.examType <> de.tum.cit.aet.artemis.exam.domain.ExamType.REAL), e.course.id, e.course.title
+                e.id, e.title, e.startDate, e.endDate, (e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL), e.course.id, e.course.title
             )
             FROM Exam e
             WHERE :fromDate <= e.visibleDate
@@ -510,7 +510,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE e.course.id IN :courseIds
                 AND e.visibleDate <= :visible
                 AND e.endDate >= :end
-                AND e.examType = de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
+                AND e.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND registeredUsers.user.id = :userId
             """)
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
@@ -542,7 +542,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE exam.course.id = :courseId
               AND se.user.id  = :studentId
               AND se.testRun = FALSE
-              AND exam.examType = de.tum.cit.aet.artemis.exam.domain.ExamType.REAL
+              AND exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
               AND exam.visibleDate <= :now
             """)
 

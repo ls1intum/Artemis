@@ -45,7 +45,7 @@ import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
-import { hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { hasTestExamMode } from 'app/exam/shared/entities/exam.model';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -87,7 +87,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private readonly profileService = inject(ProfileService);
     private readonly calendarService = inject(CalendarService);
 
-    protected readonly hasTestExamType = hasTestExamType;
+    protected readonly hasTestExamMode = hasTestExamMode;
 
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Text';

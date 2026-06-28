@@ -28,7 +28,7 @@ public record ExamSearchableEntityDTO(Long examId, Long courseId, String examTit
      */
     public static ExamSearchableEntityDTO fromExam(Exam exam) {
         return new ExamSearchableEntityDTO(exam.getId(), exam.getCourse().getId(), exam.getTitle(), buildDescription(exam), exam.getVisibleDate(), exam.getStartDate(),
-                exam.getEndDate(), exam.getExamType().isTestExamType());
+                exam.getEndDate(), exam.getExamMode().isTestExamMode());
     }
 
     private static String buildDescription(Exam exam) {

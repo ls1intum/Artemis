@@ -197,7 +197,7 @@ public class StudentExamService {
         log.debug("    Potentially save submissions in {}", formatDurationFrom(start));
 
         // NOTE: from here on, we only handle test runs and test exams
-        if (!studentExamFromClient.isTestRun() && !studentExamFromClient.getExamType().isTestExamType()) {
+        if (!studentExamFromClient.isTestRun() && !studentExamFromClient.getExamMode().isTestExamMode()) {
             return;
         }
 
@@ -236,7 +236,7 @@ public class StudentExamService {
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             throw new BadRequestAlertException("Student exam must be submitted before requesting feedback", "StudentExam", "studentExamNotSubmitted");
         }
-        if (!studentExam.getExamType().isTestExamType()) {
+        if (!studentExam.getExamMode().isTestExamMode()) {
             throw new BadRequestAlertException("Athena feedback is only available for test exams", "StudentExam", "notTestExam");
         }
         if (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty()) {
@@ -788,7 +788,7 @@ public class StudentExamService {
             // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
             var studentParticipations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId());
             // we start the exercise if no participation was found that was already fully initialized
-            if (studentExam.getExamType().isTestExamType() || studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
+            if (studentExam.getExamMode().isTestExamMode() || studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
                     && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
                     // Load lazy property

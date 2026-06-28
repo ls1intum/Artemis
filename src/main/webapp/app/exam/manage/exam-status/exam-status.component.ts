@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Exam, hasTestExamType, isActingAsTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam, hasTestExamMode, isActingAsTestExam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
@@ -65,7 +65,7 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     readonly examCorrectionState = signal<ExamReviewState>(undefined!);
 
     readonly isActingAsTestExam = computed(() => isActingAsTestExam(this.exam()));
-    readonly isTestExamType = computed(() => hasTestExamType(this.exam()));
+    readonly isTestExamMode = computed(() => hasTestExamMode(this.exam()));
     readonly maxPointExercises = signal<number>(0);
 
     readonly examConductionStateEnum = ExamConductionState;
@@ -106,7 +106,7 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
             // Step 2: Exam conduction
             this.setConductionState();
 
-            if (!this.isTestExamType()) {
+            if (!this.isTestExamMode()) {
                 // Step 3: Exam correction
                 this.setReviewState();
                 this.setCorrectionState();
@@ -132,7 +132,7 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
         const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam());
         const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
         let examPointsReachable;
-        if (this.isTestExamType()) {
+        if (this.isTestExamMode()) {
             // This method is called here, as it is part of the exercise configuration - although it is a separate entry to highlight the importance
             this.maxPointExercises.set(this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam()));
             examPointsReachable = this.exam().examMaxPoints === this.maxPointExercises();

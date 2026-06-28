@@ -561,7 +561,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participation.getSubmissions()).containsExactly(textSubmission);
         exam = participation.getExercise().getExerciseGroup().getExam();
         assertThat(exam).isNotNull(); // The client needs the exam object to check if results are published yet
-        assertThat(exam.getExamType().isTestExamType()).isTrue();
+        assertThat(exam.getExamMode().isTestExamMode()).isTrue();
         assertThat(exam.getExerciseGroups()).isNullOrEmpty();
         assertThat(exam.getCourse()).isNull();
     }

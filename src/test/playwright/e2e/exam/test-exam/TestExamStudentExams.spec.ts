@@ -1,5 +1,5 @@
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamType } from '../../../support/constants';
+import { ExamMode } from '../../../support/constants';
 import { UserCredentials, admin, studentOne, studentThree, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { Exercise, ExerciseType } from '../../../support/constants';
@@ -29,7 +29,7 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
         const examConfig = {
             course,
             title: examTitle,
-            examType: ExamType.TEST,
+            examMode: ExamMode.TEST,
             startDate: dayjs().subtract(1, 'day'),
             visibleDate: dayjs().subtract(2, 'days'),
             workingTime: 120,

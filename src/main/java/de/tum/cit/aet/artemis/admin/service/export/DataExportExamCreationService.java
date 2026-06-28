@@ -244,7 +244,7 @@ public class DataExportExamCreationService {
             headers.add("started");
         }
         headers.add("test exam");
-        builder.add(studentExam.getExamType().isTestExamType());
+        builder.add(studentExam.getExamMode().isTestExamMode());
         if (studentExam.getStartedDate() != null) {
             builder.add(studentExam.getStartedDate());
             headers.add("started at");

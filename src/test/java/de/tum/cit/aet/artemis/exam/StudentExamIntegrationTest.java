@@ -74,7 +74,7 @@ import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -525,7 +525,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         var exam = examUtilService.addExam(course1, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
-        exam.setExamType(ExamType.TEST);
+        exam.setExamMode(ExamMode.TEST);
         var examUser5 = new ExamUser();
         examUser5.setExam(exam);
         examUser5.setUser(student1);
@@ -616,7 +616,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         course2 = courseUtilService.addEmptyCourse();
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
 
-        exam2.setExamType(isTestExam ? ExamType.TEST : ExamType.REAL);
+        exam2.setExamMode(isTestExam ? ExamMode.TEST : ExamMode.REAL);
         exam2 = examRepository.save(exam2);
 
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
@@ -2902,7 +2902,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testConductionOfTestExamWithSimulationUsesFixedSimulationEndDate() throws Exception {
         Exam testExamWithSimulation = examUtilService.addTestExam(course1);
         testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
-        testExamWithSimulation.setExamType(ExamType.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
         testExamWithSimulation.setExamMaxPoints(19);
         testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
         testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));

@@ -517,7 +517,7 @@ public class ExamService {
 
         Map<Long, List<StudentParticipation>> participationsByStudentId = new HashMap<>();
 
-        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && !se.getExamType().isTestExamType()).toList();
+        List<StudentExam> regularStudentExams = studentExams.stream().filter(se -> !se.isTestRun() && !se.getExamMode().isTestExamMode()).toList();
 
         if (!regularStudentExams.isEmpty()) {
             var regularStudentIds = regularStudentExams.stream().map(se -> se.getUser().getId()).toList();
@@ -535,7 +535,7 @@ public class ExamService {
             var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
 
             List<StudentParticipation> participations;
-            if (studentExam.isTestRun() || studentExam.getExamType().isTestExamType()) {
+            if (studentExam.isTestRun() || studentExam.getExamMode().isTestExamMode()) {
                 participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
             }
             else {

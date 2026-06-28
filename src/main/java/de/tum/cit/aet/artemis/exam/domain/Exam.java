@@ -47,9 +47,9 @@ public class Exam extends DomainObject {
     /**
      * This enum indicates the type of the exam
      */
-    @Column(name = "exam_type", nullable = false)
+    @Column(name = "exam_mode", nullable = false)
     @Enumerated(EnumType.STRING)
-    private ExamType examType = ExamType.REAL;
+    private ExamMode examMode = ExamMode.REAL;
 
     /**
      * This boolean indicates whether attendance is checked during exam
@@ -184,12 +184,12 @@ public class Exam extends DomainObject {
         this.title = title.strip();
     }
 
-    public ExamType getExamType() {
-        return examType;
+    public ExamMode getExamMode() {
+        return examMode;
     }
 
-    public void setExamType(ExamType examType) {
-        this.examType = examType == null ? ExamType.REAL : examType;
+    public void setExamMode(ExamMode examMode) {
+        this.examMode = examMode == null ? ExamMode.REAL : examMode;
     }
 
     public boolean isExamWithAttendanceCheck() {

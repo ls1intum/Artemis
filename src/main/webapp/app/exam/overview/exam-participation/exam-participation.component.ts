@@ -7,7 +7,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Exam, ExamType, hasTestExamType, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode, hasTestExamMode, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
@@ -224,7 +224,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         studentExam.exam!.course = new Course();
                         studentExam.exam!.course.id = this.courseId();
                         this.exam.set(studentExam.exam!);
-                        this.testExam.set(hasTestExamType(this.exam()));
+                        this.testExam.set(hasTestExamMode(this.exam()));
                         this.loadingExam.set(false);
                     },
                     error: () => {
@@ -262,7 +262,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     private shouldSkipTestExamAttemptRequest(): boolean {
         const exam = this.courseStorageService.getCourse(this.courseId())?.exams?.find((courseExam) => courseExam.id === this.examId());
-        if (!hasTestExamType(exam)) {
+        if (!hasTestExamMode(exam)) {
             return false;
         }
 
@@ -274,7 +274,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
 
         const simulationEndDate = testExamSimulationEndDate(exam);
-        if (exam?.examType !== ExamType.TEST_WITH_SIMULATION || !simulationEndDate || dayjs(simulationEndDate).isBefore(now)) {
+        if (exam?.examMode !== ExamMode.TEST_WITH_SIMULATION || !simulationEndDate || dayjs(simulationEndDate).isBefore(now)) {
             return false;
         }
 
@@ -576,7 +576,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     toggleHandInEarly() {
         // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
-        if (hasTestExamType(this.exam()) || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
+        if (hasTestExamMode(this.exam()) || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
             this.handleHandInEarly();
         } else {
             this.examManagementService.isAttendanceChecked(this.courseId(), this.examId()).subscribe((res) => {
@@ -615,7 +615,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             return false;
         }
         let individualStudentEndDate;
-        if (hasTestExamType(this.exam())) {
+        if (hasTestExamMode(this.exam())) {
             if (!this.studentExam().submitted && this.studentExam().started && this.studentExam().startedDate) {
                 const startedDate = dayjs(this.studentExam().startedDate);
                 const relevantStartDate = this.isSimulationAttempt(startedDate) ? dayjs(this.exam().startDate) : startedDate;
@@ -681,7 +681,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return startDate ? startDate.isBefore(this.serverDateService.now()) : false;
     }
 
-    readonly isTestExamType = computed(() => hasTestExamType(this.exam()));
+    readonly isTestExamMode = computed(() => hasTestExamMode(this.exam()));
 
     checkVerticalOverflow(): boolean {
         // Get the sidebar-content element
@@ -711,8 +711,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         this.studentExam.set(studentExam);
         this.exam.set(studentExam.exam!);
-        this.testExam.set(hasTestExamType(this.exam()));
-        if (!hasTestExamType(this.exam())) {
+        this.testExam.set(hasTestExamMode(this.exam()));
+        if (!hasTestExamMode(this.exam())) {
             this.initIndividualEndDates(this.exam().startDate!);
         }
 
@@ -1073,7 +1073,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     private isSimulationAttempt(startDate: dayjs.Dayjs): boolean {
         const simulationEndDate = testExamSimulationEndDate(this.exam());
-        return this.exam().examType === ExamType.TEST_WITH_SIMULATION && !this.studentExam().testRun && !!simulationEndDate && startDate.isBefore(simulationEndDate);
+        return this.exam().examMode === ExamMode.TEST_WITH_SIMULATION && !this.studentExam().testRun && !!simulationEndDate && startDate.isBefore(simulationEndDate);
     }
 
     /**

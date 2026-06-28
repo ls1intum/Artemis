@@ -248,7 +248,7 @@ public class QuizSubmissionResource {
             // would otherwise drive an UPDATE on whichever row matches that id — including another student's
             // submission. Drop the id unless it actually belongs to the requesting user, in which case
             // saveSubmissionForExamMode merge-updates the existing row instead of inserting a new one.
-            if (quizSubmission.getId() != null && quizExercise.getExam().getExamType().isTestExamType()
+            if (quizSubmission.getId() != null && quizExercise.getExam().getExamMode().isTestExamMode()
                     && !quizSubmissionRepository.existsByIdAndStudentId(quizSubmission.getId(), user.getId())) {
                 quizSubmission.setId(null);
             }

@@ -101,9 +101,9 @@ export type ExerciseCommit = {
     result?: string;
 };
 
-// ExamType
+// ExamMode
 // Copied from src/main/webapp/app/exam/shared/entities/exam.model.ts
-export enum ExamType {
+export enum ExamMode {
     REAL = 'REAL',
     TEST = 'TEST',
     TEST_WITH_SIMULATION = 'TEST_WITH_SIMULATION',

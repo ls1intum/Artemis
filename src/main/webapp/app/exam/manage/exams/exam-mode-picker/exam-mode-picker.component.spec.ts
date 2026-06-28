@@ -6,7 +6,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ExamType } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from 'app/exam/shared/entities/exam.model';
 
 const exam = {
     id: 2,
@@ -36,7 +36,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', true);
         fixture.detectChanges();
-        component.setExamType(ExamType.TEST);
+        component.setExamMode(ExamMode.TEST);
         expect(component.exam()).toEqual(examCopy);
     });
 
@@ -44,8 +44,8 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
-        component.setExamType(ExamType.TEST);
-        expect(component.exam().examType).toBe(ExamType.TEST);
+        component.setExamMode(ExamMode.TEST);
+        expect(component.exam().examMode).toBe(ExamMode.TEST);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 
@@ -53,8 +53,8 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
-        component.setExamType(ExamType.REAL);
-        expect(component.exam().examType).toBe(ExamType.REAL);
+        component.setExamMode(ExamMode.REAL);
+        expect(component.exam().examMode).toBe(ExamMode.REAL);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
     });
 
@@ -62,8 +62,8 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
-        component.setExamType(ExamType.TEST_WITH_SIMULATION);
-        expect(component.exam().examType).toBe(ExamType.TEST_WITH_SIMULATION);
+        component.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        expect(component.exam().examMode).toBe(ExamMode.TEST_WITH_SIMULATION);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 });

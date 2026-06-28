@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
 import { combineLatestWith, filter, of } from 'rxjs';
-import { Exam, ExamType, hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode, hasTestExamMode } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -61,10 +61,10 @@ export class CourseExamsComponent {
                 .sort((exam1, exam2) => this.sortExamsByStartDate(exam1, exam2)) ?? [],
     );
 
-    protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !hasTestExamType(exam)));
+    protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !hasTestExamMode(exam)));
     protected readonly realExamWorkingTimeByExamId = signal<Map<number, number>>(new Map());
 
-    protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => hasTestExamType(exam)));
+    protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => hasTestExamMode(exam)));
     private readonly studentExamsOfTestExams = signal<StudentExam[]>([]);
 
     readonly sidebarData = computed<SidebarData | undefined>(() => this.buildSidebarData());
@@ -78,7 +78,7 @@ export class CourseExamsComponent {
     readonly canRenderSelectedExam = computed(() => {
         const selectedExamId = Number(this.childParams()['examId']);
         const selectedExam = this.course()?.exams?.find((exam) => exam.id === selectedExamId);
-        return selectedExam?.examType !== ExamType.TEST_WITH_SIMULATION || this.testStudentExamsLoaded();
+        return selectedExam?.examMode !== ExamMode.TEST_WITH_SIMULATION || this.testStudentExamsLoaded();
     });
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;

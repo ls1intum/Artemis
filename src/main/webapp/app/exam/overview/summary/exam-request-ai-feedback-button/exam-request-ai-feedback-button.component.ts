@@ -13,7 +13,7 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { hasTestExamMode } from 'app/exam/shared/entities/exam.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -67,7 +67,7 @@ export class ExamRequestAiFeedbackButtonComponent {
 
     readonly isVisible = computed(() => {
         const exam = this.studentExam();
-        return hasTestExamType(exam?.exam) && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasExerciseWithFeedbackSuggestionModule();
+        return hasTestExamMode(exam?.exam) && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasExerciseWithFeedbackSuggestionModule();
     });
 
     private readonly eligibleExerciseIds = computed(() => {

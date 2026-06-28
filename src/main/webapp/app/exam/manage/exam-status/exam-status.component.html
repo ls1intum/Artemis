@@ -12,7 +12,7 @@
                 }
             </div>
             <div class="status-step-content">
-                <h6 class="text-center" jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExamType() ? 'testExam.' : '' }}examPreparation"></h6>
+                <h6 class="text-center" jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExamMode() ? 'testExam.' : '' }}examPreparation"></h6>
                 <ol>
                     <li class="d-flex align-items-center">
                         <span jhiTranslate="artemisApp.examStatus.preparation.configureExercises" [translateValues]="{ amount: exam().exerciseGroups?.length ?? 0 }"></span>
@@ -23,7 +23,7 @@
                             <fa-icon [icon]="faTimes" class="cross" />
                         }
                     </li>
-                    @if (isTestExamType()) {
+                    @if (isTestExamMode()) {
                         <li class="d-flex align-items-center">
                             @if (maxPointExercises() === exam().examMaxPoints) {
                                 <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsCorrect' | artemisTranslate }}{{ exam().examMaxPoints }}</span>
@@ -110,13 +110,13 @@
         </div>
         <div class="status-step-content">
             <div class="text-center mb-1">
-                <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExamType() ? 'testExam.' : '' }}examConduction"></h6>
+                <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExamMode() ? 'testExam.' : '' }}examConduction"></h6>
                 <b>{{ exam().startDate | artemisDate }} - {{ exam().endDate | artemisDate }}</b>
             </div>
             <!-- In case the exercise configuration is wrong, but the test eam already started, students are not able to start a test eam -->
             @if (examConductionState() === examConductionStateEnum.ERROR) {
                 <div class="text-center mb-1">
-                    <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExamType() ? 'testExam.' : '' }}conductionSuspended"></h6>
+                    <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExamMode() ? 'testExam.' : '' }}conductionSuspended"></h6>
                 </div>
             }
             @if (course()?.isAtLeastInstructor && examChecklist() && examConductionState() !== examConductionStateEnum.ERROR) {
@@ -124,14 +124,14 @@
                     <li>
                         <span> {{ 'artemisApp.examStatus.conduction.workingTime' | artemisTranslate }}: {{ exam().workingTime! | artemisDurationFromSeconds: true }} </span>
                     </li>
-                    @if (isTestExamType()) {
+                    @if (isTestExamMode()) {
                         <li>
                             <span> {{ 'artemisApp.examStatus.conduction.testExam.numberOfStudents' | artemisTranslate }}: {{ exam().numberOfExamUsers }} </span>
                         </li>
                     }
                     <li>
                         <span>
-                            {{ 'artemisApp.examStatus.conduction.' + (isTestExamType() ? 'testExam.' : '') + 'startedExams' | artemisTranslate }}
+                            {{ 'artemisApp.examStatus.conduction.' + (isTestExamMode() ? 'testExam.' : '') + 'startedExams' | artemisTranslate }}
                             :
                             {{ numberOfStarted() }}
                             ({{ numberOfGeneratedStudentExams() > 0 ? round((numberOfStarted() * 100) / examChecklist().numberOfGeneratedStudentExams!, 1) : 0 }}
@@ -140,7 +140,7 @@
                     </li>
                     <li>
                         <span>
-                            {{ 'artemisApp.examStatus.conduction.' + (isTestExamType() ? 'testExam.' : '') + 'submittedExams' | artemisTranslate }}
+                            {{ 'artemisApp.examStatus.conduction.' + (isTestExamMode() ? 'testExam.' : '') + 'submittedExams' | artemisTranslate }}
                             :
                             {{ numberOfSubmitted() }}
                             ({{ numberOfGeneratedStudentExams() > 0 ? round((numberOfSubmitted() * 100) / numberOfGeneratedStudentExams()!, 1) : 0 }}
@@ -151,11 +151,11 @@
             }
         </div>
     </div>
-    @if (!isTestExamType()) {
+    @if (!isTestExamMode()) {
         <div class="connector" [ngClass]="examConductionState() === examConductionStateEnum.FINISHED ? 'check' : ''"></div>
     }
     <!-- 3. Exam correction -->
-    @if (!isTestExamType()) {
+    @if (!isTestExamMode()) {
         <div class="status-step">
             <!-- If exam review phase is running or there are still open complaints, show a yellow dot,
     If exam review phase is finished and all complaints are resolved, show a green check

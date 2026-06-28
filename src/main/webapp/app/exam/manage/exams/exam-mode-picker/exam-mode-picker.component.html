@@ -3,28 +3,28 @@
         <div
             id="standard-mode"
             class="btn"
-            [class.btn-success]="exam().examType === ExamType.REAL"
-            [class.btn-default]="exam().examType !== ExamType.REAL"
+            [class.btn-success]="exam().examMode === ExamMode.REAL"
+            [class.btn-default]="exam().examMode !== ExamMode.REAL"
             [class.disabled]="disableInput()"
-            (click)="setExamType(ExamType.REAL)"
+            (click)="setExamMode(ExamMode.REAL)"
             jhiTranslate="artemisApp.examManagement.testExam.realExam"
         ></div>
         <div
             id="test-mode"
             class="btn"
-            [class.btn-primary]="exam().examType === ExamType.TEST"
-            [class.btn-default]="exam().examType !== ExamType.TEST"
+            [class.btn-primary]="exam().examMode === ExamMode.TEST"
+            [class.btn-default]="exam().examMode !== ExamMode.TEST"
             [class.disabled]="disableInput()"
-            (click)="setExamType(ExamType.TEST)"
+            (click)="setExamMode(ExamMode.TEST)"
             jhiTranslate="artemisApp.examManagement.testExam.testExam"
         ></div>
         <div
             id="test-simulation-mode"
             class="btn"
-            [class.btn-primary]="exam().examType === ExamType.TEST_WITH_SIMULATION"
-            [class.btn-default]="exam().examType !== ExamType.TEST_WITH_SIMULATION"
+            [class.btn-primary]="exam().examMode === ExamMode.TEST_WITH_SIMULATION"
+            [class.btn-default]="exam().examMode !== ExamMode.TEST_WITH_SIMULATION"
             [class.disabled]="disableInput()"
-            (click)="setExamType(ExamType.TEST_WITH_SIMULATION)"
+            (click)="setExamMode(ExamMode.TEST_WITH_SIMULATION)"
             jhiTranslate="artemisApp.examManagement.testExam.testExamWithSimulation"
         ></div>
     </div>

@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 
 /**
@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamImportDTO(@NotNull String title, @NotNull ExamType examType, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
+public record ExamImportDTO(@NotNull String title, @NotNull ExamMode examMode, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
         @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
         @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
         @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
@@ -44,7 +44,7 @@ public record ExamImportDTO(@NotNull String title, @NotNull ExamType examType, b
             exerciseGroupDTOs = exam.getExerciseGroups().stream().map(ExerciseGroupImportDTO::of).toList();
         }
 
-        return new ExamImportDTO(exam.getTitle(), exam.getExamType(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
+        return new ExamImportDTO(exam.getTitle(), exam.getExamMode(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
                 exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
                 exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
                 exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
@@ -60,7 +60,7 @@ public record ExamImportDTO(@NotNull String title, @NotNull ExamType examType, b
     public Exam toEntity(Course course) {
         Exam exam = new Exam();
         exam.setTitle(title);
-        exam.setExamType(examType);
+        exam.setExamMode(examMode);
         exam.setExamWithAttendanceCheck(examWithAttendanceCheck);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);

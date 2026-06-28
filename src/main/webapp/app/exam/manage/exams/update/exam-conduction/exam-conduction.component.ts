@@ -7,7 +7,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Message } from 'primeng/message';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
-import { ExamType } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from 'app/exam/shared/entities/exam.model';
 
 @Component({
     selector: 'jhi-exam-conduction',
@@ -25,8 +25,8 @@ export class ExamConductionComponent {
     readonly workingTime = model.required<number | undefined>(); // seconds
     gracePeriod = model.required<number | undefined>(); // seconds
 
-    readonly examType = model.required<ExamType | undefined>();
-    readonly isTestExam = computed(() => this.examType() !== ExamType.REAL);
+    readonly examMode = model.required<ExamMode | undefined>();
+    readonly isTestExam = computed(() => this.examMode() !== ExamMode.REAL);
 
     readonly examTimelineStatusChange = output<boolean>();
 
@@ -99,7 +99,7 @@ export class ExamConductionComponent {
 
     private readonly isExamTimelineValid = computed(() => this.timelineStatus().valid && this.isWorkingTimeValid() && this.isGracePeriodValid());
 
-    readonly testExamWithSimulation = computed(() => this.examType() === ExamType.TEST_WITH_SIMULATION);
+    readonly testExamWithSimulation = computed(() => this.examMode() === ExamMode.TEST_WITH_SIMULATION);
 
     readonly showVisibleFromWarning = computed(() => {
         const visibleFrom = this.visibleFrom();

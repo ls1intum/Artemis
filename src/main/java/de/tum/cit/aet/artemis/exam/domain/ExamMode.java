@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.exam.domain;
 
-public enum ExamType {
+public enum ExamMode {
 
     REAL, TEST, TEST_WITH_SIMULATION;
 
-    public boolean isTestExamType() {
+    public boolean isTestExamMode() {
         return this != REAL;
     }
 }

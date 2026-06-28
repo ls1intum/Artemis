@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamType;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
@@ -110,7 +110,7 @@ public class ExamRegistrationService {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.getExamType() == ExamType.TEST) {
+        if (exam.getExamMode() == ExamMode.TEST) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
@@ -207,7 +207,7 @@ public class ExamRegistrationService {
      * @param student the student to be registered to the exam
      */
     public void registerStudentToExam(Course course, Exam exam, User student) {
-        if (exam.getExamType() == ExamType.TEST) {
+        if (exam.getExamMode() == ExamMode.TEST) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
@@ -253,7 +253,7 @@ public class ExamRegistrationService {
     public void checkRegistrationOrRegisterStudentToTestExam(Course course, long examId, User currentUser) {
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (!exam.getExamType().isTestExamType()) {
+        if (!exam.getExamMode().isTestExamMode()) {
             throw new BadRequestAlertException("Self-Registration is only allowed for test exams", "ExamRegistrationService", "SelfRegistrationOnlyForRealExams");
         }
 

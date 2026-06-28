@@ -389,7 +389,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         // Check for test exams and exam test runs
         if (programmingExercise.isExamExercise()) {
-            if (programmingExercise.getExam().getExamType().isTestExamType()) {
+            if (programmingExercise.getExam().getExamMode().isTestExamMode()) {
                 return PRIORITY_NORMAL;
             }
             if (participation instanceof StudentParticipation sp && sp.isTestRun()) {

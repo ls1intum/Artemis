@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/account/user/user.model';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamStartInformationComponent } from 'app/exam/overview/exam-start-information/exam-start-information.component';
 import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
@@ -31,7 +31,7 @@ let exam = {
     title: 'Test Exam',
     startDate,
     endDate,
-    examType: ExamType.REAL,
+    examMode: ExamMode.REAL,
 } as Exam;
 
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
@@ -40,7 +40,7 @@ describe('ExamStartInformationComponent', () => {
     setupTestBed({ zoneless: true });
 
     beforeEach(() => {
-        exam = { id: 1, title: 'ExamForTesting', examMaxPoints: 10, startDate, endDate, examType: ExamType.REAL } as Exam;
+        exam = { id: 1, title: 'ExamForTesting', examMaxPoints: 10, startDate, endDate, examMode: ExamMode.REAL } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
@@ -146,7 +146,7 @@ describe('ExamStartInformationComponent', () => {
 
     it('should initialize start date of the test exam correctly', () => {
         const examStartDate = dayjs('2022-02-06 02:00:00');
-        const testExam = { ...exam, examType: ExamType.TEST } as Exam;
+        const testExam = { ...exam, examMode: ExamMode.TEST } as Exam;
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();
@@ -155,7 +155,7 @@ describe('ExamStartInformationComponent', () => {
 
     it('should initialize end date of the test exam correctly', () => {
         const examEndDate = dayjs('2022-02-06 02:00:00').add(1, 'hours');
-        const testExam = { ...exam, examType: ExamType.TEST } as Exam;
+        const testExam = { ...exam, examMode: ExamMode.TEST } as Exam;
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('studentExam', studentExam);
         fixture.changeDetectorRef.detectChanges();

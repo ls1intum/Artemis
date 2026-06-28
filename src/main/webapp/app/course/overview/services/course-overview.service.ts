@@ -9,7 +9,7 @@ import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/g
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, hasTestExamMode } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -503,7 +503,7 @@ export class CourseOverviewService {
             attainablePoints: exam.examMaxPoints ?? 0,
             size: 'L',
             isAttempt: false,
-            testExam: hasTestExamType(exam),
+            testExam: hasTestExamMode(exam),
             attempts: options?.numberOfAttempts ?? 0,
         };
     }
@@ -622,7 +622,7 @@ export class CourseOverviewService {
 
     calculateUsedWorkingTime(studentExam: StudentExam): number {
         let usedWorkingTime = 0;
-        if (hasTestExamType(studentExam.exam) && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
+        if (hasTestExamMode(studentExam.exam) && studentExam.started && studentExam.submitted && studentExam.workingTime && studentExam.startedDate && studentExam.submissionDate) {
             const regularExamDuration = studentExam.workingTime;
             // As students may submit during the grace period, the workingTime is limited to the regular exam duration
             usedWorkingTime = Math.min(regularExamDuration, dayjs(studentExam.submissionDate).diff(dayjs(studentExam.startedDate), 'seconds'));

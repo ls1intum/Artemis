@@ -26,7 +26,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Component } from '@angular/core';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam, ExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
@@ -235,7 +235,7 @@ describe('CoursesComponent', () => {
             visibleDate: visibleDate1.subtract(10, 'minutes'),
             course: courseEmpty,
             workingTime: 3600,
-            examType: ExamType.TEST,
+            examMode: ExamMode.TEST,
         };
         const course6 = { id: 3, exams: [testExam1], exercises: [exercise1] };
         const coursesForDashboard = new CoursesForDashboardDTO();
