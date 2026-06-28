@@ -168,6 +168,34 @@ export class CourseManagementExercisesPage {
         await this.getExercise(exerciseId).locator('.btn', { hasText: 'Participations' }).click();
     }
 
+    /**
+     * Opens the edit form of the given exercise from the exercises list.
+     * <p>
+     * Robust against the multi-node "freshly-created exercise not yet visible on the routed node" race: waits for the
+     * exercise's Edit link in short bursts, reloading the list (which re-issues the exercise-list GET) between attempts.
+     * Without this, clicking the Edit link of a card that only a reload would surface auto-waits until the whole test
+     * times out. The per-attempt timeouts are kept short so the total stays within the fast-test budget.
+     *
+     * @param exerciseId - The ID of the exercise to edit.
+     */
+    async openExerciseEditForm(exerciseId: number): Promise<void> {
+        const editLink = this.getExercise(exerciseId).getByRole('link', { name: 'Edit' });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                await editLink.waitFor({ state: 'visible', timeout: 10_000 });
+                await editLink.click();
+                return;
+            } catch (error) {
+                if (attempt === 2) {
+                    throw error;
+                }
+                // The freshly-created exercise card has not surfaced on the routed node yet — re-issue the list GET.
+                await this.page.reload();
+                await this.page.waitForLoadState('domcontentloaded');
+            }
+        }
+    }
+
     async openQuizExerciseDetailsPage(exerciseId: number) {
         await Promise.all([this.page.waitForURL(`/course-management/*/quiz-exercises/${exerciseId}`), this.page.locator(`#exercise-id-${exerciseId} a`).click()]);
     }
