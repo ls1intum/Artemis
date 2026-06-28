@@ -1371,6 +1371,20 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private validateExercisePoints(validationErrorReasons: ValidationReason[]): void {
         if (this.programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
+            if (this.programmingExercise.maxPoints === undefined || this.programmingExercise.maxPoints === null) {
+                return;
+            }
+            if (this.programmingExercise.maxPoints < 0) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.exercise.form.points.customMin',
+                    translateValues: {},
+                });
+            } else if (this.programmingExercise.maxPoints > 9999) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.exercise.form.points.customMax',
+                    translateValues: {},
+                });
+            }
             return;
         }
 
