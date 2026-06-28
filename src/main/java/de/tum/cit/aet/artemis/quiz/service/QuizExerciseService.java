@@ -92,15 +92,8 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.DragAndDropMappingFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.DragAndDropQuestionFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.DragItemFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.DropLocationFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.AnswerOptionFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.MultipleChoiceQuestionFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.ShortAnswerMappingFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.ShortAnswerQuestionFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.ShortAnswerSolutionFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.ShortAnswerSpotFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragItemReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DropLocationReEvaluateDTO;
@@ -326,13 +319,23 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         originalQuestion.setText(mcDTO.text());
         originalQuestion.setHint(mcDTO.hint());
         originalQuestion.setExplanation(mcDTO.explanation());
-        Set<Long> requestedOptionIds = mcDTO.answerOptions().stream().map(optionDTO -> optionDTO.id()).collect(Collectors.toSet());
-        Set<Long> invalidIds = originalQuestion.getAnswerOptions().stream().map(AnswerOption::getId).filter(id -> !requestedOptionIds.contains(id)).collect(Collectors.toSet());
-        List<AnswerOptionInput> inputs = mcDTO.answerOptions().stream().map(optionDTO -> {
+        Set<Long> requestedOptionIds = new HashSet<>();
+        List<AnswerOptionInput> inputs = new ArrayList<>();
+        for (var optionDTO : mcDTO.answerOptions()) {
+            requestedOptionIds.add(optionDTO.id());
             AnswerOption existingOption = originalQuestion.findAnswerOptionById(optionDTO.id());
-            boolean invalid = existingOption != null && existingOption.isInvalid() ? true : optionDTO.invalid();
-            return new AnswerOptionInput(optionDTO.id(), optionDTO.text(), optionDTO.hint(), optionDTO.explanation(), optionDTO.isCorrect(), invalid);
-        }).toList();
+            // Existing tombstones must stay invalid; re-evaluation must not restore historical components.
+            boolean invalid = optionDTO.invalid() || existingOption != null && existingOption.isInvalid();
+            inputs.add(new AnswerOptionInput(optionDTO.id(), optionDTO.text(), optionDTO.hint(), optionDTO.explanation(), optionDTO.isCorrect(), invalid));
+        }
+
+        // Options omitted from the payload stay resolvable as invalid JSON components for submissions and counters.
+        Set<Long> invalidIds = new HashSet<>();
+        for (AnswerOption existingOption : originalQuestion.getAnswerOptions()) {
+            if (!requestedOptionIds.contains(existingOption.getId())) {
+                invalidIds.add(existingOption.getId());
+            }
+        }
         try {
             recalculationNecessary = originalQuestion.replaceAnswerOptions(inputs, invalidIds).requiresRecalculation() || recalculationNecessary;
         }
@@ -1165,21 +1168,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             Map<Long, QuizQuestion> existingQuestionsById = quizExercise.getQuizQuestions().stream().filter(q -> q.getId() != null)
                     .collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
 
-            // Keep existing MC aggregate roots so question-scoped ID high-watermarks cannot move backwards.
+            // Keep existing MC aggregate roots so question-scoped ID cannot move backwards.
             List<QuizQuestion> newQuestions = new ArrayList<>(updateQuizExerciseDTO.quizQuestions().stream().map(dto -> {
                 if (dto instanceof MultipleChoiceQuestionFromEditorDTO mcDTO && mcDTO.id() != null
                         && existingQuestionsById.get(mcDTO.id()) instanceof MultipleChoiceQuestion existingQuestion) {
                     applyMultipleChoiceEditorDTO(existingQuestion, mcDTO);
-                    return existingQuestion;
-                }
-                if (dto instanceof DragAndDropQuestionFromEditorDTO dndDTO && dndDTO.id() != null
-                        && existingQuestionsById.get(dndDTO.id()) instanceof DragAndDropQuestion existingQuestion) {
-                    applyDragAndDropEditorDTO(existingQuestion, dndDTO);
-                    return existingQuestion;
-                }
-                if (dto instanceof ShortAnswerQuestionFromEditorDTO saDTO && saDTO.id() != null
-                        && existingQuestionsById.get(saDTO.id()) instanceof ShortAnswerQuestion existingQuestion) {
-                    applyShortAnswerEditorDTO(existingQuestion, saDTO);
                     return existingQuestion;
                 }
                 QuizQuestion newQuestion = dto.toDomainObject();
@@ -1201,70 +1194,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         competencyExerciseLinkService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
     }
 
-    private static void applyDragAndDropEditorDTO(DragAndDropQuestion question, DragAndDropQuestionFromEditorDTO dto) {
-        question.setTitle(dto.title());
-        question.setText(dto.text());
-        question.setHint(dto.hint());
-        question.setExplanation(dto.explanation());
-        question.setPoints(dto.points());
-        question.setScoringType(dto.scoringType());
-        question.setRandomizeOrder(dto.randomizeOrder() != null ? dto.randomizeOrder() : Boolean.FALSE);
-        question.setBackgroundFilePath(dto.backgroundFilePath());
-
-        Map<Long, DropLocation> existingDropLocations = question.getDropLocations().stream().filter(dropLocation -> dropLocation.getId() != null)
-                .collect(Collectors.toMap(DropLocation::getId, Function.identity()));
-        List<DropLocation> dropLocations = new ArrayList<>();
-        Map<Long, DropLocation> effectiveIdToDropLocation = new HashMap<>();
-        for (DropLocationFromEditorDTO locationDTO : dto.dropLocations()) {
-            DropLocation dropLocation = locationDTO.id() == null ? locationDTO.toDomainObject() : existingDropLocations.get(locationDTO.id());
-            if (dropLocation == null) {
-                throw new BadRequestAlertException("Unknown drop location ID " + locationDTO.id(), ENTITY_NAME, "invalidDropLocations");
-            }
-            locationDTO.applyTo(dropLocation);
-            dropLocations.add(dropLocation);
-            effectiveIdToDropLocation.put(locationDTO.effectiveId(), dropLocation);
-        }
-
-        Map<Long, DragItem> existingDragItems = question.getDragItems().stream().filter(dragItem -> dragItem.getId() != null)
-                .collect(Collectors.toMap(DragItem::getId, Function.identity()));
-        List<DragItem> dragItems = new ArrayList<>();
-        Map<Long, DragItem> effectiveIdToDragItem = new HashMap<>();
-        for (DragItemFromEditorDTO itemDTO : dto.dragItems()) {
-            DragItem dragItem = itemDTO.id() == null ? itemDTO.toDomainObject() : existingDragItems.get(itemDTO.id());
-            if (dragItem == null) {
-                throw new BadRequestAlertException("Unknown drag item ID " + itemDTO.id(), ENTITY_NAME, "invalidDragItems");
-            }
-            itemDTO.applyTo(dragItem);
-            dragItems.add(dragItem);
-            effectiveIdToDragItem.put(itemDTO.effectiveId(), dragItem);
-        }
-
-        Map<Long, DragAndDropMapping> existingMappings = question.getCorrectMappings().stream().filter(mapping -> mapping.getId() != null)
-                .collect(Collectors.toMap(DragAndDropMapping::getId, Function.identity()));
-        Set<DragAndDropMapping> mappings = new HashSet<>();
-        for (DragAndDropMappingFromEditorDTO mappingDTO : dto.correctMappings()) {
-            DragItem dragItem = effectiveIdToDragItem.get(mappingDTO.dragItemTempId());
-            DropLocation dropLocation = effectiveIdToDropLocation.get(mappingDTO.dropLocationTempId());
-            if (dragItem == null || dropLocation == null) {
-                throw new BadRequestAlertException("Could not resolve drag and drop mappings", ENTITY_NAME, "invalidMappings");
-            }
-            DragAndDropMapping mapping = mappingDTO.id() == null ? new DragAndDropMapping() : existingMappings.get(mappingDTO.id());
-            if (mapping == null) {
-                throw new BadRequestAlertException("Unknown drag and drop mapping ID " + mappingDTO.id(), ENTITY_NAME, "invalidMappings");
-            }
-            mapping.setDragItem(dragItem);
-            mapping.setDropLocation(dropLocation);
-            mappings.add(mapping);
-        }
-
-        question.getDropLocations().clear();
-        question.getDropLocations().addAll(dropLocations);
-        question.getDragItems().clear();
-        question.getDragItems().addAll(dragItems);
-        question.getCorrectMappings().clear();
-        question.getCorrectMappings().addAll(mappings);
-    }
-
     private static void applyMultipleChoiceEditorDTO(MultipleChoiceQuestion question, MultipleChoiceQuestionFromEditorDTO dto) {
         question.setTitle(dto.title());
         question.setText(dto.text());
@@ -1275,81 +1204,23 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         question.setRandomizeOrder(dto.randomizeOrder() != null ? dto.randomizeOrder() : Boolean.FALSE);
         question.setSingleChoice(dto.singleChoice());
 
+        replaceEditorAnswerOptions(question, dto.answerOptions());
+    }
+
+    private static void replaceEditorAnswerOptions(MultipleChoiceQuestion question, List<AnswerOptionFromEditorDTO> answerOptions) {
+        List<AnswerOptionInput> answerOptionInputs = answerOptions.stream().map(optionDTO -> mapEditorAnswerOptionInput(optionDTO, question)).toList();
         try {
-            question.replaceAnswerOptions(dto.answerOptions().stream().map(optionDTO -> {
-                AnswerOption existingOption = question.findAnswerOptionById(optionDTO.id());
-                boolean invalid = existingOption != null && existingOption.isInvalid();
-                return new AnswerOptionInput(optionDTO.id(), optionDTO.text(), optionDTO.hint(), optionDTO.explanation(), optionDTO.isCorrect(), invalid);
-            }).toList());
+            question.replaceAnswerOptions(answerOptionInputs);
         }
         catch (IllegalArgumentException ex) {
             throw new BadRequestAlertException(ex.getMessage(), ENTITY_NAME, "invalidAnswerOptions");
         }
     }
 
-    private static void applyShortAnswerEditorDTO(ShortAnswerQuestion question, ShortAnswerQuestionFromEditorDTO dto) {
-        question.setTitle(dto.title());
-        question.setText(dto.text());
-        question.setHint(dto.hint());
-        question.setExplanation(dto.explanation());
-        question.setPoints(dto.points());
-        question.setScoringType(dto.scoringType());
-        question.setRandomizeOrder(dto.randomizeOrder() != null ? dto.randomizeOrder() : Boolean.FALSE);
-        question.setSimilarityValue(dto.similarityValue());
-        question.setMatchLetterCase(dto.matchLetterCase());
-
-        Map<Long, ShortAnswerSpot> existingSpots = question.getSpots().stream().filter(spot -> spot.getId() != null)
-                .collect(Collectors.toMap(ShortAnswerSpot::getId, Function.identity()));
-        List<ShortAnswerSpot> spots = new ArrayList<>();
-        Map<Long, ShortAnswerSpot> effectiveIdToSpot = new HashMap<>();
-        for (ShortAnswerSpotFromEditorDTO spotDTO : dto.spots()) {
-            ShortAnswerSpot spot = spotDTO.id() == null ? spotDTO.toDomainObject() : existingSpots.get(spotDTO.id());
-            if (spot == null) {
-                throw new BadRequestAlertException("Unknown short answer spot ID " + spotDTO.id(), ENTITY_NAME, "invalidShortAnswerSpots");
-            }
-            spotDTO.applyTo(spot);
-            spots.add(spot);
-            effectiveIdToSpot.put(spotDTO.effectiveId(), spot);
-        }
-
-        Map<Long, ShortAnswerSolution> existingSolutions = question.getSolutions().stream().filter(solution -> solution.getId() != null)
-                .collect(Collectors.toMap(ShortAnswerSolution::getId, Function.identity()));
-        List<ShortAnswerSolution> solutions = new ArrayList<>();
-        Map<Long, ShortAnswerSolution> effectiveIdToSolution = new HashMap<>();
-        for (ShortAnswerSolutionFromEditorDTO solutionDTO : dto.solutions()) {
-            ShortAnswerSolution solution = solutionDTO.id() == null ? solutionDTO.toDomainObject() : existingSolutions.get(solutionDTO.id());
-            if (solution == null) {
-                throw new BadRequestAlertException("Unknown short answer solution ID " + solutionDTO.id(), ENTITY_NAME, "invalidShortAnswerSolutions");
-            }
-            solutionDTO.applyTo(solution);
-            solutions.add(solution);
-            effectiveIdToSolution.put(solutionDTO.effectiveId(), solution);
-        }
-
-        Map<Long, ShortAnswerMapping> existingMappings = question.getCorrectMappings().stream().filter(mapping -> mapping.getId() != null)
-                .collect(Collectors.toMap(ShortAnswerMapping::getId, Function.identity()));
-        Set<ShortAnswerMapping> mappings = new HashSet<>();
-        for (ShortAnswerMappingFromEditorDTO mappingDTO : dto.correctMappings()) {
-            ShortAnswerSolution solution = effectiveIdToSolution.get(mappingDTO.solutionTempId());
-            ShortAnswerSpot spot = effectiveIdToSpot.get(mappingDTO.spotTempId());
-            if (solution == null || spot == null) {
-                throw new BadRequestAlertException("Could not resolve short answer mappings", ENTITY_NAME, "invalidMappings");
-            }
-            ShortAnswerMapping mapping = mappingDTO.id() == null ? new ShortAnswerMapping() : existingMappings.get(mappingDTO.id());
-            if (mapping == null) {
-                throw new BadRequestAlertException("Unknown short answer mapping ID " + mappingDTO.id(), ENTITY_NAME, "invalidMappings");
-            }
-            mapping.setSolution(solution);
-            mapping.setSpot(spot);
-            mappings.add(mapping);
-        }
-
-        question.getSpots().clear();
-        question.getSpots().addAll(spots);
-        question.getSolutions().clear();
-        question.getSolutions().addAll(solutions);
-        question.getCorrectMappings().clear();
-        question.getCorrectMappings().addAll(mappings);
+    private static AnswerOptionInput mapEditorAnswerOptionInput(AnswerOptionFromEditorDTO optionDTO, MultipleChoiceQuestion question) {
+        AnswerOption existingOption = question.findAnswerOptionById(optionDTO.id());
+        boolean invalid = existingOption != null && existingOption.isInvalid();
+        return new AnswerOptionInput(optionDTO.id(), optionDTO.text(), optionDTO.hint(), optionDTO.explanation(), optionDTO.isCorrect(), invalid);
     }
 
     /**
@@ -1366,7 +1237,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             copy.setCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         }
         copy.setExerciseGroup(quizExercise.getExerciseGroup());
-        copy.setQuizQuestions(quizExercise.getQuizQuestions().stream().map(QuizExerciseService::copyQuizQuestionForUpdate).collect(Collectors.toCollection(ArrayList::new)));
+        copy.setQuizQuestions(quizExercise.getQuizQuestions().stream().map(question -> {
+            if (question instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+                return copyMultipleChoiceQuestionForUpdate(multipleChoiceQuestion);
+            }
+            return question;
+        }).collect(Collectors.toCollection(ArrayList::new)));
         copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
         copy.setCompetencyLinks(new HashSet<>(quizExercise.getCompetencyLinks()));
         copy.setQuizBatches(new HashSet<>(quizExercise.getQuizBatches()));
@@ -1374,23 +1250,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return copy;
     }
 
-    private static QuizQuestion copyQuizQuestionForUpdate(QuizQuestion source) {
-        QuizQuestion copy = source.copyQuestionId();
-        copyBasicFields(source, copy);
-        copy.setQuizQuestionStatistic(source.getQuizQuestionStatistic());
-
-        if (source instanceof MultipleChoiceQuestion sourceQuestion && copy instanceof MultipleChoiceQuestion copyQuestion) {
-            copyQuestion.setSingleChoice(sourceQuestion.isSingleChoice());
-            copyQuestion.setAnswerOptions(sourceQuestion.getAnswerOptions());
-        }
-        else if (source instanceof DragAndDropQuestion sourceQuestion && copy instanceof DragAndDropQuestion copyQuestion) {
-            copyQuestion.setBackgroundFilePath(sourceQuestion.getBackgroundFilePath());
-            copyQuestion.setDragItems(sourceQuestion.getDragItems().stream().map(QuizExerciseService::copyDragItemForUpdate).collect(Collectors.toCollection(ArrayList::new)));
-        }
-        return copy;
-    }
-
-    static void copyBasicFields(QuizQuestion source, QuizQuestion copy) {
+    private static MultipleChoiceQuestion copyMultipleChoiceQuestionForUpdate(MultipleChoiceQuestion source) {
+        MultipleChoiceQuestion copy = new MultipleChoiceQuestion();
+        copy.setId(source.getId());
+        copy.setVersion(source.getVersion());
         copy.setTitle(source.getTitle());
         copy.setText(source.getText());
         copy.setHint(source.getHint());
@@ -1399,14 +1262,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         copy.setScoringType(source.getScoringType());
         copy.setRandomizeOrder(source.isRandomizeOrder());
         copy.setInvalid(source.isInvalid());
-    }
-
-    private static DragItem copyDragItemForUpdate(DragItem source) {
-        DragItem copy = new DragItem();
-        copy.setId(source.getId());
-        copy.setText(source.getText());
-        copy.setPictureFilePath(source.getPictureFilePath());
-        copy.setInvalid(source.isInvalid());
+        copy.setQuizQuestionStatistic(source.getQuizQuestionStatistic());
+        copy.setSingleChoice(source.isSingleChoice());
+        copy.setAnswerOptions(source.getAnswerOptions());
         return copy;
     }
 
