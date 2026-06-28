@@ -30,7 +30,7 @@ import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submis
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { MatSlider } from '@angular/material/slider';
+import { Slider } from 'primeng/slider';
 import { FormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -138,7 +138,7 @@ describe('Student Exam Timeline Component', () => {
                         MockComponent(QuizExamSubmissionComponent),
                         MockComponent(FileUploadExamSubmissionComponent),
                         MockComponent(ExamNavigationBarComponent),
-                        MockComponent(MatSlider),
+                        MockComponent(Slider),
                     ],
                 },
             })
@@ -311,4 +311,49 @@ describe('Student Exam Timeline Component', () => {
             }
         },
     );
+
+    // p-slider does NOT emit (onSlideEnd) for keyboard navigation, so onSliderKeyup bridges keyboard input to
+    // onSliderInputChange for the navigation keys. This behaviour is the reason the slider migration introduced the method.
+    it.each(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'])(
+        'should call onSliderInputChange when a navigation key (%s) is released on the slider',
+        (key: string) => {
+            const inputChangeSpy = vi.spyOn(component, 'onSliderInputChange').mockImplementation(() => {});
+
+            component.onSliderKeyup({ key } as KeyboardEvent);
+
+            expect(inputChangeSpy).toHaveBeenCalledOnce();
+        },
+    );
+
+    it.each(['a', 'Tab'])('should not call onSliderInputChange when a non-navigation key (%s) is released on the slider', (key: string) => {
+        const inputChangeSpy = vi.spyOn(component, 'onSliderInputChange').mockImplementation(() => {});
+
+        component.onSliderKeyup({ key } as KeyboardEvent);
+
+        expect(inputChangeSpy).not.toHaveBeenCalled();
+    });
+
+    // The PrimeNG p-slider has no [showTickMarks] equivalent, so submissionTickPercentages drives custom tick markers
+    // that restore the Material slider's per-submission visual cue.
+    describe('submission tick markers', () => {
+        it('computes an evenly-spaced percentage position for each submission timestamp', () => {
+            component.submissionTimeStamps.set([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-03-07'), dayjs('2023-04-07'), dayjs('2023-05-07')]);
+
+            expect(component.submissionTickPercentages()).toEqual([0, 25, 50, 75, 100]);
+        });
+
+        it('places the first tick at 0% and the last at 100%', () => {
+            component.submissionTimeStamps.set([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-03-07')]);
+
+            expect(component.submissionTickPercentages()).toEqual([0, 50, 100]);
+        });
+
+        it('renders no tick markers when there is at most one submission (no range to mark)', () => {
+            component.submissionTimeStamps.set([dayjs('2023-01-07')]);
+            expect(component.submissionTickPercentages()).toEqual([]);
+
+            component.submissionTimeStamps.set([]);
+            expect(component.submissionTickPercentages()).toEqual([]);
+        });
+    });
 });

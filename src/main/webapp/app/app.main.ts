@@ -23,8 +23,10 @@ bootstrapApplication(AppComponent, appConfig)
 
         // Perform initialization logic
         registerLocaleData(locale);
+        // Attach all ng-bootstrap tooltips to <body> so they are not clipped by `overflow: hidden` ancestors
+        // (e.g. the flex sidebar / layout-content), and suppress them on touch (Handset) devices.
+        // ~140 [ngbTooltip] usages still rely on this global default until they are migrated to PrimeNG p-tooltip.
         tooltipConfig.container = 'body';
-
         tooltipConfig.disableTooltip = breakpointObserver.isMatched(Breakpoints.Handset);
     })
     // eslint-disable-next-line no-undef
