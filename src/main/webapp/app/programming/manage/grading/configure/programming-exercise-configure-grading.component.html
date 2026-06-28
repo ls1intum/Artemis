@@ -60,9 +60,9 @@
                     />
                     <jhi-submission-policy-update #policyUpdate [programmingExercise]="programmingExercise" [editable]="programmingExercise.isAtLeastInstructor!" />
                     @if (programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy !== undefined) {
-                        <ngb-alert [dismissible]="false" [type]="'info'">
+                        <p-message severity="info">
                             <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation"></span>
-                        </ngb-alert>
+                        </p-message>
                     }
                 </div>
             }

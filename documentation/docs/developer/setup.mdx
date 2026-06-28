@@ -37,7 +37,7 @@ Before installing Artemis, install and configure the following dependencies:
    Download from [Node.js](https://nodejs.org/en/download).
    Required for compiling and running the Angular client.
 
-4. **[pnpm](https://pnpm.io) (≥ 11.1.0) — the package manager Artemis uses for the Angular client**
+4. **[pnpm](https://pnpm.io) (≥ 11.8.0) — the package manager Artemis uses for the Angular client**
 
    The official pnpm website is [pnpm.io](https://pnpm.io/); the CLI reference for `pnpm install` is at [pnpm.io/cli/install](https://pnpm.io/cli/install) and the installation guide at [pnpm.io/installation](https://pnpm.io/installation).
    Artemis uses pnpm instead of npm. We do **not** use `npm` / `npx` anywhere; please don't run `npm install` in this repo — it will create a `package-lock.json` that conflicts with the committed `pnpm-lock.yaml`. The exact pnpm version is pinned in `package.json` via the `packageManager` field, so every developer and every CI job uses the same version.
@@ -51,7 +51,7 @@ Before installing Artemis, install and configure the following dependencies:
    After that, any `pnpm` command run inside the Artemis repository automatically uses the pinned version. Verify the setup with:
 
    ```bash
-   pnpm --version          # should print 11.1.1 (matches packageManager in package.json)
+   pnpm --version          # should print 11.8.0 (matches packageManager in package.json)
    which pnpm              # should point at the Corepack shim, e.g. ~/.nvm/.../bin/pnpm
    ```
 
