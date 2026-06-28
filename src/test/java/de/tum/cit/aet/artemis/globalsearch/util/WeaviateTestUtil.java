@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.globalsearch.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 import org.testcontainers.DockerClientFactory;
@@ -221,34 +223,27 @@ public final class WeaviateTestUtil {
 
     /**
      * Asserts that a Weaviate date property matches the expected ZonedDateTime value.
-     * Compares by converting both dates to UTC before comparison.
+     * Compares instants with tolerance because Weaviate may round date values to seconds.
      */
     private static void assertDateProperty(Map<String, Object> properties, String propertyName, ZonedDateTime expected) {
         if (expected == null) {
             return;
         }
-        // Convert expected to UTC for comparison
-        String expectedUTC = expected.withZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-
         // Handle both OffsetDateTime (newer Weaviate client) and String (older versions)
         Object actualValue = properties.get(propertyName);
-        String actualUTC;
+        Instant actualInstant;
 
         if (actualValue instanceof OffsetDateTime offsetDateTime) {
-            // Convert OffsetDateTime to UTC
-            actualUTC = offsetDateTime.atZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            actualInstant = offsetDateTime.toInstant();
         }
         else if (actualValue instanceof String actualStr) {
-            // Parse string date and convert to UTC
-            ZonedDateTime actualDateTime = ZonedDateTime.parse(actualStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-            actualUTC = actualDateTime.withZoneSameInstant(java.time.ZoneOffset.UTC).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            actualInstant = OffsetDateTime.parse(actualStr).toInstant();
         }
         else {
             throw new AssertionError("Property " + propertyName + " has unexpected type: " + (actualValue != null ? actualValue.getClass() : "null"));
         }
 
-        // Compare first 19 chars (YYYY-MM-DDTHH:MM:SS) to avoid millisecond precision differences
-        assertThat(actualUTC).as("Property %s should match expected date", propertyName).startsWith(expectedUTC.substring(0, 19));
+        assertThat(actualInstant).as("Property %s should match expected date", propertyName).isCloseTo(expected.toInstant(), within(1, ChronoUnit.SECONDS));
     }
 
     // -- Lecture utilities --
