@@ -15,7 +15,11 @@
     }
     @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
         <div class="timeline-item-row">
-            @let isInvalid = internalItem.isBeforePreviousDate || internalItem.isOtherRequiredItemDateUndefined || (dateModel.touched && internalItem.isInputRequiredButUndefined);
+            @let isInvalid =
+                internalItem.isInvalidInput ||
+                internalItem.isBeforePreviousDate ||
+                internalItem.isOtherRequiredItemDateUndefined ||
+                (dateModel.touched && internalItem.isInputRequiredButUndefined);
             <div class="timeline-graphic">
                 <div class="timeline-graphic-line"></div>
                 <div

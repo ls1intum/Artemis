@@ -107,7 +107,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -265,7 +265,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorComponent),
+                        MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),

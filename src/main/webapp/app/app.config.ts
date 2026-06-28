@@ -8,10 +8,8 @@ import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject
 import { Title } from '@angular/platform-browser';
 import { provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
 import routes from 'app/app.routes';
-import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { missingTranslationHandler, translateHttpLoaderProviders } from 'app/core/config/translation.config';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
@@ -27,7 +25,6 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { lastValueFrom } from 'rxjs';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
@@ -43,7 +40,7 @@ export const appConfig: ApplicationConfig = {
         // NB: `BrowserModule` is intentionally NOT listed here. Standalone Angular apps bootstrap
         // via `bootstrapApplication` and don't need `BrowserModule`; its providers (notably
         // DOM/debug helpers) otherwise pull the `_debug_node` chunk (~160 KB) into production.
-        importProvidersFrom(ScrollingModule, OwlNativeDateTimeModule),
+        importProvidersFrom(ScrollingModule),
         provideTranslateService({
             loader: translateHttpLoaderProviders,
             missingTranslationHandler: {
@@ -63,7 +60,6 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(withInterceptorsFromDi()),
         Title,
         { provide: LOCALE_ID, useValue: 'en' },
-        { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
         // Sentry's TraceService / BrowserTracing is no longer eagerly wired up from here. The
         // tracing integration is attached by `SentryErrorHandler.initSentry()` once the profile
         // is known, so production traffic keeps full Sentry performance coverage while the

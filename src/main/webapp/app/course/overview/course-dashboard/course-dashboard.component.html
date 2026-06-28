@@ -17,9 +17,17 @@
                     <div class="d-sm-flex gap-3 align-items-baseline">
                         <h4 jhiTranslate="artemisApp.courseStudentDashboard.overallPerformance.title"></h4>
                         <div class="flex-grow-1">
-                            <ngb-progressbar type="success overflow-visible" [value]="points()" [max]="maxPoints()" height="1.75rem">
-                                <span class="fs-5 mx-2">{{ points() }} / {{ maxPoints() }} ({{ progress() }}%)</span>
-                            </ngb-progressbar>
+                            <p-progressbar
+                                [value]="progressBarValue()"
+                                [showValue]="false"
+                                color="var(--bs-success, #28a745)"
+                                [style]="{ height: '1.75rem' }"
+                                styleClass="points-progressbar"
+                            >
+                                <ng-template #content>
+                                    <span class="fs-5 mx-2">{{ points() }} / {{ maxPoints() }} ({{ progress() }}%)</span>
+                                </ng-template>
+                            </p-progressbar>
                         </div>
                     </div>
                 }

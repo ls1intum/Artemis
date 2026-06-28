@@ -15,7 +15,7 @@ import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-q
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
-import { NgbDate, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -583,18 +583,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
         return true;
     }
-
-    /**
-     * @desc Callback for datepicker to decide whether given date should be disabled
-     * All dates which are in the past (< today) are disabled
-     */
-    isDateInPast = (date: NgbDate, current: { month: number }) =>
-        current.month < dayjs().month() + 1 ||
-        dayjs()
-            .year(date.year)
-            .month(date.month - 1)
-            .date(date.day)
-            .isBefore(dayjs());
 
     /**
      * Iterates over the questions of the quizExercise and calculates the sum of all question scores
