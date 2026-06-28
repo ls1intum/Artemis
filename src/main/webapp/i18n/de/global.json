@@ -99,6 +99,7 @@
             "home": "Startseite",
             "overview": "Übersicht",
             "courses": "Kurse",
+            "student": "Student",
             "course": "Verwaltung",
             "courseRequests": "Neuen Kurs anfragen",
             "entities": {
@@ -252,7 +253,7 @@
                 "lectureTranscription": "Vorlesungstranskription"
             },
             "language": "Sprache",
-            "settings": "Einstellungen"
+            "settings": "Benutzereinstellungen"
         },
         "form": {
             "username": "Login oder E-Mail",
@@ -370,6 +371,7 @@
             "retry": "Erneut versuchen",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
+            "done": "Fertig",
             "finish": "Abschließen",
             "import": "Import",
             "to-import": "Importieren",

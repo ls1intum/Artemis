@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationExcepti
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
@@ -118,6 +119,8 @@ public class LocalVCServletService {
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
+    private final RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final RateLimitService rateLimitService;
@@ -142,8 +145,9 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService,
-            AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService, ExerciseVersionService exerciseVersionService) {
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
+            Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
+            ExerciseVersionService exerciseVersionService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -155,6 +159,7 @@ public class LocalVCServletService {
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
+        this.repositoryVCSAccessTokenRepository = repositoryVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
         this.authorizationCheckService = authorizationCheckService;
         this.rateLimitService = rateLimitService;
@@ -312,7 +317,7 @@ public class LocalVCServletService {
         if (optionalParticipation.isPresent()) {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             var ipAddress = request.getRemoteAddr();
-            var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(HttpHeaders.AUTHORIZATION), user);
+            var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(HttpHeaders.AUTHORIZATION), user, localVCRepositoryUri);
 
             String finalCommitHash = getCommitHash(localVCRepositoryUri);
             RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
@@ -335,7 +340,7 @@ public class LocalVCServletService {
         try {
             var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
             var commitHash = getCommitHash(localVCRepositoryUri);
-            var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(context, user);
+            var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(context, user, localVCRepositoryUri);
             var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
             var ipAddress = context.getIpAddress();
             vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
@@ -359,18 +364,19 @@ public class LocalVCServletService {
      * If neither a session nor a request is available, the authentication mechanism defaults to OTHER.
      * </p>
      *
-     * @param context the Authentication context
-     * @param user    the user for whom authentication is being determined
+     * @param context              the Authentication context
+     * @param user                 the user for whom authentication is being determined
+     * @param localVCRepositoryUri the URI of the repository the user tried to access (used to recognize repository-scoped tokens)
      * @return the resolved {@link AuthenticationMechanism}
      */
-    private AuthenticationMechanism resolveAuthenticationMechanismFromSessionOrRequest(AuthenticationContext context, User user) {
+    private AuthenticationMechanism resolveAuthenticationMechanismFromSessionOrRequest(AuthenticationContext context, User user, LocalVCRepositoryUri localVCRepositoryUri) {
         switch (context) {
             case AuthenticationContext.Session ignored -> {
                 return AuthenticationMechanism.SSH;
             }
             case AuthenticationContext.Request request -> {
                 try {
-                    return resolveHTTPSAuthenticationMechanism(request.request().getHeader(HttpHeaders.AUTHORIZATION), user);
+                    return resolveHTTPSAuthenticationMechanism(request.request().getHeader(HttpHeaders.AUTHORIZATION), user, localVCRepositoryUri);
                 }
                 catch (LocalVCAuthException ignored) {
                     return AuthenticationMechanism.AUTH_HEADER_MISSING;
@@ -406,7 +412,8 @@ public class LocalVCServletService {
      * @return the authentication type
      * @throws LocalVCAuthException if extracting the token or password from the authorizationHeader fails
      */
-    private AuthenticationMechanism resolveHTTPSAuthenticationMechanism(String authorizationHeader, User user) throws LocalVCAuthException {
+    private AuthenticationMechanism resolveHTTPSAuthenticationMechanism(String authorizationHeader, User user, LocalVCRepositoryUri localVCRepositoryUri)
+            throws LocalVCAuthException {
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
         String password = usernameAndPassword.password();
@@ -415,6 +422,12 @@ public class LocalVCServletService {
         }
         if (password.equals(user.getVcsAccessToken())) {
             return AuthenticationMechanism.USER_VCS_ACCESS_TOKEN;
+        }
+        if (localVCRepositoryUri != null) {
+            var repositoryToken = repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), localVCRepositoryUri.toString());
+            if (repositoryToken.isPresent() && password.equals(repositoryToken.get().getVcsAccessToken())) {
+                return AuthenticationMechanism.REPOSITORY_VCS_ACCESS_TOKEN;
+            }
         }
         return AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN;
     }
@@ -465,6 +478,11 @@ public class LocalVCServletService {
             return user;
         }
 
+        // check repository-scoped VCS access token (course staff token bound to a single base repository)
+        if (tryAuthenticationWithRepositoryVcsAccessToken(user, passwordOrToken, localVCRepositoryUri)) {
+            return user;
+        }
+
         // if the user does not have an access token or used a password, we try to authenticate the user with it
         // Try to authenticate the user based on the configured options, this can include sending the data to an external system (e.g. LDAP) or using internal authentication.
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, passwordOrToken);
@@ -509,6 +527,27 @@ public class LocalVCServletService {
             }
             catch (EntityNotFoundException e) {
                 throw new LocalVCAuthException();
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Attempts to authenticate a user with a repository-scoped VCS access token (course staff token bound to a single base repository).
+     * <p>
+     * The token is looked up by the exact repository URI, which enforces that a token is only valid for the one repository it was issued for. This method only authenticates the
+     * user; the authorization (at least tutor to read, at least editor to write) is still enforced afterwards in {@link #authorizeUser}.
+     *
+     * @param user                 the user attempting authentication
+     * @param providedToken        the token provided by the user
+     * @param localVCRepositoryUri the URI of the repository the user tries to access
+     * @return {@code true} if the token matches a repository token the user owns for this repository, {@code false} otherwise
+     */
+    private boolean tryAuthenticationWithRepositoryVcsAccessToken(User user, String providedToken, LocalVCRepositoryUri localVCRepositoryUri) {
+        if (providedToken.startsWith(TOKEN_PREFIX) && providedToken.length() == VCS_ACCESS_TOKEN_LENGTH) {
+            var storedToken = repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), localVCRepositoryUri.toString());
+            if (storedToken.isPresent() && Objects.equals(storedToken.get().getVcsAccessToken(), providedToken)) {
+                return true;
             }
         }
         return false;
