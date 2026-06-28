@@ -82,8 +82,9 @@ You can also see the commit message, the author of the commit, the date of the c
 Artemis supports three mechanisms for authenticating to repositories: password authentication, token authentication and authentication via SSH.
 Admins can configure which mechanisms should be available for users, and the order in which they appear in the code button drop down, as described in the Artemis configuration.
 
-There are two types of tokens: Each student has a token, for every repository of exercises they participate in, which Artemis automatically generates and provides through the code button dialog.
-Instructors additionally have the ability to create an access token, with the ability to access all repositories their user account has permissions to.
+There are three types of tokens: Each student has a participation token, for every repository of exercises they participate in, which Artemis automatically generates and provides through the code button dialog.
+Course staff (tutors, editors, and instructors) additionally receive a repository token for each base repository (template, test, solution, or auxiliary) of a programming exercise they open, scoped to exactly that one repository and likewise provided through the code button dialog.
+Instructors can also create a user access token, with the ability to access all repositories their user account has permissions to.
 Find more information on repository types and access rights in the documentation on repository types and access.
 Here is a short overview on the advantages and disadvantages of the provided mechanisms:
 
@@ -117,6 +118,23 @@ Here is a short overview on the advantages and disadvantages of the provided mec
 
 - easy to use, no setup needed
 - limited access scope to a single exercise
+- secure
+
+**Disadvantages**
+
+- only usable for one repository
+
+### Repository Token
+
+Course staff (tutors, editors, and instructors) receive a repository token for the template, test, solution, and auxiliary repositories of a programming exercise.
+Like the participation token, it is provisioned automatically and provided through the code button dialog, so staff no longer need their password to clone or push to these base repositories.
+The token only authenticates the user; the usual permission checks still apply on every Git operation (at least tutor to read, at least editor to push), so it never widens access.
+
+**Advantages**
+
+- easy to use, no setup needed
+- automatically provided in the code button dialog for staff repositories
+- limited access scope to a single repository
 - secure
 
 **Disadvantages**
@@ -188,6 +206,11 @@ For every student's exercise, Artemis automatically generates an access token, o
 Instructors can create HTTP access tokens for repository access in Artemis.
 They are created in the account settings and are used in place of passwords for Git over HTTPS.
 You can use these to authenticate to the Artemis Local Version Control.
+
+Course staff additionally receive a repository-scoped token for each base repository (template, test, solution, or auxiliary) of a programming exercise.
+Artemis provisions these tokens automatically and embeds them in the HTTPS clone URL shown in the code button dialog, so tutors, editors, and instructors can clone and push to these repositories without entering their password.
+Such a token only identifies the user; the usual permission checks still apply on every Git operation (at least tutor to read, at least editor to push), so a token never grants access the user would not otherwise have.
+It is removed automatically once the user is no longer staff in the course, when the exercise is deleted, or when the user account is deleted.
 
 **Warning:** Never share your access tokens or commit them to version control. Treat tokens like passwords. If a token is compromised, revoke it immediately and create a new one.
 
