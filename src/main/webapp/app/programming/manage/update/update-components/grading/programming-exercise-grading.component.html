@@ -121,6 +121,8 @@
                 [isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord]="isEditFieldDisplayedRecord()"
                 [customizeBuildPlan]="programmingExerciseValue.customizeBuildPlan"
                 [exercise]="programmingExerciseValue"
+                [lockedToGroup]="lockedToGroup()"
+                (lockedClick)="lockedClick.emit()"
                 [(releaseDate)]="programmingExerciseValue.releaseDate"
                 [(startDate)]="programmingExerciseValue.startDate"
                 [(dueDate)]="programmingExerciseValue.dueDate"

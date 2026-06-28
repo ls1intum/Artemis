@@ -73,7 +73,6 @@ const TYPE_TITLE_KEYS: Record<string, string> = {
         FaIconComponent,
         ExerciseTableComponent,
         ExerciseAddModalComponent,
-        ExerciseGroupEditModalComponent,
         SearchFilterComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -110,16 +109,12 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly selectedIds = signal<Set<number>>(new Set());
     readonly addModalVisible = signal(false);
     readonly addModalMode = signal<AddModalMode>('create');
-    readonly groupEditModalVisible = signal(false);
-    readonly groupEditModalId = signal<number | undefined>(undefined);
-    readonly pendingNewGroup = signal<CourseExerciseGroup | undefined>(undefined);
 
     readonly isGroup = computed(() => this.view() === 'group');
     /** Deleting a group requires the same permission as deleting an exercise: instructor (or admin) on the course. */
     readonly canDeleteGroups = computed(() => this.course()?.isAtLeastInstructor ?? false);
     /** Ids of all rendered buckets, so each group's exercise table is a connected CDK drop target for the others. */
     readonly dropListIds = computed(() => this.buckets().map((bucket) => bucket.id));
-    readonly groupEditModalGroup = computed(() => this.pendingNewGroup() ?? this.groups().find((g) => g.id === this.groupEditModalId()));
     readonly exerciseCount = computed(() => this.exercises().length);
     readonly courseId = computed(() => this.course()?.id);
     readonly selectedCount = computed(() => this.selectedIds().size);
@@ -313,8 +308,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.view.set('group');
         // Open the edit modal with a blank draft — the user names the group there (the modal's Save stays disabled until
         // a title is entered) and it is only persisted when they save.
-        this.pendingNewGroup.set({ exercises: [] });
-        this.groupEditModalVisible.set(true);
+        this.openGroupEditDialog({ exercises: [] }, true);
     }
 
     onTableGroupChange(event: TableGroupChange): void {
@@ -487,8 +481,33 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     openGroupEditModal(id: number): void {
-        this.groupEditModalId.set(id);
-        this.groupEditModalVisible.set(true);
+        const group = this.groups().find((g) => g.id === id);
+        if (group) {
+            this.openGroupEditDialog(group, false);
+        }
+    }
+
+    /**
+     * Opens the group-edit dialog via PrimeNG's {@link DialogService} (the declarative {@code <p-dialog>} mis-layered its
+     * overlay on the first open). The dialog closes with the edited {@link CourseExerciseGroup} on save, or {@code undefined}
+     * on cancel/dismiss; {@code isNew} selects the create vs. update persistence path in {@link onGroupEditModalSave}.
+     */
+    private openGroupEditDialog(group: CourseExerciseGroup, isNew: boolean): void {
+        const dialogRef = this.dialogService.open(ExerciseGroupEditModalComponent, {
+            inputValues: { group },
+            width: '780px',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            dismissableMask: false,
+            data: { headerKey: 'artemisApp.exerciseManagement.groupEdit.header' },
+            templates: { header: DialogTranslateHeaderComponent },
+        });
+        dialogRef?.onClose.subscribe((updated?: CourseExerciseGroup) => {
+            if (updated) {
+                this.onGroupEditModalSave(updated, isNew);
+            }
+        });
     }
 
     /** Opens the shared delete-confirmation dialog for a group; the actual deletion runs on confirm. */
@@ -524,10 +543,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         this.buildBuckets();
     }
 
-    onGroupEditModalSave(updated: CourseExerciseGroup): void {
-        const isNew = this.pendingNewGroup() !== undefined;
-        this.pendingNewGroup.set(undefined);
-
+    onGroupEditModalSave(updated: CourseExerciseGroup, isNew: boolean): void {
         const courseId = this.course()?.id;
         if (isNew) {
             if (!this.mockDataService.enabled() && courseId !== undefined) {
@@ -583,10 +599,6 @@ export class CourseManagementExercisesComponent implements OnInit {
         saved?.exercises?.forEach((exercise) => this.applyGroupTimeline(exercise, saved));
         this.exercises.set([...this.exercises()]);
         this.buildBuckets();
-    }
-
-    onGroupEditModalCancel(): void {
-        this.pendingNewGroup.set(undefined);
     }
 
     /** Recomputes the client-derived quiz `status` / `quizStarted` flags (the server does not serialize them). */

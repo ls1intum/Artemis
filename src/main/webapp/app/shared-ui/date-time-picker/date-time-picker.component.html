@@ -15,6 +15,19 @@
     </fa-stack>
 }
 <div class="d-flex position-relative">
+    @if (lockedToGroup()) {
+        <div
+            class="date-lock-overlay"
+            role="button"
+            tabindex="0"
+            (click)="lockedClick.emit()"
+            (keydown.enter)="lockedClick.emit()"
+            (keydown.space)="lockedClick.emit()"
+            ngbTooltip="{{ 'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate }}"
+        >
+            <fa-icon [icon]="faLock" class="date-lock-icon text-secondary" />
+        </div>
+    }
     <input
         #dateInput="ngModel"
         class="form-control position-relative ps-5"
@@ -22,7 +35,7 @@
         [ngClass]="{ 'is-invalid': !isValid(), 'border-warning': warning() }"
         [class.ng-invalid]="!isValid()"
         [ngModel]="value()"
-        [disabled]="disabled()"
+        [disabled]="effectiveDisabled()"
         [min]="minDate()"
         [max]="maxDate()"
         (ngModelChange)="updateField($event)"

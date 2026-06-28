@@ -69,6 +69,7 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/core/course/manage/exercises-experimental/group-timeline-lock/exercise-group-timeline-lock.component';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
@@ -107,6 +108,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         InputTextModule,
         InputNumberModule,
         FormDateTimePickerComponent,
+        ExerciseGroupTimelineLockComponent,
         QuizAiGenerationModalComponent,
         JsonPipe,
     ],

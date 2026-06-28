@@ -1,42 +1,36 @@
-import { Component, computed, effect, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
-import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
+/**
+ * Content of the group-edit dialog, opened via PrimeNG's {@link DialogService} (see
+ * {@code ExerciseGroupTimelineLockComponent.openModal} and {@code CourseManagementExercisesComponent.openGroupEditDialog}).
+ * The edited group is passed in through the dialog's {@code inputValues.group}; saving closes the dialog with the updated
+ * {@link CourseExerciseGroup} as result, cancelling closes it with {@code undefined}.
+ */
 @Component({
     selector: 'jhi-exercise-group-edit-modal',
     templateUrl: './exercise-group-edit-modal.component.html',
-    imports: [
-        FormsModule,
-        DialogModule,
-        InputTextModule,
-        InputNumberModule,
-        ButtonModule,
-        TooltipModule,
-        FaIconComponent,
-        ExerciseTimelineComponent,
-        ArtemisTranslatePipe,
-        TranslateDirective,
-    ],
+    imports: [FormsModule, InputTextModule, InputNumberModule, ButtonModule, TooltipModule, FaIconComponent, ExerciseTimelineComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ExerciseGroupEditModalComponent {
     protected readonly faCircleInfo = faCircleInfo;
 
-    readonly visible = input.required<boolean>();
-    readonly visibleChange = output<boolean>();
+    /** The group being edited, supplied by the dialog opener via {@code inputValues.group}. */
     readonly group = input.required<CourseExerciseGroup>();
-    readonly save = output<CourseExerciseGroup>();
-    readonly cancelled = output<void>();
+
+    private readonly dialogRef = inject(DynamicDialogRef);
 
     readonly draftTitle = signal('');
     readonly draftMaxPoints = signal<number | undefined>(undefined);
@@ -62,16 +56,18 @@ export class ExerciseGroupEditModalComponent {
 
     constructor() {
         effect(() => {
-            if (!this.visible()) return;
             const g = this.group();
             this.draftTitle.set(g.title ?? '');
             this.draftMaxPoints.set(g.maxPoints);
-            this.draftReleaseDate.set(g.releaseDate);
-            this.draftStartDate.set(g.startDate);
-            this.draftDueDate.set(g.dueDate);
-            this.draftAssessmentDueDate.set(g.assessmentDueDate);
-            this.draftExampleSolutionPublicationDate.set(g.exampleSolutionPublicationDate);
-            this.draftBuildAndTestStudentSubmissionsAfterDueDate.set(g.buildAndTestStudentSubmissionsAfterDueDate);
+            // The group's dates are typed as dayjs but arrive as ISO strings at runtime: the exercise's date
+            // deserialization does not reach the nested variant-group reference. Coerce so the timeline (which calls
+            // dayjs.toDate()) receives real dayjs objects. See {@link ExerciseTimelineComponent}.
+            this.draftReleaseDate.set(toDayjs(g.releaseDate));
+            this.draftStartDate.set(toDayjs(g.startDate));
+            this.draftDueDate.set(toDayjs(g.dueDate));
+            this.draftAssessmentDueDate.set(toDayjs(g.assessmentDueDate));
+            this.draftExampleSolutionPublicationDate.set(toDayjs(g.exampleSolutionPublicationDate));
+            this.draftBuildAndTestStudentSubmissionsAfterDueDate.set(toDayjs(g.buildAndTestStudentSubmissionsAfterDueDate));
         });
     }
 
@@ -87,12 +83,43 @@ export class ExerciseGroupEditModalComponent {
             exampleSolutionPublicationDate: this.draftExampleSolutionPublicationDate(),
             buildAndTestStudentSubmissionsAfterDueDate: this.draftBuildAndTestStudentSubmissionsAfterDueDate(),
         };
-        this.save.emit(updated);
-        this.visibleChange.emit(false);
+        // Nothing edited: close with no result so the openers treat it as a cancel and skip the persistence call.
+        this.dialogRef.close(this.isUnchanged(updated) ? undefined : updated);
     }
 
     onCancel(): void {
-        this.cancelled.emit();
-        this.visibleChange.emit(false);
+        this.dialogRef.close();
     }
+
+    /** True when the drafted values match the original group (dates compared as dayjs, accounting for the string inputs). */
+    private isUnchanged(updated: CourseExerciseGroup): boolean {
+        const g = this.group();
+        return (
+            (updated.title ?? '') === (g.title ?? '') &&
+            updated.maxPoints === g.maxPoints &&
+            datesEqual(updated.releaseDate, toDayjs(g.releaseDate)) &&
+            datesEqual(updated.startDate, toDayjs(g.startDate)) &&
+            datesEqual(updated.dueDate, toDayjs(g.dueDate)) &&
+            datesEqual(updated.assessmentDueDate, toDayjs(g.assessmentDueDate)) &&
+            datesEqual(updated.exampleSolutionPublicationDate, toDayjs(g.exampleSolutionPublicationDate)) &&
+            datesEqual(updated.buildAndTestStudentSubmissionsAfterDueDate, toDayjs(g.buildAndTestStudentSubmissionsAfterDueDate))
+        );
+    }
+}
+
+/** Compares two optional dayjs values by instant, treating both-undefined as equal. */
+function datesEqual(a: dayjs.Dayjs | undefined, b: dayjs.Dayjs | undefined): boolean {
+    if (a === undefined || b === undefined) {
+        return a === b;
+    }
+    return a.isSame(b);
+}
+
+/** Coerces a value that is typed as dayjs but may arrive as an ISO string / Date into a valid dayjs (or undefined). */
+function toDayjs(value: dayjs.Dayjs | string | Date | undefined): dayjs.Dayjs | undefined {
+    if (value === undefined) {
+        return undefined;
+    }
+    const parsed = dayjs(value);
+    return parsed.isValid() ? parsed : undefined;
 }

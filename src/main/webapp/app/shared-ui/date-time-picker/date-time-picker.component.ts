@@ -1,6 +1,6 @@
 import { Component, computed, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR, NgModel } from '@angular/forms';
-import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faCircleXmark, faClock, faGlobe, faLock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -46,6 +46,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faLock = faLock;
 
     private readonly dateInputRef = viewChild<NgModel>('dateInput');
     private dateInputOverride?: NgModel;
@@ -63,6 +64,14 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     labelTooltip = input<string>();
     value = model<dayjs.Dayjs | Date | null>();
     disabled = input<boolean>(false);
+    /**
+     * When true the field is read-only because its value is governed by the exercise's variant group: editing is
+     * disabled, a lock icon is shown, and clicking the field emits {@link lockedClick} (instead of opening the picker)
+     * so the host can open the group-edit dialog.
+     */
+    lockedToGroup = input<boolean>(false);
+    /** Emitted when the user clicks a {@link lockedToGroup} field. */
+    lockedClick = output<void>();
     error = input<boolean>();
     warning = input<boolean>();
     requiredField = input<boolean>(false);
@@ -80,6 +89,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         const isInvalid = this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()) || this.warning();
         return !isInvalid;
     });
+
+    /** Disabled either explicitly via {@link disabled} or because the value is governed by the variant group. */
+    readonly effectiveDisabled = computed(() => this.disabled() || this.lockedToGroup());
 
     updateSignals(): void {
         const dateInput = this.dateInputRef() ?? this.dateInputOverride;

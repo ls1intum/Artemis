@@ -3,6 +3,9 @@
         "exerciseVariantGroup": {
             "edit": "Gruppe bearbeiten",
             "delete": "Gruppe löschen",
+            "timelineLocked": {
+                "tooltip": "Diese Termine werden von der Aufgabengruppe verwaltet. Zum Bearbeiten der Termine der Gruppe hier klicken."
+            },
             "deleted": "Gruppe gelöscht mit ID {{ param }}",
             "deleteDialog": {
                 "question": "Soll die Gruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Die Aufgaben in dieser Gruppe werden <strong>nicht</strong> gelöscht, sondern nur aus der Gruppe entfernt.",

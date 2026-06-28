@@ -1,4 +1,4 @@
-import { Component, model, output } from '@angular/core';
+import { Component, input, model, output } from '@angular/core';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { Dayjs } from 'dayjs/esm';
 
@@ -12,6 +12,10 @@ export class ModelingExerciseTimelineComponent {
     startDate = model<Dayjs | undefined>();
     dueDate = model<Dayjs | undefined>();
     assessmentDueDate = model<Dayjs | undefined>();
+    /** When true the dates are governed by the exercise's variant group (see {@link ExerciseTimelineComponent}). */
+    lockedToGroup = input<boolean>(false);
+    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
+    lockedClick = output<void>();
     timelineItems = this.buildTimelineItems();
     timelineStatus = output<ExerciseTimelineStatus>();
 

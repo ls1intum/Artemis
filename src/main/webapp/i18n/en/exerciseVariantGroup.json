@@ -3,6 +3,9 @@
         "exerciseVariantGroup": {
             "edit": "Edit group",
             "delete": "Delete group",
+            "timelineLocked": {
+                "tooltip": "These dates are managed by the exercise group. Click to edit the group's timeline."
+            },
             "deleted": "Deleted group with identifier {{ param }}",
             "deleteDialog": {
                 "question": "Are you sure you want to delete the group <strong>{{ title }}</strong>? The exercises in this group will <strong>not</strong> be deleted, only ungrouped.",

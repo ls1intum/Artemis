@@ -13,7 +13,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
  */
 @Component({
     selector: 'jhi-dialog-translate-header',
-    template: `<span [jhiTranslate]="headerKey" [translateValues]="headerParams"></span>`,
+    // The `p-dialog-title` class is what PrimeNG applies to its default title span; a custom header template replaces
+    // that span, so we re-apply the class here to keep the dialog title's font weight/size (otherwise it renders smaller).
+    template: `<span class="p-dialog-title" [jhiTranslate]="headerKey" [translateValues]="headerParams"></span>`,
     imports: [TranslateDirective],
 })
 export class DialogTranslateHeaderComponent {

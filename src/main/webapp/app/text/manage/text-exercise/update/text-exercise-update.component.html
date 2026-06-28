@@ -1,4 +1,5 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
+    <jhi-exercise-group-timeline-lock #variantLock [exercise]="textExercise" (exerciseChange)="textExercise = $event" />
     <div class="d-flex align-items-center gap-2">
         @if (!textExercise.id) {
             <h2 id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel"></h2>
@@ -76,6 +77,8 @@
                     [error]="textExercise.exampleSolutionPublicationDateError!"
                     (valueChange)="validateDate()"
                     [disabled]="isImport()"
+                    [lockedToGroup]="variantLock.locked()"
+                    (lockedClick)="variantLock.openModal()"
                 />
                 @if (isImport()) {
                     <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
@@ -99,6 +102,8 @@
                         (valueChange)="validateDate()"
                         [error]="false"
                         name="releaseDate"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                     />
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
@@ -113,6 +118,8 @@
                         labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="textExercise.startDate"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                     />
                     @if (textExercise.startDateError) {
                         <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.startDateError"></span>
@@ -132,6 +139,8 @@
                         labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="textExercise.dueDate"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                     />
                     @if (textExercise.dueDateError) {
                         <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
@@ -149,6 +158,8 @@
                         labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="textExercise.assessmentDueDate"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                     />
                     @if (textExercise.assessmentDueDateError) {
                         <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></span>

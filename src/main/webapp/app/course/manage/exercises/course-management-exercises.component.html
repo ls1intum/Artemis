@@ -172,13 +172,4 @@
         (groupCreate)="onAddModalGroupCreate()"
         (exportRequested)="openQuizExportDialog()"
     />
-    @if (groupEditModalGroup()) {
-        <jhi-exercise-group-edit-modal
-            [visible]="groupEditModalVisible()"
-            [group]="groupEditModalGroup()!"
-            (visibleChange)="groupEditModalVisible.set($event)"
-            (save)="onGroupEditModalSave($event)"
-            (cancelled)="onGroupEditModalCancel()"
-        />
-    }
 }

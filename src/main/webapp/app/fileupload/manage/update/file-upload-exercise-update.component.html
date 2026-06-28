@@ -1,4 +1,5 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
+    <jhi-exercise-group-timeline-lock #variantLock [exercise]="fileUploadExercise()" (exerciseChange)="fileUploadExercise.set($event)" />
     <div class="d-flex align-items-center gap-2">
         @if (fileUploadExercise().id && !isImport()) {
             <h2 id="jhi-file-upload-exercise-heading-edit" jhiTranslate="artemisApp.fileUploadExercise.home.editLabel"></h2>
@@ -81,6 +82,8 @@
                     [error]="!!fileUploadExercise().exampleSolutionPublicationDateError"
                     (valueChange)="validateDate()"
                     [disabled]="isImport()"
+                    [lockedToGroup]="variantLock.locked()"
+                    (lockedClick)="variantLock.openModal()"
                 />
                 @if (isImport()) {
                     <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
@@ -104,6 +107,8 @@
                         (valueChange)="validateDate()"
                         [error]="false"
                         name="releaseDate"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                     />
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
@@ -118,6 +123,8 @@
                         labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="fileUploadExercise().startDate"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                     />
                     @if (fileUploadExercise().startDateError) {
                         <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.startDateError"></span>
@@ -139,6 +146,8 @@
                         labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="fileUploadExercise().dueDate"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                     />
                     @if (fileUploadExercise().dueDateError) {
                         <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
@@ -156,6 +165,8 @@
                         labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="fileUploadExercise().assessmentDueDate"
+                        [lockedToGroup]="variantLock.locked()"
+                        (lockedClick)="variantLock.openModal()"
                     />
                     @if (fileUploadExercise().assessmentDueDateError) {
                         <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></span>
