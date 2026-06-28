@@ -22,11 +22,14 @@
             <div class="layout-content">
                 @if (course()) {
                     <jhi-course-title-bar [hasSidebar]="hasSidebar()" [isSidebarCollapsed]="isSidebarCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()">
-                        <div class="controls">
-                            @if (course()?.isAtLeastInstructor && isSettingsPage()) {
-                                <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
-                            }
-                            @if (isSettingsPage()) {
+                        <!-- Only rendered on the settings page; its contents are all gated by isSettingsPage(). Skipping
+                             the (otherwise empty) div on other pages avoids a phantom right-aligned flex item (margin-left:
+                             auto) that would push projected title-bar actions away from the right edge. -->
+                        @if (isSettingsPage()) {
+                            <div class="controls">
+                                @if (course()?.isAtLeastInstructor) {
+                                    <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course()!" class="archive-button" />
+                                }
                                 <button
                                     id="reset-course"
                                     *jhiHasAnyAuthority="'ROLE_ADMIN'"
@@ -67,8 +70,8 @@
                                 >
                                     <fa-icon [icon]="faTrash" />
                                 </button>
-                            }
-                        </div>
+                            </div>
+                        }
                     </jhi-course-title-bar>
 
                     <div

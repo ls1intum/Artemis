@@ -35,6 +35,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarToolbarDirective } from 'app/course/shared/directives/course-title-bar-toolbar.directive';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -82,6 +83,7 @@ const TYPE_TITLE_KEYS: Record<string, string> = {
         ArtemisTranslatePipe,
         CourseTitleBarTitleDirective,
         CourseTitleBarToolbarDirective,
+        CourseTitleBarActionsDirective,
         TranslateDirective,
     ],
 })
@@ -109,6 +111,12 @@ export class CourseManagementExercisesComponent implements OnInit {
     readonly exercises = signal<Exercise[]>([]);
     readonly groups = signal<CourseExerciseGroup[]>([]);
     readonly buckets = signal<Bucket[]>([]);
+    /**
+     * Whether the initial exercise load has finished. Gates the "no exercises match" empty state so it is not shown
+     * during the brief window before the exercises arrive on first (direct) access — switching views afterwards keeps
+     * this true, so a genuinely empty result (e.g. a search with no matches) still shows the message.
+     */
+    readonly loaded = signal(false);
 
     readonly selectedIds = signal<Set<number>>(new Set());
     readonly addModalVisible = signal(false);
@@ -175,6 +183,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                 this.exercises.set(this.mockService.getExercises());
                 this.groups.set(this.mockService.getGroups());
                 this.buildBuckets();
+                this.loaded.set(true);
             } else if (course?.id) {
                 const courseId = course.id;
                 this.courseManagementService.findWithExercises(courseId).subscribe({
@@ -192,11 +201,13 @@ export class CourseManagementExercisesComponent implements OnInit {
                         this.exercises.set(exercises);
                         this.loadGroupsFromServer(courseId);
                         this.buildBuckets();
+                        this.loaded.set(true);
                         this.loadQuizBatches(courseId);
                     },
                 });
             } else {
                 this.buildBuckets();
+                this.loaded.set(true);
             }
         });
     }

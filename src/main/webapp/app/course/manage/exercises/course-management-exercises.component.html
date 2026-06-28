@@ -2,10 +2,27 @@
     <div *titleBarTitle>
         <div class="d-flex align-items-center">
             <h5 class="mb-0">
-                <span>{{ course()!.title }} — <span jhiTranslate="artemisApp.exerciseManagement.title"></span> ({{ exerciseCount() }})</span>
+                <span><span jhiTranslate="artemisApp.exerciseManagement.title"></span> ({{ exerciseCount() }})</span>
             </h5>
         </div>
     </div>
+
+    <!-- Import / Export / Create live on the title row (next to the course title) so the toolbar row below has the full
+         width for the view switch and the search bar. -->
+    <ng-template titleBarActions>
+        <p-button size="small" severity="secondary" (onClick)="openImportModal()">
+            <fa-icon [icon]="faFileImport" />
+            <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
+        </p-button>
+        <p-button size="small" severity="secondary" (onClick)="openQuizExportDialog()">
+            <fa-icon [icon]="faFileExport" />
+            <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
+        </p-button>
+        <p-button size="small" (onClick)="openCreateModal()">
+            <fa-icon [icon]="faPlus" />
+            <span class="ms-1" jhiTranslate="global.generic.create"></span>
+        </p-button>
+    </ng-template>
 
     <ng-template titleBarToolbar>
         <!-- Controls row -->
@@ -17,18 +34,6 @@
                 </ng-template>
             </p-selectbutton>
             <jhi-search-filter class="flex-grow-1" (newSearchEvent)="onSearchChange($event)" />
-            <p-button size="small" severity="secondary" (onClick)="openImportModal()">
-                <fa-icon [icon]="faFileImport" />
-                <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.import"></span>
-            </p-button>
-            <p-button size="small" severity="secondary" (onClick)="openQuizExportDialog()">
-                <fa-icon [icon]="faFileExport" />
-                <span class="ms-1" jhiTranslate="artemisApp.exerciseManagement.action.export"></span>
-            </p-button>
-            <p-button size="small" (onClick)="openCreateModal()">
-                <fa-icon [icon]="faPlus" />
-                <span class="ms-1" jhiTranslate="global.generic.create"></span>
-            </p-button>
         </div>
 
         <!-- Mass actions row -->
@@ -54,7 +59,7 @@
         }
     </ng-template>
 
-    @if (buckets().length === 0) {
+    @if (loaded() && buckets().length === 0) {
         <div class="alert alert-secondary" role="alert">{{ 'artemisApp.exerciseManagement.noExercisesMatch' | artemisTranslate: { search: search() } }}</div>
     }
     <div class="d-flex flex-column gap-3">

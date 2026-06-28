@@ -73,6 +73,14 @@ describe('Course Management Exercises Component', () => {
         expect(filteredCount).toBeLessThan(initialCount);
     });
 
+    it('should only mark itself loaded after the initial load (gating the empty state)', () => {
+        // Before init nothing is loaded, so the "no matches" empty state must stay hidden even though buckets are empty.
+        expect(comp.loaded()).toBe(false);
+        expect(comp.buckets().length).toBe(0);
+        comp.ngOnInit();
+        expect(comp.loaded()).toBe(true);
+    });
+
     it('should default to the type view when nothing is stored', () => {
         expect(comp.view()).toBe('type');
     });
