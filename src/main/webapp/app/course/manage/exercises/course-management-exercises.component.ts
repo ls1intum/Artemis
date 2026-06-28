@@ -39,8 +39,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 type View = 'type' | 'week' | 'group' | 'list';
+
+/** Local-storage key under which the last-selected view is remembered, so closing an exercise editor returns to it. */
+const VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
 
 interface Bucket {
     id: string;
@@ -142,9 +146,20 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
     private readonly deleteDialogService = inject(DeleteDialogService);
     private readonly alertService = inject(AlertService);
+    private readonly localStorageService = inject(LocalStorageService);
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly groupDeleteError = new Subject<string>();
+
+    constructor() {
+        // Restore the last-selected view so editing an exercise (which navigates away and re-instantiates this
+        // component on return) keeps the chosen view instead of falling back to the 'type' default. The stored value
+        // is validated against the known views so a stale or corrupt entry simply falls back to the default.
+        const storedView = this.localStorageService.retrieve<View>(VIEW_STORAGE_KEY);
+        if (storedView && this.viewOptions.some((option) => option.value === storedView)) {
+            this.view.set(storedView);
+        }
+    }
 
     ngOnInit(): void {
         // Bucket titles are resolved eagerly via TranslateService.instant (the view view-mode and type labels), so in
@@ -188,6 +203,8 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     onViewChange(view: View): void {
         this.view.set(view);
+        // Remember the selection so it is restored when the component is re-instantiated (e.g. after closing an editor).
+        this.localStorageService.store(VIEW_STORAGE_KEY, view);
         this.buildBuckets();
     }
 
@@ -305,7 +322,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     onAddModalGroupCreate(): void {
-        this.view.set('group');
+        // Switch to (and remember) the group view via the shared handler, so a later editor visit returns here.
+        this.onViewChange('group');
         // Open the edit modal with a blank draft — the user names the group there (the modal's Save stays disabled until
         // a title is entered) and it is only persisted when they save.
         this.openGroupEditDialog({ exercises: [] }, true);

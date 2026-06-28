@@ -2,10 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { signal } from '@angular/core';
 import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { createIntroToJavaCourse } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-exercises';
+import { MockDataService } from 'app/core/interceptor/mock-data.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -36,6 +38,9 @@ describe('Course Management Exercises Component', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
+                // Enable mock mode so ngOnInit reads exercises synchronously from ExerciseManagementMockService instead
+                // of firing an (unflushed) findWithExercises HTTP call, which would otherwise leave the buckets empty.
+                { provide: MockDataService, useValue: { enabled: signal(true) } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -47,6 +52,7 @@ describe('Course Management Exercises Component', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        localStorage.clear();
     });
 
     it('should set course on init', () => {
@@ -65,5 +71,27 @@ describe('Course Management Exercises Component', () => {
         comp.onSearchChange('zzz_nomatch_zzz');
         const filteredCount = comp.buckets().reduce((sum, b) => sum + b.exercises.length, 0);
         expect(filteredCount).toBeLessThan(initialCount);
+    });
+
+    it('should default to the type view when nothing is stored', () => {
+        expect(comp.view()).toBe('type');
+    });
+
+    it('should persist the selected view to local storage on change', () => {
+        comp.onViewChange('week');
+        expect(comp.view()).toBe('week');
+        expect(localStorage.getItem('artemis.exerciseManagement.view')).toBe(JSON.stringify('week'));
+    });
+
+    it('should restore the persisted view on re-instantiation', () => {
+        localStorage.setItem('artemis.exerciseManagement.view', JSON.stringify('group'));
+        const restored = TestBed.createComponent(CourseManagementExercisesComponent).componentInstance;
+        expect(restored.view()).toBe('group');
+    });
+
+    it('should ignore an invalid persisted view and fall back to the default', () => {
+        localStorage.setItem('artemis.exerciseManagement.view', JSON.stringify('bogus'));
+        const restored = TestBed.createComponent(CourseManagementExercisesComponent).componentInstance;
+        expect(restored.view()).toBe('type');
     });
 });
