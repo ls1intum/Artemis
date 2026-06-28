@@ -36,7 +36,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', true);
         fixture.detectChanges();
-        component.setExamMode(true);
+        component.setExamType(ExamType.TEST);
         expect(component.exam()).toEqual(examCopy);
     });
 
@@ -44,7 +44,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
-        component.setExamMode(true);
+        component.setExamType(ExamType.TEST);
         expect(component.exam().examType).toBe(ExamType.TEST);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
@@ -53,8 +53,17 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
-        component.setExamMode(false);
+        component.setExamType(ExamType.REAL);
         expect(component.exam().examType).toBe(ExamType.REAL);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
+    });
+
+    it('should set exam mode TEST_WITH_SIMULATION', () => {
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('disableInput', false);
+        fixture.detectChanges();
+        component.setExamType(ExamType.TEST_WITH_SIMULATION);
+        expect(component.exam().examType).toBe(ExamType.TEST_WITH_SIMULATION);
+        expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 });

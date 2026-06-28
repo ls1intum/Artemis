@@ -11,6 +11,18 @@ export enum ExamType {
     TEST_WITH_SIMULATION = 'TEST_WITH_SIMULATION',
 }
 
+export function isActingAsTestExam(exam?: Exam) {
+    return exam?.examType === ExamType.TEST || isInSimulationPhase(exam);
+}
+
+function isInSimulationPhase(exam?: Exam): boolean {
+    const simulationEndDate = testExamSimulationEndDate(exam);
+    if (!simulationEndDate) {
+        return false;
+    }
+    return dayjs().isAfter(simulationEndDate);
+}
+
 export function testExamSimulationEndDate(exam?: Exam): dayjs.Dayjs | undefined {
     if (!(exam?.examType === ExamType.TEST_WITH_SIMULATION) || !exam?.startDate || exam.workingTime === undefined) {
         return undefined;

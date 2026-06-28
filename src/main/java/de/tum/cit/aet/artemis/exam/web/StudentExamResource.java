@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
+import de.tum.cit.aet.artemis.exam.domain.ExamType;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
 import de.tum.cit.aet.artemis.exam.dto.AthenaFeedbackUsageDTO;
@@ -666,7 +667,7 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        if (exam.getExamType().isTestExamType()) {
+        if (exam.getExamType() == ExamType.TEST) {
             throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
         }
 
@@ -709,10 +710,11 @@ public class StudentExamResource {
     private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
 
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
-        if (studentExam.getExamType().isTestExamType()) {
+        boolean isSimulationPhaseActive = studentExam.getExam().getExamType() == ExamType.TEST_WITH_SIMULATION
+                && now().isBefore(studentExam.getExam().getStartDate().plusSeconds(studentExam.getExam().getWorkingTime()));
+        if (studentExam.getExamType() == ExamType.TEST || (studentExam.getExamType() == ExamType.TEST_WITH_SIMULATION && !isSimulationPhaseActive)) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
-
                 // Set up new participations for the Exercises
                 studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
             }

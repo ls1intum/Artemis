@@ -132,15 +132,20 @@ public class ExamAccessService {
         }
 
         StudentExam studentExam;
-        if (exam.getExamType().isTestExamType()) {
-            studentExam = getOrCreateTestExam(exam, course, currentUser);
+
+        final ZonedDateTime now = ZonedDateTime.now();
+        final ZonedDateTime simulationEndDate = exam.getStartDate().plusSeconds(exam.getWorkingTime());
+        final boolean simulationPhaseActive = exam.getExamType() == ExamType.TEST_WITH_SIMULATION && now.isBefore(simulationEndDate);
+
+        if (exam.getExamType().isTestExamType() && !simulationPhaseActive) {
+            studentExam = getOrCreateTestExam(exam, course, currentUser, now);
         }
         else if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
             throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Instructors or administrators cannot participate in exams.", ENTITY_NAME,
                     "cannotParticipateInExams", true);
         }
         else {
-            studentExam = getOrCreateNormalExam(exam, currentUser);
+            studentExam = getOrCreateNormalExam(exam, currentUser, now);
         }
 
         if (!examId.equals(studentExam.getExam().getId())) {
@@ -150,44 +155,49 @@ public class ExamAccessService {
         return studentExam;
     }
 
-    private StudentExam getOrCreateNormalExam(Exam exam, User currentUser) {
+    private StudentExam getOrCreateNormalExam(Exam exam, User currentUser, final ZonedDateTime now) {
         // Check that the student exam exists
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), currentUser.getId());
+
+        StudentExam studentExam;
+        // If an studentExam can be found, we can immediately proceed
         if (optionalStudentExam.isPresent()) {
-            return optionalStudentExam.get();
+            studentExam = optionalStudentExam.get();
         }
+        else {
 
-        ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
+            ZonedDateTime unlockDate = ExamDateService.getExamProgrammingExerciseUnlockDate(exam);
 
-        // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
-        boolean canExamBeStarted = now.isAfter(unlockDate);
-        boolean isUserRegistered = examRegistrationService.isUserRegisteredForExam(exam.getId(), currentUser.getId());
-        boolean isExamEnded = ZonedDateTime.now().isAfter(exam.getEndDate());
-        // Generate a student exam if the following conditions are met:
-        // 1. The exam has not ended.
-        // 2. User is registered and can click the start button.
-        // Allowing student exams to be generated only when students can click the start button prevents inconsistencies.
-        // For example, this avoids a scenario where a student generates an exam and an instructor adds an exercise group afterward.
+            // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
+            boolean canExamBeStarted = now.isAfter(unlockDate);
+            boolean isUserRegistered = examRegistrationService.isUserRegisteredForExam(exam.getId(), currentUser.getId());
+            boolean isExamEnded = ZonedDateTime.now().isAfter(exam.getEndDate());
+            // Generate a student exam if the following conditions are met:
+            // 1. The exam has not ended.
+            // 2. User is registered and can click the start button.
+            // Allowing student exams to be generated only when students can click the start button prevents inconsistencies.
+            // For example, this avoids a scenario where a student generates an exam and an instructor adds an exercise group afterward.
 
-        if (isExamEnded) {
-            throw new BadRequestAlertException("The exam has already ended. Cannot generate student exam.", ENTITY_NAME, "examEnded", true);
+            if (isExamEnded) {
+                throw new BadRequestAlertException("The exam has already ended. Cannot generate student exam.", ENTITY_NAME, "examEnded", true);
+            }
+            if (!isUserRegistered) {
+                throw new AccessForbiddenException("User is not registered for the exam. Cannot generate student exam.");
+            }
+            if (!canExamBeStarted) {
+                throw new AccessForbiddenException("The exam cannot be started yet. Cannot generate student exam.");
+            }
+            // Proceed only if the exam has not ended and the user meets the conditions
+            else {
+                studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
+                studentExam.setExercises(null);
+            }
         }
-        if (!isUserRegistered) {
-            throw new AccessForbiddenException("User is not registered for the exam. Cannot generate student exam.");
-        }
-        if (!canExamBeStarted) {
-            throw new AccessForbiddenException("The exam cannot be started yet. Cannot generate student exam.");
-        }
-        // Proceed only if the exam has not ended and the user meets the conditions
-        StudentExam studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
-        studentExam.setExercises(null);
         return studentExam;
     }
 
-    private StudentExam getOrCreateTestExam(Exam exam, Course course, User currentUser) {
+    private StudentExam getOrCreateTestExam(Exam exam, Course course, User currentUser, final ZonedDateTime now) {
         StudentExam studentExam;
-        ZonedDateTime now = ZonedDateTime.now();
 
         if (exam.getEndDate().isBefore(now)) {
             throw new AccessForbiddenAlertException("Test exam has already ended", ENTITY_NAME, "examHasAlreadyEnded", true);
@@ -204,7 +214,6 @@ public class ExamAccessService {
             if (!canExamBeStarted) {
                 throw new AccessForbiddenAlertException("The exam cannot be started yet. Cannot generate student exam.", ENTITY_NAME, "examCannotBeStarted");
             }
-            checkCanCreateNewTestExamAttemptElseThrow(exam, !studentExams.isEmpty(), now);
 
             studentExam = studentExamService.generateIndividualStudentExam(exam, currentUser);
             // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
@@ -220,19 +229,6 @@ public class ExamAccessService {
         // Check that the current user is registered for the test exam. Otherwise, the student can self-register
         examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course, exam.getId(), currentUser);
         return studentExam;
-    }
-
-    private void checkCanCreateNewTestExamAttemptElseThrow(Exam exam, boolean userHasAttempt, ZonedDateTime now) {
-        if (exam.getExamType() != ExamType.TEST_WITH_SIMULATION) {
-            return;
-        }
-
-        final ZonedDateTime simulationEndDate = exam.getStartDate().plusSeconds(exam.getWorkingTime());
-        final boolean simulationPhaseActive = now.isBefore(simulationEndDate);
-        if (simulationPhaseActive && userHasAttempt) {
-            throw new AccessForbiddenAlertException("Only one simulation test exam attempt is allowed before the practice phase starts.", ENTITY_NAME,
-                    "simulationTestExamAttemptAlreadyExistsBeforePractice", true);
-        }
     }
 
     /**

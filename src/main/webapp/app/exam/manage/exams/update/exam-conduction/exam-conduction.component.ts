@@ -7,12 +7,11 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Message } from 'primeng/message';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
-import { Checkbox } from 'primeng/checkbox';
 import { ExamType } from 'app/exam/shared/entities/exam.model';
 
 @Component({
     selector: 'jhi-exam-conduction',
-    imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective, Message, Checkbox],
+    imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective, Message],
     templateUrl: './exam-conduction.component.html',
 })
 export class ExamConductionComponent {
@@ -101,10 +100,6 @@ export class ExamConductionComponent {
     private readonly isExamTimelineValid = computed(() => this.timelineStatus().valid && this.isWorkingTimeValid() && this.isGracePeriodValid());
 
     readonly testExamWithSimulation = computed(() => this.examType() === ExamType.TEST_WITH_SIMULATION);
-
-    setTestExamWithSimulation(testExamWithSimulation: boolean) {
-        this.examType.update((examType) => (examType === ExamType.REAL ? ExamType.REAL : testExamWithSimulation ? ExamType.TEST_WITH_SIMULATION : ExamType.TEST));
-    }
 
     readonly showVisibleFromWarning = computed(() => {
         const visibleFrom = this.visibleFrom();

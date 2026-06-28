@@ -469,27 +469,33 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeAllowsNewAttemptAtDerivedPracticeStartDate() {
-        configureTestExam(testExam1, ZonedDateTime.now().minusHours(1), 1800, 180, true, ZonedDateTime.now().plusHours(2));
-        markStudentExamSubmitted(studentExamForTestExam1);
+    void testGetOrCreateStudentExamElseThrow_simulationActiveReturnsExistingAttempt() {
+        configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
 
         StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
 
-        assertThat(studentExam.getId()).isNotEqualTo(studentExamForTestExam1.getId());
+        assertThat(studentExam.getId()).isEqualTo(studentExamForTestExam1.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeAllowsOnlyOneAttemptBeforePracticeStart() {
+    void testGetOrCreateStudentExamElseThrow_simulationActiveGeneratesNewAttemptIfRegistered() {
+        studentExamRepository.delete(studentExamForTestExam1);
         configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
-        markStudentExamSubmitted(studentExamForTestExam1);
 
-        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
-                .satisfies(exception -> {
-                    AccessForbiddenAlertException accessForbiddenAlertException = (AccessForbiddenAlertException) exception;
-                    assertThat(accessForbiddenAlertException.getEntityName()).isEqualTo("Exam");
-                    assertThat(accessForbiddenAlertException.getErrorKey()).isEqualTo("simulationTestExamAttemptAlreadyExistsBeforePractice");
-                });
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
+
+        assertThat(studentExam).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER") // student2 is typically not registered
+    void testGetOrCreateStudentExamElseThrow_simulationActiveThrowsIfNotRegistered() {
+        configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
+
+        // student2 is not registered for testExam1
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class)
+                .hasMessageContaining("User is not registered for the exam.");
     }
 
     @Test

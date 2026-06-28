@@ -7,7 +7,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ConfirmDialog } from 'primeng/confirmdialog';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { Exam, hasTestExamType } from 'app/exam/shared/entities/exam.model';
+import { Exam, isActingAsTestExam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -149,7 +149,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly hasExamStarted = signal(false);
     readonly hasExamEnded = signal(false);
     readonly isAdmin = signal(false);
-    readonly isTestExam = computed(() => hasTestExamType(this.exam()));
+    readonly isTestExam = computed(() => isActingAsTestExam(this.exam()));
     readonly isLoading = signal(true);
 
     readonly searchUsersForExamFn = computed((): ((term: string, page: number, size: number) => Observable<UserSearchResult>) => {

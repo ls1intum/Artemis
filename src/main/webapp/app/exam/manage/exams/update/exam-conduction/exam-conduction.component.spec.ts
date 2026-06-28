@@ -88,11 +88,10 @@ describe('ExamConductionComponent', () => {
     it('should not include simulation or practice dates when the simulation phase is checked', () => {
         const start = dayjs().startOf('minute');
         setInputs({
-            examType: ExamType.TEST,
+            examType: ExamType.TEST_WITH_SIMULATION,
             workingTime: 3600,
             startOfWorkingTime: start,
         });
-        component.setTestExamWithSimulation(true);
         fixture.detectChanges();
 
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
@@ -101,7 +100,11 @@ describe('ExamConductionComponent', () => {
             'artemisApp.examManagement.testExam.endDate',
         ]);
 
-        component.setTestExamWithSimulation(false);
+        setInputs({
+            examType: ExamType.TEST,
+            workingTime: 3600,
+            startOfWorkingTime: start,
+        });
         fixture.detectChanges();
 
         expect(component.timelineItems().map((item) => item.labelStringKey)).toEqual([
@@ -112,8 +115,7 @@ describe('ExamConductionComponent', () => {
     });
 
     it('should clear the simulation mode when the exam is no longer a test exam', () => {
-        setInputs({ examType: ExamType.TEST });
-        component.setTestExamWithSimulation(true);
+        setInputs({ examType: ExamType.TEST_WITH_SIMULATION });
         fixture.detectChanges();
 
         expect(component.testExamWithSimulation()).toBe(true);

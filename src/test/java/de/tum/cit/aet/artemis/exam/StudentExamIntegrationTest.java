@@ -2910,6 +2910,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
         testExamWithSimulation = examRepository.save(testExamWithSimulation);
 
+        // Register student to exam
+        var examUser = new ExamUser();
+        examUser.setUser(student1);
+        examUser.setExam(testExamWithSimulation);
+        examUserRepository.save(examUser);
+        testExamWithSimulation.addExamUser(examUser);
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Add pre-generated student exam for the active simulation phase
+        examUtilService.addStudentExamForTestExam(testExamWithSimulation, student1);
+
         StudentExam studentExamForStart = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/own-student-exam", HttpStatus.OK,
                 StudentExam.class);
 
