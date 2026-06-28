@@ -442,6 +442,52 @@ describe('TutorialFreePeriodFormComponent', () => {
             expect(component.form.get('endDate')!.value).toBe(editedEndDate);
         });
 
+        it('does not restore endDate when the user deliberately cleared it before switching tabs', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: validEndDateBerlinFreePeriod,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            // User explicitly clears endDate while on the Period tab
+            component.form.get('endDate')!.setValue(undefined);
+
+            // Switch away and back
+            component.setTimeFrame(TimeFrame.Day);
+            component.setTimeFrame(TimeFrame.Period);
+
+            // endDate must stay empty — the clear must not be overwritten
+            expect(component.form.get('endDate')!.value).toBeFalsy();
+        });
+
+        it('does not restore startTime/endTime when the user deliberately cleared them before switching tabs', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: validStartTimeBerlin,
+                endTime: validEndTimeBerlin,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            // User explicitly clears the time controls while on the PeriodWithinDay tab
+            component.form.get('startTime')!.setValue(undefined);
+            component.form.get('endTime')!.setValue(undefined);
+
+            // Switch away and back
+            component.setTimeFrame(TimeFrame.Day);
+            component.setTimeFrame(TimeFrame.PeriodWithinDay);
+
+            // Both time controls must stay empty
+            expect(component.form.get('startTime')!.value).toBeFalsy();
+            expect(component.form.get('endTime')!.value).toBeFalsy();
+        });
+
         it('does not restore startDate when the user has deliberately cleared it', () => {
             fixture.componentRef.setInput('isEditMode', true);
             fixture.componentRef.setInput('formData', {
