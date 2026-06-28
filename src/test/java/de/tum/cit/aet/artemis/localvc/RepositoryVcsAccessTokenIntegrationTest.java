@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.localvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
@@ -20,6 +24,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 
 class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -30,6 +35,12 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
 
     @Autowired
     private RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository;
+
+    @Autowired
+    private ProgrammingExerciseDeletionService programmingExerciseDeletionService;
+
+    @Autowired
+    private UserService userService;
 
     private ProgrammingExercise exercise;
 
@@ -207,6 +218,63 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         assertThat(token).startsWith("vcpat-");
         // GET now returns the same token.
         assertThat(request.get(url, HttpStatus.OK, String.class)).isEqualTo(token);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteExercise_withRepositoryTokens_doesNotThrowAndRemovesTokens() {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        long exerciseId = exercise.getId();
+        // Provision several tokens (multiple staff users, multiple base repositories) that all reference the exercise via the RESTRICT exercise_id foreign key.
+        repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.TEMPLATE, null);
+        repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.SOLUTION, null);
+        repositoryVcsAccessTokenService.getOrCreateToken(instructor, exercise, RepositoryType.TEMPLATE, null);
+        assertThat(repositoryVCSAccessTokenRepository.findRepositoryUrisByUserIdAndExerciseIdIn(tutor.getId(), Set.of(exerciseId))).isNotEmpty();
+
+        // Deleting the exercise must NOT throw despite the RESTRICT exercise_id foreign key: the service removes the tokens before deleting the exercise.
+        assertThatCode(() -> programmingExerciseDeletionService.delete(exerciseId, false)).doesNotThrowAnyException();
+
+        // The exercise and every token referencing it are gone.
+        assertThat(programmingExerciseRepository.findById(exerciseId)).isEmpty();
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isEmpty();
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(instructor.getId(), templateUri)).isEmpty();
+        assertThat(repositoryVCSAccessTokenRepository.findRepositoryUrisByUserIdAndExerciseIdIn(tutor.getId(), Set.of(exerciseId))).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteUser_withRepositoryTokens_doesNotThrowAndRemovesTokens() {
+        // A dedicated user so soft-deleting it does not affect the shared per-prefix users used by the other test methods.
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "todelete");
+        repositoryVcsAccessTokenService.getOrCreateToken(user, exercise, RepositoryType.TEMPLATE, null);
+        repositoryVcsAccessTokenService.getOrCreateToken(user, exercise, RepositoryType.SOLUTION, null);
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), templateUri)).isPresent();
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), exercise.getSolutionRepositoryUri())).isPresent();
+
+        // Deleting the user must NOT throw despite the RESTRICT user_id foreign key: softDeleteUser removes the user's tokens before deleting the account.
+        assertThatCode(() -> userService.softDeleteUser(user.getLogin())).doesNotThrowAnyException();
+
+        // All tokens owned by the user are gone.
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), templateUri)).isEmpty();
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(user.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteAuxiliaryRepository_withRepositoryToken_cascadesAndDoesNotThrow() {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        AuxiliaryRepository auxiliaryRepository = persistAuxiliaryRepository("http://localhost/git/TESTREPOVCSAT/testrepovcsat-aux-delete.git");
+        RepositoryVCSAccessToken token = repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.AUXILIARY, auxiliaryRepository.getId());
+        assertThat(repositoryVCSAccessTokenRepository.findById(token.getId())).isPresent();
+
+        // Deleting the auxiliary repository must NOT throw and must cascade-delete the token (the auxiliary_repository_id foreign key uses ON DELETE CASCADE).
+        assertThatCode(() -> auxiliaryRepositoryRepository.delete(auxiliaryRepository)).doesNotThrowAnyException();
+
+        // The token that referenced the removed auxiliary repository is gone via the database cascade.
+        assertThat(repositoryVCSAccessTokenRepository.findById(token.getId())).isEmpty();
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), auxiliaryRepository.getRepositoryUri())).isEmpty();
     }
 
     /**
