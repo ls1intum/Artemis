@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
-import { CourseExerciseGroup } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup } from 'app/core/course/manage/exercises/course-exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /** Server representation of an exercise variant group (mirrors the backend {@code ExerciseVariantGroupDTO}). */
@@ -34,8 +34,8 @@ export interface CreateExerciseVariantGroupDTO {
 }
 
 /**
- * Talks to the real {@code ExerciseVariantGroupResource} endpoints. Used by the exercise management view when the
- * nav-bar mock-data toggle is off; the mock interceptor only rewrites requests while mock mode is enabled.
+ * Talks to the {@code ExerciseVariantGroupResource} endpoints. Used by the exercise management view to load and
+ * persist course-level variant groups.
  */
 @Injectable({ providedIn: 'root' })
 export class ExerciseVariantGroupService {
@@ -102,8 +102,8 @@ export class ExerciseVariantGroupService {
 
 /**
  * Maps a server DTO to the client {@link CourseExerciseGroup} model used by the management view. Members are resolved
- * from {@code exercisesById} since the DTO only carries exercise ids. The mock-only {@code order} field stays
- * undefined.
+ * from {@code exercisesById} since the DTO only carries exercise ids. The client-only {@code order} field (not part of
+ * the DTO) stays undefined.
  */
 export function toCourseExerciseGroup(dto: ExerciseVariantGroupDTO, exercisesById: Map<number, Exercise>): CourseExerciseGroup {
     return {

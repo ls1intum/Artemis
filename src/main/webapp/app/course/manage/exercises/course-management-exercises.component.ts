@@ -20,11 +20,8 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ExerciseVariantGroupReference, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
-import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
-import { MockDataService } from 'app/core/interceptor/mock-data.service';
+import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/course-exercise-group.model';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, toCourseExerciseGroup } from 'app/core/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseTableComponent, TableGroupChange } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-table.component';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-add-modal.component';
@@ -145,8 +142,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     });
 
     private readonly route = inject(ActivatedRoute);
-    private readonly mockService = inject(ExerciseManagementMockService);
-    private readonly mockDataService = inject(MockDataService);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly quizExerciseService = inject(QuizExerciseService);
     private readonly dialogService = inject(DialogService);
@@ -179,22 +174,7 @@ export class CourseManagementExercisesComponent implements OnInit {
             if (course) {
                 this.course.set(course);
             }
-            if (this.mockDataService.enabled()) {
-                const exercises = this.mockService.getExercises();
-                const groups = this.mockService.getGroups();
-                // Exercises in groups don't carry exerciseVariantGroup from the mock file — populate it so that
-                // lifecycle-button components know which exercises are grouped and disable the variant-unsafe actions.
-                for (const group of groups) {
-                    const ref: ExerciseVariantGroupReference = { id: group.id, title: group.title, maxPoints: group.maxPoints };
-                    for (const exercise of group.exercises ?? []) {
-                        exercise.exerciseVariantGroup = ref;
-                    }
-                }
-                this.exercises.set(exercises);
-                this.groups.set(groups);
-                this.buildBuckets();
-                this.loaded.set(true);
-            } else if (course?.id) {
+            if (course?.id) {
                 const courseId = course.id;
                 this.courseManagementService.findWithExercises(courseId).subscribe({
                     next: (response) => {
@@ -266,45 +246,12 @@ export class CourseManagementExercisesComponent implements OnInit {
             return;
         }
         const courseId = this.course()?.id;
-        if (!this.mockDataService.enabled() && courseId !== undefined && exercise.id !== undefined) {
+        if (courseId !== undefined && exercise.id !== undefined) {
             this.exerciseVariantGroupService.setExerciseVariantGroup(courseId, exercise.id, newGroup?.id).subscribe({
                 next: () => this.loadGroupsFromServer(courseId),
                 error: (errorRes: HttpErrorResponse) => this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
             });
-            return;
         }
-        const variantGroupRef: ExerciseVariantGroupReference | undefined = newGroup ? { id: newGroup.id, title: newGroup.title, maxPoints: newGroup.maxPoints } : undefined;
-        // Spread to a new object so signal inputs on child components detect the reference change.
-        const movedExercise: Exercise = { ...exercise, exerciseVariantGroup: variantGroupRef };
-        const updated = this.groups().map((g) => ({
-            ...g,
-            exercises: (g.exercises ?? []).filter((e) => e.id !== exercise.id),
-        }));
-        if (newGroup) {
-            const target = updated.find((g) => g.id === newGroup.id);
-            if (target) {
-                target.exercises = [...(target.exercises ?? []), movedExercise];
-                // Variants share the group's timeline: the moved exercise adopts the group's dates (even unset ones).
-                this.applyGroupTimeline(movedExercise, target);
-            }
-        }
-        // For quiz exercises: derive visibleToStudents / quizEnded from the (possibly new) dates, then recompute
-        // status. getStatus() checks these flags — not dates — so we must sync them first.
-        if (movedExercise.type === ExerciseType.QUIZ) {
-            const quiz = movedExercise as QuizExercise;
-            const now = dayjs();
-            const startDate = quiz.startDate ?? quiz.releaseDate;
-            if (startDate) {
-                quiz.visibleToStudents = startDate.isBefore(now);
-            }
-            if (quiz.dueDate) {
-                quiz.quizEnded = quiz.dueDate.isBefore(now);
-            }
-            this.applyQuizClientState(quiz);
-        }
-        this.groups.set(updated);
-        this.exercises.set(this.exercises().map((e) => (e.id === exercise.id ? movedExercise : e)));
-        this.buildBuckets();
     }
 
     deleteSelected(): void {
@@ -330,7 +277,7 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     openQuizExportDialog(): void {
         // Quiz exercises are the only exportable type. The develop quiz export page is shown as a modal component
-        // (no dedicated route). With mock data enabled it is populated from the mock quiz catalogue via MockCourseInterceptor.
+        // (no dedicated route).
         const id = this.courseId();
         if (id === undefined) {
             return;
@@ -584,7 +531,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     /** Deletes the group. Member exercises are not deleted, they simply fall back into the "Ungrouped" bucket. */
     private deleteGroup(group: CourseExerciseGroup): void {
         const courseId = this.course()?.id;
-        if (!this.mockDataService.enabled() && courseId !== undefined && group.id !== undefined) {
+        if (courseId !== undefined && group.id !== undefined) {
             this.exerciseVariantGroupService.deleteGroup(courseId, group.id).subscribe({
                 next: () => {
                     this.groupDeleteError.next('');
@@ -592,44 +539,36 @@ export class CourseManagementExercisesComponent implements OnInit {
                 },
                 error: (error: HttpErrorResponse) => this.groupDeleteError.next(error.message),
             });
-            return;
         }
-        this.groups.set(this.groups().filter((g) => g.id !== group.id));
-        this.groupDeleteError.next('');
-        this.buildBuckets();
     }
 
     onGroupEditModalSave(updated: CourseExerciseGroup, isNew: boolean): void {
         const courseId = this.course()?.id;
+        if (courseId === undefined) {
+            return;
+        }
         if (isNew) {
-            if (!this.mockDataService.enabled() && courseId !== undefined) {
-                this.exerciseVariantGroupService
-                    .createGroup(courseId, {
-                        // The modal only emits a save with a non-empty, trimmed title (its Save button enforces this).
-                        title: updated.title!,
-                        maxPoints: updated.maxPoints,
-                        releaseDate: updated.releaseDate,
-                        startDate: updated.startDate,
-                        dueDate: updated.dueDate,
-                        assessmentDueDate: updated.assessmentDueDate,
-                        exampleSolutionPublicationDate: updated.exampleSolutionPublicationDate,
-                        buildAndTestStudentSubmissionsAfterDueDate: updated.buildAndTestStudentSubmissionsAfterDueDate,
-                    })
-                    .subscribe((dto) => {
-                        const created = toCourseExerciseGroup(dto, this.exercisesById());
-                        this.groups.set([...this.groups(), created]);
-                        this.buildBuckets();
-                    });
-                return;
-            }
-            const nextId = Math.max(0, ...this.groups().map((g) => g.id ?? 0)) + 1;
-            const newGroup: CourseExerciseGroup = { id: nextId, ...updated, order: nextId, exercises: [] };
-            this.groups.set([...this.groups(), newGroup]);
-            this.buildBuckets();
+            this.exerciseVariantGroupService
+                .createGroup(courseId, {
+                    // The modal only emits a save with a non-empty, trimmed title (its Save button enforces this).
+                    title: updated.title!,
+                    maxPoints: updated.maxPoints,
+                    releaseDate: updated.releaseDate,
+                    startDate: updated.startDate,
+                    dueDate: updated.dueDate,
+                    assessmentDueDate: updated.assessmentDueDate,
+                    exampleSolutionPublicationDate: updated.exampleSolutionPublicationDate,
+                    buildAndTestStudentSubmissionsAfterDueDate: updated.buildAndTestStudentSubmissionsAfterDueDate,
+                })
+                .subscribe((dto) => {
+                    const created = toCourseExerciseGroup(dto, this.exercisesById());
+                    this.groups.set([...this.groups(), created]);
+                    this.buildBuckets();
+                });
             return;
         }
 
-        if (!this.mockDataService.enabled() && courseId !== undefined && updated.id !== undefined) {
+        if (updated.id !== undefined) {
             this.exerciseVariantGroupService
                 .updateGroup(courseId, {
                     id: updated.id,
@@ -647,14 +586,7 @@ export class CourseManagementExercisesComponent implements OnInit {
                     this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...mapped } : g)));
                     this.buildBuckets();
                 });
-            return;
         }
-        this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...updated } : g)));
-        // Variants share the group's timeline: propagate the edited group dates onto every member exercise.
-        const saved = this.groups().find((g) => g.id === updated.id);
-        saved?.exercises?.forEach((exercise) => this.applyGroupTimeline(exercise, saved));
-        this.exercises.set([...this.exercises()]);
-        this.buildBuckets();
     }
 
     /** Recomputes the client-derived quiz `status` / `quizStarted` flags (the server does not serialize them). */
@@ -703,11 +635,8 @@ export class CourseManagementExercisesComponent implements OnInit {
         });
     }
 
-    /** Loads the course's variant groups from the server and maps them to the view model (non-mock mode only). */
+    /** Loads the course's variant groups from the server and maps them to the view model. */
     private loadGroupsFromServer(courseId: number): void {
-        if (this.mockDataService.enabled()) {
-            return;
-        }
         this.exerciseVariantGroupService.getGroupsForCourse(courseId).subscribe((dtos) => {
             // Build a map from exercise id to its new group reference so we can update exerciseVariantGroup.
             const refByExerciseId = new Map<number, ExerciseVariantGroupReference>();
@@ -763,20 +692,5 @@ export class CourseManagementExercisesComponent implements OnInit {
                 .filter((exercise) => exercise.id !== undefined)
                 .map((exercise) => [exercise.id!, exercise]),
         );
-    }
-
-    /**
-     * Overwrites the exercise's timeline (in place) with the group's shared timeline, including unset dates. Mock-mode
-     * counterpart of the server-side propagation in {@code ExerciseVariantGroupResource}.
-     */
-    private applyGroupTimeline(exercise: Exercise, group: CourseExerciseGroup): void {
-        exercise.releaseDate = group.releaseDate;
-        exercise.startDate = group.startDate;
-        exercise.dueDate = group.dueDate;
-        exercise.assessmentDueDate = group.assessmentDueDate;
-        exercise.exampleSolutionPublicationDate = group.exampleSolutionPublicationDate;
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate = group.buildAndTestStudentSubmissionsAfterDueDate;
-        }
     }
 }

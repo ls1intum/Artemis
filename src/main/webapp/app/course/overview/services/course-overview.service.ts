@@ -9,7 +9,7 @@ import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/g
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/core/course/manage/exercises/course-exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, computed, inject, isDevMode, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
@@ -37,11 +37,10 @@ import { LoadingNotificationComponent } from 'app/core/loading-notification/load
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
-import { MockDataService } from 'app/core/interceptor/mock-data.service';
 import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
-import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
-import { getCurrentRouteSignal } from '../../foundation/route/getCurrentRouteSignal';
+import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
+import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
@@ -89,14 +88,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
-    protected readonly mockDataService = inject(MockDataService);
-    protected readonly isDevMode = isDevMode();
     private readonly currentCourseContextService = inject(CurrentCourseContextService);
-
-    toggleMockData(): void {
-        this.mockDataService.toggle();
-        window.location.reload();
-    }
 
     protected readonly faBars = faBars;
     protected readonly faUser = faUser;

@@ -5,7 +5,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleInfo, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
 import { DifficultyLevel, Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup, buildGroupsFromExercises } from 'app/core/course/manage/exercises/course-exercise-group.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';

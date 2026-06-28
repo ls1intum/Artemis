@@ -129,8 +129,7 @@ export class ExerciseAddModalComponent {
     /**
      * Opens the regular Artemis exercise import dialog (the one used on develop) for the selected exercise type.
      * Mirrors {@link ExerciseImportButtonComponent}: programming exercises use the tabbed variant (which also
-     * allows importing from a file), all other types use the direct import list. When mock data is enabled the
-     * dialog is populated from the mock catalogue via {@link MockCourseInterceptor}; otherwise it shows the real
+     * allows importing from a file), all other types use the direct import list. The dialog shows the real
      * exercises returned by the paging endpoints.
      */
     startImport(type: ExerciseType): void {
@@ -186,8 +185,7 @@ export class ExerciseAddModalComponent {
 
     /**
      * Asks the host to open the quiz export dialog (the develop quiz export page shown as a modal component). Quiz
-     * exercises are currently the only exercise type that supports export. With mock data enabled the dialog is
-     * populated from the mock quiz catalogue via {@link MockCourseInterceptor}.
+     * exercises are currently the only exercise type that supports export.
      */
     requestExport(): void {
         this.exportRequested.emit();

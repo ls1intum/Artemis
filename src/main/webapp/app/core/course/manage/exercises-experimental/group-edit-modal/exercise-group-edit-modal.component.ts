@@ -8,13 +8,13 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
-import { CourseExerciseGroup } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup } from 'app/core/course/manage/exercises/course-exercise-group.model';
 import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**
- * Content of the group-edit dialog, opened via PrimeNG's {@link DialogService} (see
+ * Content of the group-edit dialog, opened via PrimeNG's {@code DialogService} (see
  * {@code ExerciseGroupTimelineLockComponent.openModal} and {@code CourseManagementExercisesComponent.openGroupEditDialog}).
  * The edited group is passed in through the dialog's {@code inputValues.group}; saving closes the dialog with the updated
  * {@link CourseExerciseGroup} as result, cancelling closes it with {@code undefined}.

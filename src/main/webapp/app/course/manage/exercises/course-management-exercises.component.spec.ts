@@ -2,14 +2,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { signal } from '@angular/core';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { ExerciseVariantGroupService } from 'app/core/course/manage/exercises/exercise-variant-group.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { createIntroToJavaCourse } from 'app/core/course/manage/exercises/mock/intro-to-programming-java-exercises';
-import { MockDataService } from 'app/core/interceptor/mock-data.service';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -21,7 +23,12 @@ describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
     let fixture: ComponentFixture<CourseManagementExercisesComponent>;
 
-    const course = createIntroToJavaCourse();
+    const exercises: Exercise[] = [
+        { id: 1, title: 'Intro Programming', type: ExerciseType.PROGRAMMING } as Exercise,
+        { id: 2, title: 'Intro Text', type: ExerciseType.TEXT } as Exercise,
+    ];
+    const course: Course = { id: 1, title: 'Introduction to Programming in Java', shortName: 'INTRO_JAVA', exercises } as Course;
+
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;
@@ -31,16 +38,18 @@ describe('Course Management Exercises Component', () => {
         await TestBed.configureTestingModule({
             imports: [CourseManagementExercisesComponent],
             providers: [
-                MockProvider(DialogService, MockDialogService),
-                {
-                    provide: ActivatedRoute,
-                    useValue: route,
-                },
+                { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
-                // Enable mock mode so ngOnInit reads exercises synchronously from ExerciseManagementMockService instead
-                // of firing an (unflushed) findWithExercises HTTP call, which would otherwise leave the buckets empty.
-                { provide: MockDataService, useValue: { enabled: signal(true) } },
+                MockProvider(CourseManagementService, {
+                    findWithExercises: () => of(new HttpResponse({ body: course })),
+                }),
+                MockProvider(ExerciseVariantGroupService, {
+                    getGroupsForCourse: () => of([]),
+                }),
+                MockProvider(QuizExerciseService, {
+                    findForCourse: () => of(new HttpResponse({ body: [] })),
+                }),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

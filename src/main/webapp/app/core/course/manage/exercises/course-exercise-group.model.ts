@@ -8,8 +8,6 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
  * Exercises within a group are implicit variants of one another: they cover the same course
  * topic and differ only in difficulty, time effort, and application theme (e.g. the same loop
  * pattern from the lecture, themed around cars vs. planes). Variant relationships are not enforced.
- *
- * Mock-only for now — no server-side counterpart yet.
  */
 export class CourseExerciseGroup {
     id?: number;
@@ -72,37 +70,6 @@ export function buildGroupsFromExercises(exercises: Exercise[]): CourseExerciseG
         group.exercises!.push(exercise);
     }
     return Array.from(groupsById.values());
-}
-
-/** Directed relation type between exercises and/or groups. Kept deliberately simple, no payload. */
-export enum ExerciseRelationType {
-    /** `source` must be completed before `target` (source is a prerequisite of target). */
-    PREREQUISITE = 'PREREQUISITE',
-    /** `source` is harder than `target`. */
-    HARDER_THAN = 'HARDER_THAN',
-}
-
-/** A relation endpoint is either an individual exercise or a whole group. */
-export enum ExerciseRelationEndpointKind {
-    EXERCISE = 'EXERCISE',
-    GROUP = 'GROUP',
-}
-
-export interface ExerciseRelationEndpoint {
-    kind: ExerciseRelationEndpointKind;
-    /** Exercise id when kind === EXERCISE, group id when kind === GROUP. */
-    id: number;
-}
-
-/**
- * Simple directed relation between two endpoints. A group-level endpoint applies to all variants
- * in the group — e.g. variants that differ only thematically share the same prerequisites.
- */
-export class ExerciseRelation {
-    id?: number;
-    type?: ExerciseRelationType;
-    source?: ExerciseRelationEndpoint;
-    target?: ExerciseRelationEndpoint;
 }
 
 export type GroupTimelineField = 'releaseDate' | 'startDate' | 'dueDate' | 'assessmentDueDate' | 'exampleSolutionPublicationDate' | 'buildAndTestStudentSubmissionsAfterDueDate';

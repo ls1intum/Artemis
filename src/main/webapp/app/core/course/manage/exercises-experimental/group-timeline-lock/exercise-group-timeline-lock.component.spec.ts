@@ -10,7 +10,7 @@ import { ExerciseGroupTimelineLockComponent } from 'app/core/course/manage/exerc
 import { ExerciseGroupEditModalComponent } from 'app/core/course/manage/exercises-experimental/group-edit-modal/exercise-group-edit-modal.component';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/core/course/manage/exercises/exercise-variant-group.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { CourseExerciseGroup } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup } from 'app/core/course/manage/exercises/course-exercise-group.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';

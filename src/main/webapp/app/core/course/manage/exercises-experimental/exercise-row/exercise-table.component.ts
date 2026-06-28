@@ -14,7 +14,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { DifficultyLevel, Exercise, ExerciseType, IncludedInOverallScore, getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
+import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/course-exercise-group.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseActionsComponent } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-actions.component';
@@ -74,8 +74,6 @@ export class ExerciseTableComponent {
     readonly dropListId = input<string>('');
     /** Ids of the sibling exercise tables this one can exchange exercises with (enables cross-group drag-and-drop). */
     readonly connectedDropLists = input<string[]>([]);
-    /** Route segments inserted between courseId and urlSegment in the exercise title link. Used by versioned views to keep the mock interceptor active. */
-    readonly overviewRouteMiddleSegments = input<string[]>([]);
 
     readonly groupChange = output<TableGroupChange>();
     readonly rowsReordered = output<Exercise[]>();
@@ -178,7 +176,7 @@ export class ExerciseTableComponent {
     }
 
     titleLink(exercise: Exercise): (string | number)[] {
-        return ['/course-management', this.courseId(), ...this.overviewRouteMiddleSegments(), this.urlSegment(exercise), exercise.id!];
+        return ['/course-management', this.courseId(), this.urlSegment(exercise), exercise.id!];
     }
 
     icon(exercise: Exercise) {
