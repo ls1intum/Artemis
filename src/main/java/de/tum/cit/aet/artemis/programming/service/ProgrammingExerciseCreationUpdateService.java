@@ -243,10 +243,13 @@ public class ProgrammingExerciseCreationUpdateService {
         // Restore competency links with proper exercise reference before final save
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
-        // Pre-provision repository-scoped VCS access tokens for all current course staff for the exercise's base repositories.
-        repositoryVcsAccessTokenService.ensureTokensForExercise(savedProgrammingExercise);
+        ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
 
-        return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        // Pre-provision repository-scoped VCS access tokens for all current course staff for the exercise's base repositories. Done asynchronously (after the exercise is saved) so
+        // exercise creation does not block on token generation for potentially many staff members; the clone-dialog lazy fallback covers the brief window before the tokens exist.
+        repositoryVcsAccessTokenService.ensureTokensForExerciseAsync(createdProgrammingExercise.getId());
+
+        return createdProgrammingExercise;
     }
 
     /**
@@ -355,8 +358,10 @@ public class ProgrammingExerciseCreationUpdateService {
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        // Provision repository-scoped VCS access tokens for newly added base repositories (e.g. auxiliary repositories) for the course's staff.
-        repositoryVcsAccessTokenService.ensureTokensForExercise(savedProgrammingExercise);
+        // Provision repository-scoped VCS access tokens for newly added base repositories (e.g. auxiliary repositories) for the course's staff. Done asynchronously (after the
+        // save)
+        // so updating an exercise does not block on token generation; the clone-dialog lazy fallback covers the brief window before the tokens exist.
+        repositoryVcsAccessTokenService.ensureTokensForExerciseAsync(savedProgrammingExercise.getId());
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);

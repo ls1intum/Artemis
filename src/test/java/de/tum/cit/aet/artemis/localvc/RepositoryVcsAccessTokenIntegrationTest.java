@@ -119,6 +119,28 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void ensureTokensForExerciseAsync_provisionsTokensForAllStaff() {
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isEmpty();
+
+        // The exercise create/update path provisions the staff tokens ASYNCHRONOUSLY by exercise id (re-fetching the exercise off the request thread), so the request returns
+        // without waiting for token generation for all staff members.
+        repositoryVcsAccessTokenService.ensureTokensForExerciseAsync(exercise.getId());
+
+        // Poll until the asynchronously created tokens for the course's staff exist for all base repositories.
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isPresent();
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(instructor.getId(), templateUri)).isPresent();
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(instructor.getId(), exercise.getSolutionRepositoryUri())).isPresent();
+        });
+        // A student of the course must still not receive a staff repository token.
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(student.getId(), templateUri)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void staffMembershipLifecycle_createsAndRemovesTokens() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
 

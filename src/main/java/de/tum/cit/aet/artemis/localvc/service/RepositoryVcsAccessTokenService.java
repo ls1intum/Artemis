@@ -170,6 +170,20 @@ public class RepositoryVcsAccessTokenService {
     }
 
     /**
+     * Asynchronously provisions the repository tokens for all current staff of the exercise's course (see {@link #ensureTokensForExercise}).
+     * <p>
+     * Used on the exercise create/update request path so the request does not block on token generation for potentially many staff members. It re-loads the exercise (with its
+     * template/solution participations and auxiliary repositories) by id rather than receiving a detached entity, so it never touches a lazy association from the async thread; it
+     * must therefore be called only after the exercise has been saved. The clone-dialog lazy fallback covers the brief window before the tokens exist.
+     *
+     * @param exerciseId the id of the (already saved) programming exercise whose base repositories should get tokens
+     */
+    @Async
+    public void ensureTokensForExerciseAsync(long exerciseId) {
+        ensureTokensForExercise(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId));
+    }
+
+    /**
      * Eagerly creates the missing repository tokens for all current staff (tutors, editors, instructors) of the exercise's course for every base repository of the given exercise.
      * Intended to be called right after an exercise has been created (or updated, e.g. when an auxiliary repository was added).
      *
