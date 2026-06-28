@@ -113,7 +113,7 @@
     </changeSet>
 
     <changeSet id="20260615120000-4-verify-answer-options-postgresql" author="artemis" dbms="postgresql">
-        <preConditions onFail="HALT" onFailMessage="PostgreSQL answer option JSON backfill did not preserve content, order, IDs, or references.">
+        <preConditions onFail="HALT" onFailMessage="PostgreSQL answer option JSON backfill did not preserve content, order, IDs, next component IDs, or references.">
             <and>
                 <sqlCheck expectedResult="0">
                     SELECT ABS(
@@ -121,6 +121,19 @@
                         -
                         (SELECT COALESCE(SUM(jsonb_array_length(answer_options)), 0) FROM quiz_question WHERE discriminator = 'MC')
                     )
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM quiz_question question
+                    WHERE question.discriminator = 'MC'
+                      AND question.next_component_id IS DISTINCT FROM COALESCE(
+                          (
+                              SELECT MAX(option_row.id) + 1
+                              FROM answer_option option_row
+                              WHERE option_row.question_id = question.id
+                          ),
+                          1
+                      )
                 </sqlCheck>
                 <sqlCheck expectedResult="0">
                     SELECT COUNT(*)
@@ -198,7 +211,7 @@
     </changeSet>
 
     <changeSet id="20260615120000-5-verify-answer-options-mysql" author="artemis" dbms="mysql">
-        <preConditions onFail="HALT" onFailMessage="MySQL answer option JSON backfill did not preserve content, order, IDs, or references.">
+        <preConditions onFail="HALT" onFailMessage="MySQL answer option JSON backfill did not preserve content, order, IDs, next component IDs, or references.">
             <and>
                 <sqlCheck expectedResult="0">
                     SELECT ABS(
@@ -206,6 +219,19 @@
                         -
                         (SELECT COALESCE(SUM(JSON_LENGTH(answer_options)), 0) FROM quiz_question WHERE discriminator = 'MC')
                     )
+                </sqlCheck>
+                <sqlCheck expectedResult="0">
+                    SELECT COUNT(*)
+                    FROM quiz_question question
+                    WHERE question.discriminator = 'MC'
+                      AND NOT (question.next_component_id &lt;=> COALESCE(
+                          (
+                              SELECT MAX(option_row.id) + 1
+                              FROM answer_option option_row
+                              WHERE option_row.question_id = question.id
+                          ),
+                          1
+                      ))
                 </sqlCheck>
                 <sqlCheck expectedResult="0">
                     SELECT COUNT(*)
