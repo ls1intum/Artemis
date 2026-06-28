@@ -317,8 +317,41 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @BeforeEach
     void mockMailService() throws IOException {
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
+        stubMailSenderSilently();
         Files.createDirectories(tempPath);
+    }
+
+    /**
+     * Stubs the shared {@code javaMailSender} spy to swallow outgoing mails.
+     * <p>
+     * {@link de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService#sendEmail} is {@code @Async},
+     * so a mail send triggered by an earlier test may still be running on the async task executor while this
+     * {@code @BeforeEach} re-stubs the spy. Mockito stubbing is not thread-safe against a concurrent invocation of the
+     * same mock and intermittently fails the stubbing with an {@link AssertionError} (observed as flaky failures of
+     * unrelated tests such as {@code testMissingBuildJobRetryLimit}, whose {@code @BeforeEach} happened to lose the
+     * race). Retrying the stubbing until it succeeds in a window without a concurrent send makes the setup
+     * deterministic; if no clean window is found it rethrows so a genuine problem still surfaces.
+     */
+    private void stubMailSenderSilently() {
+        final int maxAttempts = 100;
+        for (int attempt = 1;; attempt++) {
+            try {
+                doNothing().when(javaMailSender).send(any(MimeMessage.class));
+                return;
+            }
+            catch (AssertionError | RuntimeException e) {
+                if (attempt >= maxAttempts) {
+                    throw e;
+                }
+                try {
+                    Thread.sleep(20);
+                }
+                catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw e;
+                }
+            }
+        }
     }
 
     @BeforeEach
