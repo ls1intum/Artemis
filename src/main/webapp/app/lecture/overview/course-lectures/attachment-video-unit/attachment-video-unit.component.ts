@@ -16,7 +16,6 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatDialog } from '@angular/material/dialog';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
@@ -96,7 +95,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly injector = inject(Injector);
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
-    private readonly dialog = inject(MatDialog);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -446,16 +444,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onFullscreenChange(isFullscreen: boolean): void {
         this.fullscreenState.set(isFullscreen);
-        if (isFullscreen) {
-            // Close the floating Iris chat widget when entering fullscreen. It is a MatDialog rendered in a
-            // popover overlay, so it keeps painting on top of the fullscreen view but its pointer events fall
-            // through to the fullscreen content underneath - the widget looks active yet can be neither moved
-            // nor clicked. The fullscreen view has its own Iris sidebar, and the chatbot button is likewise
-            // hidden here, so dismissing the widget is both correct and consistent (matches the widget's own
-            // closeAll() on navigation). Note closeAll() closes every open Material dialog; that is acceptable
-            // because Iris is the only feature using MatDialog here (other Artemis modals use PrimeNG/ng-bootstrap).
-            this.dialog.closeAll();
-        }
+        // Note: the floating Iris chat widget was previously force-closed here via MatDialog.closeAll() when entering
+        // fullscreen. The widget has since migrated to PrimeNG's DynamicDialog, which has no globally reachable
+        // close-all from this injector (its DialogService is component-scoped to the chatbot button). The widget still
+        // auto-closes on navigation; if it visibly overlays the fullscreen view, reintroduce an explicit close via a
+        // shared Iris widget service rather than a Material dependency.
     }
 
     private shouldShowIrisSidebarInFullscreen(): boolean {

@@ -16,7 +16,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import '@angular/localize/init';
 
 interface TutorialGroupApiServiceMock {
     deleteTutorialGroup: ReturnType<typeof vi.fn>;
