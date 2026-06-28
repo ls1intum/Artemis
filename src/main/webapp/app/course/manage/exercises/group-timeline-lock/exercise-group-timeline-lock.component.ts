@@ -3,9 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { DialogService } from 'primeng/dynamicdialog';
 import { Exercise, ExerciseType, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { CourseExerciseGroup } from 'app/core/course/manage/exercises/course-exercise-group.model';
-import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/core/course/manage/exercises/exercise-variant-group.service';
-import { ExerciseGroupEditModalComponent } from 'app/core/course/manage/exercises-experimental/group-edit-modal/exercise-group-edit-modal.component';
+import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
+import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { ExerciseGroupEditModalComponent } from 'app/course/manage/exercises/group-edit-modal/exercise-group-edit-modal.component';
 import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
-import { CourseExerciseGroup } from 'app/core/course/manage/exercises/course-exercise-group.model';
+import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /** Server representation of an exercise variant group (mirrors the backend {@code ExerciseVariantGroupDTO}). */

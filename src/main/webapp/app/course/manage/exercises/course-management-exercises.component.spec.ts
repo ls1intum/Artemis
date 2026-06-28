@@ -6,7 +6,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementExercisesComponent } from 'app/course/manage/exercises/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { ExerciseVariantGroupService } from 'app/core/course/manage/exercises/exercise-variant-group.service';
+import { ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';

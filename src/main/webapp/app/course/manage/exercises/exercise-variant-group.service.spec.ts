@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { CreateExerciseVariantGroupDTO, ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/core/course/manage/exercises/exercise-variant-group.service';
+import { CreateExerciseVariantGroupDTO, ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 
 describe('ExerciseVariantGroupService', () => {
     setupTestBed({ zoneless: true });
