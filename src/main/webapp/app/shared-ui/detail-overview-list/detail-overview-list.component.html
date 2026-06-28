@@ -17,26 +17,30 @@
                 @switch (detail.type) {
                     @case (DetailType.ProgrammingProblemStatement) {
                         @if (detail.data.exercise?.templateParticipation) {
-                            <dd class="p-3 border" id="detail-value-{{ detail.title }}">
-                                <jhi-programming-exercise-instructions
-                                    [exercise]="detail.data.exercise"
-                                    [participation]="detail.data.exercise.templateParticipation!"
-                                    [personalParticipation]="true"
-                                />
-                            </dd>
+                            @defer (on idle) {
+                                <dd class="p-3 border" id="detail-value-{{ detail.title }}">
+                                    <jhi-programming-exercise-instructions
+                                        [exercise]="detail.data.exercise"
+                                        [participation]="detail.data.exercise.templateParticipation!"
+                                        [personalParticipation]="true"
+                                    />
+                                </dd>
+                            }
                         }
                     }
                     @case (DetailType.ProgrammingTimeline) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <jhi-programming-exercise-timeline
-                                [releaseDate]="detail.data.exercise.releaseDate"
-                                [startDate]="detail.data.exercise.startDate"
-                                [dueDate]="detail.data.exercise.dueDate"
-                                [buildAndTestStudentSubmissionsAfterDueDate]="detail.data.exercise.buildAndTestStudentSubmissionsAfterDueDate"
-                                [assessmentDueDate]="detail.data.exercise.assessmentDueDate"
-                                [exampleSolutionPublicationDate]="detail.data.exercise.exampleSolutionPublicationDate"
-                            />
-                        </dd>
+                        @defer (on idle) {
+                            <dd id="detail-value-{{ detail.title }}">
+                                <jhi-programming-exercise-timeline
+                                    [releaseDate]="detail.data.exercise.releaseDate"
+                                    [startDate]="detail.data.exercise.startDate"
+                                    [dueDate]="detail.data.exercise.dueDate"
+                                    [buildAndTestStudentSubmissionsAfterDueDate]="detail.data.exercise.buildAndTestStudentSubmissionsAfterDueDate"
+                                    [assessmentDueDate]="detail.data.exercise.assessmentDueDate"
+                                    [exampleSolutionPublicationDate]="detail.data.exercise.exampleSolutionPublicationDate"
+                                />
+                            </dd>
+                        }
                     }
                     @case (DetailType.Markdown) {
                         <dd id="detail-value-{{ detail.title }}">
@@ -48,44 +52,52 @@
                         </dd>
                     }
                     @case (DetailType.GradingCriteria) {
-                        <dd class="col-md-6 mt-4" id="detail-value-{{ detail.title }}">
-                            <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
-                        </dd>
+                        @defer (on idle) {
+                            <dd class="col-md-6 mt-4" id="detail-value-{{ detail.title }}">
+                                <jhi-structured-grading-instructions-assessment-layout [readonly]="true" [criteria]="detail.data.gradingCriteria || []" />
+                            </dd>
+                        }
                     }
                     @case (DetailType.ModelingEditor) {
                         <dd class="p-3 border" id="detail-value-{{ detail.title }}">
                             @if (!isEmpty(detail.data.umlModel?.nodes) && detail.data.diagramType && detail.data.umlModel) {
-                                @if (detail.data.isApollonEnabled) {
-                                    <button
-                                        (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
-                                        class="btn btn-primary m-2"
-                                        jhiTranslate="entity.action.export"
-                                    ></button>
+                                @defer (on idle) {
+                                    @if (detail.data.isApollonEnabled) {
+                                        <button
+                                            (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
+                                            class="btn btn-primary m-2"
+                                            jhiTranslate="entity.action.export"
+                                        ></button>
+                                    }
+                                    <jhi-modeling-editor
+                                        class="editor-outline-background"
+                                        [readOnly]="true"
+                                        [diagramType]="detail.data.diagramType"
+                                        [umlModel]="detail.data.umlModel"
+                                    />
                                 }
-                                <jhi-modeling-editor
-                                    class="editor-outline-background"
-                                    [readOnly]="true"
-                                    [diagramType]="detail.data.diagramType"
-                                    [umlModel]="detail.data.umlModel"
-                                />
                             } @else {
                                 <ng-container *ngTemplateOutlet="noData" />
                             }
                         </dd>
                     }
                     @case (DetailType.ProgrammingCheckoutDirectories) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <jhi-programming-exercise-repository-and-build-plan-details
-                                [programmingExercise]="detail.data.exercise"
-                                [programmingLanguage]="detail.data.programmingLanguage"
-                                [checkoutSolutionRepository]="detail.data.exercise.buildConfig?.checkoutSolutionRepository || false"
-                            />
-                        </dd>
+                        @defer (on idle) {
+                            <dd id="detail-value-{{ detail.title }}">
+                                <jhi-programming-exercise-repository-and-build-plan-details
+                                    [programmingExercise]="detail.data.exercise"
+                                    [programmingLanguage]="detail.data.programmingLanguage"
+                                    [checkoutSolutionRepository]="detail.data.exercise.buildConfig?.checkoutSolutionRepository || false"
+                                />
+                            </dd>
+                        }
                     }
                     @case (DetailType.ProgrammingBuildPhases) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <jhi-build-phases-editor [phases]="detail.data.phases" [readonly]="true" [isExamMode]="detail.data.isExamMode ?? false" />
-                        </dd>
+                        @defer (on idle) {
+                            <dd id="detail-value-{{ detail.title }}">
+                                <jhi-build-phases-editor [phases]="detail.data.phases" [readonly]="true" [isExamMode]="detail.data.isExamMode ?? false" />
+                            </dd>
+                        }
                     }
                     @case (DetailType.Image) {
                         <dd id="detail-value-{{ detail.title }}">
