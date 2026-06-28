@@ -6,7 +6,6 @@ import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } f
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
-import '@angular/localize/init';
 
 /**
  * Typed view onto the protected `loadAffected` method so the spec can invoke it
