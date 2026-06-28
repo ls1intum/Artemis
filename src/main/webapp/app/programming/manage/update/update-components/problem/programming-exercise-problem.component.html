@@ -47,7 +47,7 @@
         <div class="form-group" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
             @if (programmingExerciseCreationConfig().isImportFromExistingExercise || programmingExerciseCreationConfig().isImportFromFile) {
-                <ngb-alert [dismissible]="false">
+                <p-message severity="warn">
                     <span class="font-weight-bold">
                         {{ 'artemisApp.exercise.import.attention' | artemisTranslate }}
                     </span>
@@ -58,7 +58,7 @@
                                 : 'artemisApp.exercise.import.embeddedFilesWarning'
                         }}"
                     ></span>
-                </ngb-alert>
+                </p-message>
             }
             @if (programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExercise()?.templateParticipation) {
                 <jhi-programming-exercise-instructions

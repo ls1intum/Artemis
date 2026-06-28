@@ -28,5 +28,9 @@ public enum AuthenticationMechanism {
     /**
      * The authentication header was missing
      */
-    AUTH_HEADER_MISSING
+    AUTH_HEADER_MISSING,
+    /**
+     * The user used a repository-scoped VCS access token (course staff token bound to a single base repository) to authenticate to the LocalVC
+     */
+    REPOSITORY_VCS_ACCESS_TOKEN
 }
