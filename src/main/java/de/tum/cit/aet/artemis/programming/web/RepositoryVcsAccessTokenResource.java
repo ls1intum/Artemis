@@ -63,7 +63,7 @@ public class RepositoryVcsAccessTokenResource {
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<String> getRepositoryVcsAccessToken(@RequestParam("exerciseId") long exerciseId, @RequestParam("repositoryType") RepositoryType repositoryType,
             @RequestParam(value = "auxiliaryRepositoryId", required = false) Long auxiliaryRepositoryId) {
-        validateAuxiliaryRepositoryInput(repositoryType, auxiliaryRepositoryId);
+        validateRepositoryTypeInput(repositoryType, auxiliaryRepositoryId);
         User user = userRepository.getUser();
         log.debug("REST request to get repository VCS access token of user {} for {} repository of exercise {}", user.getLogin(), repositoryType, exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
@@ -82,7 +82,7 @@ public class RepositoryVcsAccessTokenResource {
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<String> createRepositoryVcsAccessToken(@RequestParam("exerciseId") long exerciseId, @RequestParam("repositoryType") RepositoryType repositoryType,
             @RequestParam(value = "auxiliaryRepositoryId", required = false) Long auxiliaryRepositoryId) {
-        validateAuxiliaryRepositoryInput(repositoryType, auxiliaryRepositoryId);
+        validateRepositoryTypeInput(repositoryType, auxiliaryRepositoryId);
         User user = userRepository.getUser();
         log.debug("REST request to create a repository VCS access token for user {} for {} repository of exercise {}", user.getLogin(), repositoryType, exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
@@ -90,12 +90,18 @@ public class RepositoryVcsAccessTokenResource {
     }
 
     /**
-     * Fails fast with 400 (instead of an ambiguous 404 from the service lookup) when an auxiliary repository is requested without its id.
+     * Fails fast with 400 (instead of a 500 from the service's repository-type switch, or an ambiguous 404) when the requested repository type is not a base repository that can
+     * have a staff token (e.g. {@link RepositoryType#USER}), or when an auxiliary repository is requested without its id.
      *
-     * @param repositoryType        the requested repository type
+     * @param repositoryType        the requested repository type (must be a base repository: TEMPLATE, SOLUTION, TESTS or AUXILIARY)
      * @param auxiliaryRepositoryId the auxiliary repository id (must be present for {@link RepositoryType#AUXILIARY})
      */
-    private void validateAuxiliaryRepositoryInput(RepositoryType repositoryType, Long auxiliaryRepositoryId) {
+    private void validateRepositoryTypeInput(RepositoryType repositoryType, Long auxiliaryRepositoryId) {
+        if (repositoryType != RepositoryType.TEMPLATE && repositoryType != RepositoryType.SOLUTION && repositoryType != RepositoryType.TESTS
+                && repositoryType != RepositoryType.AUXILIARY) {
+            throw new BadRequestAlertException("Only base repositories (TEMPLATE, SOLUTION, TESTS, AUXILIARY) have staff VCS access tokens", ENTITY_NAME,
+                    "unsupportedRepositoryType");
+        }
         if (repositoryType == RepositoryType.AUXILIARY && auxiliaryRepositoryId == null) {
             throw new BadRequestAlertException("auxiliaryRepositoryId is required for the AUXILIARY repository type", ENTITY_NAME, "auxiliaryRepositoryIdMissing");
         }

@@ -202,6 +202,16 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void repositoryVcsAccessTokenEndpoints_nonBaseRepositoryTypeIsBadRequest() throws Exception {
+        // USER is a student-participation repository, not a staff base repository. The endpoint must reject it with 400 instead of letting it reach the service's repository-type
+        // switch and surface as a 500.
+        String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=USER";
+        request.get(url, HttpStatus.BAD_REQUEST, String.class);
+        request.put(url, null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void repositoryVcsAccessTokenEndpoints_forbiddenForStudent() throws Exception {
         String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
