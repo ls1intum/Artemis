@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Subscription, switchMap, tap } from 'rxjs';
@@ -19,13 +19,13 @@ import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExercisePerformanceComponent } from './course-exercise-performance/course-exercise-performance.component';
 import { CourseExerciseLatenessComponent } from './course-exercise-lateness/course-exercise-lateness.component';
 import { CompetencyAccordionComponent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { ProgressBar } from 'primeng/progressbar';
 
 @Component({
     selector: 'jhi-course-dashboard',
@@ -34,12 +34,12 @@ import { SidebarView } from 'app/course/shared/sidebar-view.interface';
     imports: [
         CourseChatbotComponent,
         TranslateDirective,
-        NgbProgressbar,
         CourseExercisePerformanceComponent,
         CourseExerciseLatenessComponent,
         CompetencyAccordionComponent,
         FeatureToggleHideDirective,
         FeatureOverlayComponent,
+        ProgressBar,
     ],
 })
 export class CourseDashboardComponent implements OnDestroy, SidebarView {
@@ -82,6 +82,12 @@ export class CourseDashboardComponent implements OnDestroy, SidebarView {
     readonly competencies = this._competencies.asReadonly();
     readonly openedAccordionIndex = this._openedAccordionIndex.asReadonly();
     readonly course = this._course.asReadonly();
+    /**
+     * The value bound to the points `<p-progressbar>`, clamped to [0, 100]. Unlike the old `ngb-progressbar`, PrimeNG's
+     * progress bar does not clamp internally, so a raw percentage > 100 (reachable via bonus points, where accumulated
+     * `points` can exceed `maxPoints`) would overflow the track. Clamping here keeps the bar within its track.
+     */
+    readonly progressBarValue = computed(() => Math.min(100, Math.max(0, this.progress())));
     // isCollapsed is exposed as a getter for compatibility with CourseOverviewComponent
     get isCollapsed(): boolean {
         return this._isCollapsed();
@@ -198,7 +204,8 @@ export class CourseDashboardComponent implements OnDestroy, SidebarView {
 
         const maxPoints = relevantExercises.reduce((sum, exercise) => sum + exercise.maxPoints, 0);
         this._maxPoints.set(round(maxPoints, 1));
-        this._progress.set(round((points / maxPoints) * 100, 1));
+        // Guard against a division by zero (no relevant exercises / 0 max points) which would otherwise yield NaN in the label.
+        this._progress.set(maxPoints > 0 ? round((points / maxPoints) * 100, 1) : 0);
     }
 
     /**

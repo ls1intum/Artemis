@@ -6,12 +6,13 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
-import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
+import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
@@ -22,7 +23,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
@@ -56,7 +56,6 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
     styleUrls: ['./modeling-submission.component.scss'],
     imports: [
         ResizeableContainerComponent,
-        TeamParticipateInfoBoxComponent,
         FullscreenComponent,
         ModelingEditorComponent,
         FaIconComponent,
@@ -107,6 +106,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly resultWithComplaint = signal<Result | undefined>(undefined);
 
     selectedElementIds: string[] = [];
+
+    /** Local user passed to Apollon collaboration awareness (presence + remote selection highlights in team exercises). */
+    protected readonly apollonCollaborationUser = signal<CollaborationUser | undefined>(undefined);
 
     readonly submission = signal<ModelingSubmission>(undefined!);
     submissionId: number | undefined;
@@ -163,6 +165,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     });
 
     ngOnInit(): void {
+        this.initializeApollonCollaborationUser();
+
         if (this.inputValuesArePresent()) {
             this.setupComponentWithInputValues();
         } else {
@@ -198,6 +202,22 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!isDisplayedOnExamSummaryPage) {
             window.scroll(0, 0);
         }
+    }
+
+    private initializeApollonCollaborationUser(): void {
+        this.accountService.identity().then((user: User | undefined) => {
+            if (!user) {
+                // Without an identity the editor cannot mount its collaboration layer; surface it instead of failing silently.
+                captureException('Modeling team exercise: no user identity available for Apollon collaboration.');
+                return;
+            }
+            this.apollonCollaborationUser.set(this.buildApollonCollaborationUser(user));
+        });
+    }
+
+    private buildApollonCollaborationUser(user: User): CollaborationUser {
+        const name = user.name || user.login || 'User';
+        return { id: user.login, name, color: collabColorFromName(name), imageUrl: this.accountService.getImageUrl() };
     }
 
     private setupMode(): void {
@@ -434,7 +454,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             .subscribe((submission: ModelingSubmission) => {
                 if (submission.submitted) {
                     this.submission.set(submission);
-                    if (this.submission().model) {
+                    // Team mode: leave the live collaborative editor (Yjs) untouched — see submit().
+                    if (!this.modelingExercise().teamMode && this.submission().model) {
                         this.umlModel.set(importDiagram(JSON.parse(this.submission().model!)));
                         this.hasElements.set(hasModelElements(this.umlModel()));
                     }
@@ -623,7 +644,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.update(this.submission(), this.modelingExercise().id!).subscribe({
                 next: (response) => {
                     this.submission.set(response.body!);
-                    if (this.submission().model) {
+                    // In team mode the live collaborative editor is the single source of truth (Yjs); re-importing
+                    // the saved snapshot would reset the shared document and discard a teammate's concurrent edits.
+                    if (!this.modelingExercise().teamMode && this.submission().model) {
                         this.umlModel.set(importDiagram(JSON.parse(this.submission().model!)));
                         this.hasElements.set(hasModelElements(this.umlModel()));
                     }
@@ -681,12 +704,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isSaving.set(false);
     }
 
-    onReceiveSubmissionFromTeam(submission: ModelingSubmission) {
-        submission.participation!.exercise = this.modelingExercise();
-        submission.participation!.submissions = [submission];
-        this.updateModelingSubmission(submission);
-    }
-
     /**
      * This is called when the team sync component receives
      * patches from the server. Updates the modeling editor with the received patch.
@@ -697,7 +714,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     onTeamSyncReconnected() {
-        this.modelingEditor()?.broadcastFullState();
+        const editor = this.modelingEditor();
+        editor?.broadcastFullState();
+        editor?.reannounceLocalAwareness();
     }
 
     private isModelEmpty(model?: string): boolean {
