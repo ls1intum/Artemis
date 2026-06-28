@@ -551,20 +551,52 @@ public class SearchableEntityWeaviateService {
      * We handle this by catching {@link WeaviateApiException} and falling back to {@code replace()},
      * consistent with the pattern used in {@code V0ToV1Migration} and {@code WeaviateMigrationService}.
      */
+    /**
+     * Synchronously upserts a single entity row. Used by {@link SearchableEntityReindexService}
+     * to avoid saturating the async thread pool and Ollama during a full re-index.
+     */
+    void upsertRowSync(String type, Long entityId, Map<String, Object> properties) {
+        upsertRow(type, entityId, properties);
+    }
+
+    /**
+     * Deletes every object from the SearchableEntities collection. Used before a full re-index
+     * so that all objects are fresh inserts (avoiding the gRPC replace path, which does not
+     * re-trigger text2vec-openai vectorization).
+     */
+    void deleteAllSearchableEntities() {
+        try {
+            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            // deleteMany with no filter deletes all objects
+            collection.data.deleteMany(io.weaviate.client6.v1.api.collections.query.Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).gte(0L));
+            log.info("Cleared all objects from {} for re-index", SearchableEntitySchema.COLLECTION_NAME);
+        }
+        catch (Exception e) {
+            throw new WeaviateException("Failed to clear SearchableEntities for re-index: " + e.getMessage(), e);
+        }
+    }
+
     private void upsertRow(String type, Long entityId, Map<String, Object> properties) {
         try {
             var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
             String uuid = WeaviateUuidUtil.deterministicUuid(type, entityId);
-            if (collection.data.exists(uuid)) {
+            Object releaseDate = properties.get(SearchableEntitySchema.Properties.RELEASE_DATE);
+            log.info("[upsert] type={} entityId={} uuid={} release_date={} propertyKeys={}", type, entityId, uuid, releaseDate, properties.keySet());
+            boolean exists = collection.data.exists(uuid);
+            log.info("[upsert] exists={} for type={} entityId={}", exists, type, entityId);
+            if (exists) {
                 collection.data.replace(uuid, r -> r.properties(properties));
+                log.info("[upsert] replace completed for type={} entityId={}", type, entityId);
             }
             else {
                 try {
                     collection.data.insert(properties, obj -> obj.uuid(uuid));
+                    log.info("[upsert] insert completed for type={} entityId={}", type, entityId);
                 }
                 catch (WeaviateApiException e) {
                     if (e.getMessage() != null && e.getMessage().contains("already exists")) {
                         collection.data.replace(uuid, r -> r.properties(properties));
+                        log.info("[upsert] insert race — replace fallback completed for type={} entityId={}", type, entityId);
                     }
                     else {
                         throw e;

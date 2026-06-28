@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationPropertie
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.globalsearch.service.migration.V0ToV1Migration;
+import de.tum.cit.aet.artemis.globalsearch.service.migration.V1ToV2Migration;
 import de.tum.cit.aet.artemis.globalsearch.service.migration.WeaviateMigration;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
@@ -98,7 +99,7 @@ public class WeaviateMigrationService {
             throw new IllegalStateException("WeaviateClient bean is required when Weaviate is enabled and not in OpenAPI docs generation mode");
         }
         this.collectionPrefix = properties.collectionPrefix();
-        this.migrations = List.of(new V0ToV1Migration(exerciseLoadService));
+        this.migrations = List.of(new V0ToV1Migration(exerciseLoadService), new V1ToV2Migration());
         this.latestVersion = migrations.getLast().targetVersion();
     }
 
@@ -108,15 +109,16 @@ public class WeaviateMigrationService {
      * background thread on the scheduling node.
      *
      * @throws WeaviateException if any migration fails (non-recoverable)
+     * @return {@code true} if at least one migration ran, {@code false} if the schema was already up-to-date
      */
-    public void runPendingMigrations() {
+    public boolean runPendingMigrations() {
         try {
             ensureVersionCollectionExists();
             int currentVersion = detectCurrentVersion();
 
             if (currentVersion >= latestVersion) {
                 log.debug("Weaviate schema is up-to-date (version {})", currentVersion);
-                return;
+                return false;
             }
 
             int pendingCount = (int) migrations.stream().filter(migration -> migration.targetVersion() > currentVersion).count();
@@ -133,6 +135,7 @@ public class WeaviateMigrationService {
             }
 
             log.info("All Weaviate migrations completed. Schema is now at version {}", latestVersion);
+            return true;
         }
         catch (Exception exception) {
             log.error("Weaviate migration failed: {}. Search may return incomplete results until entities are re-indexed.", exception.getMessage(), exception);

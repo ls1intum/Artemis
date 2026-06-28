@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -201,4 +202,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     Optional<Lecture> findByIdWithLectureUnitsWithCompetencyLinksAndAttachments(@Param("lectureId") Long lectureId);
 
     long countByCourse_Id(long courseId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                JOIN FETCH lecture.course
+            """)
+    List<Lecture> findAllForSearchReindex();
 }

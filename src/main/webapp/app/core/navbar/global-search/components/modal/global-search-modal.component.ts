@@ -212,7 +212,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType[]> = {
         exercises: ['exercise'],
-        lectures: ['lecture'],
+        lectures: ['lecture', 'lecture_unit'],
         exams: ['exam'],
         communication: ['channel', 'post', 'answer_post'],
         faq: ['faq'],

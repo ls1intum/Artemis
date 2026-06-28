@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, filter, shareReplay, timeout } from 'rxjs';
+import { Observable, defer, filter, shareReplay, timeout } from 'rxjs';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 
@@ -22,7 +22,13 @@ export class IrisSearchAnswerService {
      * Opens when the first subscriber arrives; closes when the last one unsubscribes.
      * This avoids subscribe/unsubscribe churn when the user types rapidly.
      */
-    private readonly statusUpdates$ = this.websocketService.subscribe<IrisSearchStatusUpdate>(GLOBAL_SEARCH_ANSWER_WS_CHANNEL).pipe(shareReplay({ bufferSize: 0, refCount: true }));
+    // defer() ensures websocketService.subscribe() is called lazily each time the refCount
+    // rises from 0 to 1. Without it, the call binds to the RxStomp instance that existed at
+    // service creation time; after logout/login a new RxStomp instance is created and the
+    // old observable goes dead, causing WebSocket callbacks to never arrive for the new session.
+    private readonly statusUpdates$ = defer(() => this.websocketService.subscribe<IrisSearchStatusUpdate>(GLOBAL_SEARCH_ANSWER_WS_CHANNEL)).pipe(
+        shareReplay({ bufferSize: 0, refCount: true }),
+    );
 
     /**
      * Fires an async ask-Iris request and returns a multi-emit Observable:

@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityReindexService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -68,6 +71,8 @@ public class GlobalSearchResource {
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
+    private final SearchableEntityReindexService reindexService;
+
     private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
@@ -80,10 +85,11 @@ public class GlobalSearchResource {
 
     private final Optional<StudentExamApi> studentExamRepository;
 
-    public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository,
+    public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, SearchableEntityReindexService reindexService, CourseRepository courseRepository,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository,
             Optional<StudentExamApi> studentExamRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+        this.reindexService = reindexService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -129,12 +135,16 @@ public class GlobalSearchResource {
         int effectiveLimit = Math.clamp(limit, 1, 25);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
+        log.info("[search] user={} query='{}' types={} courseId={} limit={}", user.getLogin(), query, requestedTypes, courseId, effectiveLimit);
+
         FilterBuildResult filterResult = buildSearchableItemFilter(user, courseId, requestedTypes);
         if (!filterResult.hasAccess()) {
+            log.info("[search] user={} has no accessible courses — returning empty", user.getLogin());
             return ResponseEntity.ok(List.of());
         }
 
         List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
+        log.info("[search] user={} query='{}' — Weaviate returned {} raw results", user.getLogin(), query, rawResults.size());
 
         Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;
@@ -310,8 +320,10 @@ public class GlobalSearchResource {
         boolean isAdmin = authCheckService.isAdmin(user);
         boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
+        log.info("[filter] user={} isAdmin={} courseId={} types={}", user.getLogin(), isAdmin, courseId, requestedTypes);
 
         if (isAdmin && courseId == null && !needsCommFiltering) {
+            log.info("[filter] user={} is admin with no courseId — skipping access filter", user.getLogin());
             return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null, null);
         }
         List<Course> accessibleCourses;
@@ -494,6 +506,9 @@ public class GlobalSearchResource {
      * exam exercises only after the exam ends); students see released regular exercises and exam
      * exercises after the exam starts.
      *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by Pyris {@code SearchableEntitiesRetrieval._exercise_filter} - update both when exercise visibility rules change.
+     *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching exercises the user may access, or {@code null} if no courses qualify
      */
@@ -570,11 +585,16 @@ public class GlobalSearchResource {
      * Builds the lecture unit type disjunct. Staff members (editors, instructors, TAs) see all lecture
      * units in their courses; students only see lecture units whose release date has passed or is unset.
      *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by release-date post-filtering in Pyris {@code LectureGlobalSearchRetrieval} - update both when lecture unit visibility rules
+     * change.
+     *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching lecture units the user may access, or {@code null} if no courses qualify
      */
     private Filter buildLectureUnitDisjunct(CourseRoleSets roleSets) {
         OffsetDateTime now = OffsetDateTime.now();
+        log.info("[filter] lecture_unit staffCourseIds={} studentCourseIds={} filterTime={}", roleSets.staffCourseIds(), roleSets.studentCourseIds(), now);
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.staffCourseIds().isEmpty()) {
             subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
@@ -617,6 +637,9 @@ public class GlobalSearchResource {
     /**
      * Builds the exam type disjunct. Editors and instructors see all exams in their courses;
      * teaching assistants and students only see exams whose visible date has passed.
+     *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by Pyris {@code SearchableEntitiesRetrieval._exam_filter} - update both when exam visibility rules change.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching exams the user may access, or {@code null} if no courses qualify
@@ -671,6 +694,9 @@ public class GlobalSearchResource {
      * Builds the FAQ type disjunct. Staff members (editors, instructors, TAs) see all FAQs in their
      * courses; students only see FAQs with state {@code ACCEPTED}.
      *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by Pyris {@code SearchableEntitiesRetrieval._faq_filter} - update both when FAQ visibility rules change.
+     *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching FAQs the user may access, or {@code null} if no courses qualify
      */
@@ -690,6 +716,9 @@ public class GlobalSearchResource {
     /**
      * Builds the channel type disjunct. All users with course access can see channels that are either
      * course-wide or public within their courses.
+     *
+     * <p>
+     * SYNC[global-search-access-filters]: mirrored by Pyris {@code SearchableEntitiesRetrieval._channel_filter} - update both when channel visibility rules change.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching channels the user may access, or {@code null} if no courses qualify
@@ -792,6 +821,20 @@ public class GlobalSearchResource {
             return nonNull.getFirst();
         }
         return Filter.or(nonNull.toArray(new Filter[0]));
+    }
+
+    /**
+     * POST /api/admin/search/reindex : re-indexes all searchable entities from the database into Weaviate.
+     * Useful after a schema migration that empties the collection (e.g. V1→V2 tokenization fix).
+     * Posts and answer posts are excluded — they re-index on next write.
+     *
+     * @return 200 with a summary of entities queued per type
+     */
+    @PostMapping("admin/search/reindex")
+    @EnforceAdmin
+    public ResponseEntity<String> reindexAll() {
+        String summary = reindexService.reindexAll();
+        return ResponseEntity.ok(summary);
     }
 
 }
