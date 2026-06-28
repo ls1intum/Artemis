@@ -16,9 +16,11 @@ export interface SidebarView {
 
 /**
  * Runtime duck-type guard for {@link SidebarView}.
- * Returns true if the component has a {@code toggleSidebar} method — sufficient to
- * distinguish sidebar-owning tab components from plain route components.
+ * Returns true if the component exposes both {@code toggleSidebar} (a function) and
+ * {@code isCollapsed} (a boolean or zero-argument function / Signal) — the full
+ * shape of the {@link SidebarView} contract.
  */
 export function hasSidebar(component: unknown): component is SidebarView {
-    return !!component && typeof (component as SidebarView).toggleSidebar === 'function';
+    const c = component as SidebarView;
+    return !!component && typeof c.toggleSidebar === 'function' && (typeof c.isCollapsed === 'boolean' || typeof c.isCollapsed === 'function');
 }
