@@ -72,13 +72,12 @@ export interface HiddenPageMap {
         ArtemisTranslatePipe,
         FontAwesomeModule,
         NgbTooltipModule,
+        NgbPopover,
         RouterModule,
         DeleteButtonDirective,
         TranslateDirective,
         ConfirmAutofocusButtonComponent,
         PdfPreviewDateBoxComponent,
-        NgbPopover,
-        NgbTooltipModule,
     ],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {

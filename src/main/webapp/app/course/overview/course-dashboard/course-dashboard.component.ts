@@ -24,6 +24,7 @@ import { CourseExerciseLatenessComponent } from './course-exercise-lateness/cour
 import { CompetencyAccordionComponent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 import { ProgressBar } from 'primeng/progressbar';
 
 @Component({
@@ -41,7 +42,7 @@ import { ProgressBar } from 'primeng/progressbar';
         ProgressBar,
     ],
 })
-export class CourseDashboardComponent implements OnDestroy {
+export class CourseDashboardComponent implements OnDestroy, SidebarView {
     private courseStorageService = inject(CourseStorageService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);

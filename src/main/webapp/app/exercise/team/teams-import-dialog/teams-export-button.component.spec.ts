@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TeamsExportButtonComponent } from 'app/exercise/team/teams-import-dialog/teams-export-button.component';
@@ -23,14 +22,7 @@ describe('TeamsExportButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [
-                MockModule(NgbModule),
-                MockDirective(FeatureToggleDirective),
-                TeamsExportButtonComponent,
-                ButtonComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [MockDirective(FeatureToggleDirective), TeamsExportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [MockProvider(TeamService), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 

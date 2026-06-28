@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -30,14 +29,7 @@ describe('TeamsImportButtonComponent', () => {
         dialogServiceOpenSpy = vi.fn().mockReturnValue({ onClose: of(mockSourceTeams) });
 
         await TestBed.configureTestingModule({
-            imports: [
-                MockModule(NgbModule),
-                MockDirective(FeatureToggleDirective),
-                TeamsImportButtonComponent,
-                ButtonComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [MockDirective(FeatureToggleDirective), TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(TeamService),
                 { provide: DialogService, useValue: { open: dialogServiceOpenSpy } },

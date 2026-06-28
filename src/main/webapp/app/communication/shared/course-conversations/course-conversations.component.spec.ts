@@ -16,7 +16,7 @@ import { ConversationMessagesComponent } from 'app/communication/course-conversa
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, Subject, of } from 'rxjs';
-import { NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -119,7 +119,7 @@ examples.forEach((activeConversation) => {
                     FormsModule,
                     ReactiveFormsModule,
                     FontAwesomeModule,
-                    NgbModule,
+                    NgbTooltip,
                     TranslateModule.forRoot(),
                 ],
                 declarations: [LoadingIndicatorContainerStubComponent],

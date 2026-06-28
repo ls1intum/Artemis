@@ -5,13 +5,10 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
-import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
-import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
-import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
-import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
-import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { LiveQuizParticipationStatus, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { QuizParticipationBase } from 'app/quiz/overview/participation/quiz-participation.base';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared-ui/components/resizable-panels/resizable-panels.component';
@@ -22,7 +19,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer.component';
@@ -35,6 +31,7 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
@@ -74,7 +71,7 @@ export class ExerciseSplitPanelComponent {
     private readonly _quizBatchStarted = signal(false);
     private readonly _quizEnded = signal(false);
     private readonly _quizHasStarted = signal(false);
-    private readonly _quizComponent = signal<QuizParticipationComponent | undefined>(undefined);
+    private readonly _quizComponent = signal<QuizParticipationBase | undefined>(undefined);
     private quizStartedSubscription: { unsubscribe(): void } | undefined;
     private quizSubmittedSubscription: { unsubscribe(): void } | undefined;
     private liveQuizStatusSubscription: { unsubscribe(): void } | undefined;
@@ -298,18 +295,8 @@ export class ExerciseSplitPanelComponent {
     submitExercise(): void {
         const context = this.childrenOutletContexts.getContext('primary');
         if (context?.outlet?.isActivated) {
-            const component = context.outlet.component;
-            if (component instanceof TextEditorComponent) {
-                component.submit();
-            } else if (component instanceof CodeEditorStudentContainerComponent) {
-                component.commit();
-            } else if (component instanceof ModelingSubmissionComponent) {
-                component.submit();
-            } else if (component instanceof FileUploadSubmissionComponent) {
-                component.submitExercise();
-            } else if (component instanceof QuizParticipationComponent) {
-                component.onSubmit();
-            }
+            const component = context.outlet.component as ExerciseSubmission;
+            component.submitExercise();
         }
     }
 
@@ -323,7 +310,7 @@ export class ExerciseSplitPanelComponent {
     }
 
     onOutletActivate(component: any): void {
-        if (component instanceof QuizParticipationComponent) {
+        if (component instanceof QuizParticipationBase) {
             this._quizComponent.set(component);
             this.quizStartedSubscription = component.quizStartedEvent.subscribe(() => {
                 this._quizHasStarted.set(true);

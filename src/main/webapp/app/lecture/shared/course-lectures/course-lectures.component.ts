@@ -13,6 +13,7 @@ import { LtiService } from 'app/foundation/service/lti.service';
 import { forkJoin } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -44,7 +45,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseLecturesComponent implements OnInit, OnDestroy {
+export class CourseLecturesComponent implements OnInit, OnDestroy, SidebarView {
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);

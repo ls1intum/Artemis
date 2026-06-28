@@ -5,7 +5,7 @@ import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
@@ -59,7 +59,7 @@ describe('CourseExerciseRowComponent', () => {
                     { path: 'courses/:courseId/exercises', component: DummyComponent },
                     { path: 'courses/:courseId/exercises/:exerciseId', component: DummyComponent },
                 ]),
-                NgbModule,
+                NgbTooltip,
                 FaIconComponent,
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),

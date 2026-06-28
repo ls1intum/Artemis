@@ -1,4 +1,4 @@
-import { Component, EventEmitter, input, output } from '@angular/core';
+﻿import { Component, EventEmitter, input, output } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -409,7 +409,7 @@ describe('ModelingSubmissionComponent', () => {
         const createStub = vi.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise.set(new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined));
         comp.modelingExercise().id = 1;
-        comp.submit();
+        comp.submitExercise();
         expect(createStub).toHaveBeenCalledOnce();
         expect(comp.submission()).toEqual(submission);
     });
@@ -427,7 +427,7 @@ describe('ModelingSubmissionComponent', () => {
         const alertServiceSpy = vi.spyOn(alertService, 'error');
         comp.modelingExercise.set(new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined));
         comp.modelingExercise().id = 1;
-        comp.submit();
+        comp.submitExercise();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(comp.submission()).toBe(modelSubmission);
     });
@@ -622,7 +622,7 @@ describe('ModelingSubmissionComponent', () => {
         comp.modelingExercise.set(new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined));
         comp.modelingExercise().id = 1;
         fixture.detectChanges();
-        comp.submit();
+        comp.submitExercise();
         expect(updateStub).toHaveBeenCalledOnce();
         expect(comp.submission()).toEqual(submission);
     });

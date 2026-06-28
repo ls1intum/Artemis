@@ -16,6 +16,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -41,7 +42,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     styleUrls: ['./course-exams.component.scss'],
     imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseExamsComponent implements OnInit, OnDestroy {
+export class CourseExamsComponent implements OnInit, OnDestroy, SidebarView {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private serverDateService = inject(ArtemisServerDateService);

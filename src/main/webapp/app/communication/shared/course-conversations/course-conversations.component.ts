@@ -66,6 +66,7 @@ import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 import { getIsMobileSignal } from 'app/foundation/util/global.utils';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -147,7 +148,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         FeatureActivationComponent,
     ],
 })
-export class CourseConversationsComponent implements OnInit, OnDestroy {
+export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarView {
     readonly isCommunicationEnabled = computed(() => {
         const currentCourse = this.course();
         return currentCourse ? isCommunicationEnabled(currentCourse) : false;

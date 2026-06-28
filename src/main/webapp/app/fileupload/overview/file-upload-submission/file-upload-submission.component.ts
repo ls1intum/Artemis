@@ -14,6 +14,7 @@ import { omit } from 'lodash-es';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -55,7 +56,7 @@ import { firstValueFrom, map } from 'rxjs';
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
+export class FileUploadSubmissionComponent implements ComponentCanDeactivate, ExerciseSubmission {
     private route = inject(ActivatedRoute);
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);
     private alertService = inject(AlertService);

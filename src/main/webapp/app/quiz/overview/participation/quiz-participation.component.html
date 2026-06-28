@@ -64,7 +64,7 @@
                                     @if (mode() === 'preview') {
                                         <jhi-button
                                             id="submit-quiz"
-                                            (onClick)="onSubmit()"
+                                            (onClick)="submitExercise()"
                                             [btnSize]="ButtonSize.SMALL"
                                             [btnType]="ButtonType.PRIMARY"
                                             [title]="shouldTreatAsSubmittedForUi() ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"

@@ -7,7 +7,6 @@ import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
-import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 export const courseManagementRoutes: Routes = [
@@ -89,7 +88,10 @@ export const courseManagementRoutes: Routes = [
             },
             {
                 path: ':courseId/assessment-dashboard/:exerciseId',
-                loadComponent: () => ExerciseAssessmentDashboardComponent,
+                loadComponent: () =>
+                    import('app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component').then(
+                        (m) => m.ExerciseAssessmentDashboardComponent,
+                    ),
                 data: {
                     authorities: IS_AT_LEAST_TUTOR,
                     pageTitle: 'artemisApp.exerciseAssessmentDashboard.home.title',

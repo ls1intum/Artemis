@@ -5,7 +5,7 @@ import { Subject } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from './plagiarism-case-review.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { MockComponent, MockModule } from 'ng-mocks';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -24,7 +24,7 @@ describe('PlagiarismCaseReviewComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PlagiarismCaseReviewComponent, MockModule(NgbModule), MockModule(TranslateModule), MockComponent(PlagiarismSplitViewComponent)],
+            imports: [PlagiarismCaseReviewComponent, MockModule(NgbNavModule), MockModule(TranslateModule), MockComponent(PlagiarismSplitViewComponent)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismCaseReviewComponent);

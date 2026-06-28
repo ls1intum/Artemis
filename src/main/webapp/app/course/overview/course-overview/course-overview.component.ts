@@ -19,14 +19,9 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { BaseCourseContainerComponent } from 'app/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
-import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
-import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
-import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
@@ -36,8 +31,7 @@ import { CourseNotificationSettingService } from 'app/notification/course-notifi
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
-import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
+import { SidebarView, hasSidebar } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -84,17 +78,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
     showRefreshButton = signal<boolean>(false);
-    activatedComponentReference = signal<
-        | CourseExercisesComponent
-        | CourseLecturesComponent
-        | CourseExamsComponent
-        | CourseTutorialGroupsComponent
-        | CourseConversationsComponent
-        | CourseIrisComponent
-        | CourseDashboardComponent
-        | undefined
-    >(undefined);
-    protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
+    activatedComponentReference = signal<SidebarView | undefined>(undefined);
+    // True for all tabs except exercises.
+    protected readonly showCourseTitleBar = computed(() => {
+        this.navigationEnd(); // re-evaluate after each navigation
+        return !this.router.url.split('?')[0].split('/').includes('exercises');
+    });
 
     // Icons
     faTimes = faTimes;
@@ -238,19 +227,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     protected handleComponentActivation(componentRef: any): void {
-        if (
-            componentRef instanceof CourseExercisesComponent ||
-            componentRef instanceof CourseLecturesComponent ||
-            componentRef instanceof CourseTutorialGroupsComponent ||
-            componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent ||
-            componentRef instanceof CourseIrisComponent ||
-            componentRef instanceof CourseDashboardComponent
-        ) {
+        if (hasSidebar(componentRef)) {
             this.activatedComponentReference.set(componentRef);
         }
 
-        if (componentRef instanceof CourseExercisesComponent) {
+        if (typeof componentRef?.setPageTitle === 'function') {
             componentRef.setPageTitle(this.pageTitle());
         }
 
