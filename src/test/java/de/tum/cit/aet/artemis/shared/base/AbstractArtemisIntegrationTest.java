@@ -315,6 +315,13 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         return defaultReader;
     }
 
+    /**
+     * Prepares mail-related test infrastructure before each test: stubs the shared {@code javaMailSender} spy so no real
+     * mails are sent (see {@link #stubMailSenderSilently()} for the concurrency handling) and ensures the temporary
+     * directory used by mail/attachment handling exists.
+     *
+     * @throws IOException if the temporary directory cannot be created
+     */
     @BeforeEach
     void mockMailService() throws IOException {
         stubMailSenderSilently();

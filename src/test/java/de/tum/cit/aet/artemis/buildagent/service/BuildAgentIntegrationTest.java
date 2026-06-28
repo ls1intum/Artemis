@@ -115,6 +115,12 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         }
     }
 
+    /**
+     * Resets the shared build-agent state after each test so it cannot leak into the next one. The distributed build
+     * job queue, processing-jobs map, and result queue are cleared <em>before</em> the agent is resumed (and once more
+     * afterwards), and the agent is un-paused if a test left it paused. See the inline comment for why the clear must
+     * precede the resume.
+     */
     @AfterEach
     void cleanup() {
         // Clear queued work BEFORE resuming the agent. If we resumed first (as the previous version did), the resume
