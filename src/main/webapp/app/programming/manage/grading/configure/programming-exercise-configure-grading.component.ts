@@ -27,7 +27,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ProgrammingExerciseConfigureGradingStatusComponent } from '../configure-status/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from '../configure-actions/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from '../configure-submission-policy/programming-exercise-grading-submission-policy-configuration-actions.component';
-import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGradingTasksTableComponent } from '../tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { TestCaseDistributionChartComponent } from '../charts/test-case-distribution-chart.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from '../table-actions/programming-exercise-grading-table-actions.component';
@@ -38,6 +37,7 @@ import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/
 import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.component';
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';
+import { Message } from 'primeng/message';
 
 /**
  * Describes the editableField
@@ -88,7 +88,6 @@ export type Table = 'testCases' | 'codeAnalysis';
         ProgrammingExerciseConfigureGradingActionsComponent,
         ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent,
         SubmissionPolicyUpdateComponent,
-        NgbAlert,
         ProgrammingExerciseGradingTasksTableComponent,
         TestCaseDistributionChartComponent,
         ProgrammingExerciseGradingTableActionsComponent,
@@ -99,6 +98,7 @@ export type Table = 'testCases' | 'codeAnalysis';
         ScaCategoryDistributionChartComponent,
         FeedbackAnalysisComponent,
         TableViewComponent,
+        Message,
     ],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
