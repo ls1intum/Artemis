@@ -190,8 +190,7 @@ export class CourseManagementExercisesPage {
                     throw error;
                 }
                 // The freshly-created exercise card has not surfaced on the routed node yet — re-issue the list GET.
-                await this.page.reload();
-                await this.page.waitForLoadState('domcontentloaded');
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
             }
         }
     }
