@@ -40,21 +40,38 @@
         @if (selectedCount() > 0) {
             <div class="d-flex align-items-center flex-wrap gap-2 mt-2">
                 <span class="text-muted small">{{ 'artemisApp.exerciseManagement.selection.count' | artemisTranslate: { count: selectedCount() } }}</span>
-                <p-button size="small" severity="secondary" [outlined]="true" (onClick)="clearSelection()" jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll" />
+                <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    (click)="clearSelection()"
+                    jhiTranslate="artemisApp.exerciseManagement.selection.deselectAll"
+                ></button>
                 @if (allSelectedAreProgramming()) {
-                    <p-button size="small" severity="warn" [outlined]="true" (onClick)="editSelectedExercises()">
-                        <i class="pi pi-wrench me-1"></i><span jhiTranslate="artemisApp.exerciseManagement.selection.editSelected"></span>
-                    </p-button>
-                    <p-button size="small" severity="secondary" [outlined]="true" (onClick)="downloadReposSelected()">
-                        <i class="pi pi-download me-1"></i><span jhiTranslate="artemisApp.exerciseManagement.selection.downloadRepos"></span>
-                    </p-button>
-                    <p-button size="small" severity="secondary" [outlined]="true" (onClick)="consistencyCheckSelected()">
-                        <i class="pi pi-verified me-1"></i><span jhiTranslate="artemisApp.exerciseManagement.selection.consistencyCheck"></span>
-                    </p-button>
+                    <button type="button" class="btn btn-warning btn-sm" (click)="editSelectedExercises()">
+                        <fa-icon [icon]="faWrench" />
+                        <span jhiTranslate="entity.action.editSelected"></span>
+                    </button>
+                    <jhi-programming-assessment-repo-export [programmingExercises]="selectedProgrammingExercises()" />
+                    <button type="button" class="btn btn-outline-primary btn-sm" (click)="consistencyCheckSelected()">
+                        <fa-icon [icon]="faCheckDouble" />
+                        <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
+                    </button>
                 }
-                <p-button size="small" severity="danger" (onClick)="deleteSelected()">
-                    <i class="pi pi-trash me-1"></i><span jhiTranslate="artemisApp.exerciseManagement.selection.deleteSelected"></span>
-                </p-button>
+                <button
+                    jhiDeleteButton
+                    deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                    [translateValues]="{
+                        courseTitle: course()?.title,
+                        courseType: course()?.testCourse
+                            ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate)
+                            : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),
+                    }"
+                    [requireConfirmationOnlyForAdditionalChecks]="true"
+                    (delete)="deleteSelectedExercises()"
+                    [dialogError]="selectedDeleteError$"
+                >
+                    <fa-icon [icon]="faTrash" />
+                </button>
             </div>
         }
     </ng-template>

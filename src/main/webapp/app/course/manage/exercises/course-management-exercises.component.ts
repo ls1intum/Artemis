@@ -1,10 +1,11 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable, Subject, merge } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QUIZ_EXPORT_BACK, QuizExerciseExportComponent } from 'app/quiz/manage/export/quiz-exercise-export.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { FormsModule } from '@angular/forms';
@@ -14,12 +15,33 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCalendarDays, faCircleInfo, faCode, faFileExport, faFileImport, faLayerGroup, faList, faPen, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    faCalendarDays,
+    faCheckDouble,
+    faCircleInfo,
+    faCode,
+    faFileExport,
+    faFileImport,
+    faLayerGroup,
+    faList,
+    faPen,
+    faPlus,
+    faTrash,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ExerciseVariantGroupReference, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
+import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
+import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseGroup, effectiveDate } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, toCourseExerciseGroup } from 'app/course/manage/exercises/exercise-variant-group.service';
@@ -36,6 +58,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
@@ -75,6 +98,8 @@ const TYPE_TITLE_KEYS: Record<string, string> = {
         FaIconComponent,
         ExerciseTableComponent,
         ExerciseAddModalComponent,
+        ProgrammingAssessmentRepoExportButtonComponent,
+        DeleteButtonDirective,
         SearchFilterComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -91,6 +116,8 @@ export class CourseManagementExercisesComponent implements OnInit {
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly faPen = faPen;
     protected readonly faTrash = faTrash;
+    protected readonly faWrench = faWrench;
+    protected readonly faCheckDouble = faCheckDouble;
     protected readonly faLayerGroup = faLayerGroup;
     protected readonly ExerciseType = ExerciseType;
 
@@ -141,10 +168,23 @@ export class CourseManagementExercisesComponent implements OnInit {
         return t.size === 1 && t.has(ExerciseType.PROGRAMMING);
     });
 
+    /** The currently selected exercises, resolved from {@link selectedIds} to the full exercise objects. */
+    readonly selectedExercises = computed(() => {
+        const ids = this.selectedIds();
+        return this.exercises().filter((exercise) => exercise.id !== undefined && ids.has(exercise.id));
+    });
+    /** The selected exercises narrowed to programming exercises — the mass actions below only apply to those. */
+    readonly selectedProgrammingExercises = computed(() => this.selectedExercises().filter((exercise) => exercise.type === ExerciseType.PROGRAMMING) as ProgrammingExercise[]);
+
     private readonly route = inject(ActivatedRoute);
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly quizExerciseService = inject(QuizExerciseService);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly textExerciseService = inject(TextExerciseService);
+    private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
+    private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly dialogService = inject(DialogService);
+    private readonly modalService = inject(NgbModal);
     private readonly translateService = inject(TranslateService);
     private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
     private readonly deleteDialogService = inject(DeleteDialogService);
@@ -153,6 +193,9 @@ export class CourseManagementExercisesComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly groupDeleteError = new Subject<string>();
+    private readonly selectedDeleteError = new Subject<string>();
+    /** Exposed to the bulk-delete button (jhiDeleteButton) so the shared delete dialog can surface deletion errors. */
+    readonly selectedDeleteError$ = this.selectedDeleteError.asObservable();
 
     constructor() {
         // Restore the last-selected view so editing an exercise (which navigates away and re-instantiates this
@@ -175,30 +218,34 @@ export class CourseManagementExercisesComponent implements OnInit {
                 this.course.set(course);
             }
             if (course?.id) {
-                const courseId = course.id;
-                this.courseManagementService.findWithExercises(courseId).subscribe({
-                    next: (response) => {
-                        const loadedCourse = response.body;
-                        const exercises = loadedCourse?.exercises ?? [];
-                        exercises.forEach((exercise) => {
-                            exercise.isAtLeastTutor = loadedCourse?.isAtLeastTutor;
-                            exercise.isAtLeastEditor = loadedCourse?.isAtLeastEditor;
-                            exercise.isAtLeastInstructor = loadedCourse?.isAtLeastInstructor;
-                            if (exercise.type === ExerciseType.QUIZ) {
-                                this.applyQuizClientState(exercise as QuizExercise);
-                            }
-                        });
-                        this.exercises.set(exercises);
-                        this.loadGroupsFromServer(courseId);
-                        this.buildBuckets();
-                        this.loaded.set(true);
-                        this.loadQuizBatches(courseId);
-                    },
-                });
+                this.loadCourseExercises(course.id);
             } else {
                 this.buildBuckets();
                 this.loaded.set(true);
             }
+        });
+    }
+
+    /** Loads the course's exercises (with access rights, quiz state, groups and batches) and rebuilds the buckets. */
+    private loadCourseExercises(courseId: number): void {
+        this.courseManagementService.findWithExercises(courseId).subscribe({
+            next: (response) => {
+                const loadedCourse = response.body;
+                const exercises = loadedCourse?.exercises ?? [];
+                exercises.forEach((exercise) => {
+                    exercise.isAtLeastTutor = loadedCourse?.isAtLeastTutor;
+                    exercise.isAtLeastEditor = loadedCourse?.isAtLeastEditor;
+                    exercise.isAtLeastInstructor = loadedCourse?.isAtLeastInstructor;
+                    if (exercise.type === ExerciseType.QUIZ) {
+                        this.applyQuizClientState(exercise as QuizExercise);
+                    }
+                });
+                this.exercises.set(exercises);
+                this.loadGroupsFromServer(courseId);
+                this.buildBuckets();
+                this.loaded.set(true);
+                this.loadQuizBatches(courseId);
+            },
         });
     }
 
@@ -254,16 +301,81 @@ export class CourseManagementExercisesComponent implements OnInit {
         }
     }
 
-    deleteSelected(): void {
-        const ids = this.selectedIds();
-        this.exercises.set(this.exercises().filter((e) => e.id === undefined || !ids.has(e.id)));
-        this.clearSelection();
-        this.buildBuckets();
+    /**
+     * Deletes every selected exercise on the server via its type-specific service. Invoked by the bulk-delete button's
+     * {@code jhiDeleteButton} directive once the user confirms in the shared delete dialog. Once the deletions settle the
+     * exercises are reloaded from the server (rather than pruned locally) so the view reflects the true state even on a
+     * partial failure. Errors are surfaced through {@link selectedDeleteError} so the delete dialog (and the alert
+     * service) can show them.
+     */
+    deleteSelectedExercises(): void {
+        const exercisesToDelete = this.selectedExercises();
+        const courseId = this.course()?.id;
+        if (exercisesToDelete.length === 0 || courseId === undefined) {
+            this.selectedDeleteError.next('');
+            return;
+        }
+        const deletionObservables = exercisesToDelete.map((exercise) => this.deleteObservableFor(exercise));
+        merge(...deletionObservables).subscribe({
+            error: (error: HttpErrorResponse) => {
+                this.selectedDeleteError.next(error.message);
+                // Some exercises may already be gone; reload so the view matches the server after a partial failure.
+                this.clearSelection();
+                this.loadCourseExercises(courseId);
+            },
+            complete: () => {
+                this.selectedDeleteError.next('');
+                this.clearSelection();
+                this.loadCourseExercises(courseId);
+            },
+        });
     }
 
-    editSelectedExercises(): void {}
-    downloadReposSelected(): void {}
-    consistencyCheckSelected(): void {}
+    /** Resolves the type-specific deletion request for a single exercise. */
+    private deleteObservableFor(exercise: Exercise): Observable<HttpResponse<void>> {
+        switch (exercise.type) {
+            case ExerciseType.PROGRAMMING:
+                // Matches this view's single-exercise delete: repos and build plans are not removed (no extra checks).
+                return this.programmingExerciseService.delete(exercise.id!, false, false);
+            case ExerciseType.QUIZ:
+                return this.quizExerciseService.delete(exercise.id!);
+            case ExerciseType.TEXT:
+                return this.textExerciseService.delete(exercise.id!);
+            case ExerciseType.FILE_UPLOAD:
+                return this.fileUploadExerciseService.delete(exercise.id!);
+            case ExerciseType.MODELING:
+                return this.modelingExerciseService.delete(exercise.id!);
+            default:
+                return new Observable<HttpResponse<void>>((subscriber) => subscriber.complete());
+        }
+    }
+
+    /**
+     * Opens the shared "edit selected" modal to apply a common timeline (release/due/assessment dates, etc.) to all
+     * selected programming exercises at once. On close the exercises are reloaded so the updated dates are reflected
+     * in the table and the week/group buckets. Mirrors the develop programming-exercise list behaviour.
+     */
+    editSelectedExercises(): void {
+        const modalRef = this.modalService.open(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
+        modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises();
+        modalRef.closed.subscribe(() => {
+            const courseId = this.course()?.id;
+            if (courseId !== undefined) {
+                this.loadCourseExercises(courseId);
+            }
+        });
+    }
+
+    /** Runs a consistency check over the selected programming exercises and shows the results in a dialog. */
+    consistencyCheckSelected(): void {
+        this.dialogService.open(ConsistencyCheckComponent, {
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            header: this.translateService.instant('artemisApp.consistencyCheck.title'),
+            data: { exercisesToCheck: this.selectedProgrammingExercises() },
+        });
+    }
 
     openCreateModal(): void {
         this.addModalMode.set('create');

@@ -19,11 +19,7 @@
             "noExercisesMatch": "Keine Aufgaben stimmen mit \"{{ search }}\" überein.",
             "selection": {
                 "count": "{{ count }} ausgewählt",
-                "deselectAll": "Auswahl aufheben",
-                "editSelected": "Auswahl bearbeiten",
-                "downloadRepos": "Repositories herunterladen",
-                "consistencyCheck": "Konsistenzprüfung",
-                "deleteSelected": "Auswahl löschen"
+                "deselectAll": "Auswahl aufheben"
             },
             "bucket": {
                 "all": "Alle Aufgaben",

@@ -19,11 +19,7 @@
             "noExercisesMatch": "No exercises match \"{{ search }}\".",
             "selection": {
                 "count": "{{ count }} selected",
-                "deselectAll": "Deselect all",
-                "editSelected": "Edit Selected",
-                "downloadRepos": "Download Repos",
-                "consistencyCheck": "Consistency Check",
-                "deleteSelected": "Delete selected"
+                "deselectAll": "Deselect all"
             },
             "bucket": {
                 "all": "All Exercises",
