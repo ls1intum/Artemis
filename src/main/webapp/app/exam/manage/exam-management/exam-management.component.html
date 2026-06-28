@@ -39,6 +39,7 @@
                     </thead>
                     <tbody>
                         @for (exam of exams(); track trackId($index, exam)) {
+                            @let isActingAsRealExam = !isActingAsTestExam(exam);
                             <tr>
                                 <td class="d-md-table-cell">
                                     @if (course().isAtLeastInstructor) {
@@ -67,7 +68,7 @@
                                     <jhi-exam-status [exam]="exam" [course]="course()" class="d-flex justify-content-center" />
                                 </td>
                                 <td class="d-md-table-cell">
-                                    <div class="btn-group flex-btn-group-container">
+                                    <div class="btn-group flex-btn-group-container align-items-start">
                                         <div class="btn-group-vertical me-1 mb-1 exam-management-button-section">
                                             @if (course().isAtLeastEditor) {
                                                 <a
@@ -109,7 +110,7 @@
                                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
                                                 </a>
                                             }
-                                            @if (exam.examMode === ExamMode.REAL && course().isAtLeastInstructor) {
+                                            @if (isActingAsRealExam && course().isAtLeastInstructor) {
                                                 <a
                                                     [routerLink]="[exam.id, 'students']"
                                                     class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard"

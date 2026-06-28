@@ -27,7 +27,6 @@ import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
-import { DateDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -124,18 +123,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         const exam = this.exam();
         const isTestExamValue = hasTestExamMode(exam);
 
-        const conductionDateDetails: DateDetail[] = [];
-        conductionDateDetails.push({
-            type: DetailType.Date,
-            title: isTestExamValue ? 'artemisApp.examManagement.testExam.startDate' : 'artemisApp.exam.startDate',
-            data: { date: exam.startDate },
-        });
-        conductionDateDetails.push({
-            type: DetailType.Date,
-            title: isTestExamValue ? 'artemisApp.examManagement.testExam.endDate' : 'artemisApp.exam.endDate',
-            data: { date: exam.endDate },
-        });
-
         this.examDetailSections.set([
             {
                 headline: 'artemisApp.exam.detail.sections.general',
@@ -145,12 +132,12 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     { type: DetailType.Text, title: 'artemisApp.examManagement.examiner', data: { text: exam.examiner } },
                     { type: DetailType.Text, title: 'artemisApp.examManagement.moduleNumber', data: { text: exam.moduleNumber } },
                     { type: DetailType.Date, title: 'artemisApp.examManagement.visibleDate', data: { date: exam.visibleDate } },
-                    isTestExamValue && {
-                        type: DetailType.Boolean,
-                        title: 'artemisApp.examManagement.testExam.testExamWithSimulation',
-                        data: { boolean: exam.examMode === ExamMode.TEST_WITH_SIMULATION },
+                    {
+                        type: DetailType.Date,
+                        title: isTestExamValue ? 'artemisApp.examManagement.testExam.startDate' : 'artemisApp.exam.startDate',
+                        data: { date: exam.startDate },
                     },
-                    ...conductionDateDetails,
+                    { type: DetailType.Date, title: isTestExamValue ? 'artemisApp.examManagement.testExam.endDate' : 'artemisApp.exam.endDate', data: { date: exam.endDate } },
                     { type: DetailType.Date, title: 'artemisApp.exam.publishResultsDate', data: { date: exam.publishResultsDate } },
                     { type: DetailType.Date, title: 'artemisApp.exam.examStudentReviewStart', data: { date: exam.examStudentReviewStart } },
                     { type: DetailType.Date, title: 'artemisApp.exam.examStudentReviewEnd', data: { date: exam.examStudentReviewEnd } },
