@@ -161,11 +161,13 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getTestRepositoryUri())).isPresent();
         });
 
-        // Removing the user from the staff group (they are no longer staff in the course) deletes their repository tokens for the course.
+        // Removing the user from the staff group (they are no longer staff in the course) deletes their repository tokens for the course — also asynchronously, so poll again.
         courseAccessService.removeUserFromGroup(joiningStaff, instructorGroup, course);
-        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
-        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
-        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getTestRepositoryUri())).isEmpty();
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getTestRepositoryUri())).isEmpty();
+        });
     }
 
     @Test

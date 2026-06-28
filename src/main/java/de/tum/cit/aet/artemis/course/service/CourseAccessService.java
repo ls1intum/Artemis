@@ -205,9 +205,10 @@ public class CourseAccessService {
      */
     public void removeUserFromGroup(User user, String group, Course course) {
         userService.removeUserFromGroup(user, group);
-        // Remove the staff member's repository-scoped VCS access tokens for this course, unless they still hold another staff role in it.
+        // Remove the staff member's repository-scoped VCS access tokens for this course, unless they still hold another staff role in it. Run asynchronously so the request does
+        // not block; a token that lingers briefly is harmless because authorization is re-checked on every git operation.
         if (isStaffGroup(course, group)) {
-            repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaff(user, course);
+            repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaffAsync(user, course);
         }
     }
 

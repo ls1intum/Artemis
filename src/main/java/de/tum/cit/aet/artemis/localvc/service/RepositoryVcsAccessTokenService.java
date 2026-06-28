@@ -197,6 +197,21 @@ public class RepositoryVcsAccessTokenService {
     }
 
     /**
+     * Asynchronously removes the staff member's repository tokens for the course when they are no longer staff (see {@link #deleteForUserInCourseIfNoLongerStaff}).
+     * <p>
+     * Used on the staff-leave request path (removing a tutor/editor/instructor from a course group) so the client does not block on token cleanup. Running this asynchronously is
+     * safe even though a token then lingers for a brief moment: authorization is re-checked on every git operation, so a leftover token for a user that is no longer staff is
+     * rejected anyway.
+     *
+     * @param user   the user that was removed from a course group
+     * @param course the course the user was removed from
+     */
+    @Async
+    public void deleteForUserInCourseIfNoLongerStaffAsync(User user, Course course) {
+        deleteForUserInCourseIfNoLongerStaff(user, course);
+    }
+
+    /**
      * Removes the repository tokens a user owns for the (non-exam) programming exercises of the given course, but only if the user is no longer at least a tutor in that course.
      * This protects users that hold more than one staff role (e.g. an instructor that was only removed from the editor group keeps their tokens).
      * <p>
