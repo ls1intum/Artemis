@@ -189,9 +189,10 @@ public class CourseAccessService {
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(course, user));
             learningPathApi.ifPresent(api -> api.generateLearningPathForUser(courseWithCompetencies, user));
         }
-        // Pre-provision repository-scoped VCS access tokens for the staff member across all base repositories of the course's programming exercises.
+        // Pre-provision repository-scoped VCS access tokens for the staff member across all base repositories of the course's programming exercises. Run asynchronously so adding a
+        // staff member to a course with many programming exercises does not block the request; the clone-dialog lazy fallback covers the brief window before the tokens exist.
         if (isStaffGroup(course, group)) {
-            repositoryVcsAccessTokenService.ensureTokensForStaffUserInCourse(user, course);
+            repositoryVcsAccessTokenService.ensureTokensForStaffUserInCourseAsync(user, course);
         }
     }
 

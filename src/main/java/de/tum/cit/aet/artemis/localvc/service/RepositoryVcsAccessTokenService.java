@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -122,6 +123,21 @@ public class RepositoryVcsAccessTokenService {
     }
 
     /**
+     * Asynchronously provisions the repository tokens for a staff user that just joined a course (see {@link #ensureTokensForStaffUserInCourse}).
+     * <p>
+     * Used on the staff-join request path (adding a tutor/editor/instructor to a course group) so the client does not block while tokens for potentially many programming exercises
+     * are created. The clone-dialog lazy fallback covers the brief window before the eager tokens exist, so a delayed (or failed) async run never blocks a staff member from
+     * cloning.
+     *
+     * @param user   the staff user that just joined the course
+     * @param course the course the user joined
+     */
+    @Async
+    public void ensureTokensForStaffUserInCourseAsync(User user, Course course) {
+        ensureTokensForStaffUserInCourse(user, course);
+    }
+
+    /**
      * Eagerly creates the missing repository tokens for a single staff user across all (non-exam) programming exercises of the given course.
      * <p>
      * Exam programming exercises and staff added through paths other than the course-management add endpoint (e.g. admin user management, CSV import) are intentionally not covered
@@ -131,15 +147,16 @@ public class RepositoryVcsAccessTokenService {
      * @param course the course the user joined
      */
     public void ensureTokensForStaffUserInCourse(User user, Course course) {
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllWithCategoriesByCourseId(course.getId());
+        // Load all programming exercises of the course together with their template/solution participations and auxiliary repositories in a single batch query (instead of one
+        // fetch per exercise), so adding a staff member to a course with many exercises stays cheap.
+        List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesByCourseId(course.getId());
         if (exercises.isEmpty()) {
             return;
         }
         Set<Long> exerciseIds = exercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
         Set<String> existingUris = repositoryVCSAccessTokenRepository.findRepositoryUrisByUserIdAndExerciseIdIn(user.getId(), exerciseIds);
         List<RepositoryVCSAccessToken> toCreate = new ArrayList<>();
-        for (Long exerciseId : exerciseIds) {
-            ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+        for (ProgrammingExercise exercise : exercises) {
             for (BaseRepository baseRepository : baseRepositoriesOf(exercise)) {
                 if (!existingUris.contains(baseRepository.repositoryUri())) {
                     toCreate.add(buildToken(user, exercise, baseRepository));

@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.localvc;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.awaitility.Awaitility.await;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +19,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -41,6 +44,9 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private CourseAccessService courseAccessService;
 
     private ProgrammingExercise exercise;
 
@@ -134,6 +140,32 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
         repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.SOLUTION, null);
         repositoryVcsAccessTokenService.deleteAllByUserId(tutor.getId());
         assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void addStaffToCourseGroup_asynchronouslyProvisionsTokens_andRemovalDeletesThem() {
+        // A dedicated user that is not yet staff in the course (so soft state of the shared per-prefix users is untouched).
+        User joiningStaff = userUtilService.createAndSaveUser(TEST_PREFIX + "joiningstaff");
+        String instructorGroup = course.getInstructorGroupName();
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
+
+        // Adding the user to a staff group triggers ASYNCHRONOUS provisioning of repository tokens for every base repository of the course's exercises (the request itself returns
+        // without waiting for token creation).
+        courseAccessService.addUserToGroup(joiningStaff, instructorGroup, course);
+
+        // The provisioning runs off the request thread, so poll until the tokens for all base repositories of the exercise exist.
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isPresent();
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getSolutionRepositoryUri())).isPresent();
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getTestRepositoryUri())).isPresent();
+        });
+
+        // Removing the user from the staff group (they are no longer staff in the course) deletes their repository tokens for the course.
+        courseAccessService.removeUserFromGroup(joiningStaff, instructorGroup, course);
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getTestRepositoryUri())).isEmpty();
     }
 
     @Test
