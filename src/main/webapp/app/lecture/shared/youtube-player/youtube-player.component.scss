@@ -35,6 +35,7 @@
     }
 
     .resizer-handle {
+        // A flex item between the video and transcript columns (the divider), not overlapping the video.
         display: flex;
         align-items: center;
         justify-content: center;

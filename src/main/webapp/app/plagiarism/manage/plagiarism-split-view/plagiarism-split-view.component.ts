@@ -1,7 +1,6 @@
-import { AfterViewInit, Component, Directive, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, signal, viewChildren } from '@angular/core';
+import { Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, afterNextRender, inject, input, signal } from '@angular/core';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
-import Split from 'split.js';
 import { Subject } from 'rxjs';
 import { Exercise, ExerciseType, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
@@ -13,20 +12,19 @@ import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/Plagiarism
 import { IconDefinition, faLock, faUnlock } from '@fortawesome/free-solid-svg-icons';
 import { TextSubmissionViewerComponent } from './text-submission-viewer/text-submission-viewer.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-
-@Directive({ selector: '[jhiPane]' })
-export class SplitPaneDirective {
-    elementRef = inject(ElementRef);
-}
+import { SplitterModule } from 'primeng/splitter';
+import { TooltipModule } from 'primeng/tooltip';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-plagiarism-split-view',
     styleUrls: ['./plagiarism-split-view.component.scss'],
     templateUrl: './plagiarism-split-view.component.html',
-    imports: [SplitPaneDirective, TextSubmissionViewerComponent, FaIconComponent],
+    imports: [SplitterModule, TextSubmissionViewerComponent, FaIconComponent, TooltipModule, ArtemisTranslatePipe],
 })
-export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, OnInit, OnDestroy {
+export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestroy {
     private plagiarismCasesService = inject(PlagiarismCasesService);
+    private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
 
     readonly comparison = input<PlagiarismComparison | undefined>(undefined!);
     readonly exercise = input<Exercise>();
@@ -34,14 +32,34 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     readonly sortByStudentLogin = input<string>();
     readonly forStudent = input<boolean>();
 
-    readonly panes = viewChildren(SplitPaneDirective);
-
     readonly plagiarismComparison = signal<PlagiarismComparison | undefined>(undefined);
     fileSelectedSubject = new Subject<PlagiarismFileElement>();
     showFilesSubject = new Subject<boolean>();
     dropdownHoverSubject = new Subject<PlagiarismFileElement>();
 
-    public split: Split.Instance;
+    /**
+     * Sizes (in percent) of the two splitter panels. Bound to p-splitter via [panelSizes];
+     * updating this signal re-applies the panel sizes at runtime through the panelSizes setter.
+     */
+    readonly panelSizes = signal<number[]>([50, 50]);
+
+    /**
+     * Which pane the "show only left/right" controls have fully collapsed, or undefined when both are shown.
+     * Collapsing is applied via a CSS class (see the component SCSS), NOT via `panelSizes`: p-splitter coerces a
+     * falsy size to an even split (`panelInitialSize || 100 / panels.length`), so setting a pane to `0` would
+     * render it at 50% and never actually hide it.
+     */
+    readonly collapsedSide = signal<'left' | 'right' | undefined>(undefined);
+
+    /**
+     * Live x-position (px, from the splitter's left edge) of the gutter centre. The lock-files button is positioned
+     * here so it stays on the divider while dragging, instead of staying fixed at the centre (a reviewer finding).
+     * Updated by a ResizeObserver on the first panel because p-splitter emits no event during a drag.
+     */
+    readonly gutterCenterPx = signal<number | undefined>(undefined);
+    /** Splitter gutter width (px); single source of truth, bound to the template's [gutterSize] and used to centre the lock button. */
+    protected readonly gutterSize = 12;
+    private panelResizeObserver?: ResizeObserver;
 
     readonly isProgrammingOrTextExercise = signal(false);
 
@@ -53,17 +71,32 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     protected readonly faLock: IconDefinition = faLock;
     protected readonly faUnlock: IconDefinition = faUnlock;
 
-    /**
-     * Initialize third-party libraries inside this lifecycle hook.
-     */
-    ngAfterViewInit(): void {
-        const paneElements = this.panes().map((pane: SplitPaneDirective) => pane.elementRef.nativeElement);
+    constructor() {
+        // Track the gutter position once the splitter (and its panels) have rendered.
+        afterNextRender(() => this.observeGutterPosition());
+    }
 
-        this.split = Split(paneElements, {
-            minSize: 100,
-            sizes: [50, 50],
-            gutterSize: 8,
-        });
+    /**
+     * Observes the first splitter panel so the lock-files button can follow the gutter live while dragging.
+     * The gutter centre sits at the first panel's width plus half the gutter size, measured from the splitter's left.
+     */
+    private observeGutterPosition(): void {
+        const firstPanel = this.hostElement.nativeElement.querySelector<HTMLElement>('.p-splitterpanel');
+        if (!firstPanel || typeof ResizeObserver === 'undefined') {
+            return;
+        }
+        const update = () => {
+            // Skip a meaningless measurement (panel not laid out yet, e.g. inside an inactive ngbNav tab): writing
+            // gutterSize/2 here would jam the lock button near the far-left edge. Leaving gutterCenterPx undefined
+            // keeps the SCSS fallback (left: 50%; translateX(-50%)) centring it until a real width arrives.
+            const width = firstPanel.offsetWidth;
+            if (width > 0) {
+                this.gutterCenterPx.set(width + this.gutterSize / 2);
+            }
+        };
+        this.panelResizeObserver = new ResizeObserver(update);
+        this.panelResizeObserver.observe(firstPanel);
+        update();
     }
 
     ngOnInit(): void {
@@ -98,6 +131,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
         this.fileSelectedSubject.complete();
         this.showFilesSubject.complete();
         this.dropdownHoverSubject.complete();
+        this.panelResizeObserver?.disconnect();
     }
 
     /**
@@ -173,15 +207,18 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     handleSplitControl(pane: string) {
         switch (pane) {
             case 'left': {
-                this.split.collapse(1);
+                // show only the left pane: fully collapse the right one
+                this.collapsedSide.set('right');
                 return;
             }
             case 'right': {
-                this.split.collapse(0);
+                // show only the right pane: fully collapse the left one
+                this.collapsedSide.set('left');
                 return;
             }
             case 'even': {
-                this.split.setSizes([50, 50]);
+                this.collapsedSide.set(undefined);
+                this.panelSizes.set([50, 50]);
             }
         }
     }

@@ -12,7 +12,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule } from 'primeng/paginator';
 import { ResultComponent } from '../../result/result.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -31,7 +32,7 @@ import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submi
         NgbTooltip,
         ResultComponent,
         ButtonComponent,
-        NgbPagination,
+        PaginatorModule,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
     ],
