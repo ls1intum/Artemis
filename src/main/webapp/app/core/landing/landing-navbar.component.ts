@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBars, faFlag, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -218,6 +218,7 @@ export class LandingNavbarComponent {
     private translateService = inject(TranslateService);
     private findLanguagePipe = new FindLanguageFromKeyPipe();
     private router = inject(Router);
+    private changeDetectorRef = inject(ChangeDetectorRef);
 
     languages = LANGUAGES;
     mobileMenuOpen = signal(false);
@@ -236,7 +237,10 @@ export class LandingNavbarComponent {
     }));
 
     changeLanguage(languageKey: string): void {
-        this.translateService.use(languageKey);
+        // Switching language fetches the translation files asynchronously. This OnPush component would
+        // otherwise not re-run its (impure) translate pipes once the new language is active, so mark it
+        // for check on completion to refresh the rendered strings.
+        this.translateService.use(languageKey).subscribe(() => this.changeDetectorRef.markForCheck());
     }
 
     toggleMobileMenu(): void {
