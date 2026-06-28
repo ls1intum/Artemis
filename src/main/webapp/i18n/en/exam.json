@@ -547,7 +547,7 @@
                 "realExam": "Exam",
                 "testExam": "Test Exam",
                 "testExamWithSimulation": "Test Exam with Simulation",
-                "testExamWithSimulationCheckboxTooltip": "Students can start one live attempt first. Repeatable practice attempts open immediately after the simulation working time is over. This is useful when the first attempt should have a synchronized end time for all students.",
+                "testExamWithSimulationTooltip": "Students can start one live attempt first. Repeatable practice attempts open immediately after the simulation working time is over. Ideally, the start of the working window is during a lecture.",
                 "examMode": "Mode",
                 "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students receive automated feedback after submitting. NOTE: This cannot be changed later on!",
                 "startDate": "Start of working window",

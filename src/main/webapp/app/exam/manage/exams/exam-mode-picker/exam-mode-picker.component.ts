@@ -2,12 +2,14 @@ import { Component, input, output } from '@angular/core';
 import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { Tooltip } from 'primeng/tooltip';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-mode-picker',
     templateUrl: './exam-mode-picker.component.html',
     styleUrls: ['./exam-mode-picker.component.scss'],
-    imports: [NgClass, TranslateDirective],
+    imports: [NgClass, TranslateDirective, Tooltip, ArtemisTranslatePipe],
 })
 export class ExamModePickerComponent {
     exam = input.required<Exam>();

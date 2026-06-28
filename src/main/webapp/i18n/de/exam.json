@@ -547,7 +547,7 @@
                 "realExam": "Klausur",
                 "testExam": "Testklausur",
                 "testExamWithSimulation": "Testklausur mit Simulation",
-                "testExamWithSimulationCheckboxTooltip": "Studierende können zuerst einen Live-Versuch starten. Wiederholbare Übungsversuche werden direkt nach Ablauf der Simulationsbearbeitungszeit freigeschaltet. Das ist hilfreich, wenn der erste Versuch für alle Studierenden synchron enden soll.",
+                "testExamWithSimulationTooltip": "Studierende können zuerst einen Live-Versuch starten. Wiederholbare Übungsversuche werden direkt nach Ablauf der Simulationsbearbeitungszeit freigeschaltet. Idealerweise findet der Beginn der Bearbeitungszeit während einer Vorlesung statt.",
                 "examMode": "Modus",
                 "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "startDate": "Beginn Bearbeitungsfenster",
