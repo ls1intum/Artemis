@@ -14,7 +14,7 @@ import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorState } from 'primeng/paginator';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('RatingListComponent', () => {
@@ -77,7 +77,7 @@ describe('RatingListComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent), MockDirective(SortDirective), MockComponent(NgbPagination)],
+            imports: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent), MockDirective(SortDirective)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -101,12 +101,12 @@ describe('RatingListComponent', () => {
     it('should initialize ratings from paginated response', () => {
         expect(component.ratings()).toHaveLength(3);
         expect(component.totalElements()).toBe(3);
-        expect(component.page).toBe(1);
+        expect(component.page()).toBe(1);
     });
 
     it('should load ratings with pagination parameters', () => {
         const serviceSpy = vi.spyOn(ratingService, 'getRatingsForDashboard');
-        component.page = 2;
+        component.page.set(2);
         component.loadRatings();
 
         // page is 1-indexed in component, 0-indexed in API
@@ -115,7 +115,8 @@ describe('RatingListComponent', () => {
 
     it('should reload ratings on page change', () => {
         const loadSpy = vi.spyOn(component, 'loadRatings');
-        component.onPageChange();
+        component.onPageChange({ page: 1 } as PaginatorState);
+        expect(component.page()).toBe(2);
         expect(loadSpy).toHaveBeenCalled();
     });
 

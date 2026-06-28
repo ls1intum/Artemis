@@ -19,7 +19,6 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -189,7 +188,6 @@ describe('CourseOverviewComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
-                MockModule(MatSidenavModule),
                 MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CourseOverviewComponent,
@@ -679,6 +677,16 @@ describe('CourseOverviewComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.exam-wrapper')).toBeNull();
         expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
+    });
+
+    it('should hide the sidebar while an exam is started and show it otherwise', () => {
+        component.isExamStarted.set(true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(true);
+
+        component.isExamStarted.set(false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(false);
     });
 
     it('should examStarted value to true when exam is started', async () => {
