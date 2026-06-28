@@ -370,11 +370,6 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         let reply: Post;
 
         test.beforeEach('Create source/destination channels, a message and a reply', async ({ login, communicationAPIRequests }) => {
-            // Forwarding is heavyweight for a @fast test: two full conversation navigations, a forward dialog, and the
-            // cache-readiness reload-retry that renders the forwarded preview (openConversationAndWaitForForwardedPreview).
-            // Under parallel multi-node CI load this legitimately exceeds the 60s fast budget, so mark these tests slow
-            // (test.slow() triples the timeout). Determinism is handled by the reload-retry helper, not by the extra time.
-            test.slow();
             await login(admin);
             const uid = generateUUID().slice(0, 8);
             const courseRef = { id: writeCourse.id } as any;
@@ -394,10 +389,8 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
 
             await courseMessages.forwardMessageToChannel(sourcePost.id!, destinationChannel.name!);
 
-            // Opening the destination kicks off a background chain (message list -> forwarded metadata -> source post fetch)
-            // that renders the preview. Reload-retry until the preview is visible so the test verifies the rendered outcome
-            // instead of racing that chain against the test deadline under parallel multi-node load. The preview only
-            // renders when the access-check-guarded source fetch succeeds (a 403 yields no preview), so this also covers it.
+            // Opening the destination triggers the access-checked source-post fetch; a visible preview proves it succeeded for an
+            // accessible source. Reload-retry to absorb the multi-node lag before the just-created forward is visible to the serving node.
             await courseMessages.openConversationAndWaitForForwardedPreview(writeCourse.id, destinationChannel.id!, sourcePost.content!);
         });
 
@@ -408,7 +401,7 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
 
             await courseMessages.forwardReplyToChannel(sourcePost.id!, reply.id!, destinationChannel.name!);
 
-            // Same reload-retry rationale as the forwarded-post case, here for the answer source fetch.
+            // Same as the post case, but the access check guards the source-answer fetch; a visible preview proves it returned the reply.
             await courseMessages.openConversationAndWaitForForwardedPreview(writeCourse.id, destinationChannel.id!, reply.content!);
         });
     });
