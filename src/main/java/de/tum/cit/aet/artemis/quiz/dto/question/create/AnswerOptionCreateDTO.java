@@ -23,7 +23,7 @@ public record AnswerOptionCreateDTO(@NotBlank @Size(max = MAX_QUIZ_ANSWER_OPTION
      * including text, hint, explanation, and correctness flag.
      *
      * @param answerOption the {@link AnswerOption} domain object to convert
-     * @return the {@link AnswerOptionCreateDTO} with properties set from the domain object^^
+     * @return the {@link AnswerOptionCreateDTO} with properties set from the domain object
      */
     public static AnswerOptionCreateDTO of(AnswerOption answerOption) {
         return new AnswerOptionCreateDTO(answerOption.getText(), answerOption.getHint(), answerOption.getExplanation(), answerOption.isIsCorrect());

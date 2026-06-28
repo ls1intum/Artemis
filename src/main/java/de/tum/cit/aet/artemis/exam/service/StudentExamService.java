@@ -9,7 +9,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -441,29 +440,13 @@ public class StudentExamService {
         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
 
         // Replace detached client question shells before saving; QuizQuestion is versioned and Hibernate rejects null-version detached references.
-        Set<Long> unresolvedQuestionIds = replaceDetachedQuizQuestionReferencesFromLatestSubmission(quizSubmissionFromClient, existingSubmissionInDatabase);
-        if (!unresolvedQuestionIds.isEmpty()) {
-            // First save or newly answered question: fall back to the exercise graph as the authoritative question source.
-            QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(existingParticipationInDatabase.getExercise().getId());
-            replaceDetachedQuizQuestionReferencesFromExercise(quizSubmissionFromClient, quizExercise);
-        }
+        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(existingParticipationInDatabase.getExercise().getId());
+        replaceDetachedQuizQuestionReferencesFromExercise(quizSubmissionFromClient, quizExercise);
 
         if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
             quizSubmissionRepository.save(quizSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
-    }
-
-    private Set<Long> replaceDetachedQuizQuestionReferencesFromLatestSubmission(QuizSubmission submissionFromClient, QuizSubmission existingSubmissionInDatabase) {
-        if (existingSubmissionInDatabase == null) {
-            // No previous submission means no question graph to reuse here; signal the caller to load the exercise.
-            return submissionFromClient.getSubmittedAnswers().stream().map(SubmittedAnswer::getQuizQuestion).filter(Objects::nonNull).map(QuizQuestion::getId)
-                    .filter(Objects::nonNull).collect(Collectors.toSet());
-        }
-        // Prefer the already loaded latest submission to avoid an extra query on regular autosaves.
-        Map<Long, QuizQuestion> questionsById = existingSubmissionInDatabase.getSubmittedAnswers().stream().map(SubmittedAnswer::getQuizQuestion).filter(Objects::nonNull)
-                .filter(question -> question.getId() != null).collect(Collectors.toMap(QuizQuestion::getId, question -> question, (left, right) -> left));
-        return replaceDetachedQuizQuestionReferencesById(submissionFromClient, questionsById);
     }
 
     private void replaceDetachedQuizQuestionReferencesFromExercise(QuizSubmission submissionFromClient, QuizExercise quizExercise) {
@@ -472,8 +455,7 @@ public class StudentExamService {
         replaceDetachedQuizQuestionReferencesById(submissionFromClient, questionsById);
     }
 
-    private Set<Long> replaceDetachedQuizQuestionReferencesById(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
-        Set<Long> unresolvedQuestionIds = new HashSet<>();
+    private void replaceDetachedQuizQuestionReferencesById(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
         for (SubmittedAnswer submittedAnswer : submissionFromClient.getSubmittedAnswers()) {
             QuizQuestion question = submittedAnswer.getQuizQuestion();
             if (question != null && question.getId() != null) {
@@ -482,12 +464,8 @@ public class StudentExamService {
                 if (managedQuestion != null) {
                     submittedAnswer.setQuizQuestion(managedQuestion);
                 }
-                else {
-                    unresolvedQuestionIds.add(question.getId());
-                }
             }
         }
-        return unresolvedQuestionIds;
     }
 
     private void saveSubmissionVersion(User currentUser, Submission submissionFromClient) {
