@@ -425,8 +425,14 @@ public class ProgrammingExerciseCreationUpdateService {
 
         programmingExercise.validateDates();
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
-            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+            try {
+                final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
+                setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+            }
+            catch (JsonProcessingException e) {
+                throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
+                        "invalidBuildPlanConfiguration");
+            }
         }
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
