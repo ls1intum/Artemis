@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBars, faFlag, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { MenuModule } from 'primeng/menu';
@@ -14,7 +14,7 @@ import { MenuItem } from 'primeng/api';
     selector: 'jhi-landing-navbar',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, ThemeSwitchComponent, MenuModule],
+    imports: [FaIconComponent, ArtemisTranslatePipe, ThemeSwitchComponent, MenuModule],
     styles: `
         :host {
             display: block;
@@ -178,12 +178,17 @@ import { MenuItem } from 'primeng/api';
                 <div class="lang-dropdown">
                     <button type="button" class="nav-link" (click)="langMenu.toggle($event)">
                         <fa-icon [icon]="faFlag" />
-                        <span>{{ languageLabel() }}</span>
+                        <span>{{ 'global.menu.language' | artemisTranslate }}</span>
                     </button>
                     <p-menu #langMenu [model]="languageMenuItems" [popup]="true" />
                 </div>
-                <button class="login-btn" (click)="navigateToLogin()">{{ loginLabel() }}</button>
-                <button class="icon-btn mobile-menu-btn" (click)="toggleMobileMenu()" [attr.aria-expanded]="mobileMenuOpen()" [attr.aria-label]="toggleMenuLabel()">
+                <button class="login-btn" (click)="navigateToLogin()">{{ 'landing.navbar.logIn' | artemisTranslate }}</button>
+                <button
+                    class="icon-btn mobile-menu-btn"
+                    (click)="toggleMobileMenu()"
+                    [attr.aria-expanded]="mobileMenuOpen()"
+                    [attr.aria-label]="'landing.navbar.toggleMenu' | artemisTranslate"
+                >
                     <fa-icon [icon]="mobileMenuOpen() ? faXmark : faBars" />
                 </button>
             </div>
@@ -196,7 +201,7 @@ import { MenuItem } from 'primeng/api';
                     <div class="lang-dropdown">
                         <button type="button" class="nav-link" (click)="mobileLangMenu.toggle($event)">
                             <fa-icon [icon]="faFlag" />
-                            <span>{{ languageLabel() }}</span>
+                            <span>{{ 'global.menu.language' | artemisTranslate }}</span>
                         </button>
                         <p-menu #mobileLangMenu [model]="mobileLanguageMenuItems" [popup]="true" />
                     </div>
@@ -213,13 +218,6 @@ export class LandingNavbarComponent {
     private translateService = inject(TranslateService);
     private findLanguagePipe = new FindLanguageFromKeyPipe();
     private router = inject(Router);
-
-    // Emits whenever the active language changes (after its translations finish loading asynchronously).
-    private activeLanguage = toSignal(this.translateService.onLangChange, { initialValue: undefined });
-
-    protected readonly languageLabel = computed(() => this.translate('global.menu.language'));
-    protected readonly loginLabel = computed(() => this.translate('landing.navbar.logIn'));
-    protected readonly toggleMenuLabel = computed(() => this.translate('landing.navbar.toggleMenu'));
 
     languages = LANGUAGES;
     mobileMenuOpen = signal(false);
@@ -239,11 +237,6 @@ export class LandingNavbarComponent {
 
     changeLanguage(languageKey: string): void {
         this.translateService.use(languageKey);
-    }
-
-    private translate(key: string): string {
-        this.activeLanguage(); // re-evaluate the label whenever the active language changes
-        return this.translateService.instant(key);
     }
 
     toggleMobileMenu(): void {
