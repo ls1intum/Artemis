@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
@@ -69,6 +71,19 @@ public class IrisChatWebsocketService {
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(messageDTO, rateLimitInfo, stages, sessionTitle, null, null, citationInfo);
         websocketService.send(user.getLogin(), topic, payload);
+    }
+
+    /**
+     * Pushes a struggle event (lamp / open-notice) to the student on the per-user struggle topic (spec §5.5): the
+     * server publishes to {@code /topic/iris/struggle-intervention} via {@code sendMessageToUser}, which the student
+     * receives on {@code /user/topic/iris/struggle-intervention}. After unify-persistence (spec §7) the event
+     * references a persisted proactive message via its {@code sessionId}/{@code messageId}.
+     *
+     * @param user  the student to notify
+     * @param event the struggle event payload
+     */
+    public void sendStruggleEvent(User user, StruggleInterventionEventDTO event) {
+        websocketService.send(user.getLogin(), "struggle-intervention", event);
     }
 
     /**

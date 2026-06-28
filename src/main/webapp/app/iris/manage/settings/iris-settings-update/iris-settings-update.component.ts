@@ -185,6 +185,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         return {
             ...settings,
             customInstructions: this.normalizeEmpty(settings.customInstructions) as string | undefined,
+            // A never-opted-in course loads the flag as `false` (or absent, on a row predating the field). Coerce to
+            // a boolean so an unchanged off-course is not falsely flagged dirty against an explicit `false`.
+            proactiveStruggleEnabled: !!settings.proactiveStruggleEnabled,
         };
     }
 
@@ -255,6 +258,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             if (originalSettingsValue) {
                 settingsToSave.variant = originalSettingsValue.variant;
                 settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+                settingsToSave.proactiveStruggleEnabled = originalSettingsValue.proactiveStruggleEnabled;
             }
         } else {
             // Admin: reconstruct rateLimit from form fields
@@ -379,6 +383,16 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         const currentSettings = this.settings();
         if (currentSettings) {
             this.settings.set({ ...currentSettings, variant: value });
+        }
+    }
+
+    /**
+     * Update the admin-only proactive-struggle flag in the settings signal (saved via the Save button).
+     */
+    updateProactiveStruggleEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set({ ...currentSettings, proactiveStruggleEnabled: value });
         }
     }
 

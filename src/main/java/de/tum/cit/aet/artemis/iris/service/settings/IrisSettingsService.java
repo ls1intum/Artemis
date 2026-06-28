@@ -111,11 +111,12 @@ public class IrisSettingsService {
 
     /**
      * Validates that non-admin users are not trying to change restricted settings.
-     * Instructors can only modify enabled status and custom instructions; variant and rate limits are admin-only.
+     * Instructors can only modify enabled status and custom instructions; variant, rate limits and proactive struggle
+     * detection are admin-only.
      *
      * @param request the requested new settings
      * @param current the current settings
-     * @throws AccessForbiddenAlertException if the request attempts to change variant or rate limits
+     * @throws AccessForbiddenAlertException if the request attempts to change variant, rate limits or proactive struggle detection
      */
     private void enforceInstructorRestrictions(IrisCourseSettings request, IrisCourseSettings current) {
         if (!Objects.equals(request.variant(), current.variant())) {
@@ -124,6 +125,10 @@ public class IrisSettingsService {
 
         if (!Objects.equals(request.rateLimit(), current.rateLimit())) {
             throw new AccessForbiddenAlertException("Only administrators can change Iris rate limits", "IrisSettings", "irisRateLimitRestricted");
+        }
+
+        if (request.proactiveStruggleEnabled() != current.proactiveStruggleEnabled()) {
+            throw new AccessForbiddenAlertException("Only administrators can change proactive struggle detection", "IrisSettings", "irisProactiveStruggleRestricted");
         }
     }
 
@@ -209,7 +214,7 @@ public class IrisSettingsService {
             return IrisCourseSettings.defaultSettings();
         }
         var sanitizedRateLimit = sanitizeRateLimit(payload.rateLimit());
-        return IrisCourseSettings.of(payload.enabled(), payload.customInstructions(), payload.variant(), sanitizedRateLimit);
+        return IrisCourseSettings.of(payload.enabled(), payload.customInstructions(), payload.variant(), sanitizedRateLimit, payload.proactiveStruggleEnabled());
     }
 
     private IrisRateLimitConfiguration sanitizeRateLimit(IrisRateLimitConfiguration rateLimit) {

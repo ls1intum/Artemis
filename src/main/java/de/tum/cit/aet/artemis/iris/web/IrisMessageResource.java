@@ -34,7 +34,9 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
@@ -206,6 +208,38 @@ public class IrisMessageResource {
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);
         return ResponseEntity.ok(IrisMessageResponseDTO.of(savedMessage));
+    }
+
+    /**
+     * PUT sessions/{sessionId}/messages/{messageId}/proactive-outcome : record how the student reacted to a
+     * proactive struggle hint (spec §7.5). Mirrors {@link #rateMessage}, but only proactive Iris messages
+     * (LLM sender AND origin PROACTIVE_STRUGGLE) accept an outcome.
+     *
+     * @param sessionId of the session
+     * @param messageId of the message
+     * @param outcome   Request body: the durable outcome (currently only DISMISSED).
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and the updated message.
+     */
+    @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/proactive-outcome")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<IrisMessageResponseDTO> setProactiveOutcome(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody IrisProactiveOutcome outcome) {
+        var message = irisMessageRepository.findByIdElseThrow(messageId);
+        var session = message.getSession();
+        if (!Objects.equals(session.getId(), sessionId)) {
+            throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
+        }
+        irisSessionService.checkIsIrisActivated(session);
+        irisSessionService.checkHasAccessToIrisSession(session, null);
+        if (outcome == null) {
+            // The body is the durable outcome (currently only DISMISSED); a null must never clear a prior dismissal.
+            throw new BadRequestException("A proactive outcome is required");
+        }
+        if (message.getSender() != IrisMessageSender.LLM || message.getOrigin() != IrisMessageOrigin.PROACTIVE_STRUGGLE) {
+            throw new BadRequestException("You can only set a proactive outcome on a proactive Iris message");
+        }
+        message.setProactiveOutcome(outcome);
+        return ResponseEntity.ok(IrisMessageResponseDTO.of(irisMessageRepository.save(message)));
     }
 
     /**

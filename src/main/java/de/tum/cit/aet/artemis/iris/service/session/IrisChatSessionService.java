@@ -95,6 +95,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final IrisChatPipelineExecutionService chatPipelineExecutionService;
 
+    @org.springframework.beans.factory.annotation.Value("${artemis.iris.proactive.legacy-build-triggers:true}")
+    private boolean legacyBuildTriggersEnabled;
+
     public IrisChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository,
@@ -227,6 +230,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @EventListener
     public void handleNewResultEvent(NewResultEvent resultEvent) {
+        if (!legacyBuildTriggersEnabled) {
+            return;
+        }
         var result = resultEvent.getEventObject();
         var participation = result.getSubmission().getParticipation();
 

@@ -37,6 +37,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
                 JOIN TREAT (m.session AS IrisChatSession) s
             WHERE s.userId = :userId
                 AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.LLM
+                AND (m.origin IS NULL OR m.origin <> de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin.PROACTIVE_STRUGGLE)
                 AND m.sentAt BETWEEN :start AND :end
             """)
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);

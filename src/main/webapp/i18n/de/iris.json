@@ -40,6 +40,8 @@
                 "adminOnly": "Nur Administratoren können diese Einstellungen sehen und ändern.",
                 "variant": "Pipeline-Variante",
                 "variantHelp": "Wähle die KI-Pipeline-Variante für diesen Kurs.",
+                "proactiveStruggle": "Proaktive Schwierigkeitserkennung",
+                "proactiveStruggleHelp": "Wenn aktiviert, erkennt Iris proaktiv, wenn ein Student nicht weiterkommt, und bietet Hilfe an. Standardmäßig aus; nur für Kurse in der proaktiven A/B-Bedingung aktivieren.",
                 "rateLimit": "Rate-Limit-Überschreibung",
                 "rateLimitHelp": "Lass beide Felder leer, um Anwendungsstandards zu verwenden. Setze 0 Anfragen, um die Iris-Nutzung zu blockieren. Zeitrahmen muss mindestens 1 Stunde sein.",
                 "rateLimitRequests": "Maximale Anfragen",

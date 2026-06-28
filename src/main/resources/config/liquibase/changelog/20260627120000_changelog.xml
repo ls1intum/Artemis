@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260627120000-1-add-proactive-outcome-mysql" author="liam-berger" dbms="mysql,h2">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_outcome"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_outcome" type="ENUM('DISMISSED')"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260627120000-1-add-proactive-outcome-postgres" author="liam-berger" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_outcome"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_outcome" type="text"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

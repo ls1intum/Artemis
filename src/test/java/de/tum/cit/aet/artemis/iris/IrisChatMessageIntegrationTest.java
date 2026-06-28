@@ -50,7 +50,9 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -297,6 +299,29 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisChatSession session2 = createSessionForUser(mode, "student2");
         IrisMessage message = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session1), session1, IrisMessageSender.USER);
         request.putWithResponseBody(helpfulUrl(session2, message), true, IrisMessageResponseDTO.class, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setProactiveOutcome_persistsDismissed() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        IrisMessage proactive = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        proactive.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        proactive = irisMessageService.saveMessage(proactive, session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(proactiveOutcomeUrl(session, proactive), IrisProactiveOutcome.DISMISSED, IrisMessageResponseDTO.class, HttpStatus.OK);
+
+        var reloaded = irisMessageRepository.findById(proactive.getId()).orElseThrow();
+        assertThat(reloaded.getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setProactiveOutcome_returns400WhenMessageNotProactive() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        IrisMessage plainLlm = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(proactiveOutcomeUrl(session, plainLlm), IrisProactiveOutcome.DISMISSED, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
@@ -1051,5 +1076,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     private static String helpfulUrl(IrisChatSession session, IrisMessage message) {
         return "/api/iris/sessions/" + session.getId() + "/messages/" + message.getId() + "/helpful";
+    }
+
+    private static String proactiveOutcomeUrl(IrisChatSession session, IrisMessage message) {
+        return "/api/iris/sessions/" + session.getId() + "/messages/" + message.getId() + "/proactive-outcome";
     }
 }

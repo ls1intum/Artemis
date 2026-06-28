@@ -172,6 +172,31 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateCourseSettings_asAdmin_enablesProactiveStruggle() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);   // proactive off (default)
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.rateLimit(), true);
+
+        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.OK);
+
+        assertThat(response.settings().proactiveStruggleEnabled()).isTrue();
+        assertThat(irisSettingsService.getSettingsForCourse(course1).proactiveStruggleEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseSettings_asInstructor_cannotChangeProactiveStruggle() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);   // proactive off (default)
+        var update = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.rateLimit(), true);  // attempt to flip it on
+
+        request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, IrisCourseSettingsWithRateLimitDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateCourseSettings_asInstructor_cannotChangeRateLimits() throws Exception {
         enableIrisFor(course1);
