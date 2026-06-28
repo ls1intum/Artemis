@@ -56,4 +56,11 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
     long countByCourseId(Long courseId);
 
     long countByCourseIdAndFaqState(Long courseId, FaqState faqState);
+
+    @Query("""
+            SELECT faq
+            FROM Faq faq
+                JOIN FETCH faq.course
+            """)
+    List<Faq> findAllForSearchReindex();
 }

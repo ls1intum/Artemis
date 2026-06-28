@@ -57,11 +57,15 @@ public class WeaviateMigrationStartupService {
 
     private final WeaviateService weaviateService;
 
+    private final SearchableEntityReindexService reindexService;
+
     private final TaskScheduler taskScheduler;
 
-    public WeaviateMigrationStartupService(WeaviateMigrationService migrationService, WeaviateService weaviateService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+    public WeaviateMigrationStartupService(WeaviateMigrationService migrationService, WeaviateService weaviateService, SearchableEntityReindexService reindexService,
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.migrationService = migrationService;
         this.weaviateService = weaviateService;
+        this.reindexService = reindexService;
         this.taskScheduler = taskScheduler;
     }
 
@@ -91,10 +95,17 @@ public class WeaviateMigrationStartupService {
      */
     private void runPendingMigrations(int attempt) {
         try {
-            migrationService.runPendingMigrations();
+            boolean migrated = migrationService.runPendingMigrations();
             // Future-proofing: if a later migration drops one of the managed collections, recreate it here. The current
             // V0→V1 migration drops only the unmanaged legacy collection, so this is a no-op for it.
             weaviateService.ensureAllCollectionsExist();
+            if (migrated) {
+                // A migration may have dropped and recreated a collection, leaving it empty.
+                // Re-index all entities so search works immediately without manual admin intervention.
+                log.info("Schema migration ran — triggering automatic re-index to repopulate Weaviate...");
+                String summary = reindexService.reindexAll();
+                log.info("Automatic post-migration re-index complete: {}", summary);
+            }
         }
         catch (Exception exception) {
             if (attempt < MAX_MIGRATION_ATTEMPTS) {

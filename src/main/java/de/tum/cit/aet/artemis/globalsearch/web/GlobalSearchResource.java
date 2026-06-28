@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityReindexService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -68,6 +71,8 @@ public class GlobalSearchResource {
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
+    private final SearchableEntityReindexService reindexService;
+
     private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
@@ -80,10 +85,11 @@ public class GlobalSearchResource {
 
     private final Optional<StudentExamApi> studentExamRepository;
 
-    public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository,
+    public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, SearchableEntityReindexService reindexService, CourseRepository courseRepository,
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository,
             Optional<StudentExamApi> studentExamRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+        this.reindexService = reindexService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -815,6 +821,20 @@ public class GlobalSearchResource {
             return nonNull.getFirst();
         }
         return Filter.or(nonNull.toArray(new Filter[0]));
+    }
+
+    /**
+     * POST /api/admin/search/reindex : re-indexes all searchable entities from the database into Weaviate.
+     * Useful after a schema migration that empties the collection (e.g. V1→V2 tokenization fix).
+     * Posts and answer posts are excluded — they re-index on next write.
+     *
+     * @return 200 with a summary of entities queued per type
+     */
+    @PostMapping("admin/search/reindex")
+    @EnforceAdmin
+    public ResponseEntity<String> reindexAll() {
+        String summary = reindexService.reindexAll();
+        return ResponseEntity.ok(summary);
     }
 
 }

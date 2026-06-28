@@ -853,4 +853,13 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE exercise.id IN :exerciseIds
             """)
     List<Exercise> findAllForSearchMigrationWithCourseAndExam(@Param("exerciseIds") Collection<Long> exerciseIds);
+
+    @Query("""
+            SELECT exercise FROM Exercise exercise
+            LEFT JOIN FETCH exercise.course
+            LEFT JOIN FETCH exercise.exerciseGroup exerciseGroup
+            LEFT JOIN FETCH exerciseGroup.exam exam
+            LEFT JOIN FETCH exam.course
+            """)
+    List<Exercise> findAllForSearchReindex();
 }

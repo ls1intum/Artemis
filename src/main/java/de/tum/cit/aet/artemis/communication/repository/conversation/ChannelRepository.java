@@ -106,4 +106,11 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
             ORDER BY channel.name
             """)
     Set<Channel> findChannelByCourseIdAndNameAndIdNot(@Param("courseId") Long courseId, @Param("name") String name, @Param("channelId") Long channelId);
+
+    @Query("""
+            SELECT channel
+            FROM Channel channel
+                JOIN FETCH channel.course
+            """)
+    List<Channel> findAllForSearchReindex();
 }

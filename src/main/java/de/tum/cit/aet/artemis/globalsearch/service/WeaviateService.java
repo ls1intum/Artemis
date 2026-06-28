@@ -332,10 +332,17 @@ public class WeaviateService {
             case INT -> Property.integer(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case TEXT -> Property.text(definition.name(), property -> {
                 var builder = property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable());
-                // Trigram tokenization indexes every 3-char sliding window of text values, enabling
-                // BM25 to match partial words and typos (e.g. "strateg" → "strategy").
                 if (definition.indexSearchable()) {
+                    // Trigram tokenization indexes every 3-char sliding window of text values, enabling
+                    // BM25 to match partial words and typos (e.g. "strateg" → "strategy").
                     builder.tokenization(Tokenization.TRIGRAM);
+                }
+                else if (definition.indexFilterable()) {
+                    // Field tokenization stores the entire value as a single token, giving exact-match
+                    // semantics for Equal filters. Without this, Weaviate defaults to "word" tokenization,
+                    // which splits on underscores — causing type="lecture" to also match type="lecture_unit"
+                    // and breaking per-type access filters in the compound OR.
+                    builder.tokenization(Tokenization.FIELD);
                 }
                 return builder;
             });

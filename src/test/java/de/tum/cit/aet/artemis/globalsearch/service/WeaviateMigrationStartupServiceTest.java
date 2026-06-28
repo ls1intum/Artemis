@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -28,9 +29,16 @@ class WeaviateMigrationStartupServiceTest {
 
     private final WeaviateService weaviateService = mock(WeaviateService.class);
 
+    private final SearchableEntityReindexService reindexService = mock(SearchableEntityReindexService.class);
+
     private final TaskScheduler taskScheduler = mock(TaskScheduler.class);
 
-    private final WeaviateMigrationStartupService startupService = new WeaviateMigrationStartupService(migrationService, weaviateService, taskScheduler);
+    private WeaviateMigrationStartupService startupService;
+
+    @BeforeEach
+    void setUp() {
+        startupService = new WeaviateMigrationStartupService(migrationService, weaviateService, reindexService, taskScheduler);
+    }
 
     @Test
     void schedulesMigrationInBackgroundWithoutRunningItInline() {
@@ -42,12 +50,28 @@ class WeaviateMigrationStartupServiceTest {
     }
 
     @Test
-    void runsMigrationThenReconcilesCollections() {
+    void runsMigrationThenReconcilesCollectionsWhenAlreadyUpToDate() {
+        when(migrationService.runPendingMigrations()).thenReturn(false);
+
         captureScheduledTask().run();
 
         InOrder inOrder = inOrder(migrationService, weaviateService);
         inOrder.verify(migrationService).runPendingMigrations();
         inOrder.verify(weaviateService).ensureAllCollectionsExist();
+        verify(reindexService, never()).reindexAll();
+    }
+
+    @Test
+    void triggersReindexAfterMigrationRan() {
+        when(migrationService.runPendingMigrations()).thenReturn(true);
+        when(reindexService.reindexAll()).thenReturn("courses=1 exercises=2");
+
+        captureScheduledTask().run();
+
+        InOrder inOrder = inOrder(migrationService, weaviateService, reindexService);
+        inOrder.verify(migrationService).runPendingMigrations();
+        inOrder.verify(weaviateService).ensureAllCollectionsExist();
+        inOrder.verify(reindexService).reindexAll();
     }
 
     @Test

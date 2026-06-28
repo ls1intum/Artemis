@@ -115,6 +115,14 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
      *
      * @param lectureUnit the lecture unit whose competency links need to be reconnected
      */
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                JOIN FETCH lu.lecture l
+                JOIN FETCH l.course
+            """)
+    List<LectureUnit> findAllForSearchReindex();
+
     default void reconnectCompetencyLinks(LectureUnit lectureUnit) {
         if (lectureUnit.getCompetencyLinks() != null && !lectureUnit.getCompetencyLinks().isEmpty()) {
             for (var competencyLink : lectureUnit.getCompetencyLinks()) {
