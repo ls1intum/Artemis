@@ -17,7 +17,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -34,7 +34,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
     imports: [
         CustomExerciseCategoryBadgeComponent,
         SearchFilterComponent,
-        NgbModule,
+        NgbDropdownModule,
         MarkdownDirective,
         TranslateDirective,
         FontAwesomeModule,
