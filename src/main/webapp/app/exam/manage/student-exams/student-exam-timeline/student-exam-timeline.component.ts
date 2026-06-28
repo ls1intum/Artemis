@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -59,6 +59,18 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     exerciseIndex = signal<number>(0);
     activeExamPage = new ExamPage();
     submissionTimeStamps = signal<dayjs.Dayjs[]>([]);
+    /**
+     * Percentage positions (0–100) of each submission timestamp along the slider track, used to render tick markers
+     * under the `p-slider`. This restores the discrete-submission visual cue that the previous Material slider provided
+     * via `[showTickMarks]` (PrimeNG's slider has no equivalent input). Empty for a single submission (no range to mark).
+     */
+    readonly submissionTickPercentages = computed<number[]>(() => {
+        const count = this.submissionTimeStamps().length;
+        if (count <= 1) {
+            return [];
+        }
+        return this.submissionTimeStamps().map((_, index) => (index / (count - 1)) * 100);
+    });
     submissionVersions: SubmissionVersion[] = [];
     programmingSubmissions: ProgrammingSubmission[] = [];
     fileUploadSubmissions: FileUploadSubmission[] = [];

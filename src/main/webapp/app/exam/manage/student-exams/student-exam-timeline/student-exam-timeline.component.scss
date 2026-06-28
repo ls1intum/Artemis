@@ -7,3 +7,25 @@
 :host ::ng-deep .custom-slider .p-slider {
     width: 98%;
 }
+
+// Tick markers under the slider, one per discrete submission timestamp (see submissionTickPercentages). These are the
+// component's own elements (no ::ng-deep needed). The container matches the slider's 98% width so a tick positioned at
+// `left: (i / (count - 1)) * 100%` aligns with the slider handle at step i.
+.custom-slider {
+    .submission-ticks {
+        position: relative;
+        width: 98%;
+        height: 6px;
+        margin-top: 2px;
+    }
+
+    .submission-tick {
+        position: absolute;
+        top: 0;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #55637d;
+        transform: translateX(-50%);
+    }
+}

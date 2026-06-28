@@ -4,7 +4,6 @@
         <div class="custom-slider">
             <h5>Selected Timestamp: {{ displayCurrentTimestamp() }}</h5>
             <p-slider
-                class="mb-5"
                 [(ngModel)]="timestampIndex"
                 [min]="0"
                 [max]="submissionTimeStamps().length - 1"
@@ -13,6 +12,13 @@
                 (keyup)="onSliderKeyup($event)"
                 #slider
             />
+            <!-- Tick markers for each discrete submission timestamp, restoring the Material slider's [showTickMarks] cue
+                 (the PrimeNG p-slider has no equivalent input). Decorative, so hidden from assistive tech. -->
+            <div class="submission-ticks mb-5" aria-hidden="true">
+                @for (percentage of submissionTickPercentages(); track $index) {
+                    <span class="submission-tick" [style.left.%]="percentage"></span>
+                }
+            </div>
         </div>
         <jhi-exam-navigation-bar
             #examNavigationBar

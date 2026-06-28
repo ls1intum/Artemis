@@ -332,4 +332,28 @@ describe('Student Exam Timeline Component', () => {
 
         expect(inputChangeSpy).not.toHaveBeenCalled();
     });
+
+    // The PrimeNG p-slider has no [showTickMarks] equivalent, so submissionTickPercentages drives custom tick markers
+    // that restore the Material slider's per-submission visual cue.
+    describe('submission tick markers', () => {
+        it('computes an evenly-spaced percentage position for each submission timestamp', () => {
+            component.submissionTimeStamps.set([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-03-07'), dayjs('2023-04-07'), dayjs('2023-05-07')]);
+
+            expect(component.submissionTickPercentages()).toEqual([0, 25, 50, 75, 100]);
+        });
+
+        it('places the first tick at 0% and the last at 100%', () => {
+            component.submissionTimeStamps.set([dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-03-07')]);
+
+            expect(component.submissionTickPercentages()).toEqual([0, 50, 100]);
+        });
+
+        it('renders no tick markers when there is at most one submission (no range to mark)', () => {
+            component.submissionTimeStamps.set([dayjs('2023-01-07')]);
+            expect(component.submissionTickPercentages()).toEqual([]);
+
+            component.submissionTimeStamps.set([]);
+            expect(component.submissionTickPercentages()).toEqual([]);
+        });
+    });
 });
