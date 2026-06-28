@@ -117,6 +117,10 @@ export class CodeButtonComponent implements OnInit {
     userTokenPresent = signal(false);
     // The repository-scoped VCS access token for course staff (used when repositoryType denotes a base repository).
     repositoryAccessToken = signal<string | undefined>(undefined);
+    // The repository identity the cached repositoryAccessToken was minted for. The repository view reuses one code-button instance across base repositories (only the route
+    // params change), so a token cached for the previous repository must not be reused for the next one: repository tokens are scoped to one exact repository URI and would fail
+    // authentication. We therefore remember which repository the cached token belongs to and reload when it no longer matches the current repository.
+    private repositoryAccessTokenIdentity?: string;
     sshKeyMissingTip = signal('');
     sshKeysExpiredTip = signal('');
     tokenMissingTip = signal('');
@@ -232,7 +236,7 @@ export class CodeButtonComponent implements OnInit {
     public useHttpsToken() {
         this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
         if (this.isBaseRepository()) {
-            this.copyEnabled.set(!!this.repositoryAccessToken());
+            this.copyEnabled.set(this.hasValidRepositoryAccessToken());
         } else if (this.isInCourseManagement()) {
             const stillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
             const present = !!this.user.vcsAccessToken?.startsWith('vcpat');
@@ -268,8 +272,11 @@ export class CodeButtonComponent implements OnInit {
         const selectedMechanism = storedState && this.authenticationMechanisms().includes(storedState) ? storedState : this.authenticationMechanisms()[0];
         this.selectedAuthenticationMechanism.set(selectedMechanism);
 
-        // Fallback for course staff: generate the repository-scoped token on demand when the clone dialog is opened and none exists yet.
-        if (this.isBaseRepository() && !this.repositoryAccessToken()) {
+        // Fallback for course staff: generate the repository-scoped token on demand when the clone dialog is opened and none valid for the current repository exists yet. A token
+        // cached for a previously viewed base repository (this component instance is reused across repositories) is dropped first, so it can never be embedded into another
+        // repository's clone URL.
+        if (this.isBaseRepository() && !this.hasValidRepositoryAccessToken()) {
+            this.repositoryAccessToken.set(undefined);
             const exerciseId = this.exercise()?.id ?? this.exerciseId();
             if (exerciseId) {
                 this.loadRepositoryVcsAccessToken(exerciseId, this.repositoryType()!, this.auxiliaryRepositoryId());
@@ -377,7 +384,7 @@ export class CodeButtonComponent implements OnInit {
         this.programmingExerciseService.getRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
-                    this.repositoryAccessToken.set(res.body);
+                    this.setRepositoryAccessToken(res.body);
                     // Only ever enable copy here; never disable. An async token response may arrive after the dialog
                     // opened with SSH/password selected, and must not clobber the copy state those methods already set.
                     if (this.useToken()) {
@@ -404,7 +411,7 @@ export class CodeButtonComponent implements OnInit {
         this.programmingExerciseService.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId).subscribe({
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
-                    this.repositoryAccessToken.set(res.body);
+                    this.setRepositoryAccessToken(res.body);
                     // Only ever enable copy here; never disable. An async token response may arrive after the dialog
                     // opened with SSH/password selected, and must not clobber the copy state those methods already set.
                     if (this.useToken()) {
@@ -422,10 +429,34 @@ export class CodeButtonComponent implements OnInit {
         });
     }
 
+    /**
+     * Stores a newly retrieved repository-scoped token together with the identity of the repository it was minted for, so it is only ever reused for that exact repository.
+     */
+    private setRepositoryAccessToken(token: string) {
+        this.repositoryAccessToken.set(token);
+        this.repositoryAccessTokenIdentity = this.currentRepositoryIdentity();
+    }
+
+    /**
+     * @return whether a cached repository-scoped token exists and still belongs to the base repository currently targeted by the clone dialog.
+     */
+    private hasValidRepositoryAccessToken(): boolean {
+        return !!this.repositoryAccessToken() && this.repositoryAccessTokenIdentity === this.currentRepositoryIdentity();
+    }
+
+    /**
+     * A stable key identifying the base repository the clone dialog currently targets (type, URI, exercise and optional auxiliary repository). Used to detect when this reused
+     * component instance switches to a different base repository, so a repository-scoped token minted for the previous repository is never reused.
+     */
+    private currentRepositoryIdentity(): string {
+        return [this.repositoryType(), this.repositoryUri(), this.exercise()?.id ?? this.exerciseId(), this.auxiliaryRepositoryId()].join('|');
+    }
+
     private getUsedToken(alwaysUseToken = false): string | undefined {
         if (this.useToken() || alwaysUseToken) {
             if (this.isBaseRepository()) {
-                return this.repositoryAccessToken();
+                // Never embed a token cached for a different repository (exact-URI scoped); only the token for the current repository is valid.
+                return this.hasValidRepositoryAccessToken() ? this.repositoryAccessToken() : undefined;
             }
             if (this.isInCourseManagement()) {
                 return this.user.vcsAccessToken;

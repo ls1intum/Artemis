@@ -233,6 +233,39 @@ describe('CodeButtonComponent', () => {
             expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'AUXILIARY', 3);
         });
 
+        it('should reload a fresh token when the component is reused for a different base repository', async () => {
+            // The repository view reuses one code-button instance across base repositories (only the route params change). A token minted for the previous repository must not be
+            // reused for the next one, because repository tokens are scoped to one exact repository URI.
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
+            await component.ngOnInit();
+
+            component.onClick();
+            fixture.detectChanges();
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+            expect(component.repositoryAccessToken()).toEqual(repoToken);
+
+            // Navigate to the solution repository of the same exercise: same component instance, only the repository type and URI change.
+            const solutionToken = 'vcpat-SolutionSolutionSolutionSolutionSolutio123';
+            getRepoTokenSpy.mockReturnValue(of(new HttpResponse({ body: solutionToken })));
+            fixture.componentRef.setInput('repositoryType', 'SOLUTION');
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-solution.git');
+            fixture.detectChanges();
+
+            component.onClick();
+            fixture.detectChanges();
+
+            // A fresh token request is made for the new repository and the stale template token is replaced.
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+            expect(component.repositoryAccessToken()).toEqual(solutionToken);
+            // The embedded clone URL must use the new repository's token, never the stale template one.
+            const cloneUrl = component.getHttpOrSshRepositoryUri(false, true, true);
+            expect(cloneUrl).toContain(`:${solutionToken}@`);
+            expect(cloneUrl).not.toContain(repoToken);
+        });
+
         it('should keep the copy button enabled for SSH when the repository token resolves after the dialog opened', async () => {
             // Reproduces the production ordering that synchronous of() mocks hide: the token HTTP response arrives only
             // after onClick already set the SSH copy state. The async response must not clobber it back to disabled.
