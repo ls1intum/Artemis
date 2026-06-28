@@ -1,65 +1,69 @@
-@if (
-    (quizExercise().status === QuizStatus.VISIBLE || quizExercise().status === QuizStatus.INVISIBLE) &&
-    quizExercise().quizMode === QuizMode.SYNCHRONIZED &&
-    quizExercise().isAtLeastEditor &&
-    !quizExercise().quizStarted
-) {
-    <button id="instructor-quiz-start-{{ quizExercise().id }}" type="submit" (click)="startQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
-        <fa-icon [icon]="faPlayCircle" />
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
-    </button>
-}
-@if ((quizExercise().status === QuizStatus.VISIBLE || quizExercise().status === QuizStatus.ACTIVE) && quizExercise().quizMode === QuizMode.BATCHED) {
-    @for (batch of quizExercise().quizBatches ?? []; track batch) {
-        <div>
-            ID: {{ batch.id }}
-            @if (!batch.ended) {
-                <span> PW: {{ batch.password }} </span>
-            }
-            @if (batch.started && !batch.ended) {
-                <span> Running </span>
-            }
-            @if (batch.ended) {
-                <span> Done </span>
-            }
-            @if (!batch.started) {
-                <button id="instructor-quiz-start-{{ quizExercise().id }}-{{ batch.id }}" type="submit" (click)="startBatch(batch.id!)" class="btn btn-warning btn-sm me-1 mb-1">
-                    <fa-icon [icon]="faPlayCircle" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz"></span>
-                </button>
+<button id="instructor-quiz-start-{{ quizExercise().id }}" type="submit" (click)="startQuiz()" class="btn btn-success" [hidden]="!showStartButton()">
+    <fa-icon [icon]="faPlayCircle" /><span class="ms-1">{{ 'artemisApp.quizExercise.startQuiz' | artemisTranslate }}</span>
+</button>
+<button type="button" class="btn btn-primary" (click)="toggleBatchMenu($event)" [hidden]="!showBatchMenu()">
+    <fa-icon [icon]="faBoxesStacked" /><span class="ms-1">{{ 'artemisApp.quizExercise.batches' | artemisTranslate: { count: quizExercise().quizBatches?.length ?? 0 } }}</span>
+</button>
+<p-popover #batchMenu appendTo="body">
+    <div class="d-flex flex-column gap-2 small" style="min-width: 15rem">
+        <div class="d-flex flex-column gap-2" style="max-height: 16rem; overflow-y: auto">
+            @for (batch of quizExercise().quizBatches ?? []; track batch.id) {
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-semibold">{{ 'artemisApp.exerciseManagement.batch.label' | artemisTranslate: { id: batch.id } }}</span>
+                    @if (!batch.ended && batch.password) {
+                        <span class="badge bg-light text-dark border font-monospace" style="font-size: inherit">{{
+                            'artemisApp.exerciseManagement.batch.password' | artemisTranslate: { password: batch.password }
+                        }}</span>
+                    }
+                    @if (batch.ended) {
+                        <span class="badge bg-secondary ms-auto" style="font-size: 0.75rem" jhiTranslate="artemisApp.exerciseManagement.batch.done"></span>
+                    } @else if (batch.started) {
+                        <span class="badge bg-success ms-auto" style="font-size: 0.75rem" jhiTranslate="artemisApp.exerciseManagement.batch.running"></span>
+                    } @else {
+                        <button type="button" class="btn btn-success btn-sm ms-auto" (click)="startBatch(batch.id!)">
+                            <fa-icon [icon]="faPlayCircle" /><span class="ms-1">{{ 'artemisApp.quizExercise.startBatch' | artemisTranslate }}</span>
+                        </button>
+                    }
+                </div>
+            } @empty {
+                <span class="text-muted fst-italic" jhiTranslate="artemisApp.exerciseManagement.batch.empty"></span>
             }
         </div>
-    }
-    <div>
-        <button id="instructor-quiz-add-{{ quizExercise().id }}" type="submit" (click)="addBatch()" class="btn btn-primary btn-sm me-1 mb-1">
-            <fa-icon [icon]="faPlus" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.addBatch"></span>
+        <button type="button" class="btn btn-primary btn-sm" (click)="addBatch()">
+            <fa-icon [icon]="faPlus" /><span class="ms-1">{{ 'artemisApp.quizExercise.addBatch' | artemisTranslate }}</span>
         </button>
     </div>
-}
-@if (
-    (quizExercise().status === QuizStatus.VISIBLE || quizExercise().status === QuizStatus.ACTIVE) &&
-    quizExercise().quizMode !== QuizMode.SYNCHRONIZED &&
-    quizExercise().isAtLeastInstructor &&
-    !quizExercise().quizEnded
-) {
-    <button
-        id="quiz-set-end-{{ quizExercise().id }}"
-        class="mb-1"
-        jhiDeleteButton
-        [actionType]="ActionType.EndNow"
-        [entityTitle]="quizExercise().title || ''"
-        deleteQuestion="artemisApp.quizExercise.endNow.question"
-        deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-        (delete)="endQuiz()"
-        [dialogError]="dialogError$"
-    >
-        <fa-icon [icon]="faStopCircle" />
-    </button>
-}
-@if (quizExercise().status === QuizStatus.INVISIBLE && quizExercise().isAtLeastEditor && !quizExercise().visibleToStudents) {
-    <button id="quiz-set-visible-{{ quizExercise().id }}" type="submit" (click)="showQuiz()" class="btn btn-warning btn-sm me-1 mb-1">
-        <fa-icon [icon]="faEye" />
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow"></span>
-    </button>
-}
+</p-popover>
+<button
+    id="quiz-set-end-{{ quizExercise().id }}"
+    class="btn btn-danger"
+    jhiDeleteButton
+    [renderButtonStyle]="false"
+    [renderButtonText]="false"
+    [disabled]="isInVariantGroup()"
+    [style.pointer-events]="isInVariantGroup() ? 'auto' : null"
+    [pTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
+    tooltipPosition="top"
+    [actionType]="ActionType.EndNow"
+    [entityTitle]="quizExercise().title || ''"
+    deleteQuestion="artemisApp.quizExercise.endNow.question"
+    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+    (delete)="endQuiz()"
+    [dialogError]="dialogError$"
+    [hidden]="!showEndButton()"
+>
+    <fa-icon [icon]="faStopCircle" /><span class="ms-1">{{ 'artemisApp.quizExercise.endQuiz' | artemisTranslate }}</span>
+</button>
+<button
+    id="quiz-set-visible-{{ quizExercise().id }}"
+    type="submit"
+    (click)="showQuiz()"
+    class="btn btn-warning"
+    [disabled]="isInVariantGroup()"
+    [style.pointer-events]="isInVariantGroup() ? 'auto' : null"
+    [pTooltip]="isInVariantGroup() ? ('artemisApp.quizExercise.actionDisabledInGroup' | artemisTranslate) : ''"
+    tooltipPosition="top"
+    [hidden]="!showSetVisibleButton()"
+>
+    <fa-icon [icon]="faEye" /><span class="ms-1">{{ 'artemisApp.quizExercise.showNow' | artemisTranslate }}</span>
+</button>

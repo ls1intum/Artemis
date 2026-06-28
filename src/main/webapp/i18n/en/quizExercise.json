@@ -104,6 +104,7 @@
             "endNow": {
                 "question": "Are you sure you want to end the quiz <strong>{{ title }}</strong> now? This action can NOT be undone! <br> This prevents any further submissions and starts to publish the results."
             },
+            "actionDisabledInGroup": "This quiz is part of an exercise group. Its dates are shared across all variants and cannot be changed individually.",
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
                 "addQuestion": "Add Question",
@@ -120,6 +121,7 @@
             "deleteQuestion": "Delete question",
             "refineQuestion": "Refine question",
             "editNotPossibleDuringQuiz": "Editing is not possible during the quiz.",
+            "editNotPossibleStudentsStarted": "Editing is not possible because students have already participated in this quiz.",
             "saveError": "An error occurred while saving. Please review your input data and try again later.",
             "export": {
                 "title": "All quiz questions for course {{ param }}",

@@ -21,7 +21,6 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
-    faBoxesStacked,
     faChartBar,
     faClipboardList,
     faEllipsis,
@@ -29,10 +28,7 @@ import {
     faLightbulb,
     faListAlt,
     faPencilAlt,
-    faPlayCircle,
-    faPlus,
     faRedo,
-    faStopCircle,
     faTable,
     faTrash,
     faUsers,
@@ -40,12 +36,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Popover, PopoverModule } from 'primeng/popover';
+import { TooltipModule } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
+import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -57,23 +54,20 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 
-/**
- * A single exercise action. `quiz` group items are the quiz lifecycle buttons: they always stay visible. `main` group
- * items render inline and collapse into the ellipsis menu (from the left, so Delete stays longest) when the action
- * area is too narrow to show them all.
- */
+/** A single collapsible main action rendered in the action row or the ellipsis overflow menu. */
 interface ActionItem {
     id: string;
     /** i18n key for the button label, resolved via the `artemisTranslate` pipe. */
     labelKey: string;
-    /** Optional interpolation params for `labelKey` (e.g. the batch count). */
-    labelArgs?: { [key: string]: unknown };
     icon: IconProp;
     styleClass: string;
-    group: 'quiz' | 'main';
-    kind: 'link' | 'button' | 'delete' | 'batches';
+    kind: 'link' | 'button' | 'delete';
     link?: (string | number)[];
     onClick?: () => void;
+    /** When true the link is rendered greyed-out and non-navigable. */
+    disabled?: boolean;
+    /** i18n key for the tooltip shown on a disabled link. */
+    disabledTooltip?: string;
 }
 
 // Flex gap (gap-1 = 0.25rem) between items, the fixed ellipsis-trigger width (see SCSS `.action-more`), and a small
@@ -86,7 +80,7 @@ const SAFETY_MARGIN_PX = 8;
     selector: 'jhi-exercise-actions',
     templateUrl: './exercise-actions.component.html',
     styleUrl: './exercise-actions.component.scss',
-    imports: [RouterLink, NgTemplateOutlet, FaIconComponent, PopoverModule, ArtemisTranslatePipe, TranslateDirective, DeleteButtonDirective, QuizExerciseLifecycleButtonsComponent],
+    imports: [RouterLink, NgTemplateOutlet, FaIconComponent, PopoverModule, TooltipModule, ArtemisTranslatePipe, DeleteButtonDirective, QuizExerciseLifecycleButtonsComponent],
 })
 export class ExerciseActionsComponent {
     readonly exercise = input.required<Exercise>();
@@ -98,8 +92,6 @@ export class ExerciseActionsComponent {
 
     protected readonly ExerciseType = ExerciseType;
     protected readonly faEllipsis = faEllipsis;
-    protected readonly faPlayCircle = faPlayCircle;
-    protected readonly faPlus = faPlus;
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
@@ -113,8 +105,6 @@ export class ExerciseActionsComponent {
     private readonly translateService = inject(TranslateService);
 
     private readonly menu = viewChild<Popover>('menu');
-    private readonly batchMenu = viewChild<Popover>('batchMenu');
-    private readonly quizLifecycle = viewChild(QuizExerciseLifecycleButtonsComponent);
     /** The full-width action row; its width minus the quiz buttons is the budget for the collapsible main buttons. */
     private readonly actionsRow = viewChild<ElementRef<HTMLElement>>('actionsRow');
     /** The always-visible quiz lifecycle buttons; their width is reserved up front. */
@@ -141,73 +131,17 @@ export class ExerciseActionsComponent {
         return ex.type === ExerciseType.QUIZ ? (ex as QuizExercise) : undefined;
     });
 
-    /** Batches of the current quiz (empty for non-batched / non-quiz exercises). Shown in the batches popover. */
-    readonly quizBatches = computed<QuizBatch[]>(() => this.quizExercise()?.quizBatches ?? []);
-
-    /** Whether the batches trigger and popover apply: a running or visible batched quiz. */
-    readonly showBatchMenu = computed<boolean>(() => {
+    /** True when the lifecycle buttons component will render at least one button. Used to show/hide the separator. */
+    readonly hasQuizButtons = computed<boolean>(() => {
         const quiz = this.quizExercise();
-        return !!quiz && quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
-    });
-
-    /**
-     * Quiz lifecycle buttons styled like the rest of the action row. Visibility mirrors the develop lifecycle buttons
-     * (see {@link QuizExerciseLifecycleButtonsComponent}); clicking delegates to that hidden component's public methods,
-     * which own the backend calls and optimistic state updates.
-     */
-    readonly quizActions = computed<ActionItem[]>(() => {
-        const quiz = this.quizExercise();
-        if (!quiz) return [];
-        const items: ActionItem[] = [];
-        // Make visible: an invisible quiz students cannot see yet.
-        if (quiz.status === QuizStatus.INVISIBLE && quiz.isAtLeastEditor && !quiz.visibleToStudents) {
-            items.push({
-                id: 'set-visible',
-                labelKey: 'artemisApp.quizExercise.showNow',
-                icon: faEye,
-                styleClass: 'btn-warning',
-                group: 'quiz',
-                kind: 'button',
-                onClick: () => this.quizLifecycle()?.showQuiz(),
-            });
-        }
-        // Start: a synchronized quiz that has not been started yet.
-        if ((quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && quiz.isAtLeastEditor && !quiz.quizStarted) {
-            items.push({
-                id: 'start',
-                labelKey: 'artemisApp.quizExercise.startQuiz',
-                icon: faPlayCircle,
-                styleClass: 'btn-success',
-                group: 'quiz',
-                kind: 'button',
-                onClick: () => this.quizLifecycle()?.startQuiz(),
-            });
-        }
-        // Batched: a single trigger that opens a popover listing each batch (id, password, status) and adds new ones.
-        if (this.showBatchMenu()) {
-            items.push({
-                id: 'batches',
-                labelKey: 'artemisApp.quizExercise.batches',
-                labelArgs: { count: quiz.quizBatches?.length ?? 0 },
-                icon: faBoxesStacked,
-                styleClass: 'btn-primary',
-                group: 'quiz',
-                kind: 'batches',
-            });
-        }
-        // End: a running non-synchronized quiz that has not ended yet (synchronized quizzes end via their duration).
-        if ((quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE) && quiz.quizMode !== QuizMode.SYNCHRONIZED && quiz.isAtLeastInstructor && !quiz.quizEnded) {
-            items.push({
-                id: 'end',
-                labelKey: 'artemisApp.quizExercise.endQuiz',
-                icon: faStopCircle,
-                styleClass: 'btn-danger',
-                group: 'quiz',
-                kind: 'button',
-                onClick: () => this.quizLifecycle()?.endQuiz(),
-            });
-        }
-        return items;
+        if (!quiz) return false;
+        const showVisible = quiz.status === QuizStatus.INVISIBLE && !!quiz.isAtLeastEditor && !quiz.visibleToStudents;
+        const showStart =
+            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor && !quiz.quizStarted;
+        const showBatches = quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
+        const showEnd =
+            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE) && quiz.quizMode !== QuizMode.SYNCHRONIZED && !!quiz.isAtLeastInstructor && !quiz.quizEnded;
+        return showVisible || showStart || showBatches || showEnd;
     });
 
     /** Regular actions in original display order: Teams → Participations → Scores → type-specific → Edit → Delete. */
@@ -223,7 +157,6 @@ export class ExerciseActionsComponent {
                 labelKey: 'artemisApp.exercise.teams',
                 icon: faUsers,
                 styleClass: 'btn-primary',
-                group: 'main',
                 kind: 'link',
                 link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
             });
@@ -233,7 +166,6 @@ export class ExerciseActionsComponent {
             labelKey: 'artemisApp.exercise.participations',
             icon: faListAlt,
             styleClass: 'btn-primary',
-            group: 'main',
             kind: 'link',
             link: ['/course-management', cid, seg, ex.id!, 'participations'],
         });
@@ -242,7 +174,6 @@ export class ExerciseActionsComponent {
             labelKey: 'entity.action.scores',
             icon: faTable,
             styleClass: 'btn-info',
-            group: 'main',
             kind: 'link',
             link: ['/course-management', cid, seg, ex.id!, 'scores'],
         });
@@ -253,7 +184,6 @@ export class ExerciseActionsComponent {
                 labelKey: 'artemisApp.quizExercise.statistics',
                 icon: faChartBar,
                 styleClass: 'btn-info',
-                group: 'main',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'quiz-point-statistic'],
             });
@@ -262,7 +192,6 @@ export class ExerciseActionsComponent {
                 labelKey: 'artemisApp.quizExercise.preview',
                 icon: faEye,
                 styleClass: 'btn-success',
-                group: 'main',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'preview'],
             });
@@ -271,7 +200,6 @@ export class ExerciseActionsComponent {
                 labelKey: 'artemisApp.quizExercise.solution',
                 icon: faLightbulb,
                 styleClass: 'btn-success',
-                group: 'main',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'solution'],
             });
@@ -281,7 +209,6 @@ export class ExerciseActionsComponent {
                     labelKey: 'entity.action.re-evaluate',
                     icon: faRedo,
                     styleClass: 'btn-warning',
-                    group: 'main',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 're-evaluate'],
                 });
@@ -293,7 +220,6 @@ export class ExerciseActionsComponent {
                 labelKey: 'entity.action.exampleSubmissions',
                 icon: faClipboardList,
                 styleClass: 'btn-success',
-                group: 'main',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
@@ -304,28 +230,50 @@ export class ExerciseActionsComponent {
                 labelKey: 'entity.action.editInEditor',
                 icon: faPencilAlt,
                 styleClass: 'btn-warning',
-                group: 'main',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
             });
         }
-        items.push({
-            id: 'edit',
-            labelKey: 'entity.action.edit',
-            icon: faWrench,
-            styleClass: 'btn-warning',
-            group: 'main',
-            kind: 'link',
-            link: ['/course-management', cid, seg, ex.id!, 'edit'],
-        });
-        items.push({ id: 'delete', labelKey: 'entity.action.delete', icon: faTrash, styleClass: 'btn-danger', group: 'main', kind: 'delete' });
+        if (ex.type !== ExerciseType.QUIZ) {
+            items.push({
+                id: 'edit',
+                labelKey: 'entity.action.edit',
+                icon: faWrench,
+                styleClass: 'btn-warning',
+                kind: 'link',
+                link: ['/course-management', cid, seg, ex.id!, 'edit'],
+            });
+        } else {
+            const q2 = ex as QuizExercise;
+            // Use server-supplied isEditable when available (set by loadQuizBatches); fall back to client check
+            // for the brief window before batches load. isEditable: undefined → fallback, false → not editable, true → editable.
+            const editable = q2.isEditable !== false && (q2.isEditable === true || isQuizEditable(q2));
+            const editDisabled = !editable || !!q2.quizEnded;
+            items.push({
+                id: 'edit',
+                labelKey: 'entity.action.edit',
+                icon: faWrench,
+                styleClass: 'btn-warning',
+                kind: 'link',
+                link: ['/course-management', cid, seg, ex.id!, 'edit'],
+                disabled: editDisabled || undefined,
+                disabledTooltip: q2.quizEnded
+                    ? 'artemisApp.quizExercise.edit.editNotPossibleAfterEnd'
+                    : !editable && q2.status === QuizStatus.ACTIVE
+                      ? 'artemisApp.quizExercise.editNotPossibleDuringQuiz'
+                      : !editable
+                        ? 'artemisApp.quizExercise.editNotPossibleStudentsStarted'
+                        : undefined,
+            });
+        }
+        items.push({ id: 'delete', labelKey: 'entity.action.delete', icon: faTrash, styleClass: 'btn-danger', kind: 'delete' });
         return items;
     });
 
     /** Signature that determines a button's rendered width: same signature ⇒ same width. Uses the translated label so a
      * language switch or a changed batch count re-measures. */
     protected signatureOf(action: ActionItem): string {
-        return `${action.id}|${this.translateService.instant(action.labelKey, action.labelArgs)}`;
+        return `${action.id}|${this.translateService.instant(action.labelKey)}`;
     }
 
     /**
@@ -409,10 +357,10 @@ export class ExerciseActionsComponent {
             this.rowWidth.set(rowEl.clientWidth);
         });
 
-        // Measure the always-visible quiz buttons' width whenever the quiz action set or language changes (they never
+        // Measure the always-visible quiz buttons' width whenever the quiz state or language changes (they never
         // collapse, so their reserved width just needs to stay accurate).
         afterRenderEffect(() => {
-            this.quizActions();
+            this.quizExercise();
             this.languageVersion();
             const quizEl = this.quizGroup()?.nativeElement;
             if (quizEl) {
@@ -456,20 +404,6 @@ export class ExerciseActionsComponent {
         if (inMenu) {
             this.menu()?.hide();
         }
-    }
-
-    protected toggleBatchMenu(event: Event): void {
-        this.batchMenu()?.toggle(event);
-    }
-
-    /** Add a new batch via the hidden lifecycle component (which performs the backend call and returns its password). */
-    protected addBatch(): void {
-        this.quizLifecycle()?.addBatch();
-    }
-
-    /** Start the given batch via the hidden lifecycle component. */
-    protected startBatch(batchId: number): void {
-        this.quizLifecycle()?.startBatch(batchId);
     }
 
     /**

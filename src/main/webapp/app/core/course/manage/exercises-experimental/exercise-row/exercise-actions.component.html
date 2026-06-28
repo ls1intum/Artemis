@@ -1,15 +1,11 @@
 <div #actionsRow class="d-flex gap-1 align-items-center justify-content-end flex-nowrap w-100">
-    @if (quizExercise(); as quiz) {
-        <!-- Rendered hidden: drives the quiz lifecycle logic; the visible buttons are the ActionItems below. -->
-        <jhi-quiz-exercise-lifecycle-buttons hidden [quizExercise]="quiz" (handleNewQuizExercise)="onQuizLifecycleUpdate($event)" (loadOne)="onQuizReload()" />
-    }
     <!-- Quiz lifecycle buttons always stay visible; grouped so their reserved width can be measured. -->
     <span #quizGroup class="d-flex gap-1 align-items-center flex-nowrap">
-        @for (action of quizActions(); track action.id) {
-            <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
-        }
-        @if (quizActions().length > 0 && mainActions().length > 0) {
-            <div class="vr mx-1"></div>
+        @if (quizExercise(); as quiz) {
+            <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quiz" (handleNewQuizExercise)="onQuizLifecycleUpdate($event)" (loadOne)="onQuizReload()" />
+            @if (hasQuizButtons() && mainActions().length > 0) {
+                <div class="vr mx-1"></div>
+            }
         }
     </span>
 
@@ -38,39 +34,6 @@
     </p-popover>
 </div>
 
-@if (showBatchMenu()) {
-    <p-popover #batchMenu appendTo="body">
-        <div class="d-flex flex-column gap-2 small" style="min-width: 15rem">
-            <div class="d-flex flex-column gap-2" style="max-height: 16rem; overflow-y: auto">
-                @for (batch of quizBatches(); track batch.id) {
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fw-semibold">{{ 'artemisApp.exerciseManagement.batch.label' | artemisTranslate: { id: batch.id } }}</span>
-                        @if (!batch.ended && batch.password) {
-                            <span class="badge bg-light text-dark border font-monospace" style="font-size: inherit">{{
-                                'artemisApp.exerciseManagement.batch.password' | artemisTranslate: { password: batch.password }
-                            }}</span>
-                        }
-                        @if (batch.ended) {
-                            <span class="badge bg-secondary ms-auto" style="font-size: 0.75rem" jhiTranslate="artemisApp.exerciseManagement.batch.done"></span>
-                        } @else if (batch.started) {
-                            <span class="badge bg-success ms-auto" style="font-size: 0.75rem" jhiTranslate="artemisApp.exerciseManagement.batch.running"></span>
-                        } @else {
-                            <button type="button" class="btn btn-success btn-sm ms-auto" (click)="startBatch(batch.id!)">
-                                <fa-icon [icon]="faPlayCircle" /><span class="ms-1">{{ 'artemisApp.quizExercise.startBatch' | artemisTranslate }}</span>
-                            </button>
-                        }
-                    </div>
-                } @empty {
-                    <span class="text-muted fst-italic" jhiTranslate="artemisApp.exerciseManagement.batch.empty"></span>
-                }
-            </div>
-            <button type="button" class="btn btn-primary btn-sm" (click)="addBatch()">
-                <fa-icon [icon]="faPlus" /><span class="ms-1">{{ 'artemisApp.quizExercise.addBatch' | artemisTranslate }}</span>
-            </button>
-        </div>
-    </p-popover>
-}
-
 <ng-template #actionTpl let-action let-inMenu="inMenu">
     @switch (action.kind) {
         @case ('delete') {
@@ -90,22 +53,29 @@
                 [class.text-start]="inMenu"
                 [class.w-100]="inMenu"
             >
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate: action.labelArgs }}</span>
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
             </button>
         }
         @case ('button') {
             <button type="button" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="runAction(action)">
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate: action.labelArgs }}</span>
-            </button>
-        }
-        @case ('batches') {
-            <button type="button" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="toggleBatchMenu($event)">
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate: action.labelArgs }}</span>
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
             </button>
         }
         @default {
-            <a [routerLink]="action.link" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="closeMenuIfOpen(inMenu)">
-                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate: action.labelArgs }}</span>
+            <a
+                [routerLink]="action.disabled ? null : action.link"
+                class="btn {{ action.styleClass }}"
+                [class.disabled]="action.disabled"
+                [class.text-start]="inMenu"
+                [class.w-100]="inMenu"
+                [attr.aria-disabled]="action.disabled || null"
+                [attr.tabindex]="action.disabled ? -1 : null"
+                [style.pointer-events]="action.disabled ? 'auto' : null"
+                [pTooltip]="action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
+                tooltipPosition="top"
+                (click)="closeMenuIfOpen(inMenu)"
+            >
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
             </a>
         }
     }
