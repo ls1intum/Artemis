@@ -162,6 +162,43 @@ The default order of authentication mechanisms is: token, SSH, and lastly passwo
 
 ---
 
+## Repository access and automatic tokens
+
+Artemis prioritizes automatically generated, narrowly scoped access tokens so that you rarely need a password for Git operations.
+Whenever such a token can be provided for the repository you open, it is generated automatically and pre-selected in the code button dialog, already embedded in the HTTPS clone URL.
+Each token stays limited to a single repository, which keeps password authentication — the least secure option, and one your administrator may disable — out of your everyday workflow.
+For an even more secure alternative, you can use SSH instead. It needs a one-time key setup and is therefore a bit more difficult to get started with, but it is the recommended choice for repeated Git access — see [Using SSH keys to secure Git operations](#using-ssh-keys-to-secure-git-operations).
+
+### What each role may do per repository
+
+What you can do with a repository depends on your role in the course. For example, a student cannot access the template repository at all, whereas an editor can read and push to it.
+
+| Repository | Student | Tutor | Editor | Instructor |
+| --- | --- | --- | --- | --- |
+| Assignment (student participation) | Read and write (own only) | Read | Read and write | Read and write |
+| Template | No access | Read | Read and write | Read and write |
+| Test | No access | Read | Read and write | Read and write |
+| Solution | No access | Read | Read and write | Read and write |
+| Auxiliary | No access | Read | Read and write | Read and write |
+
+A student can only access their own assignment repository, and write access to it may additionally be limited by the exercise due date and repository locking.
+
+### Which scoped token is provided automatically
+
+| Who | Repository | Automatically generated token |
+| --- | --- | --- |
+| Student | Own assignment repository | Participation token |
+| Tutor, editor, instructor | Template, test, solution, auxiliary | Repository token |
+| Tutor, editor, instructor | Student assignment repositories | Not yet available — planned for a future release |
+
+A scoped token only identifies you; it never widens your access.
+The permissions in the matrix above are re-evaluated on every Git operation, so a tutor's repository token grants read-only access while an editor's grants push access, exactly as shown.
+
+Automatic tokens for staff accessing student repositories are not available yet and are planned for a future release.
+Until then, use SSH (see [Using SSH keys to secure Git operations](#using-ssh-keys-to-secure-git-operations)) or, as an instructor, a manually created user access token (see [Token Creation as Instructor](#token-creation-as-instructor)) for those repositories.
+
+---
+
 ## Cloning a repository
 
 Using the chosen mechanism, you can use `Tower <https://www.git-tower.com/>`_, `git from the terminal <https://git-scm.com/downloads/>`_, or `any other client <https://git-scm.com/downloads/guis/>`_ you like to clone your Git repository.
