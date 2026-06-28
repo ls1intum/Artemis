@@ -8,7 +8,7 @@ import { TableModule } from 'primeng/table';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDragPreview, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -49,6 +49,7 @@ export interface TableGroupChange {
         CdkDropList,
         CdkDrag,
         CdkDragHandle,
+        CdkDragPreview,
         TranslateDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -235,7 +236,15 @@ export class ExerciseTableComponent {
         return exercise as QuizExercise;
     }
 
-    protected readonly rowTrackBy = (_index: number, exercise: Exercise): unknown => exercise.id ?? exercise;
+    protected readonly rowTrackBy = (_index: number, exercise: Exercise): unknown => {
+        if (exercise.type !== ExerciseType.QUIZ) return exercise.id ?? exercise;
+        const q = exercise as QuizExercise;
+        // In zoneless Angular, ngFor embedded views may not re-evaluate when let-exercise gets a new
+        // object reference with the same id. Including the properties that drive lifecycle-button
+        // rendering forces the row to be destroyed/recreated when they change, so the fresh
+        // exercise-actions instance always sees the up-to-date exercise.
+        return `${exercise.id}|${q.exerciseVariantGroup?.id ?? ''}|${q.status ?? ''}|${q.visibleToStudents ?? ''}`;
+    };
 
     /**
      * Only individual-mode quizzes support per-student dates, so only they can reasonably share a group's timeline.

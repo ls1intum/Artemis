@@ -102,7 +102,7 @@
                                 <span>
                                     <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.release"></span>:</span>
                                     @if (bucket.group.releaseDate) {
-                                        {{ bucket.group.releaseDate | artemisDate: 'short-date' }}
+                                        {{ bucket.group.releaseDate | artemisDate }}
                                     } @else {
                                         <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
@@ -110,7 +110,7 @@
                                 <span>
                                     <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.start"></span>:</span>
                                     @if (bucket.group.startDate) {
-                                        {{ bucket.group.startDate | artemisDate: 'short-date' }}
+                                        {{ bucket.group.startDate | artemisDate }}
                                     } @else {
                                         <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
@@ -118,7 +118,7 @@
                                 <span>
                                     <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.due"></span>:</span>
                                     @if (bucket.group.dueDate) {
-                                        {{ bucket.group.dueDate | artemisDate: 'short-date' }}
+                                        {{ bucket.group.dueDate | artemisDate }}
                                     } @else {
                                         <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }
@@ -126,7 +126,7 @@
                                 <span>
                                     <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.assessmentDue"></span>:</span>
                                     @if (bucket.group.assessmentDueDate) {
-                                        {{ bucket.group.assessmentDueDate | artemisDate: 'short-date' }}
+                                        {{ bucket.group.assessmentDueDate | artemisDate }}
                                     } @else {
                                         <span class="fst-italic" jhiTranslate="artemisApp.exerciseManagement.groupMeta.none"></span>
                                     }

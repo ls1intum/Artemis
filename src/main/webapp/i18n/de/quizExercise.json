@@ -104,6 +104,7 @@
             "endNow": {
                 "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich jetzt beendet werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Dies verhindert alle weiteren Abgaben und startet die Veröffentlichung der Ergebnisse."
             },
+            "actionDisabledInGroup": "Dieses Quiz ist Teil einer Aufgabengruppe. Die Termine werden für alle Varianten gemeinsam verwaltet und können nicht einzeln geändert werden.",
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",
                 "addQuestion": "Frage hinzufügen",
@@ -120,6 +121,7 @@
             "deleteQuestion": "Frage löschen",
             "refineQuestion": "Frage verfeinern",
             "editNotPossibleDuringQuiz": "Während des Quizzes ist eine Bearbeitung nicht möglich.",
+            "editNotPossibleStudentsStarted": "Eine Bearbeitung ist nicht möglich, da Studierende bereits an diesem Quiz teilgenommen haben.",
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",

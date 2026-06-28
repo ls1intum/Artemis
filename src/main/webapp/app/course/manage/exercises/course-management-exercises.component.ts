@@ -17,7 +17,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCalendarDays, faCircleInfo, faCode, faFileExport, faFileImport, faLayerGroup, faList, faPen, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, ExerciseVariantGroupReference, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -25,7 +25,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseExerciseGroup, effectiveDate } from 'app/core/course/manage/exercises/mock/course-exercise-group.model';
 import { ExerciseManagementMockService } from 'app/core/course/manage/exercises-experimental/exercise-management-mock.service';
 import { MockDataService } from 'app/core/interceptor/mock-data.service';
-import { ExerciseVariantGroupService, toCourseExerciseGroup } from 'app/core/course/manage/exercises/exercise-variant-group.service';
+import { ExerciseVariantGroupDTO, ExerciseVariantGroupService, toCourseExerciseGroup } from 'app/core/course/manage/exercises/exercise-variant-group.service';
 import { ExerciseTableComponent, TableGroupChange } from 'app/core/course/manage/exercises-experimental/exercise-row/exercise-table.component';
 import { AddModalMode, ExerciseAddModalComponent } from 'app/core/course/manage/exercises-experimental/create-modal/exercise-add-modal.component';
 import { ExerciseGroupEditModalComponent } from 'app/core/course/manage/exercises-experimental/group-edit-modal/exercise-group-edit-modal.component';
@@ -172,8 +172,18 @@ export class CourseManagementExercisesComponent implements OnInit {
                 this.course.set(course);
             }
             if (this.mockDataService.enabled()) {
-                this.exercises.set(this.mockService.getExercises());
-                this.groups.set(this.mockService.getGroups());
+                const exercises = this.mockService.getExercises();
+                const groups = this.mockService.getGroups();
+                // Exercises in groups don't carry exerciseVariantGroup from the mock file — populate it so that
+                // lifecycle-button components know which exercises are grouped and disable the variant-unsafe actions.
+                for (const group of groups) {
+                    const ref: ExerciseVariantGroupReference = { id: group.id, title: group.title, maxPoints: group.maxPoints };
+                    for (const exercise of group.exercises ?? []) {
+                        exercise.exerciseVariantGroup = ref;
+                    }
+                }
+                this.exercises.set(exercises);
+                this.groups.set(groups);
                 this.buildBuckets();
             } else if (course?.id) {
                 const courseId = course.id;
@@ -252,6 +262,9 @@ export class CourseManagementExercisesComponent implements OnInit {
             });
             return;
         }
+        const variantGroupRef: ExerciseVariantGroupReference | undefined = newGroup ? { id: newGroup.id, title: newGroup.title, maxPoints: newGroup.maxPoints } : undefined;
+        // Spread to a new object so signal inputs on child components detect the reference change.
+        const movedExercise: Exercise = { ...exercise, exerciseVariantGroup: variantGroupRef };
         const updated = this.groups().map((g) => ({
             ...g,
             exercises: (g.exercises ?? []).filter((e) => e.id !== exercise.id),
@@ -259,13 +272,27 @@ export class CourseManagementExercisesComponent implements OnInit {
         if (newGroup) {
             const target = updated.find((g) => g.id === newGroup.id);
             if (target) {
-                target.exercises = [...(target.exercises ?? []), exercise];
+                target.exercises = [...(target.exercises ?? []), movedExercise];
                 // Variants share the group's timeline: the moved exercise adopts the group's dates (even unset ones).
-                this.applyGroupTimeline(exercise, target);
+                this.applyGroupTimeline(movedExercise, target);
             }
         }
+        // For quiz exercises: derive visibleToStudents / quizEnded from the (possibly new) dates, then recompute
+        // status. getStatus() checks these flags — not dates — so we must sync them first.
+        if (movedExercise.type === ExerciseType.QUIZ) {
+            const quiz = movedExercise as QuizExercise;
+            const now = dayjs();
+            const startDate = quiz.startDate ?? quiz.releaseDate;
+            if (startDate) {
+                quiz.visibleToStudents = startDate.isBefore(now);
+            }
+            if (quiz.dueDate) {
+                quiz.quizEnded = quiz.dueDate.isBefore(now);
+            }
+            this.applyQuizClientState(quiz);
+        }
         this.groups.set(updated);
-        this.exercises.set([...this.exercises()]);
+        this.exercises.set(this.exercises().map((e) => (e.id === exercise.id ? movedExercise : e)));
         this.buildBuckets();
     }
 
@@ -634,12 +661,17 @@ export class CourseManagementExercisesComponent implements OnInit {
      */
     private loadQuizBatches(courseId: number): void {
         this.quizExerciseService.findForCourse(courseId).subscribe((response) => {
-            const batchesById = new Map((response.body ?? []).map((quiz) => [quiz.id, quiz.quizBatches]));
+            // quizInfoById carries both quizBatches (for status computation) and isEditable (from the server,
+            // which uses the authoritative DB check — client-side status alone can miss cases like INDIVIDUAL
+            // mode quizzes where student batches are started but the quiz is not visibleToStudents yet).
+            const quizInfoById = new Map((response.body ?? []).map((quiz) => [quiz.id, { quizBatches: quiz.quizBatches, isEditable: quiz.isEditable }]));
             const replacements = new Map<number, Exercise>();
             const merged = this.exercises().map((exercise) => {
-                if (exercise.type === ExerciseType.QUIZ && exercise.id !== undefined && batchesById.has(exercise.id)) {
+                if (exercise.type === ExerciseType.QUIZ && exercise.id !== undefined && quizInfoById.has(exercise.id)) {
                     const quiz = { ...(exercise as QuizExercise) } as QuizExercise;
-                    quiz.quizBatches = batchesById.get(exercise.id);
+                    const info = quizInfoById.get(exercise.id)!;
+                    quiz.quizBatches = info.quizBatches;
+                    quiz.isEditable = info.isEditable;
                     this.applyQuizClientState(quiz);
                     replacements.set(exercise.id, quiz);
                     return quiz;
@@ -666,7 +698,49 @@ export class CourseManagementExercisesComponent implements OnInit {
             return;
         }
         this.exerciseVariantGroupService.getGroupsForCourse(courseId).subscribe((dtos) => {
-            const exercisesById = this.exercisesById();
+            // Build a map from exercise id to its new group reference so we can update exerciseVariantGroup.
+            const refByExerciseId = new Map<number, ExerciseVariantGroupReference>();
+            const groupDtoByExerciseId = new Map<number, ExerciseVariantGroupDTO>();
+            for (const dto of dtos) {
+                const ref: ExerciseVariantGroupReference = { id: dto.id, title: dto.title, maxPoints: dto.maxPoints };
+                for (const id of dto.exerciseIds ?? []) {
+                    refByExerciseId.set(id, ref);
+                    groupDtoByExerciseId.set(id, dto);
+                }
+            }
+            const now = dayjs();
+            // Spread exercises whose group membership changed so dependent signal computeds see new references.
+            // Also apply the group's shared timeline and recompute quiz client state so lifecycle buttons reflect
+            // the new group's dates immediately (without a page reload).
+            const updatedExercises = this.exercises().map((ex) => {
+                if (ex.id === undefined) return ex;
+                const newRef = refByExerciseId.get(ex.id);
+                if (newRef?.id === ex.exerciseVariantGroup?.id) return ex;
+                const groupDto = groupDtoByExerciseId.get(ex.id);
+                const updated: Exercise = {
+                    ...ex,
+                    exerciseVariantGroup: newRef,
+                    releaseDate: groupDto?.releaseDate,
+                    startDate: groupDto?.startDate,
+                    dueDate: groupDto?.dueDate,
+                    assessmentDueDate: groupDto?.assessmentDueDate,
+                    exampleSolutionPublicationDate: groupDto?.exampleSolutionPublicationDate,
+                };
+                if (updated.type === ExerciseType.QUIZ) {
+                    const quiz = updated as QuizExercise;
+                    const startDate = quiz.startDate ?? quiz.releaseDate;
+                    if (startDate !== undefined) {
+                        quiz.visibleToStudents = startDate.isBefore(now);
+                    }
+                    if (quiz.dueDate !== undefined) {
+                        quiz.quizEnded = quiz.dueDate.isBefore(now);
+                    }
+                    this.applyQuizClientState(quiz);
+                }
+                return updated;
+            });
+            this.exercises.set(updatedExercises);
+            const exercisesById = new Map(updatedExercises.filter((e) => e.id !== undefined).map((e) => [e.id!, e]));
             this.groups.set(dtos.map((dto) => toCourseExerciseGroup(dto, exercisesById)));
             this.buildBuckets();
         });
