@@ -266,6 +266,44 @@ describe('CodeButtonComponent', () => {
             expect(cloneUrl).not.toContain(repoToken);
         });
 
+        it('should ignore late repository token responses for a previously viewed base repository', async () => {
+            const templateTokenSubject = new Subject<HttpResponse<string>>();
+            const solutionTokenSubject = new Subject<HttpResponse<string>>();
+            const solutionToken = 'vcpat-SolutionSolutionSolutionSolutionSolutio123';
+            getRepoTokenSpy.mockReturnValueOnce(templateTokenSubject.asObservable()).mockReturnValueOnce(solutionTokenSubject.asObservable());
+            localStorageState = RepositoryAuthenticationMethod.Token;
+            fixture.componentRef.setInput('repositoryType', 'TEMPLATE');
+            fixture.componentRef.setInput('exerciseId', 7);
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-exercise.git');
+            await component.ngOnInit();
+
+            component.onClick();
+            fixture.detectChanges();
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'TEMPLATE', undefined);
+
+            fixture.componentRef.setInput('repositoryType', 'SOLUTION');
+            fixture.componentRef.setInput('repositoryUri', 'http://localhost/git/TEST/test-solution.git');
+            fixture.detectChanges();
+
+            component.onClick();
+            fixture.detectChanges();
+            expect(getRepoTokenSpy).toHaveBeenCalledWith(7, 'SOLUTION', undefined);
+
+            templateTokenSubject.next(new HttpResponse({ body: repoToken }));
+            templateTokenSubject.complete();
+            expect(component.repositoryAccessToken()).toBeUndefined();
+            expect(component.copyEnabled()).toBe(false);
+
+            solutionTokenSubject.next(new HttpResponse({ body: solutionToken }));
+            solutionTokenSubject.complete();
+
+            expect(component.repositoryAccessToken()).toEqual(solutionToken);
+            expect(component.copyEnabled()).toBe(true);
+            const cloneUrl = component.getHttpOrSshRepositoryUri(false, true, true);
+            expect(cloneUrl).toContain(`:${solutionToken}@`);
+            expect(cloneUrl).not.toContain(repoToken);
+        });
+
         it('should keep the copy button enabled for SSH when the repository token resolves after the dialog opened', async () => {
             // Reproduces the production ordering that synchronous of() mocks hide: the token HTTP response arrives only
             // after onClick already set the SSH copy state. The async response must not clobber it back to disabled.
