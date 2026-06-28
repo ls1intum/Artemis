@@ -8,7 +8,8 @@ export interface ImportAllCompetenciesDialogData {
     disabledIds?: number[];
     competencyType?: CourseCompetencyType | 'courseCompetency';
 }
-import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule } from 'primeng/paginator';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -49,7 +50,7 @@ export type ImportAllFromCourseResult = {
     selector: 'jhi-import-all-competencies',
     templateUrl: './import-all-competencies.component.html',
     imports: [
-        NgbPagination,
+        PaginatorModule,
         ButtonComponent,
         TranslateDirective,
         ArtemisTranslatePipe,

@@ -10,7 +10,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { MarkdownEditorHeight } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -39,7 +38,6 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
     styleUrls: ['../../../../shared/programming-exercise-form.scss', './programming-exercise-problem.component.scss'],
     imports: [
         TranslateDirective,
-        NgbAlert,
         TooltipModule,
         TextareaModule,
         ProgrammingExerciseInstructionComponent,
