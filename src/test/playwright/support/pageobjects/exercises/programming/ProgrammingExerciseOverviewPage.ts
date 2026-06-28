@@ -1,4 +1,4 @@
-import { expect, Page } from '@playwright/test';
+import { expect, Locator, Page } from '@playwright/test';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { UserCredentials } from '../../../users';
 import { Commands } from '../../../commands';
@@ -77,14 +77,14 @@ export class ProgrammingExerciseOverviewPage {
         return participation.id;
     }
 
-    async openCloneMenu(cloneMethod: GitCloneMethod) {
+    async openCloneMenu(cloneMethod: GitCloneMethod, codeButton?: Locator) {
         const gitCloneMethodSelector = {
             [GitCloneMethod.https]: '#useHTTPSButton',
             [GitCloneMethod.httpsWithToken]: '#useHTTPSWithTokenButton',
             [GitCloneMethod.ssh]: '#useSSHButton',
         };
 
-        const codeButtonLocator = this.getCodeButton();
+        const codeButtonLocator = codeButton ?? this.getCodeButton();
         await Commands.reloadUntilFound(this.page, codeButtonLocator, 10000, 40000);
         await codeButtonLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
@@ -123,21 +123,22 @@ export class ProgrammingExerciseOverviewPage {
         return (await this.page.locator('.clone-url').innerText()).trim();
     }
 
-    async copyCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https) {
+    async copyCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https, codeButton?: Locator) {
         if (cloneMethod !== GitCloneMethod.httpsWithToken) {
             return await this.getCloneUrl();
         }
+        const codeButtonLocator = codeButton ?? this.getCodeButton();
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
         const button = this.getCloneUrlButton();
         if (!(await button.isVisible())) {
-            await this.getCodeButton().click();
+            await codeButtonLocator.click();
         }
         try {
             await expect(button).toBeEnabled({ timeout: 30000 });
         } catch {
-            await this.getCodeButton().click();
+            await codeButtonLocator.click();
             await this.page.waitForTimeout(500);
-            await this.getCodeButton().click();
+            await codeButtonLocator.click();
             await this.page.locator('.popover-body').waitFor({ state: 'visible' });
             await expect(button).toBeEnabled({ timeout: 15000 });
         }
