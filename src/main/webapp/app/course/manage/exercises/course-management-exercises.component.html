@@ -100,7 +100,7 @@
                         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-3">
                             <div class="d-flex flex-wrap gap-3 small text-muted">
                                 <span>
-                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.release"></span>
+                                    <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.release"></span>:</span>
                                     @if (bucket.group.releaseDate) {
                                         {{ bucket.group.releaseDate | artemisDate: 'short-date' }}
                                     } @else {
@@ -108,7 +108,7 @@
                                     }
                                 </span>
                                 <span>
-                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.start"></span>
+                                    <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.start"></span>:</span>
                                     @if (bucket.group.startDate) {
                                         {{ bucket.group.startDate | artemisDate: 'short-date' }}
                                     } @else {
@@ -116,7 +116,7 @@
                                     }
                                 </span>
                                 <span>
-                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.due"></span>
+                                    <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.due"></span>:</span>
                                     @if (bucket.group.dueDate) {
                                         {{ bucket.group.dueDate | artemisDate: 'short-date' }}
                                     } @else {
@@ -124,7 +124,7 @@
                                     }
                                 </span>
                                 <span>
-                                    <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.groupMeta.feedbackDue"></span>
+                                    <span class="fw-semibold"><span jhiTranslate="artemisApp.exercise.assessmentDue"></span>:</span>
                                     @if (bucket.group.assessmentDueDate) {
                                         {{ bucket.group.assessmentDueDate | artemisDate: 'short-date' }}
                                     } @else {

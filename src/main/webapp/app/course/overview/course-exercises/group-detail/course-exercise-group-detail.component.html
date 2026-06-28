@@ -11,31 +11,46 @@
             <hr class="my-2" />
 
             <div class="d-flex flex-wrap gap-2">
-                <div class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold">
-                    <div class="text-body-tertiary">Submission date</div>
-                    <div class="text-body">{{ group.dueDate ? (group.dueDate | artemisDate: 'short-date') : '—' }}</div>
-                </div>
-                <div class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold">
-                    <div class="text-body-tertiary">Max points</div>
-                    <div class="text-body">{{ group.maxPoints ?? '—' }}</div>
-                </div>
-                <div class="info-box text-nowrap rounded-3 py-1 px-2 border border-1 small fw-semibold">
-                    <div class="text-body-tertiary">Variants</div>
-                    <div class="text-body">{{ exercises().length }}</div>
-                </div>
+                @if (exerciseSumMaxPoints() > 0) {
+                    <jhi-information-box [informationBoxData]="pointsInfoBoxData()">
+                        <span contentComponent class="d-flex align-items-center gap-1">
+                            <span>{{ achievedGroupPoints() }} / {{ group.maxPoints ?? exerciseSumMaxPoints() }}</span>
+                            @if (group.maxPoints) {
+                                <fa-icon
+                                    [icon]="faCircleInfo"
+                                    class="text-body-tertiary"
+                                    [pTooltip]="'artemisApp.exerciseVariantGroup.detail.pointsTooltip' | artemisTranslate: { total: exerciseSumMaxPoints(), cap: group.maxPoints }"
+                                    tooltipPosition="top"
+                                />
+                            }
+                        </span>
+                    </jhi-information-box>
+                }
+                @for (dateBox of groupDateInfoBoxes(); track dateBox.title) {
+                    <jhi-information-box [informationBoxData]="dateBox">
+                        @switch (dateBox.content.type) {
+                            @case ('timeAgo') {
+                                <span [ngClass]="'text-' + dateBox.contentColor" contentComponent>{{ dateBox.content.value | artemisTimeAgo }}</span>
+                            }
+                            @case ('dateTime') {
+                                <span contentComponent>{{ dateBox.content.value | artemisDate }}</span>
+                            }
+                        }
+                    </jhi-information-box>
+                }
+                <jhi-information-box [informationBoxData]="variantsInfoBoxData()" />
             </div>
         </div>
 
         <div class="d-flex flex-column h-100 overflow-hidden module-bg rounded-3 p-2">
             <div class="group-panel-scroll">
                 <div class="variant-callout rounded-3 p-3 mb-3">
-                    <div class="fw-semibold mb-1">Choose a variant to work on</div>
-                    <p class="mb-0 small text-body-secondary">
-                        This exercise has <strong>{{ exercises().length }} variants</strong> — you can work on <strong>all</strong> of them.
+                    <div class="fw-semibold mb-1" jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.heading"></div>
+                    <p class="mb-0 text-body-secondary">
+                        <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.body" [translateValues]="{ count: exercises().length }"></span>
                         @if (group.maxPoints) {
-                            Your combined score counts towards a maximum of <strong>{{ group.maxPoints }} points</strong>.
+                            <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.cappedScore" [translateValues]="{ maxPoints: group.maxPoints }"></span>
                         }
-                        Hover over a variant to preview its problem statement, then click to open it.
                     </p>
                 </div>
                 <div class="variant-grid">
@@ -59,7 +74,7 @@
                                 @if (renderedStatements().get(exercise.id!); as renderedPs) {
                                     <div class="variant-card__ps markdown-preview" [innerHTML]="renderedPs"></div>
                                 } @else {
-                                    <p class="text-body-tertiary small fst-italic mb-0">No problem statement configured.</p>
+                                    <p class="text-body-tertiary fst-italic mb-0" jhiTranslate="artemisApp.exerciseVariantGroup.detail.noProblemStatement"></p>
                                 }
                             </a>
                         </div>

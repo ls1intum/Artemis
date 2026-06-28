@@ -58,70 +58,22 @@
 
     <!-- ── Import tab ── -->
     @if (activeTab() === 'import') {
-        @if (importSelectedType() === null) {
-            <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.importHint"></p>
-            <div class="exercise-grid">
-                @for (card of exerciseTypeCards; track card.type) {
-                    <button class="exercise-card {{ card.accentClass }}" (click)="startImport(card.type)" type="button">
-                        <div class="card-icon-wrapper">
-                            <fa-icon [icon]="card.icon" />
-                        </div>
-                        <h6>{{ card.labelKey | artemisTranslate }}</h6>
-                        <p>{{ card.descriptionKey | artemisTranslate }}</p>
-                        <span class="card-cta">
-                            <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.select"></span>
-                            <fa-icon [icon]="faArrowRight" class="ms-1" />
-                        </span>
-                    </button>
-                }
-                <button class="exercise-card card--group" (click)="selectImportType('group')" type="button">
+        <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.importHint"></p>
+        <div class="exercise-grid">
+            @for (card of exerciseTypeCards; track card.type) {
+                <button class="exercise-card {{ card.accentClass }}" (click)="startImport(card.type)" type="button">
                     <div class="card-icon-wrapper">
-                        <fa-icon [icon]="faLayerGroup" />
+                        <fa-icon [icon]="card.icon" />
                     </div>
-                    <h6 jhiTranslate="artemisApp.exerciseManagement.addModal.group.title"></h6>
-                    <p jhiTranslate="artemisApp.exerciseManagement.addModal.group.importDescription"></p>
+                    <h6>{{ card.labelKey | artemisTranslate }}</h6>
+                    <p>{{ card.descriptionKey | artemisTranslate }}</p>
                     <span class="card-cta">
                         <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.select"></span>
                         <fa-icon [icon]="faArrowRight" class="ms-1" />
                     </span>
                 </button>
-            </div>
-        } @else if (importSelectedType() === 'group') {
-            <div class="d-flex align-items-center gap-2 mb-3">
-                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="backToImportTypeSelection()">
-                    <fa-icon [icon]="faArrowLeft" class="me-1" /><span jhiTranslate="entity.action.back"></span>
-                </p-button>
-                <span class="fw-semibold" jhiTranslate="artemisApp.exerciseManagement.addModal.import.groupHeader"></span>
-            </div>
-            <p class="text-muted small mb-2" jhiTranslate="artemisApp.exerciseManagement.addModal.import.groupHint"></p>
-            <div class="import-list">
-                @for (grp of importGroups(); track grp.id) {
-                    <label class="import-item d-flex align-items-center gap-2 py-2 px-2 border-bottom">
-                        <p-checkbox [binary]="true" [ngModel]="importGroupSelectedIds().has(grp.id)" (ngModelChange)="toggleImportGroupSelection(grp.id)" />
-                        <div class="flex-grow-1 min-width-0">
-                            <div class="d-flex align-items-center gap-2">
-                                <span class="fw-semibold small">{{ grp.title }}</span>
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis small">{{
-                                    'artemisApp.exerciseManagement.addModal.import.exerciseCount' | artemisTranslate: { count: grp.exerciseCount }
-                                }}</span>
-                            </div>
-                            <div class="text-muted" style="font-size: 0.75rem">{{ grp.course }}</div>
-                        </div>
-                    </label>
-                }
-            </div>
-            <div class="d-flex justify-content-end gap-2 mt-3">
-                <p-button severity="secondary" [outlined]="true" size="small" (onClick)="close()" jhiTranslate="entity.action.cancel" />
-                <p-button severity="primary" size="small" [disabled]="importGroupSelectedIds().size === 0" (onClick)="confirmImport()">
-                    @if (importGroupSelectedIds().size > 0) {
-                        {{ 'artemisApp.exerciseManagement.addModal.import.confirmCount' | artemisTranslate: { count: importGroupSelectedIds().size } }}
-                    } @else {
-                        {{ 'artemisApp.exerciseManagement.addModal.import.confirm' | artemisTranslate }}
-                    }
-                </p-button>
-            </div>
-        }
-        <!-- Real exercise types open the regular Artemis import dialog directly (see startImport), so no extra step is rendered here. -->
+            }
+        </div>
     }
 
     <!-- The Export tab opens the quiz export dialog directly (see requestExport); no separate page is rendered here. -->

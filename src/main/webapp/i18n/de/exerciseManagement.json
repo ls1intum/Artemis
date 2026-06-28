@@ -40,10 +40,6 @@
                 "FILE_UPLOAD": "Datei-Upload"
             },
             "groupMeta": {
-                "release": "Veröffentlichung:",
-                "start": "Start:",
-                "due": "Abgabe:",
-                "feedbackDue": "Feedback bis:",
                 "maxPoints": "Maximale Punkte:",
                 "maxPointsTooltip": "Begrenzt die Gesamtpunkte, die diese Gruppe zur Kursnote beiträgt.",
                 "none": "keine"
@@ -72,7 +68,7 @@
                 },
                 "group": {
                     "title": "Aufgabengruppe",
-                    "createDescription": "Eine Reihe von Aufgabenvarianten zum selben Thema. Studierende üben mit beliebigen Varianten und wählen, welche sie zur Bewertung einreichen.",
+                    "createDescription": "Eine Reihe von Aufgabenvarianten zum selben Thema. Studierende können beliebig viele Varianten bearbeiten.",
                     "importDescription": "Importiere eine Gruppe von Aufgabenvarianten aus einem anderen Kurs, einschließlich aller enthaltenen Aufgaben."
                 },
                 "import": {

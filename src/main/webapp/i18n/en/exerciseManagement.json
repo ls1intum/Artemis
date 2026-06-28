@@ -40,10 +40,6 @@
                 "FILE_UPLOAD": "File Upload"
             },
             "groupMeta": {
-                "release": "Release:",
-                "start": "Start:",
-                "due": "Due:",
-                "feedbackDue": "Feedback due:",
                 "maxPoints": "Max points:",
                 "maxPointsTooltip": "Caps the total points this group contributes to the course score.",
                 "none": "none"
@@ -72,7 +68,7 @@
                 },
                 "group": {
                     "title": "Exercise Group",
-                    "createDescription": "A set of variant exercises on the same topic. Students practice any variant and choose which to submit for grading.",
+                    "createDescription": "A set of variant exercises on the same topic. Students can work on any or all variants.",
                     "importDescription": "Import a group of variant exercises from another course, including all its exercises."
                 },
                 "import": {

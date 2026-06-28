@@ -1,6 +1,16 @@
 {
     "artemisApp": {
         "exerciseVariantGroup": {
+            "detail": {
+                "variants": "Varianten",
+                "pointsTooltip": "Die Varianten dieser Gruppe ergeben zusammen {{ total }} Pkt., aber nur {{ cap }} Pkt. zählen zur Kursnote.",
+                "noProblemStatement": "Keine Aufgabenstellung konfiguriert.",
+                "callout": {
+                    "heading": "Wähle eine Variante zum Bearbeiten",
+                    "body": "Diese Gruppe hat {{ count }} Varianten. Du kannst beliebig viele davon bearbeiten.",
+                    "cappedScore": " Deine Gesamtpunktzahl für diese Gruppe ist auf {{ maxPoints }} Punkte begrenzt."
+                }
+            },
             "edit": "Gruppe bearbeiten",
             "delete": "Gruppe löschen",
             "timelineLocked": {
