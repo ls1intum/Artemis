@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.programming.domain.ExperimentalGroup;
 public class AnalyticsHashUtils {
 
     // Distributes npredictably user to one of four groups
-    private static final String SALT = "VCPAT_experiment_2026";
+    private static final String SALT = "VCPAT_experiment";
 
     public static ExperimentalGroup getGroup(Long userId) {
         String input = userId + "-" + SALT;
