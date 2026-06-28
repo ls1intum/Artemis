@@ -104,22 +104,7 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void ensureTokensForExercise_createsForStaffOnly() {
-        repositoryVcsAccessTokenService.ensureTokensForExercise(exercise);
-
-        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-
-        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isPresent();
-        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(instructor.getId(), templateUri)).isPresent();
-        // A student of the course must not receive a staff repository token.
-        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(student.getId(), templateUri)).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void ensureTokensForExerciseAsync_provisionsTokensForAllStaff() {
+    void ensureTokensForExerciseAsync_provisionsTokensForStaffOnly() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -144,21 +129,23 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     void staffMembershipLifecycle_createsAndRemovesTokens() {
         User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
 
-        // Joining the course as staff pre-provisions the tokens for the course's base repositories.
-        repositoryVcsAccessTokenService.ensureTokensForStaffUserInCourse(tutor, course);
-        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isPresent();
+        // Joining the course as staff pre-provisions the tokens for the course's base repositories — asynchronously, exactly as the staff-join request path does.
+        repositoryVcsAccessTokenService.ensureTokensForStaffUserInCourseAsync(tutor, course);
+        await().atMost(15, TimeUnit.SECONDS)
+                .untilAsserted(() -> assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isPresent());
 
-        // While the user is still at least a tutor in the course, their tokens must be kept.
+        // While the user is still at least a tutor in the course, their tokens must be kept. The keep/delete decision lives in the synchronous core method that the async wrapper
+        // merely delegates to; assert it directly so "keep" is deterministic instead of racing an asynchronous no-op (a "stays present" condition cannot be awaited reliably).
         repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaff(tutor, course);
         assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isPresent();
 
-        // Once the user is no longer staff in the course, their tokens for that course's exercises are removed.
+        // Once the user is no longer staff in the course, their tokens for that course's exercises are removed — asynchronously, as the staff-leave request path does.
         tutor.getGroups().remove(course.getTeachingAssistantGroupName());
         userRepository.save(tutor);
-        repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaff(tutor, course);
-        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isEmpty();
+        repositoryVcsAccessTokenService.deleteForUserInCourseIfNoLongerStaffAsync(tutor, course);
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), templateUri)).isEmpty());
 
-        // Deleting the user's account removes any remaining repository tokens.
+        // Deleting the user's account removes any remaining repository tokens (softDeleteUser does this synchronously).
         repositoryVcsAccessTokenService.getOrCreateToken(tutor, exercise, RepositoryType.SOLUTION, null);
         repositoryVcsAccessTokenService.deleteAllByUserId(tutor.getId());
         assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(tutor.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
