@@ -572,7 +572,13 @@ public class GlobalSearchResource {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
         }
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+        OffsetDateTime now = OffsetDateTime.now();
+        // Guard against lecture_unit rows leaking through this branch via Weaviate's WORD tokenization:
+        // "lecture_unit" is tokenized as ["lecture","unit"], so type Equal "lecture" also matches lecture_unit rows.
+        // Lectures never store a release_date (always null), so the IS NULL arm passes all legitimate lecture rows.
+        // Unreleased lecture_units have a future release_date and are caught by the lte(now) + isNull OR.
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()),
+                Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull()));
     }
 
     /**
