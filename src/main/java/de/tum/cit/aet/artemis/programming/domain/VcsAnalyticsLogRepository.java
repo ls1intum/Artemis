@@ -11,6 +11,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_LOCALVC)
 @Lazy
 @Repository
-public interface VcsAnalyticsLogRepository extends ArtemisJpaRepository<VcsAccessLog, Long> {
+public interface VcsAnalyticsLogRepository extends ArtemisJpaRepository<VcsAnalyticsLog, Long> {
 
 }

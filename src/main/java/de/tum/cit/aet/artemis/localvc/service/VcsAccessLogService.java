@@ -17,10 +17,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
+import de.tum.cit.aet.artemis.programming.domain.ExperimentalGroup;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.domain.VcsAnalyticsLog;
+import de.tum.cit.aet.artemis.programming.domain.VcsAnalyticsLogRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
+import de.tum.cit.aet.artemis.programming.service.AnalyticsHashUtils;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @Profile(PROFILE_LOCALVC)
@@ -32,10 +36,13 @@ public class VcsAccessLogService {
 
     private final VcsAccessLogRepository vcsAccessLogRepository;
 
+    private final VcsAnalyticsLogRepository vcsAnalyticsLogRepository;
+
     private final ParticipationRepository participationRepository;
 
-    VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository, ParticipationRepository participationRepository) {
+    VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository, VcsAnalyticsLogRepository vcsAnalyticsLogRepository, ParticipationRepository participationRepository) {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
+        this.vcsAnalyticsLogRepository = vcsAnalyticsLogRepository;
         this.participationRepository = participationRepository;
     }
 
@@ -57,6 +64,20 @@ public class VcsAccessLogService {
         VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash,
                 ipAddress);
         vcsAccessLogRepository.save(accessLogEntry);
+
+        var exercise = participation.getExercise();
+        if (exercise != null && exercise.getCourseViaExerciseGroupOrCourseMember() != null) {
+            Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+
+            ExperimentalGroup experimentalGroup = AnalyticsHashUtils.getGroup(user.getId());
+            String maskedId = AnalyticsHashUtils.maskUserId(user.getId(), courseId);
+
+            VcsAnalyticsLog analyticsLogEntry = new VcsAnalyticsLog(maskedId, courseId, experimentalGroup, actionType, authenticationMechanism);
+            vcsAnalyticsLogRepository.save(analyticsLogEntry);
+        }
+        else {
+            log.warn("Could not save analytics log: courseId is null for participation {}", participation.getId());
+        }
     }
 
     /**

@@ -43,13 +43,13 @@ public class VcsAnalyticsLog extends DomainObject {
     private ZonedDateTime timestamp;
 
     public VcsAnalyticsLog(String maskedUserId, Long courseId, ExperimentalGroup experimentalGroup, RepositoryActionType repositoryActionType,
-            AuthenticationMechanism authenticationMechanism, ZonedDateTime timestamp) {
+            AuthenticationMechanism authenticationMechanism) {
         this.maskedUserId = maskedUserId;
         this.courseId = courseId;
         this.experimentalGroup = experimentalGroup;
         this.repositoryActionType = repositoryActionType;
         this.authenticationMechanism = authenticationMechanism;
-        this.timestamp = timestamp;
+        this.timestamp = ZonedDateTime.now();
     }
 
     public VcsAnalyticsLog() {
