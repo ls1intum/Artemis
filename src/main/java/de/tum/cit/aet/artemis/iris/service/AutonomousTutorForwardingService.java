@@ -89,11 +89,13 @@ public class AutonomousTutorForwardingService {
             return;
         }
 
-        String variant = irisSettingsService.getSettingsForCourse(course).variant().jsonValue();
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        String variant = settings.variant().jsonValue();
+        String supportLevel = settings.supportLevel().jsonValue();
         log.debug("Forwarding post {} to autonomous tutor pipeline (variant={})", post.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, author.getSelectedLLMUsage(), new PyrisPostDTO(post), course, toPyrisUserDTO(author), null, null, null,
-                stages -> {
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(post), course, toPyrisUserDTO(author), null, null,
+                null, stages -> {
                 });
     }
 
@@ -149,11 +151,13 @@ public class AutonomousTutorForwardingService {
             return;
         }
 
-        String variant = irisSettingsService.getSettingsForCourse(course).variant().jsonValue();
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        String variant = settings.variant().jsonValue();
+        String supportLevel = settings.supportLevel().jsonValue();
         log.debug("Forwarding answer post {} (thread {}) to autonomous tutor pipeline (variant={})", answerPost.getId(), parentPost.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, author.getSelectedLLMUsage(), new PyrisPostDTO(parentPost), course, toPyrisUserDTO(author), null, null, null,
-                stages -> {
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(parentPost), course, toPyrisUserDTO(author), null,
+                null, null, stages -> {
                 });
     }
 
