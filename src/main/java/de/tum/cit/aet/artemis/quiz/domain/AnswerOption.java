@@ -134,21 +134,34 @@ public class AnswerOption {
         if (id == null || answerOption.id == null) {
             return false;
         }
-        if (!Objects.equals(id, answerOption.id) || !Objects.equals(text, answerOption.text) || !Objects.equals(hint, answerOption.hint)
-                || !Objects.equals(invalid, answerOption.invalid)) {
-            return false;
-        }
-        // Student/exam responses intentionally hide solution fields. Treat this projection as the same option while
-        // still comparing solution fields for valid persisted options so Hibernate detects JSON content changes.
-        if (hasHiddenSolutionFields() || answerOption.hasHiddenSolutionFields()) {
-            return true;
-        }
-        return Objects.equals(explanation, answerOption.explanation) && Objects.equals(isCorrect, answerOption.isCorrect);
+        return Objects.equals(id, answerOption.id) && Objects.equals(text, answerOption.text) && Objects.equals(hint, answerOption.hint)
+                && Objects.equals(explanation, answerOption.explanation) && Objects.equals(isCorrect, answerOption.isCorrect) && Objects.equals(invalid, answerOption.invalid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, text, hint, invalid);
+        return Objects.hash(id, text, hint, explanation, isCorrect, invalid);
+    }
+
+    /**
+     * Compares answer options after student/exam projections hide solution fields.
+     *
+     * @param answerOption answer option to compare with this option
+     * @return true when both options represent the same visible student/exam option
+     */
+    public boolean isSameStudentView(AnswerOption answerOption) {
+        if (this == answerOption) {
+            return true;
+        }
+        if (answerOption == null || id == null || answerOption.id == null) {
+            return false;
+        }
+        if (!Objects.equals(id, answerOption.id) || !Objects.equals(text, answerOption.text) || !Objects.equals(hint, answerOption.hint)
+                || !Objects.equals(invalid, answerOption.invalid)) {
+            return false;
+        }
+        return hasHiddenSolutionFields() || answerOption.hasHiddenSolutionFields()
+                || Objects.equals(explanation, answerOption.explanation) && Objects.equals(isCorrect, answerOption.isCorrect);
     }
 
     private boolean hasHiddenSolutionFields() {

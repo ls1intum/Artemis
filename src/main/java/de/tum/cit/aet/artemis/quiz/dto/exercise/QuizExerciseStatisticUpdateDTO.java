@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.dto.exercise;
 
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
@@ -76,10 +74,10 @@ record QuizQuestionStatisticWithoutSolutionDTO(Long id, Integer participantsRate
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record MultipleChoiceQuestionStatisticWithoutSolutionDTO(Set<AnswerCounterWithoutSolutionDTO> answerCounters) {
+record MultipleChoiceQuestionStatisticWithoutSolutionDTO(List<AnswerCounterWithoutSolutionDTO> answerCounters) {
 
     public static MultipleChoiceQuestionStatisticWithoutSolutionDTO of(MultipleChoiceQuestionStatistic statistic) {
-        return new MultipleChoiceQuestionStatisticWithoutSolutionDTO(statistic.getAnswerCounters().stream().map(AnswerCounterWithoutSolutionDTO::of).collect(Collectors.toSet()));
+        return new MultipleChoiceQuestionStatisticWithoutSolutionDTO(statistic.getAnswerCounters().stream().map(AnswerCounterWithoutSolutionDTO::of).toList());
     }
 }
 
@@ -92,11 +90,10 @@ record AnswerCounterWithoutSolutionDTO(AnswerOptionWithoutSolutionDTO answer, @J
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record DragAndDropQuestionStatisticWithoutSolutionDTO(Set<DropLocationCounterWithoutSolutionDTO> dropLocationCounters) {
+record DragAndDropQuestionStatisticWithoutSolutionDTO(List<DropLocationCounterWithoutSolutionDTO> dropLocationCounters) {
 
     public static DragAndDropQuestionStatisticWithoutSolutionDTO of(DragAndDropQuestionStatistic statistic) {
-        return new DragAndDropQuestionStatisticWithoutSolutionDTO(
-                statistic.getDropLocationCounters().stream().map(DropLocationCounterWithoutSolutionDTO::of).collect(Collectors.toSet()));
+        return new DragAndDropQuestionStatisticWithoutSolutionDTO(statistic.getDropLocationCounters().stream().map(DropLocationCounterWithoutSolutionDTO::of).toList());
     }
 }
 
@@ -109,11 +106,10 @@ record DropLocationCounterWithoutSolutionDTO(DropLocationDTO dropLocation, @Json
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record ShortAnswerQuestionStatisticWithoutSolutionDTO(Set<ShortAnswerSpotCounterWithoutSolutionDTO> shortAnswerSpotCounters) {
+record ShortAnswerQuestionStatisticWithoutSolutionDTO(List<ShortAnswerSpotCounterWithoutSolutionDTO> shortAnswerSpotCounters) {
 
     public static ShortAnswerQuestionStatisticWithoutSolutionDTO of(ShortAnswerQuestionStatistic statistic) {
-        return new ShortAnswerQuestionStatisticWithoutSolutionDTO(
-                statistic.getShortAnswerSpotCounters().stream().map(ShortAnswerSpotCounterWithoutSolutionDTO::of).collect(Collectors.toSet()));
+        return new ShortAnswerQuestionStatisticWithoutSolutionDTO(statistic.getShortAnswerSpotCounters().stream().map(ShortAnswerSpotCounterWithoutSolutionDTO::of).toList());
     }
 }
 

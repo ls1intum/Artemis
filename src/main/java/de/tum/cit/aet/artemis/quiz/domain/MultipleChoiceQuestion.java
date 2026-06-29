@@ -126,6 +126,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
 
         for (AnswerOptionInput input : inputs) {
             validateInput(input);
+            if (input.id() != null && input.id() <= 0) {
+                throw new IllegalArgumentException("Answer option ID must be positive");
+            }
 
             if (input.id() != null && !requestedIds.add(input.id())) {
                 throw new IllegalArgumentException("Duplicate answer option ID " + input.id());
@@ -262,7 +265,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         // check answer options
         if (getAnswerOptions() != null) {
             for (AnswerOption answerOption : getAnswerOptions()) {
-                if (answerOption.isIsCorrect()) {
+                if (!answerOption.isInvalid() && Boolean.TRUE.equals(answerOption.isIsCorrect())) {
                     correctAnswerCount++;
                 }
             }
@@ -339,6 +342,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
             validateInput(AnswerOptionInput.of(answerOption));
             if (answerOption.getId() == null || !ids.add(answerOption.getId())) {
                 throw new IllegalStateException("Answer option IDs must be non-null and unique");
+            }
+            if (answerOption.getId() <= 0) {
+                throw new IllegalStateException("Answer option IDs must be positive");
             }
             if (getNextComponentId() == null || answerOption.getId() >= getNextComponentId()) {
                 throw new IllegalStateException("Answer option ID must be below nextComponentId");

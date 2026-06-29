@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.domain;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -43,21 +44,32 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
         if (!(getQuizQuestion() instanceof MultipleChoiceQuestion question) || selectedOptionIds == null) {
             return Set.of();
         }
-        return selectedOptionIds.stream().map(optionId -> {
-            AnswerOption option = question.findAnswerOptionById(optionId);
-            if (option == null) {
-                throw new IllegalStateException("Multiple-choice submission " + getId() + " references missing answer option " + optionId + " in question " + question.getId());
+
+        Set<Long> unresolvedOptionIds = new HashSet<>(selectedOptionIds);
+        Set<AnswerOption> selectedOptions = new LinkedHashSet<>();
+        for (AnswerOption option : question.getAnswerOptions()) {
+            if (selectedOptionIds.contains(option.getId())) {
+                selectedOptions.add(option);
+                unresolvedOptionIds.remove(option.getId());
             }
-            return option;
-        }).collect(Collectors.toCollection(LinkedHashSet::new));
+        }
+        if (!unresolvedOptionIds.isEmpty()) {
+            Long optionId = unresolvedOptionIds.iterator().next();
+            throw new IllegalStateException("Multiple-choice submission " + getId() + " references missing answer option " + optionId + " in question " + question.getId());
+        }
+        return selectedOptions;
     }
 
     @JsonProperty("selectedOptions")
     public void setSelectedOptions(Set<AnswerOption> answerOptions) {
-        this.selectedOptionIds = answerOptions == null ? null : answerOptions.stream().map(AnswerOption::getId).collect(Collectors.toCollection(HashSet::new));
+        this.selectedOptionIds = answerOptions == null ? null
+                : answerOptions.stream().filter(Objects::nonNull).map(AnswerOption::getId).filter(Objects::nonNull).collect(Collectors.toCollection(HashSet::new));
     }
 
     public void addSelectedOptions(AnswerOption answerOption) {
+        if (answerOption == null || answerOption.getId() == null) {
+            return;
+        }
         if (selectedOptionIds == null) {
             selectedOptionIds = new HashSet<>();
         }
@@ -71,7 +83,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
     @JsonIgnore
     public void setSelectedOptionIds(Set<Long> selectedOptionIds) {
-        this.selectedOptionIds = selectedOptionIds == null ? null : new HashSet<>(selectedOptionIds);
+        this.selectedOptionIds = selectedOptionIds == null ? null : selectedOptionIds.stream().filter(Objects::nonNull).collect(Collectors.toCollection(HashSet::new));
     }
 
     /**

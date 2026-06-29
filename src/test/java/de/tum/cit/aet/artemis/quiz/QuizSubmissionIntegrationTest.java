@@ -1059,9 +1059,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             // ObjectNotFoundException; now it must be silently dropped and the remaining valid selections must still be persisted.
             MultipleChoiceSubmittedAnswer mcAnswer = quizSubmission.getSubmittedAnswers().stream().filter(MultipleChoiceSubmittedAnswer.class::isInstance)
                     .map(MultipleChoiceSubmittedAnswer.class::cast).findFirst().orElseThrow();
-            Set<EntityIdRefDTO> selectedOptions = mcAnswer.getSelectedOptionIds().stream().map(EntityIdRefDTO::new).collect(Collectors.toCollection(HashSet::new));
+            Set<Long> expectedSelectedOptionIds = Set.copyOf(mcAnswer.getSelectedOptionIds());
+            Set<EntityIdRefDTO> selectedOptions = expectedSelectedOptionIds.stream().map(EntityIdRefDTO::new).collect(Collectors.toCollection(HashSet::new));
             selectedOptions.add(new EntityIdRefDTO(Long.MAX_VALUE));
-            int validSelectionCount = selectedOptions.size() - 1;
             Set<SubmittedAnswerFromLiveClientDTO> submittedAnswers = Set
                     .of(new MultipleChoiceSubmittedAnswerFromLiveClientDTO(new EntityIdRefDTO(mcAnswer.getQuizQuestion().getId()), selectedOptions));
             QuizSubmissionFromLiveClientDTO submissionDTO = new QuizSubmissionFromLiveClientDTO(null, submittedAnswers);
@@ -1072,7 +1072,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             assertThat(updatedSubmission.submitted()).isTrue();
             var persistedMcAnswer = updatedSubmission.submittedAnswers().stream().filter(answer -> answer.multipleChoiceSubmittedAnswer() != null).findFirst().orElseThrow()
                     .multipleChoiceSubmittedAnswer();
-            assertThat(persistedMcAnswer.selectedOptions()).hasSize(validSelectionCount).allSatisfy(option -> assertThat(option.id()).isNotEqualTo(Long.MAX_VALUE));
+            Set<Long> persistedSelectedOptionIds = persistedMcAnswer.selectedOptions().stream().map(option -> option.id()).collect(Collectors.toSet());
+            assertThat(persistedSelectedOptionIds).isEqualTo(expectedSelectedOptionIds);
         }
 
         /**

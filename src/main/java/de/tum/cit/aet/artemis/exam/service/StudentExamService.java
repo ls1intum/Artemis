@@ -192,6 +192,9 @@ public class StudentExamService {
             // in case there were last second changes, that have not been submitted yet.
             saveSubmissions(studentExamFromClient, currentUser);
         }
+        catch (BadRequestAlertException e) {
+            throw e;
+        }
         catch (Exception e) {
             log.error("saveSubmissions threw an exception", e);
         }
@@ -310,6 +313,9 @@ public class StudentExamService {
             // we do not apply the following checks for programming exercises or file upload exercises
             try {
                 saveSubmission(currentUser, existingRelevantParticipations, exercise);
+            }
+            catch (BadRequestAlertException e) {
+                throw e;
             }
             catch (Exception e) {
                 log.error("saveSubmission threw an exception", e);
@@ -458,13 +464,16 @@ public class StudentExamService {
     private void replaceDetachedQuizQuestionReferencesById(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
         for (SubmittedAnswer submittedAnswer : submissionFromClient.getSubmittedAnswers()) {
             QuizQuestion question = submittedAnswer.getQuizQuestion();
-            if (question != null && question.getId() != null) {
-                // Keep the submitted answer data from the client, but anchor its question reference in the server graph.
-                QuizQuestion managedQuestion = questionsById.get(question.getId());
-                if (managedQuestion != null) {
-                    submittedAnswer.setQuizQuestion(managedQuestion);
-                }
+            if (question == null || question.getId() == null) {
+                throw new BadRequestAlertException("Submitted answer is missing a quiz question reference", "StudentExam", "invalidQuizQuestionReference");
             }
+
+            // Keep the submitted answer data from the client, but anchor its question reference in the server graph.
+            QuizQuestion managedQuestion = questionsById.get(question.getId());
+            if (managedQuestion == null) {
+                throw new BadRequestAlertException("Submitted answer references an unknown quiz question " + question.getId(), "StudentExam", "invalidQuizQuestionReference");
+            }
+            submittedAnswer.setQuizQuestion(managedQuestion);
         }
     }
 

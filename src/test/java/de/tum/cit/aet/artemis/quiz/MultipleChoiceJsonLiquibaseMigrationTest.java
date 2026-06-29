@@ -94,7 +94,7 @@ class MultipleChoiceJsonLiquibaseMigrationTest {
 
     @Test
     void testH2MigrationInitializesDisposableJsonColumns() throws Exception {
-        String jdbcUrl = "jdbc:h2:mem:multiple-choice-json-migration;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
+        String jdbcUrl = "jdbc:h2:mem:multiple-choice-json-migration-" + UUID.randomUUID().toString().replace("-", "") + ";DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE";
         try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
             createLegacySchema(connection, DatabaseKind.H2);
             execute(connection, List.of("INSERT INTO quiz_question (id, discriminator, quiz_question_statistic_id) VALUES (1, 'MC', 501)"));

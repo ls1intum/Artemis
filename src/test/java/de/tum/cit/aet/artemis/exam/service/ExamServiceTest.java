@@ -136,7 +136,10 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void studentExamResponseDTOFiltersQuizSolutionsWithoutMutatingLoadedQuestion() {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(5), QuizMode.SYNCHRONIZED, exam1.getCourse());
-        quizExercise.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
+        MultipleChoiceQuestion sourceQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
+        quizExercise.addQuestion(sourceQuestion);
+        List<Boolean> expectedCorrectness = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::isIsCorrect).toList();
+        List<String> expectedExplanations = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::getExplanation).toList();
         quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
 
         StudentExam studentExam = new StudentExam();
@@ -148,18 +151,20 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         QuizExercise loadedQuizExercise = (QuizExercise) studentExam.getExercises().getFirst();
         MultipleChoiceQuestion loadedQuestion = (MultipleChoiceQuestion) loadedQuizExercise.getQuizQuestions().getFirst();
-        assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
-        assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
+        List<Long> expectedOptionIds = loadedQuestion.getAnswerOptions().stream().map(AnswerOption::getId).toList();
+        assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactlyElementsOf(expectedCorrectness);
+        assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactlyElementsOf(expectedExplanations);
 
         StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.forSummary(studentExam, false);
         QuizExerciseForStudentExamDTO quizExerciseDTO = (QuizExerciseForStudentExamDTO) responseDTO.exercises().getFirst();
         QuizQuestionWithoutSolutionDTO questionDTO = (QuizQuestionWithoutSolutionDTO) quizExerciseDTO.quizQuestions().getFirst();
-        assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L, 2L);
+        assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id)
+                .containsExactlyElementsOf(expectedOptionIds);
 
         QuizExercise persistedQuizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
         MultipleChoiceQuestion persistedQuestion = (MultipleChoiceQuestion) persistedQuizExercise.getQuizQuestions().getFirst();
-        assertThat(persistedQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
-        assertThat(persistedQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
+        assertThat(persistedQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactlyElementsOf(expectedCorrectness);
+        assertThat(persistedQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactlyElementsOf(expectedExplanations);
     }
 
     @Test
@@ -169,6 +174,10 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         quizExercise.setExerciseGroup(new ExerciseGroup());
         quizExercise.getExerciseGroup().setExam(exam1);
         MultipleChoiceQuestion sourceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
+        List<Long> expectedOptionIds = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::getId).toList();
+        List<Boolean> expectedCorrectness = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::isIsCorrect).toList();
+        List<String> expectedExplanations = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::getExplanation).toList();
+        Long expectedSelectedOptionId = sourceQuestion.getAnswerOptions().getFirst().getId();
 
         MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
         submittedAnswer.setQuizQuestion(sourceQuestion);
@@ -189,20 +198,21 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(submittedAnswer.getQuizQuestion()).isSameAs(sourceQuestion);
         assertThat(quizSubmission.getScoreInPoints()).isEqualTo(1.0);
-        assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactly(true, false);
-        assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactly("E1", "E2");
+        assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactlyElementsOf(expectedCorrectness);
+        assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactlyElementsOf(expectedExplanations);
 
         StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.forSummary(studentExam, false);
         QuizExerciseForStudentExamDTO quizExerciseDTO = (QuizExerciseForStudentExamDTO) responseDTO.exercises().getFirst();
         QuizQuestionWithoutSolutionDTO questionDTO = (QuizQuestionWithoutSolutionDTO) quizExerciseDTO.quizQuestions().getFirst();
-        assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L, 2L);
+        assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id)
+                .containsExactlyElementsOf(expectedOptionIds);
 
         QuizSubmissionBeforeEvaluationDTO submissionDTO = (QuizSubmissionBeforeEvaluationDTO) quizExerciseDTO.studentParticipations().iterator().next().submissions().iterator()
                 .next();
         SubmittedAnswerBeforeEvaluationDTO submittedAnswerDTO = submissionDTO.submittedAnswers().iterator().next();
-        assertThat(submittedAnswerDTO.quizQuestion().multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L,
-                2L);
-        assertThat(submittedAnswerDTO.multipleChoiceSubmittedAnswer().selectedOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(1L);
+        assertThat(submittedAnswerDTO.quizQuestion().multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id)
+                .containsExactlyElementsOf(expectedOptionIds);
+        assertThat(submittedAnswerDTO.multipleChoiceSubmittedAnswer().selectedOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(expectedSelectedOptionId);
     }
 
     @Test

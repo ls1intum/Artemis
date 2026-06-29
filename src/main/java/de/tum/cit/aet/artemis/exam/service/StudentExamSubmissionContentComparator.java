@@ -139,7 +139,8 @@ public final class StudentExamSubmissionContentComparator {
             case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer1 when answer2 instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer2 ->
                 isContentEqualTo(shortAnswerSubmittedAnswer1, shortAnswerSubmittedAnswer2);
             default -> {
-                log.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
+                log.error("Cannot compare submitted answers for equality, classes unknown: {}({}) and {}({})", answer1.getClass().getSimpleName(), answer1.getId(),
+                        answer2 == null ? null : answer2.getClass().getSimpleName(), answer2 == null ? null : answer2.getId());
                 yield false;
             }
         };

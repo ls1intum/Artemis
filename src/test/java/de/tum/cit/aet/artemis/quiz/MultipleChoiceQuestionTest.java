@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOptionInput;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestionStatistic;
+import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 
 class MultipleChoiceQuestionTest {
 
@@ -152,6 +153,36 @@ class MultipleChoiceQuestionTest {
         question.setAnswerOptions(List.of(new AnswerOption(7L, "A", null, null, true, false), new AnswerOption(7L, "B", null, null, false, false)));
 
         assertThatThrownBy(question::validateAnswerOptions).isInstanceOf(IllegalStateException.class).hasMessageContaining("Answer option IDs must be non-null and unique");
+    }
+
+    @Test
+    void replaceAnswerOptionsRejectsNonPositiveIds() {
+        MultipleChoiceQuestion question = questionWithTwoOptions();
+
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(input(0L, "zero", false)))).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Answer option ID must be positive");
+        assertThatThrownBy(() -> question.replaceAnswerOptions(List.of(input(-1L, "negative", false)))).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Answer option ID must be positive");
+    }
+
+    @Test
+    void validateAnswerOptionsRejectsNonPositivePreservedIds() {
+        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+        question.setAnswerOptions(List.of(new AnswerOption(0L, "A", null, null, true, false)));
+
+        assertThatThrownBy(question::validateAnswerOptions).isInstanceOf(IllegalStateException.class).hasMessageContaining("Answer option IDs must be positive");
+    }
+
+    @Test
+    void isValidIgnoresInvalidAnswerOptions() {
+        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+        question.setTitle("Question");
+        question.setPoints(1.0);
+        question.setScoringType(ScoringType.ALL_OR_NOTHING);
+        question.setSingleChoice(true);
+        question.setAnswerOptions(List.of(new AnswerOption(1L, "A", null, null, true, false), new AnswerOption(2L, "B", null, null, true, true)));
+
+        assertThat(question.isValid()).isTrue();
     }
 
     @Test
