@@ -34,7 +34,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
@@ -722,7 +722,7 @@ export class ExerciseAPIRequests {
      * participation data (with latest result) via the per-participation endpoint.
      *
      * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
-     * @returns A Promise<StudentParticipation> representing the student participation with latest result.
+     * @returns A Promise<StudentParticipationDTO> representing the student participation with latest result.
      * @throws Error if no participations are found for the exercise.
      */
     /**
@@ -774,7 +774,7 @@ export class ExerciseAPIRequests {
         }
     }
 
-    async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
+    async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipationDTO> {
         const pageResponse = await this.page.request.get(
             `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
         );
@@ -793,14 +793,14 @@ export class ExerciseAPIRequests {
      * who own the participation.
      *
      * @param participationId - The ID of the participation to retrieve.
-     * @returns A Promise<StudentParticipation> representing the student participation with latest results.
+     * @returns A Promise<StudentParticipationDTO> representing the student participation with latest results.
      */
-    async getParticipationWithLatestResult(participationId: number): Promise<StudentParticipation> {
+    async getParticipationWithLatestResult(participationId: number): Promise<StudentParticipationDTO> {
         const response = await this.page.request.get(`api/exercise/participations/${participationId}/with-latest-result`);
         if (!response.ok()) {
             throw new Error(`Failed to get participation ${participationId}: ${response.status()}`);
         }
-        return (await response.json()) as StudentParticipation;
+        return (await response.json()) as StudentParticipationDTO;
     }
 
     /**
