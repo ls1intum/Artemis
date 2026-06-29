@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.atlas.api.CourseAutoOrchestrationApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -77,6 +78,8 @@ public class CourseUpdateResource {
 
     private final Optional<LearningPathApi> learningPathApi;
 
+    private final Optional<CourseAutoOrchestrationApi> autoOrchestrationApi;
+
     private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
@@ -85,13 +88,15 @@ public class CourseUpdateResource {
 
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
-            ConductAgreementService conductAgreementService, Optional<AthenaApi> athenaApi, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository,
-            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            ConductAgreementService conductAgreementService, Optional<AthenaApi> athenaApi, Optional<LearnerProfileApi> learnerProfileApi,
+            Optional<CourseAutoOrchestrationApi> autoOrchestrationApi, CourseRepository courseRepository, UserRepository userRepository,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.learningPathApi = learningPathApi;
+        this.autoOrchestrationApi = autoOrchestrationApi;
         this.conductAgreementService = conductAgreementService;
         this.athenaApi = athenaApi;
         this.learnerProfileApi = learnerProfileApi;
@@ -128,6 +133,10 @@ public class CourseUpdateResource {
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
         // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
+
+        // The managed auto-orchestration configuration is loaded via a dedicated query (rather than the shared
+        // findForUpdateById graph) and attached so applyTo mutates the existing row in place instead of orphaning it.
+        autoOrchestrationApi.ifPresent(api -> api.findConfiguration(courseId).ifPresent(existingCourse::setAutoOrchestrationConfiguration));
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -171,6 +180,7 @@ public class CourseUpdateResource {
         String existingCourseIcon = existingCourse.getCourseIcon();
         // Save values that are checked AFTER applyTo mutates the entity
         boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
+        boolean oldAutoOrchestratorEnabled = existingCourse.getAutoOrchestratorEnabled();
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
 
         // Apply DTO values to the existing course entity - this preserves all relationships
@@ -214,6 +224,12 @@ public class CourseUpdateResource {
         }
 
         Course result = courseRepository.save(existingCourse);
+
+        // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
+        // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).
+        if (oldAutoOrchestratorEnabled && !courseUpdateDTO.autoOrchestratorEnabled()) {
+            autoOrchestrationApi.ifPresent(api -> api.flushBufferedContentChanges(courseId));
+        }
 
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(result)));
 

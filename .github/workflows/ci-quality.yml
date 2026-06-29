@@ -187,9 +187,7 @@ jobs:
           total_violations=$((entitygraph_violations + query_violations))
 
           # Thresholds are technical debt; lower as violations are fixed.
-          # Bumped 11 -> 12: the per-course Atlas auto-orchestration kill switch is loaded eagerly via
-          # the Course @EntityGraph (same pattern as onlineCourseConfiguration), adding one fetch.
-          max_entitygraph=12
+          max_entitygraph=11
           max_query=25
           max_total=$((max_entitygraph + max_query))
 

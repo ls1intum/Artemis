@@ -39,4 +39,14 @@ public interface CourseAutoOrchestrationConfigurationRepository extends ArtemisJ
             WHERE config.course.id = :courseId
             """)
     Optional<CourseAutoOrchestrationConfigDTO> findConfigByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Loads the managed configuration entity for a course so the update flow can attach it to the course
+     * and mutate it in place via {@code CourseUpdateDTO#applyTo} (rather than orphaning the existing row
+     * by creating a new one).
+     *
+     * @param courseId the course to resolve the configuration for
+     * @return the managed configuration entity, or empty when the course has no configuration row
+     */
+    Optional<CourseAutoOrchestrationConfiguration> findByCourseId(long courseId);
 }
