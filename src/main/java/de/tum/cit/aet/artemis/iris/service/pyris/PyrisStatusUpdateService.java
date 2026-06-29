@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdate
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisCourseMemoryIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
@@ -25,6 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseMemoryIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
@@ -194,6 +196,17 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(FaqIngestionWebhookJob job, PyrisFaqIngestionStatusUpdateDTO statusUpdate) {
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+    }
+
+    /**
+     * Handles the status update of a Course Memory ingestion job. The entry is stored on Pyris
+     * regardless of the callback, so Artemis only manages the job lifecycle.
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
+    public void handleStatusUpdate(CourseMemoryIngestionWebhookJob job, PyrisCourseMemoryIngestionStatusUpdateDTO statusUpdate) {
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
     }
 

@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseMemoryIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
@@ -178,6 +179,21 @@ public class PyrisJobService {
     }
 
     /**
+     * Adds a new course memory ingestion webhook job to the job map with a timeout.
+     *
+     * @param courseId       the id of the course the memory entry is scoped to
+     * @param conversationId the stringified id of the originating thread
+     * @param messageId      the stringified stable id of the answer message
+     * @return a unique token identifying the created webhook job
+     */
+    public String addCourseMemoryIngestionWebhookJob(long courseId, String conversationId, String messageId) {
+        var token = generateJobIdToken();
+        var job = new CourseMemoryIngestionWebhookJob(token, courseId, conversationId, messageId);
+        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
+        return token;
+    }
+
+    /**
      * Remove a job from the job map.
      *
      * @param job the job to remove
@@ -193,7 +209,8 @@ public class PyrisJobService {
      * @param job the job to store
      */
     public void updateJob(PyrisJob job) {
-        int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
+        int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob || job instanceof CourseMemoryIngestionWebhookJob) ? ingestionJobTimeout
+                : jobTimeout;
         getPyrisJobMap().put(job.jobId(), job, ttl, TimeUnit.SECONDS);
     }
 
