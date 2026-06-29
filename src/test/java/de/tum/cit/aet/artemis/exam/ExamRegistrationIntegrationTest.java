@@ -306,6 +306,22 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAddStudentsToSimulationExam_simulationPhaseEnded() throws Exception {
+        userUtilService.setRegistrationNumberOfUserAndSave(TEST_PREFIX + "student1", "1111111");
+
+        testExamWithSimulation1.setStartDate(ZonedDateTime.now().minusHours(2));
+        testExamWithSimulation1.setEndDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSimulation1.setWorkingTime(3600);
+        examRepository.save(testExamWithSimulation1);
+
+        StudentDTO studentDto1 = UserFactory.generateStudentDTOWithRegistrationNumber("1111111");
+        List<StudentDTO> studentDTOS = List.of(studentDto1);
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation1.getId() + "/students", studentDTOS, StudentDTO.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveAllStudentsFromExam_testExam() throws Exception {
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", HttpStatus.BAD_REQUEST);
     }

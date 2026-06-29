@@ -953,7 +953,7 @@ public class ExamResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.getExamMode().isTestExamMode() && !exam.isSimulationPhaseActive(ZonedDateTime.now())) {
+        if (exam.isInTestMode(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Add student to exam is only allowed for real exams", ENTITY_NAME, "addStudentOnlyForRealExams");
         }
 
@@ -1110,7 +1110,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.getExamMode().isTestExamMode() && !exam.isSimulationPhaseActive(ZonedDateTime.now())) {
+        if (exam.isInTestMode(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
         }
 
@@ -1144,7 +1144,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.getExamMode().isTestExamMode() && !exam.isSimulationPhaseActive(ZonedDateTime.now())) {
+        if (exam.isInTestMode(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deletion of users is only allowed for real exams", ENTITY_NAME, "unregisterStudentsOnlyForRealExams");
         }
 
@@ -1172,7 +1172,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.getExamMode().isTestExamMode() && !exam.isSimulationPhaseActive(ZonedDateTime.now())) {
+        if (exam.isInTestMode(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deregister students is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");
         }
 

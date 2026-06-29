@@ -133,7 +133,7 @@ public class ExamAccessService {
         StudentExam studentExam;
 
         final ZonedDateTime now = ZonedDateTime.now();
-        if (exam.getExamMode().isTestExamMode() && !exam.isSimulationPhaseActive(now)) {
+        if (exam.isInTestMode(now)) {
             studentExam = getOrCreateTestExam(exam, course, currentUser, now);
         }
         else if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {

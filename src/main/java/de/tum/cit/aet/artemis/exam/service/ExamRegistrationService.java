@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +30,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
@@ -110,7 +110,7 @@ public class ExamRegistrationService {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.getExamMode() == ExamMode.TEST) {
+        if (exam.isInTestMode(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
@@ -207,7 +207,7 @@ public class ExamRegistrationService {
      * @param student the student to be registered to the exam
      */
     public void registerStudentToExam(Course course, Exam exam, User student) {
-        if (exam.getExamMode() == ExamMode.TEST) {
+        if (exam.isInTestMode(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 

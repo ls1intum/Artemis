@@ -498,15 +498,14 @@ public class Exam extends DomainObject {
     }
 
     /**
-     * Checks whether the simulation phase of a {@link ExamMode#TEST_WITH_SIMULATION} exam is currently active.
-     * The simulation phase spans from the exam start until {@code startDate + workingTime}.
+     * Checks whether the current exam should behave like a test exam.
      *
      * @param now the current time
-     * @return true if this exam is a test exam with simulation and the current time is before the end of the simulation phase
+     * @return true if is a test exam or a test exam with simulation and the simulation is over
      */
     @JsonIgnore
-    public boolean isSimulationPhaseActive(ZonedDateTime now) {
-        return examMode == ExamMode.TEST_WITH_SIMULATION && now.isBefore(startDate.plusSeconds(workingTime));
+    public boolean isInTestMode(ZonedDateTime now) {
+        return examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SIMULATION && !now.isBefore(startDate.plusSeconds(workingTime));
     }
 
     @JsonIgnore
