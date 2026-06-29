@@ -35,7 +35,7 @@ public class PageUtil {
             "ID", "id",
             "TITLE", "title",
             "COURSE_TITLE", "course.title",
-            "EXAM_MODE", "testExam"
+            "EXAM_MODE", "exam_mode"
         )),
         EXERCISE(Map.of(
             "ID", "id",

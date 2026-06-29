@@ -19,6 +19,7 @@ import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
 import { ExamWorkingTimeDTO } from 'app/exam/shared/entities/exam-working-time-dto.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -27,6 +28,7 @@ export class ExamParticipationService {
     private httpClient = inject(HttpClient);
     private localStorageService = inject(LocalStorageService);
     private sessionStorageService = inject(SessionStorageService);
+    private accountService = inject(AccountService);
 
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
@@ -42,6 +44,13 @@ export class ExamParticipationService {
     shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
 
     private testStudentExamsForOverviewPage: StudentExam[] = [];
+
+    constructor() {
+        this.accountService.getAuthenticationState().subscribe(() => {
+            // reset this cache when (other) user logs in
+            this.testStudentExamsForOverviewPage = [];
+        });
+    }
 
     public getResourceURL(courseId: number, examId: number): string {
         return `api/exam/courses/${courseId}/exams/${examId}`;

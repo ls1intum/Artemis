@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
 import { combineLatestWith, filter, of } from 'rxjs';
 import { Exam, ExamMode, hasTestExamMode } from 'app/exam/shared/entities/exam.model';
@@ -88,19 +88,29 @@ export class CourseExamsComponent {
      * subscribe to changes in the course and fetch course by the path parameter
      */
     constructor() {
-        // load the baseline of studentExams without overwriting newer local updates.
-        this.examParticipationService
-            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId())
+        toObservable(this.courseId)
             .pipe(takeUntilDestroyed())
-            .subscribe({
-                next: (loadedStudentExams) => {
-                    this.studentExamsOfTestExams.update((currentStudentExams) => [
-                        ...(loadedStudentExams ?? []).filter((loadedStudentExam) => !currentStudentExams.some((studentExam) => studentExam.id === loadedStudentExam.id)),
-                        ...currentStudentExams,
-                    ]);
-                    this.testStudentExamsLoaded.set(true);
-                },
-                error: () => this.testStudentExamsLoaded.set(true),
+            .subscribe((courseId) => {
+                this.studentExamsOfTestExams.set([]);
+                this.testStudentExamsLoaded.set(false);
+                this.realExamWorkingTimeByExamId.set(new Map());
+
+                // load the baseline of studentExams without overwriting newer local updates.
+                this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId).subscribe({
+                    next: (loadedStudentExams) => {
+                        this.studentExamsOfTestExams.update((currentStudentExams) => [
+                            ...(loadedStudentExams ?? []).filter((loadedStudentExam) => !currentStudentExams.some((studentExam) => studentExam.id === loadedStudentExam.id)),
+                            ...currentStudentExams,
+                        ]);
+                        this.testStudentExamsLoaded.set(true);
+                    },
+                    error: () => this.testStudentExamsLoaded.set(true),
+                });
+
+                // load real exam working times for the current student.
+                this.examParticipationService
+                    .getRealExamWorkingTimes(courseId)
+                    .subscribe((workingTimes) => this.realExamWorkingTimeByExamId.set(new Map(workingTimes.map((workingTime) => [workingTime.examId, workingTime.workingTime]))));
             });
 
         // watch for new student exams
@@ -123,12 +133,6 @@ export class CourseExamsComponent {
                     return [...studentExams, latestExam];
                 });
             });
-
-        // load real exam working times for the current student.
-        this.examParticipationService
-            .getRealExamWorkingTimes(this.courseId())
-            .pipe(takeUntilDestroyed())
-            .subscribe((workingTimes) => this.realExamWorkingTimeByExamId.set(new Map(workingTimes.map((workingTime) => [workingTime.examId, workingTime.workingTime]))));
 
         // If no exam is selected navigate to the last selected or upcoming Exam
         this.navigateToExam();

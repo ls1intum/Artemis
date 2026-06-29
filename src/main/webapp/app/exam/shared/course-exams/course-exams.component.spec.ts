@@ -38,6 +38,7 @@ describe('CourseExamsComponent', () => {
     let courseStorageService: CourseStorageService;
     let courseOverviewService: CourseOverviewService;
     let examParticipationService: ExamParticipationService;
+    let parentParamsSubject: BehaviorSubject<any>;
     const router = new MockRouter();
 
     const visibleRealExam1 = {
@@ -115,6 +116,7 @@ describe('CourseExamsComponent', () => {
     } as StudentExam;
 
     beforeEach(async () => {
+        parentParamsSubject = new BehaviorSubject({ courseId: '1' });
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
         await TestBed.configureTestingModule({
@@ -135,7 +137,7 @@ describe('CourseExamsComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
-                            params: of({ courseId: '1' }),
+                            params: parentParamsSubject.asObservable(),
                             snapshot: {
                                 params: { courseId: '1' },
                             },
@@ -368,5 +370,34 @@ describe('CourseExamsComponent', () => {
         component = componentFixture.componentInstance;
 
         expect(component['buildSidebarData']()).toBeUndefined();
+    });
+
+    it('should reset data and reload when courseId changes while component stays mounted', () => {
+        const testExamAttemptsSubject = new Subject<StudentExam[]>();
+        vi.spyOn(examParticipationService, 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(testExamAttemptsSubject);
+        componentFixture = TestBed.createComponent(CourseExamsComponent);
+        component = componentFixture.componentInstance;
+        componentFixture.detectChanges();
+
+        expect(component.courseId()).toBe(1);
+        expect(examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage).toHaveBeenCalledWith(1);
+        expect(examParticipationService.getRealExamWorkingTimes).toHaveBeenCalledWith(1);
+
+        testExamAttemptsSubject.next([studentExamForExam3AndSubmitted]);
+        expect(component.testStudentExamsLoaded()).toBe(true);
+
+        vi.clearAllMocks();
+
+        // Change courseId
+        parentParamsSubject.next({ courseId: '2' });
+        componentFixture.detectChanges();
+
+        expect(component.courseId()).toBe(2);
+        // It should reset the state before the new data is loaded
+        expect(component.testStudentExamsLoaded()).toBe(false);
+        expect(component['studentExamsOfTestExams']()).toEqual([]);
+
+        expect(examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage).toHaveBeenCalledWith(2);
+        expect(examParticipationService.getRealExamWorkingTimes).toHaveBeenCalledWith(2);
     });
 });
