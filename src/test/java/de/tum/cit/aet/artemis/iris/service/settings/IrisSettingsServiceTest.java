@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
 
 class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
@@ -45,7 +46,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     @Test
     void getSettingsForCourse_returnsStoredSettings() {
         var customRateLimit = new IrisRateLimitConfiguration(12, 6);
-        var payload = IrisCourseSettings.of(false, "stored", IrisPipelineVariant.ADVANCED, customRateLimit);
+        var payload = IrisCourseSettings.of(false, "stored", IrisPipelineVariant.ADVANCED, IrisSupportLevel.MODERATE, customRateLimit);
         irisSettingsService.updateCourseSettings(course.getId(), payload, true);
 
         var settings = irisSettingsService.getSettingsForCourse(course.getId());
@@ -92,7 +93,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
 
     @Test
     void updateCourseSettings_sanitizesCustomInstructions() {
-        var payload = IrisCourseSettings.of(false, "  keep trimmed  ", IrisPipelineVariant.ADVANCED, new IrisRateLimitConfiguration(100, 24));
+        var payload = IrisCourseSettings.of(false, "  keep trimmed  ", IrisPipelineVariant.ADVANCED, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(100, 24));
 
         var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, true);
 
@@ -105,7 +106,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     void updateCourseSettings_rejectsNegativeRateLimit() {
         enableIrisFor(course);
 
-        var invalidPayload = IrisCourseSettings.of(true, null, null, new IrisRateLimitConfiguration(-1, 24));
+        var invalidPayload = IrisCourseSettings.of(true, null, null, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(-1, 24));
 
         assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload, true)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Rate limit requests must be 0 or greater");
@@ -115,7 +116,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     void updateCourseSettings_rejectsPartialRateLimit_onlyRequests() {
         enableIrisFor(course);
 
-        var invalidPayload = IrisCourseSettings.of(true, null, null, new IrisRateLimitConfiguration(100, null));
+        var invalidPayload = IrisCourseSettings.of(true, null, null, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(100, null));
 
         assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload, true)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Both rate limit fields must be filled or both must be empty");
@@ -125,7 +126,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     void updateCourseSettings_rejectsPartialRateLimit_onlyTimeframe() {
         enableIrisFor(course);
 
-        var invalidPayload = IrisCourseSettings.of(true, null, null, new IrisRateLimitConfiguration(null, 24));
+        var invalidPayload = IrisCourseSettings.of(true, null, null, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(null, 24));
 
         assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload, true)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Both rate limit fields must be filled or both must be empty");
@@ -135,7 +136,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     void updateCourseSettings_rejectsZeroTimeframe() {
         enableIrisFor(course);
 
-        var invalidPayload = IrisCourseSettings.of(true, null, null, new IrisRateLimitConfiguration(100, 0));
+        var invalidPayload = IrisCourseSettings.of(true, null, null, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(100, 0));
 
         assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload, true)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Rate limit timeframe must be greater than 0");
@@ -145,7 +146,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     void updateCourseSettings_rejectsNegativeTimeframe() {
         enableIrisFor(course);
 
-        var invalidPayload = IrisCourseSettings.of(true, null, null, new IrisRateLimitConfiguration(100, -5));
+        var invalidPayload = IrisCourseSettings.of(true, null, null, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(100, -5));
 
         assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload, true)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("Rate limit timeframe must be greater than 0");
@@ -156,7 +157,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course);
 
         // Both null = use defaults (should return null rateLimit)
-        var payload = IrisCourseSettings.of(true, null, null, new IrisRateLimitConfiguration(null, null));
+        var payload = IrisCourseSettings.of(true, null, null, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(null, null));
 
         var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, true);
 
@@ -168,7 +169,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course);
 
         // null rateLimit = use defaults
-        var payload = IrisCourseSettings.of(true, null, null, null);
+        var payload = IrisCourseSettings.of(true, null, null, IrisSupportLevel.MODERATE, null);
 
         var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, true);
 
@@ -179,7 +180,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     void updateCourseSettings_acceptsBothFieldsFilled() {
         enableIrisFor(course);
 
-        var payload = IrisCourseSettings.of(true, null, null, new IrisRateLimitConfiguration(100, 24));
+        var payload = IrisCourseSettings.of(true, null, null, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(100, 24));
 
         var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, true);
 
@@ -193,7 +194,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course);
 
         // 0 requests means "blocking" (no requests allowed) - should be allowed as a valid configuration
-        var payload = IrisCourseSettings.of(true, null, null, new IrisRateLimitConfiguration(0, 24));
+        var payload = IrisCourseSettings.of(true, null, null, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(0, 24));
 
         var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, true);
 
@@ -212,7 +213,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
 
     @Test
     void sanitizePayload_convertsEmptyRateLimitToNull() {
-        var payload = IrisCourseSettings.of(true, "instructions", IrisPipelineVariant.DEFAULT, new IrisRateLimitConfiguration(null, null));
+        var payload = IrisCourseSettings.of(true, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(null, null));
 
         var sanitized = irisSettingsService.sanitizePayload(payload);
 
@@ -221,7 +222,7 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
 
     @Test
     void sanitizePayload_preservesNullRateLimit() {
-        var payload = IrisCourseSettings.of(true, "instructions", IrisPipelineVariant.DEFAULT, null);
+        var payload = IrisCourseSettings.of(true, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null);
 
         var sanitized = irisSettingsService.sanitizePayload(payload);
 
@@ -230,11 +231,33 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
 
     @Test
     void sanitizePayload_acceptsValidRateLimit() {
-        var payload = IrisCourseSettings.of(true, "instructions", IrisPipelineVariant.DEFAULT, new IrisRateLimitConfiguration(5, 2));
+        var payload = IrisCourseSettings.of(true, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, new IrisRateLimitConfiguration(5, 2));
 
         var sanitized = irisSettingsService.sanitizePayload(payload);
 
         assertThat(sanitized.rateLimit()).isEqualTo(new IrisRateLimitConfiguration(5, 2));
+    }
+
+    @Test
+    void sanitizePayload_preservesSupportLevel() {
+        var payload = IrisCourseSettings.of(true, "instructions", IrisPipelineVariant.DEFAULT, IrisSupportLevel.HIGH, null);
+
+        var sanitized = irisSettingsService.sanitizePayload(payload);
+
+        assertThat(sanitized.supportLevel()).isEqualTo(IrisSupportLevel.HIGH);
+    }
+
+    @Test
+    void updateCourseSettings_asInstructor_canChangeSupportLevel() {
+        enableIrisFor(course);
+        var current = irisSettingsService.getSettingsForCourse(course.getId());
+        var payload = IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), IrisSupportLevel.LOW, current.rateLimit());
+
+        // isAdmin = false: support level is intentionally instructor-editable, so this must not throw
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), payload, false);
+
+        assertThat(dto.settings().supportLevel()).isEqualTo(IrisSupportLevel.LOW);
+        assertThat(irisSettingsService.getSettingsForCourse(course.getId()).supportLevel()).isEqualTo(IrisSupportLevel.LOW);
     }
 
     @Test
