@@ -14,14 +14,13 @@
             </column>
             <column name="experimental_group" type="tinyint(3)">
                 <constraints nullable="false"/>
-            </column> 
+            </column>
             <column name="repository_action_type" type="tinyint(3)">
                 <constraints nullable="false"/>
             </column>
             <column name="authentication_mechanism" type="tinyint(3)">
                 <constraints nullable="false"/>
             </column>
-
             <column defaultValueComputed="CURRENT_TIMESTAMP" name="timestamp" type="timestamp">
                 <constraints nullable="false"/>
             </column>
@@ -29,9 +28,10 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-
+        
         <createIndex indexName="vcs_analytics_log_course_id_experimental_group" tableName="vcs_analytics_log">
             <column name="course_id"/>
             <column name="experimental_group"/>
         </createIndex>
     </changeSet>
+</databaseChangeLog>
