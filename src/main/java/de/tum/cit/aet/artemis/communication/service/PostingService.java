@@ -129,7 +129,9 @@ public abstract class PostingService {
      *
      * @param postDTO    object including the affected post as well as the action
      * @param courseId   the id of the course the posting belongs to
-     * @param recipients the recipients for this broadcast, can be null
+     * @param recipients the recipients for this broadcast, can be null. Note: this set is ignored when the post carries a pending Iris reply
+     *                       ({@link #hasPendingIrisReply}); in that case recipients are re-resolved via {@link #getNotificationRecipients}
+     *                       because per-user delivery needs each recipient's course role to choose the tutor vs. student payload.
      */
     @SuppressWarnings("deprecation")
     public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients) {

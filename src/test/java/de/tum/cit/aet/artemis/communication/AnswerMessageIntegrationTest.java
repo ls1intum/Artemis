@@ -751,6 +751,17 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(mentionNotificationsAfter).isEqualTo(mentionNotificationsBefore + 1);
         });
+
+        // The answer is now persisted as verified, with the reviewing tutor and a verification timestamp recorded.
+        AnswerPost verifiedAnswer = answerPostRepository.findById(savedAnswerPost.getId()).orElseThrow();
+        assertThat(verifiedAnswer.isVerified()).isTrue();
+        assertThat(verifiedAnswer.getVerifiedBy()).isNotNull();
+        assertThat(verifiedAnswer.getVerifiedBy().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(verifiedAnswer.getVerifiedAt()).isNotNull();
+
+        // The verified (now student-visible) post is broadcast to participants.
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(anyString(), (Object) argThat(payload -> payload instanceof PostBroadcastDTO dto
+                && dto.post().answers().stream().anyMatch(answer -> answer.id().equals(savedAnswerPost.getId()) && Boolean.TRUE.equals(answer.verified()))));
     }
 
     @Test

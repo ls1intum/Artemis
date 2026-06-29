@@ -88,6 +88,9 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
         return getValueElseThrow(findAnswerMessageByIdWithPessimisticWriteLock(answerPostId), answerPostId);
     }
 
+    // The pessimistic write lock intentionally covers only this AnswerPost row (preventing double-verification of this one answer).
+    // Loading post triggers a separate eager fetch of Post.answers (the sibling answers), which are NOT locked. This is fine:
+    // siblings are only read (e.g. for broadcasting), never written under this lock, so no correctness issue arises.
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             SELECT answerPost
