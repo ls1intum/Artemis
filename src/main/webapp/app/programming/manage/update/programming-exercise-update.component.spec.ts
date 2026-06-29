@@ -1228,6 +1228,16 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        it('should reject negative points when exercise is not included in the course score', () => {
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            comp.programmingExercise.maxPoints = -1;
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMin',
+                translateValues: {},
+            });
+        });
+
         it('validateExerciseBonusPoints', () => {
             comp.programmingExercise.maxPoints = 10_000;
             expect(comp.getInvalidReasons()).toContainEqual({
