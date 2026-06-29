@@ -446,8 +446,12 @@ public class StudentExamService {
         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
 
         // Replace detached client question shells before saving; QuizQuestion is versioned and Hibernate rejects null-version detached references.
-        QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(existingParticipationInDatabase.getExercise().getId());
-        replaceDetachedQuizQuestionReferencesFromExercise(quizSubmissionFromClient, quizExercise);
+        Map<Long, QuizQuestion> questionsById = getQuizQuestionsById(existingSubmissionInDatabase);
+        if (!containsAllSubmittedAnswerQuestionReferences(quizSubmissionFromClient, questionsById)) {
+            QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(existingParticipationInDatabase.getExercise().getId());
+            questionsById = getQuizQuestionsById(quizExercise);
+        }
+        replaceDetachedQuizQuestionReferencesById(quizSubmissionFromClient, questionsById);
 
         if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
             quizSubmissionRepository.save(quizSubmissionFromClient);
@@ -455,10 +459,27 @@ public class StudentExamService {
         }
     }
 
-    private void replaceDetachedQuizQuestionReferencesFromExercise(QuizSubmission submissionFromClient, QuizExercise quizExercise) {
-        Map<Long, QuizQuestion> questionsById = quizExercise.getQuizQuestions().stream().filter(question -> question.getId() != null)
-                .collect(Collectors.toMap(QuizQuestion::getId, question -> question));
-        replaceDetachedQuizQuestionReferencesById(submissionFromClient, questionsById);
+    private Map<Long, QuizQuestion> getQuizQuestionsById(QuizExercise quizExercise) {
+        return quizExercise.getQuizQuestions().stream().filter(question -> question.getId() != null)
+                .collect(Collectors.toMap(QuizQuestion::getId, question -> question, (first, ignored) -> first));
+    }
+
+    private Map<Long, QuizQuestion> getQuizQuestionsById(QuizSubmission quizSubmission) {
+        if (quizSubmission == null) {
+            return Map.of();
+        }
+        return quizSubmission.getSubmittedAnswers().stream().map(SubmittedAnswer::getQuizQuestion).filter(Objects::nonNull).filter(question -> question.getId() != null)
+                .collect(Collectors.toMap(QuizQuestion::getId, question -> question, (first, ignored) -> first));
+    }
+
+    private boolean containsAllSubmittedAnswerQuestionReferences(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
+        for (SubmittedAnswer submittedAnswer : submissionFromClient.getSubmittedAnswers()) {
+            QuizQuestion question = submittedAnswer.getQuizQuestion();
+            if (question == null || question.getId() == null || !questionsById.containsKey(question.getId())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void replaceDetachedQuizQuestionReferencesById(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
