@@ -12,6 +12,7 @@ import { LoadImageService } from 'app/shared-ui/image-cropper/services/load-imag
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/update/course-update.component';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
+import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockProvider } from 'ng-mocks';
@@ -40,6 +41,14 @@ import { ProgrammingLanguage } from 'app/programming/shared/entities/programming
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileService } from 'app/foundation/service/file.service';
+import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
+
+// Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
+// real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
+// see an unexpected GET /api/atlas/orchestrator/defaults. Individual tests re-spy for specific values.
+beforeEach(() => {
+    vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults').mockResolvedValue({ debounceWindowSeconds: 1800, maxDailyOrchestrations: 10 });
+});
 
 describe('Course Management Update Component', () => {
     setupTestBed({ zoneless: true });
@@ -1402,7 +1411,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
-            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
+            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths || feature === FeatureToggle.AtlasAgent) {
                 return of(false);
             }
             return of(true);
@@ -1426,7 +1435,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
-            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
+            if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths || feature === FeatureToggle.AtlasAgent) {
                 return of(true);
             }
             return of(false);
@@ -1440,7 +1449,8 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toHaveLength(2);
+        // Learning paths, student analytics dashboard, and Atlas auto-orchestration form groups are all visible.
+        expect(filteredFormGroups).toHaveLength(3);
     });
 });
 
@@ -1487,5 +1497,144 @@ describe('Course Management Update Component Create', () => {
         const codeOfConduct = 'Code of Conduct';
         req.flush(codeOfConduct);
         expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
+    });
+});
+
+describe('Course Management Update Component Atlas Auto-Orchestration', () => {
+    setupTestBed({ zoneless: true });
+
+    const validTimeZone = 'Europe/Berlin';
+    let comp: CourseUpdateComponent;
+    let fixture: ComponentFixture<CourseUpdateComponent>;
+    let profileService: ProfileService;
+    let organizationService: OrganizationManagementService;
+
+    // Build a course with the new per-course Atlas auto-orchestration fields explicitly set.
+    function buildCourse(autoOrchestratorEnabled: boolean, debounceWindowSecondsOverride?: number, maxDailyOrchestrationOverride?: number): Course {
+        const course = new Course();
+        course.id = 123;
+        course.title = 'testCourseTitle';
+        course.shortName = 'testShortName';
+        course.maxComplaintTimeDays = 7;
+        course.maxRequestMoreFeedbackTimeDays = 7;
+        course.maxComplaintTextLimit = 2000;
+        course.maxComplaintResponseTextLimit = 2000;
+        course.learningPathsEnabled = false;
+        course.studentCourseAnalyticsDashboardEnabled = false;
+        course.autoOrchestratorEnabled = autoOrchestratorEnabled;
+        course.debounceWindowSecondsOverride = debounceWindowSecondsOverride;
+        course.maxDailyOrchestrationOverride = maxDailyOrchestrationOverride;
+        return course;
+    }
+
+    async function setupWithCourse(course: Course): Promise<void> {
+        const route = { data: of({ course }) } as any as ActivatedRoute;
+        (Intl as any).supportedValuesOf = () => [validTimeZone];
+
+        await TestBed.configureTestingModule({
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
+            providers: [
+                { provide: ActivatedRoute, useValue: route },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: Router, useClass: MockRouter },
+                MockProvider(LoadImageService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CourseUpdateComponent);
+        comp = fixture.componentInstance;
+        profileService = TestBed.inject(ProfileService);
+        organizationService = TestBed.inject(OrganizationManagementService);
+
+        const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
+        vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+
+        comp.ngOnInit();
+        fixture.detectChanges();
+        await Promise.resolve();
+    }
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
+    });
+
+    it('should populate the auto-orchestration form controls from the course', async () => {
+        await setupWithCourse(buildCourse(true, 600, 5));
+
+        expect(comp.courseForm.get(['autoOrchestratorEnabled'])?.value).toBe(true);
+        expect(comp.courseForm.get(['debounceWindowSecondsOverride'])?.value).toBe(600);
+        expect(comp.courseForm.get(['maxDailyOrchestrationOverride'])?.value).toBe(5);
+    });
+
+    it('should default the kill switch to false and leave overrides empty when unset', async () => {
+        await setupWithCourse(buildCourse(false));
+
+        expect(comp.courseForm.get(['autoOrchestratorEnabled'])?.value).toBe(false);
+        expect(comp.courseForm.get(['debounceWindowSecondsOverride'])?.value ?? undefined).toBeUndefined();
+        expect(comp.courseForm.get(['maxDailyOrchestrationOverride'])?.value ?? undefined).toBeUndefined();
+    });
+
+    it('should reject override values below 1', async () => {
+        await setupWithCourse(buildCourse(true, 600, 5));
+
+        const debounceControl = comp.courseForm.get(['debounceWindowSecondsOverride']);
+        debounceControl?.setValue(0);
+        expect(debounceControl?.valid).toBe(false);
+
+        debounceControl?.setValue(1);
+        expect(debounceControl?.valid).toBe(true);
+    });
+
+    it('should map the auto-orchestration fields into the update DTO', async () => {
+        await setupWithCourse(buildCourse(true, 900, 3));
+        const dto = toCourseUpdateDTO(comp.courseForm.getRawValue() as Course);
+
+        expect(dto.autoOrchestratorEnabled).toBe(true);
+        expect(dto.debounceWindowSecondsOverride).toBe(900);
+        expect(dto.maxDailyOrchestrationOverride).toBe(3);
+    });
+
+    it('should map empty overrides to undefined in the update DTO', async () => {
+        await setupWithCourse(buildCourse(true));
+        const dto = toCourseUpdateDTO(comp.courseForm.getRawValue() as Course);
+
+        expect(dto.autoOrchestratorEnabled).toBe(true);
+        expect(dto.debounceWindowSecondsOverride).toBeUndefined();
+        expect(dto.maxDailyOrchestrationOverride).toBeUndefined();
+    });
+
+    it('should reset the hidden override inputs when auto-orchestration is turned off', async () => {
+        await setupWithCourse(buildCourse(true, 600, 5));
+
+        // Simulate the checkbox being unticked, then run the change handler the template wires up.
+        comp.courseForm.controls['autoOrchestratorEnabled'].setValue(false);
+        comp.changeAutoOrchestratorEnabled();
+
+        expect(comp.courseForm.get(['debounceWindowSecondsOverride'])?.value ?? undefined).toBeUndefined();
+        expect(comp.courseForm.get(['maxDailyOrchestrationOverride'])?.value ?? undefined).toBeUndefined();
+
+        // getRawValue() (the snapshot saved to the server) must no longer carry the stale overrides.
+        const dto = toCourseUpdateDTO(comp.courseForm.getRawValue() as Course);
+        expect(dto.autoOrchestratorEnabled).toBe(false);
+        expect(dto.debounceWindowSecondsOverride).toBeUndefined();
+        expect(dto.maxDailyOrchestrationOverride).toBeUndefined();
+    });
+
+    it('should load the global orchestration defaults to back the override placeholders when Atlas is active', async () => {
+        vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults').mockResolvedValue({ debounceWindowSeconds: 1800, maxDailyOrchestrations: 10 });
+        await setupWithCourse(buildCourse(false));
+        await Promise.resolve();
+
+        expect(comp.debounceWindowSecondsDefault()).toBe(1800);
+        expect(comp.maxDailyOrchestrationDefault()).toBe(10);
     });
 });

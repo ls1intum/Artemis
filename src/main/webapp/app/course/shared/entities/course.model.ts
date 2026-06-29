@@ -114,6 +114,9 @@ export class Course implements BaseEntity {
     public competencies?: Competency[];
     public prerequisites?: Prerequisite[];
     public learningPathsEnabled?: boolean;
+    public autoOrchestratorEnabled?: boolean;
+    public debounceWindowSecondsOverride?: number;
+    public maxDailyOrchestrationOverride?: number;
     public learningPaths?: LearningPath[];
     public exams?: Exam[];
     public organizations?: Organization[];

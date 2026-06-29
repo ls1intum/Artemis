@@ -234,6 +234,20 @@
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
             },
+            "autoOrchestration": {
+                "label": "Atlas Auto-Orchestration Enabled",
+                "tooltip": "Lets Atlas automatically review and update this course's competencies whenever an exercise's content changes. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
+                "overridePlaceholder": "Use default",
+                "overridePlaceholderWithValue": "Use default ({{ value }})",
+                "debounceWindowSecondsOverride": {
+                    "label": "Debounce Window Override (seconds)",
+                    "hint": "How long to wait after the last content change before running. Leave empty to use the global default."
+                },
+                "maxDailyOrchestrationOverride": {
+                    "label": "Daily Run Limit Override",
+                    "hint": "Maximum number of automatic runs per day for this course. Leave empty to use the global default."
+                }
+            },
             "dashboard": {
                 "label": "Student Course Analytics Dashboard Enabled",
                 "tooltip": "Activates the course analytics dashboard for the course for students, tutors and instructors. The dashboard enables users to track their progress and performance in the course."

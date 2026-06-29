@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,6 +25,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -40,6 +43,10 @@ class ContentChangeSchedulerTest {
 
     private static final long COURSE_ID = 5L;
 
+    private static final int RESOLVED_WINDOW_SECONDS = 60;
+
+    private static final int RESOLVED_DAILY_CAP = 3;
+
     @Mock
     private ContentChangeAccumulatorService accumulator;
 
@@ -52,12 +59,27 @@ class ContentChangeSchedulerTest {
     @Mock
     private FeatureToggleService featureToggleService;
 
+    @Mock
+    private CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
+
     private ContentChangeScheduler scheduler;
 
     @BeforeEach
     void setUp() {
         Clock fixedClock = Clock.fixed(Instant.parse("2026-04-24T12:00:00Z"), ZoneOffset.UTC);
-        scheduler = new ContentChangeScheduler(accumulator, orchestrationService, websocketMessagingService, featureToggleService, fixedClock);
+        scheduler = new ContentChangeScheduler(accumulator, orchestrationService, websocketMessagingService, featureToggleService, autoOrchestrationConfigurationRepository,
+                fixedClock);
+    }
+
+    /** Stub the course as auto-orchestration enabled so {@code processCourse} proceeds to claim. */
+    private void stubCourseEnabled(boolean enabled) {
+        CourseAutoOrchestrationConfigDTO config = new CourseAutoOrchestrationConfigDTO(enabled, null, null);
+        when(autoOrchestrationConfigurationRepository.findConfigByCourseId(COURSE_ID)).thenReturn(Optional.of(config));
+        // The scheduler resolves the window/cap from the config once per tick and threads them into the
+        // claim; stub the (real) resolution helpers on the mocked accumulator so the claim is invoked
+        // with concrete resolved values.
+        lenient().when(accumulator.resolveDebounceWindowSeconds(config)).thenReturn(RESOLVED_WINDOW_SECONDS);
+        lenient().when(accumulator.resolveDailyCap(config)).thenReturn(RESOLVED_DAILY_CAP);
     }
 
     @Test
@@ -75,7 +97,8 @@ class ContentChangeSchedulerTest {
         Set<Long> exerciseIds = Set.of(10L, 11L);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
         when(orchestrationService.runBatch(COURSE_ID, exerciseIds)).thenReturn(CompetencyOrchestrationResultDTO.success("done", List.of()));
 
         scheduler.tick();
@@ -97,7 +120,8 @@ class ContentChangeSchedulerTest {
         Set<Long> exerciseIds = Set.of(10L, 11L);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
         when(orchestrationService.runBatch(COURSE_ID, exerciseIds))
                 .thenReturn(CompetencyOrchestrationResultDTO.failed("nope", CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR));
 
@@ -119,7 +143,8 @@ class ContentChangeSchedulerTest {
         Set<Long> exerciseIds = Set.of(10L, 11L);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
         when(orchestrationService.runBatch(COURSE_ID, exerciseIds))
                 .thenReturn(CompetencyOrchestrationResultDTO.partial("half", List.of(), CompetencyOrchestrationResultDTO.FailureReason.LLM_ERROR));
 
@@ -139,7 +164,8 @@ class ContentChangeSchedulerTest {
         Set<Long> exerciseIds = Set.of(10L, 11L);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
         when(orchestrationService.runBatch(COURSE_ID, exerciseIds)).thenReturn(CompetencyOrchestrationResultDTO.noOp("nothing applicable"));
 
         scheduler.tick();
@@ -155,7 +181,8 @@ class ContentChangeSchedulerTest {
     void tick_noBatchEligible_skipsCourse() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.empty());
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.empty());
 
         scheduler.tick();
 
@@ -169,7 +196,8 @@ class ContentChangeSchedulerTest {
         Set<Long> exerciseIds = Set.of(10L, 11L);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
         when(orchestrationService.runBatch(COURSE_ID, exerciseIds)).thenReturn(CompetencyOrchestrationResultDTO.inProgress("Already running"));
 
         scheduler.tick();
@@ -186,7 +214,8 @@ class ContentChangeSchedulerTest {
         Set<Long> exerciseIds = Set.of(10L, 11L);
         when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
         when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
-        when(accumulator.claimDueBatch(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
+        stubCourseEnabled(true);
+        when(accumulator.claimDueBatch(COURSE_ID, RESOLVED_WINDOW_SECONDS, RESOLVED_DAILY_CAP)).thenReturn(Optional.of(new BatchClaim(exerciseIds)));
         when(orchestrationService.runBatch(COURSE_ID, exerciseIds)).thenThrow(new IllegalStateException("boom"));
 
         scheduler.tick();
@@ -200,4 +229,19 @@ class ContentChangeSchedulerTest {
         assertThat(payload.getValue().failureCount()).isEqualTo(2);
     }
 
+    @Test
+    void tick_courseDisabled_flushesAndDoesNotClaimOrFire() {
+        when(featureToggleService.isFeatureEnabled(Feature.AtlasAgent)).thenReturn(true);
+        when(accumulator.listDueCourseIds()).thenReturn(Set.of(COURSE_ID));
+        stubCourseEnabled(false);
+
+        scheduler.tick();
+
+        // A course that disabled auto-orchestration is skipped and its bucket is flushed; the
+        // orchestrator never runs and no completion is broadcast.
+        verify(accumulator).flush(COURSE_ID);
+        verify(accumulator, never()).claimDueBatch(anyLong());
+        verify(orchestrationService, never()).runBatch(anyLong(), any());
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
+    }
 }

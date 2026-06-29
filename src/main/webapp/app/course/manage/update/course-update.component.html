@@ -370,6 +370,66 @@
                             <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.learningPaths.tooltip' | artemisTranslate }}" />
                         </div>
                     </div>
+                    <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.AtlasAgent">
+                        <div class="form-check">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                name="autoOrchestratorEnabled"
+                                id="field_autoOrchestratorEnabled"
+                                formControlName="autoOrchestratorEnabled"
+                                (change)="changeAutoOrchestratorEnabled()"
+                            />
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.autoOrchestration.label" for="field_autoOrchestratorEnabled"></label>
+                            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.autoOrchestration.tooltip' | artemisTranslate }}" />
+                        </div>
+                        @if (courseForm.get('autoOrchestratorEnabled')?.value) {
+                            <div class="row mt-2">
+                                <div class="col">
+                                    <label
+                                        class="form-control-label"
+                                        jhiTranslate="artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.label"
+                                        for="field_debounceWindowSecondsOverride"
+                                    ></label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        min="1"
+                                        name="debounceWindowSecondsOverride"
+                                        id="field_debounceWindowSecondsOverride"
+                                        formControlName="debounceWindowSecondsOverride"
+                                        [placeholder]="
+                                            debounceWindowSecondsDefault() !== undefined
+                                                ? ('artemisApp.course.autoOrchestration.overridePlaceholderWithValue' | artemisTranslate: { value: debounceWindowSecondsDefault() })
+                                                : ('artemisApp.course.autoOrchestration.overridePlaceholder' | artemisTranslate)
+                                        "
+                                    />
+                                    <span class="form-text text-muted" jhiTranslate="artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.hint"></span>
+                                </div>
+                                <div class="col">
+                                    <label
+                                        class="form-control-label"
+                                        jhiTranslate="artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.label"
+                                        for="field_maxDailyOrchestrationOverride"
+                                    ></label>
+                                    <input
+                                        type="number"
+                                        class="form-control"
+                                        min="1"
+                                        name="maxDailyOrchestrationOverride"
+                                        id="field_maxDailyOrchestrationOverride"
+                                        formControlName="maxDailyOrchestrationOverride"
+                                        [placeholder]="
+                                            maxDailyOrchestrationDefault() !== undefined
+                                                ? ('artemisApp.course.autoOrchestration.overridePlaceholderWithValue' | artemisTranslate: { value: maxDailyOrchestrationDefault() })
+                                                : ('artemisApp.course.autoOrchestration.overridePlaceholder' | artemisTranslate)
+                                        "
+                                    />
+                                    <span class="form-text text-muted" jhiTranslate="artemisApp.course.autoOrchestration.maxDailyOrchestrationOverride.hint"></span>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </jhi-feature-overlay>
                 @if (isAdmin()) {
                     <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.StudentCourseAnalyticsDashboard">

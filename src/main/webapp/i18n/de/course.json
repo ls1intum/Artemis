@@ -234,6 +234,20 @@
                 "label": "Lernpfade aktiviert",
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
+            "autoOrchestration": {
+                "label": "Atlas-Auto-Orchestrierung aktiviert",
+                "tooltip": "Lässt Atlas die Kompetenzen dieses Kurses automatisch überprüfen und aktualisieren, sobald sich der Inhalt einer Aufgabe ändert. Standardmäßig deaktiviert; nur für Kurse aktivieren, in denen die KI die Kompetenzverknüpfungen selbstständig pflegen soll.",
+                "overridePlaceholder": "Standardwert verwenden",
+                "overridePlaceholderWithValue": "Standardwert verwenden ({{ value }})",
+                "debounceWindowSecondsOverride": {
+                    "label": "Wartezeit-Überschreibung (Sekunden)",
+                    "hint": "Wie lange nach der letzten Inhaltsänderung gewartet wird, bevor ein Lauf startet. Leer lassen, um den globalen Standardwert zu verwenden."
+                },
+                "maxDailyOrchestrationOverride": {
+                    "label": "Überschreibung des täglichen Lauflimits",
+                    "hint": "Maximale Anzahl automatischer Läufe pro Tag für diesen Kurs. Leer lassen, um den globalen Standardwert zu verwenden."
+                }
+            },
             "dashboard": {
                 "label": "Übersichtsseite zur Kursanalyse für Studierende aktiviert",
                 "tooltip": "Aktiviert die Übersichtsseite zur Kursanalyse für Studierende, Tutor:innen und Lehrende. Die Übersichtsseite ermöglicht es den Nutzern, ihren Fortschritt und ihre Leistung im Kurs zu verfolgen."

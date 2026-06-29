@@ -176,6 +176,11 @@ export interface CourseUpdateDTO {
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
     onboardingDone: boolean;
+
+    // Atlas auto-orchestration configuration (per-course)
+    autoOrchestratorEnabled: boolean;
+    debounceWindowSecondsOverride?: number;
+    maxDailyOrchestrationOverride?: number;
 }
 
 /**
@@ -240,5 +245,10 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
         onboardingDone: course.onboardingDone ?? false,
+
+        // Atlas auto-orchestration configuration (per-course)
+        autoOrchestratorEnabled: course.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.maxDailyOrchestrationOverride ?? undefined,
     };
 }

@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseAutoOrchestrationConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -59,7 +60,10 @@ public record CourseUpdateDTO(
 
         // Course features
         boolean learningPathsEnabled, boolean studentCourseAnalyticsDashboardEnabled, Integer presentationScore, Integer maxPoints, @Min(0) @Max(5) Integer accuracyOfScores,
-        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone) {
+        boolean restrictedAthenaModulesAccess, String timeZone, CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean onboardingDone,
+
+        // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
+        boolean autoOrchestratorEnabled, @Min(1) Integer debounceWindowSecondsOverride, @Min(1) Integer maxDailyOrchestrationOverride) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -122,6 +126,22 @@ public record CourseUpdateDTO(
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
+        // Atlas auto-orchestration configuration: stored in its own (cascaded) entity. Create the row
+        // lazily only when there is something non-default to persist, so the overwhelming majority of
+        // courses (pipeline disabled, no overrides) never get an empty configuration row.
+        CourseAutoOrchestrationConfiguration autoOrchestrationConfiguration = course.getAutoOrchestrationConfiguration();
+        boolean hasConfigToPersist = autoOrchestratorEnabled || debounceWindowSecondsOverride != null || maxDailyOrchestrationOverride != null;
+        if (autoOrchestrationConfiguration == null && hasConfigToPersist) {
+            autoOrchestrationConfiguration = new CourseAutoOrchestrationConfiguration();
+            autoOrchestrationConfiguration.setCourse(course);
+            course.setAutoOrchestrationConfiguration(autoOrchestrationConfiguration);
+        }
+        if (autoOrchestrationConfiguration != null) {
+            autoOrchestrationConfiguration.setEnabled(autoOrchestratorEnabled);
+            autoOrchestrationConfiguration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
+            autoOrchestrationConfiguration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+        }
+
         // Only allow transitioning from false to true (one-way)
         if (onboardingDone) {
             course.setOnboardingDone(true);
@@ -145,6 +165,6 @@ public record CourseUpdateDTO(
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getCourseInformationSharingMessagingCodeOfConduct(),
                 course.getLearningPathsEnabled(), course.getStudentCourseAnalyticsDashboardEnabled(), course.getPresentationScore(), course.getMaxPoints(),
                 course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone());
+                course.isOnboardingDone(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(), course.getMaxDailyOrchestrationOverride());
     }
 }

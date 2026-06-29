@@ -6,14 +6,18 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.OrchestratorDefaultsDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -35,8 +39,25 @@ public class CompetencyOrchestrationResource {
 
     private final CompetencyOrchestrationService competencyOrchestrationService;
 
-    public CompetencyOrchestrationResource(CompetencyOrchestrationService competencyOrchestrationService) {
+    private final AtlasOrchestratorProperties orchestratorProperties;
+
+    public CompetencyOrchestrationResource(CompetencyOrchestrationService competencyOrchestrationService, AtlasOrchestratorProperties orchestratorProperties) {
         this.competencyOrchestrationService = competencyOrchestrationService;
+        this.orchestratorProperties = orchestratorProperties;
+    }
+
+    /**
+     * {@code GET defaults} : the global default debounce window and daily run cap that a course's
+     * per-course overrides fall back to when left empty. Surfaced to the course-settings form so it
+     * can show the instructor what "use default" actually resolves to, rather than a blank value.
+     *
+     * @return {@code 200 OK} with the {@link OrchestratorDefaultsDTO}
+     */
+    @GetMapping("defaults")
+    @EnforceAtLeastInstructor
+    @FeatureToggle(Feature.AtlasAgent)
+    public ResponseEntity<OrchestratorDefaultsDTO> getDefaults() {
+        return ResponseEntity.ok(new OrchestratorDefaultsDTO(orchestratorProperties.debounceWindowSeconds(), orchestratorProperties.maxDailyOrchestrations()));
     }
 
     @PostMapping("programming-exercises/{exerciseId}/run")

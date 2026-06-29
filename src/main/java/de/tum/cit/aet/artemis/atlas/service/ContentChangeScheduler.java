@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AutoOrchestrationSummaryDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -54,14 +56,18 @@ public class ContentChangeScheduler {
 
     private final FeatureToggleService featureToggleService;
 
+    private final CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
+
     private final Clock clock;
 
     public ContentChangeScheduler(ContentChangeAccumulatorService accumulator, CompetencyOrchestrationService orchestrationService,
-            WebsocketMessagingService websocketMessagingService, FeatureToggleService featureToggleService, Clock clock) {
+            WebsocketMessagingService websocketMessagingService, FeatureToggleService featureToggleService,
+            CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository, Clock clock) {
         this.accumulator = accumulator;
         this.orchestrationService = orchestrationService;
         this.websocketMessagingService = websocketMessagingService;
         this.featureToggleService = featureToggleService;
+        this.autoOrchestrationConfigurationRepository = autoOrchestrationConfigurationRepository;
         this.clock = clock;
     }
 
@@ -96,11 +102,27 @@ public class ContentChangeScheduler {
     }
 
     private void processCourse(long courseId) {
+        // Resolve the per-course config exactly once per tick and thread the result through the
+        // kill-switch decision and the claim path, so a due course costs a single config query instead
+        // of one per kill-switch / window / cap lookup.
+        CourseAutoOrchestrationConfigDTO config = autoOrchestrationConfigurationRepository.findConfigByCourseId(courseId).orElse(null);
+        // Per-course kill switch: a course that disabled auto-orchestration after buffering changes
+        // must never fire. Flush its bucket so the buffered ids are dropped rather than draining the
+        // next time it is (possibly) re-enabled, and skip the run.
+        boolean autoOrchestratorEnabled = config != null && config.autoOrchestratorEnabled();
+        if (!autoOrchestratorEnabled) {
+            log.debug("atlas.automatic scheduler skipping course {}: auto-orchestration disabled; flushing bucket", courseId);
+            accumulator.flush(courseId);
+            return;
+        }
         // The lock-guarded claimDueBatch atomically drains and resets the bucket, so only one
         // scheduler tick — on any node — ever receives a non-empty batch for a given course. The
         // subsequent orchestration is additionally guarded by the per-course run lock in
-        // CompetencyOrchestrationService, so no separate scheduler lock is needed here.
-        Optional<BatchClaim> maybeClaim = accumulator.claimDueBatch(courseId);
+        // CompetencyOrchestrationService, so no separate scheduler lock is needed here. The window and
+        // cap come from the config already resolved above, so the claim performs no extra query.
+        int debounceWindowSeconds = accumulator.resolveDebounceWindowSeconds(config);
+        int dailyCap = accumulator.resolveDailyCap(config);
+        Optional<BatchClaim> maybeClaim = accumulator.claimDueBatch(courseId, debounceWindowSeconds, dailyCap);
         if (maybeClaim.isEmpty()) {
             return;
         }
