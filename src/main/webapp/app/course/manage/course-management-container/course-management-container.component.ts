@@ -62,6 +62,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
 import { Subscription } from 'rxjs';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { AutoOrchestrationNotificationService } from 'app/atlas/shared/services/auto-orchestration-notification.service';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -89,6 +90,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private readonly sidebarItemService = inject(CourseSidebarItemService);
     private readonly courseAdminService = inject(CourseAdminService);
     private readonly websocketService = inject(WebsocketService);
+    private readonly autoOrchestrationNotificationService = inject(AutoOrchestrationNotificationService);
+
+    private autoOrchestrationCourseId?: number;
+    private autoOrchestrationActive = false;
 
     protected readonly faTimes = faTimes;
     protected readonly faEye = faEye;
@@ -171,6 +176,20 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 this.learningPathsActive.set(isActive);
             });
 
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.AtlasAgent)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((isActive) => {
+                this.autoOrchestrationActive = isActive;
+                const currentCourseId = this.courseId();
+                if (isActive && currentCourseId !== undefined) {
+                    this.subscribeToAutoOrchestrationNotifications(currentCourseId);
+                } else if (!isActive && this.autoOrchestrationCourseId !== undefined) {
+                    this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
+                    this.autoOrchestrationCourseId = undefined;
+                }
+            });
+
         await super.ngOnInit();
 
         // Subscribe to course modifications and reload the course after a change.
@@ -193,6 +212,21 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.courseId.set(courseId);
         this.subscribeToCourseUpdates(courseId);
         this.subscribeToOperationProgress(courseId);
+        this.subscribeToAutoOrchestrationNotifications(courseId);
+    }
+
+    private subscribeToAutoOrchestrationNotifications(courseId: number) {
+        if (!this.autoOrchestrationActive) {
+            return;
+        }
+        if (this.autoOrchestrationCourseId === courseId) {
+            return;
+        }
+        if (this.autoOrchestrationCourseId !== undefined) {
+            this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
+        }
+        this.autoOrchestrationNotificationService.subscribeToCourse(courseId);
+        this.autoOrchestrationCourseId = courseId;
     }
 
     private subscribeToOperationProgress(courseId: number) {
@@ -366,6 +400,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.courseSub?.unsubscribe();
         this.progressSubscription?.unsubscribe();
         this.eventSubscriber?.unsubscribe();
+        if (this.autoOrchestrationCourseId !== undefined) {
+            this.autoOrchestrationNotificationService.unsubscribeFromCourse(this.autoOrchestrationCourseId);
+            this.autoOrchestrationCourseId = undefined;
+        }
     }
 
     fetchCourseDeletionSummary(): Observable<EntitySummaryCategory[]> {
