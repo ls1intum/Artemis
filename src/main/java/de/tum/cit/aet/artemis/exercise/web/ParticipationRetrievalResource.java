@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -88,12 +89,12 @@ public class ParticipationRetrievalResource {
      */
     @GetMapping("participations/{participationId}/with-latest-result")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipationDTO> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
-        return new ResponseEntity<>(participation, HttpStatus.OK);
+        return new ResponseEntity<>(StudentParticipationDTO.ofWithLatestResult(participation), HttpStatus.OK);
     }
 
     /**
@@ -104,12 +105,12 @@ public class ParticipationRetrievalResource {
      */
     @GetMapping("participations/{participationId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> getParticipationForCurrentUser(@PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipationDTO> getParticipationForCurrentUser(@PathVariable Long participationId) {
         log.debug("REST request to get participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithEagerTeamStudentsElseThrow(participationId);
         User user = userRepository.getUserWithAuthorities();
         checkAccessPermissionOwner(participation, user);
-        return new ResponseEntity<>(participation, HttpStatus.OK);
+        return new ResponseEntity<>(StudentParticipationDTO.ofForCurrentUser(participation), HttpStatus.OK);
     }
 
     private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
