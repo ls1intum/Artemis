@@ -198,6 +198,15 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
     }
 
     @Test
+    void validateScoreSettings_notIncludedTextExerciseWithZeroMaxPoints_throws() {
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        exercise.setMaxPoints(0.0);
+        exercise.setBonusPoints(0.0);
+
+        assertThatThrownBy(exercise::validateScoreSettings).hasMessageContaining("The max points needs to be greater than 0");
+    }
+
+    @Test
     void validateScoreSettings_includedWithoutMaxPoints_throws() {
         Exercise exercise = new ProgrammingExercise();
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
