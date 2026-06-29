@@ -1,13 +1,13 @@
 <!-- @if can't be used for isShownViaLti as it removes the element from the DOM, disrupting dropdown stability for the More-Menu. -->
 <div class="sidebar-wrapper" [ngClass]="{ 'd-none': isShownViaLti() }">
     <div class="vw-100 bg-body">
-        <mat-sidenav-container
-            class="vw-100"
+        <div
+            class="layout-container vw-100"
             [ngClass]="{
                 'container-closed': isNavbarCollapsed(),
             }"
         >
-            <mat-sidenav disableClose class="module-bg rounded-3" opened="true" mode="side">
+            <div class="sidebar module-bg rounded-3">
                 <jhi-course-sidebar
                     [course]="course()"
                     [sidebarItems]="sidebarItems()"
@@ -17,14 +17,14 @@
                     [communicationRouteLoaded]="communicationRouteLoaded()"
                     (toggleCollapseState)="toggleCollapseState()"
                 />
-            </mat-sidenav>
+            </div>
 
-            <mat-sidenav-content>
+            <div class="layout-content">
                 @if (course()) {
                     <jhi-course-title-bar [hasSidebar]="hasSidebar()" [isSidebarCollapsed]="isSidebarCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()">
                         @if (studentViewLink().length) {
                             <div id="student-view-button">
-                                <a class="btn btn-sm btn-outline-secondary" [routerLink]="studentViewLink()" jhiTranslate="artemisApp.courseOverview.studentView"></a>
+                                <a pButton outlined severity="secondary" size="small" [routerLink]="studentViewLink()" jhiTranslate="artemisApp.courseOverview.studentView"></a>
                             </div>
                         }
                         <div class="controls">
@@ -94,8 +94,8 @@
                         }
                     </div>
                 }
-            </mat-sidenav-content>
-        </mat-sidenav-container>
+            </div>
+        </div>
     </div>
 </div>
 
