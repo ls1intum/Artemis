@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.VcsAnalyticsLog;
-import de.tum.cit.aet.artemis.programming.domain.VcsAnalyticsLogRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
+import de.tum.cit.aet.artemis.programming.repository.VcsAnalyticsLogRepository;
 import de.tum.cit.aet.artemis.programming.service.AnalyticsHashUtils;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
