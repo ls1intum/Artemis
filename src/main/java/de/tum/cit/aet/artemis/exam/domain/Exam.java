@@ -501,6 +501,7 @@ public class Exam extends DomainObject {
      * Checks whether the simulation phase of a {@link ExamMode#TEST_WITH_SIMULATION} exam is currently active.
      * The simulation phase spans from the exam start until {@code startDate + workingTime}.
      *
+     * @param now the current time
      * @return true if this exam is a test exam with simulation and the current time is before the end of the simulation phase
      */
     @JsonIgnore
