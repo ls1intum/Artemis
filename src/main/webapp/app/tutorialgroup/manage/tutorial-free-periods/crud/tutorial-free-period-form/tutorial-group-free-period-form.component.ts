@@ -58,9 +58,10 @@ export class TutorialGroupFreePeriodFormComponent implements OnInit {
     // TimeFrame to store the current time frame of the form.
     protected readonly timeFrame = signal(TimeFrame.Day);
 
-    // Caches the last non-null value of each tab-switchable control before a reset, so that a user
-    // edit (e.g. changing endDate while on the Period tab) is not lost when the user switches away
-    // and back. Falls back to formData() only if no cached value exists. Reset on each new edit load.
+    // Caches the value of each tab-switchable control before a reset — including undefined, so a
+    // deliberate clear is remembered — so that a user edit (e.g. changing endDate while on the
+    // Period tab) is not lost when the user switches away and back. Restore falls back to formData()
+    // only when the control has no cache entry at all. Reset on each new edit load.
     private preResetCache: Record<string, Date | undefined> = {};
 
     // Enum Object to be used for Comparing different TimeFrames in the template.
