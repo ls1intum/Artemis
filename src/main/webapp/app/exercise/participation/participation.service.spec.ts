@@ -8,7 +8,7 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -19,12 +19,13 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('Participation Service', () => {
     setupTestBed({ zoneless: true });
     let service: ParticipationService;
     let httpMock: HttpTestingController;
-    let participationDefault: Participation;
     let currentDate: dayjs.Dayjs;
 
     beforeEach(() => {
@@ -41,29 +42,46 @@ describe('Participation Service', () => {
         service = TestBed.inject(ParticipationService);
         httpMock = TestBed.inject(HttpTestingController);
         currentDate = dayjs();
-
-        participationDefault = { type: 'student' } as unknown as StudentParticipation;
     });
 
     it('should find an element', () => {
-        const returnedFromService = Object.assign(
-            {
-                initializationDate: currentDate.toDate(),
-            },
-            participationDefault,
-        );
+        const returnedFromService: StudentParticipationDTO = {
+            id: 123,
+            initializationDate: currentDate.toISOString(),
+            testRun: false,
+            type: ParticipationType.STUDENT,
+            submissions: [
+                {
+                    id: 456,
+                    submissionExerciseType: SubmissionExerciseType.TEXT,
+                    results: [{ id: 789, rated: true }],
+                },
+            ],
+        };
         service
             .find(123)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: participationDefault }));
+            .subscribe((resp) => {
+                expect(resp.body).toBeInstanceOf(StudentParticipation);
+                expect(dayjs.isDayjs(resp.body?.initializationDate)).toBe(true);
+                expect(resp.body?.submissions?.[0].participation).toBe(resp.body);
+                expect(resp.body?.submissions?.[0].results?.[0].submission).toBe(resp.body?.submissions?.[0]);
+            });
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
 
     it('should cleanup build plan', () => {
-        service.cleanupBuildPlan(participationDefault).subscribe((resp) => expect(resp).toMatchObject(participationDefault));
-        httpMock.expectOne({ method: 'PUT' });
+        const participation = new ProgrammingExerciseStudentParticipation();
+        participation.id = 123;
+        service.cleanupBuildPlan(participation).subscribe((resp) => {
+            expect(resp.body).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+            expect(resp.body?.initializationState).toBe(InitializationState.INACTIVE);
+            expect((resp.body as ProgrammingExerciseStudentParticipation).buildPlanId).toBeUndefined();
+        });
+        const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush({ id: 123, initializationState: InitializationState.INACTIVE, testRun: false, type: ParticipationType.PROGRAMMING });
     });
 
     it('should merge student participations for programming exercises', () => {
@@ -156,30 +174,30 @@ describe('Participation Service', () => {
     it('should update a Participation', () => {
         const exercise = new ProgrammingExercise(new Course(), undefined);
         exercise.id = 1;
-        exercise.categories = undefined;
-        exercise.exampleSolutionPublicationDate = undefined;
+        const participation = new ProgrammingExerciseStudentParticipation();
+        participation.id = 2;
+        participation.presentationScore = 1;
 
-        const returnedFromService = {
-            ...participationDefault,
-            repositoryUri: 'BBBBBB',
-            buildPlanId: 'BBBBBB',
-            initializationState: 'BBBBBB',
-            initializationDate: currentDate,
+        const returnedFromService: StudentParticipationDTO = {
+            id: participation.id,
+            repositoryUri: 'repository-uri',
+            buildPlanId: 'build-plan-id',
+            initializationState: InitializationState.INITIALIZED,
+            initializationDate: currentDate.toISOString(),
             presentationScore: 1,
-            exercise,
-            // the update service will make the participation results and submissions
-            // empty arrays instead of undefined, so we need to adapt our expected
-            // values accordingly
-            results: [],
-            submissions: [],
+            testRun: false,
+            type: ParticipationType.PROGRAMMING,
         };
 
-        const expected = Object.assign({}, returnedFromService) as StudentParticipation;
-
         service
-            .update(exercise, expected)
+            .update(exercise, participation)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toMatchObject({ ...expected }));
+            .subscribe((resp) => {
+                expect(resp.body).toBeInstanceOf(ProgrammingExerciseStudentParticipation);
+                expect(resp.body?.presentationScore).toBe(1);
+                expect((resp.body as ProgrammingExerciseStudentParticipation).repositoryUri).toBe('repository-uri');
+                expect(dayjs.isDayjs(resp.body?.initializationDate)).toBe(true);
+            });
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
     });
