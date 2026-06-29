@@ -185,8 +185,7 @@ public class PyrisPipelineService {
      * @param post                   the post the session is about
      */
     public void executeTutorSuggestionPipeline(String variant, String supportLevel, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureId,
-            Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO,
-            Post post) {
+            Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO, Post post) {
         var course = post.getCoursePostingBelongsTo();
         if (course == null) {
             throw new IllegalStateException("Course not found for post " + post.getId());
