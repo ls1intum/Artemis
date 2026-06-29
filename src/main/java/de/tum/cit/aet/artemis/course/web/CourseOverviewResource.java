@@ -131,7 +131,7 @@ public class CourseOverviewResource {
     public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
-        User user = userRepository.getUserWithAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
 
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(courseId, user);
         boolean trainingEnabled = quizQuestionProgressService.questionsAvailableForTraining(courseId);
@@ -173,7 +173,7 @@ public class CourseOverviewResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
         long start = System.nanoTime();
-        User user = userRepository.getUserWithAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         final var courses = courseService.findAllActiveForUser(user);
         final var response = courses.stream().map(course -> new CourseDropdownDTO(course.getId(), course.getTitle(), course.getCourseIcon())).collect(Collectors.toSet());
         log.info("GET /courses/for-dropdown took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
@@ -193,7 +193,7 @@ public class CourseOverviewResource {
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<CoursesForDashboardDTO> getCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
-        User user = userRepository.getUserWithAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
         Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
         log.debug("courseService.findAllActiveWithExercisesForUser done");
@@ -244,7 +244,7 @@ public class CourseOverviewResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Set<Course>> getCoursesForNotifications() {
         log.debug("REST request to get all Courses the user has access to");
-        User user = userRepository.getUserWithAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return ResponseEntity.ok(courseService.findAllActiveForUser(user));
     }
 
@@ -262,7 +262,7 @@ public class CourseOverviewResource {
         log.debug("REST request to get course {} for students", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
 
-        User user = userRepository.getUserWithAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (authCheckService.isAtLeastInstructorInCourse(course, user)) {

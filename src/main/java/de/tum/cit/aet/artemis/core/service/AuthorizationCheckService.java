@@ -55,12 +55,15 @@ public class AuthorizationCheckService {
         this.teamRepository = teamRepository;
     }
 
+    // Membership is resolved in memory against the user's pre-loaded course roles (loadUserIfNeeded guarantees they are
+    // initialized). This mirrors the previous group-based check and keeps a single role load per request instead of one
+    // DB EXISTS per (user, course, role) check — which is an N+1 on any path that checks many courses (e.g. the dashboard).
     private boolean hasCourseRole(User user, Course course, CourseRole role) {
-        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
+        return user.getCourseRoles().stream().anyMatch(ucr -> course.getId().equals(ucr.getCourse().getId()) && ucr.getRole() == role);
     }
 
     private boolean hasCourseRoleAtLeast(User user, Course course, CourseRole minimum) {
-        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRoleIn(user.getId(), course.getId(), CourseRole.valuesAtLeast(minimum));
+        return user.getCourseRoles().stream().anyMatch(ucr -> course.getId().equals(ucr.getCourse().getId()) && ucr.getRole().isAtLeast(minimum));
     }
 
     /**
@@ -761,10 +764,11 @@ public class AuthorizationCheckService {
 
     private User loadUserIfNeeded(@Nullable User user) {
         if (user == null) {
-            user = userRepository.getUserWithAuthorities();
+            user = userRepository.getUserWithCourseRolesAndAuthorities();
         }
-        else if (user.getAuthorities() == null || !Hibernate.isInitialized(user.getAuthorities())) {
-            user = userRepository.getUserWithAuthorities(user.getLogin());
+        else if (user.getCourseRoles() == null || !Hibernate.isInitialized(user.getCourseRoles()) || user.getAuthorities() == null
+                || !Hibernate.isInitialized(user.getAuthorities())) {
+            user = userRepository.getUserWithCourseRolesAndAuthorities(user.getLogin());
         }
         return user;
     }

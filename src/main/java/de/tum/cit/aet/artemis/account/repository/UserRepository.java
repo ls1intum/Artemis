@@ -124,6 +124,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities", "organizations" })
     Optional<User> findOneWithCourseRolesAndAuthoritiesAndOrganizationsById(Long id);
 
+    @EntityGraph(type = LOAD, attributePaths = { "courseRoles", "authorities", "organizations" })
+    Optional<User> findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin(String login);
+
     @Query("""
             SELECT DISTINCT u
             FROM User u
@@ -973,6 +976,29 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
+     * Get the currently logged-in user with authorities and course roles loaded. Use this for any request that performs
+     * course-membership authorization checks, so the checks can be resolved in memory from a single load.
+     *
+     * @return currently logged-in user with authorities and course roles
+     */
+    @NonNull
+    default User getUserWithCourseRolesAndAuthorities() {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesByLogin(currentUserLogin));
+    }
+
+    /**
+     * Get the user with the given login with authorities and course roles loaded.
+     *
+     * @param login the login of the user
+     * @return the user with authorities and course roles
+     */
+    @NonNull
+    default User getUserWithCourseRolesAndAuthorities(@NonNull String login) {
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesByLogin(login));
+    }
+
+    /**
      * Get user with authorities and organizations of currently logged-in user (no courseRoles loaded).
      * Use this when the caller needs org-membership checks but not courseRoles (e.g. enrollment eligibility).
      *
@@ -982,6 +1008,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     default User getUserWithAuthoritiesAndOrganizations() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithAuthoritiesAndOrganizationsByLogin(currentUserLogin));
+    }
+
+    /**
+     * Get the currently logged-in user with authorities, organizations and course roles loaded. Use this for enrollment
+     * paths that both check org membership and perform course-membership authorization checks over many courses.
+     *
+     * @return currently logged-in user with authorities, organizations and course roles
+     */
+    @NonNull
+    default User getUserWithCourseRolesAndAuthoritiesAndOrganizations() {
+        String currentUserLogin = getCurrentUserLogin();
+        return getValueElseThrow(findOneWithCourseRolesAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
     }
 
     /**

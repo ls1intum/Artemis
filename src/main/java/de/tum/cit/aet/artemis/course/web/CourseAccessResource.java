@@ -153,7 +153,7 @@ public class CourseAccessResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Course>> getCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
-        User user = userRepository.getUserWithAuthoritiesAndOrganizations();
+        User user = userRepository.getUserWithCourseRolesAndAuthoritiesAndOrganizations();
         final var courses = courseAccessService.findAllEnrollableForUser(user).stream().filter(course -> enrollmentService.isUserAllowedToSelfEnrollInCourse(user, course))
                 .toList();
         return ResponseEntity.ok(courses);

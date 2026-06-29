@@ -591,12 +591,19 @@ public class UserService {
      */
     public void addUserToCourse(User user, Course course, CourseRole role) {
         log.debug("Add user {} to course {} with role {}", user.getLogin(), course.getId(), role);
-        if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
-            userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+        // Idempotent: if the user already holds this role, there is nothing to write and the (coarse, global) authorities
+        // cannot change — skip the reload + authority rebuild + save. This keeps bulk re-enrollment cheap.
+        if (userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
+            return;
         }
-        user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
-        user.setAuthorities(authorityService.buildAuthorities(user));
-        saveUser(user);
+        userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+        // ROLE_STUDENT is always granted, so adding a STUDENT role never changes the global authorities; only a newly
+        // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
+        if (role != CourseRole.STUDENT) {
+            user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+            user.setAuthorities(authorityService.buildAuthorities(user));
+            saveUser(user);
+        }
     }
 
     /**
@@ -609,9 +616,13 @@ public class UserService {
     public void removeUserFromCourse(User user, Course course, CourseRole role) {
         log.info("Remove user {} from course {} role {}", user.getLogin(), course.getId(), role);
         userCourseRoleRepository.deleteByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
-        user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
-        user.setAuthorities(authorityService.buildAuthorities(user));
-        saveUser(user);
+        // ROLE_STUDENT is always granted, so revoking a STUDENT role never changes the global authorities; only revoking
+        // a TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
+        if (role != CourseRole.STUDENT) {
+            user = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+            user.setAuthorities(authorityService.buildAuthorities(user));
+            saveUser(user);
+        }
     }
 
     /**
