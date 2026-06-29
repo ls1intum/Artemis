@@ -482,6 +482,37 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStartExercises_testExamWithSimulation_noDuplicateParticipations() throws Exception {
+        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
+        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setWorkingTime(3600);
+        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Register student to exam
+        var examUser = new de.tum.cit.aet.artemis.exam.domain.ExamUser();
+        examUser.setUser(student1);
+        examUser.setExam(testExamWithSimulation);
+        examUserRepository.save(examUser);
+
+        // Generate student exams
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/generate-missing", null, HttpStatus.OK,
+                null);
+
+        // Start exercises for the simulation exam for the first time
+        int firstGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
+        assertThat(firstGenerated).isEqualTo(testExamWithSimulation.getExerciseGroups().size());
+
+        // Start exercises for the simulation exam a second time, this should reuse participations
+        int secondGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
+        assertThat(secondGenerated).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExamForConduction() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
 
