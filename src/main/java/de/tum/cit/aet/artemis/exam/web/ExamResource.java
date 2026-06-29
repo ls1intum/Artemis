@@ -1144,7 +1144,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.getExamMode().isTestExamMode()) {
+        if (exam.getExamMode().isTestExamMode() && !exam.isSimulationPhaseActive(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deletion of users is only allowed for real exams", ENTITY_NAME, "unregisterStudentsOnlyForRealExams");
         }
 
@@ -1172,7 +1172,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.getExamMode().isTestExamMode()) {
+        if (exam.getExamMode().isTestExamMode() && !exam.isSimulationPhaseActive(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deregister students is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");
         }
 

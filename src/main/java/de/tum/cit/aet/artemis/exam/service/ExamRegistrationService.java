@@ -292,9 +292,10 @@ public class ExamRegistrationService {
 
         examUserService.deleteAvailableExamUserImages(registeredExamUser);
 
-        // The student exam might already be generated, then we need to delete it
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
-        optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
+        // The student exam(s) might already be generated, then we need to delete them.
+        // In test exams with simulation, a student can have multiple attempts, so we must handle a list.
+        List<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
+        studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();

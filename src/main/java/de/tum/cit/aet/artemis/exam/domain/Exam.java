@@ -497,6 +497,17 @@ public class Exam extends DomainObject {
         return ZonedDateTime.now().isAfter(getStartDate().plusSeconds(getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
     }
 
+    /**
+     * Checks whether the simulation phase of a {@link ExamMode#TEST_WITH_SIMULATION} exam is currently active.
+     * The simulation phase spans from the exam start until {@code startDate + workingTime}.
+     *
+     * @return true if this exam is a test exam with simulation and the current time is before the end of the simulation phase
+     */
+    @JsonIgnore
+    public boolean isSimulationPhaseActive(ZonedDateTime now) {
+        return examMode == ExamMode.TEST_WITH_SIMULATION && now.isBefore(startDate.plusSeconds(workingTime));
+    }
+
     @JsonIgnore
     public boolean hasExamArchive() {
         return examArchivePath != null && !examArchivePath.isEmpty();

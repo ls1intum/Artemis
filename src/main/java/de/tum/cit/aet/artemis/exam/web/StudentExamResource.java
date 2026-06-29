@@ -710,9 +710,8 @@ public class StudentExamResource {
     private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
 
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
-        boolean isSimulationPhaseActive = studentExam.getExam().getExamMode() == ExamMode.TEST_WITH_SIMULATION
-                && now().isBefore(studentExam.getExam().getStartDate().plusSeconds(studentExam.getExam().getWorkingTime()));
-        if (studentExam.getExamMode() == ExamMode.TEST || (studentExam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && !isSimulationPhaseActive)) {
+        if (studentExam.getExamMode() == ExamMode.TEST
+                || (studentExam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && !studentExam.getExam().isSimulationPhaseActive(ZonedDateTime.now()))) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
                 // Set up new participations for the Exercises

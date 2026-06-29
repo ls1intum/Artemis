@@ -82,6 +82,16 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
+            WHERE se.testRun = :isTestRun
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+            """)
+    List<StudentExam> findAllWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("isTestRun") boolean isTestRun);
+
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
                 LEFT JOIN FETCH e.studentParticipations sp
                 LEFT JOIN FETCH sp.submissions s
             WHERE se.id = :studentExamId
