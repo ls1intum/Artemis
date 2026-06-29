@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
@@ -91,19 +92,18 @@ public class AtlasAgentService {
     private final AtlasAgentPreviewService previewService;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, @Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
-            @Qualifier("mainAgentToolCallbackProvider") ToolCallbackProvider mainAgentToolCallbackProvider,
-            @Qualifier("competencyExpertToolCallbackProvider") ToolCallbackProvider competencyExpertToolCallbackProvider,
-            @Qualifier("competencyMapperToolCallbackProvider") ToolCallbackProvider competencyMapperToolCallbackProvider,
-            @Qualifier("exerciseMapperToolCallbackProvider") ToolCallbackProvider exerciseMapperToolCallbackProvider,
-            ExecutionPlanStateManagerService executionPlanStateManagerService, AtlasAgentSessionCacheService atlasAgentSessionCacheService,
-            AtlasAgentPreviewService previewService) {
+            @Qualifier("mainAgentToolCallbackProvider") AtlasToolSurface mainAgentToolCallbackProvider,
+            @Qualifier("competencyExpertToolCallbackProvider") AtlasToolSurface competencyExpertToolCallbackProvider,
+            @Qualifier("competencyMapperToolCallbackProvider") AtlasToolSurface competencyMapperToolCallbackProvider,
+            @Qualifier("exerciseMapperToolCallbackProvider") AtlasToolSurface exerciseMapperToolCallbackProvider, ExecutionPlanStateManagerService executionPlanStateManagerService,
+            AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
         this.chatClient = chatClient;
         this.chatMemory = chatMemory;
         this.delegationService = delegationService;
-        this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
-        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
-        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
-        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider;
+        this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider.provider();
+        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider.provider();
+        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider.provider();
+        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider.provider();
         this.executionPlanStateManagerService = executionPlanStateManagerService;
         this.atlasAgentSessionCacheService = atlasAgentSessionCacheService;
         this.previewService = previewService;

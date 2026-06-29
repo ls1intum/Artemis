@@ -21,6 +21,7 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
@@ -49,8 +50,9 @@ class AtlasAgentToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, competencyExpertToolCallbackProvider,
-                competencyMapperToolCallbackProvider, exerciseMapperToolCallbackProvider);
+        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService,
+                new AtlasToolSurface(competencyExpertToolCallbackProvider), new AtlasToolSurface(competencyMapperToolCallbackProvider),
+                new AtlasToolSurface(exerciseMapperToolCallbackProvider));
     }
 
     @AfterEach
@@ -126,7 +128,8 @@ class AtlasAgentToolsServiceTest {
             toolsService.delegateToCompetencyExpert("Recursion", "Create competency", "None", "Algorithms course");
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_EXPERT)),
-                    eq("TOPIC: Recursion\nREQUIREMENTS: Create competency\nCONSTRAINTS: None\nCONTEXT: Algorithms course"), eq(42L), eq("test-session"), eq(false), any());
+                    eq("TOPIC: Recursion\nREQUIREMENTS: Create competency\nCONSTRAINTS: None\nCONTEXT: Algorithms course"), eq(42L), eq("test-session"), eq(false),
+                    eq(competencyExpertToolCallbackProvider));
         }
 
         @Test
@@ -136,7 +139,8 @@ class AtlasAgentToolsServiceTest {
             toolsService.delegateToCompetencyMapper("A extends B", "Create EXTENDS relation", "None", "A builds on B");
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_MAPPER)),
-                    eq("TOPIC: A extends B\nREQUIREMENTS: Create EXTENDS relation\nCONSTRAINTS: None\nCONTEXT: A builds on B"), eq(42L), eq("test-session"), eq(false), any());
+                    eq("TOPIC: A extends B\nREQUIREMENTS: Create EXTENDS relation\nCONSTRAINTS: None\nCONTEXT: A builds on B"), eq(42L), eq("test-session"), eq(false),
+                    eq(competencyMapperToolCallbackProvider));
         }
 
         @Test
@@ -146,7 +150,8 @@ class AtlasAgentToolsServiceTest {
             toolsService.delegateToExerciseMapper(5L, "Bubble Sort", "Map to competencies", "Student selected");
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER)),
-                    eq("EXERCISE_ID: 5\nEXERCISE_TITLE: Bubble Sort\nREQUIREMENTS: Map to competencies\nCONTEXT: Student selected"), eq(42L), eq("test-session"), eq(false), any());
+                    eq("EXERCISE_ID: 5\nEXERCISE_TITLE: Bubble Sort\nREQUIREMENTS: Map to competencies\nCONTEXT: Student selected"), eq(42L), eq("test-session"), eq(false),
+                    eq(exerciseMapperToolCallbackProvider));
         }
     }
 

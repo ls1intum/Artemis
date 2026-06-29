@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
+import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentExerciseDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -63,16 +64,16 @@ public class AtlasAgentToolsService {
     private final ToolCallbackProvider exerciseMapperToolCallbackProvider;
 
     public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
-            AtlasAgentDelegationService delegationService, @Qualifier("competencyExpertToolCallbackProvider") ToolCallbackProvider competencyExpertToolCallbackProvider,
-            @Qualifier("competencyMapperToolCallbackProvider") ToolCallbackProvider competencyMapperToolCallbackProvider,
-            @Qualifier("exerciseMapperToolCallbackProvider") ToolCallbackProvider exerciseMapperToolCallbackProvider) {
+            AtlasAgentDelegationService delegationService, @Qualifier("competencyExpertToolCallbackProvider") AtlasToolSurface competencyExpertToolCallbackProvider,
+            @Qualifier("competencyMapperToolCallbackProvider") AtlasToolSurface competencyMapperToolCallbackProvider,
+            @Qualifier("exerciseMapperToolCallbackProvider") AtlasToolSurface exerciseMapperToolCallbackProvider) {
         this.objectMapper = objectMapper;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.delegationService = delegationService;
-        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
-        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
-        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider;
+        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider.provider();
+        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider.provider();
+        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider.provider();
     }
 
     public static void setCurrentCourseId(Long courseId) {

@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -79,14 +82,15 @@ class OrchestratorReadToolsServiceTest {
 
     @Test
     void getExerciseContent_examExercise_isRejectedDefenseInDepth() {
-        // Defense in depth: even if an exam exercise reaches the tool layer, no read tool may walk
-        // the lazy exerciseGroup.exam.course chain to expose course-wide data.
-        ProgrammingExercise examExercise = examExercise(20L, "Exam Exercise");
+        // Defense in depth: even a fully-wired exam exercise that belongs to a *different* course must be
+        // rejected without walking the exerciseGroup.exam.course chain to extract content.
+        ProgrammingExercise examExercise = examExerciseOnCourse(20L, "Exam Exercise", COURSE_ID + 1);
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(examExercise);
 
         String result = service.getExerciseContent(20L, toolContext);
 
         assertThat(result).contains("does not belong to the current course");
+        verify(contentExtractionService, never()).extractContent(examExercise);
     }
 
     private static Course courseWithId(long id) {
@@ -110,11 +114,15 @@ class OrchestratorReadToolsServiceTest {
         return exercise;
     }
 
-    private static ProgrammingExercise examExercise(long id, String title) {
+    private static ProgrammingExercise examExerciseOnCourse(long id, String title, long examCourseId) {
+        Exam exam = new Exam();
+        exam.setCourse(courseWithId(examCourseId));
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
+        exerciseGroup.setExam(exam);
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(id);
         exercise.setTitle(title);
-        exercise.setExerciseGroup(new ExerciseGroup());
+        exercise.setExerciseGroup(exerciseGroup);
         return exercise;
     }
 }

@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.chat.model.ToolContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -102,6 +105,27 @@ class OrchestratorPlanningToolsServiceTest {
 
         assertThat(index.competencies()).isEmpty();
         assertThat(index.unassignedExercises()).extracting(CompetencyIndexResponseDTO.UnassignedExerciseRefDTO::id).containsExactly(30L, 31L);
+    }
+
+    @Test
+    void listCompetencyIndex_toolContext_readsCourseIdFromContext() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Algorithms and Complexity", "Desc", CompetencyTaxonomy.APPLY, course);
+        when(courseCompetencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(COURSE_ID)).thenReturn(Set.of(competency));
+        when(exerciseRepository.findAllExercisesByCourseId(COURSE_ID)).thenReturn(Set.of());
+        Map<String, Object> ctx = new HashMap<>();
+        ctx.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
+
+        String result = service.listCompetencyIndex(new ToolContext(ctx));
+
+        assertThat(result).contains("Algorithms and Complexity").doesNotContain("No course context");
+    }
+
+    @Test
+    void listCompetencyIndex_toolContext_missingCourseId_returnsError() {
+        String result = service.listCompetencyIndex(new ToolContext(Map.of()));
+
+        assertThat(result).contains("No course context available for this tool call.");
     }
 
     private static Course courseWithId(long id) {

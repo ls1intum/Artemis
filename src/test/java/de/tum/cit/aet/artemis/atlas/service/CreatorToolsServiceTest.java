@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -208,12 +209,13 @@ class CreatorToolsServiceTest {
         int callers = 4;
         ExecutorService pool = Executors.newFixedThreadPool(callers);
         CountDownLatch start = new CountDownLatch(1);
+        List<Future<String>> futures = new ArrayList<>();
         try {
             for (int i = 0; i < callers; i++) {
-                pool.submit(() -> {
+                futures.add(pool.submit(() -> {
                     start.await();
                     return service.createCompetency("Concurrent", "Desc", "APPLY", JUSTIFICATION, toolContext);
-                });
+                }));
             }
             start.countDown();
         }
@@ -222,6 +224,10 @@ class CreatorToolsServiceTest {
             assertThat(pool.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
         }
 
+        // get() each future so an exception thrown inside a worker thread fails the test instead of being swallowed.
+        for (Future<String> future : futures) {
+            assertThat(future.get()).doesNotContain("Write tool call cap");
+        }
         assertThat(appliedActions).hasSize(callers);
     }
 }

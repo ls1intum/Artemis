@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
@@ -395,8 +396,9 @@ class CompetencyOrchestrationServiceTest {
 
     private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {
         return new CompetencyOrchestrationService(programmingExerciseRepository, contentExtractionService, orchestratorPlanningToolsService, templateService, delegationService,
-                chatClient, orchestratorReadToolCallbackProvider, orchestratorPlanningToolCallbackProvider, creatorToolCallbackProvider, editorToolCallbackProvider,
-                assignerToolCallbackProvider, Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository);
+                chatClient, new AtlasToolSurface(orchestratorReadToolCallbackProvider), new AtlasToolSurface(orchestratorPlanningToolCallbackProvider),
+                new AtlasToolSurface(creatorToolCallbackProvider), new AtlasToolSurface(editorToolCallbackProvider), new AtlasToolSurface(assignerToolCallbackProvider),
+                Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository);
     }
 
     private CompetencyOrchestrationService createServiceWithRunMap(@Nullable ChatClient chatClient) {

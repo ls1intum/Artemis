@@ -19,12 +19,18 @@ import de.tum.cit.aet.artemis.atlas.service.OrchestratorPlanningToolsService;
 import de.tum.cit.aet.artemis.atlas.service.OrchestratorReadToolsService;
 
 /**
- * Central wiring of the Atlas tool surfaces into Spring AI {@link ToolCallbackProvider} beans.
+ * Central wiring of the Atlas tool surfaces into per-role {@link AtlasToolSurface} beans.
  * <p>
- * Each agent or worker gets exactly one provider bean exposing the {@code @Tool}-annotated methods of
- * a single tool service. Keeping the wiring here — rather than building providers inside the consuming
- * services — gives the orchestrator and chat agents a narrow, explicit tool surface per role and lets
- * the autonomous orchestrator compose its read and planning surfaces independently of the chat agents.
+ * Each agent or worker gets exactly one surface bean wrapping a {@link ToolCallbackProvider} that
+ * exposes the {@code @Tool}-annotated methods of a single tool service. Keeping the wiring here —
+ * rather than building providers inside the consuming services — gives the orchestrator and chat
+ * agents a narrow, explicit tool surface per role and lets the autonomous orchestrator compose its
+ * read and planning surfaces independently of the chat agents.
+ * <p>
+ * The providers are deliberately wrapped in {@link AtlasToolSurface} rather than exposed as
+ * {@link ToolCallbackProvider} beans: Spring AI's {@code ToolCallingAutoConfiguration} auto-discovers
+ * every {@code ToolCallbackProvider} bean and would both flatten all role surfaces into one global
+ * tool set and create a circular dependency back to the chat stack. See {@link AtlasToolSurface}.
  * <p>
  * Beans are {@link Lazy} so the providers (and the tool services behind them) are only instantiated
  * when an Atlas flow actually runs. They are qualified by name so consumers can inject precisely the
@@ -43,52 +49,52 @@ public class AtlasAgentToolConfig {
      * Tools for the Main (chat) Agent: course-information retrieval and delegation to the sub-agents.
      *
      * @param toolsService the main-agent tool service
-     * @return the main-agent tool provider
+     * @return the main-agent tool surface
      */
     @Bean
     @Lazy
     @Qualifier("mainAgentToolCallbackProvider")
-    public ToolCallbackProvider mainAgentToolCallbackProvider(AtlasAgentToolsService toolsService) {
-        return MethodToolCallbackProvider.builder().toolObjects(toolsService).build();
+    public AtlasToolSurface mainAgentToolCallbackProvider(AtlasAgentToolsService toolsService) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(toolsService).build());
     }
 
     /**
      * Tools for the Competency Expert sub-agent (preview / create / update competencies).
      *
      * @param expertToolsService the competency-expert tool service
-     * @return the competency-expert tool provider
+     * @return the competency-expert tool surface
      */
     @Bean
     @Lazy
     @Qualifier("competencyExpertToolCallbackProvider")
-    public ToolCallbackProvider competencyExpertToolCallbackProvider(CompetencyExpertToolsService expertToolsService) {
-        return MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build();
+    public AtlasToolSurface competencyExpertToolCallbackProvider(CompetencyExpertToolsService expertToolsService) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build());
     }
 
     /**
      * Tools for the Competency Mapper sub-agent (relation mapping and preview).
      *
      * @param mapperToolsService the competency-mapper tool service
-     * @return the competency-mapper tool provider
+     * @return the competency-mapper tool surface
      */
     @Bean
     @Lazy
     @Qualifier("competencyMapperToolCallbackProvider")
-    public ToolCallbackProvider competencyMapperToolCallbackProvider(CompetencyMappingToolsService mapperToolsService) {
-        return MethodToolCallbackProvider.builder().toolObjects(mapperToolsService).build();
+    public AtlasToolSurface competencyMapperToolCallbackProvider(CompetencyMappingToolsService mapperToolsService) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(mapperToolsService).build());
     }
 
     /**
      * Tools for the Exercise Mapper sub-agent (exercise listing and exercise-to-competency mapping).
      *
      * @param exerciseMapperToolsService the exercise-mapper tool service
-     * @return the exercise-mapper tool provider
+     * @return the exercise-mapper tool surface
      */
     @Bean
     @Lazy
     @Qualifier("exerciseMapperToolCallbackProvider")
-    public ToolCallbackProvider exerciseMapperToolCallbackProvider(ExerciseMappingToolsService exerciseMapperToolsService) {
-        return MethodToolCallbackProvider.builder().toolObjects(exerciseMapperToolsService).build();
+    public AtlasToolSurface exerciseMapperToolCallbackProvider(ExerciseMappingToolsService exerciseMapperToolsService) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(exerciseMapperToolsService).build());
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -101,13 +107,13 @@ public class AtlasAgentToolConfig {
      * be composed independently.
      *
      * @param service the orchestrator read tool service
-     * @return the orchestrator read tool provider
+     * @return the orchestrator read tool surface
      */
     @Bean
     @Lazy
     @Qualifier("orchestratorReadToolCallbackProvider")
-    public ToolCallbackProvider orchestratorReadToolCallbackProvider(OrchestratorReadToolsService service) {
-        return MethodToolCallbackProvider.builder().toolObjects(service).build();
+    public AtlasToolSurface orchestratorReadToolCallbackProvider(OrchestratorReadToolsService service) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
 
     /**
@@ -115,51 +121,51 @@ public class AtlasAgentToolConfig {
      * the batch of competency-management actions.
      *
      * @param service the orchestrator planning tool service
-     * @return the orchestrator planning tool provider
+     * @return the orchestrator planning tool surface
      */
     @Bean
     @Lazy
     @Qualifier("orchestratorPlanningToolCallbackProvider")
-    public ToolCallbackProvider orchestratorPlanningToolCallbackProvider(OrchestratorPlanningToolsService service) {
-        return MethodToolCallbackProvider.builder().toolObjects(service).build();
+    public AtlasToolSurface orchestratorPlanningToolCallbackProvider(OrchestratorPlanningToolsService service) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
 
     /**
      * Creator write tool ({@code createCompetency}).
      *
      * @param service the creator tool service
-     * @return the creator tool provider
+     * @return the creator tool surface
      */
     @Bean
     @Lazy
     @Qualifier("creatorToolCallbackProvider")
-    public ToolCallbackProvider creatorToolCallbackProvider(CreatorToolsService service) {
-        return MethodToolCallbackProvider.builder().toolObjects(service).build();
+    public AtlasToolSurface creatorToolCallbackProvider(CreatorToolsService service) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
 
     /**
      * Editor write tools ({@code editCompetency}, {@code deleteCompetency}).
      *
      * @param service the editor tool service
-     * @return the editor tool provider
+     * @return the editor tool surface
      */
     @Bean
     @Lazy
     @Qualifier("editorToolCallbackProvider")
-    public ToolCallbackProvider editorToolCallbackProvider(EditorToolsService service) {
-        return MethodToolCallbackProvider.builder().toolObjects(service).build();
+    public AtlasToolSurface editorToolCallbackProvider(EditorToolsService service) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
 
     /**
      * Assigner write tools ({@code assignExerciseToCompetency}, {@code unassignExerciseFromCompetency}).
      *
      * @param service the assigner tool service
-     * @return the assigner tool provider
+     * @return the assigner tool surface
      */
     @Bean
     @Lazy
     @Qualifier("assignerToolCallbackProvider")
-    public ToolCallbackProvider assignerToolCallbackProvider(AssignerToolsService service) {
-        return MethodToolCallbackProvider.builder().toolObjects(service).build();
+    public AtlasToolSurface assignerToolCallbackProvider(AssignerToolsService service) {
+        return new AtlasToolSurface(MethodToolCallbackProvider.builder().toolObjects(service).build());
     }
 }

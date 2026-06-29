@@ -24,6 +24,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
@@ -137,24 +139,24 @@ public class CompetencyOrchestrationService {
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorPlanningToolsService orchestratorPlanningToolsService, AtlasPromptTemplateService templateService, AtlasAgentDelegationService delegationService,
-            @Nullable ChatClient chatClient, @Qualifier("orchestratorReadToolCallbackProvider") ToolCallbackProvider orchestratorReadToolCallbackProvider,
-            @Qualifier("orchestratorPlanningToolCallbackProvider") ToolCallbackProvider orchestratorPlanningToolCallbackProvider,
-            @Qualifier("creatorToolCallbackProvider") ToolCallbackProvider creatorToolCallbackProvider,
-            @Qualifier("editorToolCallbackProvider") ToolCallbackProvider editorToolCallbackProvider,
-            @Qualifier("assignerToolCallbackProvider") ToolCallbackProvider assignerToolCallbackProvider, Optional<DistributedDataProvider> distributedDataProvider,
-            AtlasOrchestratorProperties properties,
-            ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+            @Nullable ChatClient chatClient, @Qualifier("orchestratorReadToolCallbackProvider") AtlasToolSurface orchestratorReadToolCallbackProvider,
+            @Qualifier("orchestratorPlanningToolCallbackProvider") AtlasToolSurface orchestratorPlanningToolCallbackProvider,
+            @Qualifier("creatorToolCallbackProvider") AtlasToolSurface creatorToolCallbackProvider,
+            @Qualifier("editorToolCallbackProvider") AtlasToolSurface editorToolCallbackProvider,
+            @Qualifier("assignerToolCallbackProvider") AtlasToolSurface assignerToolCallbackProvider, Optional<DistributedDataProvider> distributedDataProvider,
+            AtlasOrchestratorProperties properties, ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService,
+            UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.contentExtractionService = contentExtractionService;
         this.orchestratorPlanningToolsService = orchestratorPlanningToolsService;
         this.templateService = templateService;
         this.delegationService = delegationService;
         this.chatClient = chatClient;
-        this.orchestratorReadToolCallbackProvider = orchestratorReadToolCallbackProvider;
-        this.orchestratorPlanningToolCallbackProvider = orchestratorPlanningToolCallbackProvider;
-        this.creatorToolCallbackProvider = creatorToolCallbackProvider;
-        this.editorToolCallbackProvider = editorToolCallbackProvider;
-        this.assignerToolCallbackProvider = assignerToolCallbackProvider;
+        this.orchestratorReadToolCallbackProvider = orchestratorReadToolCallbackProvider.provider();
+        this.orchestratorPlanningToolCallbackProvider = orchestratorPlanningToolCallbackProvider.provider();
+        this.creatorToolCallbackProvider = creatorToolCallbackProvider.provider();
+        this.editorToolCallbackProvider = editorToolCallbackProvider.provider();
+        this.assignerToolCallbackProvider = assignerToolCallbackProvider.provider();
         this.deploymentName = properties.model();
         this.temperature = properties.temperature();
         this.reasoningEffort = properties.reasoningEffort();
