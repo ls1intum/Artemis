@@ -15,8 +15,12 @@ export const TEXT_EXERCISE_BASE = `${BASE_API}/text/text-exercises`;
 export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
 export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;
 
-// Timeformat
+// Timeformat used when sending dates to the server (ISO-8601, UTC).
 export const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
+
+// Format the PrimeNG p-datepicker (jhi-date-time-picker, DEFAULT date+time mode) expects/displays
+// in its text input. Used when typing dates into the picker through the UI.
+export const DATE_TIME_PICKER_FORMAT = 'DD.MM.YYYY HH:mm';
 
 // ExerciseType
 // Copied from app/entities/exercise.model

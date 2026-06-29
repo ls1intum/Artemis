@@ -16,7 +16,6 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatDialog } from '@angular/material/dialog';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
@@ -61,8 +60,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { LectureUnitFullscreenLayoutComponent } from 'app/lecture/shared/lecture-unit-fullscreen-layout/lecture-unit-fullscreen-layout.component';
+import { FormsModule } from '@angular/forms';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 type SplitSizes = [number, number];
+
+/** Sentinel in {@link Attachment.displayPageNumbers} meaning the slide has no detected display page number. */
+const UNDETECTED_DISPLAY_PAGE_NUMBER = -1;
 
 @Component({
     selector: 'jhi-attachment-video-unit',
@@ -80,6 +84,8 @@ type SplitSizes = [number, number];
         LectureChatbotComponent,
         FaIconComponent,
         LectureUnitFullscreenLayoutComponent,
+        FormsModule,
+        ToggleSwitchModule,
     ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
@@ -97,7 +103,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly injector = inject(Injector);
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
-    private readonly dialog = inject(MatDialog);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -106,9 +111,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly lectureUnitCard = viewChild(LectureUnitComponent);
     readonly fullscreenLayout = viewChild(LectureUnitFullscreenLayoutComponent);
-    readonly pdfViewer = viewChild(PdfViewerComponent);
     readonly videoPlayer = viewChild(VideoPlayerComponent);
     readonly youtubePlayer = viewChild(YouTubePlayerComponent);
+    readonly pdfViewer = viewChild(PdfViewerComponent);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
@@ -148,8 +153,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
     readonly pdfLoadError = signal<boolean>(false);
+    readonly synchronizeVideoAndSlides = signal(false);
     private readonly isBlobLoadInProgress = signal<boolean>(false);
     private blobLoadSubscription?: Subscription;
+    private pendingPdfTargetPage?: number;
+    private isApplyingVideoSeek = false;
 
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
@@ -159,6 +167,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
+    readonly hasSyncCapableVideo = computed(() => !!this.playlistUrl() || (!!this.youtubeVideoId() && !this.youtubePlayerFailed()));
+    readonly synchronizationState = computed(() => this.computeSynchronizationState());
+    readonly synchronizationAvailable = computed(() => this.synchronizationState().available);
 
     readonly hasPdf = computed(() => {
         const attachment = this.lectureUnit().attachment;
@@ -280,6 +291,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         effect(() => {
             this.hostElement.nativeElement.classList.toggle('dark-mode', this.themeService.currentTheme() === Theme.DARK);
         });
+
+        effect(() => {
+            if (!this.synchronizationAvailable() && this.synchronizeVideoAndSlides()) {
+                this.synchronizeVideoAndSlides.set(false);
+                this.clearSynchronizationTargets();
+            }
+        });
     }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
@@ -377,6 +395,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.cancelPdfLoad();
             this.isPdfLoading.set(false);
             this.clearPdfState();
+            this.synchronizeVideoAndSlides.set(false);
+            this.clearSynchronizationTargets();
         }
     }
 
@@ -506,16 +526,65 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onFullscreenChange(isFullscreen: boolean): void {
         this.fullscreenState.set(isFullscreen);
-        if (isFullscreen) {
-            // Close the floating Iris chat widget when entering fullscreen. It is a MatDialog rendered in a
-            // popover overlay, so it keeps painting on top of the fullscreen view but its pointer events fall
-            // through to the fullscreen content underneath - the widget looks active yet can be neither moved
-            // nor clicked. The fullscreen view has its own Iris sidebar, and the chatbot button is likewise
-            // hidden here, so dismissing the widget is both correct and consistent (matches the widget's own
-            // closeAll() on navigation). Note closeAll() closes every open Material dialog; that is acceptable
-            // because Iris is the only feature using MatDialog here (other Artemis modals use PrimeNG/ng-bootstrap).
-            this.dialog.closeAll();
+        // Note: the floating Iris chat widget was previously force-closed here via MatDialog.closeAll() when entering
+        // fullscreen. The widget has since migrated to PrimeNG's DynamicDialog, which has no globally reachable
+        // close-all from this injector (its DialogService is component-scoped to the chatbot button). The widget still
+        // auto-closes on navigation; if it visibly overlays the fullscreen view, reintroduce an explicit close via a
+        // shared Iris widget service rather than a Material dependency.
+    }
+
+    protected onSynchronizationToggleChange(enabled: boolean): void {
+        if (!enabled || !this.synchronizationAvailable()) {
+            this.synchronizeVideoAndSlides.set(false);
+            this.clearSynchronizationTargets();
+            return;
         }
+
+        this.synchronizeVideoAndSlides.set(true);
+        this.synchronizeCurrentState();
+    }
+
+    protected onPdfCurrentPageChange(page: number): void {
+        if (this.pendingPdfTargetPage === page) {
+            this.pendingPdfTargetPage = undefined;
+            return;
+        }
+
+        if (!this.synchronizeVideoAndSlides()) {
+            return;
+        }
+
+        const displayedPageNumber = this.synchronizationState().pdfPageToDisplayedPageNumber.get(page);
+        if (displayedPageNumber === undefined) {
+            return;
+        }
+
+        this.seekVideoToDisplayedPageNumber(displayedPageNumber);
+    }
+
+    protected onVideoSlideNumberChange(slideNumber: number | undefined): void {
+        if (slideNumber === undefined) {
+            return;
+        }
+
+        // A sync-initiated seek re-emits the active slide synchronously (both players call
+        // updateCurrentSegment from within seekTo). Ignore that echo regardless of which slide it
+        // resolved to, otherwise our own seek would drag the PDF back — see seekVideoToDisplayedPageNumber.
+        if (this.isApplyingVideoSeek) {
+            return;
+        }
+
+        if (!this.synchronizeVideoAndSlides()) {
+            return;
+        }
+
+        const targetPdfPage = this.synchronizationState().displayedPageNumberToPdfPage.get(slideNumber);
+        if (targetPdfPage === undefined || this.pdfViewer()?.getCurrentPage() === targetPdfPage) {
+            return;
+        }
+
+        this.pendingPdfTargetPage = targetPdfPage;
+        this.pdfViewer()?.goToPage(targetPdfPage);
     }
 
     private shouldShowIrisSidebarInFullscreen(): boolean {
@@ -556,6 +625,106 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      */
     protected onPdfFullscreenChange(isFullscreen: boolean): void {
         this.pdfFullscreenState.set(isFullscreen);
+    }
+
+    private synchronizeCurrentState(): void {
+        const activeSlideNumber = this.getActiveVideoSlideNumber();
+        if (activeSlideNumber !== undefined) {
+            this.onVideoSlideNumberChange(activeSlideNumber);
+            return;
+        }
+
+        const currentPdfPage = this.pdfViewer()?.getCurrentPage();
+        if (currentPdfPage !== undefined) {
+            this.onPdfCurrentPageChange(currentPdfPage);
+        }
+    }
+
+    private seekVideoToDisplayedPageNumber(displayedPageNumber: number): void {
+        const timestamp = this.synchronizationState().displayedPageNumberToVideoTimestamp.get(displayedPageNumber);
+        if (timestamp === undefined) {
+            return;
+        }
+
+        const shouldResumePlayback = this.isVideoCurrentlyPlaying();
+
+        // Both players synchronously re-emit the active slide from inside seekTo. Guard the whole
+        // call so that synchronous echo is suppressed in onVideoSlideNumberChange and cannot bounce
+        // the PDF back. The flag is only ever set for the duration of this synchronous call.
+        this.isApplyingVideoSeek = true;
+        try {
+            const videoPlayer = this.videoPlayer();
+            if (videoPlayer) {
+                videoPlayer.seekTo(timestamp, shouldResumePlayback);
+                return;
+            }
+
+            this.youtubePlayer()?.seekTo(timestamp, shouldResumePlayback);
+        } finally {
+            this.isApplyingVideoSeek = false;
+        }
+    }
+
+    private isVideoCurrentlyPlaying(): boolean {
+        return this.videoPlayer()?.isPlaying() ?? this.youtubePlayer()?.isPlaying() ?? false;
+    }
+
+    private getActiveVideoSlideNumber(): number | undefined {
+        return this.videoPlayer()?.getCurrentSlideNumber() ?? this.youtubePlayer()?.getCurrentSlideNumber();
+    }
+
+    private clearSynchronizationTargets(): void {
+        this.pendingPdfTargetPage = undefined;
+        this.isApplyingVideoSeek = false;
+    }
+
+    private computeSynchronizationState(): {
+        available: boolean;
+        displayedPageNumberToPdfPage: Map<number, number>;
+        pdfPageToDisplayedPageNumber: Map<number, number>;
+        displayedPageNumberToVideoTimestamp: Map<number, number>;
+    } {
+        const displayedPageNumbers = this.lectureUnit().attachment?.displayPageNumbers ?? [];
+        const transcriptSegments = this.transcriptSegments();
+
+        const displayedPageNumberToPdfPage = new Map<number, number>();
+        const pdfPageToDisplayedPageNumber = new Map<number, number>();
+        const displayedPageNumberToVideoTimestamp = new Map<number, number>();
+
+        if (!this.hasPdf() || !this.hasTranscript() || !this.hasSyncCapableVideo() || displayedPageNumbers.length === 0) {
+            return { available: false, displayedPageNumberToPdfPage, pdfPageToDisplayedPageNumber, displayedPageNumberToVideoTimestamp };
+        }
+
+        // displayPageNumbers is indexed in PDF page order: index 0 = PDF page 1, index 1 = PDF page 2, ...
+        for (const [pdfIndex, displayedPageNumber] of displayedPageNumbers.entries()) {
+            // A page with no detected display number (sentinel -1) has no sync partner. It still
+            // occupies a PDF page, so the index keeps counting; we just skip the mapping.
+            if (displayedPageNumber === UNDETECTED_DISPLAY_PAGE_NUMBER) {
+                continue;
+            }
+            const pdfPage = pdfIndex + 1;
+            // A display page number may appear on several PDF pages; keep the first occurrence as the sync target.
+            if (!displayedPageNumberToPdfPage.has(displayedPageNumber)) {
+                displayedPageNumberToPdfPage.set(displayedPageNumber, pdfPage);
+            }
+            pdfPageToDisplayedPageNumber.set(pdfPage, displayedPageNumber);
+        }
+
+        // Map each displayed page that exists in the PDF to the first transcript timestamp that mentions it.
+        for (const segment of transcriptSegments) {
+            const slideNumber = segment.slideNumber;
+            if (slideNumber !== undefined && displayedPageNumberToPdfPage.has(slideNumber) && !displayedPageNumberToVideoTimestamp.has(slideNumber)) {
+                displayedPageNumberToVideoTimestamp.set(slideNumber, segment.startTime);
+            }
+        }
+
+        // Synchronization needs at least one page that exists in both the PDF and the video transcript.
+        return {
+            available: displayedPageNumberToVideoTimestamp.size > 0,
+            displayedPageNumberToPdfPage,
+            pdfPageToDisplayedPageNumber,
+            displayedPageNumberToVideoTimestamp,
+        };
     }
 
     /**

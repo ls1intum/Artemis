@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, output, signal, viewChild } from '@angular/core';
-import { NgbActiveModal, NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -30,7 +30,16 @@ import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
     styleUrls: ['./exercise-filter-modal.component.scss'],
-    imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, CustomExerciseCategoryBadgeComponent, RangeSliderComponent, NgbModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        FontAwesomeModule,
+        CustomExerciseCategoryBadgeComponent,
+        RangeSliderComponent,
+        NgbTypeahead,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExerciseFilterModalComponent implements OnInit {
     protected readonly faFilter = faFilter;
