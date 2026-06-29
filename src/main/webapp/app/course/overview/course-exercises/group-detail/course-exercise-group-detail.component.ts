@@ -88,10 +88,14 @@ export class CourseExerciseGroupDetailComponent {
     /** Sum of maxPoints across all exercises in the group. */
     protected readonly exerciseSumMaxPoints = computed<number>(() => this.exercises().reduce((sum, ex) => sum + (ex.maxPoints ?? 0), 0));
 
-    /** Sum of achieved points across all exercises in the group, based on latest rated results. */
+    /**
+     * Sum of achieved points across all exercises in the group, based on latest rated results, capped at the group's
+     * configured maxPoints (matching the server-side cap in CourseScoreCalculationService) so the displayed score never
+     * exceeds the cap.
+     */
     protected readonly achievedGroupPoints = computed<number>(() => {
         const course = this.course();
-        return this.exercises().reduce((sum, ex) => {
+        const achieved = this.exercises().reduce((sum, ex) => {
             const participation = this.exerciseParticipation(ex);
             const results = getAllResultsOfAllSubmissions(participation?.submissions);
             const latestRated = results.filter((r) => r.rated).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0];
@@ -100,6 +104,8 @@ export class CourseExerciseGroupDetailComponent {
             }
             return sum + (roundValueSpecifiedByCourseSettings((latestRated.score * ex.maxPoints) / 100, course) ?? 0);
         }, 0);
+        const cap = this.group()?.maxPoints;
+        return cap !== undefined ? Math.min(achieved, cap) : achieved;
     });
 
     protected readonly pointsInfoBoxData = computed<InformationBox>(() => ({

@@ -391,6 +391,86 @@ describe('CourseScoresComponent', () => {
         expect(component.exportReady()).toBe(true);
     });
 
+    it('should cap the points of exercise variants in a group at the group max points', () => {
+        const variantGroup = { id: 100, maxPoints: 10 };
+        const variantA = {
+            title: 'variant A',
+            id: 101,
+            dueDate: dayjs().add(5, 'minutes'),
+            type: ExerciseType.TEXT,
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            maxPoints: 10,
+            bonusPoints: 0,
+            exerciseVariantGroup: variantGroup,
+        } as Exercise;
+        const variantB = {
+            title: 'variant B',
+            id: 102,
+            dueDate: dayjs().add(5, 'minutes'),
+            type: ExerciseType.TEXT,
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            maxPoints: 10,
+            bonusPoints: 0,
+            exerciseVariantGroup: variantGroup,
+        } as Exercise;
+        const variantCourse = { courseId: 1, exercises: [variantA, variantB], accuracyOfScores: 1 } as Course;
+        const variantGradeInfo: CourseGradeInformationDTO = {
+            // The student solved both variants fully, which would be 20 points without the cap.
+            gradeScores: [createGradeScore(1, 1, 101, 100), createGradeScore(2, 1, 102, 100)],
+            students: [{ id: 1, login: 'user1login', firstName: 'user1', lastName: '', name: 'user1', email: 'user1mail' }],
+        };
+
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: variantCourse })));
+        vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(variantGradeInfo));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+
+        fixture.detectChanges();
+
+        // Denominator: the group contributes its cap (10), not the sum of both variants' max points (20).
+        expect(component.maxNumberOfOverallPoints()).toBe(10);
+        // Numerator: the student's combined variant points are capped at the group max (10) instead of summing to 20.
+        expect(component.studentStatistics()[0].overallPoints).toBe(10);
+    });
+
+    it('should cap a variant group whose variants span multiple exercise types as a whole', () => {
+        // A single group with four variants of different types summing to 18 points, capped at 5.
+        const variantGroup = { id: 200, maxPoints: 5 };
+        const makeVariant = (id: number, type: ExerciseType, maxPoints: number) =>
+            ({
+                title: `variant ${id}`,
+                id,
+                dueDate: dayjs().add(5, 'minutes'),
+                type,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                maxPoints,
+                bonusPoints: 0,
+                exerciseVariantGroup: variantGroup,
+            }) as Exercise;
+        const variants = [
+            makeVariant(201, ExerciseType.PROGRAMMING, 5),
+            makeVariant(202, ExerciseType.MODELING, 5),
+            makeVariant(203, ExerciseType.TEXT, 4),
+            makeVariant(204, ExerciseType.FILE_UPLOAD, 4),
+        ];
+        const variantCourse = { courseId: 1, exercises: variants, accuracyOfScores: 1 } as Course;
+        const variantGradeInfo: CourseGradeInformationDTO = {
+            // The student solved every variant fully (18 points), which must still be capped at the group max of 5.
+            gradeScores: [createGradeScore(1, 1, 201, 100), createGradeScore(2, 1, 202, 100), createGradeScore(3, 1, 203, 100), createGradeScore(4, 1, 204, 100)],
+            students: [{ id: 1, login: 'user1login', firstName: 'user1', lastName: '', name: 'user1', email: 'user1mail' }],
+        };
+
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: variantCourse })));
+        vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(variantGradeInfo));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+
+        fixture.detectChanges();
+
+        // Overall max: the cross-type group contributes its cap (5), not the summed 18 points of its four variants.
+        expect(component.maxNumberOfOverallPoints()).toBe(5);
+        // Overall achieved: the student's combined variant points are capped at the group max (5) instead of summing to 18.
+        expect(component.studentStatistics()[0].overallPoints).toBe(5);
+    });
+
     it('should omit student statistics with no participations', () => {
         vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of({} as CourseGradeInformationDTO));

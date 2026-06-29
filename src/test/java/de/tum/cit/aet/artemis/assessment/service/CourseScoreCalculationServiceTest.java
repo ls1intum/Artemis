@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
@@ -37,8 +38,10 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
@@ -317,6 +320,52 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(mostSeverePlagiarismVerdict).isNull();
         boolean presentationScorePassed = courseScoreCalculationService.isPresentationScoreSufficientForBonus(studentScore.presentationScore(), course.getPresentationScore());
         assertThat(presentationScorePassed).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void variantGroupPointsAreCappedInAchievedScore() {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // Two interchangeable variants of the same group, each worth 5 points, but the group is capped at 5 points.
+        long variantGroupId = 1L;
+        double variantGroupCap = 5.0;
+        var variant1 = new ExerciseCourseScoreDTO(101L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, null, null, null, 5.0, 0.0,
+                course.getId(), variantGroupId, variantGroupCap);
+        var variant2 = new ExerciseCourseScoreDTO(102L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, null, null, null, 5.0, 0.0,
+                course.getId(), variantGroupId, variantGroupCap);
+        Set<ExerciseCourseScoreDTO> courseExercises = Set.of(variant1, variant2);
+
+        // The student fully solved both variants (100% each), which would be 10 points without the cap.
+        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, null, ExerciseType.TEXT),
+                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, null, ExerciseType.TEXT));
+
+        StudentScoresDTO studentScores = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), gradeScores,
+                new MaxAndReachablePointsDTO(5.0, 5.0, 0.0), List.of(), courseExercises);
+
+        // The group's combined contribution is capped at 5 points instead of summing to 10.
+        assertThat(studentScores.absoluteScore()).isEqualTo(5.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void variantGroupMaxPointsAreCappedInReachablePoints() {
+        long variantGroupId = 1L;
+        double variantGroupCap = 5.0;
+        ZonedDateTime past = ZonedDateTime.now().minusDays(1);
+
+        // Two variants worth 5 points each in a group capped at 5, plus a standalone exercise worth 3 points.
+        var variant1 = new ExerciseCourseScoreDTO(101L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, past, past, null, 5.0, 0.0,
+                course.getId(), variantGroupId, variantGroupCap);
+        var variant2 = new ExerciseCourseScoreDTO(102L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, past, past, null, 5.0, 0.0,
+                course.getId(), variantGroupId, variantGroupCap);
+        var standalone = new ExerciseCourseScoreDTO(103L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, past, past, null, 3.0, 0.0,
+                course.getId(), null, null);
+
+        double reachablePoints = courseScoreCalculationService.calculateReachablePoints(null, Set.of(variant1, variant2, standalone));
+
+        // The group contributes min(5 + 5, 5) = 5, plus the standalone 3, for 8 instead of 13.
+        assertThat(reachablePoints).isEqualTo(8.0);
     }
 
     @Test

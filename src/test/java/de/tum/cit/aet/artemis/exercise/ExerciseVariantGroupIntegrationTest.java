@@ -86,6 +86,22 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCourseWithExercisesSerializesVariantGroupForCap() throws Exception {
+        ExerciseVariantGroupDTO created = createGroupAsEditor();
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group";
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.OK);
+
+        // The course-with-exercises endpoint (used by the scores management view) must serialize each exercise's variant
+        // group including its maxPoints, so the client can cap the combined points of a group's variants at that maxPoints.
+        // With open-in-view disabled this only works because the fetch graph eagerly loads the association.
+        Course loaded = request.get("/api/course/courses/" + course.getId() + "/with-exercises", HttpStatus.OK, Course.class);
+        Exercise loadedExercise = loaded.getExercises().stream().filter(candidate -> candidate.getId().equals(exercise.getId())).findFirst().orElseThrow();
+        assertThat(loadedExercise.getExerciseVariantGroup()).isNotNull();
+        assertThat(loadedExercise.getExerciseVariantGroup().getMaxPoints()).isEqualTo(100.0);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateExerciseVariantGroup_studentForbidden() throws Exception {
         request.postWithResponseBody(groupsUrl(), sampleCreateDTO(), ExerciseVariantGroupDTO.class, HttpStatus.FORBIDDEN);

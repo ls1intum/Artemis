@@ -47,6 +47,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             FROM Exercise e
                 LEFT JOIN FETCH e.categories
                 LEFT JOIN FETCH e.course
+                LEFT JOIN FETCH e.exerciseVariantGroup
             WHERE e.course.id = :courseId
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -759,9 +760,10 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<NonQuizExerciseCalendarEventDTO> getNonQuizExerciseCalendarEventsDTOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id, evg.id, evg.maxPoints)
             FROM Exercise e
                 LEFT JOIN ProgrammingExercise p ON e.id = p.id
+                LEFT JOIN e.exerciseVariantGroup evg
             WHERE e.course.id = :courseId
             """)
     Set<ExerciseCourseScoreDTO> findCourseExerciseScoreInformationByCourseId(@Param("courseId") long courseId);
