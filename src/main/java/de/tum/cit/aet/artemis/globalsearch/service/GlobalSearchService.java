@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -104,15 +105,22 @@ public class GlobalSearchService {
      * @return a {@link FilterBuildResult} with the filter and access metadata
      */
     public FilterBuildResult buildFilter(User user, @Nullable Long courseId, Set<String> requestedTypes) {
-        boolean isAdmin = authCheckService.isAdmin(user);
-        boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
-                || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
+        // lecture_unit is always co-requested with lecture to match production behaviour;
+        // release-date filtering for non-admin users is applied per-path via buildLectureUnitDisjunct
+        Set<String> effectiveTypes = new LinkedHashSet<>(requestedTypes);
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
+            effectiveTypes.add(SearchableEntitySchema.TypeValues.LECTURE_UNIT);
+        }
 
-        log.info("[filter] user={} isAdmin={} courseId={} types={}", user.getLogin(), isAdmin, courseId, requestedTypes);
+        boolean isAdmin = authCheckService.isAdmin(user);
+        boolean needsCommFiltering = effectiveTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || effectiveTypes.contains(SearchableEntitySchema.TypeValues.POST)
+                || effectiveTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
+
+        log.info("[filter] user={} isAdmin={} courseId={} types={}", user.getLogin(), isAdmin, courseId, effectiveTypes);
 
         if (isAdmin && courseId == null && !needsCommFiltering) {
             log.info("[filter] user={} is admin with no courseId — skipping access filter", user.getLogin());
-            return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null, null);
+            return new FilterBuildResult(buildTypeDiscriminatorFilter(effectiveTypes), true, null, null, null);
         }
 
         List<Course> accessibleCourses;
@@ -144,34 +152,34 @@ public class GlobalSearchService {
         java.util.HashSet<Long> editorCourseIds = new java.util.HashSet<>(roleSets.editorCourseIds());
 
         List<Filter> disjuncts = new ArrayList<>();
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
             addIfNotNull(disjuncts, isAdmin && courseId == null ? typeEquals(SearchableEntitySchema.TypeValues.EXERCISE) : buildExerciseDisjunct(roleSets, studentExamInfo));
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
             addIfNotNull(disjuncts, isAdmin && courseId == null ? typeEquals(SearchableEntitySchema.TypeValues.LECTURE) : buildLectureDisjunct(roleSets));
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
             addIfNotNull(disjuncts, isAdmin && courseId == null ? typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT) : buildLectureUnitDisjunct(roleSets));
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
             addIfNotNull(disjuncts, isAdmin && courseId == null ? typeEquals(SearchableEntitySchema.TypeValues.EXAM) : buildExamDisjunct(roleSets, studentExamInfo));
-            if (!requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
+            if (!effectiveTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
                 addIfNotNull(disjuncts, buildExamExerciseDisjunct(roleSets, studentExamInfo));
             }
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
             addIfNotNull(disjuncts, isAdmin && courseId == null ? typeEquals(SearchableEntitySchema.TypeValues.FAQ) : buildFaqDisjunct(roleSets));
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL)) {
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL)) {
             addIfNotNull(disjuncts, buildChannelDisjunct(roleSetsComm));
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
             addIfNotNull(disjuncts, isAdmin && courseId == null ? typeEquals(SearchableEntitySchema.TypeValues.COURSE) : buildCourseDisjunct(roleSets));
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)) {
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.POST)) {
             addIfNotNull(disjuncts, buildPostDisjunct(roleSetsComm));
         }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST)) {
+        if (effectiveTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST)) {
             addIfNotNull(disjuncts, buildAnswerPostDisjunct(roleSetsComm));
         }
 

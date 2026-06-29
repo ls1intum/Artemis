@@ -229,5 +229,4 @@ public class GlobalSearchResource {
         channelRepository.findAllById(channelIds).forEach(channel -> result.put(channel.getId(), channel.getName()));
         return result;
     }
-    // private filter-building helpers live in GlobalSearchService
 }
