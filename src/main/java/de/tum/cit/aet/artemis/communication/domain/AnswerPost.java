@@ -60,7 +60,6 @@ public class AnswerPost extends Posting {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "verified_by_id")
-    @JsonIncludeProperties({ "id", "login", "firstName", "lastName" })
     private User verifiedBy;
 
     @Column(name = "verified_at")

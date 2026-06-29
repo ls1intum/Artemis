@@ -72,10 +72,10 @@ public class AutonomousTutorService {
     private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     /** Iris replies at or above this confidence are auto-verified and visible to students. */
-    public static final double AUTO_VERIFY_CONFIDENCE_THRESHOLD = 0.95;
+    public static final double AUTO_VERIFY_CONFIDENCE_THRESHOLD = 0.85;
 
     /** Iris replies below this confidence are never posted (a tutor cannot rescue something Pyris itself is very unsure about). */
-    public static final double REVIEW_MIN_CONFIDENCE_THRESHOLD = 0.80;
+    public static final double REVIEW_MIN_CONFIDENCE_THRESHOLD = 0.70;
 
     private final IrisBotUserService irisBotUserService;
 
@@ -148,15 +148,18 @@ public class AutonomousTutorService {
         boolean isVerified = confidence >= AUTO_VERIFY_CONFIDENCE_THRESHOLD;
 
         AnswerPost answerPost = createAndSaveAnswerPost(statusUpdate.result(), botUser, originalPost, confidence, isVerified);
-        Set<ConversationNotificationRecipientSummary> recipientSummaries = getNotificationRecipients(conversation, course);
 
         if (isVerified) {
+            Set<ConversationNotificationRecipientSummary> recipientSummaries = getNotificationRecipients(conversation, course);
             sendNewAnswerNotifications(answerPost, originalPost, conversation, course, botUser, recipientSummaries);
             broadcastAnswer(answerPost, originalPost, conversation, course.getId(), recipientSummaries, true);
         }
         else {
-            sendReviewNotifications(answerPost, originalPost, conversation, course, recipientSummaries);
-            broadcastAnswer(answerPost, originalPost, conversation, course.getId(), recipientSummaries, false);
+            // A pending reply only ever concerns tutors (review notification + tutor-only broadcast),
+            // so fetch just the staff instead of every course member.
+            Set<ConversationNotificationRecipientSummary> tutorRecipients = getReviewNotificationRecipients(conversation, course);
+            sendReviewNotifications(answerPost, originalPost, conversation, course, tutorRecipients);
+            broadcastAnswer(answerPost, originalPost, conversation, course.getId(), tutorRecipients, false);
         }
 
         log.info("Autonomous tutor posted answer {} (verified={}, confidence={}) to post {} in course {}", answerPost.getId(), isVerified, confidence, job.postId(),
@@ -233,6 +236,19 @@ public class AutonomousTutorService {
         user.setLangKey(summary.userLangKey());
         user.setEmail(summary.userEmail());
         return user;
+    }
+
+    /**
+     * Resolves the staff recipients (teaching assistants, editors, instructors) of a conversation for the
+     * tutor-review path. For course-wide channels this is scoped at the query level so the course's students
+     * are never loaded; for other conversations the participant list is small and is simply filtered to staff.
+     */
+    private Set<ConversationNotificationRecipientSummary> getReviewNotificationRecipients(Conversation conversation, Course course) {
+        if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            return userRepository.findStaffNotificationRecipientsInCourseForConversation(conversation.getId(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(),
+                    course.getInstructorGroupName());
+        }
+        return getNotificationRecipients(conversation, course).stream().filter(ConversationNotificationRecipientSummary::isAtLeastTutorInCourse).collect(Collectors.toSet());
     }
 
     private Set<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation, Course course) {

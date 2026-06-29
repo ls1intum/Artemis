@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Profile(PROFILE_CORE)
@@ -166,8 +165,13 @@ public class AnswerMessageResource {
     /**
      * PATCH /courses/{courseId}/answer-messages/{answerMessageId}/verify : Approve an Iris-generated answer message
      * (optionally with edited content) so it becomes visible to students.
-     * {@code @EnforceAtLeastTutorInCourse} restricts access to tutors, editors, and instructors
-     * (roles at or above teaching assistant).
+     * <p>
+     * Uses {@code @EnforceAtLeastStudent} as the coarse gate (any authenticated user) and performs the real
+     * tutor-in-course authorization inside {@code AnswerMessageService#verifyAnswerMessage} via
+     * {@code checkHasAtLeastRoleInCourseElseThrow(TEACHING_ASSISTANT, ...)} plus a channel-membership check.
+     * This mirrors the reject (delete) endpoint: relying on {@code @EnforceAtLeastTutorInCourse} instead would
+     * additionally require the global {@code ROLE_TA} authority, which course tutors do not necessarily carry
+     * (it is only assigned by {@code AuthorityService} on auth sync), causing a spurious 403 for legitimate tutors.
      *
      * @param courseId        id of the course the answer message belongs to
      * @param answerMessageId id of the answer message to approve
@@ -175,7 +179,7 @@ public class AnswerMessageResource {
      * @return ResponseEntity with status 200 (OK) containing the verified answer message
      */
     @PatchMapping("courses/{courseId}/answer-messages/{answerMessageId}/verify")
-    @EnforceAtLeastTutorInCourse
+    @EnforceAtLeastStudent
     public ResponseEntity<AnswerMessageDTO> verifyAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId,
             @RequestBody(required = false) VerifyAnswerMessageDTO verifyDto) {
         log.debug("PATCH verifyAnswerMessage invoked for course {} on message {}", courseId, answerMessageId);

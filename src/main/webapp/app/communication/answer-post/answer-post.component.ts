@@ -6,6 +6,7 @@ import {
     OnInit,
     Renderer2,
     ViewContainerRef,
+    computed,
     effect,
     inject,
     input,
@@ -179,10 +180,10 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     }
 
     /** True when the current answer is an Iris-generated reply that has not yet been verified by a tutor. */
-    get isUnverifiedIris(): boolean {
+    readonly isUnverifiedIris = computed(() => {
         const posting = this.posting();
         return !!posting && posting.author?.bot === true && posting.verified === false;
-    }
+    });
 
     /** True for users who are allowed to approve, edit, or reject unverified Iris replies. */
     get mayVerify(): boolean {

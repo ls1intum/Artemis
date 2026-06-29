@@ -311,24 +311,24 @@ describe('AnswerPostComponent', () => {
     it('should return true for isUnverifiedIris when posting is from a bot and unverified', () => {
         const botPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: false });
         component.posting.set(botPost);
-        expect(component.isUnverifiedIris).toBe(true);
+        expect(component.isUnverifiedIris()).toBe(true);
     });
 
     it('should return false for isUnverifiedIris when posting is from a human author', () => {
         const humanPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 1, bot: false }, verified: false });
         component.posting.set(humanPost);
-        expect(component.isUnverifiedIris).toBe(false);
+        expect(component.isUnverifiedIris()).toBe(false);
     });
 
     it('should return false for isUnverifiedIris when posting is verified', () => {
         const verifiedBotPost = Object.assign(new AnswerPost(), { ...metisResolvingAnswerPostUser1, author: { id: 99, bot: true }, verified: true });
         component.posting.set(verifiedBotPost);
-        expect(component.isUnverifiedIris).toBe(false);
+        expect(component.isUnverifiedIris()).toBe(false);
     });
 
     it('should return false for isUnverifiedIris when posting is undefined', () => {
         component.posting.set(undefined as any);
-        expect(component.isUnverifiedIris).toBe(false);
+        expect(component.isUnverifiedIris()).toBe(false);
     });
 
     it('should delegate mayVerify to metisService.metisUserIsAtLeastTutorInCourse', () => {

@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -726,6 +727,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
 
         var channel = createChannelWithTwoStudents();
+        // The reviewing tutor must be a member of the (restricted) channel to verify an Iris reply in it.
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "tutor1");
         var post = existingConversationPostsWithAnswers.getFirst();
         post.setConversation(channel);
         Post savedMessage = conversationMessageRepository.save(post);
@@ -748,6 +751,55 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(mentionNotificationsAfter).isEqualTo(mentionNotificationsBefore + 1);
         });
+
+        // The answer is now persisted as verified, with the reviewing tutor and a verification timestamp recorded.
+        AnswerPost verifiedAnswer = answerPostRepository.findById(savedAnswerPost.getId()).orElseThrow();
+        assertThat(verifiedAnswer.isVerified()).isTrue();
+        assertThat(verifiedAnswer.getVerifiedBy()).isNotNull();
+        assertThat(verifiedAnswer.getVerifiedBy().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(verifiedAnswer.getVerifiedAt()).isNotNull();
+
+        // The verified (now student-visible) post is broadcast to participants.
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(anyString(), (Object) argThat(payload -> payload instanceof PostBroadcastDTO dto
+                && dto.post().answers().stream().anyMatch(answer -> answer.id().equals(savedAnswerPost.getId()) && Boolean.TRUE.equals(answer.verified()))));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotBroadcastUnverifiedIrisReplyToStudents() throws Exception {
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "iris-leak");
+
+        Post parent = new Post();
+        parent.setAuthor(student1);
+        parent.setContent("What is a bridge pattern?");
+        parent.setConversation(channel);
+        parent.setVisibleForStudents(true);
+        Post savedParent = conversationMessageRepository.save(parent);
+
+        AnswerPost pendingIris = createAnswerPost(savedParent);
+        pendingIris.setContent("A pending Iris answer that students must not see.");
+        pendingIris.setAuthor(irisBot);
+        pendingIris.setVerified(false);
+        AnswerPost savedPendingIris = answerPostRepository.save(pendingIris);
+
+        // A student adds a normal reply, which re-broadcasts the parent post — and the parent still carries the pending Iris reply.
+        CreateAnswerPostDTO newReply = new CreateAnswerPostDTO("A normal student reply", new ParentPostDTO(savedParent.getId()));
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/answer-messages", newReply, AnswerPostResponseDTO.class, HttpStatus.CREATED);
+
+        // Because a pending Iris reply is attached, the post is delivered per-user, never on the shared course-wide topic that students subscribe to.
+        verify(websocketMessagingService, never()).sendMessage(argThat((String topic) -> topic != null && topic.contains("/courses/")), any());
+
+        // The student receives the update without the pending Iris reply ...
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(eq("/topic/user/" + student1.getId() + "/notifications/conversations"), (Object) argThat(
+                payload -> payload instanceof PostBroadcastDTO dto && dto.post().answers().stream().noneMatch(answer -> answer.id().equals(savedPendingIris.getId()))));
+
+        // ... while a tutor still receives it so the review controls stay live.
+        verify(websocketMessagingService, timeout(2000).atLeastOnce()).sendMessage(eq("/topic/user/" + tutor.getId() + "/notifications/conversations"), (Object) argThat(
+                payload -> payload instanceof PostBroadcastDTO dto && dto.post().answers().stream().anyMatch(answer -> answer.id().equals(savedPendingIris.getId()))));
     }
 
     // GET answer-messages-source-posts (forwarded-message source previews must not leak answer posts the caller cannot access)
