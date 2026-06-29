@@ -72,10 +72,10 @@ public class AutonomousTutorService {
     private static final String LEGACY_METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
     /** Iris replies at or above this confidence are auto-verified and visible to students. */
-    public static final double AUTO_VERIFY_CONFIDENCE_THRESHOLD = 0.95;
+    public static final double AUTO_VERIFY_CONFIDENCE_THRESHOLD = 0.85;
 
     /** Iris replies below this confidence are never posted (a tutor cannot rescue something Pyris itself is very unsure about). */
-    public static final double REVIEW_MIN_CONFIDENCE_THRESHOLD = 0.80;
+    public static final double REVIEW_MIN_CONFIDENCE_THRESHOLD = 0.70;
 
     private final IrisBotUserService irisBotUserService;
 
