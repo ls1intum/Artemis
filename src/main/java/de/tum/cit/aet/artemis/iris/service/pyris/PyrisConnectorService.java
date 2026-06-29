@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
@@ -72,8 +71,6 @@ public class PyrisConnectorService {
 
     private final PyrisJobService pyrisJobService;
 
-    private final Optional<WeaviateService> weaviateService;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
@@ -81,11 +78,10 @@ public class PyrisConnectorService {
     private String pyrisUrl;
 
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            PyrisJobService pyrisJobService, Optional<WeaviateService> weaviateService) {
+            PyrisJobService pyrisJobService) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.pyrisJobService = pyrisJobService;
-        this.weaviateService = weaviateService;
     }
 
     /**
