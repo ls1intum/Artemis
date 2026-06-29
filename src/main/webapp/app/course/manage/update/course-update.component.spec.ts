@@ -1444,6 +1444,13 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         // Run change detection to update the view
         fixture.changeDetectorRef.detectChanges();
 
+        // Auto-orchestration controls only render in edit mode (the create DTO does not carry them), so put
+        // the component in edit mode to assert all three feature-toggle groups are visible.
+        const editCourse = new Course();
+        editCourse.id = 123;
+        fixture.componentInstance.course = editCourse;
+        fixture.changeDetectorRef.detectChanges();
+
         // Try to find the form field in the DOM
         const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
         const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));

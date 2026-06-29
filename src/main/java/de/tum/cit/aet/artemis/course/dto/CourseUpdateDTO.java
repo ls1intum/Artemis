@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseAutoOrchestrationConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -129,6 +130,12 @@ public record CourseUpdateDTO(
         // Atlas auto-orchestration configuration: stored in its own (cascaded) entity. Create the row
         // lazily only when there is something non-default to persist, so the overwhelming majority of
         // courses (pipeline disabled, no overrides) never get an empty configuration row.
+        // Enforce the override bounds server-side: the @Min(1) bean-validation annotations are not active
+        // here (the multipart update endpoint does not run @Valid), so a crafted request could otherwise
+        // persist zero/negative overrides that the scheduler would treat as invalid configuration.
+        if ((debounceWindowSecondsOverride != null && debounceWindowSecondsOverride < 1) || (maxDailyOrchestrationOverride != null && maxDailyOrchestrationOverride < 1)) {
+            throw new BadRequestAlertException("Auto-orchestration overrides must be positive", Course.ENTITY_NAME, "invalidAutoOrchestrationOverride", true);
+        }
         CourseAutoOrchestrationConfiguration autoOrchestrationConfiguration = course.getAutoOrchestrationConfiguration();
         boolean hasConfigToPersist = autoOrchestratorEnabled || debounceWindowSecondsOverride != null || maxDailyOrchestrationOverride != null;
         if (autoOrchestrationConfiguration == null && hasConfigToPersist) {

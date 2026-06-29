@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +72,7 @@ public class ExerciseVersionService {
      * orchestrator's own writes re-arm the pipeline.
      */
     public static final Set<String> COMPETENCY_RELEVANT_FIELDS = Set.of("title", "shortName", "difficulty", "categories", "problemStatement",
-            "programmingData.templateParticipation", "programmingData.solutionParticipation", "programmingData.testsCommitId", "programmingData.auxiliaryRepositories");
+            "programmingData.templateParticipation", "programmingData.solutionParticipation", "programmingData.testsCommitId", "programmingData.auxiliaryRepositoriesCommit");
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionService.class);
 
@@ -206,7 +207,12 @@ public class ExerciseVersionService {
             // set lets content-sensitive consumers (Atlas auto-orchestration) filter without
             // re-diffing; it is the full content-relevant diff (including problemStatement and
             // repository commits), not the narrower editor-sync set computed above.
-            Set<String> changedFieldsForEvent = previousVersion.map(prev -> collectChangedFieldsForEvent(exerciseSnapshot, prev.getExerciseSnapshot())).orElseGet(Set::of);
+            // For the very first version there is nothing to diff against: seed the set with the
+            // content-bearing allowlist so creating an exercise is treated as a content change and
+            // schedules an initial orchestration run, rather than being silently dropped until the
+            // next edit. (Non-content consumers ignore this set; the listener still type-filters.)
+            Set<String> changedFieldsForEvent = previousVersion.map(prev -> collectChangedFieldsForEvent(exerciseSnapshot, prev.getExerciseSnapshot()))
+                    .orElseGet(() -> COMPETENCY_RELEVANT_FIELDS);
             eventPublisher.publishEvent(new ExerciseVersionCreatedEvent(exercise, changedFieldsForEvent));
         }
         catch (Exception e) {
@@ -387,12 +393,15 @@ public class ExerciseVersionService {
     }
 
     /**
-     * Detects template / solution / test repository commit changes between two programming snapshots
-     * and records them under {@code programmingData.templateParticipation} /
-     * {@code programmingData.solutionParticipation} / {@code programmingData.testsCommitId}. These are
-     * tracked for the {@link ExerciseVersionCreatedEvent} (auxiliary-repository commits are already
-     * covered by {@link #collectProgrammingChanges}) but not for editor metadata sync, which surfaces
-     * them via a dedicated commit alert instead.
+     * Detects template / solution / test / auxiliary repository commit changes between two programming
+     * snapshots and records them under {@code programmingData.templateParticipation} /
+     * {@code programmingData.solutionParticipation} / {@code programmingData.testsCommitId} /
+     * {@code programmingData.auxiliaryRepositoriesCommit}. These are tracked for the
+     * {@link ExerciseVersionCreatedEvent} but not for editor metadata sync, which surfaces them via a
+     * dedicated commit alert instead. The auxiliary entry intentionally tracks only commit-hash changes
+     * (keyed by repository id) rather than the broad {@code programmingData.auxiliaryRepositories} field
+     * emitted by {@link #collectProgrammingChanges}, so that metadata-only edits (name, description,
+     * checkout directory) do not arm Atlas auto-orchestration and consume the daily cap.
      *
      * @param changedFields the set to update with changed repository-commit field identifiers
      * @param newData       the new programming snapshot data
@@ -411,6 +420,28 @@ public class ExerciseVersionService {
         if (!Objects.equals(previousData.testsCommitId(), newData.testsCommitId())) {
             changedFields.add("programmingData.testsCommitId");
         }
+        if (!auxiliaryRepositoryCommitsById(previousData.auxiliaryRepositories()).equals(auxiliaryRepositoryCommitsById(newData.auxiliaryRepositories()))) {
+            changedFields.add("programmingData.auxiliaryRepositoriesCommit");
+        }
+    }
+
+    /**
+     * Maps each auxiliary repository's id to its current commit hash, so commit changes can be compared
+     * without reacting to metadata-only edits. Adding or removing a repository changes the key set and
+     * is therefore also treated as a commit-relevant change.
+     *
+     * @param auxiliaryRepositories the auxiliary repository snapshots, may be {@code null}
+     * @return a map of repository id to commit hash (commit hash may be {@code null} for an uninitialised repository)
+     */
+    private Map<Long, String> auxiliaryRepositoryCommitsById(List<ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO> auxiliaryRepositories) {
+        if (auxiliaryRepositories == null) {
+            return Map.of();
+        }
+        Map<Long, String> commitsById = new HashMap<>();
+        for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO repository : auxiliaryRepositories) {
+            commitsById.put(repository.id(), repository.commitId());
+        }
+        return commitsById;
     }
 
     /**

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -240,7 +241,10 @@ class ContentChangeSchedulerTest {
         // A course that disabled auto-orchestration is skipped and its bucket is flushed; the
         // orchestrator never runs and no completion is broadcast.
         verify(accumulator).flush(COURSE_ID);
+        // tick() claims via the three-argument overload (course id + resolved window + cap), so assert
+        // against that signature too — a disabled-path regression that started claiming would otherwise slip past.
         verify(accumulator, never()).claimDueBatch(anyLong());
+        verify(accumulator, never()).claimDueBatch(anyLong(), anyInt(), anyInt());
         verify(orchestrationService, never()).runBatch(anyLong(), any());
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/atlas/orchestrator/" + COURSE_ID), any(AutoOrchestrationSummaryDTO.class));
     }

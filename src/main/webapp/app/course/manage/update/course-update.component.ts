@@ -25,7 +25,7 @@ import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes,
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -86,6 +86,7 @@ export class CourseUpdateComponent implements OnInit {
     private readonly fileService = inject(FileService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
+    private readonly featureToggleService = inject(FeatureToggleService);
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
@@ -224,11 +225,18 @@ export class CourseUpdateComponent implements OnInit {
         // if the feature toggle is off or the request fails, the placeholders stay on the plain
         // "Use default" label.
         if (this.atlasEnabled()) {
-            this.competencyOrchestrationApiService
-                .getDefaults()
-                .then((defaults) => {
-                    this.debounceWindowSecondsDefault.set(defaults.debounceWindowSeconds);
-                    this.maxDailyOrchestrationDefault.set(defaults.maxDailyOrchestrations);
+            // The defaults endpoint is gated by FeatureToggle.AtlasAgent (and 403s when it is off), the same
+            // toggle that hides the override controls. Only fetch when the toggle is active to avoid a failing
+            // request on every course-edit load in deployments where the agent feature is disabled.
+            firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent))
+                .then((atlasAgentActive) => {
+                    if (!atlasAgentActive) {
+                        return undefined;
+                    }
+                    return this.competencyOrchestrationApiService.getDefaults().then((defaults) => {
+                        this.debounceWindowSecondsDefault.set(defaults.debounceWindowSeconds);
+                        this.maxDailyOrchestrationDefault.set(defaults.maxDailyOrchestrations);
+                    });
                 })
                 .catch(() => {
                     // Defaults are non-essential; leave the placeholders on the generic label.
@@ -266,8 +274,9 @@ export class CourseUpdateComponent implements OnInit {
                 testCourse: new FormControl(this.course.testCourse),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
                 autoOrchestratorEnabled: new FormControl(this.course.autoOrchestratorEnabled ?? false),
-                debounceWindowSecondsOverride: new FormControl(this.course.debounceWindowSecondsOverride, { validators: [Validators.min(1)] }),
-                maxDailyOrchestrationOverride: new FormControl(this.course.maxDailyOrchestrationOverride, { validators: [Validators.min(1)] }),
+                // Seconds / daily run counts: reject fractional values in addition to the lower bound.
+                debounceWindowSecondsOverride: new FormControl(this.course.debounceWindowSecondsOverride, { validators: [Validators.min(1), Validators.pattern(/^\d+$/)] }),
+                maxDailyOrchestrationOverride: new FormControl(this.course.maxDailyOrchestrationOverride, { validators: [Validators.min(1), Validators.pattern(/^\d+$/)] }),
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),

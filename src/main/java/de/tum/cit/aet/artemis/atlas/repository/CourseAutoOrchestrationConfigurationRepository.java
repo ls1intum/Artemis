@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.repository;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * update flow ({@code CourseUpdateDTO#applyTo}) via the {@code Course} association cascade.
  */
 @Conditional(AtlasEnabled.class)
+@Lazy
 @Repository
 public interface CourseAutoOrchestrationConfigurationRepository extends ArtemisJpaRepository<CourseAutoOrchestrationConfiguration, Long> {
 
