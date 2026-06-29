@@ -6,7 +6,7 @@ import { DatePipe } from '@angular/common';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZonelessChangeDetection } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { provideRouter, withRouterConfig } from '@angular/router';
+import { provideRouter, withPreloading, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
 import routes from 'app/app.routes';
@@ -31,6 +31,7 @@ import { Configuration } from 'app/openapi/configuration';
 import { providePrimeNG } from 'primeng/config';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AuraArtemis } from './primeng-artemis-theme';
+import { RoleAwarePreloadingStrategy } from 'app/core/config/role-aware-preloading.strategy';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -53,7 +54,10 @@ export const appConfig: ApplicationConfig = {
         //  this would set non-route inputs to undefined, which not all components can handle, currently
         //  see https://angular.dev/api/router/withComponentInputBinding?tab=usage-notes
         //  provideRouter(routes, withComponentInputBinding(), withRouterConfig({ onSameUrlNavigation: 'reload' })),
-        provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' })),
+        // Role-aware staged background preloading: after the app settles, lazy route chunks the current user
+        // can reach are warmed during idle (student tier first, then management, then admin) so later navigation
+        // is instant; a pure student never downloads management/admin code. See RoleAwarePreloadingStrategy.
+        provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' }), withPreloading(RoleAwarePreloadingStrategy)),
         // This enables service worker (PWA)
         importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),
         provideHttpClient(withInterceptorsFromDi()),
