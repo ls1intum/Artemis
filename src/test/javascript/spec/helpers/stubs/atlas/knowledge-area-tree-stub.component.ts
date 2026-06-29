@@ -1,7 +1,6 @@
-import { NestedTreeControl } from '@angular/cdk/tree';
 import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
-import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { KnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
+import { TreeNode } from 'primeng/api';
+import { KnowledgeAreaForTree, StandardizedCompetencyForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 
 @Component({
     selector: 'jhi-knowledge-area-tree',
@@ -9,8 +8,7 @@ import { KnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-com
     standalone: true,
 })
 export class KnowledgeAreaTreeStubComponent {
-    @Input({ required: true }) dataSource: MatTreeNestedDataSource<KnowledgeAreaForTree>;
-    @Input({ required: true }) treeControl: NestedTreeControl<KnowledgeAreaForTree>;
+    @Input() nodes: TreeNode<KnowledgeAreaForTree | StandardizedCompetencyForTree>[] = [];
 
     @ContentChild('knowledgeAreaTemplate') knowledgeAreaTemplate: TemplateRef<any>;
     @ContentChild('competencyTemplate') competencyTemplate: TemplateRef<any>;

@@ -57,16 +57,7 @@
             </table>
         </div>
         <div class="d-flex justify-content-between p-2 mt-auto">
-            <ngb-pagination
-                (pageChange)="onPageChange($event)"
-                [(page)]="state.page"
-                [collectionSize]="total()"
-                [maxSize]="5"
-                [pageSize]="state.pageSize"
-                [rotate]="true"
-                [ellipses]="true"
-                [boundaryLinks]="true"
-            />
+            <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
         </div>
     </div>
 </form>

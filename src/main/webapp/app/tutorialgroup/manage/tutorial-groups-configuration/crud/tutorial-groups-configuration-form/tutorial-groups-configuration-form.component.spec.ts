@@ -1,18 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
+    tutorialPeriodRangeValidator,
 } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
-import { ArtemisDateRangePipe } from 'app/foundation/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -38,12 +36,8 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
                 ReactiveFormsModule,
                 FormsModule,
                 NgbTypeaheadModule,
-                OwlDateTimeModule,
-                OwlNativeDateTimeModule,
-                FaIconComponent,
                 TutorialGroupsConfigurationFormComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDateRangePipe),
                 MockDirective(TranslateDirective),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
@@ -126,10 +120,58 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
         }
     });
 
+    it('should render a PrimeNG-style invalid-feedback message only once the invalid period is touched/dirty', () => {
+        const feedback = () => fixture.nativeElement.querySelectorAll('.invalid-feedback');
+
+        // invalid (empty period) but still pristine/untouched -> no message yet
+        fixture.detectChanges();
+        expect(component.isPeriodInvalid).toBe(false);
+        expect(feedback()).toHaveLength(0);
+
+        // touched empty period -> the "required" message renders
+        component.markPeriodAsTouched();
+        fixture.detectChanges();
+        expect(component.isPeriodInvalid).toBe(true);
+        expect(feedback()).toHaveLength(1);
+
+        // inverted range -> the "invalidRange" message renders (still exactly one message)
+        component.form.get('period')!.setValue([validPeriodEnd, validPeriodStart]);
+        component.form.get('period')!.markAsDirty();
+        fixture.detectChanges();
+        expect(component.isPeriodInvalid).toBe(true);
+        expect(feedback()).toHaveLength(1);
+
+        // valid range -> no message
+        component.form.get('period')!.setValue(validPeriod);
+        fixture.detectChanges();
+        expect(component.isPeriodInvalid).toBe(false);
+        expect(feedback()).toHaveLength(0);
+    });
+
     // === helper functions ===
     const setValidFormValues = () => {
         component.form.get('period')!.setValue(validPeriod);
         component.form.get('usePublicTutorialGroupChannels')!.setValue(true);
         component.form.get('useTutorialGroupChannels')!.setValue(true);
     };
+});
+
+describe('tutorialPeriodRangeValidator', () => {
+    const start = new Date(Date.UTC(2021, 1, 1));
+    const end = new Date(Date.UTC(2021, 2, 1));
+
+    it('should accept a valid, correctly ordered range', () => {
+        expect(tutorialPeriodRangeValidator(new FormControl([start, end]))).toBeNull();
+    });
+
+    it('should require a range when empty, partial, or non-date', () => {
+        expect(tutorialPeriodRangeValidator(new FormControl(undefined))).toEqual({ required: true });
+        expect(tutorialPeriodRangeValidator(new FormControl([start]))).toEqual({ required: true });
+        expect(tutorialPeriodRangeValidator(new FormControl([start, null]))).toEqual({ required: true });
+        expect(tutorialPeriodRangeValidator(new FormControl([start, new Date('invalid')]))).toEqual({ required: true });
+    });
+
+    it('should flag an inverted range (start after end)', () => {
+        expect(tutorialPeriodRangeValidator(new FormControl([end, start]))).toEqual({ invalidRange: true });
+    });
 });

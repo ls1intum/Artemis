@@ -283,7 +283,8 @@ export class PdfViewerComponent {
     }
 
     private applyFullscreenLayering(): void {
-        const drawerContent = this.hostElementRef.nativeElement.closest('.mat-drawer-content') as HTMLElement | null;
+        const drawerContent = (this.hostElementRef.nativeElement.closest('.layout-content') ??
+            this.hostElementRef.nativeElement.closest('.mat-drawer-content')) as HTMLElement | null;
         if (!drawerContent) {
             return;
         }
