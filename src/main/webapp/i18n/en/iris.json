@@ -290,6 +290,14 @@
             "controlCenter": {
                 "tooltip": "Enable or disable Iris for your course. To configure custom instructions, click the configure button."
             },
+            "pointOut": {
+                "label": "Navigated to {{target}} in lecture unit {{unit}}",
+                "labelNoUnit": "Navigated to {{target}}",
+                "page": "page {{page}}",
+                "timestamp": "timestamp {{time}}",
+                "and": " and ",
+                "openTooltip": "Open this in the lecture view"
+            },
             "chatHistory": {
                 "title": "Chats",
                 "newChat": "New chat",

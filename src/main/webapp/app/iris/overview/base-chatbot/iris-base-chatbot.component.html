@@ -324,6 +324,24 @@
                                         </div>
                                     </div>
                                 }
+                                @if (message.sender === IrisSender.COMMAND) {
+                                    @for (content of message.content; track content.id ?? $index) {
+                                        @if (getPointOutData(content); as pointOut) {
+                                            <div class="d-flex justify-content-start point-out-marker-row">
+                                                <button
+                                                    type="button"
+                                                    class="point-out-marker"
+                                                    (click)="onPointOutMarkerClick(pointOut)"
+                                                    [title]="'artemisApp.iris.pointOut.openTooltip' | artemisTranslate"
+                                                    [attr.aria-label]="'artemisApp.iris.pointOut.openTooltip' | artemisTranslate"
+                                                >
+                                                    <fa-icon [icon]="faLocationArrow" />
+                                                    <span>{{ pointOutMarkerLabel(pointOut) }}</span>
+                                                </button>
+                                            </div>
+                                        }
+                                    }
+                                }
                             </div>
                         }
                         @if (canShowSuggestions()) {

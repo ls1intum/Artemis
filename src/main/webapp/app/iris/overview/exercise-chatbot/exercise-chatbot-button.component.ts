@@ -173,6 +173,14 @@ export class IrisExerciseChatbotButtonComponent {
                 });
             }
         });
+
+        // Close the floating widget when something else requests it (e.g. the lecture combined view
+        // opening in fullscreen), so the popup does not overlay the fullscreen content.
+        this.chatService.closeWidget$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+            if (this.chatOpen() && this.dialogRef) {
+                this.dialogRef.close();
+            }
+        });
     }
 
     /**

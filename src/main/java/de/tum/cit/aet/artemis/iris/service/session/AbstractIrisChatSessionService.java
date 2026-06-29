@@ -14,6 +14,7 @@ import org.springframework.context.MessageSource;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -166,6 +167,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         IrisMessage savedMessage;
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
+
+        // Persist and push a navigation marker before the answer so it appears first in the chat history.
+        handlePointOutAction(session, statusUpdate);
+
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             for (var content : parseResultContents(statusUpdate.result())) {
@@ -226,6 +231,40 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         updateLatestSuggestions(session, statusUpdate.suggestions());
 
         return updatedJob.get();
+    }
+
+    /**
+     * If the status update carries a point-out action (Iris pointed the student to a position in the combined view), persist it as a COMMAND message holding the navigation
+     * target as JSON content and push it to the client. The client renders it as a clickable marker and, if the combined view is still open, navigates there. Does nothing if no
+     * (valid) action is present.
+     *
+     * @param session      the chat session the marker belongs to
+     * @param statusUpdate the status update potentially carrying the point-out action
+     */
+    private void handlePointOutAction(S session, PyrisChatStatusUpdateDTO statusUpdate) {
+        var action = statusUpdate.pointOutAction();
+        if (action == null || action.lectureUnitId() == null || (action.page() == null && action.timestamp() == null)) {
+            return;
+        }
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("type", "pointOut");
+        node.put("lectureUnitId", action.lectureUnitId());
+        if (action.page() != null) {
+            node.put("page", action.page());
+        }
+        if (action.timestamp() != null) {
+            node.put("timestamp", action.timestamp());
+        }
+        if (action.lectureUnitName() != null && !action.lectureUnitName().isBlank()) {
+            node.put("lectureUnitName", action.lectureUnitName());
+        }
+        if (action.reason() != null && !action.reason().isBlank()) {
+            node.put("reason", action.reason());
+        }
+        var commandMessage = new IrisMessage();
+        commandMessage.addContent(new IrisJsonMessageContent(node));
+        var savedCommand = irisMessageService.saveMessage(commandMessage, session, IrisMessageSender.COMMAND);
+        irisChatWebsocketService.sendMessage(session, savedCommand, statusUpdate.stages());
     }
 
     private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";

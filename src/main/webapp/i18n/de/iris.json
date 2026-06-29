@@ -290,6 +290,14 @@
             "controlCenter": {
                 "tooltip": "Aktiviere oder deaktiviere Iris für deinen Kurs. Um benutzerdefinierte Anweisungen zu konfigurieren, klicke auf die Schaltfläche 'Konfigurieren'."
             },
+            "pointOut": {
+                "label": "Zu {{target}} in Lerneinheit {{unit}} gesprungen",
+                "labelNoUnit": "Zu {{target}} gesprungen",
+                "page": "Seite {{page}}",
+                "timestamp": "Zeitpunkt {{time}}",
+                "and": " und ",
+                "openTooltip": "In der Vorlesungsansicht öffnen"
+            },
             "chatHistory": {
                 "title": "Chats",
                 "newChat": "Neuer Chat",

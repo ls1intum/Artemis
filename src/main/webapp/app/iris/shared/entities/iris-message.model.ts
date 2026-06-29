@@ -11,6 +11,7 @@ export enum IrisSender {
     LLM = 'LLM',
     USER = 'USER',
     ARTIFACT = 'ARTIFACT',
+    COMMAND = 'COMMAND',
 }
 
 export class IrisAssistantMessage implements BaseEntity {
@@ -42,4 +43,18 @@ export class IrisArtifactMessage implements BaseEntity {
     createdMemories?: MemirisMemory[];
 }
 
-export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage;
+/**
+ * A system-generated marker recording an action Iris performed on the client, such as pointing the
+ * student to a slide page / video timestamp in the combined view. Its content is JSON describing the
+ * action; the client renders it as a clickable navigation marker.
+ */
+export class IrisCommandMessage implements BaseEntity {
+    id?: number;
+    content: IrisMessageContent[];
+    sentAt?: dayjs.Dayjs;
+    sender: IrisSender.COMMAND;
+    accessedMemories?: MemirisMemory[];
+    createdMemories?: MemirisMemory[];
+}
+
+export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage | IrisCommandMessage;

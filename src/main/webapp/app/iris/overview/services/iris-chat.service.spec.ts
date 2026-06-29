@@ -30,7 +30,8 @@ import 'app/foundation/util/array.extension';
 import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
-import { IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
+import { IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
@@ -371,6 +372,32 @@ describe('IrisChatService', () => {
         expect(messages).toHaveLength(mockConversation.messages!.length + 1);
         const lastMessage = messages.last();
         expect(lastMessage).toMatchObject({ sender: message.sender, id: message.id, content: message.content });
+    });
+
+    it('should emit point-out navigation when a COMMAND message arrives', async () => {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        const commandPayload = {
+            type: IrisChatWebsocketPayloadType.MESSAGE,
+            message: {
+                id: 99,
+                sender: IrisSender.COMMAND,
+                content: [{ type: 'json', attributes: { type: 'pointOut', lectureUnitId: 42, page: 3, reason: 'x' } }],
+            },
+        } as unknown as IrisChatWebsocketDTO;
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(commandPayload));
+
+        const navPromise = firstValueFrom(service.pointOutNavigation$);
+        service.switchTo(ChatServiceMode.LECTURE, id);
+        await waitForSessionId();
+
+        await expect(navPromise).resolves.toEqual({ lectureUnitId: 42, page: 3, timestamp: undefined, forceOpen: false });
+    });
+
+    it('should emit point-out navigation with forceOpen when navigateToPointOut is called', async () => {
+        const navPromise = firstValueFrom(service.pointOutNavigation$);
+        service.navigateToPointOut({ lectureUnitId: 7, page: 2, forceOpen: true });
+        await expect(navPromise).resolves.toEqual({ lectureUnitId: 7, page: 2, forceOpen: true });
     });
 
     it('should emit sessionId when set', async () => {

@@ -56,6 +56,8 @@ import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisCombinedViewContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisPointOutNavigation } from 'app/iris/shared/entities/iris-point-out-navigation.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -103,6 +105,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly injector = inject(Injector);
     private readonly translateService = inject(TranslateService);
     private readonly themeService = inject(ThemeService);
+    private readonly chatService = inject(IrisChatService);
 
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
@@ -158,6 +161,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private blobLoadSubscription?: Subscription;
     private pendingPdfTargetPage?: number;
     private isApplyingVideoSeek = false;
+
+    // A point-out navigation target waiting to be applied once the combined view is open and the
+    // relevant viewer (PDF / video) has rendered. Applied (and cleared) by an effect in the constructor.
+    private readonly pendingPointOut = signal<IrisPointOutNavigation | undefined>(undefined);
 
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
@@ -298,6 +305,64 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.clearSynchronizationTargets();
             }
         });
+
+        // Iris points the student to a position in the combined view: navigate when the request
+        // targets this unit (auto-navigation only acts if the view is already open; a marker click
+        // forces it open — see applyPointOut).
+        this.chatService.pointOutNavigation$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((navigation) => this.applyPointOut(navigation));
+
+        // Apply a pending point-out target once the combined view is open and the viewer it needs has
+        // rendered. Reading the viewChild signals here re-runs this effect as they become available.
+        effect(() => {
+            const navigation = this.pendingPointOut();
+            if (!navigation || !this.isFullscreen()) {
+                return;
+            }
+            const pdfReady = navigation.page == undefined || this.pdfViewer() !== undefined;
+            const videoReady = navigation.timestamp == undefined || this.videoPlayer() !== undefined || this.youtubePlayer() !== undefined;
+            if (!pdfReady || !videoReady) {
+                return;
+            }
+            untracked(() => {
+                this.navigateWithinCombinedView(navigation);
+                this.pendingPointOut.set(undefined);
+            });
+        });
+    }
+
+    /**
+     * Handles an Iris point-out navigation request. Ignores requests for other units. If the combined
+     * view is closed, auto-navigation (forceOpen = false) does nothing, while a marker click
+     * (forceOpen = true) opens it first. The actual page jump / video seek is deferred to the
+     * pendingPointOut effect, which waits until the relevant viewer has rendered.
+     * @param navigation the requested navigation target
+     */
+    private applyPointOut(navigation: IrisPointOutNavigation): void {
+        if (navigation.lectureUnitId !== this.lectureUnit()?.id) {
+            return;
+        }
+        if (!this.isFullscreen()) {
+            if (!navigation.forceOpen) {
+                return;
+            }
+            this.openFullscreen();
+        }
+        this.pendingPointOut.set(navigation);
+    }
+
+    /** Jumps the slides to the requested page and/or seeks the video to the requested timestamp. */
+    private navigateWithinCombinedView(navigation: IrisPointOutNavigation): void {
+        if (navigation.page != undefined) {
+            this.pdfViewer()?.goToPage(navigation.page);
+        }
+        if (navigation.timestamp != undefined) {
+            const videoPlayer = this.videoPlayer();
+            if (videoPlayer) {
+                videoPlayer.seekTo(navigation.timestamp, false);
+            } else {
+                this.youtubePlayer()?.seekTo(navigation.timestamp, false);
+            }
+        }
     }
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
@@ -526,11 +591,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onFullscreenChange(isFullscreen: boolean): void {
         this.fullscreenState.set(isFullscreen);
-        // Note: the floating Iris chat widget was previously force-closed here via MatDialog.closeAll() when entering
-        // fullscreen. The widget has since migrated to PrimeNG's DynamicDialog, which has no globally reachable
-        // close-all from this injector (its DialogService is component-scoped to the chatbot button). The widget still
-        // auto-closes on navigation; if it visibly overlays the fullscreen view, reintroduce an explicit close via a
-        // shared Iris widget service rather than a Material dependency.
+        // Close the floating Iris chat widget (chatbot button popup) when entering fullscreen, so it does
+        // not overlay the combined view. The combined view has its own embedded Iris sidebar; this only
+        // closes the separate floating popup via the shared IrisChatService.
+        if (isFullscreen) {
+            this.chatService.requestCloseWidget();
+        }
     }
 
     protected onSynchronizationToggleChange(enabled: boolean): void {

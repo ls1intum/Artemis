@@ -40,6 +40,7 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import * as DownloadUtils from 'app/foundation/util/download.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -159,6 +160,7 @@ describe('CourseLectureDetailsComponent', () => {
                 },
                 MockProvider(Router),
                 MockProvider(ScienceService),
+                MockProvider(IrisChatService, { pointOutNavigation$: EMPTY }),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         }).compileComponents();

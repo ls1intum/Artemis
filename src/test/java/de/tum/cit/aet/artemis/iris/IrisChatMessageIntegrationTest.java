@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -69,6 +70,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisPointOutActionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
@@ -229,6 +231,70 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         verify(websocketMessagingService, times(8)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + session.getId()), any());
         assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).hasSize(4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMessage_withPointOutAction_persistsCommandMarkerMessage() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+
+        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatusWithPointOut(dto.settings().authenticationToken(), "Take a look at the slide I opened.",
+                dto.initialStages(), new PyrisPointOutActionDTO(42L, 3, null, "Sorting Algorithms", "Binary search definition"))));
+
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+
+        // user message + COMMAND marker + LLM answer
+        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 3);
+
+        var commandMessages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.COMMAND)
+                .toList();
+        assertThat(commandMessages).hasSize(1);
+        IrisMessageContent content = commandMessages.getFirst().getContent().getFirst();
+        assertThat(content).isInstanceOf(IrisJsonMessageContent.class);
+        var jsonNode = ((IrisJsonMessageContent) content).getJsonNode();
+        assertThat(jsonNode.get("lectureUnitId").asLong()).isEqualTo(42L);
+        assertThat(jsonNode.get("page").asInt()).isEqualTo(3);
+        assertThat(jsonNode.get("lectureUnitName").asText()).isEqualTo("Sorting Algorithms");
+        assertThat(jsonNode.get("reason").asText()).isEqualTo("Binary search definition");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendMessage_withoutPointOutAction_persistsNoCommandMessage() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+
+        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null, null)));
+
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+
+        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 2);
+
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().noneMatch(m -> m.getSender() == IrisMessageSender.COMMAND)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void followUpMessage_excludesCommandMarkerFromPyrisHistory() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+
+        // Both Pyris responses must be queued up front: the mock server rejects new expectations once a request has been made.
+        AtomicReference<PyrisChatPipelineExecutionDTO> capturedFollowUpDto = new AtomicReference<>();
+        // Turn 1: Iris points out a slide -> persists a COMMAND marker plus the LLM answer (3 messages total).
+        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatusWithPointOut(dto.settings().authenticationToken(), "Look at the slide.", dto.initialStages(),
+                new PyrisPointOutActionDTO(42L, 1, null, "Sorting Algorithms", "X"))));
+        // Turn 2: capture the DTO forwarded to Pyris; its chat history must not contain the COMMAND marker (Pyris has no such role).
+        mockChatResponse(dto -> {
+            capturedFollowUpDto.set(dto);
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Sure.", dto.initialStages(), null, null));
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 3);
+
+        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
+        await().until(() -> capturedFollowUpDto.get() != null);
+
+        assertThat(capturedFollowUpDto.get().chatHistory()).isNotEmpty().noneMatch(message -> message.sender() == IrisMessageSender.COMMAND);
     }
 
     @ParameterizedTest
@@ -1310,7 +1376,13 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, suggestions, null, null, null), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, suggestions, null, null, null, null), HttpStatus.OK, headers);
+    }
+
+    private void sendStatusWithPointOut(String jobId, String result, List<PyrisStageDTO> stages, PyrisPointOutActionDTO pointOutAction) throws Exception {
+        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
+                new PyrisChatStatusUpdateDTO(result, stages, null, null, null, null, null, pointOutAction), HttpStatus.OK, headers);
     }
 
     private static String messagesUrl(IrisChatSession session) {

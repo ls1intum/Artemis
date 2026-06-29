@@ -817,6 +817,37 @@ pre {
     transform: none;
 }
 
+.point-out-marker-row {
+    margin: 0.25rem 0;
+}
+
+.point-out-marker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 1rem;
+    background-color: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: left;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+
+    &:hover,
+    &:focus-visible {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    fa-icon {
+        color: var(--primary);
+    }
+}
+
 cdk-global-scrollblock {
     position: fixed;
     width: 100%;

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisFeedbackDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
@@ -95,7 +96,9 @@ public class PyrisDTOService {
      * @return the converted list of PyrisMessageDTOs
      */
     public List<PyrisMessageDTO> toPyrisMessageDTOList(List<IrisMessage> messages) {
-        return messages.stream().map(PyrisMessageDTO::of).toList();
+        // COMMAND messages are client-side UI markers (e.g. combined-view navigation), not part of the conversation.
+        // Exclude them: Pyris has no COMMAND message role and would reject the chat history otherwise.
+        return messages.stream().filter(message -> message.getSender() != IrisMessageSender.COMMAND).map(PyrisMessageDTO::of).toList();
     }
 
     /**
