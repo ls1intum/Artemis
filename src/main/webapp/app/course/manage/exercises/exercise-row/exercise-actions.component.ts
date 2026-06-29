@@ -6,6 +6,7 @@ import {
     afterNextRender,
     afterRenderEffect,
     computed,
+    effect,
     inject,
     input,
     output,
@@ -89,6 +90,13 @@ export class ExerciseActionsComponent {
 
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
+    /**
+     * Width (px) the actions column must reserve to keep this row's always-visible quiz lifecycle buttons plus the
+     * ellipsis trigger on screen — i.e. the point at which every collapsible main button has folded into the ellipsis.
+     * 0 for non-quiz rows. The table floors the shared column at the max reported across its rows (see exercise-table),
+     * so the column shrinks (collapsing the main buttons) before the table scrolls, never clipping the quiz buttons.
+     */
+    readonly quizActionsMinWidth = output<number>();
 
     protected readonly ExerciseType = ExerciseType;
     protected readonly faEllipsis = faEllipsis;
@@ -388,6 +396,15 @@ export class ExerciseActionsComponent {
             if (next) {
                 this.buttonWidths.set(next);
             }
+        });
+
+        // Report the width this row's actions column must reserve: the always-visible quiz buttons (the measured
+        // quizGroup already includes their trailing separator) plus the gap, the ellipsis trigger, and a small safety
+        // margin so sub-pixel rounding never clips the left edge of the leftmost quiz button. Quiz-button widths do not
+        // depend on the column width, so this never feeds back into its own measurement. Non-quiz rows report 0.
+        effect(() => {
+            const quizWidth = this.quizWidth();
+            this.quizActionsMinWidth.emit(quizWidth > 0 ? quizWidth + GAP_PX + ELLIPSIS_WIDTH_PX + SAFETY_MARGIN_PX : 0);
         });
     }
 

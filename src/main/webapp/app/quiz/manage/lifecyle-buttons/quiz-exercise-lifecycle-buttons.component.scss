@@ -8,3 +8,11 @@
     line-height: 1.2;
     white-space: nowrap;
 }
+
+// The batch-menu popover renders its panel in the document body (appendTo="body") and is positioned from the Batches
+// button's click event, so its host element is only a viewChild anchor and never shows anything inline. Take it out of
+// the flex flow so it does not sit between the Batches and End buttons and double the gap between them (the flex `gap`
+// would otherwise apply on both sides of this empty host).
+p-popover {
+    display: none;
+}

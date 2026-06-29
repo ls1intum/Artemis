@@ -18,7 +18,10 @@ import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
     templateUrl: './quiz-exercise-lifecycle-buttons.component.html',
     styleUrl: './quiz-exercise-lifecycle-buttons.component.scss',
-    host: { class: 'd-flex gap-1 align-items-center flex-wrap' },
+    // flex-nowrap: keep the lifecycle buttons (e.g. Batches + End) on a single line rather than stacking them when space
+    // is tight — they are a related action group, and the exercise-management table measures their inline width to size
+    // the actions column (a wrap would mis-measure it).
+    host: { class: 'd-flex gap-1 align-items-center flex-nowrap' },
     imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisTranslatePipe, TooltipModule, PopoverModule],
 })
 export class QuizExerciseLifecycleButtonsComponent {

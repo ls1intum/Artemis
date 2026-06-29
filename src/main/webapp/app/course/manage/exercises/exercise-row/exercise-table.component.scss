@@ -23,13 +23,20 @@
  * columns), so it is responsive: more space (wider viewport / zoomed out) ⇒ wider column ⇒ more buttons fit; less space
  * ⇒ narrower column ⇒ buttons collapse into the ellipsis. `max-width` caps it at the widest button set (a full quiz
  * row) so it never grows into pure whitespace. Buttons are an absolute overlay (exercise-actions.component) so they
- * never inflate the column; overflow:hidden clips anything past it and min-width keeps the ellipsis reachable.
+ * never inflate the column; overflow:hidden clips anything past it.
+ *
+ * `min-width` keeps the always-visible part of the overlay on screen. By default that is just the ellipsis trigger
+ * (`4rem`), so the column can collapse fully. When a row has quiz lifecycle buttons (which never fold into the ellipsis)
+ * the component sets `--actions-min-width` to the widest measured quiz-button + ellipsis width across its rows, so the
+ * column shrinks — collapsing every main button into the ellipsis — right down to that point and no further. The table
+ * only starts scrolling horizontally (the p-table is [scrollable]) past it, keeping the quiz buttons reachable. The var
+ * is left unset when no row has quiz buttons, so the `4rem` default applies and the ellipsis collapses completely.
  */
 th.col-actions,
 td.col-actions {
     width: 100%;
     max-width: 60rem;
-    min-width: 4rem;
+    min-width: var(--actions-min-width, 4rem);
     position: relative;
     overflow: hidden;
 }

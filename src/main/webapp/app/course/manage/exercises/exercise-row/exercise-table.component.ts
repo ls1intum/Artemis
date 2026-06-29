@@ -38,6 +38,10 @@ export interface TableGroupChange {
     selector: 'jhi-exercise-table',
     templateUrl: './exercise-table.component.html',
     styleUrl: './exercise-table.component.scss',
+    // Floor the actions column at `--actions-min-width` — the widest always-visible quiz-button + ellipsis width the rows
+    // actually report — so it collapses every main button into the ellipsis before the table scrolls, yet never clips the
+    // (non-collapsing) quiz buttons. Stays unset when no row has quiz buttons, so the column collapses fully (SCSS default).
+    host: { '[style.--actions-min-width]': 'actionsMinWidthVar()' },
     imports: [
         RouterLink,
         FormsModule,
@@ -124,6 +128,26 @@ export class ExerciseTableComponent {
             return asc ? cmp : -cmp;
         });
     });
+
+    /**
+     * Largest actions-column width (px) any row has reported for its always-visible quiz buttons + ellipsis. Kept as a
+     * running max so the shared column fits the widest quiz row. It only grows: if the widest quiz row later disappears
+     * the floor may stay marginally larger than needed, which at worst makes the table scroll a touch sooner — never
+     * clips a quiz button. Stays 0 when no row has quiz lifecycle buttons (no quizzes, or quizzes in a state with no
+     * actions), so the column falls back to the narrow default and the ellipsis can collapse fully.
+     */
+    private readonly maxQuizActionsMinWidth = signal(0);
+    /** CSS value for the actions-column floor, or null when no quiz buttons are present (so the SCSS default applies). */
+    readonly actionsMinWidthVar = computed(() => {
+        const width = this.maxQuizActionsMinWidth();
+        return width > 0 ? `${width}px` : null;
+    });
+
+    onQuizActionsMinWidth(width: number): void {
+        if (width > this.maxQuizActionsMinWidth()) {
+            this.maxQuizActionsMinWidth.set(width);
+        }
+    }
 
     readonly allSelected = computed(() => {
         const ids = this.selectedIds();
