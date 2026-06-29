@@ -26,7 +26,7 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, Li
     }
 
     public enum Status {
-        SUCCESS, PARTIAL, FAILED, IN_PROGRESS
+        SUCCESS, PARTIAL, FAILED, IN_PROGRESS, NO_OP
     }
 
     /**
@@ -38,6 +38,11 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, Li
         NO_CHAT_CLIENT,
         /** The LLM call itself threw — surfaced as 502. */
         LLM_ERROR,
+        /**
+         * A non-LLM step in the orchestrator failed (content extraction, repository lookup,
+         * template rendering, tool-index assembly) — surfaced as 500.
+         */
+        INTERNAL_ERROR,
         /**
          * The exercise the orchestrator was triggered for is not a course exercise (currently:
          * exam exercises). Mutating competencies for an exam exercise would silently affect the
@@ -65,5 +70,14 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, Li
 
     public static CompetencyOrchestrationResultDTO inProgress(String summary) {
         return new CompetencyOrchestrationResultDTO(Status.IN_PROGRESS, summary, List.of(), null);
+    }
+
+    /**
+     * The run completed without anything to do: every claimed exercise resolved to nothing
+     * applicable (deleted, exam, or owned by another course). No competencies were touched, so the
+     * caller must not report the claimed ids as successfully processed.
+     */
+    public static CompetencyOrchestrationResultDTO noOp(String summary) {
+        return new CompetencyOrchestrationResultDTO(Status.NO_OP, summary, List.of(), null);
     }
 }
