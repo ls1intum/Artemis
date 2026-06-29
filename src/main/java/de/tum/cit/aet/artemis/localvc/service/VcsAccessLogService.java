@@ -48,6 +48,7 @@ public class VcsAccessLogService {
 
     /**
      * Creates a vcs access log entry and stores it to the database
+     * Also uses helper function to create and save vcs analytics log entry to the database
      *
      * @param user                    The user accessing the repository
      * @param participation           The participation which owns the repository
@@ -64,11 +65,17 @@ public class VcsAccessLogService {
         VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash,
                 ipAddress);
         vcsAccessLogRepository.save(accessLogEntry);
+        saveAnalyticsLog(user, participation.getId(), actionType, authenticationMechanism);
+    }
 
-        var exercise = participation.getExercise();
-        if (exercise != null && exercise.getCourseViaExerciseGroupOrCourseMember() != null) {
-            Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-
+    /**
+     * Helper function to save the analytics entry to vcsAnalyticsRepository
+     *
+     */
+    private void saveAnalyticsLog(User user, Long participationId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism) {
+        Optional<Long> optionalCourseId = vcsAnalyticsLogRepository.findCourseIdByParticipationId(participationId);
+        if (optionalCourseId.isPresent()) {
+            Long courseId = optionalCourseId.get();
             ExperimentalGroup experimentalGroup = AnalyticsHashUtils.getGroup(user.getId());
             String maskedId = AnalyticsHashUtils.maskUserId(user.getId(), courseId);
 
@@ -76,7 +83,7 @@ public class VcsAccessLogService {
             vcsAnalyticsLogRepository.save(analyticsLogEntry);
         }
         else {
-            log.warn("Could not save analytics log: courseId is null for participation {}", participation.getId());
+            log.warn("Could not save analytics log: courseId is null for participation {}", participationId);
         }
     }
 
@@ -108,17 +115,43 @@ public class VcsAccessLogService {
         if (vcsAccessLog.isPresent()) {
             vcsAccessLog.get().setRepositoryActionType(repositoryActionType);
             vcsAccessLogRepository.save(vcsAccessLog.get());
+            updateAnalyticsActionType(vcsAccessLog.get(), repositoryActionType);
         }
     }
 
     /**
-     * Saves an vcsAccessLog
+     * Helper function to update actionType at vcs_analytics_log table
+     */
+    private void updateAnalyticsActionType(VcsAccessLog vcsAccessLog, RepositoryActionType repositoryActionType) {
+        User user = vcsAccessLog.getUser();
+        Participation participation = vcsAccessLog.getParticipation();
+        if (user == null || participation == null) {
+            log.warn("Cannot update analytics log: user or participation is null");
+            return;
+        }
+        Optional<Long> optionalCourseId = vcsAnalyticsLogRepository.findCourseIdByParticipationId(participation.getId());
+        if (optionalCourseId.isPresent()) {
+            Long courseId = optionalCourseId.get();
+            String maskedUserId = AnalyticsHashUtils.maskUserId(user.getId(), courseId);
+            Optional<VcsAnalyticsLog> vcsAnalyticsLog = vcsAnalyticsLogRepository.findLatestByMaskedUserId(maskedUserId);
+            if (vcsAnalyticsLog.isPresent()) {
+                vcsAnalyticsLog.get().setRepositoryActionType(repositoryActionType);
+                vcsAnalyticsLogRepository.save(vcsAnalyticsLog.get());
+            }
+        }
+    }
+
+    /**
+     * Saves an vcsAccessLog and vcsAnalyticsLog
      *
      * @param vcsAccessLog The vcsAccessLog to save
      */
     @Async
     public void saveVcsAccesslog(VcsAccessLog vcsAccessLog) {
         vcsAccessLogRepository.save(vcsAccessLog);
+        if (vcsAccessLog.getParticipation() != null && vcsAccessLog.getUser() != null) {
+            saveAnalyticsLog(vcsAccessLog.getUser(), vcsAccessLog.getParticipation().getId(), vcsAccessLog.getRepositoryActionType(), vcsAccessLog.getAuthenticationMechanism());
+        }
     }
 
     /**
