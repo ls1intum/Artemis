@@ -132,6 +132,14 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('tracks the fullscreen state on fullscreen change', () => {
+        component['onFullscreenChange'](true);
+        expect(component.isFullscreen()).toBe(true);
+
+        component['onFullscreenChange'](false);
+        expect(component.isFullscreen()).toBe(false);
+    });
+
     it('should get file name', () => {
         fixture.detectChanges();
         expect(component.getFileName()).toBe('test.pdf');

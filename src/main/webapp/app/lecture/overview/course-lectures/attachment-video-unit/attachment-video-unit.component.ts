@@ -14,6 +14,7 @@ import {
     untracked,
     viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -64,6 +65,7 @@ type SplitSizes = [number, number];
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
+        NgTemplateOutlet,
         LectureUnitComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -100,8 +102,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly lectureUnitCard = viewChild(LectureUnitComponent);
     readonly fullscreenLayout = viewChild(LectureUnitFullscreenLayoutComponent);
-    readonly videoContainerElement = viewChild<ElementRef>('videoContainer');
-    readonly pdfContainerElement = viewChild<ElementRef>('pdfContainer');
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
@@ -183,8 +183,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         sizes: this.horizontalSplitSizes(),
         minSizes: this.minHorizontalSplitSizes,
         defaultSizes: this.defaultHorizontalSplitSizes,
-        topElement: this.videoContainerElement(),
-        bottomElement: this.pdfContainerElement(),
     }));
 
     readonly fullscreenAriaLabel = computed(() => {
@@ -446,6 +444,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onFullscreenChange(isFullscreen: boolean): void {
         this.fullscreenState.set(isFullscreen);
+        // Note: the floating Iris chat widget was previously force-closed here via MatDialog.closeAll() when entering
+        // fullscreen. The widget has since migrated to PrimeNG's DynamicDialog, which has no globally reachable
+        // close-all from this injector (its DialogService is component-scoped to the chatbot button). The widget still
+        // auto-closes on navigation; if it visibly overlays the fullscreen view, reintroduce an explicit close via a
+        // shared Iris widget service rather than a Material dependency.
     }
 
     private shouldShowIrisSidebarInFullscreen(): boolean {

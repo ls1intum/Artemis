@@ -10,7 +10,6 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('FinishedBuildsFilterModalComponent', () => {
     setupTestBed({ zoneless: true });
@@ -58,7 +57,7 @@ describe('FinishedBuildsFilterModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, FinishedBuildsFilterModalComponent],
+            imports: [FinishedBuildsFilterModalComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(DynamicDialogRef), { provide: DynamicDialogConfig, useValue: { data: {} } }],
         }).compileComponents();
 
@@ -133,7 +132,7 @@ describe('FinishedBuildsFilterModalComponent', () => {
 
         TestBed.resetTestingModule();
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, FinishedBuildsFilterModalComponent],
+            imports: [FinishedBuildsFilterModalComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(DynamicDialogRef),

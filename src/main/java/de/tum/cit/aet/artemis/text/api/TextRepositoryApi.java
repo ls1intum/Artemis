@@ -35,6 +35,10 @@ public class TextRepositoryApi extends AbstractTextApi {
         return textExerciseRepository.findWithGradingCriteriaByIdElseThrow(exerciseId);
     }
 
+    public Optional<TextExercise> findForVersioningById(long exerciseId) {
+        return textExerciseRepository.findForVersioningById(exerciseId);
+    }
+
     public Optional<TextBlock> findById(String reference) {
         return textBlockRepository.findById(reference);
     }

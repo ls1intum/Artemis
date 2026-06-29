@@ -69,7 +69,6 @@ import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { HttpHeaders } from '@angular/common/http';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
@@ -148,7 +147,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), OwlNativeDateTimeModule],
+            imports: [TranslateModule.forRoot()],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),

@@ -382,33 +382,27 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
             reply = await communicationAPIRequests.createCourseMessageReply(courseRef, sourcePost, `Forward reply message ${uid}`);
         });
 
-        test('Forwarded post renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
+        test('Forwarded post renders its preview in the destination conversation', async ({ login, courseMessages }) => {
             await login(instructor);
             await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardMessageToChannel(sourcePost.id!, destinationChannel.name!);
 
-            // opening the destination triggers the source-post fetch that the access check guards; it must succeed for an accessible source
-            const sourcePostsResponse = page.waitForResponse((resp) => resp.url().includes('/messages-source-posts') && resp.request().method() === 'GET');
-            await courseMessages.openConversation(writeCourse.id, destinationChannel.id!);
-            expect((await sourcePostsResponse).status()).toBe(200);
-
-            await courseMessages.checkForwardedPreview(sourcePost.content!);
+            // Opening the destination triggers the access-checked source-post fetch; a visible preview proves it succeeded for an
+            // accessible source. Reload-retry to absorb the multi-node lag before the just-created forward is visible to the serving node.
+            await courseMessages.openConversationAndWaitForForwardedPreview(writeCourse.id, destinationChannel.id!, sourcePost.content!);
         });
 
-        test('Forwarded reply renders its preview in the destination conversation', async ({ login, courseMessages, page }) => {
+        test('Forwarded reply renders its preview in the destination conversation', async ({ login, courseMessages }) => {
             await login(instructor);
             await courseMessages.openConversationAndWaitForPost(writeCourse.id, sourceChannel.id!, sourcePost.id!);
             await courseMessages.checkMessage(sourcePost.id!, sourcePost.content!);
 
             await courseMessages.forwardReplyToChannel(sourcePost.id!, reply.id!, destinationChannel.name!);
 
-            const answerSourceResponse = page.waitForResponse((resp) => resp.url().includes('/answer-messages-source-posts') && resp.request().method() === 'GET');
-            await courseMessages.openConversation(writeCourse.id, destinationChannel.id!);
-            expect((await answerSourceResponse).status()).toBe(200);
-
-            await courseMessages.checkForwardedPreview(reply.content!);
+            // Same as the post case, but the access check guards the source-answer fetch; a visible preview proves it returned the reply.
+            await courseMessages.openConversationAndWaitForForwardedPreview(writeCourse.id, destinationChannel.id!, reply.content!);
         });
     });
 });
