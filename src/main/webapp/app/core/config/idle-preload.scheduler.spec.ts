@@ -108,6 +108,18 @@ describe('IdlePreloadScheduler', () => {
         expect(load).not.toHaveBeenCalled();
     });
 
+    it('skips a queued load if the connection turns to save-data before the idle tick', () => {
+        configure();
+        const load = vi.fn(() => of(undefined));
+        scheduler.enqueue(load, 1); // enqueued while the connection is unconstrained
+
+        // Connection degrades during the stability/idle wait — the load must not run.
+        Object.defineProperty(navigator, 'connection', { value: { saveData: true }, configurable: true });
+        reachFirstIdleBatch();
+
+        expect(load).not.toHaveBeenCalled();
+    });
+
     it('halves the concurrency cap on a 3g connection', () => {
         Object.defineProperty(navigator, 'connection', { value: { effectiveType: '3g' }, configurable: true });
         configure();

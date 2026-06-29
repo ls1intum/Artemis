@@ -120,6 +120,13 @@ export class IdlePreloadScheduler {
                 // children — pump() picks them up next.
                 this.pump();
             };
+            // The network gate is also checked at enqueue time, but a chunk is fetched much later — re-check
+            // here so a connection that switched to Save-Data / 2g during the stability or idle wait releases
+            // the slot instead of downloading.
+            if (this.isWarmingDisabled()) {
+                done();
+                return;
+            }
             try {
                 // Failures are non-critical: a chunk that fails to warm is simply fetched on demand later.
                 task.load().subscribe({ error: done, complete: done });
