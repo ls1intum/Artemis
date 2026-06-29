@@ -22,7 +22,7 @@ import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-grou
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
@@ -56,7 +56,7 @@ import { hasTestExamMode } from 'app/exam/shared/entities/exam.model';
         FormStatusBarComponent,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorComponent,
+        CategorySelectorPrimengComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,

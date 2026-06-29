@@ -11,49 +11,49 @@
 @if (shouldDisplayTimeZoneWarning()) {
     <jhi-time-zone-warning />
 }
-<div class="d-flex position-relative">
-    <input
-        #dateInput="ngModel"
-        class="form-control position-relative ps-5"
-        id="date-input-field"
-        [ngClass]="{ 'is-invalid': !isValid(), 'border-warning': warning() }"
-        [class.ng-invalid]="!isValid()"
-        [ngModel]="value()"
-        [disabled]="disabled()"
-        [min]="minDate()"
-        [max]="maxDate()"
+<div class="d-flex position-relative" [class.invalid-date-input]="showErrorBorder()">
+    <p-datepicker
+        #datePicker
+        inputId="date-input-field"
+        styleClass="w-100"
+        [inputStyleClass]="warning() ? 'border-warning' : ''"
+        panelStyleClass="jhi-date-time-picker-panel"
+        [ngModel]="value() ?? null"
+        [ngModelOptions]="{ standalone: true }"
         (ngModelChange)="updateField($event)"
-        [owlDateTime]="pickerType() === DateTimePickerType.CALENDAR ? dtCalendar : pickerType() === DateTimePickerType.TIMER ? dtTimer : dtDefault"
+        (onBlur)="onInputBlur($event)"
         name="datePicker"
-    />
-    @switch (pickerType()) {
-        @case (DateTimePickerType.TIMER) {
-            <ng-template *ngTemplateOutlet="owlTrigger; context: { $implicit: dtTimer, icon: faClock }" />
-        }
-        @case (DateTimePickerType.CALENDAR) {
-            <ng-template *ngTemplateOutlet="owlTrigger; context: { $implicit: dtCalendar, icon: faCalendarAlt }" />
-        }
-        @default {
-            <ng-template *ngTemplateOutlet="owlTrigger; context: { $implicit: dtDefault, icon: faCalendarAlt }" />
-        }
-    }
-
-    <ng-template #owlTrigger let-owlTrigger let-icon="icon">
-        <button [owlDateTimeTrigger]="owlTrigger" class="btn position-absolute" type="button">
-            <fa-icon [icon]="icon" />
-        </button>
-    </ng-template>
-    <div class="position-relative">
-        <button class="btn position-absolute" type="button" style="right: 0" (click)="clearDate()">
-            <fa-icon [icon]="faCircleXmark" />
-        </button>
-    </div>
-
-    <owl-date-time [startAt]="startDate()" #dtDefault />
-    <owl-date-time [pickerType]="'calendar'" #dtCalendar />
-    <owl-date-time [pickerType]="'timer'" #dtTimer />
+        [showTime]="showTime()"
+        [timeOnly]="timeOnly()"
+        hourFormat="24"
+        [dateFormat]="dateFormat()"
+        timeSeparator=":"
+        [placeholder]="placeholder()"
+        [firstDayOfWeek]="1"
+        keepInvalid="true"
+        showClear="true"
+        [showIcon]="true"
+        iconDisplay="input"
+        showOnFocus="false"
+        appendTo="body"
+        [baseZIndex]="baseZIndex()"
+        [minDate]="minDate()"
+        [maxDate]="maxDate()"
+        [defaultDate]="startDate()"
+        [disabled]="disabled()"
+        [showButtonBar]="showTime() || timeOnly()"
+        [invalid]="showErrorBorder()"
+    >
+        <!-- The picker leaves the panel open after a time selection (unlike the legacy picker). Provide an
+             explicit confirm button that also commits the currently shown time, so applying it is one click. -->
+        <ng-template #buttonbar>
+            <div class="d-flex justify-content-end w-100">
+                <button type="button" class="btn btn-primary btn-sm" (click)="applyAndClose(datePicker)" jhiTranslate="entity.action.done"></button>
+            </div>
+        </ng-template>
+    </p-datepicker>
 </div>
-@if (dateInput.invalid || (requiredField() && !dateInput.value)) {
+@if (!isInputValid() || (requiredField() && !dateInputValue())) {
     <div class="invalid-feedback" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName() }"></div>
 }
 @if (warning()) {

@@ -21,12 +21,12 @@
                 @if (exercisesProgress() !== undefined) {
                     <div class="d-flex gap-3 align-items-center justify-content-center">
                         <fa-icon [icon]="faList" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exercises' | artemisTranslate" />
-                        <ngb-progressbar
+                        <p-progressbar
                             class="w-100"
-                            type="success overflow-visible"
                             [value]="exercisesProgress()!"
-                            [max]="100"
-                            height="0.75rem"
+                            [showValue]="false"
+                            color="var(--bs-success, #28a745)"
+                            [style]="{ height: '0.75rem' }"
                             [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.exerciseProgress' | artemisTranslate: { progress: exercisesProgress() }"
                         />
                     </div>
@@ -34,12 +34,12 @@
                 @if (lectureUnitsProgress() !== undefined) {
                     <div class="d-flex gap-3 align-items-center justify-content-center">
                         <fa-icon [icon]="faFilePdf" [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectures' | artemisTranslate" />
-                        <ngb-progressbar
+                        <p-progressbar
                             class="w-100"
-                            type="success overflow-visible"
                             [value]="lectureUnitsProgress()!"
-                            [max]="100"
-                            height="0.75rem"
+                            [showValue]="false"
+                            color="var(--bs-success, #28a745)"
+                            [style]="{ height: '0.75rem' }"
                             [ngbTooltip]="'artemisApp.studentAnalyticsDashboard.competencyAccordion.lectureProgress' | artemisTranslate: { progress: lectureUnitsProgress() }"
                         />
                     </div>

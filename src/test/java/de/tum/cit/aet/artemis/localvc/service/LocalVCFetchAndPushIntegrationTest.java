@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -1537,6 +1538,128 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 var remoteUpdate = pushResult.getRemoteUpdates().iterator().next();
                 assertThat(remoteUpdate.getStatus()).as("Push with valid participation token should succeed").isEqualTo(RemoteRefUpdate.Status.OK);
             }
+        }
+    }
+
+    @Nested
+    class RepositoryTokenTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testCloneFetchPush_templateRepository_withRepositoryVcsAccessToken() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-template-repo-token");
+            String projectKey = exercise.getProjectKey();
+            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
+            String solutionRepoSlug = projectKey.toLowerCase() + "-solution";
+
+            // The instructor obtains a repository-scoped token for the template repository via the REST endpoint (the clone-dialog flow).
+            String tokenUrl = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
+            String token = request.putWithResponseBody(tokenUrl, null, String.class, HttpStatus.OK);
+            assertThat(token).startsWith("vcpat-").hasSize(50);
+            // Requesting the token again must return the very same token (idempotent), so a re-opened clone dialog keeps working.
+            assertThat(request.get(tokenUrl, HttpStatus.OK, String.class)).isEqualTo(token);
+
+            // Disable the LDAP/password fallback so authentication can ONLY succeed via the repository-scoped token, not via the account password.
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            // Cloning the template repository with the repository-scoped token succeeds, and so do fetch and push (an instructor may write).
+            String templateTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), token, projectKey, templateRepoSlug);
+            Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-template-token-clone-");
+            clonedRepoPaths.add(clonePath);
+            try (Git git = Git.cloneRepository().setURI(templateTokenUri).setDirectory(clonePath.toFile()).call()) {
+                assertThat(git).isNotNull();
+                assertThat(git.getRepository().getBranch()).isNotNull();
+
+                git.fetch().setRemote(templateTokenUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
+
+                commitFile(git, "template-token-file.txt");
+                var pushResults = git.push().setRemote(templateTokenUri).setRefSpecs(new RefSpec("HEAD:refs/heads/main")).call();
+                var remoteUpdate = pushResults.iterator().next().getRemoteUpdates().iterator().next();
+                assertThat(remoteUpdate.getStatus()).as("Push with a valid repository token should succeed for an instructor").isEqualTo(RemoteRefUpdate.Status.OK);
+            }
+
+            // Scope enforcement: a token issued for the template repository must NOT authenticate against a different repository (here the solution repository).
+            String solutionWithTemplateTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), token, projectKey, solutionRepoSlug);
+            Path solutionClonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-solution-wrong-token-clone-");
+            clonedRepoPaths.add(solutionClonePath);
+            assertThatThrownBy(() -> Git.cloneRepository().setURI(solutionWithTemplateTokenUri).setDirectory(solutionClonePath.toFile()).call())
+                    .isInstanceOf(TransportException.class).hasMessageContaining(NOT_AUTHORIZED);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testRepositoryVcsAccessToken_authenticatesButStillEnforcesAuthorization() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-tests-repo-token");
+            String projectKey = exercise.getProjectKey();
+            String testsRepoSlug = projectKey.toLowerCase() + "-tests";
+
+            // A tutor obtains a repository-scoped token for the tests repository via the REST endpoint (allowed for at least a tutor).
+            userUtilService.changeUser(TEST_PREFIX + "tutor1");
+            String tokenUrl = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TESTS";
+            String tutorToken = request.putWithResponseBody(tokenUrl, null, String.class, HttpStatus.OK);
+            assertThat(tutorToken).startsWith("vcpat-").hasSize(50);
+
+            // Disable the LDAP/password fallback so authentication can ONLY succeed via the repository-scoped token.
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            String tutorTokenUri = buildRepositoryUriWithToken(tutor1.getLogin(), tutorToken, projectKey, testsRepoSlug);
+            Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-tests-tutor-token-clone-");
+            clonedRepoPaths.add(clonePath);
+            try (Git git = Git.cloneRepository().setURI(tutorTokenUri).setDirectory(clonePath.toFile()).call()) {
+                // The token authenticates the tutor, and a tutor is allowed to READ the tests repository.
+                assertThat(git).isNotNull();
+                git.fetch().setRemote(tutorTokenUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
+
+                // ...but a tutor may NOT write: even though the token authenticated successfully, the authorization check rejects the push.
+                // This is the core security property: the token only authenticates, it never widens the user's permissions.
+                commitFile(git, "tutor-tests-file.txt");
+                assertThatThrownBy(() -> git.push().setRemote(tutorTokenUri).setRefSpecs(new RefSpec("HEAD:refs/heads/main")).call()).isInstanceOf(TransportException.class)
+                        .hasMessageContaining(FORBIDDEN);
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testRepositoryVcsAccessToken_forgedTokenIsRejected() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-forged-token");
+            String projectKey = exercise.getProjectKey();
+            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
+
+            // A syntactically valid but never-issued token (correct prefix and length) must not authenticate anyone.
+            String forgedToken = "vcpat-" + "x".repeat(44);
+
+            // Disable the LDAP/password fallback so a clone can only succeed via a genuine repository-scoped token.
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            String forgedTokenUri = buildRepositoryUriWithToken(instructor1.getLogin(), forgedToken, projectKey, templateRepoSlug);
+            Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-forged-token-clone-");
+            clonedRepoPaths.add(clonePath);
+            assertThatThrownBy(() -> Git.cloneRepository().setURI(forgedTokenUri).setDirectory(clonePath.toFile()).call()).isInstanceOf(TransportException.class)
+                    .hasMessageContaining(NOT_AUTHORIZED);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testRepositoryVcsAccessToken_isBoundToOwningUser() throws Exception {
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-token-owner-binding");
+            String projectKey = exercise.getProjectKey();
+            String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
+
+            // The instructor obtains their own repository-scoped token for the template repository.
+            String tokenUrl = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=TEMPLATE";
+            String instructorToken = request.putWithResponseBody(tokenUrl, null, String.class, HttpStatus.OK);
+            assertThat(instructorToken).startsWith("vcpat-").hasSize(50);
+
+            // Disable the LDAP/password fallback so authentication can only succeed via a genuine token owned by the requesting user.
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            // A DIFFERENT staff user (the editor) presenting the instructor's token must NOT be authenticated: the token is looked up by the
+            // requesting user's id, so it only ever authenticates its owner.
+            String stolenTokenUri = buildRepositoryUriWithToken(editor1.getLogin(), instructorToken, projectKey, templateRepoSlug);
+            Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-stolen-token-clone-");
+            clonedRepoPaths.add(clonePath);
+            assertThatThrownBy(() -> Git.cloneRepository().setURI(stolenTokenUri).setDirectory(clonePath.toFile()).call()).isInstanceOf(TransportException.class)
+                    .hasMessageContaining(NOT_AUTHORIZED);
         }
     }
 }
