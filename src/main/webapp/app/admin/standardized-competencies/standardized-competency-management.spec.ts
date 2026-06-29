@@ -4,20 +4,6 @@
  * including CRUD operations, tree navigation, and filtering.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-vi.mock('interactjs', () => {
-    const mockOn = vi.fn((eventName: string, callback: (event: any) => void) => {
-        return { on: mockOn };
-    });
-    const mockResizable = vi.fn(() => ({ on: mockOn }));
-    const mockInteract = Object.assign(
-        vi.fn(() => ({ resizable: mockResizable, unset: vi.fn() })),
-        {
-            modifiers: { restrictSize: vi.fn(() => ({})) },
-        },
-    );
-    return { default: mockInteract };
-});
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
@@ -520,6 +506,106 @@ describe('StandardizedCompetencyManagementComponent', () => {
         canDeactivate = component.canDeactivate();
         expect(canDeactivate).toBe(false);
     });
+
+    it('should add the new competency node to the rebuilt tree on create', () => {
+        const tree: KnowledgeAreaDTO[] = [{ id: 1, competencies: [{ id: 1, title: 'existing' }] }];
+        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+
+        const competencyToCreate: StandardizedCompetencyDTO = { title: 'created competency', knowledgeAreaId: 1 };
+        const createdCompetency: StandardizedCompetencyDTO = { id: 5, ...competencyToCreate };
+        component['selectedCompetency'].set(competencyToCreate);
+        const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
+        vi.spyOn(adminStandardizedCompetencyService, 'createStandardizedCompetency').mockReturnValue(of(new HttpResponse({ body: createdCompetency })));
+        componentFixture.detectChanges();
+
+        // expand so competency leaves end up in the rendered children of their knowledge area node
+        component['tree'].expandAll();
+        expect(findCompetencyNodeByKey('competency-5')).toBeUndefined();
+
+        const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditComponent)).componentInstance;
+        detailComponent.onSave.emit(competencyToCreate);
+
+        // refreshTree() rebuilt the tree: the new competency node is now present
+        const createdNode = findCompetencyNodeByKey('competency-5');
+        expect(createdNode).toBeDefined();
+        expect(createdNode!.data!.title).toBe('created competency');
+    });
+
+    it('should remove the competency node from the rebuilt tree on delete', () => {
+        const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
+        vi.spyOn(adminStandardizedCompetencyService, 'deleteStandardizedCompetency').mockReturnValue(of(new HttpResponse<void>()));
+        const competencyToDelete: StandardizedCompetencyDTO = { id: 1, title: 'to delete', knowledgeAreaId: 1 };
+        const tree: KnowledgeAreaDTO[] = [{ id: 1, competencies: [competencyToDelete, { id: 2, title: 'survivor' }] }];
+        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        component['selectedCompetency'].set(competencyToDelete);
+        componentFixture.detectChanges();
+
+        component['tree'].expandAll();
+        expect(findCompetencyNodeByKey('competency-1')).toBeDefined();
+
+        const detailComponent = componentFixture.debugElement.query(By.directive(StandardizedCompetencyEditComponent)).componentInstance;
+        detailComponent.onDelete.emit(competencyToDelete.id);
+
+        // refreshTree() rebuilt the tree: the deleted competency node is gone, the survivor remains
+        expect(findCompetencyNodeByKey('competency-1')).toBeUndefined();
+        expect(findCompetencyNodeByKey('competency-2')).toBeDefined();
+    });
+
+    it('should reflect a competency title change in the rebuilt tree on update', () => {
+        const competencyToUpdate = createCompetencyDTO(1, 'old title', 'description', CompetencyTaxonomy.ANALYZE, 1);
+        const updatedCompetency = createCompetencyDTO(1, 'brand new title', 'description', CompetencyTaxonomy.ANALYZE, 1);
+        const tree: KnowledgeAreaDTO[] = [{ id: 1, competencies: [competencyToUpdate, { id: 2 }] }];
+
+        prepareAndExecuteCompetencyUpdate(tree, competencyToUpdate, updatedCompetency);
+
+        component['tree'].expandAll();
+        const updatedNode = findCompetencyNodeByKey('competency-1');
+        expect(updatedNode).toBeDefined();
+        expect(updatedNode!.data!.title).toBe('brand new title');
+    });
+
+    it('should collapse and expand the tree via the toolbar buttons', () => {
+        const tree: KnowledgeAreaDTO[] = [{ id: 1, children: [{ id: 2, parentId: 1 }] }];
+        getForTreeViewSpy.mockReturnValue(of(new HttpResponse({ body: tree })));
+        componentFixture.detectChanges();
+
+        const collapseSpy = vi.spyOn(component['tree'], 'collapseAll');
+        const expandSpy = vi.spyOn(component['tree'], 'expandAll');
+
+        // [1] collapse-all and [2] expand-all are the two icon buttons in the toolbar header
+        const buttons = componentFixture.debugElement.queryAll(By.css('jhi-button'));
+        const collapseButton = buttons[1];
+        const expandButton = buttons[2];
+
+        expandButton.componentInstance.onClick.emit(new MouseEvent('click'));
+        expect(expandSpy).toHaveBeenCalledOnce();
+        // every knowledge-area node is expanded after expandAll
+        expect(component['treeNodes']()[0].expanded).toBe(true);
+        expect(component['treeNodes']()[0].children![0].expanded).toBe(true);
+
+        collapseButton.componentInstance.onClick.emit(new MouseEvent('click'));
+        expect(collapseSpy).toHaveBeenCalledOnce();
+        // every knowledge-area node is collapsed after collapseAll
+        expect(component['treeNodes']()[0].expanded).toBe(false);
+        expect(component['treeNodes']()[0].children![0].expanded).toBe(false);
+    });
+
+    /** Recursively searches the rebuilt tree nodes for a node with the given key. */
+    function findCompetencyNodeByKey(key: string) {
+        const search = (nodes: ReturnType<(typeof component)['treeNodes']> | undefined): { key?: string; data?: StandardizedCompetencyDTO } | undefined => {
+            for (const node of nodes ?? []) {
+                if (node.key === key) {
+                    return node;
+                }
+                const found = search(node.children);
+                if (found) {
+                    return found;
+                }
+            }
+            return undefined;
+        };
+        return search(component['treeNodes']());
+    }
 
     /**
      * Prepares test data and executes a competency update.

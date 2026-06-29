@@ -5,6 +5,7 @@ export type IframeMessageType =
     | 'pageChange'
     | 'pageRendered'
     | 'loadPDF'
+    | 'setPage'
     | 'themeChange'
     | 'languageChange'
     | 'viewerModeChange'
