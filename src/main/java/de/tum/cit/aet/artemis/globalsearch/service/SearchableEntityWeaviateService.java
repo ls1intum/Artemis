@@ -598,6 +598,11 @@ public class SearchableEntityWeaviateService {
      * Builds a comprehensive debug report for a single entity covering: raw stored properties,
      * Java-side filter simulation, and a live Weaviate query using the exact student release_date
      * filter. Intended for temporary admin debugging only — remove once investigation is complete.
+     *
+     * @param type     the entity type (e.g. "lecture_unit", "exercise")
+     * @param entityId the database ID of the entity
+     * @return a map containing uuid, collection name, stored properties, filter simulation, live filter
+     *         test result, indexNulls deduction, and upsert simulation (lecture_unit only)
      */
     public Map<String, Object> buildDebugReport(String type, Long entityId) {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
