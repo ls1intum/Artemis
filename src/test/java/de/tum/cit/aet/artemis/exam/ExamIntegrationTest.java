@@ -287,8 +287,39 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGenerateStudentExamsForSimulationExam() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
+        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
+        examRepository.save(exam);
+
+        generateStudentExams(exam);
+
+        verifyStudentsExamAndExercises(exam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateMissingStudentExams() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+
+        generateStudentExams(exam);
+
+        registerNewStudentsToExam(exam, 1);
+        generateMissingStudentExams(exam, 1);
+        verifyStudentsExamAndExercises(exam);
+
+        generateMissingStudentExams(exam, 0);
+        verifyStudentsExamAndExercises(exam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGenerateMissingStudentExamsForSimulationExam() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
+        examRepository.save(exam);
 
         generateStudentExams(exam);
 
