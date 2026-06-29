@@ -66,6 +66,11 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
                 : answerOptions.stream().filter(Objects::nonNull).map(AnswerOption::getId).filter(Objects::nonNull).collect(Collectors.toCollection(HashSet::new));
     }
 
+    /**
+     * Adds the answer option ID to the selected options. Null options and options without a stable ID are ignored.
+     *
+     * @param answerOption answer option whose ID should be selected
+     */
     public void addSelectedOptions(AnswerOption answerOption) {
         if (answerOption == null || answerOption.getId() == null) {
             return;
