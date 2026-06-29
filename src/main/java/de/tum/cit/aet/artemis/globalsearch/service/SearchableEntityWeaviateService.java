@@ -1,11 +1,16 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
@@ -28,6 +33,8 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
@@ -62,6 +69,9 @@ public class SearchableEntityWeaviateService {
     private final WeaviateService weaviateService;
 
     private final boolean useHybridSearch;
+
+    @Autowired(required = false)
+    private LectureUnitRepository lectureUnitRepository;
 
     public SearchableEntityWeaviateService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
@@ -585,13 +595,140 @@ public class SearchableEntityWeaviateService {
     }
 
     /**
-     * Returns the raw Weaviate property map stored for the given entity, or empty if not found.
-     * Intended for temporary admin debugging only.
+     * Builds a comprehensive debug report for a single entity covering: raw stored properties,
+     * Java-side filter simulation, and a live Weaviate query using the exact student release_date
+     * filter. Intended for temporary admin debugging only — remove once investigation is complete.
      */
-    public java.util.Optional<Map<String, Object>> getStoredProperties(String type, Long entityId) {
+    public Map<String, Object> buildDebugReport(String type, Long entityId) {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
         String uuid = WeaviateUuidUtil.deterministicUuid(type, entityId);
-        return collection.query.fetchObjectById(uuid).map(WeaviateObject::properties);
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+
+        Map<String, Object> report = new LinkedHashMap<>();
+        report.put("uuid", uuid);
+        report.put("collection", weaviateService.getSearchableEntitiesCollectionName());
+        report.put("filter_time", now.toString());
+
+        // 1 ── raw stored object ───────────────────────────────────────────────
+        var objOpt = collection.query.fetchObjectById(uuid);
+        report.put("found", objOpt.isPresent());
+        if (objOpt.isEmpty()) {
+            return report;
+        }
+
+        Map<String, Object> props = new LinkedHashMap<>(objOpt.get().properties());
+        WeaviateDateUtil.normalizeDateProperties(props);
+        report.put("stored_properties", props);
+
+        // 2 ── Java-side filter simulation ────────────────────────────────────
+        Object storedReleaseDate = props.get(SearchableEntitySchema.Properties.RELEASE_DATE);
+        Map<String, Object> filterSim = new LinkedHashMap<>();
+        filterSim.put("stored_release_date", storedReleaseDate);
+        filterSim.put("release_date_is_null_in_weaviate", storedReleaseDate == null);
+
+        boolean studentWouldPassJavaSide;
+        String verdict;
+        if (storedReleaseDate == null) {
+            studentWouldPassJavaSide = true;
+            verdict = "VISIBLE — null in Weaviate; passes IS NULL check. Fix: re-ingest this unit to write release_date.";
+        }
+        else {
+            try {
+                OffsetDateTime rd = OffsetDateTime.parse(storedReleaseDate.toString());
+                studentWouldPassJavaSide = !rd.isAfter(now);
+                verdict = studentWouldPassJavaSide ? "VISIBLE — release_date " + rd + " is in the past (lte now)"
+                        : "HIDDEN — release_date " + rd + " is in the future (gt now); filter correctly blocks";
+            }
+            catch (Exception e) {
+                studentWouldPassJavaSide = false;
+                verdict = "UNKNOWN — cannot parse stored value '" + storedReleaseDate + "': " + e.getMessage();
+            }
+        }
+        filterSim.put("student_would_see_java_sim", studentWouldPassJavaSide);
+        filterSim.put("verdict", verdict);
+        filterSim.put("filter_logic", "student sees: release_date <= now  OR  release_date IS NULL");
+        report.put("filter_analysis", filterSim);
+
+        // 3 ── live Weaviate filter test ───────────────────────────────────────
+        Object courseIdRaw = props.get(SearchableEntitySchema.Properties.COURSE_ID);
+        if (courseIdRaw instanceof Number courseIdNum) {
+            Map<String, Object> liveTest = new LinkedHashMap<>();
+            try {
+                Filter releaseFilter = Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now),
+                        Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull());
+                Filter studentFilter = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type),
+                        Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).eq(entityId.longValue()),
+                        Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseIdNum.longValue()), releaseFilter);
+                var liveResult = collection.query.fetchObjects(b -> b.filters(studentFilter).limit(1));
+                boolean passes = !liveResult.objects().isEmpty();
+                liveTest.put("passes_student_release_filter", passes);
+                liveTest.put("verdict", passes ? "Entity IS returned by Weaviate with student release_date filter — visible to students"
+                        : "Entity NOT returned by Weaviate with student release_date filter — correctly hidden");
+            }
+            catch (Exception e) {
+                liveTest.put("error", e.getMessage());
+                liveTest.put("error_class", e.getClass().getSimpleName());
+            }
+            report.put("live_filter_test", liveTest);
+        }
+
+        // 4 ── indexNulls deduction ──────────────────────────────────────────────
+        // indexNulls controls whether IS NULL filters match rows that never had a value written.
+        // We can deduce whether it is working from stored value + live filter result.
+        Map<String, Object> indexNullsCheck = new LinkedHashMap<>();
+        indexNullsCheck.put("what_it_controls", "whether Filter.isNull() can match rows where the property was never written");
+        if (storedReleaseDate == null) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> liveTestResult = (Map<String, Object>) report.get("live_filter_test");
+            Object passesRaw = liveTestResult != null ? liveTestResult.get("passes_student_release_filter") : null;
+            if (Boolean.TRUE.equals(passesRaw)) {
+                indexNullsCheck.put("indexNulls_effective", true);
+                indexNullsCheck.put("verdict", "Working — IS NULL matched this null-release_date row. indexNulls is ON on the live collection.");
+            }
+            else if (Boolean.FALSE.equals(passesRaw)) {
+                indexNullsCheck.put("indexNulls_effective", false);
+                indexNullsCheck.put("verdict", "BROKEN — IS NULL did NOT match null row. indexNulls is likely OFF. Drop and recreate the collection.");
+            }
+            else {
+                indexNullsCheck.put("verdict", "Could not determine — live filter test did not run (no course_id in stored properties)");
+            }
+        }
+        else {
+            indexNullsCheck.put("indexNulls_effective", "N/A");
+            indexNullsCheck.put("verdict", "Not applicable — release_date is stored (not null), IS NULL path not triggered for this entity");
+        }
+        report.put("index_nulls_check", indexNullsCheck);
+
+        // 5 ── upsert simulation (lecture_unit only) ───────────────────────────
+        // Shows what release_date the DB currently holds and whether re-ingesting would fix Weaviate.
+        if (SearchableEntitySchema.TypeValues.LECTURE_UNIT.equals(type) && lectureUnitRepository != null) {
+            Map<String, Object> upsertSim = new LinkedHashMap<>();
+            try {
+                java.util.Optional<LectureUnit> unitOpt = lectureUnitRepository.findById(entityId.longValue());
+                if (unitOpt.isPresent()) {
+                    ZonedDateTime dbReleaseDate = unitOpt.get().getReleaseDate();
+                    String dbReleaseDateStr = dbReleaseDate != null ? WeaviateDateUtil.format(dbReleaseDate) : null;
+                    upsertSim.put("db_release_date", dbReleaseDateStr);
+                    upsertSim.put("release_date_key_included_in_property_map", dbReleaseDate != null);
+                    if (dbReleaseDate != null) {
+                        upsertSim.put("verdict", "Re-indexing WOULD fix Weaviate — DB has release_date=" + dbReleaseDateStr + ". Trigger re-ingestion in Artemis admin.");
+                    }
+                    else {
+                        upsertSim.put("verdict", "Re-indexing would NOT fix it — DB also has null release_date. Set the release date in Artemis first, then re-ingest.");
+                    }
+                }
+                else {
+                    upsertSim.put("error", "LectureUnit not found in DB for id=" + entityId);
+                }
+            }
+            catch (Exception e) {
+                upsertSim.put("error", e.getMessage());
+                upsertSim.put("error_class", e.getClass().getSimpleName());
+            }
+            report.put("upsert_simulation", upsertSim);
+        }
+
+        return report;
     }
 
     private void deleteEntityInternal(String type, long entityId) {
