@@ -90,7 +90,7 @@ public class OrchestratorToolsService {
      * many writes regardless of what the prompt says. {@link AppliedActionsBuffer#actions size}
      * counts all five write tool types.
      */
-    private static final int MAX_WRITE_CALLS = 8;
+    private static final int MAX_WRITE_CALLS = 16;
 
     /**
      * Allowed weight bands for {@link #assignExerciseToCompetency}. The system prompt forbids any
