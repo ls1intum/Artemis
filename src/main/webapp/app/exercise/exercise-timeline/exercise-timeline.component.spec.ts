@@ -165,7 +165,7 @@ describe('ExerciseTimeline', () => {
         // flagged invalid so the user is notified and saving is blocked (PR #13009 review).
         expect(input.value).toBe('0.06.2026 16:23');
         expect(item.date()).toBe(initialDate);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
         expect(component.timelineStatus().valid).toBe(false);
     });
 
@@ -179,7 +179,7 @@ describe('ExerciseTimeline', () => {
 
         expect(input.value).toBe('00.06.2026 16:23');
         expect(item.date()).toBe(initialDate);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
     });
 
     it('should flag invalid manual input on blur even without a current date value', () => {
@@ -191,7 +191,7 @@ describe('ExerciseTimeline', () => {
 
         expect(input.value).toBe('0.06.2026 16:23');
         expect(item.date()).toBeUndefined();
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
     });
 
     it('should clear the invalid flag and set the date when a valid date is entered after an invalid one', () => {
@@ -199,11 +199,11 @@ describe('ExerciseTimeline', () => {
         fixture.componentRef.setInput('timelineItems', [item]);
 
         component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
 
         component.handleManualInput(item, { target: { value: '02.01.2026 12:30' } } as unknown as Event);
 
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
+        expect(component.internalTimelineItems()[0].violationKey).toBeUndefined();
         expect(item.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBe(true);
     });
 
@@ -212,11 +212,11 @@ describe('ExerciseTimeline', () => {
         fixture.componentRef.setInput('timelineItems', [item]);
 
         component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
 
         component.handleManualInput(item, { target: { value: '' } } as unknown as Event);
 
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
+        expect(component.internalTimelineItems()[0].violationKey).toBeUndefined();
         expect(item.date()).toBeUndefined();
     });
 
