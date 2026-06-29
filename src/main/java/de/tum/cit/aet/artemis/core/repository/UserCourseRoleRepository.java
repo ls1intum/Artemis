@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -13,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -24,6 +26,17 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
 
     @Query("SELECT ucr FROM UserCourseRole ucr JOIN FETCH ucr.user WHERE ucr.course.id = :courseId AND ucr.role = :role")
     List<UserCourseRole> findByCourse_IdAndRole(@Param("courseId") Long courseId, @Param("role") CourseRole role);
+
+    /**
+     * Returns the (non-deleted) users holding the given role in the given course. Selects the {@link User} directly so
+     * callers do not pay the hydration cost of the intermediate {@link UserCourseRole} wrapper entities.
+     *
+     * @param courseId the id of the course
+     * @param role     the role to filter by
+     * @return the set of non-deleted users with that role in the course
+     */
+    @Query("SELECT ucr.user FROM UserCourseRole ucr WHERE ucr.course.id = :courseId AND ucr.role = :role AND ucr.user.deleted = FALSE")
+    Set<User> findUsersByCourse_IdAndRole(@Param("courseId") Long courseId, @Param("role") CourseRole role);
 
     @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role = :role)")
     boolean existsByUser_IdAndCourse_IdAndRole(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("role") CourseRole role);

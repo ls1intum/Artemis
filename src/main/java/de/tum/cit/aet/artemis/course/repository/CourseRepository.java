@@ -61,6 +61,25 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
+    /**
+     * Returns the active courses in which the given user holds any role. For an active course (already started, not yet
+     * finished) holding any role is exactly the visibility condition evaluated by
+     * {@code CourseVisibleService.isCourseVisibleForUser} for a non-admin, so this lets the dashboard/dropdown load only
+     * the user's own courses via an indexed join instead of loading all active courses and filtering them in memory.
+     *
+     * @param userId the id of the user
+     * @param now    the current time used to determine whether a course is active
+     * @return the list of active courses the (non-admin) user can see
+     */
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+                JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+            """)
+    List<Course> findAllActiveWhereUserHasAnyRole(@Param("userId") long userId, @Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT DISTINCT c
             FROM Course c

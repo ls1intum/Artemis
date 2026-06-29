@@ -5,9 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -46,6 +49,7 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -370,6 +374,30 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setCourseRoles(Set<UserCourseRole> courseRoles) {
         this.courseRoles = courseRoles;
+        this.courseRolesByCourseIdTransient = null;
+    }
+
+    @Transient
+    @JsonIgnore
+    private transient Map<Long, EnumSet<CourseRole>> courseRolesByCourseIdTransient = null;
+
+    /**
+     * In-memory index of this user's course roles grouped by course id, built lazily from {@link #courseRoles} and
+     * cached for the lifetime of this (request-scoped) entity instance. Enables O(1) membership lookups on hot paths
+     * that check many courses (e.g. the course dashboard), instead of scanning the whole collection per check.
+     *
+     * @return a map from course id to the set of roles the user holds in that course (empty if no roles loaded)
+     */
+    @JsonIgnore
+    public Map<Long, EnumSet<CourseRole>> getCourseRolesByCourseId() {
+        if (courseRolesByCourseIdTransient == null) {
+            Map<Long, EnumSet<CourseRole>> map = new HashMap<>();
+            for (UserCourseRole courseRole : courseRoles) {
+                map.computeIfAbsent(courseRole.getCourse().getId(), key -> EnumSet.noneOf(CourseRole.class)).add(courseRole.getRole());
+            }
+            courseRolesByCourseIdTransient = map;
+        }
+        return courseRolesByCourseIdTransient;
     }
 
     public boolean isLtiCreated() {

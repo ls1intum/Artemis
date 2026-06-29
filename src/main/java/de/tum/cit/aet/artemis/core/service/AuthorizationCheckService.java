@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -59,11 +60,21 @@ public class AuthorizationCheckService {
     // initialized). This mirrors the previous group-based check and keeps a single role load per request instead of one
     // DB EXISTS per (user, course, role) check — which is an N+1 on any path that checks many courses (e.g. the dashboard).
     private boolean hasCourseRole(User user, Course course, CourseRole role) {
-        return user.getCourseRoles().stream().anyMatch(ucr -> course.getId().equals(ucr.getCourse().getId()) && ucr.getRole() == role);
+        EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
+        return roles != null && roles.contains(role);
     }
 
     private boolean hasCourseRoleAtLeast(User user, Course course, CourseRole minimum) {
-        return user.getCourseRoles().stream().anyMatch(ucr -> course.getId().equals(ucr.getCourse().getId()) && ucr.getRole().isAtLeast(minimum));
+        EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
+        if (roles == null) {
+            return false;
+        }
+        for (CourseRole role : roles) {
+            if (role.isAtLeast(minimum)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

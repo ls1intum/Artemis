@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -159,8 +158,7 @@ public class CourseAccessService {
      */
     @NonNull
     public ResponseEntity<Set<User>> getUsersWithRole(Course course, CourseRole role) {
-        var courseRoles = userCourseRoleRepository.findByCourse_IdAndRole(course.getId(), role);
-        Set<User> usersInGroup = courseRoles.stream().map(UserCourseRole::getUser).collect(Collectors.toSet());
+        Set<User> usersInGroup = userCourseRoleRepository.findUsersByCourse_IdAndRole(course.getId(), role);
         usersInGroup.forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
         removeUserVariables(usersInGroup);
         return ResponseEntity.ok().body(usersInGroup);

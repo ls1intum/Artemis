@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -216,7 +217,14 @@ public class CourseService {
      * @return an unmodifiable set of all courses for the user
      */
     public Set<Course> findAllActiveForUser(User user) {
-        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
+        ZonedDateTime now = ZonedDateTime.now();
+        // Admins see every active course; for them we still load all active courses and filter in memory.
+        if (authCheckService.isAdmin(user)) {
+            return courseRepository.findAllActive(now).stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
+        }
+        // Non-admins only see courses they are a member of: push that filter into the query (indexed join) so we load
+        // only the user's own courses instead of all active courses + an in-memory visibility check per course.
+        return new HashSet<>(courseRepository.findAllActiveWhereUserHasAnyRole(user.getId(), now));
     }
 
     /**
@@ -228,8 +236,10 @@ public class CourseService {
     public Set<Course> findAllActiveWithExercisesForUser(User user) {
         long start = System.nanoTime();
 
-        var userVisibleCourses = courseRepository.findAllActive().stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+        // Admins see every active course (in-memory filter); non-admins only their own courses (pushed into the query).
+        var userVisibleCourses = (authCheckService.isAdmin(user)
+                ? courseRepository.findAllActive().stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course))
+                : courseRepository.findAllActiveWhereUserHasAnyRole(user.getId(), ZonedDateTime.now()).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {
             log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
