@@ -2,7 +2,7 @@
   <configuration default="false" name="PostgreSQL" type="docker-deploy" factoryName="docker-compose.yml" server-name="Docker">
     <deployment type="docker-compose.yml">
       <settings>
-        <option name="envFilePath" value="" />
+        <option name="envFilePath" value="$PROJECT_DIR$/.env" />
         <option name="sourceFilePath" value="docker/postgres.yml" />
       </settings>
     </deployment>
