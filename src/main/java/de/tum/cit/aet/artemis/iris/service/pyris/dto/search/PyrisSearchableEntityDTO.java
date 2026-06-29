@@ -45,7 +45,32 @@ public record PyrisSearchableEntityDTO(@JsonProperty("sourceType") String source
         }
         String description = getString(props, SearchableEntitySchema.Properties.DESCRIPTION);
         String exerciseType = SearchableEntitySchema.TypeValues.EXERCISE.equals(type) ? getString(props, SearchableEntitySchema.Properties.EXERCISE_TYPE) : null;
-        return new PyrisSearchableEntityDTO(type, entityId, new CourseRef(courseId, ""), title, description, exerciseType);
+        String snippet = description != null ? description : fallbackDescription(type, title, exerciseType);
+        return new PyrisSearchableEntityDTO(type, entityId, new CourseRef(courseId, ""), title, snippet, exerciseType);
+    }
+
+    /**
+     * Returns a minimal factual description for entities with no description in Weaviate,
+     * so the LLM can identify the entity type without inferring it from the entity name.
+     * Add a case here when adding a new entity type to the Iris pipeline.
+     */
+    @Nullable
+    private static String fallbackDescription(String type, String title, @Nullable String exerciseType) {
+        return switch (type) {
+            case SearchableEntitySchema.TypeValues.CHANNEL -> {
+                if (title.startsWith("exercise-"))
+                    yield "A communication channel for asking questions and discussing an exercise.";
+                if (title.startsWith("exam-"))
+                    yield "A communication channel for asking questions and discussing an exam.";
+                if (title.startsWith("lecture-"))
+                    yield "A communication channel for asking questions and discussing a lecture.";
+                yield "A communication channel where students can ask questions and discuss.";
+            }
+            case SearchableEntitySchema.TypeValues.EXERCISE -> exerciseType != null ? "A " + exerciseType.toLowerCase() + " exercise: " + title : "An exercise: " + title;
+            case SearchableEntitySchema.TypeValues.EXAM -> "An exam: " + title;
+            case SearchableEntitySchema.TypeValues.FAQ -> "A frequently asked question: " + title;
+            default -> null;
+        };
     }
 
     private static @Nullable String getString(Map<String, Object> props, String key) {
