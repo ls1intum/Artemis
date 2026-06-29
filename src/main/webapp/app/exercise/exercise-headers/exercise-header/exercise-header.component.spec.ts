@@ -29,15 +29,21 @@ import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-d
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import dayjs from 'dayjs/esm';
+import { AccountService } from 'app/core/auth/account.service';
+import { WritableSignal, signal } from '@angular/core';
+import { User } from 'app/account/user/user.model';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('ExerciseHeaderComponent', () => {
     setupTestBed({ zoneless: true });
 
     let fixture: ComponentFixture<ExerciseHeaderComponent>;
+    let userIdentity: WritableSignal<User | undefined>;
 
     const submitCallback = vi.fn();
 
     beforeEach(() => {
+        userIdentity = signal({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
         TestBed.configureTestingModule({
             imports: [ExerciseHeaderComponent],
             providers: [
@@ -46,8 +52,12 @@ describe('ExerciseHeaderComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(AlertService),
                 MockProvider(CourseExerciseService),
-                MockProvider(ParticipationService),
-                MockProvider(ProfileService),
+                MockProvider(ParticipationService, {
+                    getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
+                        participations.find((participation) => !!participation.testRun === testRun),
+                }),
+                MockProvider(ProfileService, { isModuleFeatureActive: () => true }),
+                MockProvider(AccountService, { userIdentity }),
             ],
         });
 
@@ -105,6 +115,44 @@ describe('ExerciseHeaderComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.css('#submit-exercise'))).not.toBeNull();
+    });
+
+    describe('programming exercise AI feedback button', () => {
+        function configureProgrammingExercise(allowOnlineEditor?: boolean): void {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 1;
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.allowFeedbackRequests = true;
+            exercise.allowOnlineEditor = allowOnlineEditor;
+
+            const participation = new StudentParticipation();
+            participation.submissions = [{ submitted: true }];
+            exercise.studentParticipations = [participation];
+
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('courseId', 5);
+            fixture.componentRef.setInput('studentParticipation', participation);
+            fixture.detectChanges();
+        }
+
+        it('should show the feedback button when the online editor is explicitly disabled', () => {
+            configureProgrammingExercise(false);
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).not.toBeNull();
+        });
+
+        it.each([true, undefined])('should hide the feedback button when allowOnlineEditor is %s', (allowOnlineEditor) => {
+            configureProgrammingExercise(allowOnlineEditor);
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
+        });
+
+        it('should hide the feedback button when the user has disabled AI', () => {
+            userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
+            configureProgrammingExercise(false);
+
+            expect(fixture.debugElement.query(By.css('jhi-request-feedback-button'))).toBeNull();
+        });
     });
 
     it('should show the sidebar collapse button before the exercise heading when enabled and collapsed', () => {
