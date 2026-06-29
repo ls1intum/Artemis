@@ -42,7 +42,6 @@ describe('FileUploadExerciseService', () => {
                     provide: ExerciseService,
                     useValue: {
                         processExerciseEntityResponse: vi.fn((res) => res),
-                        processExerciseEntityArrayResponse: vi.fn((res) => res),
                         convertExerciseCategoriesAsStringFromServer: vi.fn((cats) => cats),
                     },
                 },
@@ -68,6 +67,8 @@ describe('FileUploadExerciseService', () => {
             });
 
             const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
+            expect(req.request.body.courseId).toBe(123);
+            expect(req.request.body.course).toBeUndefined();
             req.flush(expectedExercise);
 
             const response = await resultPromise;
@@ -167,33 +168,6 @@ describe('FileUploadExerciseService', () => {
             req.flush(exercise);
 
             expect(exerciseService.processExerciseEntityResponse).toHaveBeenCalled();
-        });
-    });
-
-    describe('query', () => {
-        it('should query all exercises', async () => {
-            const exercises = [createExercise(1), createExercise(2)];
-
-            const resultPromise = new Promise<HttpResponse<FileUploadExercise[]>>((resolve) => {
-                service.query().subscribe((resp) => resolve(resp));
-            });
-
-            const req = httpMock.expectOne({ method: 'GET', url: resourceUrl });
-            req.flush(exercises);
-
-            const response = await resultPromise;
-            expect(response.body?.length).toBe(2);
-        });
-
-        it('should pass request options to query', async () => {
-            const options = { page: 1, size: 10 };
-
-            service.query(options).subscribe();
-
-            const req = httpMock.expectOne((r) => r.url === resourceUrl);
-            expect(req.request.params.get('page')).toBe('1');
-            expect(req.request.params.get('size')).toBe('10');
-            req.flush([]);
         });
     });
 
