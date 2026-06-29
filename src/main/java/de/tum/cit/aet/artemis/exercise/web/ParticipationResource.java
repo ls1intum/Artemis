@@ -46,8 +46,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -59,7 +59,6 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -141,7 +140,7 @@ public class ParticipationResource {
     @PostMapping("exercises/{exerciseId}/participations")
     @EnforceAtLeastStudentInExercise
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
+    public ResponseEntity<StudentParticipationDTO> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -175,7 +174,7 @@ public class ParticipationResource {
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
-        return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(participation);
+        return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation));
     }
 
     /**
@@ -189,7 +188,7 @@ public class ParticipationResource {
     @PostMapping("exercises/{exerciseId}/participations/practice")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId,
+    public ResponseEntity<StudentParticipationDTO> startPracticeParticipation(@PathVariable Long exerciseId,
             @RequestParam(value = "useGradedParticipation", defaultValue = "false") boolean useGradedParticipation) throws URISyntaxException {
         log.debug("REST request to practice Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -226,7 +225,7 @@ public class ParticipationResource {
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
-        return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
+        return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation));
     }
 
     /**
@@ -240,7 +239,7 @@ public class ParticipationResource {
             "exercises/{exerciseId}/resume-programming-participation/{participationId}" })
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipationDTO> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseStudentParticipationRepository.findWithTeamStudentsByIdElseThrow(participationId);
@@ -270,7 +269,7 @@ public class ParticipationResource {
 
         participation = participationService.resumeProgrammingExercise(participation);
         participation.getExercise().filterSensitiveInformation();
-        return ResponseEntity.ok().body(participation);
+        return ResponseEntity.ok().body(StudentParticipationDTO.ofAfterResume(participation));
     }
 
     /**
@@ -282,7 +281,7 @@ public class ParticipationResource {
      */
     @PutMapping("exercises/{exerciseId}/participations/{participationId}/request-feedback")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {
+    public ResponseEntity<StudentParticipationDTO> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {
         log.debug("REST request to request feedback for exercise {} and participation {}", exerciseId, participationId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -340,7 +339,7 @@ public class ParticipationResource {
         }
 
         StudentParticipation updatedParticipation = feedbackRequestService.processFeedbackRequest(exercise, participation);
-        return ResponseEntity.ok().body(updatedParticipation);
+        return ResponseEntity.ok().body(StudentParticipationDTO.ofWithLatestResult(updatedParticipation));
     }
 
     /**
