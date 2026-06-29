@@ -40,6 +40,10 @@ import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 
+interface SaveSettingsOptions {
+    keepPersistedRateLimit?: boolean;
+}
+
 /**
  * Component for editing Iris course-level settings.
  * Extracts the courseId from the route and provides the settings form.
@@ -346,7 +350,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     /**
      * Save the current settings to the server
      */
-    saveSettings(): void {
+    saveSettings(options: SaveSettingsOptions = {}): void {
         const currentSettings = this.settings();
         if (!this.courseId || !currentSettings) {
             return;
@@ -366,8 +370,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 settingsToSave.rateLimit = originalSettingsValue.rateLimit;
             }
         } else {
-            // Admin: reconstruct rateLimit from form fields
-            settingsToSave.rateLimit = this.buildRateLimitForSave();
+            // Admin: reconstruct rateLimit from form fields unless a caller only saves
+            // General-tab changes while the admin rate-limit draft is invalid.
+            settingsToSave.rateLimit = options.keepPersistedRateLimit ? originalSettingsValue?.rateLimit : this.buildRateLimitForSave();
         }
 
         this.isSaving.set(true);
@@ -518,7 +523,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             return;
         }
         this.settings.set(Object.assign({}, currentSettings, { supportLevel: defaults.supportLevel, customInstructions: defaults.customInstructions }));
-        this.saveSettings();
+        this.saveSettings({ keepPersistedRateLimit: this.isAdmin() && !this.isFormValid() });
     }
 
     /**

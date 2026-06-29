@@ -564,6 +564,21 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(saved.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
         });
 
+        it('should keep the persisted rateLimit when resetting with an invalid admin rate-limit draft', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            component.rateLimitRequests.set(200);
+            component.rateLimitTimeframeHours.set(undefined);
+            expect(component.isFormValid()).toBe(false);
+
+            component.resetToDefault();
+
+            const saved = updateSpy.mock.calls[0][1];
+            expect(saved.supportLevel).toBe('moderate');
+            expect(saved.customInstructions).toBeUndefined();
+            expect(saved.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
+        });
+
         it('should not throw or persist when settings are undefined', async () => {
             await initComponent();
             const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
