@@ -584,6 +584,16 @@ public class SearchableEntityWeaviateService {
         }
     }
 
+    /**
+     * Returns the raw Weaviate property map stored for the given entity, or empty if not found.
+     * Intended for temporary admin debugging only.
+     */
+    public java.util.Optional<Map<String, Object>> getStoredProperties(String type, Long entityId) {
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        String uuid = WeaviateUuidUtil.deterministicUuid(type, entityId);
+        return collection.query.fetchObjectById(uuid).map(WeaviateObject::properties);
+    }
+
     private void deleteEntityInternal(String type, long entityId) {
         var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
         collection.data.deleteMany(
