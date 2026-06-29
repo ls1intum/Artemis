@@ -40,7 +40,6 @@ import { ProgrammingLanguage } from 'app/programming/shared/entities/programming
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileService } from 'app/foundation/service/file.service';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 describe('Course Management Update Component', () => {
     setupTestBed({ zoneless: true });
@@ -97,7 +96,7 @@ describe('Course Management Update Component', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
@@ -1350,7 +1349,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -1459,7 +1458,7 @@ describe('Course Management Update Component Create', () => {
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
         await TestBed.configureTestingModule({
-            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            imports: [CourseUpdateComponent, ReactiveFormsModule, FormsModule, ImageCropperComponent, NgbTooltipModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

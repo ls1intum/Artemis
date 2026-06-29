@@ -49,7 +49,6 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -409,18 +408,10 @@ public class ProgrammingExerciseUpdateResource {
             buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
         }
         // Note: branch is preserved from original (immutable during update)
-        if (dto.buildPlanConfiguration() != null && BuildPlanPhasesDTO.isInPhasesFormatOrNull(dto.buildPlanConfiguration())) {
+        if (dto.buildPlanConfiguration() != null) {
             buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-            buildConfig.setBuildScript(null);
         }
-        else {
-            if (dto.buildPlanConfiguration() != null) {
-                buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-            }
-            if (dto.buildScript() != null) {
-                buildConfig.setBuildScript(dto.buildScript());
-            }
-        }
+        buildConfig.setBuildScript(null);
         buildConfig.setCheckoutSolutionRepository(dto.checkoutSolutionRepository());
         buildConfig.setTestCheckoutPath(dto.testCheckoutPath());
         buildConfig.setAssignmentCheckoutPath(dto.assignmentCheckoutPath());

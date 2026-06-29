@@ -7,7 +7,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -39,7 +38,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     beforeEach(() => {
         activatedRouteUrlSubject = new BehaviorSubject<UrlSegment[]>([{ path: 'programming-exercises' }] as UrlSegment[]);
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule, ProgrammingExerciseUpdateTimelineComponent],
+            imports: [ProgrammingExerciseUpdateTimelineComponent],
             providers: [
                 {
                     provide: ActivatedRoute,
