@@ -63,6 +63,19 @@ describe('RoleAwarePreloadingStrategy', () => {
         emitted(route({ usesModuleBackground: true }));
         expect(enqueue).toHaveBeenCalledExactlyOnceWith(load, 1);
     });
+
+    it('enqueues a given route only once across repeated preload passes (re-walk dedupe)', () => {
+        const r = route({ authorities: IS_AT_LEAST_STUDENT });
+        emitted(r);
+        emitted(r);
+        expect(enqueue).toHaveBeenCalledExactlyOnceWith(load, 1);
+    });
+
+    it('treats a non-array authorities value as no restriction (defensive)', () => {
+        emitted(route({ authorities: 'ROLE_ADMIN' }));
+        expect(accountStub.hasAnyAuthorityDirect).not.toHaveBeenCalled();
+        expect(enqueue).toHaveBeenCalledExactlyOnceWith(load, 1);
+    });
 });
 
 describe('preloadTierForRoute', () => {
