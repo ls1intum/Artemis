@@ -84,12 +84,10 @@ public class CourseService {
 
     private final FaqRepository faqRepository;
 
-    private final CourseVisibleService courseVisibleService;
-
     public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
             Optional<CompetencyApi> competencyApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository, CourseVisibleService courseVisibleService) {
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository) {
         this.lectureApi = lectureApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -103,7 +101,6 @@ public class CourseService {
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.prerequisitesApi = prerequisitesApi;
         this.faqRepository = faqRepository;
-        this.courseVisibleService = courseVisibleService;
     }
 
     /**
@@ -218,9 +215,9 @@ public class CourseService {
      */
     public Set<Course> findAllActiveForUser(User user) {
         ZonedDateTime now = ZonedDateTime.now();
-        // Admins see every active course; for them we still load all active courses and filter in memory.
+        // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
         if (authCheckService.isAdmin(user)) {
-            return courseRepository.findAllActive(now).stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
+            return new HashSet<>(courseRepository.findAllActive(now));
         }
         // Non-admins only see courses they are a member of: push that filter into the query (indexed join) so we load
         // only the user's own courses instead of all active courses + an in-memory visibility check per course.
@@ -236,9 +233,8 @@ public class CourseService {
     public Set<Course> findAllActiveWithExercisesForUser(User user) {
         long start = System.nanoTime();
 
-        // Admins see every active course (in-memory filter); non-admins only their own courses (pushed into the query).
-        var userVisibleCourses = (authCheckService.isAdmin(user)
-                ? courseRepository.findAllActive().stream().filter(course -> courseVisibleService.isCourseVisibleForUser(user, course))
+        // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
+        var userVisibleCourses = (authCheckService.isAdmin(user) ? courseRepository.findAllActive().stream()
                 : courseRepository.findAllActiveWhereUserHasAnyRole(user.getId(), ZonedDateTime.now()).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {

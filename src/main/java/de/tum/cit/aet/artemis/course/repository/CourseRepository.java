@@ -80,6 +80,25 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     List<Course> findAllActiveWhereUserHasAnyRole(@Param("userId") long userId, @Param("now") ZonedDateTime now);
 
+    /**
+     * Returns the active courses with learning paths enabled in which the given user holds any role. Equivalent to
+     * {@link #findAllActiveWhereUserHasAnyRole} with the additional {@code learningPathsEnabled} filter, so callers
+     * that need learning-path courses for a specific user avoid loading all such courses and filtering in memory.
+     *
+     * @param userId the id of the user
+     * @param now    the current time used to determine whether a course is active
+     * @return the list of active learning-path courses the (non-admin) user can see
+     */
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+                JOIN UserCourseRole ucr ON ucr.course = c AND ucr.user.id = :userId
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND c.learningPathsEnabled = TRUE
+            """)
+    List<Course> findAllActiveWhereUserHasAnyRoleAndLearningPathsEnabled(@Param("userId") long userId, @Param("now") ZonedDateTime now);
+
     @Query("""
             SELECT DISTINCT c
             FROM Course c

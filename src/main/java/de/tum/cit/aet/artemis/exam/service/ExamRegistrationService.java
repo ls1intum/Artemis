@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -70,6 +72,8 @@ public class ExamRegistrationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final UserCourseRoleRepository userCourseRoleRepository;
+
     private final ExamUserService examUserService;
 
     private static final boolean IS_TEST_RUN = false;
@@ -79,7 +83,7 @@ public class ExamRegistrationService {
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService,
             ParticipationDeletionService participationDeletionService, UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository,
             StudentExamRepository studentExamRepository, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
-            ExamUserService examUserService, StudentExamService studentExamService) {
+            UserCourseRoleRepository userCourseRoleRepository, ExamUserService examUserService, StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -89,6 +93,7 @@ public class ExamRegistrationService {
         this.studentExamRepository = studentExamRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.userCourseRoleRepository = userCourseRoleRepository;
         this.examUserRepository = examUserRepository;
         this.examUserService = examUserService;
         this.studentExamService = studentExamService;
@@ -114,6 +119,9 @@ public class ExamRegistrationService {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
+        // Pre-fetch instructor IDs once to avoid one isInstructorInCourse EXISTS query per submitted student.
+        Set<Long> instructorIds = userCourseRoleRepository.findUsersByCourse_IdAndRole(course.getId(), CourseRole.INSTRUCTOR).stream().map(User::getId).collect(Collectors.toSet());
+
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<String> usersAddedToExam = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
@@ -126,7 +134,7 @@ public class ExamRegistrationService {
                 User student = optionalStudent.get();
                 Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
 
-                if ((examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) && !authorizationCheckService.isInstructorInCourse(course, student)
+                if ((examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) && !instructorIds.contains(student.getId())
                         && !authorizationCheckService.isAdmin(student)) {
                     ExamUser registeredExamUser = new ExamUser();
                     registeredExamUser.setUser(optionalStudent.get());
@@ -356,12 +364,16 @@ public class ExamRegistrationService {
         // the detached entity after the Hibernate session has been closed.
         var students = new ArrayList<>(userRepository.findAllByCourseIdAndCourseRolesInWithAuthorities(course.getId(), Set.of(CourseRole.STUDENT)));
 
+        // Pre-fetch already-registered user IDs from the eagerly loaded exam users to avoid one per-student DB query.
+        Set<Long> registeredUserIds = exam.getExamUsers() != null ? exam.getExamUsers().stream().map(eu -> eu.getUser().getId()).collect(Collectors.toSet()) : Set.of();
+        // Pre-fetch instructor IDs once to avoid one isInstructorInCourse EXISTS query per student.
+        Set<Long> instructorIds = userCourseRoleRepository.findUsersByCourse_IdAndRole(course.getId(), CourseRole.INSTRUCTOR).stream().map(User::getId).collect(Collectors.toSet());
+
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
-            Optional<ExamUser> registeredExamUserCheckOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
-            if (registeredExamUserCheckOptional.isEmpty() && !authorizationCheckService.isInstructorInCourse(course, student) && !authorizationCheckService.isAdmin(student)) {
+            if (!registeredUserIds.contains(student.getId()) && !instructorIds.contains(student.getId()) && !authorizationCheckService.isAdmin(student)) {
                 ExamUser registeredExamUser = createExamUser(exam, student);
                 exam.addExamUser(registeredExamUser);
                 userData.put("student " + i, student.toDatabaseString());

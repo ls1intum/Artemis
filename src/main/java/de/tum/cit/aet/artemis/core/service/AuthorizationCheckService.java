@@ -56,25 +56,33 @@ public class AuthorizationCheckService {
         this.teamRepository = teamRepository;
     }
 
-    // Membership is resolved in memory against the user's pre-loaded course roles (loadUserIfNeeded guarantees they are
-    // initialized). This mirrors the previous group-based check and keeps a single role load per request instead of one
-    // DB EXISTS per (user, course, role) check — which is an N+1 on any path that checks many courses (e.g. the dashboard).
+    // Adaptive: if the caller pre-loaded course roles (e.g. dashboard endpoints that call
+    // getUserWithCourseRolesAndAuthorities()), we use the O(1) in-memory index built by
+    // getCourseRolesByCourseId(). Otherwise we fall back to a single indexed EXISTS query
+    // so that endpoints that only load authorities do not pay the cost of fetching all
+    // course memberships (which would be a heavy JOIN for users in many courses).
     private boolean hasCourseRole(User user, Course course, CourseRole role) {
-        EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
-        return roles != null && roles.contains(role);
+        if (Hibernate.isInitialized(user.getCourseRoles())) {
+            EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
+            return roles != null && roles.contains(role);
+        }
+        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role);
     }
 
     private boolean hasCourseRoleAtLeast(User user, Course course, CourseRole minimum) {
-        EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
-        if (roles == null) {
+        if (Hibernate.isInitialized(user.getCourseRoles())) {
+            EnumSet<CourseRole> roles = user.getCourseRolesByCourseId().get(course.getId());
+            if (roles == null) {
+                return false;
+            }
+            for (CourseRole role : roles) {
+                if (role.isAtLeast(minimum)) {
+                    return true;
+                }
+            }
             return false;
         }
-        for (CourseRole role : roles) {
-            if (role.isAtLeast(minimum)) {
-                return true;
-            }
-        }
-        return false;
+        return userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRoleIn(user.getId(), course.getId(), CourseRole.valuesAtLeast(minimum));
     }
 
     /**
@@ -773,13 +781,18 @@ public class AuthorizationCheckService {
         }
     }
 
+    // Only guarantees that authorities are initialized — course roles are intentionally NOT
+    // loaded here. hasCourseRole / hasCourseRoleAtLeast decide adaptively whether to use
+    // the pre-loaded in-memory index (when the caller fetched course roles up front, e.g.
+    // for the dashboard) or a targeted indexed EXISTS query (for single-course endpoints
+    // that only need to verify one membership). Loading course roles unconditionally here
+    // would be an unnecessary heavy JOIN for every auth check on single-course endpoints.
     private User loadUserIfNeeded(@Nullable User user) {
         if (user == null) {
-            user = userRepository.getUserWithCourseRolesAndAuthorities();
+            user = userRepository.getUserWithAuthorities();
         }
-        else if (user.getCourseRoles() == null || !Hibernate.isInitialized(user.getCourseRoles()) || user.getAuthorities() == null
-                || !Hibernate.isInitialized(user.getAuthorities())) {
-            user = userRepository.getUserWithCourseRolesAndAuthorities(user.getLogin());
+        else if (user.getAuthorities() == null || !Hibernate.isInitialized(user.getAuthorities())) {
+            user = userRepository.getUserWithAuthorities(user.getLogin());
         }
         return user;
     }
