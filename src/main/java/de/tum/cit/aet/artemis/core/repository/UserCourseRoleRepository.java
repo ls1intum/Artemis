@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
@@ -23,9 +22,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Lazy
 @Repository
 public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCourseRole, UserCourseRole.UserCourseRoleId> {
-
-    @Query("SELECT ucr FROM UserCourseRole ucr JOIN FETCH ucr.user WHERE ucr.course.id = :courseId AND ucr.role = :role")
-    List<UserCourseRole> findByCourse_IdAndRole(@Param("courseId") Long courseId, @Param("role") CourseRole role);
 
     /**
      * Returns the (non-deleted) users holding the given role in the given course. Selects the {@link User} directly so
