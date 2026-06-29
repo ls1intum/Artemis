@@ -486,7 +486,7 @@ public class FileResource {
         LectureUnitApi unitApi = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
         LectureAttachmentApi attachmentApi = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        User user = userRepository.getUserWithAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         Lecture lecture = api.findByIdElseThrow(lectureId);
 
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);

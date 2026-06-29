@@ -69,7 +69,7 @@ public class CourseLearnerProfileResource {
     @GetMapping("course-learner-profiles")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<CourseLearnerProfileDTO>> getCourseLearnerProfiles() {
-        User user = userRepository.getUserWithAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("REST request to get all CourseLearnerProfiles of user {}", user.getLogin());
         Set<CourseLearnerProfile> courseLearnerProfiles = courseLearnerProfileRepository.findAllByLoginAndCourseActive(user.getLogin(), ZonedDateTime.now()).stream()
                 .filter(profile -> authorizationCheckService.isStudentInCourse(profile.getCourse(), user)).collect(Collectors.toSet());

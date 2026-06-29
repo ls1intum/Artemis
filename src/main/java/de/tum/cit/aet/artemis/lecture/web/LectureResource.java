@@ -475,7 +475,7 @@ public class LectureResource {
     @EnforceAtLeastStudentInLecture
     public ResponseEntity<LectureDetailsDTO> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        User user = userRepository.getUserWithAuthorities();
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         return ResponseEntity.ok(lectureService.getForDetails(lectureId, user));
     }
 
