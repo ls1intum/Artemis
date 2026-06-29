@@ -178,7 +178,7 @@
                         <fa-icon [icon]="faXmark" />
                     </button>
                 </div>
-                <jhi-lecture-chatbot [lectureId]="lectureId()" />
+                <jhi-lecture-chatbot [lectureId]="lectureId()" [contextsProvider]="ownContextsProvider()" />
             }
         </div>
     </jhi-lecture-unit-fullscreen-layout>

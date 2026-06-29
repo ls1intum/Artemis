@@ -937,4 +937,122 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.isFullscreen()).toBe(false);
         });
     });
+
+    describe('Context Provider', () => {
+        it('contextProvider: returns object with getCurrentPdfPage function', () => {
+            const mockPdfViewer = {
+                currentPageSignal: vi.fn().mockReturnValue(5),
+            };
+            Object.defineProperty(component, 'pdfViewer', {
+                value: vi.fn().mockReturnValue(mockPdfViewer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider).toBeDefined();
+            expect(provider.getCurrentPdfPage).toBeDefined();
+            expect(provider.getCurrentPdfPage!()).toBe(5);
+        });
+
+        it('contextProvider: getCurrentPdfPage returns undefined when no PDF viewer', () => {
+            Object.defineProperty(component, 'pdfViewer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.getCurrentPdfPage!()).toBeUndefined();
+        });
+
+        it('contextProvider: getCurrentVideoTimestamp returns video player time', () => {
+            const mockVideoPlayer = {
+                getCurrentTime: vi.fn().mockReturnValue(42.5),
+            };
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(mockVideoPlayer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.getCurrentVideoTimestamp!()).toBe(42.5);
+        });
+
+        it('contextProvider: getCurrentVideoTimestamp returns YouTube player time when no video player', () => {
+            const mockYoutubePlayer = {
+                getCurrentTime: vi.fn().mockReturnValue(125.5),
+            };
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(component, 'youtubePlayer', {
+                value: vi.fn().mockReturnValue(mockYoutubePlayer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.getCurrentVideoTimestamp!()).toBe(125.5);
+        });
+
+        it('contextProvider: hasVideoBeenPlayed returns true from video player', () => {
+            const mockVideoPlayer = {
+                hasBeenPlayed: vi.fn().mockReturnValue(true),
+            };
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(mockVideoPlayer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.hasVideoBeenPlayed!()).toBe(true);
+        });
+
+        it('contextProvider: hasVideoBeenPlayed returns true from YouTube player', () => {
+            const mockYoutubePlayer = {
+                hasBeenPlayed: vi.fn().mockReturnValue(true),
+            };
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(component, 'youtubePlayer', {
+                value: vi.fn().mockReturnValue(mockYoutubePlayer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.hasVideoBeenPlayed!()).toBe(true);
+        });
+
+        it('contextProvider: hasVideoBeenPlayed returns false when neither player has been played', () => {
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(component, 'youtubePlayer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.hasVideoBeenPlayed!()).toBe(false);
+        });
+    });
 });

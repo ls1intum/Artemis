@@ -326,6 +326,23 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
+     * Returns the current playback time in seconds, or undefined if no video is loaded.
+     */
+    getCurrentTime(): number | undefined {
+        const videoElement = this.videoRef()?.nativeElement;
+        return videoElement?.currentTime;
+    }
+
+    /**
+     * Returns whether the video has been played at least once (not just showing thumbnail).
+     * Uses the played TimeRanges property which is only populated when actual playback occurred.
+     */
+    hasBeenPlayed(): boolean {
+        const videoElement = this.videoRef()?.nativeElement;
+        return videoElement ? videoElement.played.length > 0 : false;
+    }
+
+    /**
      * Updates the `currentSegmentIndex` signal based on playback time.
      * Scrolls the active transcript line into view via the transcript viewer component.
      */
