@@ -210,6 +210,7 @@ describe('CourseExamsComponent', () => {
         examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
         componentFixture = TestBed.createComponent(CourseExamsComponent);
         component = componentFixture.componentInstance;
+        componentFixture.detectChanges();
 
         expect(component['realExamWorkingTimeByExamId']().has(newExamWorkingTime.examId)).toBe(true);
     });
