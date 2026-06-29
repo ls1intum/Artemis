@@ -75,8 +75,7 @@
                                                             : {
                                                                   dueDate: (plagiarismCase.createdByContinuousPlagiarismControl
                                                                       ? dayjs(plagiarismCase.exercise!.dueDate!).add(
-                                                                            plagiarismCase.exercise!.plagiarismDetectionConfig!
-                                                                                .continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod!,
+                                                                            plagiarismCase.exercise!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod!,
                                                                             'day'
                                                                         )
                                                                       : posts[0].creationDate.add(7, 'day')
