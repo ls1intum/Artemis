@@ -953,7 +953,7 @@ public class ExamResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.getExamMode().isTestExamMode()) {
+        if (exam.getExamMode().isTestExamMode() && !exam.isSimulationPhaseActive(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Add student to exam is only allowed for real exams", ENTITY_NAME, "addStudentOnlyForRealExams");
         }
 
@@ -1110,7 +1110,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.getExamMode().isTestExamMode()) {
+        if (exam.getExamMode().isTestExamMode() && !exam.isSimulationPhaseActive(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
         }
 
