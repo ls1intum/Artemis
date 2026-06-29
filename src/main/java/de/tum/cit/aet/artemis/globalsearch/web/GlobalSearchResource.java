@@ -129,16 +129,16 @@ public class GlobalSearchResource {
         int effectiveLimit = Math.clamp(limit, 1, 25);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        log.info("[search] user={} query='{}' types={} courseId={} limit={}", user.getLogin(), query, requestedTypes, courseId, effectiveLimit);
+        log.debug("[search] user={} query='{}' types={} courseId={} limit={}", user.getLogin(), query, requestedTypes, courseId, effectiveLimit);
 
         FilterBuildResult filterResult = buildSearchableItemFilter(user, courseId, requestedTypes);
         if (!filterResult.hasAccess()) {
-            log.info("[search] user={} has no accessible courses — returning empty", user.getLogin());
+            log.debug("[search] user={} has no accessible courses — returning empty", user.getLogin());
             return ResponseEntity.ok(List.of());
         }
 
         List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
-        log.info("[search] user={} query='{}' — Weaviate returned {} raw results", user.getLogin(), query, rawResults.size());
+        log.debug("[search] user={} query='{}' — Weaviate returned {} raw results", user.getLogin(), query, rawResults.size());
 
         Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;
@@ -314,10 +314,10 @@ public class GlobalSearchResource {
         boolean isAdmin = authCheckService.isAdmin(user);
         boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
-        log.info("[filter] user={} isAdmin={} courseId={} types={}", user.getLogin(), isAdmin, courseId, requestedTypes);
+        log.debug("[filter] user={} isAdmin={} courseId={} types={}", user.getLogin(), isAdmin, courseId, requestedTypes);
 
         if (isAdmin && courseId == null && !needsCommFiltering) {
-            log.info("[filter] user={} is admin with no courseId — skipping access filter", user.getLogin());
+            log.debug("[filter] user={} is admin with no courseId — skipping access filter", user.getLogin());
             return new FilterBuildResult(buildTypeDiscriminatorFilter(requestedTypes), true, null, null, null);
         }
         List<Course> accessibleCourses;
@@ -594,7 +594,7 @@ public class GlobalSearchResource {
      */
     private Filter buildLectureUnitDisjunct(CourseRoleSets roleSets) {
         OffsetDateTime now = OffsetDateTime.now();
-        log.info("[filter] lecture_unit staffCourseIds={} studentCourseIds={} filterTime={}", roleSets.staffCourseIds(), roleSets.studentCourseIds(), now);
+        log.debug("[filter] lecture_unit staffCourseIds={} studentCourseIds={} filterTime={}", roleSets.staffCourseIds(), roleSets.studentCourseIds(), now);
         List<Filter> subBranches = new ArrayList<>();
         if (!roleSets.staffCourseIds().isEmpty()) {
             subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
