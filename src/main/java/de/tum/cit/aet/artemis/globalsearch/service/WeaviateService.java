@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchem
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateReferenceDefinition;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
@@ -90,6 +91,17 @@ public class WeaviateService {
      */
     private String resolveCollectionName(String baseName) {
         return properties.collectionPrefix() + baseName;
+    }
+
+    /**
+     * Returns the fully-qualified Weaviate collection name for searchable entities,
+     * including any configured prefix. Used by Pyris so it can query the correct collection
+     * without having to mirror the prefix configuration.
+     *
+     * @return the resolved collection name (e.g. "Artemis_SearchableEntities")
+     */
+    public String getSearchableEntitiesCollectionName() {
+        return resolveCollectionName(SearchableEntitySchema.COLLECTION_NAME);
     }
 
     /**

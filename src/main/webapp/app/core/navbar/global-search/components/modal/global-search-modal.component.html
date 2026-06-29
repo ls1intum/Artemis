@@ -28,20 +28,18 @@
     <div class="results-container">
         @switch (currentView()) {
             @case (SearchView.Navigation) {
-                @if (overlay.isOpen()) {
-                    <jhi-global-search-navigation-view
-                        [searchQuery]="searchQuery()"
-                        [selectedIndex]="selectedIndex()"
-                        [results]="results()"
-                        [hasSearched]="hasSearched()"
-                        [showResults]="showResults()"
-                        [isLoading]="isLoading()"
-                        [searchError]="searchError()"
-                        [activeFilters]="activeFilters()"
-                        (viewSelected)="navigateTo($event)"
-                        (entityClick)="onEntityClick($event)"
-                    />
-                }
+                <jhi-global-search-navigation-view
+                    [searchQuery]="searchQuery()"
+                    [selectedIndex]="selectedIndex()"
+                    [results]="results()"
+                    [hasSearched]="hasSearched()"
+                    [showResults]="showResults()"
+                    [isLoading]="isLoading()"
+                    [searchError]="searchError()"
+                    [activeFilters]="activeFilters()"
+                    (viewSelected)="navigateTo($event)"
+                    (entityClick)="onEntityClick($event)"
+                />
             }
             @case (SearchView.Lecture) {
                 <jhi-global-search-lecture-results (back)="navigateTo(SearchView.Navigation)" [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" />

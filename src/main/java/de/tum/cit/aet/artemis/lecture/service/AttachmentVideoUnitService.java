@@ -4,6 +4,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -98,10 +99,12 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
             MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
+        int payloadFingerprintBeforeUpdate = buildIngestionPayloadFingerprint(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
         existingAttachmentVideoUnit.setVideoSource(updateUnitDTO.videoSource());
+        boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
@@ -116,49 +119,71 @@ public class AttachmentVideoUnitService {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedAttachmentVideoUnit));
 
-        if (updateAttachment == null) {
-            // Trigger processing for video-only updates (video source change detection is done inside the service)
-            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
-            prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
-            return existingAttachmentVideoUnit;
-        }
-
-        if (createdNewAttachment) {
-            // Split the new file into single slides if it is a PDF
-            if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+        // Process attachment if provided
+        if (updateAttachment != null) {
+            if (createdNewAttachment) {
+                // Split PDF files into individual slides for easier navigation
+                if (hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                }
             }
-            // Trigger processing for newly added attachment
-            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
-        }
-        else if (existingAttachment != null) {
-            updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
-            handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
-            final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
-            existingAttachment.setVersion(revision);
-            Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-            savedAttachmentVideoUnit.setAttachment(savedAttachment);
-            evictCache(updateFile, savedAttachmentVideoUnit);
+            else if (existingAttachment != null) {
+                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
 
-            if (updateFile != null) {
-                // Split the updated file into single slides only if it is a pdf
-                if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                    if (pageOrder == null) {
-                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
-                    }
-                    else {
-                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                // Update file and increment version number when a file is uploaded
+                if (hasUploadedFile) {
+                    handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
+                    final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
+                    existingAttachment.setVersion(revision);
+                }
+
+                Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
+                savedAttachmentVideoUnit.setAttachment(savedAttachment);
+                evictCache(updateFile, savedAttachmentVideoUnit);
+
+                if (hasUploadedFile) {
+                    // Split PDF into slides, respecting custom page order if provided
+                    if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                        if (pageOrder == null) {
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                        }
+                        else {
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                        }
                     }
                 }
             }
-
-            // Trigger automated content processing (transcription and ingestion)
-            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
         }
 
+        // Trigger content processing if the ingestion payload changed and prepare unit for client response
+        triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
+    }
+
+    private void triggerContentProcessingBasedOnPayloadChange(int payloadFingerprintBeforeUpdate, AttachmentVideoUnit savedAttachmentVideoUnit) {
+        int payloadFingerprintAfterUpdate = buildIngestionPayloadFingerprint(savedAttachmentVideoUnit);
+        boolean ingestionPayloadChanged = payloadFingerprintBeforeUpdate != payloadFingerprintAfterUpdate;
+
+        if (!ingestionPayloadChanged) {
+            // No changes in the ingestion payload - skip processing entirely
+            return;
+        }
+
+        // Something changed in the payload (could be metadata or content)
+        // Use triggerProcessingForMetadataChange to force reprocessing even if only metadata changed
+        contentProcessingService.ifPresent(api -> api.triggerProcessingForMetadataChange(savedAttachmentVideoUnit));
+    }
+
+    private int buildIngestionPayloadFingerprint(AttachmentVideoUnit unit) {
+        var lecture = unit.getLecture();
+        var course = lecture != null ? lecture.getCourse() : null;
+        var attachment = unit.getAttachment();
+        return Objects.hash(unit.getId(), unit.getName(), lecture != null ? lecture.getId() : null, lecture != null ? lecture.getTitle() : null,
+                course != null ? course.getId() : null, course != null ? course.getTitle() : null, course != null && course.getDescription() != null ? course.getDescription() : "",
+                attachment != null ? attachment.getVersion() : -1, attachment != null && attachment.getLink() != null ? attachment.getLink() : "",
+                unit.getVideoSource() != null && !unit.getVideoSource().isBlank() ? unit.getVideoSource() : null, unit.getReleaseDate());
     }
 
     private void createAttachment(Attachment attachment, AttachmentVideoUnit attachmentVideoUnit, MultipartFile file, boolean keepFilename) {

@@ -132,7 +132,21 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of((AttachmentVideoUnit) lecture1.getLectureUnits().getFirst()));
         assertThat(jobToken).isNotNull();
         jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of((AttachmentVideoUnit) lecture1.getLectureUnits().getLast()));
-        assertThat(jobToken).isNull();
+        assertThat(jobToken).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteLecturefromPyrisDatabaseWithoutCurrentProcessableContent() {
+        enableIrisFor(lecture1.getCourse());
+        AttachmentVideoUnit unit = (AttachmentVideoUnit) lecture1.getLectureUnits().getFirst();
+        unit.setVideoSource(null);
+        unit.setAttachment(null);
+        irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
+
+        String jobToken = pyrisWebhookService.deleteLectureFromPyrisDB(List.of(unit));
+
+        assertThat(jobToken).isNotNull();
     }
 
     @Test

@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { NEVER } from 'rxjs';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -61,7 +62,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 { provide: AccountService, useValue: { userIdentity: signal({ selectedLLMUsage: llmDecision }) } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 { provide: SearchOverlayService, useValue: { close: vi.fn(), isOpen: signal(false) } },
-                { provide: IrisSearchAnswerService, useValue: { ask: vi.fn() } },
+                { provide: IrisSearchAnswerService, useValue: { ask: vi.fn().mockReturnValue(NEVER) } },
             ],
         });
 
