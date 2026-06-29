@@ -114,7 +114,7 @@
                 "feedbackRequested": "KI-Feedback angefordert",
                 "feedbackRequestSent": "KI-Feedback wurde für alle Text- und Modellierungsaufgaben angefordert. Die Ergebnisse erscheinen in Kürze.",
                 "feedbackUsageLoadFailed": "Die verbleibenden KI-Feedback-Anfragen konnten nicht geladen werden. Bitte lade die Seite neu, um es erneut zu versuchen.",
-                "noCourseLevelAthenaGradingEnabled": "KI-Feedback ist für diesen Kurs nicht aktiviert.",
+                "noCourseLevelAthenaFormativeEnabled": "KI-Feedback ist für diesen Kurs nicht aktiviert.",
                 "noSubmissionFound": "Du hast keine Lösung für diese Aufgabe abgegeben.",
                 "submissionLinkedToCommit": "Die abgegebene Lösung ist mit folgendem Commit verknüpft: ",
                 "noCommitHash": "Es hat kein Commit stattgefunden",
