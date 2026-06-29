@@ -12,9 +12,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param lectureUnitId   the lecture unit the student is viewing
  * @param page            the 1-based slide page to display, or {@code null}
  * @param timestamp       the video position in seconds to seek to, or {@code null}
- * @param lectureUnitName the display name of the lecture unit, or {@code null}
- * @param reason          a short human-readable label of what is being shown, or {@code null}
+ * @param lectureUnitName the display name of the lecture unit (resolved by Artemis), or {@code null}
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record PyrisPointOutActionDTO(Long lectureUnitId, @Nullable Integer page, @Nullable Double timestamp, @Nullable String lectureUnitName, @Nullable String reason) {
+public record PyrisPointOutActionDTO(Long lectureUnitId, @Nullable Integer page, @Nullable Double timestamp, @Nullable String lectureUnitName) {
 }

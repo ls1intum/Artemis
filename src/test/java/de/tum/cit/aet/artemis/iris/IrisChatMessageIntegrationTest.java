@@ -239,7 +239,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
 
         mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatusWithPointOut(dto.settings().authenticationToken(), "Take a look at the slide I opened.",
-                dto.initialStages(), new PyrisPointOutActionDTO(42L, 3, null, "Sorting Algorithms", "Binary search definition"))));
+                dto.initialStages(), new PyrisPointOutActionDTO(42L, 3, null, "Sorting Algorithms"))));
 
         request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
 
@@ -255,7 +255,6 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         assertThat(jsonNode.get("lectureUnitId").asLong()).isEqualTo(42L);
         assertThat(jsonNode.get("page").asInt()).isEqualTo(3);
         assertThat(jsonNode.get("lectureUnitName").asText()).isEqualTo("Sorting Algorithms");
-        assertThat(jsonNode.get("reason").asText()).isEqualTo("Binary search definition");
     }
 
     @Test
@@ -281,7 +280,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         AtomicReference<PyrisChatPipelineExecutionDTO> capturedFollowUpDto = new AtomicReference<>();
         // Turn 1: Iris points out a slide -> persists a COMMAND marker plus the LLM answer (3 messages total).
         mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatusWithPointOut(dto.settings().authenticationToken(), "Look at the slide.", dto.initialStages(),
-                new PyrisPointOutActionDTO(42L, 1, null, "Sorting Algorithms", "X"))));
+                new PyrisPointOutActionDTO(42L, 1, null, "Sorting Algorithms"))));
         // Turn 2: capture the DTO forwarded to Pyris; its chat history must not contain the COMMAND marker (Pyris has no such role).
         mockChatResponse(dto -> {
             capturedFollowUpDto.set(dto);

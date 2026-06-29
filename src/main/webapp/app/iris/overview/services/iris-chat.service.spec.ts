@@ -382,7 +382,7 @@ describe('IrisChatService', () => {
             message: {
                 id: 99,
                 sender: IrisSender.COMMAND,
-                content: [{ type: 'json', attributes: { type: 'pointOut', lectureUnitId: 42, page: 3, reason: 'x' } }],
+                content: [{ type: 'json', attributes: { type: 'pointOut', lectureUnitId: 42, page: 3 } }],
             },
         } as unknown as IrisChatWebsocketDTO;
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of(commandPayload));

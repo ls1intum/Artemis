@@ -258,9 +258,6 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
         if (action.lectureUnitName() != null && !action.lectureUnitName().isBlank()) {
             node.put("lectureUnitName", action.lectureUnitName());
         }
-        if (action.reason() != null && !action.reason().isBlank()) {
-            node.put("reason", action.reason());
-        }
         var commandMessage = new IrisMessage();
         commandMessage.addContent(new IrisJsonMessageContent(node));
         var savedCommand = irisMessageService.saveMessage(commandMessage, session, IrisMessageSender.COMMAND);

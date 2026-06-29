@@ -115,7 +115,7 @@ public class PyrisStatusUpdateService {
         if (name == null || name.isBlank()) {
             return statusUpdate;
         }
-        var enrichedAction = new PyrisPointOutActionDTO(action.lectureUnitId(), action.page(), action.timestamp(), name, action.reason());
+        var enrichedAction = new PyrisPointOutActionDTO(action.lectureUnitId(), action.page(), action.timestamp(), name);
         return new PyrisChatStatusUpdateDTO(statusUpdate.result(), statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
                 statusUpdate.accessedMemories(), statusUpdate.createdMemories(), enrichedAction);
     }

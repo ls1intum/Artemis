@@ -134,7 +134,6 @@ export interface PointOutData {
     page?: number;
     timestamp?: number;
     lectureUnitName?: string;
-    reason?: string;
 }
 
 /**
