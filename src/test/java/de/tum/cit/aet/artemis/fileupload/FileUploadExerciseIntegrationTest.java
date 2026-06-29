@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -51,15 +52,22 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadExerciseInputDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadPlagiarismDetectionConfigDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadTeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTest {
@@ -90,6 +98,22 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     private final String creationFilePattern = "png, pdf, jPg , r, DOCX";
 
+    static FileUploadExerciseInputDTO inputDTO(Exercise exercise) {
+        FileUploadExercise fileUploadExercise = (FileUploadExercise) exercise;
+        var teamConfig = exercise.getTeamAssignmentConfig() == null ? null : FileUploadTeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig());
+        var plagiarismConfig = exercise.getPlagiarismDetectionConfig() == null ? null : FileUploadPlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig());
+        var criteria = exercise.getGradingCriteria() == null ? null : exercise.getGradingCriteria().stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        var competencyLinks = exercise.getCompetencyLinks() == null ? null : exercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
+        Long courseId = exercise.isCourseExercise() ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+        Long exerciseGroupId = exercise.isExamExercise() ? exercise.getExerciseGroup().getId() : null;
+        return new FileUploadExerciseInputDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
+                exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getMode(),
+                teamConfig, exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
+                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
+                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(),
+                fileUploadExercise.getExampleSolution(), fileUploadExercise.getFilePattern(), courseId, exerciseGroupId, criteria, competencyLinks, plagiarismConfig);
+    }
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
@@ -105,7 +129,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void createFileUploadExerciseFails() throws Exception {
         String filePattern = "Example file pattern";
         fileUploadExercise.setFilePattern(filePattern);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -114,7 +138,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         String filePattern = "Example file pattern";
         fileUploadExercise.setFilePattern(filePattern);
         fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -124,7 +148,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         userUtilService.unenrollUserFromCourse(instructor1, course);
         fileUploadExercise.setFilePattern(creationFilePattern);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -132,7 +156,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void createFileUploadExerciseFails_AlmostEmptyFilePattern() throws Exception {
         fileUploadExercise.setFilePattern(" ");
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -140,7 +164,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void createFileUploadExerciseFails_EmptyFilePattern() throws Exception {
         fileUploadExercise.setFilePattern("");
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
@@ -153,8 +177,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         fileUploadExercise.setTitle("new fileupload exercise");
         fileUploadExercise.setChannelName(channelName);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
-        FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
-                HttpStatus.CREATED);
+        FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise),
+                FileUploadExercise.class, HttpStatus.CREATED);
 
         Channel channelFromDB = channelRepository.findChannelByExerciseId(receivedFileUploadExercise.getId());
 
@@ -183,7 +207,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
 
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(fileUploadExercise);
-        FileUploadExercise createdFileUploadExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
+        FileUploadExercise createdFileUploadExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class,
                 HttpStatus.CREATED);
 
         Channel channelFromDB = channelRepository.findChannelByExerciseId(createdFileUploadExercise.getId());
@@ -202,6 +226,35 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
                 .isEqualTo("created first instruction with empty criteria for testing");
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAndGetTeamFileUploadExercise_preservesTeamConfiguration() throws Exception {
+        fileUploadExercise.setTitle("new team file upload exercise");
+        fileUploadExercise.setFilePattern(creationFilePattern);
+        fileUploadExercise.setMode(ExerciseMode.TEAM);
+        TeamAssignmentConfig teamConfig = new TeamAssignmentConfig();
+        teamConfig.setMinTeamSize(2);
+        teamConfig.setMaxTeamSize(4);
+        fileUploadExercise.setTeamAssignmentConfig(teamConfig);
+        PlagiarismDetectionConfig plagiarismConfig = PlagiarismDetectionConfig.createDefault();
+        plagiarismConfig.setSimilarityThreshold(75);
+        fileUploadExercise.setPlagiarismDetectionConfig(plagiarismConfig);
+
+        FileUploadExerciseDTO createdExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExerciseDTO.class,
+                HttpStatus.CREATED);
+        FileUploadExerciseDTO retrievedExercise = request.get("/api/fileupload/file-upload-exercises/" + createdExercise.id(), HttpStatus.OK, FileUploadExerciseDTO.class);
+
+        assertThat(createdExercise.mode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(createdExercise.teamMode()).isTrue();
+        assertThat(createdExercise.teamAssignmentConfig().minTeamSize()).isEqualTo(2);
+        assertThat(createdExercise.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
+        assertThat(createdExercise.plagiarismDetectionConfig().similarityThreshold()).isEqualTo(75);
+        assertThat(retrievedExercise.teamMode()).isTrue();
+        assertThat(retrievedExercise.teamAssignmentConfig().minTeamSize()).isEqualTo(2);
+        assertThat(retrievedExercise.teamAssignmentConfig().maxTeamSize()).isEqualTo(4);
+        assertThat(retrievedExercise.plagiarismDetectionConfig().similarityThreshold()).isEqualTo(75);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -209,7 +262,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
 
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", invalidDates.applyTo(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(invalidDates.applyTo(fileUploadExercise)), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -219,12 +272,12 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
         fileUploadExercise.setCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember());
 
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
         fileUploadExercise.setCourse(null);
         fileUploadExercise.setExerciseGroup(null);
 
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -235,10 +288,12 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         conversationUtilService.addChannelToExercise(fileUploadExercise);
 
-        FileUploadExercise receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
+        FileUploadExerciseDTO receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK,
+                FileUploadExerciseDTO.class);
 
-        assertThat(fileUploadExercise.getId()).isEqualTo(receivedFileUploadExercise.getId());
-        assertThat(fileUploadExercise).isEqualTo(receivedFileUploadExercise);
+        assertThat(fileUploadExercise.getId()).isEqualTo(receivedFileUploadExercise.id());
+        assertThat(receivedFileUploadExercise.course()).isNotNull();
+        assertThat(receivedFileUploadExercise.course().id()).isEqualTo(course.getId());
     }
 
     @Test
@@ -263,9 +318,13 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void getExamFileUploadExercise_asInstructor() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(TEST_PREFIX, false);
 
-        FileUploadExercise receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
+        FileUploadExerciseDTO receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK,
+                FileUploadExerciseDTO.class);
         assertThat(receivedFileUploadExercise).as("exercise was retrieved").isNotNull();
-        assertThat(receivedFileUploadExercise.getId()).as("exercise with the right id was retrieved").isEqualTo(fileUploadExercise.getId());
+        assertThat(receivedFileUploadExercise.id()).as("exercise with the right id was retrieved").isEqualTo(fileUploadExercise.getId());
+        assertThat(receivedFileUploadExercise.exerciseGroup()).isNotNull();
+        assertThat(receivedFileUploadExercise.exerciseGroup().exam()).isNotNull();
+        assertThat(receivedFileUploadExercise.exerciseGroup().exam().title()).isEqualTo(fileUploadExercise.getExerciseGroup().getExam().getTitle());
     }
 
     @Test
@@ -297,9 +356,10 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         conversationUtilService.addChannelToExercise(fileUploadExercise);
 
-        FileUploadExercise receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
+        FileUploadExerciseDTO receivedFileUploadExercise = request.get("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK,
+                FileUploadExerciseDTO.class);
 
-        assertThat(receivedFileUploadExercise.isGradingInstructionFeedbackUsed()).isTrue();
+        assertThat(receivedFileUploadExercise.gradingInstructionFeedbackUsed()).isTrue();
     }
 
     @Test
@@ -543,12 +603,13 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAllFileUploadExercisesForCourse_asInstructor() throws Exception {
         var course = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
-        List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/fileupload/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.OK,
-                FileUploadExercise.class);
+        List<FileUploadExerciseDTO> receivedFileUploadExercises = request.getList("/api/fileupload/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.OK,
+                FileUploadExerciseDTO.class);
 
         // this seems to be a flaky test, based on the execution order, the following line has a problem with authentication, this should fix it
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         assertThat(receivedFileUploadExercises).hasSize(course.getExercises().size());
+        assertThat(receivedFileUploadExercises).allSatisfy(exercise -> assertThat(exercise.course()).isNull());
     }
 
     @Test
@@ -680,13 +741,13 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         fileUploadExercise.setDueDate(baseTime.plusHours(3));
         fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
         fileUploadExercise.setReleaseDate(baseTime.plusHours(3));
         fileUploadExercise.setDueDate(null);
         fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -705,7 +766,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
         fileUploadExercise.setChannelName("test-" + UUID.randomUUID().toString().substring(0, 4));
-        var result = request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
+        var result = request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
         fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -714,7 +775,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         exampleSolutionPublicationDate = baseTime.plusHours(2);
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
         fileUploadExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
-        result = request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
+        result = request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
     }
@@ -737,7 +798,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
             create.setFilePattern("pdf, png");
             create.setMaxPoints(10.0);
             create.setChannelName("atlasml-fileupload-create");
-            request.postWithResponseBody("/api/fileupload/file-upload-exercises", create, FileUploadExercise.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(create), FileUploadExercise.class, HttpStatus.CREATED);
 
             // Update
             FileUploadExercise persisted = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
@@ -769,22 +830,22 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         fileUploadExercise.setPlagiarismDetectionConfig(config);
 
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
         // Test invalid minimumScore
         config.setSimilarityThreshold(50);
         config.setMinimumScore(101); // invalid: above 100
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
         // Test invalid minimumSize
         config.setMinimumScore(50);
         config.setMinimumSize(-1); // invalid: negative
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
         // Test invalid response period
         config.setMinimumSize(50);
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(5); // invalid: below 7
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(fileUploadExercise), FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -825,7 +886,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         expectedFileUploadExercise.setPlagiarismDetectionConfig(config);
 
         var sourceExerciseId = expectedFileUploadExercise.getId();
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + sourceExerciseId, inputDTO(expectedFileUploadExercise), FileUploadExercise.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -843,17 +904,25 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         courseUtilService.enableMessagingForCourse(course2);
         expectedFileUploadExercise.setCourse(course2);
+        expectedFileUploadExercise.setMode(ExerciseMode.TEAM);
+        TeamAssignmentConfig teamConfig = new TeamAssignmentConfig();
+        teamConfig.setMinTeamSize(2);
+        teamConfig.setMaxTeamSize(4);
+        expectedFileUploadExercise.setTeamAssignmentConfig(teamConfig);
         String uniqueChannelName = "test" + UUID.randomUUID().toString().substring(0, 8);
         expectedFileUploadExercise.setChannelName(uniqueChannelName);
         fileUploadExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, fileUploadExercise, 1)));
 
         var sourceExerciseId = expectedFileUploadExercise.getId();
-        var importedFileUploadExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + sourceExerciseId, expectedFileUploadExercise,
-                FileUploadExercise.class, HttpStatus.CREATED);
+        var importedFileUploadExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + sourceExerciseId,
+                inputDTO(expectedFileUploadExercise), FileUploadExercise.class, HttpStatus.CREATED);
         // File upload exercises are always assessed manually
         assertThat(importedFileUploadExercise.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
-        assertThat(importedFileUploadExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate",
-                "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks", "assessmentType").isEqualTo(expectedFileUploadExercise);
+        assertThat(importedFileUploadExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(importedFileUploadExercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(2);
+        assertThat(importedFileUploadExercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(4);
+        assertThat(importedFileUploadExercise).usingRecursiveComparison().ignoringFields("id", "teamAssignmentConfig.id", "course", "shortName", "releaseDate", "dueDate",
+                "assessmentDueDate", "exampleSolutionPublicationDate", "channelNameTransient", "competencyLinks", "assessmentType").isEqualTo(expectedFileUploadExercise);
         Channel channelFromDB = channelRepository.findChannelByExerciseId(importedFileUploadExercise.getId());
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo(uniqueChannelName);
@@ -868,7 +937,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
         Course course2 = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         expectedFileUploadExercise.setCourse(course2);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + -1, expectedFileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + -1, inputDTO(expectedFileUploadExercise), FileUploadExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -877,7 +947,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
         expectedFileUploadExercise.setCourse(null);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + expectedFileUploadExercise.getId(), expectedFileUploadExercise,
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + expectedFileUploadExercise.getId(), inputDTO(expectedFileUploadExercise),
                 FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
     }
@@ -892,10 +962,12 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         exercise.setTitle(title);
         exercise = fileUploadExerciseRepository.save(exercise);
         final var searchTerm = pageableSearchUtilService.configureSearch(exercise.getTitle());
-        SearchResultPageDTO<Exercise> result = request.getSearchResult("/api/fileupload/file-upload-exercises", HttpStatus.OK, Exercise.class,
+        SearchResultPageDTO<FileUploadExerciseDTO> result = request.getSearchResult("/api/fileupload/file-upload-exercises", HttpStatus.OK, FileUploadExerciseDTO.class,
                 pageableSearchUtilService.searchMapping(searchTerm));
         assertThat(result.getResultsOnPage()).hasSize(1);
         assertThat(result.getNumberOfPages()).isEqualTo(1);
+        assertThat(result.getResultsOnPage().getFirst().course()).isNotNull();
+        assertThat(result.getResultsOnPage().getFirst().course().title()).isEqualTo(course.getTitle());
 
     }
 
@@ -905,7 +977,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         Course course = fileUploadExerciseUtilService.addEnrolledCourseWithFileUploadExercise(TEST_PREFIX);
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().orElseThrow();
         var sourceExerciseId = expectedFileUploadExercise.getId();
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + sourceExerciseId, inputDTO(expectedFileUploadExercise), FileUploadExercise.class,
                 HttpStatus.FORBIDDEN);
 
     }
@@ -915,7 +987,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     void testExamExerciseNotIncludedInScoreReturnsBadRequest() throws Exception {
         FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(TEST_PREFIX, false);
         fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class,
+        request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), inputDTO(fileUploadExercise), FileUploadExercise.class,
                 HttpStatus.BAD_REQUEST);
 
     }

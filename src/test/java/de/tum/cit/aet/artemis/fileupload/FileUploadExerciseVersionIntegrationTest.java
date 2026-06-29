@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload;
 
 import static de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService.zonedDateTimeBiPredicate;
+import static de.tum.cit.aet.artemis.fileupload.FileUploadExerciseIntegrationTest.inputDTO;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -65,7 +66,8 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
         newExercise.setChannelName("exercise-" + UUID.randomUUID().toString().substring(0, 8));
 
         // Act: Create the exercise
-        FileUploadExercise createdExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", newExercise, FileUploadExercise.class, HttpStatus.CREATED);
+        FileUploadExercise createdExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", inputDTO(newExercise), FileUploadExercise.class,
+                HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(createdExercise).isNotNull();
@@ -126,8 +128,8 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
         exerciseToImport.setChannelName("imported-" + UUID.randomUUID().toString().substring(0, 8));
 
         // Act: Import the exercise
-        FileUploadExercise importedExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(), exerciseToImport,
-                FileUploadExercise.class, HttpStatus.CREATED);
+        FileUploadExercise importedExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises/import?sourceId=" + fileUploadExercise.getId(),
+                inputDTO(exerciseToImport), FileUploadExercise.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(importedExercise).isNotNull();
