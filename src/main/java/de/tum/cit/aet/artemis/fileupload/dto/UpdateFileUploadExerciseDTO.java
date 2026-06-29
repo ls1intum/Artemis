@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -74,11 +75,13 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param competencyLinks                        links to course competencies with weights
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpdateFileUploadExerciseDTO(long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
-        Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
-        Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
-        ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, String filePattern,
-        Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
+        @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable Double maxPoints, @Nullable Double bonusPoints,
+        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
+        @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String feedbackSuggestionModule, @Nullable String gradingInstructions,
+        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
+        @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution, @Nullable String filePattern, @Nullable Long courseId,
+        @Nullable Long exerciseGroupId, @Nullable Set<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a {@link FileUploadExercise} entity.
@@ -91,7 +94,7 @@ public record UpdateFileUploadExerciseDTO(long id, String title, String channelN
      * @return a new DTO with data copied from the entity
      * @throws BadRequestAlertException if exercise is null
      */
-    public static UpdateFileUploadExerciseDTO of(FileUploadExercise exercise) {
+    public static UpdateFileUploadExerciseDTO of(@Nullable FileUploadExercise exercise) {
         if (exercise == null) {
             throw new BadRequestAlertException("No fileUpload exercise was provided.", "FileUploadExercise", "isNull");
         }
