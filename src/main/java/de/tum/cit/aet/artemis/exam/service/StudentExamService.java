@@ -840,17 +840,21 @@ public class StudentExamService {
         sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
 
         try (var threadPool = Executors.newFixedThreadPool(10)) {
-            var futures = studentExams.stream()
-                    .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations, true), threadPool)
-                            .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
-                                    generatedParticipations.size(), startedAt, lock))
-                            .exceptionally(throwable -> {
-                                log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
-                                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
-                                        generatedParticipations.size(), startedAt, lock);
-                                return null;
-                            }))
-                    .toArray(CompletableFuture[]::new);
+            var futures = studentExams.stream().map(studentExam -> CompletableFuture.runAsync(() -> {
+                List<StudentParticipation> localParticipations = new ArrayList<>();
+                setUpExerciseParticipationsAndSubmissions(studentExam, localParticipations, true);
+                if (studentExam.getExamMode().isTestExamMode() && !localParticipations.isEmpty()) {
+                    studentExam.setStudentParticipations(localParticipations);
+                    studentExamRepository.save(studentExam);
+                }
+                generatedParticipations.addAll(localParticipations);
+            }, threadPool).thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
+                    generatedParticipations.size(), startedAt, lock)).exceptionally(throwable -> {
+                        log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
+                        sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
+                                generatedParticipations.size(), startedAt, lock);
+                        return null;
+                    })).toArray(CompletableFuture[]::new);
             return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
                 threadPool.shutdown();
                 sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,

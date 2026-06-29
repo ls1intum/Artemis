@@ -337,6 +337,4 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     convertToDate(value?: dayjs.Dayjs) {
         return value != undefined && value.isValid() ? value.toDate() : null;
     }
-
-    protected readonly DateTimePickerType = DateTimePickerType;
 }
