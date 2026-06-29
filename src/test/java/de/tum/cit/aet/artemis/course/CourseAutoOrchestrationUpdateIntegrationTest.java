@@ -71,4 +71,33 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         assertThat(persisted).isPresent();
         assertThat(persisted.get().autoOrchestratorEnabled()).isTrue();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCourse_withExistingConfig_reusesManagedRowInsteadOfOrphaningIt() throws Exception {
+        // Pre-persist a configuration row for the course (cascade from the owning course side).
+        Course managed = courseRepository.findByIdElseThrow(course.getId());
+        var existingConfiguration = new CourseAutoOrchestrationConfiguration();
+        existingConfiguration.setEnabled(true);
+        existingConfiguration.setDebounceWindowSecondsOverride(120);
+        existingConfiguration.setCourse(managed);
+        managed.setAutoOrchestrationConfiguration(existingConfiguration);
+        courseRepository.save(managed);
+
+        Long originalConfigId = autoOrchestrationConfigurationRepository.findByCourseId(course.getId()).orElseThrow().getId();
+
+        // Update a single field through the endpoint (change the debounce override, keep it enabled).
+        var updatedConfiguration = new CourseAutoOrchestrationConfiguration();
+        updatedConfiguration.setEnabled(true);
+        updatedConfiguration.setDebounceWindowSecondsOverride(300);
+        course.setAutoOrchestrationConfiguration(updatedConfiguration);
+        updateCourse(course);
+
+        // The attach path must mutate the existing row in place; a broken path would create a new row and
+        // orphan the old one (which the insertion-only test above would not catch).
+        var persisted = autoOrchestrationConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        assertThat(persisted.getId()).isEqualTo(originalConfigId);
+        assertThat(persisted.isEnabled()).isTrue();
+        assertThat(persisted.getDebounceWindowSecondsOverride()).isEqualTo(300);
+    }
 }
