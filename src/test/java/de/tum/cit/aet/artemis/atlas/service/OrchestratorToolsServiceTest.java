@@ -514,10 +514,10 @@ class OrchestratorToolsServiceTest {
         // Saturate the buffer's reservation counter at the cap. Any further write tool call must
         // short-circuit before touching repositories or pulling competencies/exercises. Going via
         // tryReserveSlot mirrors what the production write path does on every successful call.
-        for (int i = 0; i < 8; i++) {
-            assertThat(appliedActionsBuffer.tryReserveSlot(8)).isTrue();
+        for (int i = 0; i < 16; i++) {
+            assertThat(appliedActionsBuffer.tryReserveSlot(16)).isTrue();
         }
-        assertThat(appliedActionsBuffer.tryReserveSlot(8)).isFalse();
+        assertThat(appliedActionsBuffer.tryReserveSlot(16)).isFalse();
 
         String createResult = service.createCompetency("Title", "Desc", "APPLY", JUSTIFICATION, toolContext);
         String editResult = service.editCompetency(10L, "Title", null, null, JUSTIFICATION, toolContext);
@@ -525,11 +525,11 @@ class OrchestratorToolsServiceTest {
         String unassignResult = service.unassignExerciseFromCompetency(10L, 20L, JUSTIFICATION, toolContext);
         String deleteResult = service.deleteCompetency(10L, JUSTIFICATION, toolContext);
 
-        assertThat(createResult).contains("Write tool call cap (8)");
-        assertThat(editResult).contains("Write tool call cap (8)");
-        assertThat(assignResult).contains("Write tool call cap (8)");
-        assertThat(unassignResult).contains("Write tool call cap (8)");
-        assertThat(deleteResult).contains("Write tool call cap (8)");
+        assertThat(createResult).contains("Write tool call cap (16)");
+        assertThat(editResult).contains("Write tool call cap (16)");
+        assertThat(assignResult).contains("Write tool call cap (16)");
+        assertThat(unassignResult).contains("Write tool call cap (16)");
+        assertThat(deleteResult).contains("Write tool call cap (16)");
         verify(competencyService, never()).createCompetencies(any(), any());
         verify(courseCompetencyRepository, never()).save(any());
         verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
@@ -540,21 +540,21 @@ class OrchestratorToolsServiceTest {
     @Test
     void writeQuota_allowsFullCapWorthOfAppendsBeforeBlocking() {
         // Verify the buffer accepts exactly the cap and rejects the next reservation.
-        // Eight different write types confirm the cap is shared across tool kinds, not per-tool.
+        // Repeated writes confirm the cap is shared across tool kinds, not per-tool.
         Course course = courseWithId(COURSE_ID);
         when(courseRepository.findById(COURSE_ID)).thenReturn(Optional.of(course));
         Competency created = new Competency("Created", "Desc", null, CourseCompetency.DEFAULT_MASTERY_THRESHOLD, CompetencyTaxonomy.UNDERSTAND, false);
         created.setId(900L);
         when(competencyService.createCompetencies(any(), eq(course))).thenReturn(List.of(created));
 
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 16; i++) {
             String result = service.createCompetency("Title " + i, "Desc", "UNDERSTAND", JUSTIFICATION, toolContext);
             assertThat(result).doesNotContain("Write tool call cap").as("call %d should succeed", i);
         }
 
-        assertThat(appliedActions).hasSize(8);
+        assertThat(appliedActions).hasSize(16);
         String overflow = service.createCompetency("Overflow", "Desc", "UNDERSTAND", JUSTIFICATION, toolContext);
-        assertThat(overflow).contains("Write tool call cap (8)");
+        assertThat(overflow).contains("Write tool call cap (16)");
     }
 
     @Test
