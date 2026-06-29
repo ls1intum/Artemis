@@ -460,8 +460,10 @@ describe('TutorialFreePeriodFormComponent', () => {
             component.setTimeFrame(TimeFrame.Day);
             component.setTimeFrame(TimeFrame.Period);
 
-            // endDate must stay empty — the clear must not be overwritten
-            expect(component.form.get('endDate')!.value).toBeFalsy();
+            // endDate must stay empty — the clear must not be overwritten.
+            // Cleared date controls reset to null (Angular FormControl.reset()), not undefined;
+            // a restore regression would put the original Date back, which toBeNull() also catches.
+            expect(component.form.get('endDate')!.value).toBeNull();
         });
 
         it('does not restore startTime/endTime when the user deliberately cleared them before switching tabs', () => {
@@ -483,9 +485,9 @@ describe('TutorialFreePeriodFormComponent', () => {
             component.setTimeFrame(TimeFrame.Day);
             component.setTimeFrame(TimeFrame.PeriodWithinDay);
 
-            // Both time controls must stay empty
-            expect(component.form.get('startTime')!.value).toBeFalsy();
-            expect(component.form.get('endTime')!.value).toBeFalsy();
+            // Both time controls must stay empty (reset to null, see endDate test above)
+            expect(component.form.get('startTime')!.value).toBeNull();
+            expect(component.form.get('endTime')!.value).toBeNull();
         });
 
         it('does not restore startDate when the user has deliberately cleared it', () => {
