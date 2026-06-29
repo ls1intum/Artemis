@@ -35,6 +35,14 @@ public class LLMModelCostConfiguration {
 
     @PostConstruct
     void applyDefaultModelCosts() {
+        // Reject keys that carry no alphanumeric characters: they strip to "", which is also the form a
+        // missing model name takes in LLMTokenUsageService, so they would silently become the fallback
+        // price for every model-less request. Fail fast before such a key can reach the lookup maps.
+        modelCosts.keySet().forEach(key -> {
+            if (stripToAlphanumeric(key).isEmpty()) {
+                throw new IllegalStateException("LLM model cost key '" + key + "' must contain at least one alphanumeric character");
+            }
+        });
         // A configured entry may use any representation of a model name (e.g. the env-var form "gpt54"
         // for "gpt-5.4"), so seed a default only when no configured key strips to the same value -
         // otherwise both would normalize to the same stripped key and collide at lookup-map construction.

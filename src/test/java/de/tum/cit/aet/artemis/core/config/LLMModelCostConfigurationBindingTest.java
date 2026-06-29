@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 
 import java.io.IOException;
@@ -146,6 +147,19 @@ class LLMModelCostConfigurationBindingTest {
         assertThat(modelCosts.get("gpt54").getInputCostPerMillionEur()).isCloseTo(2.30f, within(1e-4f));
         // unrelated default still present
         assertThat(modelCosts).containsKey("gpt-5.4-mini");
+    }
+
+    @Test
+    void rejectsModelCostKeyThatStripsToEmpty() {
+        // A punctuation-only key strips to "" - the same form a missing model name takes - so it must be
+        // rejected before it can become the silent fallback price for model-less requests.
+        var config = new LLMModelCostConfiguration();
+        LLMModelCostConfiguration.ModelCostProperties cost = new LLMModelCostConfiguration.ModelCostProperties();
+        cost.setInputCostPerMillionEur(1.0f);
+        cost.setOutputCostPerMillionEur(2.0f);
+        config.setModelCosts(new HashMap<>(Map.of("...", cost)));
+
+        assertThatThrownBy(config::applyDefaultModelCosts).isInstanceOf(IllegalStateException.class).hasMessageContaining("alphanumeric");
     }
 
     @Test
