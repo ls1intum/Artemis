@@ -20,6 +20,7 @@ import dayjs from 'dayjs/esm';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { ChatServiceMode, SessionContext, sameSessionContext } from 'app/iris/shared/entities/iris-session-context.model';
@@ -259,8 +260,9 @@ export class IrisChatService implements OnDestroy {
      *
      * @param message to be created
      * @param uncommittedFiles optional map of uncommitted file changes (path to content)
+     * @param context optional list of context objects providing information about what the user is viewing
      */
-    public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}): Observable<undefined> {
+    public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}, context?: IrisMessageContextDTO[]): Observable<undefined> {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
@@ -270,21 +272,21 @@ export class IrisChatService implements OnDestroy {
 
         const pendingContext = this.contextService.pending();
         const pendingContextDTO = pendingContext ? { mode: pendingContext.mode, entityId: pendingContext.entityId } : undefined;
-        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, pendingContextDTO);
+        const requestSessionId = this.sessionId;
+        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, pendingContextDTO, context);
 
         const generation = this.stateGeneration;
-        return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
+        return this.irisChatHttpService.createMessage(requestSessionId, requestDTO).pipe(
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {
-                if (this.stateGeneration !== generation) return;
+                if (this.stateGeneration !== generation || this.sessionId !== requestSessionId) return;
                 if (pendingContext) {
                     this.contextService.commitSentContext(pendingContext);
                     // Reflect the committed context in the sidebar entry immediately — without this,
                     // the related-entity icon/tooltip would stay stale until the next loadChatSessions().
-                    const sessionId = this.sessionId;
                     const updatedSessions = this.chatSessions
                         .getValue()
                         .map((session) =>
-                            session.id === sessionId
+                            session.id === requestSessionId
                                 ? { ...session, mode: pendingContext.mode, entityId: pendingContext.entityId, entityName: pendingContext.entityName ?? session.entityName }
                                 : session,
                         );
@@ -295,7 +297,7 @@ export class IrisChatService implements OnDestroy {
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
-                if (this.stateGeneration !== generation) return of(undefined);
+                if (this.stateGeneration !== generation || this.sessionId !== requestSessionId) return of(undefined);
                 this.handleSendHttpError(error);
                 return of(undefined);
             }),

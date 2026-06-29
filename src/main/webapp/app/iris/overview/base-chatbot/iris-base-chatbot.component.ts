@@ -37,10 +37,10 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
@@ -151,9 +151,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected accountService = inject(AccountService);
     protected translateService = inject(TranslateService);
     private readonly dialogService = inject(DialogService);
-    private readonly matDialog = inject(MatDialog);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
-    private aboutIrisMatDialogRef: MatDialogRef<AboutIrisModalComponent> | undefined;
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
 
@@ -350,6 +348,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isChatGptWrapper = input<boolean>(false);
     readonly layout = input<'client' | 'widget' | 'embedded'>('client');
     readonly aboutIrisDialogTransport = input<'automatic' | 'material' | 'dynamic'>('automatic');
+    /** Optional function provider that returns a list of context objects for the current message */
+    readonly contextProvider = input<(() => IrisMessageContextDTO[]) | undefined>(undefined);
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();
 
@@ -677,7 +677,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         });
         this.destroyRef.onDestroy(() => {
             this.aboutIrisDialogRef?.close();
-            this.aboutIrisMatDialogRef?.close();
         });
 
         // Placeholder cycling lifecycle
@@ -810,8 +809,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const content = this.newMessageTextContent().trim();
         if (content) {
             this.isLoading.set(true);
+            const provider = this.contextProvider();
+            const context = provider ? provider() : undefined;
+
             this.chatService
-                .sendMessage(content)
+                .sendMessage(content, {}, context && context.length > 0 ? context : undefined)
                 .pipe(takeUntilDestroyed(this.destroyRef))
                 .subscribe({
                     next: () => {
@@ -1315,44 +1317,20 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         if (this.onboardingService.currentStep() === 3) {
             this.onboardingService.onboardingEvent$.next({ type: 'aboutIrisOpened' });
         }
-        // The floating exercise chat widget lives inside a CDK MatDialog overlay and uses CSS
-        // transforms for drag/resize. In that specific case the About dialog must also use CDK
-        // to escape the widget's stacking context. Other Iris hosts with widget-like layout,
-        // such as the lecture fullscreen sidebar, should keep using PrimeNG.
-        if (this.shouldUseMaterialAboutDialog()) {
-            this.aboutIrisMatDialogRef?.close();
-            this.aboutIrisMatDialogRef = this.matDialog.open(AboutIrisModalComponent, {
-                hasBackdrop: true,
-                disableClose: true,
-                panelClass: 'about-iris-dialog',
-                backdropClass: 'about-iris-backdrop',
+        // The About dialog always uses PrimeNG's DynamicDialog. It is portaled to <body>, so it
+        // escapes the stacking context of the floating chat widget (itself a DynamicDialog) and
+        // renders above it regardless of the host layout (sidebar, lecture sidebar, or widget).
+        this.aboutIrisDialogRef?.close();
+        this.aboutIrisDialogRef =
+            this.dialogService.open(AboutIrisModalComponent, {
+                modal: true,
+                closable: false,
+                showHeader: false,
+                styleClass: 'about-iris-dialog',
+                maskStyleClass: 'about-iris-dialog',
                 width: '40rem',
-                maxWidth: '95vw',
-            });
-        } else {
-            this.aboutIrisDialogRef?.close();
-            this.aboutIrisDialogRef =
-                this.dialogService.open(AboutIrisModalComponent, {
-                    modal: true,
-                    closable: false,
-                    showHeader: false,
-                    styleClass: 'about-iris-dialog',
-                    maskStyleClass: 'about-iris-dialog',
-                    width: '40rem',
-                    breakpoints: { '640px': '95vw' },
-                }) ?? undefined;
-        }
-    }
-
-    private shouldUseMaterialAboutDialog(): boolean {
-        const transport = this.aboutIrisDialogTransport();
-        if (transport === 'material') {
-            return true;
-        }
-        if (transport === 'dynamic') {
-            return false;
-        }
-        return this.layout() === 'widget';
+                breakpoints: { '640px': '95vw' },
+            }) ?? undefined;
     }
 
     setSearchValue(searchValue: string) {

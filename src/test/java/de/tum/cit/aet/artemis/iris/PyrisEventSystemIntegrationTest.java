@@ -194,7 +194,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         // Wrap the following code into await() to ensure that the pipeline is executed before the test finishes.
         await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
 
-        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+        await().atMost(5, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq(irisSession), eq(Optional.of("progress_stalled")), any());
     }

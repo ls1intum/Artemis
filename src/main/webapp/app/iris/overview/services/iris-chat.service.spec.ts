@@ -36,6 +36,7 @@ import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { IrisSlidesContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 
 describe('IrisChatService', () => {
@@ -230,6 +231,26 @@ describe('IrisChatService', () => {
             // After the send commits the switch, the override is cleared and committed is updated
             expect(service['contextService']['_pending']()).toBeUndefined();
             expect(service['contextService']['_committed']()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: pendingEntityId });
+        });
+
+        it('should forward page context together with pendingContext', async () => {
+            vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+            const createdMessage = mockUserMessageWithContent('hi');
+            const createMessageSpy = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+            const context: IrisSlidesContextDTO[] = [{ type: 'slides', lectureUnitId: 7, page: 3 }];
+
+            service.openChat(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            service.stagePendingContext(ChatServiceMode.LECTURE, 42);
+            await firstValueFrom(service.sendMessage('hi', {}, context));
+
+            expect(createMessageSpy).toHaveBeenCalledWith(
+                id,
+                expect.objectContaining({ pendingContext: { mode: ChatServiceMode.LECTURE, entityId: 42 }, context }),
+            );
         });
 
         it('should not include pendingContext when user reverts to session current context before sending', async () => {
@@ -1041,6 +1062,38 @@ describe('IrisChatService', () => {
             // The tap should have been gated by stateGeneration and therefore did NOT repopulate messages
             // for the previous user.
             expect(scopedService.messages.getValue()).toEqual([]);
+        });
+
+        it('should ignore an in-flight sendMessage response after switching to another session', async () => {
+            const inFlight = new Subject<HttpResponse<IrisMessageResponseDTO>>();
+            const httpServiceMock = TestBed.inject(IrisChatHttpService);
+            vi.spyOn(httpServiceMock, 'createMessage').mockReturnValue(inFlight.asObservable());
+
+            scopedService.sessionId = 1;
+            scopedService.messages.next([mockServerMessage]);
+            scopedService.chatSessions.next([
+                { id: 1, mode: ChatServiceMode.COURSE, entityId: 1 } as IrisSessionDTO,
+                { id: 2, mode: ChatServiceMode.COURSE, entityId: 2 } as IrisSessionDTO,
+            ]);
+            scopedService['contextService'].adoptServerContext({ mode: ChatServiceMode.COURSE, entityId: 1 });
+            scopedService.stagePendingContext(ChatServiceMode.LECTURE, 42);
+
+            const callerResult = firstValueFrom(scopedService.sendMessage('hi'));
+
+            scopedService.sessionId = 2;
+            scopedService.messages.next([mockServerMessage2]);
+            scopedService['contextService'].adoptServerContext({ mode: ChatServiceMode.COURSE, entityId: 2 });
+
+            inFlight.next({ body: mockServerMessage } as unknown as HttpResponse<IrisMessageResponseDTO>);
+            inFlight.complete();
+            await callerResult;
+
+            expect(scopedService.messages.getValue()).toEqual([mockServerMessage2]);
+            expect(scopedService.chatSessions.getValue()).toEqual([
+                { id: 1, mode: ChatServiceMode.COURSE, entityId: 1 },
+                { id: 2, mode: ChatServiceMode.COURSE, entityId: 2 },
+            ]);
+            expect(scopedService['contextService']['_committed']()).toEqual({ mode: ChatServiceMode.COURSE, entityId: 2 });
         });
 
         it('should not allow an in-flight requestTutorSuggestion catchError to surface an error after logout', async () => {

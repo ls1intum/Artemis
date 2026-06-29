@@ -2,8 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
-import { Overlay } from '@angular/cdk/overlay';
+import { DialogService } from 'primeng/dynamicdialog';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
@@ -13,6 +12,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ActivatedRoute } from '@angular/router';
 import { mockServerSessionHttpResponseWithId, mockWebsocketServerMessage } from 'test/helpers/sample/iris-sample-data';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
@@ -34,11 +34,10 @@ describe('ExerciseChatbotButtonComponent', () => {
     let chatService: IrisChatService;
     let chatHttpServiceMock: IrisChatHttpService;
     let wsServiceMock: IrisWebsocketService;
-    let mockDialog: MatDialog;
-    let mockOverlay: Overlay;
+    let mockDialogService: DialogService;
     let mockActivatedRoute: ActivatedRoute;
     let mockDialogClose: ReturnType<typeof vi.fn>;
-    let mockDialogAfterClosed: Subject<void>;
+    let mockDialogOnClose: Subject<void>;
     let mockParamsSubject: Subject<any>;
     let mockQueryParamsSubject: Subject<any>;
     let accountService: AccountService;
@@ -62,21 +61,14 @@ describe('ExerciseChatbotButtonComponent', () => {
         } as unknown as ActivatedRoute;
 
         mockDialogClose = vi.fn();
-        mockDialogAfterClosed = new Subject<void>();
+        mockDialogOnClose = new Subject<void>();
 
-        mockDialog = {
+        mockDialogService = {
             open: vi.fn().mockReturnValue({
-                afterClosed: vi.fn().mockReturnValue(mockDialogAfterClosed.asObservable()),
+                onClose: mockDialogOnClose.asObservable(),
                 close: mockDialogClose,
             }),
-            closeAll: vi.fn(),
-        } as unknown as MatDialog;
-
-        mockOverlay = {
-            scrollStrategies: {
-                noop: vi.fn().mockReturnValue({}),
-            },
-        } as unknown as Overlay;
+        } as unknown as DialogService;
 
         await TestBed.configureTestingModule({
             imports: [FontAwesomeModule, MockPipe(HtmlForMarkdownPipe), IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent)],
@@ -86,8 +78,6 @@ describe('ExerciseChatbotButtonComponent', () => {
                 IrisChatService,
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
-                { provide: MatDialog, useValue: mockDialog },
-                { provide: Overlay, useValue: mockOverlay },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: IrisStatusService, useValue: statusMock },
@@ -104,7 +94,13 @@ describe('ExerciseChatbotButtonComponent', () => {
                     },
                 },
             ],
-        }).compileComponents();
+        })
+            // DialogService is provided at the component level (providers: [DialogService]), so it must
+            // be overridden on the component, not the module, for the mock to take effect.
+            .overrideComponent(IrisExerciseChatbotButtonComponent, {
+                set: { providers: [{ provide: DialogService, useValue: mockDialogService }] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
         component = fixture.componentInstance;
@@ -248,8 +244,8 @@ describe('ExerciseChatbotButtonComponent', () => {
             component.handleButtonClick();
 
             expect(mockDialogClose).toHaveBeenCalled();
-            // chatOpen is reset via afterClosed subscription
-            mockDialogAfterClosed.next();
+            // chatOpen is reset via the onClose subscription
+            mockDialogOnClose.next();
             await fixture.whenStable();
             expect(component.chatOpen()).toBe(false);
         });
@@ -260,7 +256,22 @@ describe('ExerciseChatbotButtonComponent', () => {
             component.handleButtonClick();
 
             expect(component.chatOpen()).toBe(true);
-            expect(mockDialog.open).toHaveBeenCalled();
+            expect(mockDialogService.open).toHaveBeenCalled();
+        });
+
+        it('should open the chat widget dialog with the correct floating, non-modal config', () => {
+            component.openChat();
+
+            expect(mockDialogService.open).toHaveBeenCalledWith(
+                IrisChatbotWidgetComponent,
+                expect.objectContaining({
+                    modal: false,
+                    closable: false,
+                    dismissableMask: false,
+                    showHeader: false,
+                    styleClass: 'iris-chat-widget-dialog',
+                }),
+            );
         });
     });
 
@@ -271,7 +282,7 @@ describe('ExerciseChatbotButtonComponent', () => {
             expect(component.chatOpen()).toBe(true);
 
             // Simulate dialog closing
-            mockDialogAfterClosed.next();
+            mockDialogOnClose.next();
             await fixture.whenStable();
 
             expect(component.chatOpen()).toBe(false);

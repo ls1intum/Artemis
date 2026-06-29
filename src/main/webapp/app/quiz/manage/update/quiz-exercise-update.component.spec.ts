@@ -5,7 +5,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -801,38 +800,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.quizExercise().isEditable = false;
                 comp.pendingChangesCache.set(true);
                 expect(comp.canDeactivate()).toBe(true);
-            });
-        });
-
-        describe('check if date is in the past', () => {
-            let tomorrow: NgbDate;
-            beforeEach(() => {
-                tomorrow = new NgbDate(2020, 11, 16);
-                // Set system time to 2020-11-15
-                // dayjs adds one month
-                vi.useFakeTimers();
-                vi.setSystemTime(new Date(2020, 10, 15, 0, 0, 0));
-            });
-
-            afterEach(() => {
-                vi.useRealTimers();
-            });
-
-            it('should return true if given month is before month we are in', () => {
-                expect(comp.isDateInPast(tomorrow, { month: 10 })).toBe(true);
-            });
-
-            it('should return false if given month is same or after month we are in', () => {
-                expect(comp.isDateInPast(tomorrow, { month: 11 })).toBe(false);
-            });
-
-            it('should return true if given date is before now', () => {
-                const past = new NgbDate(2020, 11, 10);
-                expect(comp.isDateInPast(past, { month: 11 })).toBe(true);
-            });
-
-            it('should return false if given date is before now', () => {
-                expect(comp.isDateInPast(tomorrow, { month: 11 })).toBe(false);
             });
         });
 

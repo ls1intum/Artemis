@@ -2,6 +2,7 @@ import { Component, DestroyRef, OnInit, effect, inject, input, signal } from '@a
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { PaginatorState } from 'primeng/paginator';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -166,6 +167,14 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
         if (pageNumber) {
             this.page = pageNumber;
         }
+    }
+
+    /**
+     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the 1-indexed page
+     * used throughout this component before delegating to {@link onPageChange}.
+     */
+    onPaginatorPageChange(event: PaginatorState): void {
+        this.onPageChange((event.page ?? 0) + 1);
     }
 
     /**

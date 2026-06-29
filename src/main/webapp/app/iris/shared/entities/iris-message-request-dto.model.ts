@@ -1,4 +1,5 @@
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 
 /**
  * Pending context change forwarded with a new user message so the server can apply the switch
@@ -10,7 +11,7 @@ export interface IrisPendingContextDTO {
 }
 
 /**
- * DTO for sending messages to Iris with optional uncommitted file changes and an optional pending context change.
+ * DTO for sending messages to Iris with optional uncommitted file changes and optional context information.
  * Matches the server IrisMessageRequestDTO structure.
  */
 export class IrisMessageRequestDTO {
@@ -18,11 +19,23 @@ export class IrisMessageRequestDTO {
     messageDifferentiator?: number;
     uncommittedFiles: { [path: string]: string };
     pendingContext?: IrisPendingContextDTO;
+    context?: IrisMessageContextDTO[];
 
-    constructor(content: IrisMessageContentDTO[], messageDifferentiator?: number, uncommittedFiles: { [path: string]: string } = {}, pendingContext?: IrisPendingContextDTO) {
+    constructor(
+        content: IrisMessageContentDTO[],
+        messageDifferentiator?: number,
+        uncommittedFiles: { [path: string]: string } = {},
+        pendingContextOrContext?: IrisPendingContextDTO | IrisMessageContextDTO[],
+        context?: IrisMessageContextDTO[],
+    ) {
         this.content = content;
         this.messageDifferentiator = messageDifferentiator;
         this.uncommittedFiles = uncommittedFiles;
-        this.pendingContext = pendingContext;
+        if (Array.isArray(pendingContextOrContext)) {
+            this.context = pendingContextOrContext;
+        } else {
+            this.pendingContext = pendingContextOrContext;
+            this.context = context;
+        }
     }
 }
