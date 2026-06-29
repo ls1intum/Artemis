@@ -67,6 +67,7 @@ export class PdfViewerComponent {
     private readonly hostElementRef = inject(ElementRef<HTMLElement>);
     private readonly languageChange = toSignal(this.translateService.onLangChange);
     private readonly currentPage = signal(1);
+    readonly currentPageSignal = this.currentPage.asReadonly();
     private drawerContentElement?: HTMLElement;
     private originalDrawerContentZIndex?: string;
 

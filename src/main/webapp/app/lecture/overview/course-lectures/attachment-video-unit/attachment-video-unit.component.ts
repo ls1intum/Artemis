@@ -55,6 +55,7 @@ import { map } from 'rxjs/operators';
 import { MessageModule } from 'primeng/message';
 import { LectureChatbotComponent } from 'app/iris/overview/lecture-chatbot/lecture-chatbot.component';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCombinedViewContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -106,6 +107,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
     targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
     irisSettings = input<IrisCourseSettingsWithRateLimitDTO | undefined>(undefined);
+    contextsProvider = input<LectureContextsProvider | undefined>(undefined); // For collecting context from visible units
 
     readonly lectureUnitCard = viewChild(LectureUnitComponent);
     readonly fullscreenLayout = viewChild(LectureUnitFullscreenLayoutComponent);
@@ -216,6 +218,61 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly closeFullscreenAriaLabel = computed(() => {
         return this.isFullscreen() ? this.translateService.instant('artemisApp.lectureUnit.closeFullscreen') : undefined;
     });
+
+    readonly contextProvider = computed(() => ({
+        getCurrentPdfPage: () => {
+            const viewer = this.pdfViewer();
+            return viewer ? viewer.currentPageSignal() : undefined;
+        },
+        getCurrentVideoTimestamp: () => {
+            const videoPlayer = this.videoPlayer();
+            const youtubePlayer = this.youtubePlayer();
+            return videoPlayer?.getCurrentTime() ?? youtubePlayer?.getCurrentTime();
+        },
+        hasVideoBeenPlayed: () => {
+            const videoPlayer = this.videoPlayer();
+            const youtubePlayer = this.youtubePlayer();
+            return videoPlayer?.hasBeenPlayed() ?? youtubePlayer?.hasBeenPlayed() ?? false;
+        },
+    }));
+
+    readonly ownContextsProvider = computed<LectureContextsProvider>(() => ({
+        getVisibleContexts: () => {
+            if (this.isCollapsed()) {
+                return [];
+            }
+
+            const unitId = this.lectureUnit()?.id;
+            if (!unitId) {
+                return [];
+            }
+
+            // In the combined view, the slide and video context are nested on the combined view
+            // context instead of being sent as separate top-level entries.
+            const provider = this.contextProvider();
+            const pdfPage = provider.getCurrentPdfPage?.();
+            const videoTimestamp = provider.getCurrentVideoTimestamp?.();
+            const hasVideoBeenPlayed = provider.hasVideoBeenPlayed?.() ?? false;
+
+            const slides: IrisSlidesContextDTO | undefined = pdfPage != null ? { type: 'slides', lectureUnitId: unitId, page: pdfPage } : undefined;
+            // Only include the video context if the video has been played (not just showing thumbnail)
+            const video: IrisVideoContextDTO | undefined =
+                videoTimestamp != null && hasVideoBeenPlayed ? { type: 'video', lectureUnitId: unitId, timestamp: videoTimestamp } : undefined;
+
+            // The combined view only carries meaningful context when a slide or video is present.
+            if (!slides && !video) {
+                return [];
+            }
+
+            const combinedViewContext: IrisCombinedViewContextDTO = {
+                type: 'combinedView',
+                slides,
+                video,
+            };
+
+            return [combinedViewContext];
+        },
+    }));
 
     constructor() {
         super();
