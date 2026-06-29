@@ -1,12 +1,12 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { ImportCompetenciesTableComponent } from 'app/atlas/manage/import/import-competencies-table.component';
+import { PaginatorState } from 'primeng/paginator';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -18,7 +18,7 @@ describe('ImportCompetenciesTableComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, ImportCompetenciesTableComponent, MockDirective(SortDirective), MockDirective(TranslateDirective), MockComponent(NgbPagination)],
+            imports: [ReactiveFormsModule, ImportCompetenciesTableComponent, MockDirective(SortDirective), MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -44,6 +44,11 @@ describe('ImportCompetenciesTableComponent', () => {
 
     it('should change page', () => {
         component.onPageChange(5);
+        expect(component.search().page).toBe(5);
+    });
+
+    it('onPaginatorPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+        component.onPaginatorPageChange({ page: 4 } as PaginatorState);
         expect(component.search().page).toBe(5);
     });
 
