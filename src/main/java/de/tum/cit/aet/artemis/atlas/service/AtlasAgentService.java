@@ -18,6 +18,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -67,9 +68,13 @@ public class AtlasAgentService {
 
     private final AtlasAgentDelegationService delegationService;
 
-    private final AtlasAgentToolCallbackService toolCallbackFactory;
+    private final ToolCallbackProvider mainAgentToolCallbackProvider;
 
-    private final AtlasAgentToolsService toolsService;
+    private final ToolCallbackProvider competencyExpertToolCallbackProvider;
+
+    private final ToolCallbackProvider competencyMapperToolCallbackProvider;
+
+    private final ToolCallbackProvider exerciseMapperToolCallbackProvider;
 
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
@@ -86,13 +91,19 @@ public class AtlasAgentService {
     private final AtlasAgentPreviewService previewService;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, @Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
-            AtlasAgentToolCallbackService toolCallbackFactory, AtlasAgentToolsService toolsService, ExecutionPlanStateManagerService executionPlanStateManagerService,
-            AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
+            @Qualifier("mainAgentToolCallbackProvider") ToolCallbackProvider mainAgentToolCallbackProvider,
+            @Qualifier("competencyExpertToolCallbackProvider") ToolCallbackProvider competencyExpertToolCallbackProvider,
+            @Qualifier("competencyMapperToolCallbackProvider") ToolCallbackProvider competencyMapperToolCallbackProvider,
+            @Qualifier("exerciseMapperToolCallbackProvider") ToolCallbackProvider exerciseMapperToolCallbackProvider,
+            ExecutionPlanStateManagerService executionPlanStateManagerService, AtlasAgentSessionCacheService atlasAgentSessionCacheService,
+            AtlasAgentPreviewService previewService) {
         this.chatClient = chatClient;
         this.chatMemory = chatMemory;
         this.delegationService = delegationService;
-        this.toolCallbackFactory = toolCallbackFactory;
-        this.toolsService = toolsService;
+        this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
+        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
+        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
+        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider;
         this.executionPlanStateManagerService = executionPlanStateManagerService;
         this.atlasAgentSessionCacheService = atlasAgentSessionCacheService;
         this.previewService = previewService;
@@ -245,10 +256,10 @@ public class AtlasAgentService {
 
     private ToolCallbackProvider getToolCallbackProvider(AgentType agentType) {
         return switch (agentType) {
-            case MAIN_AGENT -> toolCallbackFactory.createMainAgentProvider(toolsService);
-            case COMPETENCY_EXPERT -> toolCallbackFactory.createCompetencyExpertProvider();
-            case COMPETENCY_MAPPER -> toolCallbackFactory.createCompetencyMapperProvider();
-            case EXERCISE_MAPPER -> toolCallbackFactory.createExerciseMapperProvider();
+            case MAIN_AGENT -> mainAgentToolCallbackProvider;
+            case COMPETENCY_EXPERT -> competencyExpertToolCallbackProvider;
+            case COMPETENCY_MAPPER -> competencyMapperToolCallbackProvider;
+            case EXERCISE_MAPPER -> exerciseMapperToolCallbackProvider;
         };
     }
 

@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ai.tool.ToolCallbackProvider;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,13 +37,20 @@ class AtlasAgentToolsServiceTest {
     private AtlasAgentDelegationService delegationService;
 
     @Mock
-    private AtlasAgentToolCallbackService toolCallbackFactory;
+    private ToolCallbackProvider competencyExpertToolCallbackProvider;
+
+    @Mock
+    private ToolCallbackProvider competencyMapperToolCallbackProvider;
+
+    @Mock
+    private ToolCallbackProvider exerciseMapperToolCallbackProvider;
 
     private AtlasAgentToolsService toolsService;
 
     @BeforeEach
     void setUp() {
-        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, toolCallbackFactory);
+        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, competencyExpertToolCallbackProvider,
+                competencyMapperToolCallbackProvider, exerciseMapperToolCallbackProvider);
     }
 
     @AfterEach
