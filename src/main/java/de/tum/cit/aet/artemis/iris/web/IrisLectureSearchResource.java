@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import jakarta.validation.Valid;
 
@@ -147,15 +148,20 @@ public class IrisLectureSearchResource {
     public ResponseEntity<Void> ask(@RequestBody @Valid PyrisSearchAskRequestDTO requestDTO, Principal principal) {
         var user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         user.hasOptedIntoLLMUsageElseThrow();
-        var accessContext = buildAccessContext(user);
-        var prefetchedEntities = prefetchEntities(requestDTO.query(), user);
+        // Register the job before returning so WebSocket callbacks can be routed immediately.
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
-        // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
-        // Pyris may have received the request and already started the pipeline. Removing the token
-        // would break WebSocket routing for any callbacks that arrive later.
-        // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), user.getSelectedLLMUsage(), accessContext,
-                prefetchedEntities);
+        // Run the Weaviate pre-fetch and Pyris call asynchronously so the 202 is returned before
+        // the prefetch query hits Weaviate, preventing contention with concurrent /api/search requests.
+        CompletableFuture.runAsync(() -> {
+            var accessContext = buildAccessContext(user);
+            var prefetchedEntities = prefetchEntities(requestDTO.query(), user);
+            // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
+            // Pyris may have received the request and already started the pipeline. Removing the token
+            // would break WebSocket routing for any callbacks that arrive later.
+            // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
+            pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), user.getSelectedLLMUsage(), accessContext,
+                    prefetchedEntities);
+        });
         return ResponseEntity.accepted().build();
     }
 }
