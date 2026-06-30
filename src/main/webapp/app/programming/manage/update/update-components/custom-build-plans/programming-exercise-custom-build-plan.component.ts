@@ -47,7 +47,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements DoCheck, OnI
         }
 
         const legacyBuildScript = buildConfig?.buildScript;
-        if (!legacyBuildScript?.trim() || !this.programmingExercise().programmingLanguage) {
+        if ((!legacyBuildScript?.trim() && !configJson) || !this.programmingExercise().programmingLanguage) {
             this.resetCustomBuildPlan();
             this.buildPhasesTemplateService.resetToDefault();
             return;
