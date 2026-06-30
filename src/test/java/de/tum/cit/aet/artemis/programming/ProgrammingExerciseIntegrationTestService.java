@@ -87,7 +87,6 @@ import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
@@ -1731,13 +1730,12 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO result, double expectedSimilarity) {
         // verify plagiarism result
-        assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
-        assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(programmingExercise.getId());
+        assertThat(result.plagiarismResult().comparisons()).hasSize(1);
 
-        PlagiarismComparison comparison = result.plagiarismResult().getComparisons().iterator().next();
-        assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
-        assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
-        assertThat(comparison.getMatches()).hasSize(1);
+        var comparison = result.plagiarismResult().comparisons().getFirst();
+        assertThat(comparison.similarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
+        assertThat(comparison.status()).isEqualTo(PlagiarismStatus.NONE);
+        assertThat(comparison.matches()).hasSize(1);
 
         // verify plagiarism result stats
         var stats = result.plagiarismResultStats();
@@ -1891,7 +1889,7 @@ public class ProgrammingExerciseIntegrationTestService {
         PlagiarismResult expectedResult = textExerciseUtilService.createPlagiarismResultForExercise(programmingExercise);
 
         var result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
-        assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
+        assertThat(result.plagiarismResult().id()).isEqualTo(expectedResult.getId());
     }
 
     void testGetPlagiarismResultWithoutResult() throws Exception {
