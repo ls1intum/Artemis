@@ -19,10 +19,11 @@ import org.springframework.validation.annotation.Validated;
  * @param debounceWindowSeconds  Seconds without a new content change before a course's accumulator is eligible to fire.
  * @param maxDailyOrchestrations Per-course daily cap on auto-orchestration runs.
  * @param schedulerRateMs        Scheduler tick interval in milliseconds. Also used as the initial delay.
+ * @param maxAtlasMLCallsPerRun  Per-run cap on AtlasML similarity-shortlist calls (one per changed exercise); bounds the orchestrator's AtlasML fan-out.
  */
 @Validated
 @ConfigurationProperties(prefix = "artemis.atlas.orchestrator", ignoreUnknownFields = false)
 public record AtlasOrchestratorProperties(@DefaultValue("gpt-5.4") String model, @DefaultValue("1.0") double temperature, @DefaultValue("medium") String reasoningEffort,
-        @DefaultValue("1800") @Positive int debounceWindowSeconds, @DefaultValue("10") @Positive int maxDailyOrchestrations,
-        @DefaultValue("30000") @Positive long schedulerRateMs) {
+        @DefaultValue("1800") @Positive int debounceWindowSeconds, @DefaultValue("10") @Positive int maxDailyOrchestrations, @DefaultValue("30000") @Positive long schedulerRateMs,
+        @DefaultValue("10") @Positive int maxAtlasMLCallsPerRun) {
 }

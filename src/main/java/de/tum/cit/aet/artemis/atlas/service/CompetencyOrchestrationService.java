@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
+import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLShortlistService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
@@ -121,12 +122,15 @@ public class CompetencyOrchestrationService {
 
     private final UserRepository userRepository;
 
+    private final AtlasMLShortlistService shortlistService;
+
     private volatile DistributedMap<Long, RunInfo> runMap;
 
     public CompetencyOrchestrationService(ProgrammingExerciseRepository programmingExerciseRepository, ContentExtractionService contentExtractionService,
             OrchestratorToolsService orchestratorToolsService, AtlasPromptTemplateService templateService, @Nullable ChatClient chatClient,
             AtlasAgentToolCallbackService toolCallbackFactory, Optional<DistributedDataProvider> distributedDataProvider, AtlasOrchestratorProperties properties,
-            ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+            ContentChangeAccumulatorService contentChangeAccumulatorService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository,
+            AtlasMLShortlistService shortlistService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.contentExtractionService = contentExtractionService;
         this.orchestratorToolsService = orchestratorToolsService;
@@ -140,6 +144,7 @@ public class CompetencyOrchestrationService {
         this.contentChangeAccumulatorService = contentChangeAccumulatorService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
+        this.shortlistService = shortlistService;
     }
 
     /** Per-course IN_PROGRESS guard map, resolved lazily (see {@link #resolveRunMap}). */
@@ -404,13 +409,16 @@ public class CompetencyOrchestrationService {
         String systemPrompt;
         try {
             ExtractedContentDTO extracted = contentExtractionService.extractContent(exercise);
+            List<ExerciseChange> changes = List.of(new ExerciseChange(exerciseId, extracted.title(), extracted.extractedLearningText()));
             CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
-            String renderedChanges = renderExerciseChangeBatch(List.of(new ExerciseChange(exerciseId, extracted.title(), extracted.extractedLearningText())));
-            // Map.of key order is irrelevant: the prompt template references both placeholders by
-            // name, and the fence sanitization in renderExerciseChangeBatch / renderCompetencyIndex
-            // guarantees neither user-supplied string can break out and reposition the other.
-            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
+            String renderedChanges = renderExerciseChangeBatch(changes);
+            String renderedShortlist = renderAtlasMLShortlist(courseId, changes);
+            // Map.of key order is irrelevant: the prompt template references the placeholders by
+            // name, and the fence sanitization in renderExerciseChangeBatch / renderCompetencyIndex /
+            // the shortlist service guarantees no user-supplied string can break out and reposition another.
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH,
+                    Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex, "atlasMLShortlist", renderedShortlist));
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator preparation failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
@@ -452,7 +460,9 @@ public class CompetencyOrchestrationService {
             CompetencyIndexResponseDTO competencyIndex = orchestratorToolsService.listCompetencyIndex(courseId);
             String renderedIndex = renderCompetencyIndex(competencyIndex);
             String renderedChanges = renderExerciseChangeBatch(changes);
-            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH, Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex));
+            String renderedShortlist = renderAtlasMLShortlist(courseId, changes);
+            systemPrompt = templateService.render(EXECUTE_PROMPT_PATH,
+                    Map.of("exerciseChanges", renderedChanges, "competencyIndex", renderedIndex, "atlasMLShortlist", renderedShortlist));
         }
         catch (Exception ex) {
             log.warn("Atlas orchestrator (batch) preparation failed for course {}: {}", courseId, ex.getMessage(), ex);
@@ -536,6 +546,17 @@ public class CompetencyOrchestrationService {
 
     /** One extracted exercise change rendered as a numbered entry in the EXERCISE CHANGE BATCH block. */
     private record ExerciseChange(long exerciseId, String title, @Nullable String problemStatement) {
+    }
+
+    /**
+     * Fetches and renders the per-exercise AtlasML similarity shortlist for the batch. The cleaned learning
+     * text of each change is the AtlasML query; the result is the injection-safe block interpolated into the
+     * execute prompt. Best-effort: an unavailable or failing AtlasML yields the stub block (see {@link AtlasMLShortlistService}).
+     */
+    private String renderAtlasMLShortlist(long courseId, List<ExerciseChange> changes) {
+        List<AtlasMLShortlistService.ExerciseExtract> extracts = changes.stream()
+                .map(change -> new AtlasMLShortlistService.ExerciseExtract(change.exerciseId(), change.problemStatement())).toList();
+        return shortlistService.renderShortlist(shortlistService.fetchShortlists(courseId, extracts));
     }
 
     /**
