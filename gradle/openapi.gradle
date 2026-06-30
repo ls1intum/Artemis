@@ -71,9 +71,9 @@
     // generator (generatorName "angular21"): standalone, inject()-based services (no constructor
     // injection — required for the AnalogJS fastCompile test runner under Angular 22) and
     // signal/readonly-aware models. The generator is added to the buildscript classpath (only for the
-    // openApiGenerate task) in the root build.gradle, which also documents how to obtain it (GitHub
-    // Packages with read:packages auth, or build-from-source via publishToMavenLocal). The generated
-    // client is committed, so CI never runs openApiGenerate.
+    // openApiGenerate task) in the root build.gradle, which also documents how to obtain it (Maven
+    // Central — no auth — or build-from-source via publishToMavenLocal). The generated client is
+    // committed, so CI never runs openApiGenerate.
     openApiGenerate {
         generatorName = "angular21"
         inputSpec.set(file("${rootDir}/openapi/openapi.yaml").toURI().toString())
