@@ -178,7 +178,7 @@ describe('VideoPlayerComponent', () => {
 
     it('timeupdate sets active segment and scrolls the element into view', async () => {
         const segments: TranscriptSegment[] = [
-            { startTime: 10, endTime: 12, text: 'A' },
+            { startTime: 10, endTime: 12, text: 'A', slideNumber: 7 },
             { startTime: 20, endTime: 22, text: 'B' },
         ];
         setInputs('https://cdn.example.com/m.m3u8', segments);
@@ -194,6 +194,7 @@ describe('VideoPlayerComponent', () => {
         component.updateCurrentSegment(10.1);
 
         expect(getIndex()).toBe(0);
+        expect(component.getCurrentSlideNumber()).toBe(7);
     });
 
     it('timeupdate outside any segment leaves index at -1', async () => {
@@ -206,18 +207,32 @@ describe('VideoPlayerComponent', () => {
         expect(getIndex()).toBe(-1);
     });
 
-    it('updateCurrentSegment: within margin updates; far outside does not clear back to -1', async () => {
-        const segments: TranscriptSegment[] = [{ startTime: 5, endTime: 10, text: 'edge' }];
+    it('updateCurrentSegment: within margin updates; moving outside clears index and slide number', async () => {
+        const segments: TranscriptSegment[] = [{ startTime: 5, endTime: 10, text: 'edge', slideNumber: 3 }];
         setInputs('https://cdn.example.com/m.m3u8', segments);
         await render();
 
         // Within margin (10.2 <= 10 + 0.3)
         component.updateCurrentSegment(10.2);
         expect(getIndex()).toBe(0);
+        expect(component.getCurrentSlideNumber()).toBe(3);
 
-        // Far outside -> index remains last valid (component does not set -1)
+        // Far outside all segments — index and slide number must be cleared
         component.updateCurrentSegment(99);
-        expect(getIndex()).toBe(0);
+        expect(getIndex()).toBe(-1);
+        expect(component.getCurrentSlideNumber()).toBeUndefined();
+    });
+
+    it('getCurrentSlideNumber returns undefined after playback leaves all transcript segments', async () => {
+        const segments: TranscriptSegment[] = [{ startTime: 10, endTime: 15, text: 'Slide 5', slideNumber: 5 }];
+        setInputs('https://cdn.example.com/m.m3u8', segments);
+        await render();
+
+        component.updateCurrentSegment(12); // inside segment
+        expect(component.getCurrentSlideNumber()).toBe(5);
+
+        component.updateCurrentSegment(50); // gap after last segment
+        expect(component.getCurrentSlideNumber()).toBeUndefined();
     });
 
     it('seekTo sets current time and plays', async () => {
@@ -230,6 +245,18 @@ describe('VideoPlayerComponent', () => {
 
         expect(videoElement.currentTime).toBe(42);
         expect(playSpy).toHaveBeenCalled();
+    });
+
+    it('seekTo can update the position without resuming playback', async () => {
+        setInputs('https://cdn.example.com/m.m3u8', []);
+        await render();
+
+        const playSpy = vi.spyOn(videoElement, 'play').mockResolvedValue(undefined);
+
+        component.seekTo(21, false);
+
+        expect(videoElement.currentTime).toBe(21);
+        expect(playSpy).not.toHaveBeenCalled();
     });
 
     it('applies initial timestamp after metadata is available', async () => {
@@ -542,6 +569,79 @@ describe('VideoPlayerComponent', () => {
             const setSignalSpy = vi.spyOn(component.currentSegmentIndex, 'set');
             component.updateCurrentSegment(10.5);
             expect(setSignalSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('Context provider methods', () => {
+        it('getCurrentTime: returns current time from video element', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            videoElement.currentTime = 42.5;
+
+            const currentTime = component.getCurrentTime();
+
+            expect(currentTime).toBe(42.5);
+        });
+
+        it('getCurrentTime: returns undefined when videoRef is not available', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            vi.spyOn(component, 'videoRef').mockReturnValue(undefined);
+
+            const currentTime = component.getCurrentTime();
+
+            expect(currentTime).toBeUndefined();
+        });
+
+        it('hasBeenPlayed: returns true when video has played ranges', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            // Mock played TimeRanges
+            Object.defineProperty(videoElement, 'played', {
+                value: {
+                    length: 1,
+                    start: (index: number) => 0,
+                    end: (index: number) => 10,
+                },
+                configurable: true,
+            });
+
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(true);
+        });
+
+        it('hasBeenPlayed: returns false when video has not been played', async () => {
+            setInputs('https://cdn.example.com/m.m3u8', []);
+            await render();
+
+            // Mock empty played TimeRanges
+            Object.defineProperty(videoElement, 'played', {
+                value: {
+                    length: 0,
+                    start: (index: number) => 0,
+                    end: (index: number) => 0,
+                },
+                configurable: true,
+            });
+
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(false);
+        });
+
+        it('hasBeenPlayed: returns false when videoRef is not available', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            vi.spyOn(component, 'videoRef').mockReturnValue(undefined);
+
+            const hasPlayed = component.hasBeenPlayed();
+
+            expect(hasPlayed).toBe(false);
         });
     });
 });
