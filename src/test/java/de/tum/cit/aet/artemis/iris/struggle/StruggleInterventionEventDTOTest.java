@@ -17,7 +17,7 @@ class StruggleInterventionEventDTOTest {
     @Test
     void nullSessionAndMessageIdsAreOmitted() throws Exception {
         // NON_EMPTY serialization contract: a push without session/message ids (e.g. a partial payload) omits both.
-        var event = new StruggleInterventionEventDTO(42, "decide", "ambient", "Re-check the logic.", null, null, null, null, null, 0.7, null);
+        var event = new StruggleInterventionEventDTO(42, "decide", "ambient", "Re-check the logic.", null, null, null, null, null, 0.7, null, null, null, null, null, null, null);
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("exerciseId").asLong()).isEqualTo(42);
         assertThat(node.get("kind").asText()).isEqualTo("decide");
@@ -33,7 +33,7 @@ class StruggleInterventionEventDTOTest {
     @Test
     void eventCarriesSessionIdMessageIdAndConfidence() throws Exception {
         // Active event carries sessionId + messageId of the saved message, and the episodeId for slot correlation.
-        var event = new StruggleInterventionEventDTO(42, "decide", "active", null, 99L, 555L, null, null, null, 0.81, "ep-abc");
+        var event = new StruggleInterventionEventDTO(42, "decide", "active", null, 99L, 555L, null, null, null, 0.81, "ep-abc", null, null, null, null, null, null);
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("kind").asText()).isEqualTo("decide");
         assertThat(node.get("sessionId").asLong()).isEqualTo(99);
@@ -45,7 +45,7 @@ class StruggleInterventionEventDTOTest {
     @Test
     void silentEventOmitsSessionMessageAndEpisodeWhenNull() throws Exception {
         // Silent completion frames carry kind + action, but omit optional fields when null.
-        var event = new StruggleInterventionEventDTO(42, "decide", "silent", null, null, null, null, null, null, null, null);
+        var event = new StruggleInterventionEventDTO(42, "decide", "silent", null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         JsonNode node = mapper.valueToTree(event);
         assertThat(node.get("kind").asText()).isEqualTo("decide");
         assertThat(node.get("action").asText()).isEqualTo("silent");

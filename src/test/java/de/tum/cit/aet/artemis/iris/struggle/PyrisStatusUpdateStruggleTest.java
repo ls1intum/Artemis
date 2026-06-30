@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.struggle;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -48,8 +49,13 @@ class PyrisStatusUpdateStruggleTest {
 
     private PyrisStatusUpdateService service;
 
-    // jobId "t", courseId 7, exerciseId 42, userId 3
+    // jobId "t", courseId 7, exerciseId 42, userId 3 (decide / legacy intent)
     private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L, null, null, null, null);
+
+    // A11 mode jobs: intent carries the routing key; action is null on the response (deadlock guard)
+    private final StruggleInterventionJob confirmCloseJob = new StruggleInterventionJob("cc", 7L, 42L, 3L, "confirm_close", "ep-cc", "progress", null);
+
+    private final StruggleInterventionJob staleCheckJob = new StruggleInterventionJob("sc", 7L, 42L, 3L, "stale_check", "ep-sc", null, null);
 
     @BeforeEach
     void setUp() {
@@ -110,5 +116,35 @@ class PyrisStatusUpdateStruggleTest {
         verify(pyrisJobService, never()).removeJob(any());
         verify(pyrisJobService, never()).updateJob(any());
         verify(pyrisJobService, never()).releaseStruggleInFlightMarker(anyString(), anyLong(), anyLong());
+    }
+
+    @Test
+    void confirmClose_withNullAction_removesJobAndReleasesMarker() {
+        // A11 deadlock fix: confirm_close responses carry action=null. The old gate (action != null) would
+        // never clear the in-flight marker, deadlocking the slot. The fix routes by job.intent() first.
+        // action=null is the real-world response shape for confirm_close.
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null, true, "Nice work!", "Done", null, null);
+
+        service.handleStatusUpdate(confirmCloseJob, update);
+
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        inOrder.verify(pyrisJobService).removeJob(confirmCloseJob);
+        inOrder.verify(irisStruggleInterventionService).handleConfirmClose(eq(confirmCloseJob), any());
+        inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("cc", 3L, 42L);
+        verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
+    }
+
+    @Test
+    void staleCheck_withNullAction_removesJobAndReleasesMarker() {
+        // A11 deadlock fix: stale_check responses carry action=null. Same root cause as confirm_close above.
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null, null, null, null, true, "Still stuck?");
+
+        service.handleStatusUpdate(staleCheckJob, update);
+
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        inOrder.verify(pyrisJobService).removeJob(staleCheckJob);
+        inOrder.verify(irisStruggleInterventionService).handleStaleCheck(eq(staleCheckJob), any());
+        inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("sc", 3L, 42L);
+        verify(irisStruggleInterventionService, never()).handleDecision(any(), any());
     }
 }

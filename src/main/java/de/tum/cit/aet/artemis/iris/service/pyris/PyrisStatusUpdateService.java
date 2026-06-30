@@ -79,17 +79,44 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handle a struggle-intervention callback (spec §5.4). Exactly-once: the first callback carrying an
-     * {@code action} removes the job and applies the decision; the trailing duplicate then fails auth (403).
-     * The single-flight in-flight marker is released only AFTER the decision work completes, so a concurrent
-     * second trigger for the same {@code (user, exercise)} cannot race in while the session is being
-     * materialized + the bubble persisted + pushed (spec §11).
+     * Handle a struggle-intervention callback (spec §5.4, A11). Routes by the authoritative {@code job.intent()}:
+     * {@code confirm_close} and {@code stale_check} are one-shot terminal completions regardless of the
+     * {@code action} field (which is null on these modes). They MUST be removed + released immediately or the
+     * single-flight slot deadlocks after the first progress-close / stale-check (spec §6 fix).
+     *
+     * <p>
+     * For the legacy {@code decide} path (or null intent): the first callback carrying {@code action != null}
+     * removes the job and applies the decision; the trailing duplicate then fails auth (403). The in-flight marker
+     * is released only AFTER the handler returns, so a concurrent second trigger cannot race in while the bubble
+     * is being materialized + persisted + pushed (spec §11).
      *
      * @param job          the struggle-intervention job that is updated
      * @param statusUpdate the status update received
      */
     public void handleStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
-        if (statusUpdate.action() != null) {
+        String intent = job.intent();
+        if ("confirm_close".equals(intent)) {
+            // confirm_close: always a one-shot terminal completion (action is null on this mode).
+            pyrisJobService.removeJob(job);   // drop FIRST so trailing duplicate 403s
+            try {
+                irisStruggleInterventionService.handleConfirmClose(job, statusUpdate);
+            }
+            finally {
+                pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+            }
+        }
+        else if ("stale_check".equals(intent)) {
+            // stale_check: always a one-shot terminal completion (action is null on this mode).
+            pyrisJobService.removeJob(job);   // drop FIRST so trailing duplicate 403s
+            try {
+                irisStruggleInterventionService.handleStaleCheck(job, statusUpdate);
+            }
+            finally {
+                pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
+            }
+        }
+        else if (statusUpdate.action() != null) {
+            // decide (or legacy null intent): action != null signals the terminal decision callback.
             pyrisJobService.removeJob(job);   // drop the JOB-MAP entry FIRST so the trailing duplicate is rejected (403)...
             try {
                 irisStruggleInterventionService.handleDecision(job, statusUpdate);
