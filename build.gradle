@@ -9,14 +9,35 @@ buildscript {
             force "com.github.jknack:handlebars:4.5.2"
         }
     }
-    // The custom OpenAPI generator (generatorName "angular21") is only needed when regenerating the
-    // Angular client locally via `./gradlew openApiGenerate`. The generated client is committed, so CI
-    // never regenerates it and must not try to resolve this artifact (it lives only in Maven Local
-    // until published). Add it — and Maven Local — to the buildscript classpath solely for that task,
-    // so it is discovered by the org.openapi.generator plugin via ServiceLoader during regeneration.
+    // The custom OpenAPI generator (generatorName "angular21", https://github.com/ls1intum/openapi-generator-angular21)
+    // is only needed when regenerating the Angular client locally via `./gradlew openApiGenerate`. The
+    // generated client is committed, so CI never regenerates it and must not try to resolve this
+    // artifact. The generator + Maven Local are therefore added to the buildscript classpath solely for
+    // that task (so the org.openapi.generator plugin discovers it via ServiceLoader during regeneration).
+    //
+    // To regenerate the client you need the generator available to Gradle, via either:
+    //   1. GitHub Packages (the generator's published artifact): export GITHUB_ACTOR + GITHUB_TOKEN
+    //      (a token with `read:packages`); CI provides these automatically. OR
+    //   2. Build from source: clone the generator repo and run `./gradlew publishToMavenLocal` there,
+    //      which installs it into your local Maven repository.
     if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("openapigenerate") }) {
+        def githubActor = System.getenv("GITHUB_ACTOR")
+        def githubToken = System.getenv("GITHUB_TOKEN")
         repositories {
+            // Locally-built generator (`publishToMavenLocal`) — checked first so no auth is required.
             mavenLocal()
+            // Published generator artifact on GitHub Packages (only added when credentials are present,
+            // since GitHub Packages requires authentication even for reads).
+            if (githubActor && githubToken) {
+                maven {
+                    name = "openapiGeneratorAngular21"
+                    url = "https://maven.pkg.github.com/ls1intum/openapi-generator-angular21"
+                    credentials {
+                        username = githubActor
+                        password = githubToken
+                    }
+                }
+            }
             maven {
                 name = "reposiliteRepository"
                 url = "https://reposilite.aet.cit.tum.de/releases"
@@ -24,9 +45,7 @@ buildscript {
             mavenCentral()
         }
         dependencies {
-            // Build & install it with `./gradlew publishToMavenLocal` in
-            // https://github.com/ls1intum/openapi-generator-angular21.
-            classpath "de.tum.cit.aet:openapi-generator-angular21:1.0.0"
+            classpath "de.tum.cit.aet:openapi-generator-angular21:1.1.0"
         }
     }
     dependencies {
