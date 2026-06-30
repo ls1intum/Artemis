@@ -477,8 +477,10 @@ public class IrisStruggleInterventionService {
         if (clientMessageId == null || clientMessageId.isBlank()) {
             throw new BadRequestException("A non-blank clientMessageId is required to reveal an ambient hint");
         }
-        // Fast idempotency path: already persisted (normal case on lost-response retry).
-        var existing = irisMessageRepository.findByProactiveClientMessageId(clientMessageId);
+        // Fast idempotency path: already persisted by THIS user (normal case on lost-response retry). The lookup is
+        // user-scoped so a replayed (client-supplied, globally-unique) clientMessageId can never read another
+        // student's persisted hint (IDOR fix): a foreign key returns empty here, never the foreign row.
+        var existing = irisMessageRepository.findByProactiveClientMessageIdAndUserId(clientMessageId, user.getId());
         if (existing.isPresent()) {
             return IrisMessageResponseDTO.of(existing.get());
         }
@@ -496,8 +498,11 @@ public class IrisStruggleInterventionService {
             return IrisMessageResponseDTO.of(saved);
         }
         catch (DataIntegrityViolationException ex) {
-            // Concurrent retry persisted first; re-select the now-existing row (race-safe upsert).
-            return irisMessageRepository.findByProactiveClientMessageId(clientMessageId).map(IrisMessageResponseDTO::of)
+            // The global unique index on proactive_client_message_id rejected the insert. Re-select user-scoped: a
+            // same-user concurrent retry persisted first, so the now-existing row is returned (race-safe upsert). A
+            // cross-user key collision (the key belongs to another student's row) finds nothing here and surfaces as
+            // an error rather than leaking the foreign row - the user scope is preserved on the recovery path too.
+            return irisMessageRepository.findByProactiveClientMessageIdAndUserId(clientMessageId, user.getId()).map(IrisMessageResponseDTO::of)
                     .orElseThrow(() -> new IllegalStateException("Row vanished after unique-index violation on proactive_client_message_id=" + clientMessageId, ex));
         }
     }
@@ -546,6 +551,21 @@ public class IrisStruggleInterventionService {
             return !irisMessageRepository.findEpisodeOutcomes(episodeId).isEmpty();
         }
         return true;
+    }
+
+    /**
+     * Enforce that {@code user} holds at least the STUDENT role for the given exercise. Binds the {@code exerciseId}
+     * path variable of the episode-outcome endpoint to a real authorization check, closing the IDOR where any
+     * authenticated student could record (or probe) an outcome for an episode in an exercise they are not enrolled in.
+     * This is a pure authorization gate: it does NOT touch the LLM opt-in (recording a reaction to an already
+     * delivered hint must never be rejected on opt-in, spec §10), only course/exercise membership.
+     *
+     * @param exerciseId the programming exercise id from the request path
+     * @param user       the requesting user (must carry groups + authorities)
+     */
+    public void checkAtLeastStudentForExercise(long exerciseId, User user) {
+        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
     }
 
     /**
@@ -631,8 +651,27 @@ public class IrisStruggleInterventionService {
         if (session == null) {
             return null;
         }
-        var saved = saveProactiveMessage(session, result, episodeId);
-        return new PersistedProactive(session, saved);
+        // Bounded retry on transient DB failures, mirroring handleDecision's active path (spec §12). On a permanent
+        // DataAccessException (or once the transient retries are exhausted) the message is dropped and null is
+        // returned rather than propagating: the confirm_close / stale_check callers then still emit their completion
+        // frame (with messageId=null) so the client's in-flight slot always clears (finding 2 fix) instead of the
+        // exception bubbling up and leaving the single-flight slot stuck.
+        for (int attempt = 0; attempt < PERSIST_MAX_ATTEMPTS; attempt++) {
+            try {
+                var saved = saveProactiveMessage(session, result, episodeId);
+                return new PersistedProactive(session, saved);
+            }
+            catch (TransientDataAccessException ex) {
+                log.warn("Transient proactive persist failure attempt {}/{} for exercise={} user={}", attempt + 1, PERSIST_MAX_ATTEMPTS, exerciseId, user.getId(), ex);
+            }
+            catch (DataAccessException ex) {
+                // Non-transient failure (e.g. DataIntegrityViolationException): no point retrying.
+                log.warn("Permanent proactive persist failure for exercise={} user={}", exerciseId, user.getId(), ex);
+                return null;
+            }
+        }
+        log.warn("Proactive persist failed after {} attempts for exercise={} user={}", PERSIST_MAX_ATTEMPTS, exerciseId, user.getId());
+        return null;
     }
 
     /**

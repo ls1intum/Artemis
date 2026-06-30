@@ -76,13 +76,23 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     List<IrisProactiveOutcome> findEpisodeOutcomes(@Param("episodeId") String episodeId);
 
     /**
-     * Find a message by its client-assigned idempotency key.
-     * Used by A10 {@code revealAmbient} to detect duplicate reveal inserts.
+     * Find a message by its client-assigned idempotency key, SCOPED to the requesting user's own sessions. Used by
+     * A10 {@code revealAmbient} to detect duplicate reveal inserts. The user scope is a security guard: the
+     * {@code proactiveClientMessageId} is client-supplied and globally unique, so an unscoped lookup would let any
+     * student read another student's persisted hint by replaying their idempotency key (IDOR). Scoping the read by
+     * the owning session's {@code userId} closes that hole - a foreign key returns empty, never the foreign row.
      *
      * @param proactiveClientMessageId the client-generated UUID key
-     * @return the message row, or empty if none persisted with this key yet
+     * @param userId                   the requesting user; only rows in this user's sessions are returned
+     * @return the message row owned by this user, or empty if none persisted by this user with this key yet
      */
-    Optional<IrisMessage> findByProactiveClientMessageId(String proactiveClientMessageId);
+    @Query("""
+            SELECT m
+            FROM IrisMessage m
+            WHERE m.proactiveClientMessageId = :proactiveClientMessageId
+              AND m.session.id IN (SELECT s.id FROM IrisSession s WHERE s.userId = :userId)
+            """)
+    Optional<IrisMessage> findByProactiveClientMessageIdAndUserId(@Param("proactiveClientMessageId") String proactiveClientMessageId, @Param("userId") long userId);
 
     /**
      * Row-scoped first-write-wins update: sets {@code proactiveOutcome} on the target row ONLY IF that row currently

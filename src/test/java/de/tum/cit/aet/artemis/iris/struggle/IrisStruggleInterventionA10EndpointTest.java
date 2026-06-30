@@ -127,6 +127,29 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-blank/reveal", body, HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void reveal_clientMessageIdLookup_isUserScoped_noCrossUserRead() throws Exception {
+        // IDOR guard (Fix 3) at the data layer: a globally-unique clientMessageId is only resolvable by the OWNING
+        // user. student3 owns the row; the scoped finder returns it for student3 but NEVER for student1, so a replayed
+        // key can never read another student's persisted hint.
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var student3 = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student3);
+        var msg = new IrisMessage();
+        msg.addContent(new IrisTextMessageContent("student3 hint"));
+        msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        msg.setProactiveEpisodeId("ep-scope");
+        msg.setProactiveClientMessageId("scoped-cid");
+        var owned = irisMessageService.saveMessage(msg, session, IrisMessageSender.LLM);
+
+        var ownerLookup = irisMessageRepository.findByProactiveClientMessageIdAndUserId("scoped-cid", student3.getId());
+        assertThat(ownerLookup).isPresent();
+        assertThat(ownerLookup.get().getId()).isEqualTo(owned.getId());
+        // The foreign user gets nothing back - the row is in none of student1's sessions.
+        assertThat(irisMessageRepository.findByProactiveClientMessageIdAndUserId("scoped-cid", student1.getId())).isEmpty();
+    }
+
     // ---- episode-outcome ----
 
     @Test
@@ -169,6 +192,16 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         var result = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-optedout/proactive-outcome", IrisProactiveOutcome.DISMISSED,
                 EpisodeOutcomeAppliedDTO.class, HttpStatus.OK);
         assertThat(result.applied()).isFalse();   // no row yet for this episode -> deferred, but NOT forbidden
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "nonmember", roles = "USER")
+    void episodeOutcome_studentNotInExercise_isForbidden() throws Exception {
+        // Fix 4: the exerciseId path variable is now bound to a real membership check. A user holding the global
+        // ROLE_USER authority but NOT enrolled in this exercise's course must be refused (403). Without the check any
+        // authenticated student could write an outcome for an episode in any exercise.
+        userUtilService.createAndSaveUser(TEST_PREFIX + "nonmember");
+        request.put("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-nm/proactive-outcome", IrisProactiveOutcome.DISMISSED, HttpStatus.FORBIDDEN);
     }
 
     @Test

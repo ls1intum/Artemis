@@ -155,6 +155,10 @@ public class IrisStruggleInterventionResource {
         if (outcome == null) {
             throw new BadRequestException("An episode outcome is required");
         }
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Bind the exerciseId path variable to a real authorization check: the caller must be at least a STUDENT in
+        // this exercise. Without it any authenticated student could write an outcome for an episode in any exercise.
+        struggleInterventionService.checkAtLeastStudentForExercise(exerciseId, user);
         // No LLM opt-in gate (unlike the trigger/reveal): recording a student's reaction to an already-delivered hint
         // (notably DISMISSED) must never be rejected, even if the student's opt-in lapsed after the hint was shown.
         // The brief mandates that an explicit terminal outcome is always eventually written - a 403 here would make the

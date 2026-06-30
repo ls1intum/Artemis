@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -318,6 +319,59 @@ class IrisStruggleInterventionConfirmCloseTest {
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && e.messageId() == null));
+    }
+
+    // --- confirm_close / stale_check persist-failure resilience (Fix 2) ---
+
+    @Test
+    void confirmClose_progress_resolved_true_persistFailure_stillEmitsCompletionEvent() {
+        // Fix 2: a permanent persist failure on confirm_close must NOT propagate out of the handler - that would skip
+        // sendStruggleEvent and leave the client's in-flight confirm_close (and the single-flight slot) stuck. The
+        // completion event must still be emitted (messageId=null) and RECOVERED must NOT be written (no row to anchor).
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc")).thenReturn(List.of());
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("persist failed"));
+        var update = closeUpdate(true, "Closing", "Done", null);
+
+        service.handleConfirmClose(progressJob, update);   // must not throw
+
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && e.messageId() == null));
+    }
+
+    @Test
+    void confirmClose_staleSolved_resolved_false_persistFailure_stillEmitsOfferEvent() {
+        // Fix 2: the stale_solved offer persist can also fail; the offer event must still be emitted (messageId=null).
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc")).thenReturn(List.of());
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("persist failed"));
+        var update = closeUpdateWithRationale(false, "Want to pair on it?");
+
+        service.handleConfirmClose(staleSolvedJob, update);   // must not throw
+
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(),
+                argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null && "Want to pair on it?".equals(e.offer())));
+    }
+
+    @Test
+    void staleCheck_askTrue_persistFailure_stillEmitsCompletionEvent() {
+        // Fix 2: a persist failure on stale_check must NOT propagate; the stale_check event is still emitted with the
+        // question and messageId=null so the client's in-flight slot clears.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageRepository.findEpisodeOutcomes("ep-sc")).thenReturn(List.of());
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("persist failed"));
+        var update = staleCheckUpdate(true, "Still stuck on the same error?");
+
+        service.handleStaleCheck(staleCheckJob, update);   // must not throw
+
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(),
+                argThat(e -> "stale_check".equals(e.kind()) && Objects.equals(e.ask(), true) && e.messageId() == null && "Still stuck on the same error?".equals(e.question())));
     }
 
     // --- stale_check ask=true ---

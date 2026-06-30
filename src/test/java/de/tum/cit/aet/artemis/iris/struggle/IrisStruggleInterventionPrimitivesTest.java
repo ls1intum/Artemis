@@ -113,7 +113,7 @@ class IrisStruggleInterventionPrimitivesTest {
     void revealAmbient_createsRowWithServerSentAt_andReturnsDtoWithoutSendMessage() {
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
-        when(irisMessageRepository.findByProactiveClientMessageId("cid-1")).thenReturn(Optional.empty());
+        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-1", USER_ID)).thenReturn(Optional.empty());
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
             IrisMessage m = inv.getArgument(0);
             m.setId(101L);
@@ -136,7 +136,7 @@ class IrisStruggleInterventionPrimitivesTest {
         var existingMessage = new IrisMessage();
         existingMessage.setId(101L);
         existingMessage.setProactiveEpisodeId("ep-1");
-        when(irisMessageRepository.findByProactiveClientMessageId("cid-1")).thenReturn(Optional.of(existingMessage));
+        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-1", USER_ID)).thenReturn(Optional.of(existingMessage));
 
         var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "Re-check the loop.", "ambient", "cid-1");
 
@@ -153,7 +153,7 @@ class IrisStruggleInterventionPrimitivesTest {
         var concurrentRow = new IrisMessage();
         concurrentRow.setId(202L);
         concurrentRow.setProactiveEpisodeId("ep-1");
-        when(irisMessageRepository.findByProactiveClientMessageId("cid-1")).thenReturn(Optional.empty())            // first check: row doesn't exist
+        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-1", USER_ID)).thenReturn(Optional.empty())            // first check: row doesn't exist
                 .thenReturn(Optional.of(concurrentRow)); // re-select after IntegrityViolation
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("unique constraint violation"));
 
@@ -167,7 +167,7 @@ class IrisStruggleInterventionPrimitivesTest {
         // Two reveals for the same episode with different clientMessageIds must result in two distinct rows
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
-        when(irisMessageRepository.findByProactiveClientMessageId("cid-reveal")).thenReturn(Optional.empty());
+        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-reveal", USER_ID)).thenReturn(Optional.empty());
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
             IrisMessage m = inv.getArgument(0);
             m.setId(303L);
@@ -178,6 +178,21 @@ class IrisStruggleInterventionPrimitivesTest {
 
         assertThat(dto.id()).isEqualTo(303L);
         verify(irisMessageService).saveMessage(argThat(m -> "cid-reveal".equals(m.getProactiveClientMessageId())), any(), any());
+    }
+
+    @Test
+    void revealAmbient_crossUserClientMessageId_neverReturnsForeignRow() {
+        // IDOR guard (Fix 3): a replayed, globally-unique clientMessageId that belongs to ANOTHER user's row must not
+        // be readable. The user-scoped finder returns empty for this user, so the fast path falls through to an insert
+        // which hits the global unique index (DataIntegrityViolationException). The user-scoped re-select also returns
+        // empty (the colliding row is not this user's), so the foreign row is NEVER returned - it surfaces as an error.
+        var session = exerciseSession(EXERCISE_ID);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
+        // foreign key: empty on both the fast-path read and the post-violation re-select (not this user's row).
+        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("foreign-cid", USER_ID)).thenReturn(Optional.empty());
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("global unique violation"));
+
+        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", "victim hint", "ambient", "foreign-cid")).isInstanceOf(IllegalStateException.class);
     }
 
     @Test
