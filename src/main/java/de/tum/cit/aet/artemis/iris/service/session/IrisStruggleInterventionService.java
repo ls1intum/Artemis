@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -46,9 +48,13 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * Orchestrates the proactive struggle-intervention feature (spec §4): the trigger (this task) + the downstream
  * decision (Task 11). Detection stays in the client engine; this service ships the live code + signal to the
- * dedicated Pyris pipeline and applies Iris's gated result. After unify-persistence (spec §7) both {@code ambient}
- * and {@code active} persist a proactive message into the shared exercise-chat session; only {@code active} also
- * pushes it live over the socket this slice.
+ * dedicated Pyris pipeline and applies Iris's gated result.
+ *
+ * <p>
+ * After the pull-model change (spec §5, A9) {@code ambient} is event-only: no message row is persisted until the
+ * student clicks (A10 {@code revealAmbient} handles that). {@code active} persists a message and pushes it live over
+ * the socket. {@code silent} (and empty results) always emit a noop completion event so the client's in-flight
+ * {@code decide} always clears.
  */
 @Lazy
 @Service
@@ -56,6 +62,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public class IrisStruggleInterventionService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisStruggleInterventionService.class);
+
+    private static final int PERSIST_MAX_ATTEMPTS = 3;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -79,13 +87,15 @@ public class IrisStruggleInterventionService {
 
     private final IrisChatWebsocketService irisChatWebsocketService;
 
+    private final IrisMessageRepository irisMessageRepository;
+
     @Value("${artemis.iris.proactive.struggle.confidence-threshold:0.6}")
     private double confidenceThreshold;
 
     public IrisStruggleInterventionService(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
-            IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService) {
+            IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService, IrisMessageRepository irisMessageRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -97,6 +107,7 @@ public class IrisStruggleInterventionService {
         this.irisChatSessionService = irisChatSessionService;
         this.irisMessageService = irisMessageService;
         this.irisChatWebsocketService = irisChatWebsocketService;
+        this.irisMessageRepository = irisMessageRepository;
     }
 
     /**
@@ -201,7 +212,14 @@ public class IrisStruggleInterventionService {
 
     /**
      * Apply Iris's gated decision for a completed run (spec §5.4, §5.5, §11). Called once per run by the status
-     * handler, AFTER the job has been removed (idempotency). Materializes the session only on {@code active}.
+     * handler, AFTER the job has been removed (idempotency).
+     *
+     * <p>
+     * Pull-model change (A9): ambient is now event-only (no persist). The client holds the hint text frozen and
+     * promotes it to a chat message only when the student clicks (A10 {@code revealAmbient}). Active still persists
+     * and pushes the bubble, with bounded retry on transient failures and a fallback event frame on permanent failure.
+     * Silent (and empty results) always emit a noop {@code kind="decide", action="silent"} frame so the client's
+     * in-flight {@code decide} always clears.
      *
      * @param job          the struggle-intervention job (ids only; the session is resolved here)
      * @param statusUpdate the gated decision posted back by Pyris
@@ -214,29 +232,61 @@ public class IrisStruggleInterventionService {
         String finalAction = ("silent".equals(action) || belowThreshold) ? "silent" : action;
         log.info("Struggle intervention exercise={} user={} rawAction={} confidence={} finalAction={}", job.exerciseId(), job.userId(), action, confidence, finalAction);
 
-        if (statusUpdate.result() == null || statusUpdate.result().isEmpty()) {
-            return;   // nothing to surface
+        String episodeId = job.episodeId();
+        String result = statusUpdate.result();
+
+        if (result == null || result.isEmpty()) {
+            // Nothing to surface; always emit a completion frame so the client's in-flight decide clears.
+            irisChatWebsocketService.sendStruggleEvent(user,
+                    new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, null, episodeId));
+            return;
         }
+
         switch (finalAction) {
             case "active" -> {
-                var p = persistProactiveMessage(user, job.exerciseId(), statusUpdate.result());
-                if (p == null) {
-                    return;
+                // Skip if this episode is already terminal (late escalation arriving after the student dismissed).
+                if (episodeId != null && isEpisodeTerminal(episodeId)) {
+                    irisChatWebsocketService.sendStruggleEvent(user,
+                            new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, confidence, episodeId));
+                    break;
                 }
-                irisChatWebsocketService.sendMessage(p.session(), p.saved(), statusUpdate.stages());
-                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "active", null, p.session().getId(), p.saved().getId(),
-                        statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence));
+                // Resolve the exercise-chat session; drop defensively if not exercise-bound.
+                var session = resolveProactiveSession(user, job.exerciseId());
+                if (session == null) {
+                    break; // defensive drop - no event (session is structurally wrong, not a transient failure)
+                }
+                // Persist the message with bounded retry on transient DB failures (spec §12).
+                IrisMessage saved = null;
+                for (int attempt = 0; attempt < PERSIST_MAX_ATTEMPTS; attempt++) {
+                    try {
+                        saved = saveProactiveMessage(session, result, episodeId);
+                        break;
+                    }
+                    catch (TransientDataAccessException ex) {
+                        log.warn("Transient persist failure attempt {}/{} for exercise={} user={}", attempt + 1, PERSIST_MAX_ATTEMPTS, job.exerciseId(), job.userId(), ex);
+                    }
+                }
+                if (saved != null) {
+                    irisChatWebsocketService.sendMessage(session, saved, statusUpdate.stages());
+                }
+                // Always emit the active control event - with messageId on success, null on permanent failure.
+                // The event always carries the hint text so the client can render a runtime fallback bubble (spec §5/§12).
+                Long messageId = saved != null ? saved.getId() : null;
+                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "decide", "active", result, session.getId(), messageId,
+                        statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId));
             }
             case "ambient" -> {
-                var p = persistProactiveMessage(user, job.exerciseId(), statusUpdate.result());
-                if (p == null) {
-                    return;
-                }
-                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "ambient", statusUpdate.result(), p.session().getId(),
-                        p.saved().getId(), statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence));
+                // Pull model (spec §5): do NOT persist. Resolve the session only to supply its id on the event
+                // so the client knows which session to reveal into when the student clicks (A10/C2).
+                var session = resolveProactiveSession(user, job.exerciseId());
+                Long sessionId = session != null ? session.getId() : null;
+                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "decide", "ambient", result, sessionId, null,
+                        statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId));
             }
             default -> {
-                // silent (or downgraded): surface nothing, materialize nothing.
+                // silent (or downgraded): emit a noop completion frame so the client's in-flight decide always clears.
+                irisChatWebsocketService.sendStruggleEvent(user,
+                        new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, confidence, episodeId));
             }
         }
     }
@@ -245,26 +295,76 @@ public class IrisStruggleInterventionService {
     }
 
     /**
-     * Resolve the shared exercise-chat session and persist an origin-tagged proactive message. Returns null when the
-     * resolved session is not exercise-bound (defensive drop). Shared by active and ambient (spec §7.2). Does NOT push
-     * the message over the socket - callers decide that.
+     * Resolve the shared exercise-chat session. Returns null when the resolved session is not exercise-bound
+     * (defensive drop). Callers decide whether to persist into it.
      *
-     * @param user       the student the proactive message belongs to
-     * @param exerciseId the programming exercise id the message is bound to
-     * @param result     the proactive message text returned by the gate
-     * @return the resolved session + saved message, or null if the resolved session is not exercise-bound
+     * @param user       the student
+     * @param exerciseId the programming exercise id
+     * @return the session, or null if not exercise-bound
      */
-    private @Nullable PersistedProactive persistProactiveMessage(User user, long exerciseId, String result) {
+    private @Nullable IrisChatSession resolveProactiveSession(User user, long exerciseId) {
         var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId, user);
         if (session.getMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT || !Objects.equals(session.getEntityId(), exerciseId)) {
             log.info("Dropping stale struggle intervention: resolved session for exercise {} is not exercise-bound", exerciseId);
             return null;
         }
+        return session;
+    }
+
+    /**
+     * Build and persist a single origin-tagged proactive message into the given session. Does NOT push over the
+     * socket. Callers handle retry and event emission.
+     *
+     * @param session   the resolved exercise-chat session
+     * @param result    the proactive message text returned by the gate
+     * @param episodeId the client-allocated episode UUID; set on the message when non-null (written by A9 active,
+     *                      used by A10 to locate the canonical row)
+     * @return the saved IrisMessage (id assigned)
+     */
+    private IrisMessage saveProactiveMessage(IrisChatSession session, String result, @Nullable String episodeId) {
         var message = new IrisMessage();
         message.addContent(new IrisTextMessageContent(result));
         message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
-        var saved = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+        if (episodeId != null) {
+            message.setProactiveEpisodeId(episodeId);
+        }
+        return irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+    }
+
+    /**
+     * Resolve the shared exercise-chat session and persist an origin-tagged proactive message. Returns null when the
+     * resolved session is not exercise-bound (defensive drop). Shared by paths that need the session + saved message
+     * together (e.g. A10 {@code revealAmbient}). Does NOT push over the socket.
+     *
+     * @param user       the student the proactive message belongs to
+     * @param exerciseId the programming exercise id the message is bound to
+     * @param result     the proactive message text returned by the gate
+     * @param episodeId  the client-allocated episode UUID; stamped on the persisted message when non-null
+     * @return the resolved session + saved message, or null if the resolved session is not exercise-bound
+     */
+    @Nullable
+    PersistedProactive persistProactiveMessage(User user, long exerciseId, String result, @Nullable String episodeId) {
+        var session = resolveProactiveSession(user, exerciseId);
+        if (session == null) {
+            return null;
+        }
+        var saved = saveProactiveMessage(session, result, episodeId);
         return new PersistedProactive(session, saved);
+    }
+
+    /**
+     * Returns true when the episode already has a terminal outcome persisted (DISMISSED, RECOVERED, or ABANDONED).
+     * Used by the active branch to skip a late escalation that arrived after the student dismissed.
+     *
+     * <p>
+     * Reads episode-wide: checks ALL rows tagged with the episodeId, not just the earliest, so the result is
+     * stable under out-of-order persistence.
+     *
+     * @param episodeId the client-allocated episode UUID
+     * @return true if a terminal outcome exists for this episode
+     */
+    boolean isEpisodeTerminal(String episodeId) {
+        return !irisMessageRepository.findEpisodeOutcomes(episodeId).isEmpty();
     }
 
     /**

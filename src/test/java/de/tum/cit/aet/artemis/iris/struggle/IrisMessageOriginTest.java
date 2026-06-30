@@ -29,4 +29,22 @@ class IrisMessageOriginTest {
         var dto = IrisMessageResponseDTO.of(message);
         assertThat(dto.origin()).isEqualTo(IrisMessageOrigin.PROACTIVE_STRUGGLE);
     }
+
+    @Test
+    void responseDtoExposesProactiveEpisodeId() {
+        // Step 1 DTO contract: IrisMessageResponseDTO.of(msg) carries proactiveEpisodeId when set.
+        var message = new IrisMessage();
+        message.setSender(IrisMessageSender.LLM);
+        message.setProactiveEpisodeId("ep-999");
+        var dto = IrisMessageResponseDTO.of(message);
+        assertThat(dto.proactiveEpisodeId()).isEqualTo("ep-999");
+    }
+
+    @Test
+    void responseDtoProactiveEpisodeIdIsNullWhenNotSet() {
+        var message = new IrisMessage();
+        message.setSender(IrisMessageSender.LLM);
+        var dto = IrisMessageResponseDTO.of(message);
+        assertThat(dto.proactiveEpisodeId()).isNull();
+    }
 }

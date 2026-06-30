@@ -63,9 +63,8 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * {@link IrisMessageOrigin#PROACTIVE_STRUGGLE}-origin LLM message, and pushes a per-user {@code active} event
  * (sessionId set, confidence 0.85) on {@code /topic/iris/struggle-intervention},</li>
  * <li>a trailing duplicate callback for the same run is rejected (403, idempotency),</li>
- * <li>an {@code ambient} decision (after unify-persistence, spec §7) also persists a
- * {@link IrisMessageOrigin#PROACTIVE_STRUGGLE} message into the shared session and pushes an {@code ambient} event
- * carrying that session id (confidence 0.7), without a live bubble push.</li>
+ * <li>an {@code ambient} decision (pull model, spec §5, A9) emits an {@code ambient} event carrying the sessionId
+ * (resolved without persisting) and {@code messageId=null}; no message row is saved until the student clicks (A10).</li>
  * </ol>
  */
 class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest {
@@ -202,7 +201,10 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void ambientDecision_persistsTaggedMessageAndPushesEventWithSession() throws Exception {
+    void ambientDecision_pullModel_emitsEventWithSessionId_doesNotPersistMessage() throws Exception {
+        // A9 pull model (spec §5): ambient is event-only. No message row is saved; the client holds the hint
+        // frozen and reveals it on click (A10/C2). The event still carries a sessionId (from session resolution
+        // without persisting) so the client knows which session to target on reveal.
         AtomicReference<String> runId = new AtomicReference<>();
         irisRequestMockProvider.mockStruggleInterventionResponse(dto -> runId.set(dto.settings().authenticationToken()));
 
@@ -217,30 +219,32 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
                 null, null, null, null, null);
         sendStruggleStatus(runId.get(), update, HttpStatus.OK);
 
-        // unify-persistence (spec §7): ambient now persists an origin-tagged LLM message into the shared exercise session.
-        AtomicReference<Long> savedSessionId = new AtomicReference<>();
-        AtomicReference<Long> savedMessageId = new AtomicReference<>();
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-            var session = irisChatSessionRepository
-                    .findLatestByEntityIdAndChatModeAndUserIdWithMessages(exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, studentId(), Pageable.ofSize(1)).stream()
-                    .findFirst().orElseThrow();
-            var proactive = session.getMessages().stream().filter(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE).findFirst().orElseThrow();
-            savedSessionId.set(session.getId());
-            savedMessageId.set(proactive.getId());
-        });
-
-        // ...and a per-user 'ambient' event WAS pushed on the per-user topic, carrying the SAVED message's session +
-        // message ids (so a later slice can open/reveal exactly that message). The "no live bubble push" negative is
-        // locked down at the unit layer in IrisStruggleInterventionDecisionTest (verify(...never()).sendMessage).
+        // The ambient event is pushed to the per-user topic.
         ArgumentCaptor<Object> ambientPayload = ArgumentCaptor.forClass(Object.class);
         verify(websocketMessagingService, timeout(5000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/struggle-intervention"), ambientPayload.capture());
         assertThat(ambientPayload.getValue()).isInstanceOf(StruggleInterventionEventDTO.class);
         var ambientEvent = (StruggleInterventionEventDTO) ambientPayload.getValue();
+        assertThat(ambientEvent.kind()).isEqualTo("decide");
         assertThat(ambientEvent.action()).isEqualTo("ambient");
-        assertThat(ambientEvent.sessionId()).isEqualTo(savedSessionId.get());
-        assertThat(ambientEvent.messageId()).isEqualTo(savedMessageId.get());
+        // sessionId is set (the session was resolved without persisting so the client knows the reveal target).
+        assertThat(ambientEvent.sessionId()).isNotNull();
+        // messageId is null - no row was persisted (pull model).
+        assertThat(ambientEvent.messageId()).isNull();
         assertThat(ambientEvent.message()).contains("logic");
         assertThat(ambientEvent.confidence()).isEqualTo(0.7);
+
+        // No proactive message row must exist in the session - the pull model defers persistence to reveal (A10).
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            var sessionOpt = irisChatSessionRepository
+                    .findLatestByEntityIdAndChatModeAndUserIdWithMessages(exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, studentId(), Pageable.ofSize(1)).stream()
+                    .findFirst();
+            if (sessionOpt.isPresent()) {
+                assertThat(sessionOpt.get().getMessages()).noneMatch(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE);
+            }
+            // If no session exists at all, that is also correct (resolveProactiveSession may have created one
+            // but it has no messages, and the repo might or might not return an empty-message session depending
+            // on the query semantics - either outcome satisfies the "no proactive row" invariant).
+        });
     }
 
     private void sendStruggleStatus(String runId, PyrisStruggleInterventionStatusUpdateDTO update, HttpStatus expected) throws Exception {

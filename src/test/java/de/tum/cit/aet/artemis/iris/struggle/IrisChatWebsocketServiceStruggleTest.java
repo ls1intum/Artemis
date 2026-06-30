@@ -31,7 +31,7 @@ class IrisChatWebsocketServiceStruggleTest extends AbstractIrisIntegrationTest {
     void sendsStruggleEventToPerUserTopic() {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(42, "ambient", "Re-check the logic.", 99L, 556L, null, null, null, 0.7));
+        irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(42, "decide", "ambient", "Re-check the logic.", 99L, 556L, null, null, null, 0.7, null));
 
         ArgumentCaptor<Object> payload = ArgumentCaptor.forClass(Object.class);
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(user.getLogin()), eq("/topic/iris/struggle-intervention"), payload.capture());

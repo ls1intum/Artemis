@@ -24,9 +24,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -41,12 +43,19 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
- * Plain Mockito unit test for the decision side of {@link IrisStruggleInterventionService#handleDecision}. The four
- * behaviors are the contract: active >= threshold materializes the session, persists an origin-tagged LLM message and
- * pushes both the chat message and an {@code active} event; active < threshold downgrades to silent (no session, no
- * save, no event); ambient >= threshold persists an origin-tagged LLM message into the shared session and emits an
- * {@code ambient} event carrying its sessionId + messageId (no live push this slice); an active outcome whose
- * resolved session is not exercise-bound is defensively dropped (no save).
+ * Plain Mockito unit test for the decision side of {@link IrisStruggleInterventionService#handleDecision}.
+ *
+ * <p>
+ * A9 contracts verified here:
+ * <ul>
+ * <li>active above threshold: persist with episodeId, sendMessage, emit kind="decide"/action="active" event.</li>
+ * <li>active below threshold: downgrades to silent, no session created, emits kind="decide"/action="silent" noop.</li>
+ * <li>ambient above threshold: NO persist (pull model), session resolved for sessionId, emits kind="decide"/action="ambient" event.</li>
+ * <li>active with terminal episode: no persist, emits kind="decide"/action="silent" noop.</li>
+ * <li>active resolved session not exercise-bound: defensive drop, no save, no event.</li>
+ * <li>null result: emits kind="decide"/action="silent" noop regardless of action.</li>
+ * <li>active with episodeId: episodeId stamped on the persisted message.</li>
+ * </ul>
  */
 @ExtendWith(MockitoExtension.class)
 class IrisStruggleInterventionDecisionTest {
@@ -84,11 +93,18 @@ class IrisStruggleInterventionDecisionTest {
     @Mock
     private IrisChatWebsocketService irisChatWebsocketService;
 
+    @Mock
+    private IrisMessageRepository irisMessageRepository;
+
     private IrisStruggleInterventionService service;
 
     private User user;
 
+    // job with no episodeId (legacy / single-episode scenarios)
     private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L, null, null, null, null);
+
+    // job with an explicit episodeId (A9 episodeId-threading tests)
+    private final StruggleInterventionJob jobWithEpisode = new StruggleInterventionJob("t2", 7L, 42L, 3L, "decide", "ep-123", null, null);
 
     @BeforeEach
     void setUp() {
@@ -96,7 +112,7 @@ class IrisStruggleInterventionDecisionTest {
         user.setId(3L);
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
-                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService);
+                pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
@@ -121,36 +137,32 @@ class IrisStruggleInterventionDecisionTest {
     }
 
     @Test
-    void active_belowThreshold_downgradesToSilent_noSessionCreated() {
+    void active_belowThreshold_downgradesToSilent_noSessionCreated_emitsSilentNoop() {
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.4, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
         service.handleDecision(job, update);
         verify(irisChatSessionService, never()).getCurrentSessionOrCreateIfNotExists(any(), eq(42L), any());
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), any());
+        // A9: silent downgrade always emits a kind="decide"/action="silent" noop so the client's in-flight clears.
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
     }
 
     @Test
-    void ambient_aboveThreshold_persistsAndEmitsSessionAndMessageId() {
+    void ambient_aboveThreshold_emitsEventWithSessionId_noPersistedMessage() {
+        // A9 pull model: ambient does NOT persist. Session is resolved to supply sessionId on the event.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
-            IrisMessage m = inv.getArgument(0);
-            m.setId(556L);
-            return m;
-        });
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, List.of(), List.of(), "Sort.java", 42, "off-by-one?", null, null,
                 null, null, null);
 
         service.handleDecision(job, update);
 
-        // unify-persistence: ambient now saves an origin-tagged LLM message into the shared exercise-chat session
-        verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE), eq(session), eq(IrisMessageSender.LLM));
-        // but it does NOT push the bubble live in this slice (surfacing is deferred)
+        // ambient never saves a message row (pull model)
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
-        // the event also forwards the gate's anchor + inlineHint (spec §4/§8) for the inline surface
+        // event carries kind="decide", action="ambient", the hint text, and the resolved sessionId (no messageId)
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
-                argThat(e -> "ambient".equals(e.action()) && Objects.equals(e.message(), "Re-check the logic.") && Objects.equals(e.sessionId(), 99L)
-                        && Objects.equals(e.messageId(), 556L) && "Sort.java".equals(e.anchorFile()) && Objects.equals(e.anchorLine(), 42) && "off-by-one?".equals(e.inlineHint())
+                argThat(e -> "decide".equals(e.kind()) && "ambient".equals(e.action()) && Objects.equals(e.message(), "Re-check the logic.") && Objects.equals(e.sessionId(), 99L)
+                        && e.messageId() == null && "Sort.java".equals(e.anchorFile()) && Objects.equals(e.anchorLine(), 42) && "off-by-one?".equals(e.inlineHint())
                         && Objects.equals(e.confidence(), 0.7)));
     }
 
@@ -161,6 +173,54 @@ class IrisStruggleInterventionDecisionTest {
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
         service.handleDecision(job, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
+    }
+
+    @Test
+    void nullResult_emitsSilentDecideEvent_noPersistedMessage() {
+        // Empty/null result: a completion noop is always emitted so the client's in-flight decide clears (Critical fix).
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
+        service.handleDecision(job, update);
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
+    }
+
+    @Test
+    void emptyResult_emitsSilentDecideEvent_noPersistedMessage() {
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
+        service.handleDecision(job, update);
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
+    }
+
+    @Test
+    void active_withEpisodeId_stampsEpisodeIdOnPersistedMessage() {
+        // A9: the episodeId from the job must be set on the saved IrisMessage row.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageRepository.findEpisodeOutcomes("ep-123")).thenReturn(List.of());   // not yet terminal
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
+            IrisMessage m = inv.getArgument(0);
+            m.setId(777L);
+            return m;
+        });
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
+        service.handleDecision(jobWithEpisode, update);
+        // The persisted message must have proactiveEpisodeId set.
+        verify(irisMessageService).saveMessage(argThat(m -> "ep-123".equals(m.getProactiveEpisodeId())), eq(session), eq(IrisMessageSender.LLM));
+        // The active control event must carry the episodeId.
+        verify(irisChatWebsocketService).sendStruggleEvent(any(),
+                argThat(e -> "decide".equals(e.kind()) && "active".equals(e.action()) && Objects.equals(e.episodeId(), "ep-123") && Objects.equals(e.messageId(), 777L)));
+    }
+
+    @Test
+    void active_withTerminalEpisode_emitsSilentEvent_noPersistedMessage() {
+        // A9: if the episode is already terminal (DISMISSED), a late escalation is skipped and a silent noop emitted.
+        when(irisMessageRepository.findEpisodeOutcomes("ep-123")).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
+        service.handleDecision(jobWithEpisode, update);
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(),
+                argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action()) && Objects.equals(e.episodeId(), "ep-123")));
     }
 
     private IrisChatSession exerciseSession(long entityId) {
