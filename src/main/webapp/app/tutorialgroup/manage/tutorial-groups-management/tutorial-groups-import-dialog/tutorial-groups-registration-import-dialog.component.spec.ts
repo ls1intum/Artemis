@@ -9,10 +9,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupImportData } from 'app/openapi/models/tutorial-group-import-data';
+import { TutorialGroupImportData, TutorialGroupImportDataErrorEnum } from 'app/openapi/models/tutorial-group-import-data';
 import { Student } from 'app/openapi/models/student';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import ErrorEnum = TutorialGroupImportDataErrorEnum;
+type ErrorEnum = TutorialGroupImportDataErrorEnum;
 
 vi.mock('papaparse', async () => {
     const original = await vi.importActual<typeof import('papaparse')>('papaparse');

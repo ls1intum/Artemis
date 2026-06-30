@@ -574,7 +574,7 @@ describe('CourseOverviewComponent', () => {
             status: 200,
         });
 
-        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse));
+        vi.spyOn(tutorialGroupApiService, 'getTutorialGroupsForCourse').mockReturnValue(of(tutorialGroupsResponse.body!));
         vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(of(configurationResponse));
 
         getCourseStub.mockReturnValue(course2);
