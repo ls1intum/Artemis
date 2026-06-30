@@ -96,7 +96,7 @@ public class ExamAccessService {
             // students can always see their results during the exam.
             return;
         }
-        if (exam.getExamMode().isTestExamMode()) {
+        if (!exam.getExamMode().isReal()) {
             // results for test exams are always visible
             return;
         }
@@ -133,7 +133,7 @@ public class ExamAccessService {
         StudentExam studentExam;
 
         final ZonedDateTime now = ZonedDateTime.now();
-        if (exam.isInTestMode(now)) {
+        if (exam.isTestOrPractice(now)) {
             studentExam = getOrCreateTestExam(exam, course, currentUser, now);
         }
         else if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {

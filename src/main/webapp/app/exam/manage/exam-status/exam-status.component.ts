@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Exam, hasTestExamMode, isActingAsTestExam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isActingAsTestExam, isRealExam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
@@ -65,7 +65,7 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     readonly examCorrectionState = signal<ExamReviewState>(undefined!);
 
     readonly isActingAsTestExam = computed(() => isActingAsTestExam(this.exam()));
-    readonly isTestExamMode = computed(() => hasTestExamMode(this.exam()));
+    readonly isRealExam = computed(() => isRealExam(this.exam()));
     readonly maxPointExercises = signal<number>(0);
 
     readonly examConductionStateEnum = ExamConductionState;
@@ -106,7 +106,7 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
             // Step 2: Exam conduction
             this.setConductionState();
 
-            if (!this.isTestExamMode()) {
+            if (this.isRealExam()) {
                 // Step 3: Exam correction
                 this.setReviewState();
                 this.setCorrectionState();
@@ -132,7 +132,7 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
         const noEmptyExerciseGroup = this.examChecklistService.checkEachGroupContainsExercise(this.exam());
         const maximumPointsEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
         let examPointsReachable;
-        if (this.isTestExamMode()) {
+        if (!this.isRealExam()) {
             // This method is called here, as it is part of the exercise configuration - although it is a separate entry to highlight the importance
             this.maxPointExercises.set(this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam()));
             examPointsReachable = this.exam().examMaxPoints === this.maxPointExercises();
@@ -173,10 +173,9 @@ export class ExamStatusComponent implements OnInit, OnDestroy {
     private setConductionState(): void {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a test eam or real exam
         // The ERROR-State should only be visible to Instructors, as editors & TAs have no access to the required data to determine if the preparation is finished
-        const course = this.course();
-        if (course?.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished()) {
+        if (this.course()?.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished()) {
             this.examConductionState.set(ExamConductionState.ERROR);
-        } else if (this.examAlreadyEnded() && ((course && !course.isAtLeastInstructor) || this.examPreparationFinished())) {
+        } else if (this.examAlreadyEnded() && ((this.course() && !this.course().isAtLeastInstructor) || this.examPreparationFinished())) {
             this.examConductionState.set(ExamConductionState.FINISHED);
         } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState.set(ExamConductionState.RUNNING);

@@ -1049,7 +1049,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
         }
 
-        if (studentExam.getExamMode().isTestExamMode()) {
+        if (!studentExam.getExamMode().isReal()) {
             if (withAssessor) {
                 return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(studentExam.getId());
             }

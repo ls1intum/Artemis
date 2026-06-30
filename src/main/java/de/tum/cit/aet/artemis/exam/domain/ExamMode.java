@@ -4,7 +4,7 @@ public enum ExamMode {
 
     REAL, TEST, TEST_WITH_SIMULATION;
 
-    public boolean isTestExamMode() {
-        return this != REAL;
+    public boolean isReal() {
+        return this == REAL;
     }
 }

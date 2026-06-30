@@ -5,25 +5,25 @@
     <h4 id="upcoming-exams-page-heading" jhiTranslate="artemisApp.upcomingExamsAndExercises.upcomingExams"></h4>
     @if (upcomingExams().length) {
         <div class="table-responsive">
-            <table class="table table-striped upcoming-exams-table" aria-describedby="upcoming-exams-page-heading">
+            <table class="table table-striped" aria-describedby="upcoming-exams-page-heading">
                 <thead>
                     <tr>
                         <th class="d-md-table-cell" style="width: 300px">
                             <span jhiTranslate="artemisApp.upcomingExamsAndExercises.exam"></span>
                         </th>
-                        <th class="d-md-table-cell mode-column">
+                        <th class="d-md-table-cell" style="width: 100px">
                             <span jhiTranslate="artemisApp.examManagement.testExam.examMode"></span>
                         </th>
                         <th class="d-md-table-cell" style="width: 300px">
                             <span jhiTranslate="artemisApp.upcomingExamsAndExercises.course"></span>
                         </th>
-                        <th class="d-md-table-cell date-column">
+                        <th class="d-md-table-cell" style="width: 180px">
                             <span jhiTranslate="artemisApp.examManagement.visibleDate"></span>
                         </th>
-                        <th class="d-md-table-cell date-column">
+                        <th class="d-md-table-cell" style="width: 180px">
                             <span jhiTranslate="artemisApp.examManagement.startDate"></span>
                         </th>
-                        <th class="d-md-table-cell date-column">
+                        <th class="d-md-table-cell" style="width: 180px">
                             <span jhiTranslate="artemisApp.examManagement.endDate"></span>
                         </th>
                     </tr>
@@ -60,7 +60,7 @@
     <h4 id="upcoming-exercises-page-heading" class="mt-4" jhiTranslate="artemisApp.upcomingExamsAndExercises.upcomingExercises"></h4>
     @if (upcomingExercises().length) {
         <div class="table-responsive">
-            <table class="table table-striped upcoming-exercises-table" aria-describedby="upcoming-exercises-page-heading">
+            <table class="table table-striped" aria-describedby="upcoming-exercises-page-heading">
                 <thead>
                     <tr>
                         <th class="d-md-table-cell" style="width: 50px">

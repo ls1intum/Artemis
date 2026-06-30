@@ -26,7 +26,6 @@ export class ExamModePickerComponent {
     setExamMode(examMode: ExamMode) {
         if (!this.disableInput() && this.exam().examMode !== examMode) {
             this.exam().examMode = examMode;
-            this.exam().numberOfCorrectionRoundsInExam = examMode !== ExamMode.REAL ? 0 : 1;
             this.examModeChanged.emit();
         }
     }

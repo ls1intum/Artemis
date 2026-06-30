@@ -88,7 +88,6 @@ import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
@@ -288,6 +287,7 @@ public class ExamResource {
         Integer originalGracePeriod = originalExam.getGracePeriod();
         ZonedDateTime originalLatestEndDate = automaticAfterDueDateService.map(service -> service.getLatestExamEndDateWithGrace(originalExam)).orElse(null);
 
+        // The Exam Mode cannot be changed after creation -> Compare request with version in the database
         if (examUpdateDTO.examMode() != originalExam.getExamMode()) {
             throw new ConflictException("The Exam Mode cannot be changed after creation", ENTITY_NAME, "examModeMismatch");
         }
@@ -496,7 +496,7 @@ public class ExamResource {
     private void checkExamNumericFieldLimitsElseThrow(Exam exam) {
         // Max working time: 30 days = 2592000 seconds
         final int maxWorkingTimeSeconds = 2_592_000;
-        final int workingTimeToCheck = exam.getExamMode().isTestExamMode() ? exam.getWorkingTime() : exam.getDuration();
+        final int workingTimeToCheck = !exam.getExamMode().isReal() ? exam.getWorkingTime() : exam.getDuration();
         if (workingTimeToCheck > maxWorkingTimeSeconds) {
             throw new BadRequestAlertException("The working time is too long. Maximum allowed is 30 days (43200 minutes).", ENTITY_NAME, "examWorkingTimeTooHigh");
         }
@@ -529,7 +529,7 @@ public class ExamResource {
             throw new BadRequestAlertException("An exam has to have times when it becomes visible, starts, and ends as well as a working time.", ENTITY_NAME, "examTimes");
         }
 
-        if (exam.getExamMode().isTestExamMode()) {
+        if (!exam.getExamMode().isReal()) {
             if (!(exam.getVisibleDate().isBefore(exam.getStartDate()) || exam.getVisibleDate().isEqual(exam.getStartDate())) || !exam.getStartDate().isBefore(exam.getEndDate())) {
                 throw new BadRequestAlertException("For test exams, the visible date has to be before or equal to the start date and the start date has to be before the end date",
                         ENTITY_NAME, "examTimes");
@@ -554,7 +554,7 @@ public class ExamResource {
     private void checkExamForWorkingTimeConflictsElseThrow(Exam exam) {
         var examDuration = exam.getDuration();
 
-        if (exam.getExamMode().isTestExamMode()) {
+        if (!exam.getExamMode().isReal()) {
             if (exam.getWorkingTime() > examDuration || exam.getWorkingTime() < 1) {
                 throw new BadRequestAlertException("For TestExams, the working time must be at least 1 and at most the duration of the working window.", ENTITY_NAME, "examTimes");
             }
@@ -578,11 +578,11 @@ public class ExamResource {
             throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
         }
 
-        if (exam.getExamMode().isTestExamMode() && exam.getNumberOfCorrectionRoundsInExam() != 0) {
+        if (!exam.getExamMode().isReal() && exam.getNumberOfCorrectionRoundsInExam() != 0) {
             throw new BadRequestAlertException("A testExam has to have 0 correction rounds", ENTITY_NAME, "correctionRoundViolation");
         }
 
-        if (!exam.getExamMode().isTestExamMode() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
+        if (exam.getExamMode().isReal() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
             throw new BadRequestAlertException("A realExam has to have either 1 or 2 correction rounds", ENTITY_NAME, "correctionRoundViolation");
         }
     }
@@ -593,7 +593,7 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamAttendanceCheckSettings(Exam exam) {
-        if (exam.getExamMode().isTestExamMode() && exam.isExamWithAttendanceCheck()) {
+        if (!exam.getExamMode().isReal() && exam.isExamWithAttendanceCheck()) {
             throw new BadRequestAlertException("A test exam cannot have attendance check turned on", ENTITY_NAME, "attendanceCheckViolation");
         }
     }
@@ -953,7 +953,7 @@ public class ExamResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.isInTestMode(ZonedDateTime.now())) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Add student to exam is only allowed for real exams", ENTITY_NAME, "addStudentOnlyForRealExams");
         }
 
@@ -996,7 +996,7 @@ public class ExamResource {
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
         final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        if (exam.getExamMode() == ExamMode.TEST) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");
         }
 
@@ -1062,7 +1062,7 @@ public class ExamResource {
                     "evaluateQuizExercisesTooEarly");
         }
         var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        if (exam.getExamMode().isTestExamMode()) {
+        if (!exam.getExamMode().isReal()) {
             throw new BadRequestAlertException("Evaluate quiz exercises is only allowed for real exams", ENTITY_NAME, "evaluateQuizExercisesOnlyForRealExams");
         }
 
@@ -1110,7 +1110,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (exam.isInTestMode(ZonedDateTime.now())) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
         }
 
@@ -1144,7 +1144,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.isInTestMode(ZonedDateTime.now())) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deletion of users is only allowed for real exams", ENTITY_NAME, "unregisterStudentsOnlyForRealExams");
         }
 
@@ -1172,7 +1172,7 @@ public class ExamResource {
 
         var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
-        if (exam.isInTestMode(ZonedDateTime.now())) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new BadRequestAlertException("Deregister students is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");
         }
 

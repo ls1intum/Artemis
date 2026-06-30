@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLDiagramType } from '@tumaet/apollon';
@@ -167,6 +168,7 @@ describe('ExamParticipationComponent', () => {
         // Ensure the mocked service has the currentlyLoadedStudentExam Subject in place; otherwise pipelines triggered
         // by tests below would crash with "Cannot read 'next' of undefined" during teardown.
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        examParticipationService.testStudentExams = signal([]);
         // The TestBed has no router routes registered, so any navigate(...) call would emit an
         // unhandled NG04002 rejection. Stub it once so individual tests don't have to.
         vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
@@ -175,7 +177,7 @@ describe('ExamParticipationComponent', () => {
         const loadTestRunSpy = vi.spyOn(examParticipationService, 'loadTestRunWithExercisesForConduction').mockReturnValue(new Subject());
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(new Subject());
         vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
-        vi.spyOn(examParticipationService, 'getTestStudentExamsForOverviewPage').mockReturnValue([]);
+        examParticipationService.testStudentExams.set([]);
         comp.ngOnInit();
         loadTestRunSpy.mockClear();
         comp.exam.set(new Exam());
@@ -375,7 +377,7 @@ describe('ExamParticipationComponent', () => {
 
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
-        vi.spyOn(examParticipationService, 'getTestStudentExamsForOverviewPage').mockReturnValue([simulationAttempt]);
+        examParticipationService.testStudentExams.set([simulationAttempt]);
         const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
 
         comp.ngOnInit();
@@ -399,7 +401,7 @@ describe('ExamParticipationComponent', () => {
 
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
-        vi.spyOn(examParticipationService, 'getTestStudentExamsForOverviewPage').mockReturnValue([]);
+        examParticipationService.testStudentExams.set([]);
         const getOwnStudentExamSpy = vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(of(studentExam));
 
         comp.ngOnInit();

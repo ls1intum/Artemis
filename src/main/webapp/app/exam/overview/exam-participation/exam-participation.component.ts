@@ -7,7 +7,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Exam, ExamMode, hasTestExamMode, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode, isRealExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
@@ -60,7 +60,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
-import { TestExamParticipationMessageService } from 'app/exam/overview/services/test-exam-participation-message.service';
 import { Message } from 'primeng/message';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
@@ -107,7 +106,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
     private examManagementService = inject(ExamManagementService);
-    private testExamParticipationMessageService = inject(TestExamParticipationMessageService);
 
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faGraduationCap = faGraduationCap;
@@ -224,7 +222,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         studentExam.exam!.course = new Course();
                         studentExam.exam!.course.id = this.courseId();
                         this.exam.set(studentExam.exam!);
-                        this.testExam.set(hasTestExamMode(this.exam()));
+                        this.testExam.set(!isRealExam(this.exam()));
                         this.loadingExam.set(false);
                     },
                     error: () => {
@@ -262,14 +260,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     private shouldSkipTestExamAttemptRequest(): boolean {
         const exam = this.courseStorageService.getCourse(this.courseId())?.exams?.find((courseExam) => courseExam.id === this.examId());
-        if (!hasTestExamMode(exam)) {
+        if (isRealExam(exam)) {
             return false;
         }
 
         this.testExam.set(true);
         const now = this.serverDateService.now();
         if (exam?.endDate && dayjs(exam.endDate).isBefore(now)) {
-            this.noStudentExamMessageKey.set(this.testExamParticipationMessageService.getMessageKey(exam, 'examHasAlreadyEnded'));
+            this.noStudentExamMessageKey.set('artemisApp.examParticipation.testExamConcluded');
             return true;
         }
 
@@ -278,11 +276,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             return false;
         }
 
-        const hasSubmittedAttempt = this.examParticipationService
-            .getTestStudentExamsForOverviewPage()
-            .some((studentExam) => studentExam.exam?.id === exam.id && studentExam.submitted);
+        const hasSubmittedAttempt = this.examParticipationService.testStudentExams().some((studentExam) => studentExam.exam?.id === exam.id && studentExam.submitted);
         if (hasSubmittedAttempt) {
-            this.noStudentExamMessageKey.set(this.testExamParticipationMessageService.getMessageKey(exam, 'simulationTestExamAttemptAlreadyExistsBeforePractice'));
+            this.noStudentExamMessageKey.set('artemisApp.examParticipation.testExamAttemptUsedPracticeOpens');
             return true;
         }
 
@@ -502,7 +498,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (this.testExam()) {
                         this.examParticipationService.resetExamLayout();
                         this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam().id]);
-                        this.examParticipationService.setShouldUpdateTestExams(true);
                     }
 
                     this.examSummaryButtonTimer = setInterval(() => {
@@ -576,7 +571,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     toggleHandInEarly() {
         // no need to fetch attendance check status from the server if it is a test exam or an exam without attendance check or when clicking continue
-        if (hasTestExamMode(this.exam()) || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
+        if (!isRealExam(this.exam()) || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
             this.handleHandInEarly();
         } else {
             this.examManagementService.isAttendanceChecked(this.courseId(), this.examId()).subscribe((res) => {
@@ -615,7 +610,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             return false;
         }
         let individualStudentEndDate;
-        if (hasTestExamMode(this.exam())) {
+        if (!isRealExam(this.exam())) {
             if (!this.studentExam().submitted && this.studentExam().started && this.studentExam().startedDate) {
                 const startedDate = dayjs(this.studentExam().startedDate);
                 const relevantStartDate = this.isSimulationAttempt(startedDate) ? dayjs(this.exam().startDate) : startedDate;
@@ -681,8 +676,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         return startDate ? startDate.isBefore(this.serverDateService.now()) : false;
     }
 
-    readonly isTestExamMode = computed(() => hasTestExamMode(this.exam()));
-
     checkVerticalOverflow(): boolean {
         // Get the sidebar-content element
         const sidebarContent = document.querySelector('.content-exam-height');
@@ -711,8 +704,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
         this.studentExam.set(studentExam);
         this.exam.set(studentExam.exam!);
-        this.testExam.set(hasTestExamMode(this.exam()));
-        if (!hasTestExamMode(this.exam())) {
+        this.testExam.set(!isRealExam(this.exam()));
+        if (isRealExam(this.exam())) {
             this.initIndividualEndDates(this.exam().startDate!);
         }
 
@@ -748,7 +741,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     handleNoStudentExam() {
         const course = this.courseStorageService.getCourse(this.courseId());
         const exam = course?.exams?.find((courseExam) => courseExam.id === this.examId());
-        this.noStudentExamMessageKey.set(this.getNoStudentExamMessageKey(exam));
+        this.noStudentExamMessageKey.set(isRealExam(exam) ? 'artemisApp.examParticipation.noStudentExam' : 'artemisApp.examParticipation.noFurtherAttempts');
         if (!course) {
             this.courseService.find(this.courseId()).subscribe((courseResponse) => {
                 this.isAtLeastTutor.set(courseResponse.body?.isAtLeastTutor);
@@ -759,13 +752,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.isAtLeastInstructor.set(course.isAtLeastInstructor);
         }
         this.loadingExam.set(false);
-    }
-
-    private getNoStudentExamMessageKey(exam?: Exam): string {
-        if (exam || !this.testExam()) {
-            return this.testExamParticipationMessageService.getMessageKey(exam, this.testExam() ? 'noFurtherAttempts' : 'noStudentExam');
-        }
-        return 'artemisApp.examParticipation.noFurtherAttempts';
     }
 
     /**

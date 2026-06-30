@@ -30,8 +30,8 @@ export function testExamSimulationEndDate(exam?: Exam): dayjs.Dayjs | undefined 
     return dayjs(exam.startDate).add(exam.workingTime, 'seconds');
 }
 
-export function hasTestExamMode(exam?: Pick<Exam, 'examMode'>): boolean {
-    return exam?.examMode !== undefined && exam.examMode !== ExamMode.REAL;
+export function isRealExam(exam?: Exam): boolean {
+    return exam?.examMode === undefined || exam.examMode === ExamMode.REAL;
 }
 
 export class Exam implements BaseEntity {

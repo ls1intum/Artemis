@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, 
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Exam, hasTestExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam, isRealExam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -57,7 +57,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     readonly isAttendanceChecked = signal(false);
 
     readonly testRun = computed(() => this.studentExam()?.testRun);
-    readonly testExam = computed(() => hasTestExamMode(this.exam()));
+    readonly testExam = computed(() => !isRealExam(this.exam()));
 
     readonly formattedGeneralInformation = signal<SafeHtml | undefined>(undefined);
     readonly formattedConfirmationText = signal<SafeHtml | undefined>(undefined);
@@ -108,7 +108,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
 
     ngOnInit(): void {
         const exam = this.exam();
-        this.isAttendanceChecked.set(hasTestExamMode(exam) || !exam.examWithAttendanceCheck || this.attendanceChecked());
+        this.isAttendanceChecked.set(!isRealExam(exam) || !exam.examWithAttendanceCheck || this.attendanceChecked());
     }
 
     ngOnDestroy() {

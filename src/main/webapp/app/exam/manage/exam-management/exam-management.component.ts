@@ -58,6 +58,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     private router = inject(Router);
 
     protected readonly isActingAsTestExam = isActingAsTestExam;
+    protected readonly ExamMode = ExamMode;
 
     readonly documentationType: DocumentationType = 'Exams';
 
@@ -194,6 +195,4 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
             }
         });
     }
-
-    protected readonly ExamMode = ExamMode;
 }

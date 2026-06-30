@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
-import { Exam, ExamMode, hasTestExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam, isRealExam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -54,6 +54,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
+
+    protected readonly isRealExam = isRealExam;
 
     readonly exam = signal<Exam>(undefined!);
     formattedStartText?: SafeHtml;
@@ -121,7 +123,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
 
     getExamDetailSections() {
         const exam = this.exam();
-        const isTestExamValue = hasTestExamMode(exam);
+        const isTestExamValue = !isRealExam(exam);
 
         this.examDetailSections.set([
             {
@@ -213,7 +215,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         });
 
         const numberOfExerciseGroups = this.exam().exerciseGroups?.length ?? 0;
-        const testExam = hasTestExamMode(this.exam());
+        const isTestExam = !isRealExam(this.exam());
         const isTestCourse = this.exam().course?.testCourse ?? false;
 
         return {
@@ -224,7 +226,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             'artemisApp.examManagement.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD),
             'artemisApp.examManagement.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ),
             'artemisApp.examManagement.delete.summary.numberRepositories': numberOfProgrammingExerciseParticipations,
-            'artemisApp.examManagement.delete.summary.testExam': testExam,
+            'artemisApp.examManagement.delete.summary.testExam': isTestExam,
             'artemisApp.examManagement.delete.summary.isTestCourse': isTestCourse,
         };
     }
@@ -251,6 +253,4 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             }),
         );
     }
-
-    protected readonly ExamMode = ExamMode;
 }

@@ -198,7 +198,7 @@ public class StudentExamService {
         log.debug("    Potentially save submissions in {}", formatDurationFrom(start));
 
         // NOTE: from here on, we only handle test runs and test exams
-        if (!studentExamFromClient.isTestRun() && !studentExamFromClient.getExamMode().isTestExamMode()) {
+        if (!studentExamFromClient.isTestRun() && studentExamFromClient.getExamMode().isReal()) {
             return;
         }
 
@@ -237,7 +237,7 @@ public class StudentExamService {
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             throw new BadRequestAlertException("Student exam must be submitted before requesting feedback", "StudentExam", "studentExamNotSubmitted");
         }
-        if (!studentExam.getExamMode().isTestExamMode()) {
+        if (studentExam.getExamMode().isReal()) {
             throw new BadRequestAlertException("Athena feedback is only available for test exams", "StudentExam", "notTestExam");
         }
         if (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty()) {
@@ -844,7 +844,7 @@ public class StudentExamService {
             var futures = studentExams.stream().map(studentExam -> CompletableFuture.runAsync(() -> {
                 List<StudentParticipation> localParticipations = new ArrayList<>();
                 setUpExerciseParticipationsAndSubmissions(studentExam, localParticipations, true);
-                if (studentExam.getExamMode().isTestExamMode() && !localParticipations.isEmpty()) {
+                if (!studentExam.getExamMode().isReal() && !localParticipations.isEmpty()) {
                     studentExam.setStudentParticipations(localParticipations);
                     studentExamRepository.save(studentExam);
                 }

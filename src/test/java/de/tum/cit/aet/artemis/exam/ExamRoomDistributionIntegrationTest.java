@@ -255,7 +255,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(attendanceCheckerInformation.examTitle()).isEqualTo(exam1.getTitle());
         assertThat(attendanceCheckerInformation.startDate()).isCloseTo(exam1.getStartDate(), byLessThan(1, ChronoUnit.SECONDS));
         assertThat(attendanceCheckerInformation.endDate()).isCloseTo(exam1.getEndDate(), byLessThan(1, ChronoUnit.SECONDS));
-        assertThat(attendanceCheckerInformation.examMode().isTestExamMode()).isFalse();
+        assertThat(!attendanceCheckerInformation.examMode().isReal()).isFalse();
         assertThat(attendanceCheckerInformation.courseId()).isEqualTo(course1.getId());
         assertThat(attendanceCheckerInformation.courseTitle()).isEqualTo(course1.getTitle());
     }

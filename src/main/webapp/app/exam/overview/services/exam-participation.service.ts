@@ -1,8 +1,8 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
-import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Exam, isRealExam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -16,10 +16,9 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
 import { ExamWorkingTimeDTO } from 'app/exam/shared/entities/exam-working-time-dto.model';
-import { AccountService } from 'app/core/auth/account.service';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' | 'notStarted';
 
@@ -28,7 +27,6 @@ export class ExamParticipationService {
     private httpClient = inject(HttpClient);
     private localStorageService = inject(LocalStorageService);
     private sessionStorageService = inject(SessionStorageService);
-    private accountService = inject(AccountService);
 
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
@@ -40,15 +38,20 @@ export class ExamParticipationService {
 
     private examEndViewSubject = new BehaviorSubject<boolean>(false);
     endViewDisplayed$ = this.examEndViewSubject.asObservable();
-    private shouldUpdateTestExams = new BehaviorSubject<boolean>(false);
-    shouldUpdateTestExamsObservable = this.shouldUpdateTestExams.asObservable();
 
-    private testStudentExamsForOverviewPage: StudentExam[] = [];
+    readonly testStudentExams = signal<StudentExam[]>([]);
 
     constructor() {
-        this.accountService.getAuthenticationState().subscribe(() => {
-            // reset this cache when (other) user logs in
-            this.testStudentExamsForOverviewPage = [];
+        this.currentlyLoadedStudentExam.pipe(filter((studentExam) => !!studentExam?.submitted && !!studentExam.exam && !isRealExam(studentExam.exam))).subscribe((latestExam) => {
+            this.testStudentExams.update((studentExams) => {
+                const index = studentExams.findIndex((se) => se?.id === latestExam?.id);
+                if (index !== -1) {
+                    const updated = [...studentExams];
+                    updated[index] = latestExam;
+                    return updated;
+                }
+                return [...studentExams, latestExam];
+            });
         });
     }
 
@@ -173,22 +176,18 @@ export class ExamParticipationService {
      * @param courseId the id of the course we are interested
      * @returns a List of all StudentExams without Exercises per User and Course
      */
-    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
+    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<void> {
         const url = `api/exam/courses/${courseId}/test-exams-per-user`;
         return this.httpClient.get<StudentExam[]>(url, { observe: 'response' }).pipe(
             map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)),
-            tap((studentExams) => (this.testStudentExamsForOverviewPage = studentExams)),
+            tap((loadedStudentExams) => {
+                this.testStudentExams.update((currentStudentExams) => [
+                    ...(loadedStudentExams ?? []).filter((loadedStudentExam) => !currentStudentExams.some((studentExam) => studentExam.id === loadedStudentExam.id)),
+                    ...currentStudentExams,
+                ]);
+            }),
+            map(() => undefined),
         );
-    }
-
-    /**
-     * Returns the test exam attempts that were loaded for the course exam overview page.
-     * This is a client-side snapshot and does not trigger a backend request.
-     *
-     * @returns the cached student exams for visible test exam attempts
-     */
-    public getTestStudentExamsForOverviewPage(): StudentExam[] {
-        return this.testStudentExamsForOverviewPage;
     }
 
     private processListOfStudentExamsFromServer(studentExamsResponse: HttpResponse<StudentExam[]>) {
@@ -399,9 +398,6 @@ export class ExamParticipationService {
 
     setEndView(isEndView: boolean) {
         this.examEndViewSubject.next(isEndView);
-    }
-    setShouldUpdateTestExams(shouldUpdate: boolean) {
-        this.shouldUpdateTestExams.next(shouldUpdate);
     }
 
     setExamLayout(isExamStarted: boolean = true, isTestRun: boolean = false) {

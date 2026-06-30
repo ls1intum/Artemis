@@ -1,16 +1,17 @@
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
@@ -160,14 +161,12 @@ describe('CourseExamsComponent', () => {
         examParticipationService = TestBed.inject(ExamParticipationService);
         courseOverviewService = TestBed.inject(CourseOverviewService);
         (examParticipationService as any).examIsStarted$ = of(false);
-        examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        (examParticipationService as any).testStudentExams = signal([]);
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({
             exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, visibleTestExamWithSimulation, notVisibleTestExam],
         });
-        vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
-            of([studentExamForExam3AndSubmitted, studentExamForExam3AndNotSubmitted, studentExamForExam4AndSubmitted]) as Observable<StudentExam[]>,
-        );
+        vi.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(of(undefined) as Observable<void>);
         vi.spyOn(examParticipationService, 'getRealExamWorkingTimes').mockReturnValue(of([]));
 
         componentFixture = TestBed.createComponent(CourseExamsComponent);
@@ -207,7 +206,7 @@ describe('CourseExamsComponent', () => {
         };
 
         vi.spyOn(examParticipationService, 'getRealExamWorkingTimes').mockReturnValue(of([...existingExamWorkingTimes, newExamWorkingTime]));
-        examParticipationService.shouldUpdateTestExamsObservable = new BehaviorSubject<boolean>(false).asObservable();
+
         componentFixture = TestBed.createComponent(CourseExamsComponent);
         component = componentFixture.componentInstance;
         componentFixture.detectChanges();
@@ -235,7 +234,7 @@ describe('CourseExamsComponent', () => {
     });
 
     it('should render selected real exam routes before test exam attempts are loaded', () => {
-        const testExamAttemptsSubject = new Subject<StudentExam[]>();
+        const testExamAttemptsSubject = new Subject<void>();
         const activatedRoute = TestBed.inject(ActivatedRoute);
         (activatedRoute as any).firstChild = {
             snapshot: {
@@ -254,7 +253,7 @@ describe('CourseExamsComponent', () => {
     });
 
     it('should render selected plain test exam routes before test exam attempts are loaded', () => {
-        const testExamAttemptsSubject = new Subject<StudentExam[]>();
+        const testExamAttemptsSubject = new Subject<void>();
         const activatedRoute = TestBed.inject(ActivatedRoute);
         (activatedRoute as any).firstChild = {
             snapshot: {
@@ -273,7 +272,7 @@ describe('CourseExamsComponent', () => {
     });
 
     it('should render selected simulation test exam routes only after test exam attempts are loaded', () => {
-        const testExamAttemptsSubject = new Subject<StudentExam[]>();
+        const testExamAttemptsSubject = new Subject<void>();
         const activatedRoute = TestBed.inject(ActivatedRoute);
         (activatedRoute as any).firstChild = {
             snapshot: {
@@ -290,7 +289,7 @@ describe('CourseExamsComponent', () => {
         expect(component.testStudentExamsLoaded()).toBe(false);
         expect(componentFixture.nativeElement.querySelector('router-outlet')).toBeNull();
 
-        testExamAttemptsSubject.next([]);
+        testExamAttemptsSubject.next();
         componentFixture.detectChanges();
 
         expect(component.testStudentExamsLoaded()).toBe(true);
@@ -371,34 +370,5 @@ describe('CourseExamsComponent', () => {
         component = componentFixture.componentInstance;
 
         expect(component['buildSidebarData']()).toBeUndefined();
-    });
-
-    it('should reset data and reload when courseId changes while component stays mounted', () => {
-        const testExamAttemptsSubject = new Subject<StudentExam[]>();
-        vi.spyOn(examParticipationService, 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(testExamAttemptsSubject);
-        componentFixture = TestBed.createComponent(CourseExamsComponent);
-        component = componentFixture.componentInstance;
-        componentFixture.detectChanges();
-
-        expect(component.courseId()).toBe(1);
-        expect(examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage).toHaveBeenCalledWith(1);
-        expect(examParticipationService.getRealExamWorkingTimes).toHaveBeenCalledWith(1);
-
-        testExamAttemptsSubject.next([studentExamForExam3AndSubmitted]);
-        expect(component.testStudentExamsLoaded()).toBe(true);
-
-        vi.clearAllMocks();
-
-        // Change courseId
-        parentParamsSubject.next({ courseId: '2' });
-        componentFixture.detectChanges();
-
-        expect(component.courseId()).toBe(2);
-        // It should reset the state before the new data is loaded
-        expect(component.testStudentExamsLoaded()).toBe(false);
-        expect(component['studentExamsOfTestExams']()).toEqual([]);
-
-        expect(examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage).toHaveBeenCalledWith(2);
-        expect(examParticipationService.getRealExamWorkingTimes).toHaveBeenCalledWith(2);
     });
 });

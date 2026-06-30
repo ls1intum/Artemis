@@ -83,15 +83,15 @@
                                     }
                                 }
                             }
-                            @let participationStatus = participationGenerationStatus();
-                            @if (participationStatus === 'generating') {
+                            @let generateParticipationStatus = participationGenerationStatus();
+                            @if (generateParticipationStatus === 'generating') {
                                 <div class="d-flex justify-content-center align-items-center">
                                     <p class="mb-0" jhiTranslate="artemisApp.examParticipation.preparingParticipation"></p>
                                     <div class="spinner-border ms-2" role="status">
                                         <span class="visually-hidden" jhiTranslate="loading"></span>
                                     </div>
                                 </div>
-                            } @else if (participationStatus === 'failed') {
+                            } @else if (generateParticipationStatus === 'failed') {
                                 <div class="d-flex justify-content-center align-items-center">
                                     <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
                                     <button
@@ -150,7 +150,7 @@
                     <div class="col-12 text-center my-auto">
                         <h3 class="mt-2">{{ exam().title }}</h3>
                         <div class="mb-2 font-weight-bold text-danger">
-                            <span [jhiTranslate]="isTestExamMode() ? 'artemisApp.examParticipation.testExamAttemptUsed' : 'artemisApp.studentExam.submissionNotInTime'"></span>
+                            <span jhiTranslate="artemisApp.studentExam.submissionNotInTime"></span>
                         </div>
                     </div>
                 </div>

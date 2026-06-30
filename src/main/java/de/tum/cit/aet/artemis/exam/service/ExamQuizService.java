@@ -89,7 +89,7 @@ public class ExamQuizService {
                     result.setExerciseId(quizExercise.getId());
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
-                    if (studentExam.getExamMode().isTestExamMode()) {
+                    if (!studentExam.getExamMode().isReal()) {
                         result.rated(true);
                     }
                     result = resultRepository.save(result);
@@ -104,12 +104,12 @@ public class ExamQuizService {
                     // calculate scores and update result and submission accordingly
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
-                    if (studentExam.getExamMode().isTestExamMode()) {
+                    if (!studentExam.getExamMode().isReal()) {
                         result.rated(true);
                     }
                     resultRepository.save(result);
                 }
-                if (studentExam.getExamMode().isTestExamMode()) {
+                if (!studentExam.getExamMode().isReal()) {
                     // In case of an test exam, the quiz statistic should also be updated
                     var quizExercise1 = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
                     quizStatisticService.updateStatistics(Set.of(result), quizExercise1);

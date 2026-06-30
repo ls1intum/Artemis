@@ -436,7 +436,7 @@ public class ResultService {
         StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
         Exam exam = exercise.getExerciseGroup().getExam();
         boolean shouldResultsBePublished = exam.resultsPublished();
-        if (!shouldResultsBePublished && exam.getExamMode().isTestExamMode() && participation instanceof StudentParticipation) {
+        if (!shouldResultsBePublished && !exam.getExamMode().isReal() && participation instanceof StudentParticipation) {
             var studentExamOptional = api.findByExamIdAndParticipationId(exam.getId(), participation.getId());
             if (studentExamOptional.isPresent()) {
                 shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();

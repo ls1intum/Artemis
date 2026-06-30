@@ -1,6 +1,6 @@
 import { Component, OnInit, input, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { hasTestExamMode } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/shared/entities/exam.model';
 import { round } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
@@ -23,7 +23,7 @@ export class TestExamWorkingTimeComponent implements OnInit {
      */
     ngOnInit() {
         if (
-            hasTestExamMode(this.studentExam().exam) &&
+            !isRealExam(this.studentExam().exam) &&
             this.studentExam().started &&
             this.studentExam().submitted &&
             this.studentExam().workingTime &&

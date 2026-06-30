@@ -19,12 +19,7 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
 @Component({
     selector: 'jhi-upcoming-exams-and-exercises',
     templateUrl: './upcoming-exams-and-exercises.component.html',
-    styles: [
-        '.upcoming-exercises-table { table-layout: fixed; }',
-        '.upcoming-exams-table { table-layout: auto; min-width: 1100px; }',
-        '.upcoming-exams-table .mode-column { min-width: 12rem; width: 14rem; }',
-        '.upcoming-exams-table .date-column { min-width: 11rem; width: 12rem; }',
-    ],
+    styles: ['.table {table-layout: fixed}'],
     imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, TooltipModule, ArtemisTranslatePipe, AdminTitleBarTitleDirective, ExamModeBadgeComponent],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {

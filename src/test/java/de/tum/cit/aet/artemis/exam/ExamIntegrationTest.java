@@ -1525,7 +1525,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(actualExam.getChannelName()).isEqualTo(expectedExam.getChannelName());
         assertThat(actualExam.getCourseName()).isEqualTo(expectedExam.getCourseName());
 
-        assertThat(actualExam.getExamMode().isTestExamMode()).isFalse();
+        assertThat(!actualExam.getExamMode().isReal()).isFalse();
         assertThat(actualExam.getRandomizeExerciseOrder()).isTrue();
 
         /// For the times we need to give a slight tolerance because Artemis truncates the times to 6 sub-second digits
@@ -2008,7 +2008,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
                 .exam();
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
-        assertThat(received.getExamMode().isTestExamMode()).isFalse();
+        assertThat(!received.getExamMode().isReal()).isFalse();
         assertThat(received.getWorkingTime()).isEqualTo(3000);
         assertThat(received.getStartText()).isEqualTo("Start Text");
         assertThat(received.getEndText()).isEqualTo("End Text");

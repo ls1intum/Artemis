@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
-import { combineLatestWith, filter, of } from 'rxjs';
-import { Exam, ExamMode, hasTestExamMode } from 'app/exam/shared/entities/exam.model';
+import { of } from 'rxjs';
+import { Exam, ExamMode, isRealExam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -61,11 +61,10 @@ export class CourseExamsComponent {
                 .sort((exam1, exam2) => this.sortExamsByStartDate(exam1, exam2)) ?? [],
     );
 
-    protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !hasTestExamMode(exam)));
+    protected readonly realExamsOfCourse = computed(() => this.visibleExams().filter((exam) => isRealExam(exam)));
     protected readonly realExamWorkingTimeByExamId = signal<Map<number, number>>(new Map());
 
-    protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => hasTestExamMode(exam)));
-    private readonly studentExamsOfTestExams = signal<StudentExam[]>([]);
+    protected readonly testExamsOfCourse = computed(() => this.visibleExams().filter((exam) => !isRealExam(exam)));
 
     readonly sidebarData = computed<SidebarData | undefined>(() => this.buildSidebarData());
 
@@ -91,19 +90,13 @@ export class CourseExamsComponent {
         toObservable(this.courseId)
             .pipe(takeUntilDestroyed())
             .subscribe((courseId) => {
-                this.studentExamsOfTestExams.set([]);
+                this.examParticipationService.testStudentExams.set([]);
                 this.testStudentExamsLoaded.set(false);
                 this.realExamWorkingTimeByExamId.set(new Map());
 
                 // load the baseline of studentExams without overwriting newer local updates.
                 this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId).subscribe({
-                    next: (loadedStudentExams) => {
-                        this.studentExamsOfTestExams.update((currentStudentExams) => [
-                            ...(loadedStudentExams ?? []).filter((loadedStudentExam) => !currentStudentExams.some((studentExam) => studentExam.id === loadedStudentExam.id)),
-                            ...currentStudentExams,
-                        ]);
-                        this.testStudentExamsLoaded.set(true);
-                    },
+                    next: () => this.testStudentExamsLoaded.set(true),
                     error: () => this.testStudentExamsLoaded.set(true),
                 });
 
@@ -111,27 +104,6 @@ export class CourseExamsComponent {
                 this.examParticipationService
                     .getRealExamWorkingTimes(courseId)
                     .subscribe((workingTimes) => this.realExamWorkingTimeByExamId.set(new Map(workingTimes.map((workingTime) => [workingTime.examId, workingTime.workingTime]))));
-            });
-
-        // watch for new student exams
-        this.examParticipationService.shouldUpdateTestExamsObservable
-            .pipe(
-                combineLatestWith(this.examParticipationService.currentlyLoadedStudentExam),
-                filter(([shouldUpdate, studentExam]) => shouldUpdate && !!studentExam && studentExam.exam?.course?.id === this.courseId()),
-                takeUntilDestroyed(),
-            )
-            .subscribe(([_, latestExam]) => {
-                this.studentExamsOfTestExams.update((studentExams) => {
-                    this.examParticipationService.setShouldUpdateTestExams(false);
-
-                    const index = studentExams.findIndex((se) => se?.id === latestExam?.id);
-                    if (index !== -1) {
-                        const updated = [...studentExams];
-                        updated[index] = latestExam;
-                        return updated;
-                    }
-                    return [...studentExams, latestExam];
-                });
             });
 
         // If no exam is selected navigate to the last selected or upcoming Exam
@@ -235,7 +207,7 @@ export class CourseExamsComponent {
         const sortedRealExams: Exam[] = [...this.realExamsOfCourse()].sort((a, b) => this.sortExamsByStartDate(a, b));
         const sortedTestExams: Exam[] = [...this.testExamsOfCourse()].sort((a, b) => this.sortExamsByStartDate(a, b));
 
-        const testExamAttempts = this.studentExamsOfTestExams();
+        const testExamAttempts = this.examParticipationService.testStudentExams();
         const testExamAttemptsMap: Map<number, StudentExam[]> = new Map();
         for (const testExam of sortedTestExams) {
             const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExamAttempts, testExam.id!);

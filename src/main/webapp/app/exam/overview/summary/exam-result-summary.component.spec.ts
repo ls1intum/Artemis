@@ -354,20 +354,20 @@ describe('ExamResultSummaryComponent', () => {
     it('should correctly identify a TestExam', () => {
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.hasTestExamMode).toBe(true);
+        expect(component.isNotRealExam).toBe(true);
         expect(component.testExamConduction()).toBe(true);
 
         studentExamForTestExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.hasTestExamMode).toBe(true);
+        expect(component.isNotRealExam).toBe(true);
         expect(component.testExamConduction()).toBe(false);
     });
 
     it('should correctly identify a RealExam', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.hasTestExamMode).toBe(false);
+        expect(component.isNotRealExam).toBe(false);
         expect(component.testExamConduction()).toBe(false);
         expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
@@ -375,7 +375,7 @@ describe('ExamResultSummaryComponent', () => {
         studentExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.hasTestExamMode).toBe(false);
+        expect(component.isNotRealExam).toBe(false);
         expect(component.testExamConduction()).toBe(false);
         expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
@@ -394,11 +394,11 @@ describe('ExamResultSummaryComponent', () => {
         component.testExamConduction.set(false);
         expect(component.resultsArePublished).toBe(true);
 
-        component.hasTestExamMode = true;
+        component.isNotRealExam = true;
         component.isTestRun.set(false);
         expect(component.resultsArePublished).toBe(true);
 
-        component.hasTestExamMode = false;
+        component.isNotRealExam = false;
         // const publishResultsDate is in the past
         expect(component.resultsArePublished).toBe(true);
 
@@ -421,11 +421,11 @@ describe('ExamResultSummaryComponent', () => {
         const now = dayjs();
         const dateSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
-        component.hasTestExamMode = true;
+        component.isNotRealExam = true;
         component.ngOnInit();
         expect(component.isAfterStudentReviewStart()).toBe(true);
 
-        component.hasTestExamMode = false;
+        component.isNotRealExam = false;
         component.isTestRun.set(true);
         component.ngOnInit();
         expect(component.isAfterStudentReviewStart()).toBe(true);
@@ -447,11 +447,11 @@ describe('ExamResultSummaryComponent', () => {
         const now = dayjs();
         const dateSpy = vi.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
 
-        component.hasTestExamMode = true;
+        component.isNotRealExam = true;
         component.ngOnInit();
         expect(component.isBeforeStudentReviewEnd()).toBe(true);
 
-        component.hasTestExamMode = false;
+        component.isNotRealExam = false;
         component.isTestRun.set(true);
         component.ngOnInit();
         expect(component.isBeforeStudentReviewEnd()).toBe(true);
