@@ -63,7 +63,7 @@ class PyrisStatusUpdateStruggleTest {
 
     @Test
     void decisionCallback_removesJobThenDispatchesThenReleasesMarker() {
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, "FM", List.of(), List.of(), null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 
@@ -76,7 +76,7 @@ class PyrisStatusUpdateStruggleTest {
     @Test
     void nonDecisionCallback_keepAlive_holdsMarker() {
         var inProgress = new PyrisStageDTO("Thinking", 10, PyrisStageState.IN_PROGRESS, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(inProgress), List.of(), null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(inProgress), List.of(), null, null, null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 
@@ -89,7 +89,7 @@ class PyrisStatusUpdateStruggleTest {
     @Test
     void nonDecisionTerminalCallback_releasesMarker() {
         var errorStage = new PyrisStageDTO("Error", 10, PyrisStageState.ERROR, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(errorStage), List.of(), null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(errorStage), List.of(), null, null, null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 
@@ -102,7 +102,7 @@ class PyrisStatusUpdateStruggleTest {
     void nonDecisionCallback_emptyStages_doesNotTerminateNorReleaseMarker() {
         // An empty stages list is vacuously "all terminal"; the !isEmpty() guard must NOT let it drop the job,
         // otherwise the real decision callback would 403 and the intervention would be silently lost.
-        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, List.of(), List.of(), null, null, null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 

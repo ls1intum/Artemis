@@ -177,7 +177,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
 
         var terminalStage = new PyrisStageDTO("Thinking", 10, PyrisStageState.DONE, null, false, null);
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Have you checked the empty-list case?", "active", 0.85, "FM", List.of(terminalStage), List.of(), null, null,
-                null);
+                null, null, null, null, null, null);
         sendStruggleStatus(runId.get(), update, HttpStatus.OK);
 
         // The active path lazily CREATED the exercise session and persisted a proactive-tagged LLM message into it.
@@ -213,8 +213,8 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         await().atMost(5, TimeUnit.SECONDS).until(() -> runId.get() != null);
 
         var terminalStage = new PyrisStageDTO("Thinking", 10, PyrisStageState.DONE, null, false, null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("Step back and re-check the logic.", "ambient", 0.7, "STATE", List.of(terminalStage), List.of(), null, null,
-                null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Step back and re-check the logic.", "ambient", 0.7, "STATE", List.of(terminalStage), List.of(), null, null, null,
+                null, null, null, null, null);
         sendStruggleStatus(runId.get(), update, HttpStatus.OK);
 
         // unify-persistence (spec §7): ambient now persists an origin-tagged LLM message into the shared exercise session.
