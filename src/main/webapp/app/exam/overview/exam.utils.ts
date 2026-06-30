@@ -1,5 +1,6 @@
-import { Exam } from 'app/exam/shared/entities/exam.model';
-import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import type { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from 'app/exam/shared/entities/exam.model';
+import type { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/foundation/util/utils';
 import { ServerDateService } from 'app/foundation/service/server-date.service';
@@ -91,4 +92,47 @@ export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined
     }
 
     return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
+}
+
+/**
+ * Checks if the given exam is acting as a test exam.
+ * This is the case if the exam mode is TEST or if the exam is currently in its simulation phase.
+ *
+ * @param exam The exam to check, which might be undefined.
+ * @returns True if the exam acts as a test exam, false otherwise.
+ */
+export function isActingAsTestExam(exam?: Exam) {
+    return exam?.examMode === ExamMode.TEST || isInSimulationPhase(exam);
+}
+
+function isInSimulationPhase(exam?: Exam): boolean {
+    const simulationEndDate = testExamSimulationEndDate(exam);
+    if (!simulationEndDate) {
+        return false;
+    }
+    return dayjs().isAfter(simulationEndDate);
+}
+
+/**
+ * Calculates the simulation end date for a test exam.
+ *
+ * @param exam The exam to calculate the simulation end date for.
+ * @returns The simulation end date as a Dayjs object, or undefined if it cannot be calculated.
+ */
+export function testExamSimulationEndDate(exam?: Exam): dayjs.Dayjs | undefined {
+    if (!(exam?.examMode === ExamMode.TEST_WITH_SIMULATION) || !exam?.startDate || exam.workingTime === undefined) {
+        return undefined;
+    }
+    return dayjs(exam.startDate).add(exam.workingTime, 'seconds');
+}
+
+/**
+ * Checks if the given exam is a real exam.
+ * An exam is considered a real exam if its exam mode is undefined or explicitly set to REAL.
+ *
+ * @param exam The exam to check, which might be undefined.
+ * @returns True if the exam is a real exam, false otherwise.
+ */
+export function isRealExam(exam?: Exam): boolean {
+    return exam?.examMode === undefined || exam.examMode === ExamMode.REAL;
 }

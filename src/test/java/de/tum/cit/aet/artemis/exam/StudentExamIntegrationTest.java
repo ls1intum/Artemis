@@ -490,6 +490,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
         testExamWithSimulation.setWorkingTime(3600);
         testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSimulation.setExamMaxPoints(19);
         testExamWithSimulation = examRepository.save(testExamWithSimulation);
 
         // Register student to exam
@@ -499,7 +500,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         examUserRepository.save(examUser);
 
         // Generate student exams
-        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/generate-missing", null, HttpStatus.OK,
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
                 null);
 
         // Start exercises for the simulation exam for the first time
@@ -2962,6 +2963,41 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(studentExamForConduction.getWorkingTime()).isEqualTo(testExamWithSimulation.getWorkingTime());
         assertThat(studentExamForConduction.getIndividualEndDate()).isCloseTo(testExamWithSimulation.getStartDate().plusSeconds(testExamWithSimulation.getWorkingTime()),
                 within(10, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testConductionOfTestExamWithSimulationPracticeAttemptBoundary() {
+        Exam testExamWithSimulation = new Exam();
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        ZonedDateTime startDate = ZonedDateTime.now().minusMinutes(10);
+        testExamWithSimulation.setStartDate(startDate);
+        int workingTime = 3600;
+        testExamWithSimulation.setWorkingTime(workingTime);
+
+        // Simulation end date is startDate + workingTime
+        ZonedDateTime simulationEndDate = testExamWithSimulation.getSimulationEndDate();
+
+        // 1. Started exactly at simulationEndDate
+        StudentExam studentExamAtBoundary = new StudentExam();
+        studentExamAtBoundary.setExam(testExamWithSimulation);
+        studentExamAtBoundary.setWorkingTime(workingTime);
+        studentExamAtBoundary.setStartedAndStartDate(simulationEndDate);
+
+        // Since boundary is strict isAfter, exactly at simulationEndDate is NOT a practice attempt (isTestStudentExam returns false)
+        // Therefore, individual end date should be exam.getStartDate() + workingTime
+        assertThat(studentExamAtBoundary.getIndividualEndDate()).isEqualTo(startDate.plusSeconds(workingTime));
+
+        // 2. Started strictly after simulationEndDate
+        StudentExam studentExamAfterBoundary = new StudentExam();
+        studentExamAfterBoundary.setExam(testExamWithSimulation);
+        studentExamAfterBoundary.setWorkingTime(workingTime);
+        ZonedDateTime afterSimulationEndDate = simulationEndDate.plusSeconds(1);
+        studentExamAfterBoundary.setStartedAndStartDate(afterSimulationEndDate);
+
+        // Since boundary is strict isAfter, strictly after simulationEndDate is a practice attempt (isTestStudentExam returns true)
+        // Therefore, individual end date should be startedDate + workingTime
+        assertThat(studentExamAfterBoundary.getIndividualEndDate()).isEqualTo(afterSimulationEndDate.plusSeconds(workingTime));
     }
 
     @Test

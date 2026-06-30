@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
-import { Exam, isActingAsTestExam, isRealExam } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isActingAsTestExam, isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';

@@ -506,7 +506,7 @@ public class Exam extends DomainObject {
      */
     @JsonIgnore
     public boolean isTestOrPractice(ZonedDateTime now) {
-        return examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SIMULATION && !now.isBefore(getSimulationEndDate());
+        return examMode == ExamMode.TEST || examMode == ExamMode.TEST_WITH_SIMULATION && now.isAfter(getSimulationEndDate());
     }
 
     @JsonIgnore

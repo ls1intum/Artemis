@@ -11,29 +11,6 @@ export enum ExamMode {
     TEST_WITH_SIMULATION = 'TEST_WITH_SIMULATION',
 }
 
-export function isActingAsTestExam(exam?: Exam) {
-    return exam?.examMode === ExamMode.TEST || isInSimulationPhase(exam);
-}
-
-function isInSimulationPhase(exam?: Exam): boolean {
-    const simulationEndDate = testExamSimulationEndDate(exam);
-    if (!simulationEndDate) {
-        return false;
-    }
-    return dayjs().isAfter(simulationEndDate);
-}
-
-export function testExamSimulationEndDate(exam?: Exam): dayjs.Dayjs | undefined {
-    if (!(exam?.examMode === ExamMode.TEST_WITH_SIMULATION) || !exam?.startDate || exam.workingTime === undefined) {
-        return undefined;
-    }
-    return dayjs(exam.startDate).add(exam.workingTime, 'seconds');
-}
-
-export function isRealExam(exam?: Exam): boolean {
-    return exam?.examMode === undefined || exam.examMode === ExamMode.REAL;
-}
-
 export class Exam implements BaseEntity {
     public id?: number;
     public title?: string;

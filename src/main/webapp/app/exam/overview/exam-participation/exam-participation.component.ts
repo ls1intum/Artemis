@@ -7,7 +7,8 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Exam, ExamMode, isRealExam, testExamSimulationEndDate } from 'app/exam/shared/entities/exam.model';
+import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { isRealExam, testExamSimulationEndDate } from 'app/exam/overview/exam.utils';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
@@ -272,7 +273,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
 
         const simulationEndDate = testExamSimulationEndDate(exam);
-        if (exam?.examMode !== ExamMode.TEST_WITH_SIMULATION || !simulationEndDate || dayjs(simulationEndDate).isBefore(now)) {
+        if (exam?.examMode !== ExamMode.TEST_WITH_SIMULATION || !simulationEndDate || now.isAfter(simulationEndDate)) {
             return false;
         }
 
@@ -1057,9 +1058,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
     }
 
-    private isSimulationAttempt(startDate: dayjs.Dayjs): boolean {
-        const simulationEndDate = testExamSimulationEndDate(this.exam());
-        return this.exam().examMode === ExamMode.TEST_WITH_SIMULATION && !this.studentExam().testRun && !!simulationEndDate && startDate.isBefore(simulationEndDate);
+    private isSimulationAttempt(customStartDate: dayjs.Dayjs): boolean {
+        const exam = this.exam();
+        const studentExam = this.studentExam();
+        const actualExam = exam ?? studentExam.exam;
+        if (!actualExam || actualExam.examMode !== ExamMode.TEST_WITH_SIMULATION || studentExam.testRun) {
+            return false;
+        }
+        const startedDate = customStartDate ?? studentExam.startedDate;
+        if (!startedDate) {
+            return false;
+        }
+        const simulationEndDate = testExamSimulationEndDate(actualExam);
+        return !!simulationEndDate && !startedDate.isAfter(simulationEndDate);
     }
 
     /**
