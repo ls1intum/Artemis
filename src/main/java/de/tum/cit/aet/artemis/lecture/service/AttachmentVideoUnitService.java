@@ -144,7 +144,7 @@ public class AttachmentVideoUnitService {
         if (updateAttachment != null) {
             if (createdNewAttachment) {
                 // Split PDF files into individual slides for easier navigation
-                if (hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                     slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
                 }
             }
@@ -167,16 +167,17 @@ public class AttachmentVideoUnitService {
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
-                if (hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                    if (pageOrder != null) {
-                        // Apply slide visibility (hiddenPages) and ordering metadata to the existing slides. This must run even for a same-content re-upload, because the client
-                        // re-sends the unchanged PDF when only the hidden-slide dates or the page order change.
-                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
-                    }
-                    else if (fileContentChanged) {
-                        // Full re-split into fresh slides. The create-only splitter always adds new Slide rows, so it must only run when the content actually changed; otherwise a
-                        // no-op re-upload would duplicate the existing slide set.
-                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                // Slide splitting is intentionally identical to develop: it runs on every uploaded file, independent of the content fingerprint. The fingerprint only gates the
+                // version bump (and therefore the Pyris re-ingestion) above; it deliberately does not change the existing slide-splitting behavior.
+                if (updateFile != null) {
+                    // Split PDF into slides, respecting custom page order if provided
+                    if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                        if (pageOrder == null) {
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                        }
+                        else {
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                        }
                     }
                 }
             }

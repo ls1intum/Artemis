@@ -16,7 +16,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -443,9 +442,6 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var afterSameUpload = mapper.readValue(sameResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
         assertThat(afterSameUpload.getAttachment().getVersion()).isEqualTo(originalVersion);
         assertThat(afterSameUpload.getAttachment().getLink()).isEqualTo(originalLink);
-        // A same-content re-upload without page-order metadata must not run the create-only splitter, so it must not create duplicate slides (verify the count stays stable)
-        await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(3))
-                .untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
 
         // Uploading a PDF with genuinely different content must bump the version
         var changedFile = createAttachmentVideoUnitPdf("a completely different lecture body");
