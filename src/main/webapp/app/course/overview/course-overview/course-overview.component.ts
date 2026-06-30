@@ -36,15 +36,7 @@ import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/c
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [
-        NgClass,
-        RouterOutlet,
-        NgTemplateOutlet,
-        FaIconComponent,
-        CourseTitleBarComponent,
-        CourseSidebarComponent,
-        CourseUnenrollmentModalComponent,
-    ],
+    imports: [NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, CourseTitleBarComponent, CourseSidebarComponent, CourseUnenrollmentModalComponent],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
