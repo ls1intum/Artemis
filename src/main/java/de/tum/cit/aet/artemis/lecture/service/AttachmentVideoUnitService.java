@@ -1,7 +1,12 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -10,6 +15,8 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -33,6 +40,10 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 @Service
 @Lazy
 public class AttachmentVideoUnitService {
+
+    private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitService.class);
+
+    private static final int HASH_BUFFER_SIZE = 8192;
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
@@ -130,8 +141,12 @@ public class AttachmentVideoUnitService {
             else if (existingAttachment != null) {
                 updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
 
-                // Update file and increment version number when a file is uploaded
-                if (hasUploadedFile) {
+                // Re-uploading a file with identical content must not bump the version or trigger a re-ingest.
+                // Compare the uploaded content against the stored file and only treat it as a real change if they differ.
+                boolean fileContentChanged = hasUploadedFile && !isUploadedFileContentIdenticalToStored(updateFile, existingAttachment);
+
+                // Update file and increment version number only when the uploaded content actually changed
+                if (fileContentChanged) {
                     handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
                     final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
                     existingAttachment.setVersion(revision);
@@ -141,7 +156,7 @@ public class AttachmentVideoUnitService {
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
-                if (hasUploadedFile) {
+                if (fileContentChanged) {
                     // Split PDF into slides, respecting custom page order if provided
                     if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                         if (pageOrder == null) {
@@ -184,6 +199,57 @@ public class AttachmentVideoUnitService {
                 course != null ? course.getId() : null, course != null ? course.getTitle() : null, course != null && course.getDescription() != null ? course.getDescription() : "",
                 attachment != null ? attachment.getVersion() : -1, attachment != null && attachment.getLink() != null ? attachment.getLink() : "",
                 unit.getVideoSource() != null && !unit.getVideoSource().isBlank() ? unit.getVideoSource() : null);
+    }
+
+    /**
+     * Checks whether the uploaded file has the exact same binary content as the file currently stored for the attachment.
+     * This is used to avoid bumping the attachment version (and triggering a costly re-ingest) when the same file is re-uploaded.
+     *
+     * @param uploadedFile       the newly uploaded file
+     * @param existingAttachment the attachment whose currently stored file the upload is compared against
+     * @return {@code true} if a stored file exists and its content hash matches the uploaded file's content hash, {@code false} otherwise
+     */
+    private boolean isUploadedFileContentIdenticalToStored(MultipartFile uploadedFile, Attachment existingAttachment) {
+        if (existingAttachment == null || existingAttachment.getLink() == null) {
+            return false;
+        }
+        Path existingFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(existingAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+        if (!Files.exists(existingFilePath)) {
+            return false;
+        }
+        try (InputStream uploadedStream = uploadedFile.getInputStream(); InputStream existingStream = Files.newInputStream(existingFilePath)) {
+            byte[] uploadedHash = computeContentHash(uploadedStream);
+            byte[] existingHash = computeContentHash(existingStream);
+            return MessageDigest.isEqual(uploadedHash, existingHash);
+        }
+        catch (IOException e) {
+            // If the comparison fails for any reason, fall back to treating the upload as changed content so that processing still happens.
+            log.warn("Could not compare uploaded file with the stored attachment file (attachment {}). Treating the upload as changed content: {}", existingAttachment.getId(),
+                    e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Computes a SHA-256 hash over the full content of the given input stream. The stream is read in chunks so that large files do not have to be held in memory at once.
+     *
+     * @param inputStream the stream to hash; the caller is responsible for closing it
+     * @return the SHA-256 digest of the stream content
+     * @throws IOException if reading the stream fails
+     */
+    private static byte[] computeContentHash(InputStream inputStream) throws IOException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[HASH_BUFFER_SIZE];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
+            return digest.digest();
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm not available", e);
+        }
     }
 
     private void createAttachment(Attachment attachment, AttachmentVideoUnit attachmentVideoUnit, MultipartFile file, boolean keepFilename) {

@@ -11,7 +11,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -329,6 +331,40 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(attachment.getAttachmentVideoUnit()).isEqualTo(attachmentVideoUnit2);
         assertThat(attachmentVideoUnit1.getCompetencyLinks()).anyMatch(link -> link.getCompetency().getId().equals(competency.getId()));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of(competency.getId())), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withIdenticalFile_shouldNotBumpVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+        String originalLink = persistedAttachment.getLink();
+
+        // Wait for the initial slide splitting to finish before re-uploading
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Read the exact bytes of the stored file so we can re-upload byte-identical content
+        File storedFile = request.getFile(ARTEMIS_FILE_PATH_PREFIX + originalLink, HttpStatus.OK);
+        byte[] storedBytes = Files.readAllBytes(storedFile.toPath());
+
+        // Re-uploading byte-identical content must not bump the version or change the stored file
+        var sameFile = new MockMultipartFile("file", "lectureFile.pdf", "application/pdf", storedBytes);
+        var sameBuilder = buildUpdateAttachmentVideoUnit(persistedAttachmentVideoUnit, persistedAttachment, null);
+        sameBuilder.file(sameFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+        var sameResult = request.performMvcRequest(sameBuilder).andExpect(status().isOk()).andReturn();
+        var afterSameUpload = mapper.readValue(sameResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        assertThat(afterSameUpload.getAttachment().getVersion()).isEqualTo(originalVersion);
+        assertThat(afterSameUpload.getAttachment().getLink()).isEqualTo(originalLink);
+
+        // Uploading a file with different content must bump the version
+        var changedFile = createAttachmentVideoUnitPdf();
+        var changedBuilder = buildUpdateAttachmentVideoUnit(persistedAttachmentVideoUnit, afterSameUpload.getAttachment(), null);
+        changedBuilder.file(changedFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+        var changedResult = request.performMvcRequest(changedBuilder).andExpect(status().isOk()).andReturn();
+        var afterChangedUpload = mapper.readValue(changedResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        assertThat(afterChangedUpload.getAttachment().getVersion()).isEqualTo(originalVersion + 1);
     }
 
     @Test
