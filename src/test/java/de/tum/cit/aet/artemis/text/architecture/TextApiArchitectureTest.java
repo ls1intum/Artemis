@@ -4,7 +4,6 @@ import java.util.Set;
 
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleAccessArchitectureTest;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 class TextApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
 
@@ -15,6 +14,6 @@ class TextApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
 
     @Override
     protected Set<Class<?>> getIgnoredClasses() {
-        return Set.of(TextApiNotPresentException.class, TextExerciseRepository.class);
+        return Set.of(TextApiNotPresentException.class);
     }
 }
