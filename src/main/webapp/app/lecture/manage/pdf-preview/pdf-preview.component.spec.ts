@@ -154,6 +154,41 @@ describe('PdfPreviewComponent', () => {
         expect(finalOrder.map((p) => p.order)).toEqual([1, 2]);
     });
 
+    it('should save a regular attachment through the attachment service', async () => {
+        await loadOriginal(2);
+        component.attachment.set({ id: 7, version: 1, lecture: { id: 3 } } as any);
+
+        await component.updateAttachmentWithFile();
+
+        expect(attachmentService.update).toHaveBeenCalledOnce();
+        expect(alertService.success).toHaveBeenCalled();
+    });
+
+    it('should save an attachment video unit with both instructor and student versions', async () => {
+        await loadOriginal(2);
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        const hidden = component.pageOrder()[0];
+        component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
+
+        await component.updateAttachmentWithFile();
+
+        expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
+        expect(attachmentVideoUnitService.updateStudentVersion).toHaveBeenCalledOnce();
+        expect(alertService.success).toHaveBeenCalled();
+    });
+
+    it('should abort saving when a hidden page has a past release date', async () => {
+        await loadOriginal(2);
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: {} } as any);
+        const page = component.pageOrder()[0];
+        component.hidePages({ slideId: page.slideId, date: dayjs().subtract(1, 'day'), exerciseId: undefined });
+
+        await component.updateAttachmentWithFile();
+
+        expect(attachmentVideoUnitService.update).not.toHaveBeenCalled();
+        expect(alertService.error).toHaveBeenCalled();
+    });
+
     it('should reject building a student version when every page is hidden', async () => {
         await loadOriginal(2);
         component.pageOrder().forEach((page) => component.hidePages({ slideId: page.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined }));
