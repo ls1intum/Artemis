@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamParticipationCoverComponent } from 'app/exam/overview/exam-cover/exam-participation-cover.component';
@@ -31,6 +31,7 @@ import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-se
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamParticipationCoverComponent', () => {
     setupTestBed({ zoneless: true });

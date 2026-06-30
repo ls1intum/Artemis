@@ -1,9 +1,9 @@
 import type { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamMode } from 'app/exam/shared/entities/exam.model';
 import type { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/foundation/util/utils';
 import { ServerDateService } from 'app/foundation/service/server-date.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 /**
  * Calculates the individual end time based on the studentExam

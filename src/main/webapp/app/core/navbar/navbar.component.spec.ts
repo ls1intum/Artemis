@@ -45,7 +45,6 @@ import { User } from 'app/account/user/user.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { ExamMode } from 'app/exam/shared/entities/exam.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -68,6 +67,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LoginService } from 'app/core/login/login.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 class MockBreadcrumb {
     label: string;

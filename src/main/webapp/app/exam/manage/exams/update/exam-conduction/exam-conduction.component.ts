@@ -7,7 +7,8 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Message } from 'primeng/message';
 import { normalWorkingTime } from 'app/exam/overview/exam.utils';
-import { ExamMode } from 'app/exam/shared/entities/exam.model';
+
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 @Component({
     selector: 'jhi-exam-conduction',

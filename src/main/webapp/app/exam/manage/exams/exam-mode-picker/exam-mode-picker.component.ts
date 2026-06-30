@@ -1,9 +1,10 @@
 import { Component, input, output } from '@angular/core';
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Tooltip } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 @Component({
     selector: 'jhi-exam-mode-picker',
@@ -26,6 +27,7 @@ export class ExamModePickerComponent {
     setExamMode(examMode: ExamMode) {
         if (!this.disableInput() && this.exam().examMode !== examMode) {
             this.exam().examMode = examMode;
+            this.exam().numberOfCorrectionRoundsInExam = examMode === ExamMode.REAL ? 1 : 0;
             this.examModeChanged.emit();
         }
     }

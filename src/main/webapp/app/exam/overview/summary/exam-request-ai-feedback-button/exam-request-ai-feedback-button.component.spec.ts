@@ -18,7 +18,7 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shar
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -35,6 +35,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamRequestAiFeedbackButtonComponent', () => {
     setupTestBed({ zoneless: true });

@@ -7,7 +7,8 @@ import { ExamConductionComponent } from 'app/exam/manage/exams/update/exam-condu
 import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ExamMode } from 'app/exam/shared/entities/exam.model';
+
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamConductionComponent', () => {
     setupTestBed({ zoneless: true });

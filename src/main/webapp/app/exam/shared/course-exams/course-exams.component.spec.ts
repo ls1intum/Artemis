@@ -1,4 +1,4 @@
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -30,6 +30,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ExamWorkingTimeDTO } from 'app/exam/shared/entities/exam-working-time-dto.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('CourseExamsComponent', () => {
     setupTestBed({ zoneless: true });

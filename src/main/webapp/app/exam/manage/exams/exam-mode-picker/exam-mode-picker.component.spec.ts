@@ -6,16 +6,15 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { ExamMode } from 'app/exam/shared/entities/exam.model';
 
-const exam = {
-    id: 2,
-};
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+
 describe('ExamModePickerComponent', () => {
     setupTestBed({ zoneless: true });
 
     let component: ExamModePickerComponent;
     let fixture: ComponentFixture<ExamModePickerComponent>;
+    let exam: any;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -25,6 +24,7 @@ describe('ExamModePickerComponent', () => {
 
         fixture = TestBed.createComponent(ExamModePickerComponent);
         component = fixture.componentInstance;
+        exam = { id: 2 };
     });
 
     afterEach(() => {

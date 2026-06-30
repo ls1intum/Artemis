@@ -5,7 +5,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -31,6 +31,7 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;

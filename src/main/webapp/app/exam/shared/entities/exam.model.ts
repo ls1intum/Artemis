@@ -4,12 +4,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { BaseEntity } from 'app/foundation/model/base-entity';
-
-export enum ExamMode {
-    REAL = 'REAL',
-    TEST = 'TEST',
-    TEST_WITH_SIMULATION = 'TEST_WITH_SIMULATION',
-}
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 export class Exam implements BaseEntity {
     public id?: number;

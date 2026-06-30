@@ -1,7 +1,8 @@
 import { Component, computed, input } from '@angular/core';
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 export type ExamModeBadgeSize = 'default' | 'large';
 

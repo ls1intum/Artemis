@@ -23,7 +23,6 @@ import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, fa
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { ExamMode } from 'app/exam/shared/entities/exam.model';
 import { Title } from '@angular/platform-browser';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
@@ -43,6 +42,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
 import { getCurrentRouteSignal } from '../../foundation/route/getCurrentRouteSignal';
 import { Course } from 'app/course/shared/entities/course.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 @Component({
     selector: 'jhi-navbar',

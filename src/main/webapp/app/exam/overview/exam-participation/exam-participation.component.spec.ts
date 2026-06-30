@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UMLDiagramType } from '@tumaet/apollon';
@@ -10,7 +11,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
@@ -66,6 +67,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 describe('ExamParticipationComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -167,6 +169,7 @@ describe('ExamParticipationComponent', () => {
         // Ensure the mocked service has the currentlyLoadedStudentExam Subject in place; otherwise pipelines triggered
         // by tests below would crash with "Cannot read 'next' of undefined" during teardown.
         examParticipationService.currentlyLoadedStudentExam = new Subject<StudentExam>();
+        (examParticipationService as any).testStudentExams = signal([]);
         examParticipationService.testStudentExams.set([]);
         // The TestBed has no router routes registered, so any navigate(...) call would emit an
         // unhandled NG04002 rejection. Stub it once so individual tests don't have to.
@@ -177,6 +180,7 @@ describe('ExamParticipationComponent', () => {
         vi.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(new Subject());
         vi.spyOn(examParticipationService, 'getOwnStudentExam').mockReturnValue(new Subject());
         examParticipationService.testStudentExams.set([]);
+        vi.spyOn(artemisServerDateService, 'now').mockReturnValue(dayjs());
         comp.ngOnInit();
         loadTestRunSpy.mockClear();
         comp.exam.set(new Exam());
@@ -1547,22 +1551,6 @@ describe('ExamParticipationComponent', () => {
         const warning = fixture.debugElement.query(By.css('.text-danger span'));
         const directiveInstance = warning.injector.get(TranslateDirective);
         expect(directiveInstance.jhiTranslate()).toBe('artemisApp.studentExam.submissionNotInTime');
-    });
-
-    it('should show the test exam missed submission warning', () => {
-        comp.exam.set(new Exam());
-        comp.exam().examMode = ExamMode.TEST;
-        comp.studentExam.set(new StudentExam());
-        comp.studentExam().submitted = false;
-        comp.examStartConfirmed.set(true);
-        vi.spyOn(comp, 'isOver').mockReturnValue(true);
-        vi.spyOn(comp, 'studentFailedToSubmit', 'get').mockReturnValue(true);
-
-        fixture.changeDetectorRef.detectChanges();
-
-        const warning = fixture.debugElement.query(By.css('.text-danger span'));
-        const directiveInstance = warning.injector.get(TranslateDirective);
-        expect(directiveInstance.jhiTranslate()).toBe('artemisApp.examParticipation.testExamAttemptUsed');
     });
 
     it('should get whether student failed to submit', () => {

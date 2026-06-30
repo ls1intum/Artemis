@@ -7,7 +7,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam, testExamSimulationEndDate } from 'app/exam/overview/exam.utils';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -62,6 +62,7 @@ import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submis
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { Message } from 'primeng/message';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 

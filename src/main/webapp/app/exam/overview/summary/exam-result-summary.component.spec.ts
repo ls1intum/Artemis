@@ -4,7 +4,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { User } from 'app/account/user/user.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { Exam, ExamMode } from 'app/exam/shared/entities/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
@@ -55,6 +55,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -354,20 +355,20 @@ describe('ExamResultSummaryComponent', () => {
     it('should correctly identify a TestExam', () => {
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.isRealExam).toBe(false);
+        expect(component.isRealExam()).toBe(false);
         expect(component.testExamConduction()).toBe(true);
 
         studentExamForTestExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExamForTestExam);
         component.ngOnInit();
-        expect(component.isRealExam).toBe(false);
+        expect(component.isRealExam()).toBe(false);
         expect(component.testExamConduction()).toBe(false);
     });
 
     it('should correctly identify a RealExam', () => {
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.isRealExam).toBe(true);
+        expect(component.isRealExam()).toBe(true);
         expect(component.testExamConduction()).toBe(false);
         expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
@@ -375,7 +376,7 @@ describe('ExamResultSummaryComponent', () => {
         studentExam.submitted = true;
         fixture.componentRef.setInput('studentExam', studentExam);
         component.ngOnInit();
-        expect(component.isRealExam).toBe(true);
+        expect(component.isRealExam()).toBe(true);
         expect(component.testExamConduction()).toBe(false);
         expect(component.isTestRun()).toBe(false);
         expect(component.testRunConduction).toBe(false);
