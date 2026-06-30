@@ -8,7 +8,6 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -17,6 +16,7 @@ import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/
 import { ResultSummaryExerciseInfo } from 'app/exam/overview/summary/exam-result-summary.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 let fixture: ComponentFixture<ExamResultSummaryExerciseCardHeaderComponent>;
 let component: ExamResultSummaryExerciseCardHeaderComponent;

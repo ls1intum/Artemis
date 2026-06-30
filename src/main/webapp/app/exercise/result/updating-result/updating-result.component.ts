@@ -10,7 +10,7 @@ import { BuildTimingInfo, ProgrammingSubmissionService, ProgrammingSubmissionSta
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ResultService } from 'app/exercise/result/result.service';
-import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
@@ -18,6 +18,7 @@ import { getLatestResultOfStudentParticipation, hasParticipationChanged } from '
 import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { ResultComponent } from '../result.component';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.

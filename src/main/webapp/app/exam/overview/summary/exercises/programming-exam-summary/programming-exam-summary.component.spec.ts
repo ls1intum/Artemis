@@ -10,7 +10,6 @@ import { User } from 'app/account/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -27,6 +26,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 const user = { id: 1, name: 'Test User' } as User;
 
