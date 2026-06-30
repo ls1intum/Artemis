@@ -11,9 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -158,7 +156,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + attachmentVideoUnit.getId());
         if (fileContent != null) {
-            var filePart = createAttachmentVideoUnitPdf();
+            // Render the provided text into the PDF so that distinct fileContent values produce PDFs with genuinely different content (and identical values produce identical
+            // content)
+            var filePart = createAttachmentVideoUnitPdf(fileContent);
             builder.file(filePart);
         }
 
@@ -181,6 +181,17 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
      * @return MockMultipartFile attachment video unit pdf file
      */
     private MockMultipartFile createAttachmentVideoUnitPdf() throws IOException {
+        return createAttachmentVideoUnitPdf("This is the sample document");
+    }
+
+    /**
+     * Generates an attachment video unit pdf file using the given body text on its content pages. Two PDFs generated with the same body text have identical extractable text
+     * (even though their raw bytes differ), which is what the content-fingerprint comparison relies on.
+     *
+     * @param bodyText the text rendered on the content pages
+     * @return MockMultipartFile attachment video unit pdf file
+     */
+    private MockMultipartFile createAttachmentVideoUnitPdf(String bodyText) throws IOException {
 
         var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
 
@@ -205,8 +216,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
                 contentStream.beginText();
                 contentStream.setFont(font, 12);
                 contentStream.newLineAtOffset(25, 500);
-                String text = "This is the sample document";
-                contentStream.showText(text);
+                contentStream.showText(bodyText);
                 contentStream.endText();
                 contentStream.close();
             }
@@ -335,7 +345,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAttachmentVideoUnit_withIdenticalFile_shouldNotBumpVersion() throws Exception {
+    void updateAttachmentVideoUnit_reUploadingSameContent_shouldNotBumpVersion() throws Exception {
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
         var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
@@ -345,26 +355,68 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // Wait for the initial slide splitting to finish before re-uploading
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
 
-        // Read the exact bytes of the stored file so we can re-upload byte-identical content
-        File storedFile = request.getFile(ARTEMIS_FILE_PATH_PREFIX + originalLink, HttpStatus.OK);
-        byte[] storedBytes = Files.readAllBytes(storedFile.toPath());
-
-        // Re-uploading byte-identical content must not bump the version or change the stored file
-        var sameFile = new MockMultipartFile("file", "lectureFile.pdf", "application/pdf", storedBytes);
+        // Re-upload a freshly generated PDF with identical content. Its raw bytes differ (like the pdf-preview client re-serializing the PDF), but its extracted text is the same,
+        // so the version and stored file must stay unchanged.
+        var sameContentFile = createAttachmentVideoUnitPdf();
         var sameBuilder = buildUpdateAttachmentVideoUnit(persistedAttachmentVideoUnit, persistedAttachment, null);
-        sameBuilder.file(sameFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+        sameBuilder.file(sameContentFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
         var sameResult = request.performMvcRequest(sameBuilder).andExpect(status().isOk()).andReturn();
         var afterSameUpload = mapper.readValue(sameResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
         assertThat(afterSameUpload.getAttachment().getVersion()).isEqualTo(originalVersion);
         assertThat(afterSameUpload.getAttachment().getLink()).isEqualTo(originalLink);
 
-        // Uploading a file with different content must bump the version
-        var changedFile = createAttachmentVideoUnitPdf();
+        // Uploading a PDF with genuinely different content must bump the version
+        var changedFile = createAttachmentVideoUnitPdf("a completely different lecture body");
         var changedBuilder = buildUpdateAttachmentVideoUnit(persistedAttachmentVideoUnit, afterSameUpload.getAttachment(), null);
         changedBuilder.file(changedFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
         var changedResult = request.performMvcRequest(changedBuilder).andExpect(status().isOk()).andReturn();
         var afterChangedUpload = mapper.readValue(changedResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
         assertThat(afterChangedUpload.getAttachment().getVersion()).isEqualTo(originalVersion + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withSameContentButChangedHiddenPages_shouldApplyHiddenWithoutBumpingVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+        String originalLink = persistedAttachment.getLink();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Initially no slide is hidden
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId()).stream().sorted(Comparator.comparing(Slide::getSlideNumber))
+                .toList();
+        assertThat(slides).allMatch(slide -> slide.getHidden() == null);
+        Long hiddenSlideId = slides.getFirst().getId();
+
+        // Simulate the real hidden-slide edit: the client re-serializes the PDF (different bytes, same content) and changes only the hidden-slide metadata
+        var reSerializedFile = createAttachmentVideoUnitPdf();
+        String futureDate = ZonedDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        String hiddenPagesJson = "[{\"slideId\": \"" + hiddenSlideId + "\", \"date\": \"" + futureDate + "\"}]";
+        String pageOrderJson = slides.stream().map(slide -> "{\"slideId\": \"" + slide.getId() + "\", \"order\": " + slide.getSlideNumber() + "}")
+                .collect(Collectors.joining(",", "[", "]"));
+
+        var attachmentUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsString(persistedAttachmentVideoUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+        var pageOrderPart = new MockMultipartFile("pageOrder", "", MediaType.APPLICATION_JSON_VALUE, pageOrderJson.getBytes());
+
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
+                .file(attachmentPart).file(reSerializedFile).file(hiddenPagesPart).file(pageOrderPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                .param("keepFilename", "true");
+        request.performMvcRequest(builder).andExpect(status().isOk());
+
+        // The hidden-slide metadata must be applied even though the PDF content (and therefore the version) did not change
+        await().untilAsserted(() -> assertThat(slideRepository.findById(hiddenSlideId).orElseThrow().getHidden()).isNotNull());
+
+        // The version and stored file must stay unchanged because the PDF content did not change
+        Attachment reloadedAttachment = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow();
+        assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion);
+        assertThat(reloadedAttachment.getLink()).isEqualTo(originalLink);
     }
 
     @Test

@@ -1,13 +1,14 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -15,6 +16,9 @@ import java.util.Set;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -42,8 +46,6 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 public class AttachmentVideoUnitService {
 
     private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitService.class);
-
-    private static final int HASH_BUFFER_SIZE = 8192;
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
@@ -141,8 +143,9 @@ public class AttachmentVideoUnitService {
             else if (existingAttachment != null) {
                 updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
 
-                // Re-uploading a file with identical content must not bump the version or trigger a re-ingest.
-                // Compare the uploaded content against the stored file and only treat it as a real change if they differ.
+                // Re-uploading a file whose content is unchanged must not bump the version or trigger a re-ingest. The pdf-preview client re-serializes the PDF on every save
+                // (e.g. when only hidden-slide dates change), so the raw bytes always differ; we therefore compare the PDF content (extracted text + page count), which is stable
+                // across re-serialization. Only a genuine content change bumps the version.
                 boolean fileContentChanged = hasUploadedFile && !isUploadedFileContentIdenticalToStored(updateFile, existingAttachment);
 
                 // Update file and increment version number only when the uploaded content actually changed
@@ -156,7 +159,7 @@ public class AttachmentVideoUnitService {
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
-                if (fileContentChanged) {
+                if (hasUploadedFile) {
                     // Split PDF into slides, respecting custom page order if provided
                     if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                         if (pageOrder == null) {
@@ -202,12 +205,13 @@ public class AttachmentVideoUnitService {
     }
 
     /**
-     * Checks whether the uploaded file has the exact same binary content as the file currently stored for the attachment.
-     * This is used to avoid bumping the attachment version (and triggering a costly re-ingest) when the same file is re-uploaded.
+     * Checks whether the uploaded file has the same content as the file currently stored for the attachment. This is used to avoid bumping the attachment version (and triggering
+     * a costly re-ingest) when a file with unchanged content is re-uploaded. For PDFs the comparison is based on a content fingerprint (extracted text + page count) rather than
+     * the raw bytes, because the pdf-preview client re-serializes the PDF on every save (e.g. when only hidden-slide dates change), which changes the bytes but not the content.
      *
      * @param uploadedFile       the newly uploaded file
      * @param existingAttachment the attachment whose currently stored file the upload is compared against
-     * @return {@code true} if a stored file exists and its content hash matches the uploaded file's content hash, {@code false} otherwise
+     * @return {@code true} if a stored file exists and its content fingerprint matches the uploaded file's fingerprint, {@code false} otherwise
      */
     private boolean isUploadedFileContentIdenticalToStored(MultipartFile uploadedFile, Attachment existingAttachment) {
         if (existingAttachment == null || existingAttachment.getLink() == null) {
@@ -217,10 +221,10 @@ public class AttachmentVideoUnitService {
         if (!Files.exists(existingFilePath)) {
             return false;
         }
-        try (InputStream uploadedStream = uploadedFile.getInputStream(); InputStream existingStream = Files.newInputStream(existingFilePath)) {
-            byte[] uploadedHash = computeContentHash(uploadedStream);
-            byte[] existingHash = computeContentHash(existingStream);
-            return MessageDigest.isEqual(uploadedHash, existingHash);
+        try {
+            String uploadedFingerprint = computeContentFingerprint(uploadedFile.getBytes(), uploadedFile.getOriginalFilename());
+            String existingFingerprint = computeContentFingerprint(Files.readAllBytes(existingFilePath), existingFilePath.getFileName().toString());
+            return uploadedFingerprint.equals(existingFingerprint);
         }
         catch (IOException e) {
             // If the comparison fails for any reason, fall back to treating the upload as changed content so that processing still happens.
@@ -231,21 +235,34 @@ public class AttachmentVideoUnitService {
     }
 
     /**
-     * Computes a SHA-256 hash over the full content of the given input stream. The stream is read in chunks so that large files do not have to be held in memory at once.
+     * Computes a content fingerprint for the given file. For PDFs this is a SHA-256 hash over the extracted text and the page count, so that re-serializing the same PDF (which
+     * changes the raw bytes but not the content) yields the same fingerprint. For non-PDF files (or PDFs that cannot be parsed) it falls back to a hash of the raw bytes.
      *
-     * @param inputStream the stream to hash; the caller is responsible for closing it
-     * @return the SHA-256 digest of the stream content
-     * @throws IOException if reading the stream fails
+     * @param fileBytes the file content
+     * @param filename  the original filename, used to detect PDFs
+     * @return a hex-encoded SHA-256 fingerprint of the file content
      */
-    private static byte[] computeContentHash(InputStream inputStream) throws IOException {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] buffer = new byte[HASH_BUFFER_SIZE];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                digest.update(buffer, 0, bytesRead);
+    private String computeContentFingerprint(byte[] fileBytes, String filename) {
+        if (filename != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(filename))) {
+            try (PDDocument document = Loader.loadPDF(fileBytes)) {
+                String text = new PDFTextStripper().getText(document);
+                // Include the page count so that adding or removing pages is still detected for image-only PDFs without extractable text.
+                return sha256Hex(document.getNumberOfPages() + "\n" + text);
             }
-            return digest.digest();
+            catch (IOException e) {
+                log.warn("Could not parse uploaded PDF for content fingerprinting, falling back to raw bytes: {}", e.getMessage());
+            }
+        }
+        return sha256Hex(fileBytes);
+    }
+
+    private static String sha256Hex(String value) {
+        return sha256Hex(value.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String sha256Hex(byte[] value) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value));
         }
         catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm not available", e);
