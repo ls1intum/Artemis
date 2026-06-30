@@ -55,6 +55,10 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
      * context would make Hibernate's flush fail with a {@code TransientPropertyValueException} (the managed exercises
      * would still reference the removed group). With the members left unloaded, the {@code ON DELETE SET NULL} foreign
      * key on {@code exercise.exercise_variant_group_id} cleanly ungroups them.
+     *
+     * @param groupId  the id of the exercise variant group to load
+     * @param courseId the id of the course the group must belong to
+     * @return the matching group without its exercises, or empty if none matches
      */
     @Query("""
             SELECT evg
