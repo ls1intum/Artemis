@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import jakarta.ws.rs.BadRequestException;
+
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,21 +15,25 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -310,6 +316,131 @@ public class IrisStruggleInterventionService {
     }
 
     private record PersistedProactive(IrisChatSession session, IrisMessage saved) {
+    }
+
+    /**
+     * Persist a previously-hidden ambient hint as a {@code PROACTIVE_STRUGGLE} message with a server-assigned
+     * {@code sentAt} and an idempotency key on {@code proactiveClientMessageId}. Idempotent: a lost-response
+     * retry with the same {@code clientMessageId} returns the same persisted row without inserting a duplicate.
+     * Race-safe: if a concurrent retry wins the unique-index race, the {@code DataIntegrityViolationException}
+     * is caught and the now-existing row is re-selected.
+     *
+     * <p>
+     * Deliberately does NOT call {@code irisChatWebsocketService.sendMessage}: the client owns the single insert
+     * (optimistic bubble), and broadcasting here would duplicate the bubble before the client can reconcile (C2).
+     *
+     * @param user            the student performing the reveal
+     * @param exerciseId      the programming exercise id (session scope)
+     * @param episodeId       the client-allocated episode UUID to stamp on the row
+     * @param hintText        the hint text to persist as message content
+     * @param level           the intervention level tag; accepted for future use, not stored as a separate column
+     * @param clientMessageId the client-generated UUID that serves as the unique idempotency key
+     * @return the persisted message as a DTO (id + proactiveEpisodeId visible to the client for reconciliation)
+     */
+    public IrisMessageResponseDTO revealAmbient(User user, long exerciseId, String episodeId, String hintText, String level, String clientMessageId) {
+        // The clientMessageId is the idempotency key: it MUST be present and non-blank, otherwise the unique index
+        // cannot dedupe (NULLs are not unique in SQL) and a lost-response retry would create duplicate rows.
+        if (clientMessageId == null || clientMessageId.isBlank()) {
+            throw new BadRequestException("A non-blank clientMessageId is required to reveal an ambient hint");
+        }
+        // Fast idempotency path: already persisted (normal case on lost-response retry).
+        var existing = irisMessageRepository.findByProactiveClientMessageId(clientMessageId);
+        if (existing.isPresent()) {
+            return IrisMessageResponseDTO.of(existing.get());
+        }
+        var session = resolveProactiveSession(user, exerciseId);
+        if (session == null) {
+            throw new ConflictException("Cannot persist reveal: the exercise-chat session could not be resolved", "IrisMessage", "revealSessionConflict");
+        }
+        var message = new IrisMessage();
+        message.addContent(new IrisTextMessageContent(hintText));
+        message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        message.setProactiveEpisodeId(episodeId);
+        message.setProactiveClientMessageId(clientMessageId);
+        try {
+            var saved = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+            return IrisMessageResponseDTO.of(saved);
+        }
+        catch (DataIntegrityViolationException ex) {
+            // Concurrent retry persisted first; re-select the now-existing row (race-safe upsert).
+            return irisMessageRepository.findByProactiveClientMessageId(clientMessageId).map(IrisMessageResponseDTO::of)
+                    .orElseThrow(() -> new IllegalStateException("Row vanished after unique-index violation on proactive_client_message_id=" + clientMessageId, ex));
+        }
+    }
+
+    /**
+     * Episode-wide first-terminal-wins outcome write. Writes {@code outcome} onto the episode's first-persisted
+     * (smallest-id) row ONLY IF no row of the episode already carries a non-null outcome. Returns {@code true}
+     * (applied) whenever a terminal outcome is established for the episode (whether THIS call wrote it or a prior one
+     * did), and {@code false} only when no terminal outcome could be established because no row exists yet (deferred,
+     * not an error - the client back-fills once the reveal/delivery row is persisted).
+     *
+     * <p>
+     * Portable AND race-safe without a pessimistic lock or a same-table subquery (which would trip MySQL 1093):
+     * <ul>
+     * <li>The target row is the episode's SMALLEST-id row ({@link IrisMessageRepository#findFirstByProactiveEpisodeIdOrderByIdAsc}).
+     * Ids are monotonic, so this target is stable under concurrent inserts (a delivery row that persists late gets a
+     * larger id and can never become the target). Two concurrent writers therefore pick the SAME target row.</li>
+     * <li>An episode-wide existence pre-check ({@link IrisMessageRepository#findEpisodeOutcomes}) makes first-terminal-wins
+     * stable under out-of-order persistence: once ANY row of the episode holds an outcome, every later call is a no-op.</li>
+     * <li>The row-scoped {@code WHERE id = ? AND proactive_outcome IS NULL} guard ({@link IrisMessageRepository#setProactiveOutcomeIfNull})
+     * makes concurrent writes to that one stable target land at most once.</li>
+     * <li>If the guarded update affects 0 rows (the target was concurrently given an outcome OR concurrently deleted),
+     * a re-check decides the result: {@code true} if an outcome now exists episode-wide, else {@code false} (the row
+     * vanished and nothing is established - defer so the client back-fills). This prevents a false {@code applied=true}.</li>
+     * </ul>
+     * Readers are episode-wide ({@code findEpisodeOutcomes}), so the physical row holding the outcome is immaterial.
+     *
+     * @param episodeId the client-allocated episode UUID
+     * @param outcome   the terminal outcome to write
+     * @return {@code true} if a terminal outcome is established for the episode; {@code false} if none could be
+     *         established yet (no row persisted - the caller should back-fill once a row exists)
+     */
+    public boolean writeEpisodeOutcome(String episodeId, IrisProactiveOutcome outcome) {
+        var target = irisMessageRepository.findFirstByProactiveEpisodeIdOrderByIdAsc(episodeId);
+        if (target.isEmpty()) {
+            return false;  // DEFERRED: no row persisted yet for this episode; client must back-fill
+        }
+        // Episode-wide first-terminal-wins: if any row already holds an outcome, this is a no-op (applied = true).
+        if (!irisMessageRepository.findEpisodeOutcomes(episodeId).isEmpty()) {
+            return true;
+        }
+        // Write to the episode's stable smallest-id row, guarded on that row still being null (row-scoped, MySQL-safe).
+        int updated = irisMessageRepository.setProactiveOutcomeIfNull(target.get().getId(), outcome);
+        if (updated == 0) {
+            // The target was concurrently given an outcome or deleted: only report applied if an outcome now stands.
+            return !irisMessageRepository.findEpisodeOutcomes(episodeId).isEmpty();
+        }
+        return true;
+    }
+
+    /**
+     * Delete a superseded proactive message row, making stale-row suppression durable (not just live). The guards
+     * (proactive-origin AND null outcome AND the row belongs to one of the user's sessions) and the delete run as ONE
+     * atomic SQL statement ({@link IrisMessageRepository#deleteSupersededProactiveMessage}), so there is no
+     * check-then-delete race: a concurrent outcome write can never cause a now-terminal row to be deleted. Missing or
+     * already-deleted rows, non-proactive rows, other users' rows, and rows with a terminal outcome are all silent
+     * noops (idempotent 204 semantics at the endpoint level).
+     *
+     * @param user      the requesting student
+     * @param messageId the id of the message to delete
+     */
+    public void deleteSupersededProactiveMessage(User user, long messageId) {
+        irisMessageRepository.deleteSupersededProactiveMessage(messageId, user.getId());
+    }
+
+    /**
+     * Scoped cancel: remove the pending struggle job ONLY IF its stamped {@code requestToken} matches the
+     * provided token, then release the single-flight marker. A non-matching token or no pending job is an
+     * idempotent noop (204 at the endpoint level). This prevents {@code cancel(A)} from accidentally removing
+     * a since-started run B that carries a different token.
+     *
+     * @param user         the requesting student (scopes the in-flight slot to this user)
+     * @param exerciseId   the exercise id (scopes the in-flight slot)
+     * @param requestToken the token that must match the pending job's stamped token
+     */
+    public void cancelOutstandingStruggleJob(User user, long exerciseId, String requestToken) {
+        pyrisJobService.removeStruggleJobIfTokenMatches(user.getId(), exerciseId, requestToken);
     }
 
     /**

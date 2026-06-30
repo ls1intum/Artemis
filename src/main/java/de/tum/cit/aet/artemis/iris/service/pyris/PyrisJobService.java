@@ -216,6 +216,40 @@ public class PyrisJobService {
     }
 
     /**
+     * Scoped cancel: remove the pending struggle job and its in-flight marker ONLY IF the job's stamped
+     * {@code requestToken} equals the provided token. If no pending job exists, or the token does not match,
+     * this is an idempotent noop (the slot is left intact).
+     *
+     * <p>
+     * This prevents {@code cancel(A)} from accidentally removing a since-started run B that carries a different
+     * token. Run B is only removed by its own scoped cancel or by the normal completion path.
+     *
+     * @param userId       the struggling student (scopes the in-flight key)
+     * @param exerciseId   the exercise the student is struggling on (scopes the in-flight key)
+     * @param requestToken the token that must match the pending job's stamped token; null is treated as no-match
+     */
+    public void removeStruggleJobIfTokenMatches(long userId, long exerciseId, @Nullable String requestToken) {
+        if (requestToken == null) {
+            return;
+        }
+        var key = struggleInFlightKey(userId, exerciseId);
+        String pendingToken = getStruggleInFlightMap().get(key);
+        if (pendingToken == null) {
+            return;  // no pending job, idempotent noop
+        }
+        var job = getPyrisJobMap().get(pendingToken);
+        if (!(job instanceof StruggleInterventionJob sij)) {
+            return;  // job expired or wrong type, noop
+        }
+        if (!requestToken.equals(sij.requestToken())) {
+            return;  // token mismatch: cancel(A) must never remove a since-started B
+        }
+        // Scoped match: remove the job entry and the in-flight marker
+        getPyrisJobMap().remove(pendingToken);
+        getStruggleInFlightMap().remove(key, pendingToken);
+    }
+
+    /**
      * Adds a new global search answer job to the job map.
      * The job stores the requesting user's login so that WebSocket status updates can be routed.
      *

@@ -89,4 +89,43 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
         assertThat(job.confirmReason()).isEqualTo("progress");
         assertThat(job.requestToken()).isEqualTo("rt-uuid");
     }
+
+    @Test
+    void scopedCancelMatchingTokenRemovesJobAndFreesSlot() {
+        long courseId = 9005L;
+        long userId = 9105L;
+        long exerciseId = 9205L;
+
+        String token = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", "ep-1", null, "tok-A").orElseThrow();
+
+        // A matching token removes the job and frees the in-flight marker, so a new reservation can be taken.
+        pyrisJobService.removeStruggleJobIfTokenMatches(userId, exerciseId, "tok-A");
+        assertThat(pyrisJobService.getJob(token)).as("the scoped cancel must remove the job entry").isNull();
+        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", "ep-2", null, "tok-B"))
+                .as("after a matching scoped cancel the pair can be reserved again").isPresent();
+    }
+
+    @Test
+    void scopedCancelNonMatchingTokenLeavesJobIntact() {
+        long courseId = 9006L;
+        long userId = 9106L;
+        long exerciseId = 9206L;
+
+        String token = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", "ep-1", null, "tok-A").orElseThrow();
+
+        // A non-matching token must be a noop: the scoped-cancel guarantee means cancel(A) never removes a since-started B.
+        pyrisJobService.removeStruggleJobIfTokenMatches(userId, exerciseId, "tok-OTHER");
+        assertThat(pyrisJobService.getJob(token)).as("a non-matching token must leave the job intact").isNotNull();
+        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", "ep-2", null, "tok-B"))
+                .as("a non-matching scoped cancel must leave the in-flight reservation intact").isEmpty();
+    }
+
+    @Test
+    void scopedCancelNoPendingJobIsNoop() {
+        long userId = 9107L;
+        long exerciseId = 9207L;
+
+        // No reservation for this pair: a scoped cancel is an idempotent noop (no exception).
+        pyrisJobService.removeStruggleJobIfTokenMatches(userId, exerciseId, "tok-A");
+    }
 }
