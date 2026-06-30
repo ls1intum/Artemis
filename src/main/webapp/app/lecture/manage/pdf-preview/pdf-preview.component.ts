@@ -38,7 +38,6 @@ export interface PDFSource {
     id: string;
     /** The document handle opened in the shared PDFium engine (cached by {@link id}). */
     doc: PdfDocumentObject;
-    blob: Blob;
     url: string;
 }
 
@@ -252,14 +251,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.isPdfLoading.set(true);
         try {
             const engine = await this.pdfEngineService.getEngine();
-            // Create the blob before opening the document: the engine may transfer (detach) the ArrayBuffer to its worker.
-            const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
             const doc = await engine.openDocumentBuffer({ id: sourceId, content: arrayBuffer }).toPromise();
             const pageCount = doc.pageCount;
 
             this.sourcePDFs.update((sources) => {
                 const newSources = new Map(sources);
-                newSources.set(sourceId, { id: sourceId, doc, blob, url: fileUrl });
+                newSources.set(sourceId, { id: sourceId, doc, url: fileUrl });
                 return newSources;
             });
 
@@ -440,6 +437,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const hiddenSlideIds = new Set(Object.keys(this.hiddenPages()));
             if (hiddenSlideIds.size > 0) {
                 const visibleOrder = finalOrder.filter((page) => !hiddenSlideIds.has(page.slideId));
+                if (visibleOrder.length === 0) {
+                    // Every page is hidden: a student PDF would be empty (a 0-page document), so reject the save
+                    // instead of uploading an invalid student version.
+                    throw new Error('Cannot create a student version with no visible pages');
+                }
                 studentBytes = await this.buildPdfBytes(visibleOrder);
             }
         }

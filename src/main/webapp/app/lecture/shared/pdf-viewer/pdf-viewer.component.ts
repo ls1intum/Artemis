@@ -153,6 +153,10 @@ export class PdfViewerComponent {
     });
 
     private renderToken = 0;
+    private searchToken = 0;
+    // Epoch (ms) until which IntersectionObserver-driven page tracking is suppressed because a programmatic
+    // smooth-scroll is in flight; prevents intermediate pages from emitting currentPageChange during goToPage.
+    private programmaticScrollUntil = 0;
     private lastFullscreenState?: boolean;
     private intersectionObserver?: IntersectionObserver;
     private drawerContentElement?: HTMLElement;
@@ -207,7 +211,9 @@ export class PdfViewerComponent {
             if (token !== this.renderToken) {
                 return;
             }
-            const doc = await engine.openDocumentBuffer({ id: this.docId, content: arrayBuffer }).toPromise();
+            // A unique id per load: the engine caches documents by id and silently ignores a second open of an
+            // already-present id, so a fixed id would leak/alias when the pdfUrl changes while a load is in flight.
+            const doc = await engine.openDocumentBuffer({ id: `${this.docId}-${token}`, content: arrayBuffer }).toPromise();
             if (token !== this.renderToken) {
                 await engine
                     .closeDocument(doc)
@@ -229,8 +235,12 @@ export class PdfViewerComponent {
             this.isLoading.set(false);
             this.pageRendered.emit({ pdfUrl: url });
         } catch {
-            this.isLoading.set(false);
-            this.loadError.emit({ pdfUrl: url });
+            // Ignore failures from a superseded load (the pdfUrl changed while this one was in flight) so a
+            // stale error neither clears the newer load's state nor emits a misleading loadError.
+            if (token === this.renderToken) {
+                this.isLoading.set(false);
+                this.loadError.emit({ pdfUrl: url });
+            }
         }
     }
 
@@ -248,7 +258,8 @@ export class PdfViewerComponent {
         for (const page of doc.pages) {
             const blob = await engine.renderPage(doc, page, { scaleFactor: scale * dpr }).toPromise();
             if (token !== this.renderToken) {
-                URL.revokeObjectURL(URL.createObjectURL(blob));
+                // Superseded by a newer render: revoke the object URLs created so far so they do not leak.
+                pages.forEach((p) => URL.revokeObjectURL(p.url));
                 return;
             }
             pages.push({
@@ -325,7 +336,9 @@ export class PdfViewerComponent {
                         bestIndex = index;
                     }
                 });
-                if (bestRatio > 0) {
+                // Ignore intersection changes caused by an in-flight programmatic smooth-scroll so intermediate
+                // pages do not emit currentPageChange (which would, e.g., drive a synced video to the wrong page).
+                if (bestRatio > 0 && Date.now() >= this.programmaticScrollUntil) {
                     this.setCurrentPage(bestIndex + 1);
                 }
             },
@@ -352,6 +365,8 @@ export class PdfViewerComponent {
             return;
         }
         const element = this.pageElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === page - 1);
+        // Suppress observer-driven page tracking while the smooth-scroll animates past intermediate pages.
+        this.programmaticScrollUntil = Date.now() + 700;
         element?.nativeElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
         this.currentPage.set(page);
         this.pageInputValue.set(page);
@@ -388,8 +403,13 @@ export class PdfViewerComponent {
             this.clearSearchResults();
             return;
         }
+        const token = ++this.searchToken;
         const engine = await this.pdfEngineService.getEngine();
         const result = await engine.searchAllPages(doc, query).toPromise();
+        // Discard results from a superseded query (or one resolving after a reload) so highlights stay in sync.
+        if (token !== this.searchToken || doc !== this.doc()) {
+            return;
+        }
         this.searchResults.set(result.results);
         this.activeResultIndex.set(0);
         this.searchMatchesCount.set(result.total > 0 ? { current: 1, total: result.total } : undefined);
@@ -421,6 +441,8 @@ export class PdfViewerComponent {
     }
 
     private clearSearchResults(): void {
+        // Invalidate any in-flight search so a late-resolving query cannot repopulate cleared results.
+        this.searchToken++;
         this.searchResults.set([]);
         this.activeResultIndex.set(0);
         this.searchMatchesCount.set(undefined);

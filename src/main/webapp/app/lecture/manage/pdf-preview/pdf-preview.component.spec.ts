@@ -154,6 +154,13 @@ describe('PdfPreviewComponent', () => {
         expect(finalOrder.map((p) => p.order)).toEqual([1, 2]);
     });
 
+    it('should reject building a student version when every page is hidden', async () => {
+        await loadOriginal(2);
+        component.pageOrder().forEach((page) => component.hidePages({ slideId: page.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined }));
+
+        await expect(component.applyOperations(true)).rejects.toThrow(/no visible pages/);
+    });
+
     it('should close opened engine documents on destroy', async () => {
         await loadOriginal(3);
 

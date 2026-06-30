@@ -27,7 +27,12 @@ export class PdfEngineService {
      */
     getEngine(): Promise<WorkerPdfEngine> {
         if (!this.enginePromise) {
-            this.enginePromise = this.createEngine();
+            // Clear the cached promise on failure so a later call can retry instead of being stuck with a
+            // permanently rejected engine (e.g. a transient WASM fetch error during the first open).
+            this.enginePromise = this.createEngine().catch((error) => {
+                this.enginePromise = undefined;
+                throw error;
+            });
         }
         return this.enginePromise;
     }

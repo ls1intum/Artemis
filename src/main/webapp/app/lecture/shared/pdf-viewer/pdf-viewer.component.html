@@ -10,6 +10,7 @@
     [class.dark-mode]="isDarkMode()"
     [attr.role]="isFullscreen() ? 'dialog' : null"
     [attr.aria-modal]="isFullscreen() ? 'true' : null"
+    [attr.aria-label]="isFullscreen() ? ('artemisApp.attachmentVideoUnit.pdfViewer.fullscreenDialog' | artemisTranslate) : null"
     [attr.tabindex]="isFullscreen() ? '0' : null"
     (click)="$event.stopPropagation()"
     (keydown.escape)="onFullscreenEscape($event)"

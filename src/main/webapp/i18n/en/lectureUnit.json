@@ -249,7 +249,8 @@
                 "pageInputPlaceholder": "Page",
                 "downloadPdf": "Download PDF",
                 "openFullscreen": "Open fullscreen",
-                "closeFullscreen": "Close fullscreen"
+                "closeFullscreen": "Close fullscreen",
+                "fullscreenDialog": "PDF fullscreen viewer"
             }
         },
         "exerciseUnit": {

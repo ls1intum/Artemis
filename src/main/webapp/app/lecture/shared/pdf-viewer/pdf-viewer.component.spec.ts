@@ -80,8 +80,8 @@ describe('PdfViewerComponent', () => {
 
         expect(engineService.engine.openDocumentBuffer).toHaveBeenCalledOnce();
         expect(engineService.engine.renderPage).toHaveBeenCalledTimes(3);
-        expect(component.totalPages()).toBe(3);
-        expect(component.renderedPages().length).toBe(3);
+        expect(component['totalPages']()).toBe(3);
+        expect(component['renderedPages']().length).toBe(3);
     });
 
     it('should emit pageRendered after a successful load', async () => {
@@ -91,7 +91,7 @@ describe('PdfViewerComponent', () => {
         await loadPdf();
 
         expect(emitted).toHaveBeenCalledWith({ pdfUrl: PDF_URL });
-        expect(component.isLoading()).toBe(false);
+        expect(component['isLoading']()).toBe(false);
     });
 
     it('should emit loadError when opening the document fails', async () => {
@@ -113,29 +113,29 @@ describe('PdfViewerComponent', () => {
             task({ results: [{ pageIndex: 0, charIndex: 0, charCount: 5, rects: [{ origin: { x: 1, y: 2 }, size: { width: 3, height: 4 } }], context: {} }], total: 1 }) as any,
         );
 
-        await component.performSearch('hello');
+        await component['performSearch']('hello');
 
         expect(engineService.engine.searchAllPages).toHaveBeenCalledWith(expect.anything(), 'hello');
-        expect(component.searchMatchesCount()).toEqual({ current: 1, total: 1 });
+        expect(component['searchMatchesCount']()).toEqual({ current: 1, total: 1 });
     });
 
     it('should clear the search results', async () => {
         await loadPdf();
         engineService.engine.searchAllPages.mockReturnValue(task({ results: [{ pageIndex: 0, charIndex: 0, charCount: 1, rects: [], context: {} }], total: 1 }) as any);
-        await component.performSearch('x');
-        expect(component.searchMatchesCount()).toBeDefined();
+        await component['performSearch']('x');
+        expect(component['searchMatchesCount']()).toBeDefined();
 
-        component.clearSearch();
+        component['clearSearch']();
 
-        expect(component.searchQuery()).toBe('');
-        expect(component.searchMatchesCount()).toBeUndefined();
+        expect(component['searchQuery']()).toBe('');
+        expect(component['searchMatchesCount']()).toBeUndefined();
     });
 
     it('should re-render the pages when zooming in', async () => {
         await loadPdf();
         engineService.engine.renderPage.mockClear();
 
-        component.zoomIn();
+        component['zoomIn']();
         await flushAsync();
 
         expect(engineService.engine.renderPage).toHaveBeenCalledTimes(3);
@@ -147,11 +147,11 @@ describe('PdfViewerComponent', () => {
         await loadPdf();
 
         component.openFullscreen();
-        expect(component.isFullscreen()).toBe(true);
+        expect(component['isFullscreen']()).toBe(true);
         expect(emitted).toHaveBeenLastCalledWith(true);
 
         component.closeFullscreen();
-        expect(component.isFullscreen()).toBe(false);
+        expect(component['isFullscreen']()).toBe(false);
         expect(emitted).toHaveBeenLastCalledWith(false);
     });
 
@@ -162,6 +162,112 @@ describe('PdfViewerComponent', () => {
         component['triggerDownload']();
 
         expect(emitted).toHaveBeenCalledOnce();
+    });
+
+    it('should navigate to the next and previous search matches with wraparound', async () => {
+        await loadPdf(2);
+        engineService.engine.searchAllPages.mockReturnValue(
+            task({
+                results: [
+                    { pageIndex: 0, charIndex: 0, charCount: 1, rects: [], context: {} },
+                    { pageIndex: 1, charIndex: 0, charCount: 1, rects: [], context: {} },
+                ],
+                total: 2,
+            }) as any,
+        );
+        await component['performSearch']('a');
+        expect(component['searchMatchesCount']()).toEqual({ current: 1, total: 2 });
+
+        component['search'](false); // next
+        expect(component['searchMatchesCount']()).toEqual({ current: 2, total: 2 });
+        component['search'](false); // wraps to first
+        expect(component['searchMatchesCount']()).toEqual({ current: 1, total: 2 });
+        component['search'](true); // previous wraps to last
+        expect(component['searchMatchesCount']()).toEqual({ current: 2, total: 2 });
+    });
+
+    it('should discard a stale search whose result resolves after it was cleared', async () => {
+        await loadPdf();
+        let resolveSearch!: (value: unknown) => void;
+        engineService.engine.searchAllPages.mockReturnValue({
+            toPromise: () => new Promise((resolve) => (resolveSearch = resolve)),
+            wait: () => {},
+            abort: () => {},
+        } as any);
+
+        const pending = component['performSearch']('slow');
+        component['clearSearch']();
+        // Let performSearch advance past `await getEngine()` to the searchAllPages call (which captures the resolver),
+        // then resolve it: the result must be discarded because clearSearch already advanced the search token.
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        resolveSearch({ results: [{ pageIndex: 0, charIndex: 0, charCount: 1, rects: [], context: {} }], total: 1 });
+        await pending;
+
+        expect(component['searchMatchesCount']()).toBeUndefined();
+        expect(component['searchQuery']()).toBe('');
+    });
+
+    it('should navigate pages and reject out-of-range input', async () => {
+        await loadPdf(3);
+
+        component.goToPage(2);
+        expect(component.getCurrentPage()).toBe(2);
+        component.goToPage(99); // out of range -> ignored
+        expect(component.getCurrentPage()).toBe(2);
+
+        // An invalid page-input value resets to the current page.
+        component['pageInputValue'].set(42);
+        component['confirmPageNavigation']();
+        expect(component['pageInputValue']()).toBe(2);
+    });
+
+    it('should emit currentPageChange when the current page changes', async () => {
+        await loadPdf(3);
+        const emitted = vi.fn();
+        component.currentPageChange.subscribe(emitted);
+
+        component['setCurrentPage'](3);
+
+        expect(emitted).toHaveBeenCalledWith(3);
+        expect(component.getCurrentPage()).toBe(3);
+    });
+
+    it('should clamp zoom-out at the minimum scale', async () => {
+        await loadPdf();
+        for (let i = 0; i < 20; i++) {
+            component['zoomOut']();
+        }
+        await flushAsync();
+
+        expect(component['scale']()).toBeGreaterThanOrEqual(0.2);
+    });
+
+    it('should revoke previous page object URLs and close the old document when a new PDF is loaded', async () => {
+        await loadPdf(3);
+        (URL.revokeObjectURL as ReturnType<typeof vi.fn>).mockClear();
+        engineService.engine.closeDocument.mockClear();
+
+        const SECOND_URL = 'https://example.com/other.pdf';
+        engineService.engine.openDocumentBuffer.mockReturnValue(task(createMockPdfDocument('doc2', 2)) as any);
+        fixture.componentRef.setInput('pdfUrl', SECOND_URL);
+        fixture.detectChanges();
+        httpMock.expectOne(SECOND_URL).flush(new Blob(['%PDF'], { type: 'application/pdf' }));
+        await flushAsync();
+        fixture.detectChanges();
+
+        expect(URL.revokeObjectURL).toHaveBeenCalled();
+        expect(engineService.engine.closeDocument).toHaveBeenCalled();
+        expect(component['totalPages']()).toBe(2);
+    });
+
+    it('should close fullscreen on escape', async () => {
+        await loadPdf();
+        component.openFullscreen();
+        expect(component['isFullscreen']()).toBe(true);
+
+        component.onFullscreenEscape({ preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as Event);
+
+        expect(component['isFullscreen']()).toBe(false);
     });
 
     it('should close the engine document on destroy', async () => {

@@ -26,7 +26,9 @@ export class EmbedPdfPreloadService {
         this.scheduled = true;
         const warm = () => {
             if (this.accountService.isAuthenticated()) {
-                void this.pdfEngineService.getEngine();
+                // Best-effort warm-up: swallow failures (e.g. a WASM fetch error) so the engine still
+                // initializes lazily on first real use without an unhandled promise rejection here.
+                this.pdfEngineService.getEngine().catch(() => {});
             }
         };
         const idleWindow = window as IdleWindow;
