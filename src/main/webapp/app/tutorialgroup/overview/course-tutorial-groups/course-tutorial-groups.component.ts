@@ -59,6 +59,7 @@ export class CourseTutorialGroupsComponent {
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
 
     constructor() {
@@ -88,6 +89,10 @@ export class CourseTutorialGroupsComponent {
     toggleSidebar() {
         this.isCollapsed.update((collapsed) => !collapsed);
         this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed());
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     private setTutorialGroupsAndTutorialLectures(courseId: number) {

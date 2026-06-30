@@ -210,6 +210,14 @@ describe('CourseTutorialGroupsComponent', () => {
         expect(component.isCollapsed()).toBe(!initialCollapseState);
         expect(courseOverviewService.setSidebarCollapseState).toHaveBeenCalledWith('tutorialGroup', component.isCollapsed());
     });
+
+    it('should update the page title signal via setPageTitle', () => {
+        expect(component.pageTitle()).toBe('');
+
+        component.setPageTitle('overview.tutorialGroups');
+
+        expect(component.pageTitle()).toBe('overview.tutorialGroups');
+    });
 });
 
 function createTutorialGroup(id: number, title: string, isUserRegistered: boolean, isUserTutor: boolean): TutorialGroup {
@@ -269,4 +277,7 @@ class MockSidebarComponent {
     sidebarData = input<any>();
     collapseState = input<any>();
     sidebarItemAlwaysShow = input<any>();
+    pageTitle = input<any>();
+    showSidebarToggle = input<any>();
+    isSidebarCollapsed = input<any>();
 }
