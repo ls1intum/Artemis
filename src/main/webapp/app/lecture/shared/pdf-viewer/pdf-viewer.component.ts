@@ -368,8 +368,9 @@ export class PdfViewerComponent {
         // Suppress observer-driven page tracking while the smooth-scroll animates past intermediate pages.
         this.programmaticScrollUntil = Date.now() + 700;
         element?.nativeElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
-        this.currentPage.set(page);
-        this.pageInputValue.set(page);
+        // Emit the target page once via setCurrentPage; the observer suppression above prevents intermediate
+        // pages from emitting during the scroll, and the same-page guard prevents a duplicate when it settles.
+        this.setCurrentPage(page);
     }
 
     protected onPageInputEnter(event: Event): void {

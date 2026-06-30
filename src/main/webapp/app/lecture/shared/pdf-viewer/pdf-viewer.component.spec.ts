@@ -207,11 +207,14 @@ describe('PdfViewerComponent', () => {
         expect(component['searchQuery']()).toBe('');
     });
 
-    it('should navigate pages and reject out-of-range input', async () => {
+    it('should navigate pages, emit the change, and reject out-of-range input', async () => {
         await loadPdf(3);
+        const emitted = vi.fn();
+        component.currentPageChange.subscribe(emitted);
 
         component.goToPage(2);
         expect(component.getCurrentPage()).toBe(2);
+        expect(emitted).toHaveBeenCalledWith(2);
         component.goToPage(99); // out of range -> ignored
         expect(component.getCurrentPage()).toBe(2);
 

@@ -86,12 +86,18 @@ export class CourseNotificationWebsocketService implements OnDestroy {
             return this.courseWebsocketSubscriptions[courseId];
         }
         this.courseWebsocketSubscriptions[courseId] = this.websocketService.subscribe('/user/topic/notification/' + courseId).subscribe((notification: CourseNotification) => {
+            const category = courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category);
+            const status = courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status);
+            // Skip malformed or forward-incompatible payloads whose category/status do not map to a known enum value.
+            if (category === undefined || status === undefined) {
+                return;
+            }
             const courseNotification = new CourseNotification(
                 notification.notificationId!,
                 notification.courseId!,
                 notification.notificationType!,
-                courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category)!,
-                courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status)!,
+                category,
+                status,
                 convertDateFromServer(notification.creationDate!)!,
                 notification.parameters!,
                 notification.relativeWebAppUrl!,
