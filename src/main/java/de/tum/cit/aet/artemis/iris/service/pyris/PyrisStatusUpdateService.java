@@ -116,12 +116,12 @@ public class PyrisStatusUpdateService {
         boolean isThinking = hasStages && stages.getFirst().state() == PyrisStageState.IN_PROGRESS;
 
         if (isThinking) {
-            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null));
+            irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC, new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), true, null, null, null));
             pyrisJobService.updateJob(job);
         }
         else if (isTerminal) {
             irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER_WEBSOCKET_TOPIC,
-                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources()));
+                    new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(), statusUpdate.sources(), statusUpdate.handoff()));
             pyrisJobService.removeJob(job);
         }
         else {

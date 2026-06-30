@@ -39,6 +39,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { IrisHandoffContextService } from 'app/iris/overview/services/iris-handoff-context.service';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -164,6 +165,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly clipboard = inject(Clipboard);
     private readonly onboardingService = inject(IrisOnboardingService);
     private readonly irisChatHttpService = inject(IrisChatHttpService);
+    private readonly irisHandoffContextService = inject(IrisHandoffContextService);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -522,9 +524,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.focusInputAfterAcceptance();
         }
 
-        // Handle route query params (irisQuestion)
+        // Pre-fill the text field from the irisQuestion query param.
+        // CourseChatbotComponent owns session switching and seeding for handoff navigations;
+        // here we only handle the fallback (page refresh, or no handoff context set).
         this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
-            if (params?.irisQuestion) {
+            if (!params?.irisQuestion) return;
+            // Skip pre-fill when a handoff context is pending — CourseChatbotComponent will
+            // seed the session instead, and the Q&A will arrive via WebSocket.
+            if (!this.irisHandoffContextService.context()) {
                 this.newMessageTextContent.set(params.irisQuestion);
             }
         });

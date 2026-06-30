@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,18 +34,24 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchSeedDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
  * REST controller for managing {@link IrisChatSession}.
@@ -76,9 +83,14 @@ public class IrisChatSessionResource {
 
     private final IrisChatSessionService irisChatSessionService;
 
+    private final IrisMessageService irisMessageService;
+
+    private final IrisChatWebsocketService irisChatWebsocketService;
+
     public IrisChatSessionResource(UserRepository userRepository, CourseRepository courseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             IrisSessionRepository irisSessionRepository, IrisCitationService irisCitationService, IrisChatSessionRepository irisChatSessionRepository,
-            CustomAuditEventRepository auditEventRepository, IrisChatSessionService irisChatSessionService) {
+            CustomAuditEventRepository auditEventRepository, IrisChatSessionService irisChatSessionService, IrisMessageService irisMessageService,
+            IrisChatWebsocketService irisChatWebsocketService) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -88,6 +100,8 @@ public class IrisChatSessionResource {
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.auditEventRepository = auditEventRepository;
         this.irisChatSessionService = irisChatSessionService;
+        this.irisMessageService = irisMessageService;
+        this.irisChatWebsocketService = irisChatWebsocketService;
     }
 
     // -------------------------------------------------------------------------
@@ -228,6 +242,48 @@ public class IrisChatSessionResource {
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_ALL_IRIS_SESSIONS, "sessions=" + sessionCount, "messages=" + messageCount);
         auditEventRepository.add(auditEvent);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * POST api/iris/chat/sessions/{sessionId}/global-search-seed
+     * <p>
+     * Seeds an Iris chat session with a Q&amp;A pair from global search so the student
+     * can continue the conversation with Iris having full context about the prior exchange.
+     * Both messages are appended to the session history (existing messages are preserved)
+     * and pushed via WebSocket so the chat page renders them immediately without a reload.
+     *
+     * @param sessionId the ID of the session to seed
+     * @param seedDTO   the query and answer from the global search result card
+     * @return {@code 200 OK}
+     */
+    @PostMapping("sessions/{sessionId}/global-search-seed")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> seedFromGlobalSearch(@PathVariable Long sessionId, @RequestBody IrisGlobalSearchSeedDTO seedDTO) {
+        var user = userRepository.getUser();
+        var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+
+        if (user.getId() == null || session.getUserId() != user.getId().longValue()) {
+            throw new AccessForbiddenAlertException("You do not have access to this Iris chat session.", "iris", "iris.forbidden");
+        }
+
+        var userMsg = new IrisMessage();
+        userMsg.addContent(new IrisTextMessageContent(seedDTO.query()));
+        var savedUserMsg = irisMessageService.saveMessage(userMsg, session, IrisMessageSender.USER);
+
+        // Re-fetch so the second save sees the updated message list
+        session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+
+        var llmMsg = new IrisMessage();
+        llmMsg.addContent(new IrisTextMessageContent(seedDTO.answer()));
+        var savedLlmMsg = irisMessageService.saveMessage(llmMsg, session, IrisMessageSender.LLM);
+
+        // Re-fetch once more to get the fully-persisted session for WebSocket routing
+        session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+
+        irisChatWebsocketService.sendMessage(session, savedUserMsg, null);
+        irisChatWebsocketService.sendMessage(session, savedLlmMsg, null);
+
+        return ResponseEntity.ok().build();
     }
 
     /**

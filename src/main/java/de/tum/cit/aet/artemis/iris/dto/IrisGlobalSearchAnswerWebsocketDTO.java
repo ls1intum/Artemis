@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchHandoffDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchSourceDTO;
 
 /**
@@ -19,7 +20,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchSou
  * <li>{@code isThinking=true}: Pyris classified the query as a real question; LLM is running.</li>
  * <li>{@code isThinking=false}: Pipeline finished. Show the {@code answer} card if non-null; hide otherwise.</li>
  * </ul>
+ * <p>
+ * {@code handoff} is non-null on the done message when the pipeline produced an answer. It identifies the most
+ * focused Iris chat context the user can navigate to for follow-up questions.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisGlobalSearchAnswerWebsocketDTO(@NotBlank String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisGlobalSearchSourceDTO> sources) {
+public record IrisGlobalSearchAnswerWebsocketDTO(@NotBlank String runId, boolean isThinking, @Nullable String answer, @Nullable List<PyrisGlobalSearchSourceDTO> sources,
+        @Nullable PyrisGlobalSearchHandoffDTO handoff) {
 }

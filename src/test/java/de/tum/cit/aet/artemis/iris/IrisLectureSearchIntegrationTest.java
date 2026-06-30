@@ -128,7 +128,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
 
         var thinkingStage = new PyrisStageDTO("Classifying query", 10, PyrisStageState.IN_PROGRESS, null, false, null);
-        sendLectureSearchStatus(runId.toString(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(thinkingStage), null, null));
+        sendLectureSearchStatus(runId.toString(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(thinkingStage), null, null, null));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", "global-search-answer",
                 obj -> obj instanceof IrisGlobalSearchAnswerWebsocketDTO dto && dto.isThinking() && dto.answer() == null);
@@ -147,7 +147,8 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
         var source = new PyrisGlobalSearchSourceDTO("lecture_unit_slide", 3L, new PyrisLectureSearchResultDTO.CourseDTO(1L, "ML"), "Neural Nets", "backprop snippet", null, null,
                 null);
         var doneStage = new PyrisStageDTO("LLM", 90, PyrisStageState.DONE, null, false, null);
-        sendLectureSearchStatus(runId.toString(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), "Neural networks learn via backpropagation.", List.of(source)));
+        sendLectureSearchStatus(runId.toString(),
+                new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), "Neural networks learn via backpropagation.", List.of(source), null));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", "global-search-answer",
                 obj -> obj instanceof IrisGlobalSearchAnswerWebsocketDTO dto && !dto.isThinking() && "Neural networks learn via backpropagation.".equals(dto.answer()));
@@ -164,7 +165,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
 
         var doneStage = new PyrisStageDTO("Classifying query", 10, PyrisStageState.DONE, null, false, null);
-        sendLectureSearchStatus(runId.toString(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), null, null));
+        sendLectureSearchStatus(runId.toString(), new PyrisGlobalSearchAnswerStatusUpdateDTO(List.of(doneStage), null, null, null));
 
         verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", "global-search-answer",
                 obj -> obj instanceof IrisGlobalSearchAnswerWebsocketDTO dto && !dto.isThinking() && dto.answer() == null);
