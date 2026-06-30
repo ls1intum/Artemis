@@ -292,7 +292,21 @@ public class GlobalSearchService {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
             return null;
         }
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+        List<Filter> sub = new ArrayList<>();
+        if (!roleSets.staffCourseIds().isEmpty()) {
+            sub.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
+        }
+        if (!roleSets.studentCourseIds().isEmpty()) {
+            // Lectures never carry a release_date, so adding isNull() is semantically a no-op for real
+            // lecture rows. It is required as a defence against Weaviate's word tokenizer splitting
+            // "lecture_unit" → ["lecture","unit"], which makes the type="lecture" equality filter
+            // accidentally match lecture_unit documents. Without this guard an unreleased lecture_unit
+            // (release_date != null) would pass through this branch and bypass the date check.
+            sub.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
+                    Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull()));
+        }
+        Filter combined = combineOr(sub);
+        return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), combined);
     }
 
     @Nullable

@@ -332,10 +332,17 @@ public class WeaviateService {
             case INT -> Property.integer(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case TEXT -> Property.text(definition.name(), property -> {
                 var builder = property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable());
-                // Trigram tokenization indexes every 3-char sliding window of text values, enabling
-                // BM25 to match partial words and typos (e.g. "strateg" → "strategy").
                 if (definition.indexSearchable()) {
+                    // Trigram tokenization indexes every 3-char sliding window of text values, enabling
+                    // BM25 to match partial words and typos (e.g. "strateg" → "strategy").
                     builder.tokenization(Tokenization.TRIGRAM);
+                }
+                else if (definition.indexFilterable()) {
+                    // Field tokenization stores the whole value as a single token, so equality
+                    // filters are exact-match. Without this, Weaviate's default word tokenizer splits
+                    // on non-alphanumeric chars: "lecture_unit" → ["lecture", "unit"], causing
+                    // type="lecture" to match lecture_unit documents and bypass access checks.
+                    builder.tokenization(Tokenization.FIELD);
                 }
                 return builder;
             });

@@ -45,10 +45,11 @@ public class IrisLectureSearchApi extends AbstractIrisApi {
      *
      * @param query         the search query
      * @param limit         maximum number of results to return
+     * @param courseIds     optional list of course IDs to restrict the search to; {@code null} means no course filter
      * @param accessContext role-based course ID sets resolved by Artemis; {@code null} means admin (no filter)
      * @return list of matching lecture search results with full metadata
      */
-    public List<PyrisLectureSearchResultDTO> searchLecturesByAccessContext(String query, int limit, @Nullable PyrisAccessContextDTO accessContext) {
-        return pyrisConnectorService.searchLectures(query, limit, null, accessContext);
+    public List<PyrisLectureSearchResultDTO> searchLecturesByAccessContext(String query, int limit, @Nullable List<Long> courseIds, @Nullable PyrisAccessContextDTO accessContext) {
+        return pyrisConnectorService.searchLectures(query, limit, courseIds, accessContext);
     }
 }
