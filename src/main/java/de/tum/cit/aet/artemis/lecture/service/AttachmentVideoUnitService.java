@@ -166,15 +166,16 @@ public class AttachmentVideoUnitService {
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
-                if (hasUploadedFile) {
-                    // Split PDF into slides, respecting custom page order if provided
-                    if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                        if (pageOrder == null) {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
-                        }
-                        else {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
-                        }
+                if (hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                    if (pageOrder != null) {
+                        // Apply slide visibility (hiddenPages) and ordering metadata to the existing slides. This must run even for a same-content re-upload, because the client
+                        // re-sends the unchanged PDF when only the hidden-slide dates or the page order change.
+                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                    }
+                    else if (fileContentChanged) {
+                        // Full re-split into fresh slides. The create-only splitter always adds new Slide rows, so it must only run when the content actually changed; otherwise a
+                        // no-op re-upload would duplicate the existing slide set.
+                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
                     }
                 }
             }
