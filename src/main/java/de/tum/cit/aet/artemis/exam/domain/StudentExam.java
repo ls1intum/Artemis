@@ -263,7 +263,7 @@ public class StudentExam extends AbstractAuditingEntity {
     @JsonIgnore
     private boolean isTestStudentExam() {
         return exam.getExamMode() == ExamMode.TEST
-                || exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && startedDate != null && startedDate.isAfter(exam.getSimulationEndDate());
+                || exam.getExamMode() == ExamMode.TEST_WITH_SIMULATION && startedDate != null && !startedDate.isBefore(exam.getSimulationEndDate());
     }
 
     /**

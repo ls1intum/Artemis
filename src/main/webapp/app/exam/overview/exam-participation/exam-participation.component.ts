@@ -274,7 +274,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         }
 
         const simulationEndDate = testExamSimulationEndDate(exam);
-        if (exam?.examMode !== ExamMode.TEST_WITH_SIMULATION || !simulationEndDate || now.isAfter(simulationEndDate)) {
+        if (exam?.examMode !== ExamMode.TEST_WITH_SIMULATION || !simulationEndDate || !now.isBefore(simulationEndDate)) {
             return false;
         }
 
@@ -1071,7 +1071,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             return false;
         }
         const simulationEndDate = testExamSimulationEndDate(actualExam);
-        return !!simulationEndDate && !startedDate.isAfter(simulationEndDate);
+        return !!simulationEndDate && startedDate.isBefore(simulationEndDate);
     }
 
     /**

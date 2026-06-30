@@ -96,21 +96,22 @@ export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined
 
 /**
  * Checks if the given exam is acting as a test exam.
- * This is the case if the exam mode is TEST or if the exam is currently in its simulation phase.
+ * This is the case if the exam mode is TEST, or if the exam mode is TEST_WITH_SIMULATION and its
+ * simulation phase has already ended (i.e. the exam has entered the practice phase).
  *
  * @param exam The exam to check, which might be undefined.
  * @returns True if the exam acts as a test exam, false otherwise.
  */
 export function isActingAsTestExam(exam?: Exam) {
-    return exam?.examMode === ExamMode.TEST || isInSimulationPhase(exam);
+    return exam?.examMode === ExamMode.TEST || isAfterSimulationPhase(exam);
 }
 
-function isInSimulationPhase(exam?: Exam): boolean {
+function isAfterSimulationPhase(exam?: Exam): boolean {
     const simulationEndDate = testExamSimulationEndDate(exam);
     if (!simulationEndDate) {
         return false;
     }
-    return dayjs().isAfter(simulationEndDate);
+    return !dayjs().isBefore(simulationEndDate);
 }
 
 /**

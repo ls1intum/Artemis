@@ -549,7 +549,7 @@ describe('ExamParticipationComponent', () => {
         expect(secondSubmission.submitted).toBe(false);
 
         const simulationEndDate = studentExam.exam?.startDate?.add(studentExam.exam.workingTime!, 'seconds');
-        if (studentExam.exam?.examMode === ExamMode.TEST_WITH_SIMULATION && studentExam.startedDate && !studentExam.startedDate.isAfter(simulationEndDate!)) {
+        if (studentExam.exam?.examMode === ExamMode.TEST_WITH_SIMULATION && studentExam.startedDate && studentExam.startedDate.isBefore(simulationEndDate!)) {
             expect(comp.individualStudentEndDate()).toEqual(comp.exam().startDate!.add(studentExam.workingTime!, 'seconds'));
         } else if (studentExam.testRun || (studentExam.exam?.examMode !== undefined && studentExam.exam.examMode !== ExamMode.REAL)) {
             expect(comp.individualStudentEndDate()).toEqual(comp.testStartTime()!.add(studentExam.workingTime!, 'seconds'));

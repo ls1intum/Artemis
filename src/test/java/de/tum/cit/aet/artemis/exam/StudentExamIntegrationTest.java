@@ -2984,9 +2984,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         studentExamAtBoundary.setWorkingTime(workingTime);
         studentExamAtBoundary.setStartedAndStartDate(simulationEndDate);
 
-        // Since boundary is strict isAfter, exactly at simulationEndDate is NOT a practice attempt (isTestStudentExam returns false)
-        // Therefore, individual end date should be exam.getStartDate() + workingTime
-        assertThat(studentExamAtBoundary.getIndividualEndDate()).isEqualTo(startDate.plusSeconds(workingTime));
+        assertThat(studentExamAtBoundary.getIndividualEndDate()).isEqualTo(simulationEndDate.plusSeconds(workingTime));
 
         // 2. Started strictly after simulationEndDate
         StudentExam studentExamAfterBoundary = new StudentExam();
@@ -2995,9 +2993,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         ZonedDateTime afterSimulationEndDate = simulationEndDate.plusSeconds(1);
         studentExamAfterBoundary.setStartedAndStartDate(afterSimulationEndDate);
 
-        // Since boundary is strict isAfter, strictly after simulationEndDate is a practice attempt (isTestStudentExam returns true)
-        // Therefore, individual end date should be startedDate + workingTime
         assertThat(studentExamAfterBoundary.getIndividualEndDate()).isEqualTo(afterSimulationEndDate.plusSeconds(workingTime));
+
+        // 3. Started strictly before simulationEndDate
+        StudentExam studentExamBeforeBoundary = new StudentExam();
+        studentExamBeforeBoundary.setExam(testExamWithSimulation);
+        studentExamBeforeBoundary.setWorkingTime(workingTime);
+        ZonedDateTime beforeSimulationEndDate = simulationEndDate.minusSeconds(1);
+        studentExamBeforeBoundary.setStartedAndStartDate(beforeSimulationEndDate);
+
+        assertThat(studentExamBeforeBoundary.getIndividualEndDate()).isEqualTo(startDate.plusSeconds(workingTime));
     }
 
     @Test
