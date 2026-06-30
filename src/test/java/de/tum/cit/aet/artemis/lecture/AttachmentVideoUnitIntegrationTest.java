@@ -10,6 +10,9 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -27,6 +30,8 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -226,6 +231,49 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         }
     }
 
+    /**
+     * Generates a PDF with the default text on every page and a solid-color image of the given color embedded on the first page. The text and page count are independent of the
+     * color, so two PDFs that differ only in {@code imageColor} have the same extracted text and page count but different embedded images.
+     *
+     * @param imageColor the color of the embedded image
+     * @return MockMultipartFile attachment video unit pdf file containing an embedded image
+     */
+    private MockMultipartFile createAttachmentVideoUnitPdfWithImage(Color imageColor) throws IOException {
+        var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
+            BufferedImage bufferedImage = new BufferedImage(50, 50, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = bufferedImage.createGraphics();
+            graphics.setColor(imageColor);
+            graphics.fillRect(0, 0, 50, 50);
+            graphics.dispose();
+            PDImageXObject image = LosslessFactory.createFromImage(document, bufferedImage);
+
+            for (int i = 1; i <= SLIDE_COUNT; i++) {
+                document.addPage(new PDPage());
+                try (PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1))) {
+                    contentStream.beginText();
+                    contentStream.setFont(font, 12);
+                    contentStream.newLineAtOffset(25, 500);
+                    contentStream.showText("This is the sample document");
+                    contentStream.endText();
+                    if (i == 1) {
+                        contentStream.drawImage(image, 25, 25, 50, 50);
+                    }
+                }
+            }
+            document.save(outputStream);
+            return new MockMultipartFile("file", "lectureFile.pdf", "application/pdf", outputStream.toByteArray());
+        }
+    }
+
+    private AttachmentVideoUnit updateAttachmentVideoUnitWithFile(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MockMultipartFile file) throws Exception {
+        var builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null);
+        builder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+        var result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
+        return mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAll_asTutor() throws Exception {
@@ -372,6 +420,30 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var changedResult = request.performMvcRequest(changedBuilder).andExpect(status().isOk()).andReturn();
         var afterChangedUpload = mapper.readValue(changedResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
         assertThat(afterChangedUpload.getAttachment().getVersion()).isEqualTo(originalVersion + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withSameTextButChangedImage_shouldBumpVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Upload a PDF with the same text and page count but an embedded image -> visual content changed -> version bumps
+        var afterImageA = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, createAttachmentVideoUnitPdfWithImage(Color.RED));
+        int versionAfterImageA = afterImageA.getAttachment().getVersion();
+        assertThat(versionAfterImageA).isEqualTo(originalVersion + 1);
+
+        // Re-upload the same text and the same image (freshly generated, different raw bytes) -> content unchanged -> no bump
+        var afterImageAagain = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, afterImageA.getAttachment(), createAttachmentVideoUnitPdfWithImage(Color.RED));
+        assertThat(afterImageAagain.getAttachment().getVersion()).isEqualTo(versionAfterImageA);
+
+        // Upload a PDF with the same text and page count but a different image -> visual content changed -> version bumps again
+        var afterImageB = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, afterImageAagain.getAttachment(), createAttachmentVideoUnitPdfWithImage(Color.BLUE));
+        assertThat(afterImageB.getAttachment().getVersion()).isEqualTo(versionAfterImageA + 1);
     }
 
     @Test
