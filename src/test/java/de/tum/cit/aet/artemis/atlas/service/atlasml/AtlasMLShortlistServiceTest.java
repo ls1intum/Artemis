@@ -111,7 +111,8 @@ class AtlasMLShortlistServiceTest {
     @Test
     void fetchShortlists_perExerciseFailureIsolated() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
-        when(atlasMLApi.suggestCompetenciesWithShortTimeout(argThat(request -> request != null && "boom".equals(request.description())))).thenThrow(new RuntimeException("AtlasML down"));
+        when(atlasMLApi.suggestCompetenciesWithShortTimeout(argThat(request -> request != null && "boom".equals(request.description()))))
+                .thenThrow(new RuntimeException("AtlasML down"));
         when(atlasMLApi.suggestCompetenciesWithShortTimeout(argThat(request -> request != null && "ok".equals(request.description())))).thenReturn(response(competency(100L, "C")));
         AtlasMLShortlistService service = createService(Optional.of(atlasMLApi), Optional.of(featureToggleService), 10);
 
