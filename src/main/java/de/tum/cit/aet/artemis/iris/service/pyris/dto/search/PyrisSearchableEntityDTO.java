@@ -17,10 +17,10 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * Course name is intentionally left blank — Pyris enriches it from the Artemis API after the merge.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisSearchableEntityDTO(@JsonProperty("sourceType") String sourceType, @JsonProperty("entityId") long entityId, @JsonProperty("course") CourseRef course,
+public record PyrisSearchableEntityDTO(@JsonProperty("sourceType") String sourceType, @JsonProperty("entityId") long entityId, @JsonProperty("course") CourseRefDTO course,
         @JsonProperty("title") String title, @JsonProperty("snippet") @Nullable String snippet, @JsonProperty("exerciseType") @Nullable String exerciseType) {
 
-    public record CourseRef(@JsonProperty("id") long id, @JsonProperty("name") String name) {
+    public record CourseRefDTO(@JsonProperty("id") long id, @JsonProperty("name") String name) {
     }
 
     private static final java.util.Set<String> IRIS_ENTITY_TYPES = java.util.Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.FAQ,
@@ -46,7 +46,7 @@ public record PyrisSearchableEntityDTO(@JsonProperty("sourceType") String source
         String description = getString(props, SearchableEntitySchema.Properties.DESCRIPTION);
         String exerciseType = SearchableEntitySchema.TypeValues.EXERCISE.equals(type) ? getString(props, SearchableEntitySchema.Properties.EXERCISE_TYPE) : null;
         String snippet = description != null ? description : fallbackDescription(type, title, exerciseType);
-        return new PyrisSearchableEntityDTO(type, entityId, new CourseRef(courseId, ""), title, snippet, exerciseType);
+        return new PyrisSearchableEntityDTO(type, entityId, new CourseRefDTO(courseId, ""), title, snippet, exerciseType);
     }
 
     /**

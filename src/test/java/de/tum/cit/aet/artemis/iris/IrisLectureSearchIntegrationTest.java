@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchSourceDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
@@ -183,6 +187,25 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
     void ask_asUnauthenticated_shouldReturnUnauthorized() throws Exception {
         var requestDTO = new PyrisSearchAskRequestDTO("machine learning", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_shouldForwardAccessContextToPyris() throws Exception {
+        var captured = new AtomicReference<PyrisGlobalSearchAnswerRequestDTO>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(captured::set);
+
+        var requestDTO = new PyrisSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
+        request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        // Block until the background CompletableFuture has called the Pyris mock.
+        await().atMost(5, TimeUnit.SECONDS).until(() -> captured.get() != null);
+
+        PyrisGlobalSearchAnswerRequestDTO pyrisRequest = captured.get();
+        // Artemis must always build and forward an access context so Pyris can apply
+        // role-based Weaviate filters and date-based visibility rules on its side.
+        assertThat(pyrisRequest.accessContext()).isNotNull();
+        assertThat(pyrisRequest.accessContext().now()).isNotNull();
     }
 
     // ==================== helpers ====================
