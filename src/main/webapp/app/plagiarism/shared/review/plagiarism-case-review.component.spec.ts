@@ -8,6 +8,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideTranslateService } from '@ngx-translate/core';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 
 describe('PlagiarismCaseReviewComponent', () => {
     let component: PlagiarismCaseReviewComponent;
@@ -41,6 +42,20 @@ describe('PlagiarismCaseReviewComponent', () => {
     it('should set plagiarismCase input', () => {
         fixture.componentRef.setInput('plagiarismCase', mockPlagiarismCase);
         expect(component.plagiarismCase()).toEqual(mockPlagiarismCase);
+    });
+
+    it('should not render split view for submissions without comparison data', () => {
+        const plagiarismCaseWithoutComparison = {
+            id: 1,
+            exercise: { id: 1 } as Exercise,
+            student: { login: 'student' },
+            plagiarismSubmissions: [{ id: 1 } as PlagiarismSubmission],
+        } as PlagiarismCase;
+
+        fixture.componentRef.setInput('plagiarismCase', plagiarismCaseWithoutComparison);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('jhi-plagiarism-split-view')).toHaveLength(0);
     });
 
     it('should set forStudent input to false', () => {

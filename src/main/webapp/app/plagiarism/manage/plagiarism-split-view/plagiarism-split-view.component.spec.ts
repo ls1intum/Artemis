@@ -87,6 +87,22 @@ describe('Plagiarism Split View Component', () => {
         expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     });
 
+    it('should not fetch comparison until course id and comparison id are available', () => {
+        const getComparisonSpy = vi
+            .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
+            .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
+
+        comp.ngOnChanges({
+            comparison: { currentValue: { id: 1 } } as SimpleChange,
+        });
+        comp.ngOnChanges({
+            exercise: { currentValue: textExercise } as SimpleChange,
+            comparison: { currentValue: {} } as SimpleChange,
+        });
+
+        expect(getComparisonSpy).not.toHaveBeenCalled();
+    });
+
     it('should subscribe to the split control subject', () => {
         fixture.componentRef.setInput('exercise', textExercise as Exercise);
         const subscribeSpy = vi.spyOn(splitControlSubject, 'subscribe');

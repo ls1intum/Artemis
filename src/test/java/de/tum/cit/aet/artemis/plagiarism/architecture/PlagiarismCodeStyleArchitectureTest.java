@@ -11,6 +11,6 @@ class PlagiarismCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 1;
+        return 0;
     }
 }
