@@ -56,6 +56,29 @@ class StruggleInterventionEventDTOTest {
     }
 
     @Test
+    void newA11FieldsRoundTripCorrectly() throws Exception {
+        // All 6 A11 fields set to non-null values; serialized JSON must carry every one.
+        var event = new StruggleInterventionEventDTO(42, "confirm_close", null, null, null, 77L, null, null, null, null, "ep-rt", "Want to look at it together?", true,
+                "Nice work, that is resolved.", "Resolved", false, "Are you stuck?");
+        JsonNode node = mapper.valueToTree(event);
+
+        assertThat(node.get("offer").asText()).isEqualTo("Want to look at it together?");
+        assertThat(node.get("resolved").asBoolean()).isTrue();
+        assertThat(node.get("closingSentence").asText()).isEqualTo("Nice work, that is resolved.");
+        assertThat(node.get("episodeLabel").asText()).isEqualTo("Resolved");
+        assertThat(node.get("question").asText()).isEqualTo("Are you stuck?");
+
+        // CRITICAL: resolved=false and ask=false must appear explicitly on the wire so the client receives them.
+        // NON_EMPTY must NOT omit Boolean false (only null is omitted).
+        var falseEvent = new StruggleInterventionEventDTO(42, "confirm_close", null, null, null, null, null, null, null, null, "ep-rt", null, false, null, null, false, null);
+        JsonNode falseNode = mapper.valueToTree(falseEvent);
+        assertThat(falseNode.hasNonNull("resolved")).isTrue();
+        assertThat(falseNode.get("resolved").asBoolean()).isFalse();
+        assertThat(falseNode.hasNonNull("ask")).isTrue();
+        assertThat(falseNode.get("ask").asBoolean()).isFalse();
+    }
+
+    @Test
     void acceptedDtoCarriesJobIdOrNull() {
         assertThat(new StruggleInterventionAcceptedDTO(true, false, 42, "tok").jobId()).isEqualTo("tok");
         assertThat(new StruggleInterventionAcceptedDTO(false, true, 42, null).courseDisabled()).isTrue();

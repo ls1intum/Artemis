@@ -347,9 +347,9 @@ public class IrisStruggleInterventionService {
         // parked_progress (and null/unknown fail-closed): silent on both results.
         // Persist nothing, write no outcome. Emit bare completion event only.
         if (!"progress".equals(confirmReason) && !"stale_solved".equals(confirmReason)) {
-            if (confirmReason != null && !"parked_progress".equals(confirmReason)) {
-                log.warn("Unknown confirmReason '{}' on confirm_close for exercise={} user={}, failing closed to parked_progress semantics", confirmReason, job.exerciseId(),
-                        job.userId());
+            if (!"parked_progress".equals(confirmReason)) {
+                log.warn("Unexpected confirmReason '{}' on confirm_close for episodeId={} exercise={} user={}, failing closed to parked_progress semantics", confirmReason,
+                        episodeId, job.exerciseId(), job.userId());
             }
             irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null,
                     episodeId, null, resolved, null, null, null, null));

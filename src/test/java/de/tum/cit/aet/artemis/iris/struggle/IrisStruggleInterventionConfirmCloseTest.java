@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,6 +15,7 @@ import java.util.Objects;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -151,6 +153,11 @@ class IrisStruggleInterventionConfirmCloseTest {
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
                 argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && "You nailed it!".equals(e.closingSentence())
                         && "Challenge cleared".equals(e.episodeLabel()) && Objects.equals(e.messageId(), 201L) && Objects.equals(e.episodeId(), "ep-cc")));
+        // Outcome-last invariant: persist -> broadcast -> outcome write (a resolved=true close must never gate away its own row).
+        InOrder order = inOrder(irisMessageService, irisChatWebsocketService, irisMessageRepository);
+        order.verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
+        order.verify(irisChatWebsocketService).sendMessage(eq(session), any(), any());
+        order.verify(irisMessageRepository).setProactiveOutcomeIfNull(anyLong(), eq(IrisProactiveOutcome.RECOVERED));
     }
 
     @Test
