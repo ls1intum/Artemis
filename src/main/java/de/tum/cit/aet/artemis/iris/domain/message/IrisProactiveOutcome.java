@@ -6,5 +6,5 @@ package de.tum.cit.aet.artemis.iris.domain.message;
  * so there is no OPENED value to write client-side.
  */
 public enum IrisProactiveOutcome {
-    DISMISSED
+    DISMISSED, RECOVERED, ABANDONED
 }

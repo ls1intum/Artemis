@@ -1,0 +1,41 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260630120000-1-widen-proactive-outcome-enum-mysql" author="liam-berger" dbms="mysql,h2">
+        <modifyDataType tableName="iris_message" columnName="proactive_outcome"
+                        newDataType="ENUM('DISMISSED','RECOVERED','ABANDONED')"/>
+    </changeSet>
+
+    <changeSet id="20260630120000-2-add-proactive-episode-id-mysql" author="liam-berger" dbms="mysql,h2">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_episode_id"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_episode_id" type="varchar(64)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260630120000-2-add-proactive-episode-id-postgres" author="liam-berger" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_episode_id"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_episode_id" type="varchar(64)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260630120000-3-add-proactive-client-message-id" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_client_message_id"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_client_message_id" type="varchar(64)"/>
+        </addColumn>
+        <createIndex tableName="iris_message" indexName="ux_iris_message_proactive_client_message_id" unique="true">
+            <column name="proactive_client_message_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
