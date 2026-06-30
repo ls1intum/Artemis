@@ -498,7 +498,8 @@ public class Exam extends DomainObject {
     }
 
     /**
-     * Checks whether the current exam should behave like a test exam.
+     * Checks whether the current exam should behave like a test exam. This means it is repeatable.
+     * Student exams and exercises are prepared when the user starts the exam.
      *
      * @param now the current time
      * @return true if is a test exam or a test exam with simulation and the simulation is over
