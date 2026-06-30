@@ -19,10 +19,12 @@ export class CourseTitleBarComponent {
     isSidebarCollapsed = input(false);
     pageTitle = input('');
     isExamStarted = input(false);
+    titleInSidebar = input(false);
 
     toggleSidebar = output<void>();
 
     private courseTitleBarService = inject(CourseTitleBarService);
     readonly customTitleTemplate: Signal<TemplateRef<any> | undefined> = computed(() => this.courseTitleBarService.titleTemplate());
     readonly customActionsTemplate: Signal<TemplateRef<any> | undefined> = computed(() => this.courseTitleBarService.actionsTemplate());
+    readonly hideDefaultTitle = computed(() => this.titleInSidebar() && this.hasSidebar() && !this.isSidebarCollapsed());
 }

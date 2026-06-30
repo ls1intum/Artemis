@@ -149,4 +149,53 @@ describe('CourseTitleBarComponent', () => {
         expect(titleBar.classes['rounded-3']).toBeTruthy();
         expect(titleBar.classes['sticky-top']).toBeTruthy();
     });
+
+    it('should hide the default title when titleInSidebar is true and the sidebar is expanded', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('titleInSidebar', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.componentRef.setInput('pageTitle', 'overview.lectures');
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('h5'))).toBeNull();
+    });
+
+    it('should show the default title when titleInSidebar is true and the sidebar is collapsed', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('titleInSidebar', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.componentRef.setInput('pageTitle', 'overview.lectures');
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('h5'))).toBeTruthy();
+    });
+
+    it('should hide the toggle button when titleInSidebar is true and the sidebar is expanded', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('titleInSidebar', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+    });
+
+    it('should show the toggle button when titleInSidebar is true and the sidebar is collapsed', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('titleInSidebar', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeTruthy();
+    });
+
+    it('should keep default behavior (toggle and title shown) when titleInSidebar is false', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('titleInSidebar', false);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.componentRef.setInput('pageTitle', 'overview.lectures');
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('h5'))).toBeTruthy();
+    });
 });
