@@ -14,6 +14,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
+import { artemisApollonTheme } from 'app/modeling/shared/apollon-theme.util';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -160,6 +161,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             model: this.umlModel(),
             type: this.diagramType() || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups(),
+            theme: artemisApollonTheme(),
         });
 
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
