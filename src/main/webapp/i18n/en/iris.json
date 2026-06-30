@@ -25,7 +25,6 @@
             },
             "settings": {
                 "success": "Successfully saved Iris settings",
-                "saved": "All saved",
                 "unsaved": "Unsaved changes",
                 "enabled": "Enabled",
                 "disabled": "Disabled",
@@ -57,6 +56,50 @@
                 "hours": "hours",
                 "unlimited": "unlimited",
                 "unlimitedTime": "∞",
+                "generalTab": "General",
+                "adminTab": "Admin",
+                "irisEnabled": "Iris is enabled",
+                "irisDisabled": "Iris is disabled",
+                "enableSubtext": "All students in this course can use Iris when it is enabled",
+                "disabledSubtext": "Iris is inactive for this course.",
+                "supportLevel": {
+                    "title": "Level of Instructional Support",
+                    "help": "Low prioritizes independent problem-solving. High adds detailed explanations, analogies, and examples.",
+                    "low": "Low",
+                    "moderate": "Moderate",
+                    "high": "High",
+                    "bestSuitedFor": "Best suited for",
+                    "description": {
+                        "low": {
+                            "title": "Support Level: Low",
+                            "text": "Iris responds only with high-level counter-questions that redirect students back to their own reasoning.",
+                            "bestSuitedFor": "Advanced courses where independent problem-solving is a core learning objective.",
+                            "exampleUser": "My sorting algorithm is not working. Can you help?",
+                            "exampleIris": "What sorting algorithm are you implementing? What output do you get when you trace through your code with a small input like [3, 1, 2]?"
+                        },
+                        "moderate": {
+                            "title": "Support Level: Moderate",
+                            "text": "Iris asks guiding questions and provides targeted hints to help students work through problems.",
+                            "bestSuitedFor": "Courses where students have some experience but benefit from concrete nudges and contextual pointers.",
+                            "exampleUser": "My sorting algorithm is not working. Can you help?",
+                            "exampleIris": "Let us work through this step by step. Can you describe what your algorithm should do with the input [3, 1, 4, 1, 5]? Walk me through the first pass."
+                        },
+                        "high": {
+                            "title": "Support Level: High",
+                            "text": "Iris provides step-by-step explanations with analogies and small code examples to illustrate concepts.",
+                            "bestSuitedFor": "Introductory courses where students are new to programming and need clear and approachable explanations.",
+                            "exampleUser": "My sorting algorithm is not working. Can you help?",
+                            "exampleIris": "The issue is in your inner loop condition <code>j &lt;= arr.length</code>. Arrays are zero-indexed, so the last element is at <code>arr.length - 1</code>. Try changing it to <code>j &lt; arr.length</code> and see if that resolves the IndexOutOfBoundsException."
+                        }
+                    }
+                },
+                "exampleConversationLabel": "Example conversation at this level",
+                "additionalGuidelines": "Additional Guidelines",
+                "additionalGuidelinesHelp": "Set additional expectations for how Iris interacts with your students.",
+                "additionalGuidelinesPlaceholder": "Always use Python 3.12 syntax.",
+                "globalRestriction": "Iris is globally restricted from providing complete solutions or full code blocks, regardless of your settings.",
+                "saveChanges": "Save Changes",
+                "resetToDefault": "Reset to Default",
                 "error": {
                     "save": "Error while saving Iris settings",
                     "load": "Error while loading Iris settings",
