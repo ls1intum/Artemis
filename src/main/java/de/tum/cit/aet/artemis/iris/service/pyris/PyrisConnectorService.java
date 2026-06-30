@@ -224,11 +224,12 @@ public class PyrisConnectorService {
      * 1. A "thinking" update (~2 ms after this call) when the query is classified as a real question.
      * 2. A "result" update when the LLM finishes, containing the answer (or null for navigation queries).
      *
-     * @param query         the user's question
-     * @param limit         the maximum number of source segments to retrieve
-     * @param jobToken      the Hazelcast job token used for callback authentication and WebSocket routing
-     * @param aiSelection   the user's LLM selection (LOCAL_AI or CLOUD_AI)
-     * @param accessContext the role-based access context for the requesting user
+     * @param query              the user's question
+     * @param limit              the maximum number of source segments to retrieve
+     * @param jobToken           the Hazelcast job token used for callback authentication and WebSocket routing
+     * @param aiSelection        the user's LLM selection (LOCAL_AI or CLOUD_AI)
+     * @param accessContext      the role-based access context for the requesting user
+     * @param prefetchedEntities searchable entity snippets pre-fetched from Weaviate by Artemis
      */
     public void executeGlobalSearchIrisAnswer(String query, int limit, String jobToken, AiSelectionDecision aiSelection, PyrisAccessContextDTO accessContext,
             List<PyrisSearchableEntityDTO> prefetchedEntities) {

@@ -210,6 +210,13 @@ public class GlobalSearchService {
 
     // ---- Role / exam helpers ----
 
+    /**
+     * Groups the given courses by the user's role, returning sets for editors, TAs, students, staff, and all accessible courses.
+     *
+     * @param user    the authenticated user
+     * @param courses the courses to group
+     * @return a {@link CourseRoleSets} containing the partitioned course ID sets
+     */
     public CourseRoleSets groupCoursesByRole(User user, List<Course> courses) {
         List<Long> editorIds = new ArrayList<>();
         List<Long> taIds = new ArrayList<>();
@@ -239,6 +246,13 @@ public class GlobalSearchService {
         return Role.STUDENT;
     }
 
+    /**
+     * Fetches the exam registration and assigned exercise IDs for the given student in the given courses.
+     *
+     * @param userId           the database ID of the student
+     * @param studentCourseIds the course IDs in which the student is enrolled
+     * @return exam info, or {@code null} if the student is in no courses or the exam API is unavailable
+     */
     @Nullable
     public StudentExamInfo fetchStudentExamInfo(long userId, List<Long> studentCourseIds) {
         if (studentCourseIds.isEmpty() || studentExamApi.isEmpty()) {
@@ -252,6 +266,13 @@ public class GlobalSearchService {
 
     // ---- Type disjuncts ----
 
+    /**
+     * Builds a Weaviate filter that grants access to exercises according to the user's role across courses.
+     *
+     * @param roleSets        the partitioned course ID sets for the requesting user
+     * @param studentExamInfo registered exam IDs and assigned exercise IDs for student users; may be {@code null}
+     * @return a combined exercise access filter, or {@code null} if no courses are accessible
+     */
     @Nullable
     public Filter buildExerciseDisjunct(CourseRoleSets roleSets, @Nullable StudentExamInfo studentExamInfo) {
         List<Filter> sub = new ArrayList<>();
@@ -268,6 +289,13 @@ public class GlobalSearchService {
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), combined);
     }
 
+    /**
+     * Builds a Weaviate filter that restricts results to exercises that belong to exams, respecting role-based access.
+     *
+     * @param roleSets        the partitioned course ID sets for the requesting user
+     * @param studentExamInfo registered exam IDs and assigned exercise IDs for student users; may be {@code null}
+     * @return a combined exam-exercise access filter, or {@code null} if no courses are accessible
+     */
     @Nullable
     public Filter buildExamExerciseDisjunct(CourseRoleSets roleSets, @Nullable StudentExamInfo studentExamInfo) {
         List<Filter> sub = new ArrayList<>();
@@ -287,6 +315,13 @@ public class GlobalSearchService {
         return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), combined);
     }
 
+    /**
+     * Builds a Weaviate filter for lectures, applying an {@code IS NULL} release-date guard on the student branch to prevent
+     * lecture_unit documents from leaking through Weaviate's word tokenizer splitting "lecture_unit" → ["lecture","unit"].
+     *
+     * @param roleSets the partitioned course ID sets for the requesting user
+     * @return a combined lecture access filter, or {@code null} if no courses are accessible
+     */
     @Nullable
     public Filter buildLectureDisjunct(CourseRoleSets roleSets) {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
@@ -309,6 +344,12 @@ public class GlobalSearchService {
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), combined);
     }
 
+    /**
+     * Builds a Weaviate filter for lecture units, restricting students to units whose release date is in the past or not set.
+     *
+     * @param roleSets the partitioned course ID sets for the requesting user
+     * @return a combined lecture-unit access filter, or {@code null} if no courses are accessible
+     */
     @Nullable
     public Filter buildLectureUnitDisjunct(CourseRoleSets roleSets) {
         OffsetDateTime now = OffsetDateTime.now();
@@ -325,6 +366,13 @@ public class GlobalSearchService {
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT), combined);
     }
 
+    /**
+     * Builds a Weaviate filter for exams, restricting student access to exams they are registered for or that are visible test exams.
+     *
+     * @param roleSets        the partitioned course ID sets for the requesting user
+     * @param studentExamInfo registered exam IDs for student users; may be {@code null}
+     * @return a combined exam access filter, or {@code null} if no courses are accessible
+     */
     @Nullable
     public Filter buildExamDisjunct(CourseRoleSets roleSets, @Nullable StudentExamInfo studentExamInfo) {
         OffsetDateTime now = OffsetDateTime.now();
@@ -344,6 +392,12 @@ public class GlobalSearchService {
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXAM), combined);
     }
 
+    /**
+     * Builds a Weaviate filter for FAQs; students only see FAQs in the ACCEPTED state.
+     *
+     * @param roleSets the partitioned course ID sets for the requesting user
+     * @return a combined FAQ access filter, or {@code null} if no courses are accessible
+     */
     @Nullable
     public Filter buildFaqDisjunct(CourseRoleSets roleSets) {
         List<Filter> sub = new ArrayList<>();
@@ -358,6 +412,12 @@ public class GlobalSearchService {
         return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.FAQ), combined);
     }
 
+    /**
+     * Builds a Weaviate filter for channels; only course-wide or public channels in accessible courses are returned.
+     *
+     * @param roleSets the partitioned course ID sets for the requesting user
+     * @return a combined channel access filter, or {@code null} if no courses are accessible
+     */
     @Nullable
     public Filter buildChannelDisjunct(CourseRoleSets roleSets) {
         if (roleSets.allAccessibleCourseIds().isEmpty()) {
@@ -395,6 +455,13 @@ public class GlobalSearchService {
 
     // ---- Static helpers ----
 
+    /**
+     * Returns a Weaviate sub-filter encoding exercise visibility rules for the given role.
+     *
+     * @param role            the user's role in the course (EDITOR, TEACHING_ASSISTANT, or STUDENT)
+     * @param studentExamInfo registered exam IDs and assigned exercise IDs; only used for the STUDENT role; may be {@code null}
+     * @return the exercise access sub-filter
+     */
     public static Filter exerciseAccessFilter(Role role, @Nullable StudentExamInfo studentExamInfo) {
         OffsetDateTime now = OffsetDateTime.now();
         if (role == Role.TEACHING_ASSISTANT) {
@@ -441,6 +508,13 @@ public class GlobalSearchService {
         return combineOr(branches);
     }
 
+    /**
+     * Builds a Weaviate type-discriminator filter that matches any of the requested entity types.
+     * When {@code exam} is requested without {@code exercise}, exam exercises are automatically included.
+     *
+     * @param types the set of entity type values to include (e.g. "lecture", "exercise")
+     * @return a filter matching any of the requested types
+     */
     public static Filter buildTypeDiscriminatorFilter(Set<String> types) {
         List<Filter> typeFilters = new ArrayList<>(types.size());
         for (String type : types) {
@@ -464,6 +538,12 @@ public class GlobalSearchService {
         return Filter.property(property).containsAny(courseIds.toArray(new Long[0]));
     }
 
+    /**
+     * Combines a collection of filters with OR, ignoring any {@code null} entries. Returns {@code null} if all entries are null or the collection is empty.
+     *
+     * @param filters the filters to combine; {@code null} entries are silently skipped
+     * @return a single OR-combined filter, or {@code null} if no non-null filters exist
+     */
     @Nullable
     public static Filter combineOr(Collection<Filter> filters) {
         List<Filter> nonNull = new ArrayList<>();

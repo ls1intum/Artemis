@@ -127,6 +127,10 @@ public class IrisLectureSearchResource {
 
     /**
      * POST api/iris/lecture-search: Search for lecture units using Pyris.
+     *
+     * @param requestDTO the search request containing the query, limit, and optional course/access filters
+     * @param principal  the authenticated user
+     * @return 200 with the matching lecture search results
      */
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
@@ -141,6 +145,10 @@ public class IrisLectureSearchResource {
      * Artemis pre-fetches searchable entities from Weaviate and includes them in the Pyris request
      * so Pyris never needs to query the SearchableEntities collection directly.
      * Pyris sends webhook callbacks; results are pushed to the client via WebSocket.
+     *
+     * @param requestDTO the ask request containing the query, limit, and client-generated run ID
+     * @param principal  the authenticated user
+     * @return 202 Accepted immediately; the answer is delivered asynchronously via WebSocket
      */
     @PostMapping("search-answer")
     @EnforceAtLeastStudent
