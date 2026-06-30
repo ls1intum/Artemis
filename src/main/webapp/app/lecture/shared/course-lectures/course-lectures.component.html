@@ -7,6 +7,10 @@
                 [sidebarData]="sidebarData()"
                 [collapseState]="DEFAULT_COLLAPSE_STATE"
                 [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                [pageTitle]="pageTitle()"
+                [showSidebarToggle]="true"
+                [isSidebarCollapsed]="isCollapsed()"
+                (toggleSidebar)="toggleSidebar()"
             />
         </div>
 

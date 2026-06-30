@@ -67,6 +67,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     isMultiLaunch = false;
     multiLaunchLectureIDs: number[] = [];
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
@@ -148,6 +149,10 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             groupedData: this.accordionLectureGroups,
             ungroupedData: this.sidebarLectures,
         });
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     toggleSidebar() {
