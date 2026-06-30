@@ -343,8 +343,33 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         StudentScoresDTO studentScores = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), gradeScores,
                 new MaxAndReachablePointsDTO(5.0, 5.0, 0.0), List.of(), courseExercises);
 
-        // The group's combined contribution is capped at 5 points instead of summing to 10.
+        // The credited score caps the group's combined contribution at 5 points instead of summing to 10.
         assertThat(studentScores.absoluteScore()).isEqualTo(5.0);
+        // The total score reports the uncapped 10 points for transparency.
+        assertThat(studentScores.absoluteScoreTotal()).isEqualTo(10.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void totalScoreEqualsCreditedScoreWithoutVariantGroups() {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // Two standalone (non-variant) exercises worth 5 points each.
+        var exercise1 = new ExerciseCourseScoreDTO(101L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, null, null, null, 5.0, 0.0,
+                course.getId(), null, null);
+        var exercise2 = new ExerciseCourseScoreDTO(102L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, null, null, null, 5.0, 0.0,
+                course.getId(), null, null);
+        Set<ExerciseCourseScoreDTO> courseExercises = Set.of(exercise1, exercise2);
+
+        var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, null, ExerciseType.TEXT),
+                new CourseGradeScoreDTO(2L, student.getId(), 102L, 100.0, null, ExerciseType.TEXT));
+
+        StudentScoresDTO studentScores = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), gradeScores,
+                new MaxAndReachablePointsDTO(10.0, 10.0, 0.0), List.of(), courseExercises);
+
+        // Without any capped variant group, the total score equals the credited score.
+        assertThat(studentScores.absoluteScore()).isEqualTo(10.0);
+        assertThat(studentScores.absoluteScoreTotal()).isEqualTo(10.0);
     }
 
     @Test

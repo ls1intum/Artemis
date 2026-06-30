@@ -218,7 +218,7 @@ describe('GradingKeyTableComponent', () => {
                     vi.spyOn(gradingService, 'setGradePoints').mockImplementation(() => {});
                     vi.spyOn(gradingService, 'hasPointsSet').mockReturnValue(false);
                     vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
-                        new CourseScores(200, 200, 0, { absoluteScore: 150, relativeScore: 75, currentRelativeScore: 80, presentationScore: 0 }),
+                        new CourseScores(200, 200, 0, { absoluteScore: 150, absoluteScoreTotal: 150, relativeScore: 75, currentRelativeScore: 80, presentationScore: 0 }),
                     );
 
                     fixture = TestBed.createComponent(GradingKeyTableComponent);

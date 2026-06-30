@@ -376,7 +376,7 @@ public class CourseScoreCalculationService {
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
         if (plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
-            return new StudentScoresDTO(0.0, 0.0, 0.0, 0);
+            return new StudentScoresDTO(0.0, 0.0, 0.0, 0.0, 0);
         }
 
         Map<Long, CourseGradeScoreDTO> gradeScoreDTOMap = courseGradeScoreDTOsOfStudent.stream()
@@ -404,7 +404,9 @@ public class CourseScoreCalculationService {
         }
 
         // Exercise variants: the points a student earns across a group's variants are capped at the group's configured maxPoints.
-        pointsAchievedByStudentInCourse += calculateVariantGroupAchievedPoints(courseExercises, gradeScoreDTOMap, plagiarismCasesForStudent, course);
+        VariantGroupCappedSum variantGroupAchievedPoints = calculateVariantGroupAchievedPoints(courseExercises, gradeScoreDTOMap, plagiarismCasesForStudent, course);
+        pointsAchievedByStudentInCourse += variantGroupAchievedPoints.total();
+        double pointsCappedAwayFromVariantGroups = variantGroupAchievedPoints.uncappedTotal() - variantGroupAchievedPoints.total();
 
         // calculate presentation points for graded presentations
         if (gradingScale != null && maxAndReachablePoints.reachablePresentationPoints() > 0.0) {
@@ -417,7 +419,8 @@ public class CourseScoreCalculationService {
             presentationScore = courseGradeScoreDTOsOfStudent.stream().filter(p -> p.presentationScore() != null && p.presentationScore() > 0.0).count();
         }
 
-        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);
+        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, pointsAchievedByStudentInCourse + pointsCappedAwayFromVariantGroups,
+                presentationScore);
     }
 
     /**
@@ -430,9 +433,10 @@ public class CourseScoreCalculationService {
      * @param gradeScoreDTOMap          the student's achieved scores per exercise id
      * @param plagiarismCasesForStudent the plagiarism cases of the student per exercise id
      * @param course                    the course the scores are calculated for (used for rounding)
-     * @return the capped points the student earns from the variant groups
+     * @return the per-group accumulator of the points the student earns from the variant groups (see
+     *         {@link VariantGroupCappedSum#total()} for the capped and {@link VariantGroupCappedSum#uncappedTotal()} for the uncapped sum)
      */
-    private double calculateVariantGroupAchievedPoints(Set<ExerciseCourseScoreDTO> courseExercises, Map<Long, CourseGradeScoreDTO> gradeScoreDTOMap,
+    private VariantGroupCappedSum calculateVariantGroupAchievedPoints(Set<ExerciseCourseScoreDTO> courseExercises, Map<Long, CourseGradeScoreDTO> gradeScoreDTOMap,
             Map<Long, PlagiarismCase> plagiarismCasesForStudent, Course course) {
         var achievedPointsPerGroup = new VariantGroupCappedSum();
         for (ExerciseCourseScoreDTO exercise : courseExercises) {
@@ -446,11 +450,13 @@ public class CourseScoreCalculationService {
                 achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), pointsAchievedFromExercise);
             }
         }
-        return achievedPointsPerGroup.total();
+        return achievedPointsPerGroup;
     }
 
-    private StudentScoresDTO getStudentScoresDTO(Course course, MaxAndReachablePointsDTO maxAndReachablePoints, double pointsAchievedByStudentInCourse, double presentationScore) {
+    private StudentScoresDTO getStudentScoresDTO(Course course, MaxAndReachablePointsDTO maxAndReachablePoints, double pointsAchievedByStudentInCourse,
+            double pointsAchievedByStudentInCourseUncapped, double presentationScore) {
         double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
+        double absolutePointsTotal = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourseUncapped, course);
         double relativeScore = maxAndReachablePoints.maxPoints() > 0
                 ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.maxPoints() * 100.0, course)
                 : 0.0;
@@ -458,7 +464,7 @@ public class CourseScoreCalculationService {
                 ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxAndReachablePoints.reachablePoints() * 100.0, course)
                 : 0.0;
 
-        return new StudentScoresDTO(absolutePoints, relativeScore, currentRelativeScore, presentationScore);
+        return new StudentScoresDTO(absolutePoints, absolutePointsTotal, relativeScore, currentRelativeScore, presentationScore);
     }
 
     /**
@@ -478,7 +484,7 @@ public class CourseScoreCalculationService {
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
         if (participationsOfStudent.isEmpty() || plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
-            return new StudentScoresDTO(0.0, 0.0, 0.0, 0);
+            return new StudentScoresDTO(0.0, 0.0, 0.0, 0.0, 0);
         }
 
         double pointsAchievedByStudentInCourse = 0.0;
@@ -509,6 +515,7 @@ public class CourseScoreCalculationService {
             }
         }
         pointsAchievedByStudentInCourse += achievedPointsPerVariantGroup.total();
+        double pointsCappedAwayFromVariantGroups = achievedPointsPerVariantGroup.uncappedTotal() - achievedPointsPerVariantGroup.total();
 
         // calculate presentation points for graded presentations
         if (gradingScale != null && maxAndReachablePoints.reachablePresentationPoints() > 0.0) {
@@ -521,7 +528,8 @@ public class CourseScoreCalculationService {
             presentationScore = participationsOfStudent.stream().filter(p -> p.getPresentationScore() != null && p.getPresentationScore() > 0.0).count();
         }
 
-        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, presentationScore);
+        return getStudentScoresDTO(course, maxAndReachablePoints, pointsAchievedByStudentInCourse, pointsAchievedByStudentInCourse + pointsCappedAwayFromVariantGroups,
+                presentationScore);
     }
 
     private double calculatePointsAchievedFromExercise(Exercise exercise, Result result, @Nullable PlagiarismCase plagiarismCaseForExercise) {
@@ -735,6 +743,17 @@ public class CourseScoreCalculationService {
             double total = ungroupedSum;
             for (var entry : sumPerVariantGroup.entrySet()) {
                 total += Math.min(entry.getValue(), capPerVariantGroup.get(entry.getKey()));
+            }
+            return total;
+        }
+
+        /**
+         * @return the sum of all contributions without applying any variant group cap (i.e. as if no group had a cap)
+         */
+        double uncappedTotal() {
+            double total = ungroupedSum;
+            for (var groupSum : sumPerVariantGroup.values()) {
+                total += groupSum;
             }
             return total;
         }

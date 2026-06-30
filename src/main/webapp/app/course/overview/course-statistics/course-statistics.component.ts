@@ -152,6 +152,16 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     readonly overallPoints = signal<number>(0);
     overallPointsPerExercise = new Map<ExerciseType, number>();
 
+    // overall points the student would have if the points of exercise variants were not capped at their group's maxPoints.
+    // Only relevant (and shown) when the course has exercise variant groups; see courseHasExerciseVariants.
+    readonly overallPointsTotal = signal<number>(0);
+
+    // whether the course contains exercise variant groups with a configured points cap. If so, the statistics page shows
+    // both the total (uncapped) and the credited (capped) points to make the variant capping transparent.
+    readonly courseHasExerciseVariants = computed<boolean>(() =>
+        (this.course()?.exercises ?? []).some((exercise) => exercise.exerciseVariantGroup?.id !== undefined && exercise.exerciseVariantGroup.maxPoints !== undefined),
+    );
+
     // relative score
     readonly totalRelativeScore = signal<number>(0);
     relativeScoresPerExercise = new Map<ExerciseType, number>();
@@ -484,6 +494,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const fileUploadExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.ABSOLUTE_SCORE);
         const course = this.course();
         this.overallPoints.set(this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE));
+        this.overallPointsTotal.set(this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE_TOTAL));
         const totalPresentationPoints = course?.presentationScore ? 0 : this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE);
         let totalMissedPoints = this.reachablePoints() - this.overallPoints();
         if (totalMissedPoints < 0) {
@@ -647,6 +658,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 return scores.reachablePoints;
             case ScoreType.ABSOLUTE_SCORE:
                 return scores.studentScores.absoluteScore;
+            case ScoreType.ABSOLUTE_SCORE_TOTAL:
+                return scores.studentScores.absoluteScoreTotal;
             case ScoreType.RELATIVE_SCORE:
                 return scores.studentScores.relativeScore;
             case ScoreType.CURRENT_RELATIVE_SCORE:
