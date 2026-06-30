@@ -43,7 +43,7 @@ export class CalendarApi {
         }
         const queryString = new URLSearchParams(queryParams).toString();
         const url = `${this.basePath}/api/calendar/courses/${courseId}/calendar-events-ics${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<string>(url);
+        return this.http.get(url, { responseType: 'text' });
     }
 
     /**
@@ -52,7 +52,7 @@ export class CalendarApi {
      */
     getCalendarEventSubscriptionToken(): Observable<string> {
         const url = `${this.basePath}/api/calendar/subscription-token`;
-        return this.http.get<string>(url);
+        return this.http.get(url, { responseType: 'text' });
     }
 
     /**

@@ -6,9 +6,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CommonModule } from '@angular/common';
 
 /**
- * The value stored on {@link TreeNode.type}. PrimeNG `<p-tree>` resolves the node template by this type, so the template
- * declares one `pTemplate` per type (`pTemplate="knowledgeArea"` / `pTemplate="competency"`). This mirrors the previous dual
- * content-template projection (knowledge-area rows vs. competency rows).
+ * The value stored on {@link TreeNode.type}. PrimeNG 22 `<p-tree>` resolves a single node template by the ref name
+ * `#node` (it no longer matches a template per `type`), so the template declares one `<ng-template let-node #node>` and
+ * branches on `node.type` to render knowledge-area rows vs. competency rows (the previous dual content-template projection).
  */
 export const TREE_NODE_TYPE_KNOWLEDGE_AREA = 'knowledgeArea';
 export const TREE_NODE_TYPE_COMPETENCY = 'competency';

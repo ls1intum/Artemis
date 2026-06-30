@@ -88,7 +88,7 @@ export class TutorialGroupApi {
         }
         const queryString = new URLSearchParams(queryParams).toString();
         const url = `${this.basePath}/api/tutorialgroup/courses/${courseId}/tutorial-groups/export/csv${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<Blob>(url);
+        return this.http.get(url, { responseType: 'blob' });
     }
 
     /**

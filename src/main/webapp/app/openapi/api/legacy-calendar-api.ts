@@ -42,7 +42,7 @@ export class LegacyCalendarApi {
         }
         const queryString = new URLSearchParams(queryParams).toString();
         const url = `${this.basePath}/api/core/calendar/courses/${courseId}/calendar-events-ics${queryString ? `?${queryString}` : ''}`;
-        return this.http.get<string>(url);
+        return this.http.get(url, { responseType: 'text' });
     }
 
 }
