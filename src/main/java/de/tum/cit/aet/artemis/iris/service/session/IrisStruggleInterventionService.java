@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataAccessException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -253,7 +254,11 @@ public class IrisStruggleInterventionService {
                 // Resolve the exercise-chat session; drop defensively if not exercise-bound.
                 var session = resolveProactiveSession(user, job.exerciseId());
                 if (session == null) {
-                    break; // defensive drop - no event (session is structurally wrong, not a transient failure)
+                    // Structural mismatch: resolved session is not exercise-bound. Emit a silent completion frame
+                    // so the client's in-flight decide always clears (finding 2 fix).
+                    irisChatWebsocketService.sendStruggleEvent(user,
+                            new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, confidence, episodeId));
+                    break;
                 }
                 // Persist the message with bounded retry on transient DB failures (spec §12).
                 IrisMessage saved = null;
@@ -264,6 +269,13 @@ public class IrisStruggleInterventionService {
                     }
                     catch (TransientDataAccessException ex) {
                         log.warn("Transient persist failure attempt {}/{} for exercise={} user={}", attempt + 1, PERSIST_MAX_ATTEMPTS, job.exerciseId(), job.userId(), ex);
+                    }
+                    catch (DataAccessException ex) {
+                        // Non-transient failure (e.g. DataIntegrityViolationException): no point retrying.
+                        // saved stays null; the active control event below is still emitted with messageId=null
+                        // so the client's in-flight decide always clears (finding 1 fix).
+                        log.warn("Permanent persist failure for exercise={} user={}", job.exerciseId(), job.userId(), ex);
+                        break;
                     }
                 }
                 if (saved != null) {
@@ -279,8 +291,14 @@ public class IrisStruggleInterventionService {
                 // Pull model (spec §5): do NOT persist. Resolve the session only to supply its id on the event
                 // so the client knows which session to reveal into when the student clicks (A10/C2).
                 var session = resolveProactiveSession(user, job.exerciseId());
-                Long sessionId = session != null ? session.getId() : null;
-                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "decide", "ambient", result, sessionId, null,
+                if (session == null) {
+                    // Structural mismatch: resolved session is not exercise-bound. A null-session ambient
+                    // pointer is unrevealable by the client; emit a silent completion frame instead (finding 3 fix).
+                    irisChatWebsocketService.sendStruggleEvent(user,
+                            new StruggleInterventionEventDTO(job.exerciseId(), "decide", "silent", null, null, null, null, null, null, confidence, episodeId));
+                    break;
+                }
+                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "decide", "ambient", result, session.getId(), null,
                         statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId));
             }
             default -> {

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -52,7 +53,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  * <li>active below threshold: downgrades to silent, no session created, emits kind="decide"/action="silent" noop.</li>
  * <li>ambient above threshold: NO persist (pull model), session resolved for sessionId, emits kind="decide"/action="ambient" event.</li>
  * <li>active with terminal episode: no persist, emits kind="decide"/action="silent" noop.</li>
- * <li>active resolved session not exercise-bound: defensive drop, no save, no event.</li>
+ * <li>active resolved session not exercise-bound: defensive drop, no save, emits kind="decide"/action="silent" noop.</li>
+ * <li>active non-transient persist failure: no save, still emits kind="decide"/action="active" with messageId=null.</li>
  * <li>null result: emits kind="decide"/action="silent" noop regardless of action.</li>
  * <li>active with episodeId: episodeId stamped on the persisted message.</li>
  * </ul>
@@ -173,6 +175,27 @@ class IrisStruggleInterventionDecisionTest {
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
         service.handleDecision(job, update);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        // Fix (finding 2): the not-bound drop now emits a silent completion frame so the client's in-flight clears.
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
+    }
+
+    @Test
+    void active_nonTransientPersistFailure_emitsActiveEventWithNullMessageId() {
+        // A non-transient persist failure (DataIntegrityViolationException) must NOT propagate out of handleDecision.
+        // The active control event must still be emitted with messageId=null + hint text so the client's in-flight
+        // decide clears and can render a runtime fallback bubble (finding 1 fix, spec §5/§12).
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("unique constraint violation"));
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Hint text.", "active", 0.9, "FM", List.of(), List.of(), null, null, null, null, null, null, null, null);
+
+        service.handleDecision(job, update);
+
+        // No row was saved, so sendMessage must not be called.
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any());
+        // The active control event is still emitted with messageId=null and the hint text (client fallback).
+        verify(irisChatWebsocketService).sendStruggleEvent(any(),
+                argThat(e -> "decide".equals(e.kind()) && "active".equals(e.action()) && e.messageId() == null && "Hint text.".equals(e.message())));
     }
 
     @Test

@@ -234,16 +234,14 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         assertThat(ambientEvent.confidence()).isEqualTo(0.7);
 
         // No proactive message row must exist in the session - the pull model defers persistence to reveal (A10).
+        // resolveProactiveSession always calls getCurrentSessionOrCreateIfNotExists, so a session IS created;
+        // asserting isPresent removes the escape hatch that let the test pass vacuously with no session.
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             var sessionOpt = irisChatSessionRepository
                     .findLatestByEntityIdAndChatModeAndUserIdWithMessages(exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, studentId(), Pageable.ofSize(1)).stream()
                     .findFirst();
-            if (sessionOpt.isPresent()) {
-                assertThat(sessionOpt.get().getMessages()).noneMatch(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE);
-            }
-            // If no session exists at all, that is also correct (resolveProactiveSession may have created one
-            // but it has no messages, and the repo might or might not return an empty-message session depending
-            // on the query semantics - either outcome satisfies the "no proactive row" invariant).
+            assertThat(sessionOpt).isPresent();
+            assertThat(sessionOpt.get().getMessages()).noneMatch(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE);
         });
     }
 
