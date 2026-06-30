@@ -524,31 +524,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.focusInputAfterAcceptance();
         }
 
-        // Handle route query params (irisQuestion).
-        // When a handoff context is set (the user clicked "Continue in Iris" from global search),
-        // create a fresh session and seed it with the Q&A pair instead of pre-filling the text field.
-        // This fires reliably whether the component is freshly mounted or already alive on the same
-        // route (in which case the constructor-time check would have missed it).
+        // Pre-fill the text field from the irisQuestion query param.
+        // CourseChatbotComponent owns session switching and seeding for handoff navigations;
+        // here we only handle the fallback (page refresh, or no handoff context set).
         this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
             if (!params?.irisQuestion) return;
-            const handoffCtx = this.irisHandoffContextService.context();
-            if (handoffCtx) {
-                this.irisHandoffContextService.clear();
-                // Force a new session so the Q&A is seeded into a clean context, not an old chat.
-                // clearChat() emits initialLoadComplete=false via close(), then true once the new
-                // session arrives — at which point the effect below seeds it exactly once.
-                this.chatService.clearChat();
-                let seeded = false;
-                effect(() => {
-                    if (this.initialLoadComplete() && !seeded) {
-                        const { query, answer } = handoffCtx;
-                        untracked(() => {
-                            seeded = true;
-                            this.chatService.seedFromGlobalSearch(query, answer).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
-                        });
-                    }
-                });
-            } else {
+            // Skip pre-fill when a handoff context is pending — CourseChatbotComponent will
+            // seed the session instead, and the Q&A will arrive via WebSocket.
+            if (!this.irisHandoffContextService.context()) {
                 this.newMessageTextContent.set(params.irisQuestion);
             }
         });

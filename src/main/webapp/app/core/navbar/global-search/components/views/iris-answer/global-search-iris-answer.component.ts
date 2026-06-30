@@ -210,8 +210,12 @@ export class GlobalSearchIrisAnswerComponent {
 
     protected setHandoffContext(): void {
         const result = this.irisResult();
-        if (result?.answer) {
-            this.irisHandoffContextService.set(this.searchQuery(), result.answer);
+        if (result?.answer && result.handoff) {
+            this.irisHandoffContextService.set(this.searchQuery(), result.answer, {
+                type: result.handoff.type,
+                lectureId: result.handoff.lectureId,
+                exerciseId: result.handoff.exerciseId,
+            });
         }
     }
 
