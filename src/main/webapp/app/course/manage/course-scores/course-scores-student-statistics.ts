@@ -11,6 +11,10 @@ export class CourseScoresStudentStatistics {
     numberOfParticipatedExercises = 0;
     numberOfSuccessfulExercises = 0;
     overallPoints = 0;
+    // The points the student achieved that exceed an exercise variant group's maxPoints cap and therefore do NOT count
+    // towards the grade (the uncapped total minus the credited overallPoints). 0 when no variant group exceeds its cap.
+    // Stored as a positive magnitude; it is displayed with a leading minus to read as a deduction.
+    excessVariantPoints = 0;
     // the index is the exercise id
     pointsPerExercise = new Map<number, number>();
     // the absolute number (sum) of points the students received per exercise type

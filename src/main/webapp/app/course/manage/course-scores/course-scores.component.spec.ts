@@ -430,6 +430,45 @@ describe('CourseScoresComponent', () => {
         expect(component.maxNumberOfOverallPoints()).toBe(10);
         // Numerator: the student's combined variant points are capped at the group max (10) instead of summing to 20.
         expect(component.studentStatistics()[0].overallPoints).toBe(10);
+
+        // The excess-variant-points column reports the 10 points (20 earned - 10 credited) that the cap removed.
+        expect(component.courseHasExerciseVariants()).toBe(true);
+        expect(component.maxNumberOfExcessVariantPoints()).toBe(10);
+        expect(component.studentStatistics()[0].excessVariantPoints).toBe(10);
+    });
+
+    it('should export the excess variant points column when the course has exercise variants', () => {
+        const variantGroup = { id: 100, maxPoints: 10 };
+        const makeVariant = (id: number) =>
+            ({
+                title: `variant ${id}`,
+                id,
+                dueDate: dayjs().add(5, 'minutes'),
+                type: ExerciseType.TEXT,
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                maxPoints: 10,
+                bonusPoints: 0,
+                exerciseVariantGroup: variantGroup,
+            }) as Exercise;
+        const variantCourse = { courseId: 1, exercises: [makeVariant(101), makeVariant(102)], accuracyOfScores: 1 } as Course;
+        const variantGradeInfo: CourseGradeInformationDTO = {
+            gradeScores: [createGradeScore(1, 1, 101, 100), createGradeScore(2, 1, 102, 100)],
+            students: [{ id: 1, login: 'user1login', firstName: 'user1', lastName: '', name: 'user1', email: 'user1mail' }],
+        };
+        vi.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: variantCourse })));
+        vi.spyOn(courseManagementService, 'findGradeScores').mockReturnValue(of(variantGradeInfo));
+        vi.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForScores').mockReturnValue(of(new HttpResponse<PlagiarismCaseDTO[]>({ body: [] })));
+        fixture.detectChanges();
+
+        const exportAsExcelStub = vi.spyOn(component, 'exportAsExcel').mockImplementation(() => {});
+        component.exportResults();
+        const exportKeys = exportAsExcelStub.mock.calls[0][0];
+        const generatedRows = exportAsExcelStub.mock.calls[0][1];
+        // The student row reports the excess variant points as a negative deduction (-10) next to the unchanged credited overall points (10).
+        expect(generatedRows[0]['Excess Variant Points']).toEqual({ t: 'n', v: -10 });
+        expect(generatedRows[0][COURSE_OVERALL_POINTS_KEY]).toEqual({ t: 'n', v: 10 });
+        // The excess column is placed immediately before the overall course points column.
+        expect(exportKeys.indexOf('Excess Variant Points')).toBe(exportKeys.indexOf(COURSE_OVERALL_POINTS_KEY) - 1);
     });
 
     it('should cap a variant group whose variants span multiple exercise types as a whole', () => {

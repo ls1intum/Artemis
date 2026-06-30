@@ -148,6 +148,13 @@
                             @if (maxNumberOfPresentationPoints() > 0) {
                                 <th jhiSortBy="presentationPoints"><span jhiTranslate="artemisApp.instructorDashboard.presentationPoints"></span> <fa-icon [icon]="faSort" /></th>
                             }
+                            @if (courseHasExerciseVariants()) {
+                                <th jhiSortBy="excessVariantPoints">
+                                    <span jhiTranslate="artemisApp.instructorDashboard.excessVariantPoints"></span>
+                                    <jhi-help-icon text="artemisApp.instructorDashboard.excessVariantPointsTooltip" />
+                                    <fa-icon [icon]="faSort" />
+                                </th>
+                            }
                             <th jhiSortBy="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span> <fa-icon [icon]="faSort" /></th>
                             @if (gradingScaleExists()) {
                                 <th jhiSortBy="overallPoints">
@@ -172,6 +179,9 @@
                             }
                             @if (maxNumberOfPresentationPoints() > 0) {
                                 <th>{{ maxNumberOfPresentationPoints() }}</th>
+                            }
+                            @if (courseHasExerciseVariants()) {
+                                <th>{{ localizeExcessVariantPoints(maxNumberOfExcessVariantPoints()) }}</th>
                             }
                             <th>{{ maxNumberOfOverallPoints() }}</th>
                             @if (gradingScaleExists()) {
@@ -209,6 +219,9 @@
                                     {{ localize(averageNumberOfPresentationPoints()) }}
                                     ({{ localize(roundScorePercentSpecifiedByCourseSettings(averageNumberOfPresentationPoints() / maxNumberOfPresentationPoints(), course()!)) }}%)
                                 </th>
+                            }
+                            @if (courseHasExerciseVariants()) {
+                                <th>{{ localizeExcessVariantPoints(averageNumberOfExcessVariantPoints()) }}</th>
                             }
                             <th>
                                 {{ localize(averageNumberOfOverallPoints()) }}
@@ -254,6 +267,9 @@
                                         {{ localize(studentStat.presentationPoints) }}
                                         ({{ localize(roundScorePercentSpecifiedByCourseSettings(studentStat.presentationPoints / maxNumberOfPresentationPoints(), course()!)) }}%)
                                     </td>
+                                }
+                                @if (courseHasExerciseVariants()) {
+                                    <td>{{ localizeExcessVariantPoints(studentStat.excessVariantPoints) }}</td>
                                 }
                                 <td>
                                     {{ localize(studentStat.overallPoints) }}

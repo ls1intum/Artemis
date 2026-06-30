@@ -15,6 +15,8 @@
             "file-uploadPoints": "File Upload Points (%)",
             "presentationPoints": "Presentation Points (%)",
             "overallScore": "Overall Points (%)",
+            "excessVariantPoints": "Excess Variant Points",
+            "excessVariantPointsTooltip": "Points the student earned across exercise variants that do not count towards the grade because the combined points of a variant group are capped at the group's maximum points. Shown as a negative deduction.",
             "max": "Max",
             "average": "Average",
             "students": "Students",
