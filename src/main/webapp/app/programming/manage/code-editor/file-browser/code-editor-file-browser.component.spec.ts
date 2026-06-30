@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
@@ -48,8 +47,6 @@ type FileBrowserInternals = Omit<CodeEditorFileBrowserComponent, 'repositoryFile
 const internals = (c: CodeEditorFileBrowserComponent): FileBrowserInternals => c as unknown as FileBrowserInternals;
 
 describe('CodeEditorFileBrowserComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorFileBrowserComponent;
     let fixture: ComponentFixture<CodeEditorFileBrowserComponent>;
     let debugElement: DebugElement;

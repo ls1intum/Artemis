@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Signal } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
@@ -36,8 +35,6 @@ type GradingInternals = ProgrammingExerciseGradingComponent & {
 const internals = (c: ProgrammingExerciseGradingComponent): GradingInternals => c as GradingInternals;
 
 describe('ProgrammingExerciseGradingComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
     let comp: ProgrammingExerciseGradingComponent;
     let exercise: ProgrammingExercise;

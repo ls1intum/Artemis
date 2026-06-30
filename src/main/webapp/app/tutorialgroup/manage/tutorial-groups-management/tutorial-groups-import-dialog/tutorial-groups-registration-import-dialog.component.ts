@@ -5,7 +5,6 @@ import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject } from 'rxjs';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import { HttpResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
@@ -14,8 +13,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
-import { TutorialGroupImportData } from 'app/openapi/model/tutorialGroupImportData';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupImportData } from 'app/openapi/models/tutorial-group-import-data';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 /**
  * Each row is a object with the structure
@@ -51,7 +50,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     private fb = inject(FormBuilder);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private csvDownloadService = inject(CsvDownloadService);
 
     readonly dialogVisible = signal<boolean>(false);
@@ -289,7 +288,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
     import() {
         this.isImporting.set(true);
-        this.tutorialGroupApiService.importTutorialGroupsWithRegistrations(this.courseId(), this.registrationsDisplayedInTable(), 'response').subscribe({
+        this.tutorialGroupApiService.importTutorialGroupsWithRegistrations(this.courseId(), this.registrationsDisplayedInTable()).subscribe({
             next: (res) => this.onSaveSuccess(res),
             error: () => this.onSaveError(),
         });
@@ -471,10 +470,10 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
         this.importCompleted.emit();
     }
 
-    onSaveSuccess(registrations: HttpResponse<TutorialGroupImportData[]>) {
+    onSaveSuccess(registrations: TutorialGroupImportData[]) {
         this.isImporting.set(false);
         this.isImportDone.set(true);
-        const sortedRegistrations = (registrations.body ?? []).sort((a, b) => this.compareTitle(a, b));
+        const sortedRegistrations = (registrations ?? []).sort((a, b) => this.compareTitle(a, b));
         this.registrationsDisplayedInTable.set(sortedRegistrations);
         this.allRegistrations.set(sortedRegistrations);
         this.notImportedRegistrations = sortedRegistrations.filter((registration) => registration.importSuccessful !== true);

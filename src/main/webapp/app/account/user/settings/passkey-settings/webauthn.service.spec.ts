@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { WebauthnService } from './webauthn.service';
 import { WebauthnApiService } from './webauthn-api.service';
@@ -34,8 +33,6 @@ type MockedAccountService = {
 const CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
 
 describe('WebauthnService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: WebauthnService;
     let webauthnApiService: MockedWebauthnApiService;
     let alertService: MockedAlertService;

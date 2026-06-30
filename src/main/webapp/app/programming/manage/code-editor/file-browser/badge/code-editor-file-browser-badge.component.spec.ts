@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FileBadge, FileBadgeType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -7,8 +6,6 @@ import { CodeEditorFileBrowserBadgeComponent } from 'app/programming/manage/code
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CodeEditorFileBrowserBadgeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CodeEditorFileBrowserBadgeComponent;
     let fixture: ComponentFixture<CodeEditorFileBrowserBadgeComponent>;
     let translateService: TranslateService;

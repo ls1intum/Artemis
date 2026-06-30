@@ -13,10 +13,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyCardComponent', () => {
-    setupTestBed({ zoneless: true });
     let competencyCardComponentFixture: ComponentFixture<CompetencyCardComponent>;
     let competencyCardComponent: CompetencyCardComponent;
     beforeEach(() => {

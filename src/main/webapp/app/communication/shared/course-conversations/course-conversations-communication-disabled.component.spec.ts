@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
@@ -33,8 +32,6 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('CourseConversationComponent with communication disabled', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseConversationsComponent;
     let fixture: ComponentFixture<CourseConversationsComponent>;
     let metisConversationService: MetisConversationService;

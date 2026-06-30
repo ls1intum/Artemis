@@ -193,7 +193,7 @@
                                         <p-chart
                                             type="bar"
                                             [data]="groupChartData().get(exerciseGroup.key)"
-                                            [options]="groupChartOptions().get(exerciseGroup.key)"
+                                            [options]="groupChartOptions().get(exerciseGroup.key)!"
                                             (onDataSelect)="onSelect($event, exerciseGroup.key)"
                                         />
                                     </div>

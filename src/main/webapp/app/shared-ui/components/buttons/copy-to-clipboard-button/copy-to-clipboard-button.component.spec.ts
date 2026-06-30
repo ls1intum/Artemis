@@ -5,11 +5,9 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CopyToClipboardButtonComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CopyToClipboardButtonComponent;
     let fixture: ComponentFixture<CopyToClipboardButtonComponent>;
 

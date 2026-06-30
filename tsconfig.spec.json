@@ -4,11 +4,11 @@
         "types": ["node"],
         "allowJs": true,
         "outDir": "build/www/app",
-        "baseUrl": ".",
         "paths": {
-            "@angular/*": ["node_modules/@angular/*"],
-            "app/*": ["src/main/webapp/app/*"],
-            "test/*": ["src/test/javascript/spec/*"]
+            "@angular/*": ["./node_modules/@angular/*"],
+            "app/*": ["./src/main/webapp/app/*"],
+            "test/*": ["./src/test/javascript/spec/*"],
+            "src/*": ["./src/*"]
         },
         "emitDecoratorMetadata": false,
         "isolatedModules": true

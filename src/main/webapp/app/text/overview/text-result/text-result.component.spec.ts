@@ -9,17 +9,15 @@
  * - Result block styling and icons
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { TextResultBlock } from 'app/text/overview/text-result/text-result-block';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 
 describe('TextResultComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: TextResultComponent;
     let fixture: ComponentFixture<TextResultComponent>;
 
@@ -32,7 +30,8 @@ describe('TextResultComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TextResultComponent, TranslateModule.forRoot()],
+            imports: [TextResultComponent],
+            providers: [provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TextResultComponent);

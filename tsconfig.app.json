@@ -2,6 +2,11 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "outDir": "./build/resources/main/static/app",
+        // Type-check only: `pnpm run compile` is a CI gate, the real bundle is produced by
+        // `ng build` (@angular/build). TS 6 (TS5011) now requires an explicit `rootDir` when
+        // emitting; `noEmit` is the canonical Angular pattern for a check-only project and
+        // avoids both that requirement and stray output under build/.
+        "noEmit": true,
         "types": ["node"]
     },
     "files": ["src/main/webapp/app/app.main.ts"]

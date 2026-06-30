@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,8 +9,6 @@ import { TooltipItem } from 'chart.js';
 import { CourseExerciseLatenessComponent, ExerciseLateness } from 'app/course/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 
 describe('CourseExerciseLatenessComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseExerciseLatenessComponent>;
     let component: CourseExerciseLatenessComponent;
     let componentRef: ComponentRef<CourseExerciseLatenessComponent>;

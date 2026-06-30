@@ -9,12 +9,26 @@ buildscript {
             force "com.github.jknack:handlebars:4.5.2"
         }
     }
+    repositories {
+        mavenLocal()
+        // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429s)
+        maven {
+            name = "reposiliteRepository"
+            url = "https://reposilite.aet.cit.tum.de/releases"
+        }
+        mavenCentral()
+    }
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
             exclude group: "com.opencsv", module: "opencsv"
         }
+        // Custom OpenAPI generator (generatorName "angular21") used by gradle/openapi.gradle's
+        // openApiGenerate task. Placed on the buildscript classpath so the org.openapi.generator
+        // plugin discovers it via ServiceLoader. Resolved from Maven Local (publishToMavenLocal in
+        // https://github.com/ls1intum/openapi-generator-angular21).
+        classpath "de.tum.cit.aet:openapi-generator-angular21:1.0.0"
     }
 }
 

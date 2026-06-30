@@ -13,7 +13,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({ template: '' })
 class DummyImportComponent extends ImportCourseCompetenciesComponent {
@@ -23,7 +22,6 @@ class DummyImportComponent extends ImportCourseCompetenciesComponent {
 }
 
 describe('ImportCourseCompetenciesComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<DummyImportComponent>;
     let component: DummyImportComponent;
     let courseCompetencyService: CourseCompetencyService;

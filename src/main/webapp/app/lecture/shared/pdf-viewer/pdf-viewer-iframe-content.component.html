@@ -94,7 +94,7 @@
                 <div class="artemis-pdf-toolbar__divider"></div>
                 @if (totalPages() > 0) {
                     <div class="artemis-pdf-toolbar__page-navigation">
-                        <p-inputNumber
+                        <p-inputnumber
                             #pageInput
                             [ngModel]="pageInputValue()"
                             (ngModelChange)="pageInputValue.set($event ?? undefined)"

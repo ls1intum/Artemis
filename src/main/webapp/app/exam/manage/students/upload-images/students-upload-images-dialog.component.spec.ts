@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -23,8 +22,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('StudentsUploadImagesDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<StudentsUploadImagesDialogComponent>;
     let component: StudentsUploadImagesDialogComponent;
     let examManagementService: ExamManagementService;

@@ -1,11 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -29,16 +28,28 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
  * keyboard events, grading instruction links, and assessment event tracking.
  */
 describe('TextBlockFeedbackEditorComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: TextBlockFeedbackEditorComponent;
     let fixture: ComponentFixture<TextBlockFeedbackEditorComponent>;
     let compiled: any;
 
     const textBlock = { id: '1' } as TextBlock;
 
+    /**
+     * Re-applies the current (mutated) feedback to the signal input under a fresh object identity and runs
+     * change detection. Mutating the object held by a signal input in place does not notify the signal in
+     * Angular's zoneless reactivity model, so dependent template branches (e.g. the dismiss/confirm @if) would
+     * otherwise not re-render. Cloning preserves the mutated state while changing the reference.
+     */
+    function reapplyFeedback(): void {
+        const feedback = component.feedback();
+        const clone: Feedback = Object.assign(Object.create(Object.getPrototypeOf(feedback)), feedback);
+        fixture.componentRef.setInput('feedback', clone);
+        fixture.changeDetectorRef.detectChanges();
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
+            imports: [MockDirective(NgbTooltip), FaIconComponent, TextBlockFeedbackEditorComponent, AssessmentCorrectionRoundBadgeComponent],
             providers: [
                 MockProvider(ChangeDetectorRef),
                 SessionStorageService,
@@ -48,6 +59,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
+                provideTranslateService(),
             ],
         }).compileComponents();
     });
@@ -81,28 +93,28 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(confirm).toBeFalsy();
 
         component.feedback().credits = 1;
-        fixture.changeDetectorRef.detectChanges();
+        reapplyFeedback();
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback().detailText = 'Lorem Ipsum';
-        fixture.changeDetectorRef.detectChanges();
+        reapplyFeedback();
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback().credits = 0;
-        fixture.changeDetectorRef.detectChanges();
+        reapplyFeedback();
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback().detailText = '';
-        fixture.changeDetectorRef.detectChanges();
+        reapplyFeedback();
 
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');

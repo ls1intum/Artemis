@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
@@ -24,8 +23,6 @@ import { BehaviorSubject } from 'rxjs';
 import { ScienceService } from 'app/foundation/science/science.service';
 
 describe('CourseSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseSidebarComponent;
     let fixture: ComponentFixture<CourseSidebarComponent>;
     let layoutService: LayoutService;

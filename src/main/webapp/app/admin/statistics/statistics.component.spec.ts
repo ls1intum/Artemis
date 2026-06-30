@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideRouter } from '@angular/router';
 
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -11,8 +10,6 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 
 describe('StatisticsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<StatisticsComponent>;
     let component: StatisticsComponent;
 

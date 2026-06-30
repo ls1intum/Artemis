@@ -6,7 +6,7 @@ import { CreateTutorialGroupEvent, TutorialCreateOrEditComponent } from 'app/tut
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 @Component({
     selector: 'jhi-tutorial-create-container',
@@ -17,7 +17,7 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
 export class TutorialCreateContainerComponent {
     private destroyRef = inject(DestroyRef);
     private activatedRoute = inject(ActivatedRoute);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
     private tutorialGroupTutorService = inject(TutorialGroupTutorsService);
     private router = inject(Router);

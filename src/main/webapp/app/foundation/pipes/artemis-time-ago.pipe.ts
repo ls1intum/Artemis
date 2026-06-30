@@ -31,7 +31,7 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
             this.lastTime = getTime(value);
             this.lastValue = value;
             this.lastOmitSuffix = omitSuffix;
-            this.lastLocale = this.translateService.getCurrentLang();
+            this.lastLocale = this.translateService.getCurrentLang() ?? 'en';
             this.formatFn = formatFn || this.format.bind(this);
             this.removeTimer();
             this.createTimer();

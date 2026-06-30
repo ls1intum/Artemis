@@ -3,15 +3,12 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { WebsocketAdminService } from 'app/admin/websocket/websocket-admin.service';
 
 describe('WebsocketAdminService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: WebsocketAdminService;
     let httpMock: HttpTestingController;
 

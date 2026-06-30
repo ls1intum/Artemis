@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -26,7 +25,6 @@ import { provideHttpClient } from '@angular/common/http';
  * example submission filtering, and error handling.
  */
 describe('TextAssessmentAnalytics Service', () => {
-    setupTestBed({ zoneless: true });
     let service: TextAssessmentAnalytics;
     let location: Location;
     let httpMock: HttpTestingController;

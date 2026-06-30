@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,8 +14,8 @@ import { TutorialRegistrationsStudentsTableStubComponent } from 'test/helpers/st
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
 
 interface TutorialGroupApiServiceMock {
     batchRegisterStudents: ReturnType<typeof vi.fn>;
@@ -31,8 +30,6 @@ interface TutorialGroupRegisteredStudentsServiceMock {
 }
 
 describe('TutorialRegistrationsRegisterModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialRegistrationsRegisterModalComponent;
     let fixture: ComponentFixture<TutorialRegistrationsRegisterModalComponent>;
 
@@ -74,7 +71,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorialRegistrationsRegisterModalComponent],
             providers: [
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TutorialGroupRegisteredStudentsService, useValue: tutorialGroupRegisteredStudentsServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },

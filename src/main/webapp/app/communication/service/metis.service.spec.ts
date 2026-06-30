@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -56,8 +55,6 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('Metis Service', () => {
-    setupTestBed({ zoneless: true });
-
     let metisService: MetisService;
     let metisServiceUserStub: ReturnType<typeof vi.spyOn>;
     let metisServiceGetFilteredPostsSpy: ReturnType<typeof vi.spyOn>;

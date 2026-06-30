@@ -1,14 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { AutoOrchestrationNotificationService, AutoOrchestrationSummary } from 'app/atlas/shared/services/auto-orchestration-notification.service';
 
 describe('AutoOrchestrationNotificationService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: AutoOrchestrationNotificationService;
     let websocketSubject: Subject<AutoOrchestrationSummary>;
     let websocketSubscribeSpy: ReturnType<typeof vi.fn>;

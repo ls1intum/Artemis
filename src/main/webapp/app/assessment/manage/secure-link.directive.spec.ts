@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 
@@ -21,8 +20,6 @@ class TestHostComponent {}
 class MultiLinkTestHostComponent {}
 
 describe('SecureLinkDirective', () => {
-    setupTestBed({ zoneless: true });
-
     describe('single link', () => {
         let fixture: ComponentFixture<TestHostComponent>;
         let linkElement: DebugElement;

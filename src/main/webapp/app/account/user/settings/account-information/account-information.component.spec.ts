@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -15,8 +14,6 @@ import { provideRouter } from '@angular/router';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('AccountInformationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<AccountInformationComponent>;
     let comp: AccountInformationComponent;
 

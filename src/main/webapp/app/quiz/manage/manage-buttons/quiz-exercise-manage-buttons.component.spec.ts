@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -19,8 +18,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 
 describe('QuizExercise Management Buttons Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizExerciseManageButtonsComponent;
     let fixture: ComponentFixture<QuizExerciseManageButtonsComponent>;
     let quizExerciseService: QuizExerciseService;
@@ -204,8 +201,6 @@ describe('QuizExercise Management Buttons Component', () => {
 });
 
 describe('QuizExercise Management Buttons Component - Exam Mode', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizExerciseManageButtonsComponent;
     let fixture: ComponentFixture<QuizExerciseManageButtonsComponent>;
 

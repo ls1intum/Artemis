@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -8,8 +7,6 @@ import dayjs from 'dayjs/esm';
 import { AssessmentProgressLabelComponent } from 'app/exercise/assessment-progress-label/assessment-progress-label.component';
 
 describe('Assessment progress label test', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: AssessmentProgressLabelComponent;
     let fixture: ComponentFixture<AssessmentProgressLabelComponent>;
 

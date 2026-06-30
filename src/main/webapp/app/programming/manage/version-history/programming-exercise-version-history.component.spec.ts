@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -10,8 +9,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseVersionHistoryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseVersionHistoryComponent>;
     let component: ProgrammingExerciseVersionHistoryComponent;
 
@@ -140,8 +137,6 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
 });
 
 describe('ProgrammingExerciseVersionHistoryComponent (missing exerciseId)', () => {
-    setupTestBed({ zoneless: true });
-
     const serviceMock = {
         getVersions: vi.fn(),
         getSnapshot: vi.fn(),

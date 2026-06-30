@@ -1,5 +1,4 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupDetailAccessLevel, TutorialGroupDetailComponent } from './tutorial-group-detail.component';
 import { HttpResponse } from '@angular/common/http';
@@ -21,9 +20,9 @@ import { of, throwError } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { User } from 'app/account/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/model/tutorialGroupDetailData';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
-import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
+import { TutorialGroupDetailData as RawTutorialGroupDetailData } from 'app/openapi/models/tutorial-group-detail-data';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/models/tutorial-group-session';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/models/create-or-update-tutorial-group-session-request';
 import { ConfirmationService } from 'primeng/api';
 import {
     TutorialSessionCreateOrEditModalComponent,
@@ -31,8 +30,6 @@ import {
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 
 describe('TutorialGroupDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupDetailComponent;
     let fixture: ComponentFixture<TutorialGroupDetailComponent>;
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApplicationRef } from '@angular/core';
 import { MockComponent, MockDirective, MockModule } from 'ng-mocks';
@@ -57,8 +56,6 @@ const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
 question.correctMappings = [mapping1, mapping2];
 
 describe('ShortAnswerQuestionEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ShortAnswerQuestionEditComponent>;
     let component: ShortAnswerQuestionEditComponent;
 

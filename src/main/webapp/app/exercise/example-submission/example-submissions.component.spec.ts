@@ -7,7 +7,6 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject, of, throwError } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { AccountService } from 'app/core/auth/account.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
@@ -21,8 +20,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Example Submission Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExampleSubmissionsComponent;
     let fixture: ComponentFixture<ExampleSubmissionsComponent>;
     let exampleSubmissionService: ExampleSubmissionService;

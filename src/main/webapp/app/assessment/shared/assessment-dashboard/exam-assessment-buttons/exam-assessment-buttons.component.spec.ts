@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Params, convertToParamMap } from '@angular/router';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -25,7 +24,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExamAssessmentButtonsComponent } from 'app/assessment/shared/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 
 describe('ExamAssessmentButtons', () => {
-    setupTestBed({ zoneless: true });
     let examAssessmentButtonsFixture: ComponentFixture<ExamAssessmentButtonsComponent>;
     let examAssessmentButtonsComponent: ExamAssessmentButtonsComponent;
     let course: Course;

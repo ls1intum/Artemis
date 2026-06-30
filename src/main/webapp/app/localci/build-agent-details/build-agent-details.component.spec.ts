@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
@@ -27,8 +26,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('BuildAgentDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildAgentDetailsComponent;
     let fixture: ComponentFixture<BuildAgentDetailsComponent>;
     let activatedRoute: MockActivatedRoute;

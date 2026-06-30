@@ -5,7 +5,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -21,8 +20,6 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('StandardizedCompetencyEditComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let componentFixture: ComponentFixture<StandardizedCompetencyEditComponent>;
     let component: StandardizedCompetencyEditComponent;
 

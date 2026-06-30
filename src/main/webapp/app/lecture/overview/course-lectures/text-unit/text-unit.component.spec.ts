@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
@@ -17,8 +16,6 @@ import { of } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('TextUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let scienceService: ScienceService;
 
     let component: TextUnitComponent;

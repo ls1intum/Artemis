@@ -6,8 +6,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupExportData } from 'app/openapi/model/tutorialGroupExportData';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupExportData } from 'app/openapi/models/tutorial-group-export-data';
 import { map } from 'rxjs/operators';
 
 @Component({
@@ -17,7 +17,7 @@ import { map } from 'rxjs/operators';
     imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective, FormsModule, DialogModule, ArtemisTranslatePipe],
 })
 export class TutorialGroupsExportButtonComponent implements OnDestroy {
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
 
     ngUnsubscribe = new Subject<void>();

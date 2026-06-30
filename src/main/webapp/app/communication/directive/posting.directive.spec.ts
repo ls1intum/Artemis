@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Posting } from 'app/communication/shared/entities/posting.model';
@@ -63,8 +62,6 @@ class TestPostingComponent extends PostingDirective<MockPosting> {
 }
 
 describe('PostingDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TestPostingComponent;
     let fixture: ComponentFixture<TestPostingComponent>;
     let mockReactionsBar: MockReactionsBar;

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -32,8 +31,6 @@ class MockFeatureToggleServiceWithPluralMethod extends MockFeatureToggleService 
 }
 
 describe('JhiResetRepoButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ResetRepoButtonComponent;
     let fixture: ComponentFixture<ResetRepoButtonComponent>;
 

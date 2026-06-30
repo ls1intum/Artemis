@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -20,8 +19,6 @@ import { MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExercise Edit Selected Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseEditSelectedComponent;
     let fixture: ComponentFixture<ProgrammingExerciseEditSelectedComponent>;
     let programmingExerciseService: ProgrammingExerciseService;

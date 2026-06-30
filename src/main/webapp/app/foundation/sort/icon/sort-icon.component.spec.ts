@@ -1,13 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { SortIconComponent } from 'app/foundation/sort/icon/sort-icon.component';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 
 describe('SortIconComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: SortIconComponent;
     let fixture: ComponentFixture<SortIconComponent>;
 

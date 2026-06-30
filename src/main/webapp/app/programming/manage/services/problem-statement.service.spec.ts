@@ -3,17 +3,15 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, of, throwError } from 'rxjs';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProblemStatementService } from './problem-statement.service';
 import { FileService } from 'app/foundation/service/file.service';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ProblemStatementService', () => {
-    setupTestBed({ zoneless: true });
     let service: ProblemStatementService;
     let fileServiceMock: { getTemplateFile: ReturnType<typeof vi.fn> };
     let hyperionApiMock: {
@@ -46,7 +44,7 @@ describe('ProblemStatementService', () => {
             providers: [
                 ProblemStatementService,
                 { provide: FileService, useValue: fileServiceMock },
-                { provide: HyperionProblemStatementApiService, useValue: hyperionApiMock },
+                { provide: HyperionProblemStatementApi, useValue: hyperionApiMock },
                 { provide: AlertService, useValue: alertServiceMock },
             ],
         });

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
@@ -22,15 +21,13 @@ import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 interface TutorialGroupApiServiceMock {
     getTutorialGroupsForCourse: ReturnType<typeof vi.fn>;
 }
 
 describe('CourseTutorialGroupsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseTutorialGroupsComponent>;
     let component: CourseTutorialGroupsComponent;
 
@@ -52,7 +49,7 @@ describe('CourseTutorialGroupsComponent', () => {
 
     beforeEach(async () => {
         tutorialGroupApiServiceMock = {
-            getTutorialGroupsForCourse: vi.fn(),
+            getTutorialGroupsForCourse: vi.fn().mockReturnValue(of([])),
         };
         await TestBed.configureTestingModule({
             imports: [CourseTutorialGroupsComponent, MockSidebarComponent, MockDirective(TranslateDirective)],
@@ -62,7 +59,7 @@ describe('CourseTutorialGroupsComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 MockProvider(CourseStorageService),
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
                 MockProvider(LectureService),
                 MockProvider(CourseOverviewService),
                 MockProvider(SessionStorageService),
@@ -80,6 +77,7 @@ describe('CourseTutorialGroupsComponent', () => {
         courseOverviewService = TestBed.inject(CourseOverviewService);
         courseStorageService = TestBed.inject(CourseStorageService);
         lectureService = TestBed.inject(LectureService);
+        vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
         sessionStorageService = TestBed.inject(SessionStorageService);
         router = TestBed.inject(Router);
     });
@@ -106,8 +104,8 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
         vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
-        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse');
-        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId');
+        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([]));
+        const tutorialLectureFetchSpy = vi.spyOn(lectureService, 'findAllTutorialLecturesByCourseId').mockReturnValue(of(new HttpResponse({ body: [] })));
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -148,9 +146,7 @@ describe('CourseTutorialGroupsComponent', () => {
         vi.spyOn(courseOverviewService, 'mapTutorialGroupToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialGroup);
         vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement').mockImplementation(getSidebarCardElementForTutorialLecture);
 
-        const tutorialGroupFetchSpy = vi
-            .spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse')
-            .mockReturnValue(of(new HttpResponse({ body: [tutorialGroup1, tutorialGroup2] })));
+        const tutorialGroupFetchSpy = vi.spyOn(tutorialGroupApiServiceMock, 'getTutorialGroupsForCourse').mockReturnValue(of([tutorialGroup1, tutorialGroup2]));
 
         const tutorialLectureFetchSpy = vi
             .spyOn(lectureService, 'findAllTutorialLecturesByCourseId')

@@ -10,11 +10,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import { facSaveSuccess } from 'app/foundation/icons/icons';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExerciseSaveButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExerciseSaveButtonComponent;
     let fixture: ComponentFixture<ExerciseSaveButtonComponent>;
 

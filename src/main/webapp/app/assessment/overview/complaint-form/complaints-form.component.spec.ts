@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
@@ -15,7 +14,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 
 describe('ComplaintsFormComponent', () => {
-    setupTestBed({ zoneless: true });
     const teamComplaints = 42;
     const studentComplaints = 69;
     const course: Course = { maxTeamComplaints: teamComplaints, maxComplaints: studentComplaints, maxComplaintTextLimit: 20 };
@@ -129,8 +127,11 @@ describe('ComplaintsFormComponent', () => {
 
         const responseTextArea = fixture.debugElement.query(By.css('#complainTextArea')).nativeElement;
         const complaintButton = fixture.debugElement.query(By.css('#submit-complaint')).nativeElement;
+        // Drive the value through the [(ngModel)] input event so the (zoneless) change detection
+        // re-evaluates the button's [disabled] binding; directly mutating the plain `complaintText`
+        // field no longer marks the binding dirty in Angular's zoneless reactivity model.
         responseTextArea.value = 'a';
-        component.complaintText = 'a';
+        responseTextArea.dispatchEvent(new Event('input'));
 
         fixture.changeDetectorRef.detectChanges();
 
@@ -149,8 +150,11 @@ describe('ComplaintsFormComponent', () => {
         const responseTextArea = fixture.debugElement.query(By.css('#complainTextArea')).nativeElement;
         const complaintButton = fixture.debugElement.query(By.css('#submit-complaint')).nativeElement;
 
+        // 26 characters, exceeding the course limit of 20 -> button must be disabled.
+        // Drive the value through the [(ngModel)] input event so the disabled binding re-evaluates
+        // under zoneless change detection (direct field mutation no longer marks the binding dirty).
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
-        component.complaintText = 'abcdefghijklmnopqrstuvwxyz';
+        responseTextArea.dispatchEvent(new Event('input'));
 
         fixture.changeDetectorRef.detectChanges();
 

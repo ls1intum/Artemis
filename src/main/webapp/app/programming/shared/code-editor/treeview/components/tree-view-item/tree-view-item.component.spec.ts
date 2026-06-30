@@ -1,7 +1,6 @@
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { slice } from 'lodash-es';
@@ -55,8 +54,6 @@ class TestComponent {
 const createTestComponent = (html: string) => createGenericTestComponent(html, TestComponent) as ComponentFixture<TestComponent>;
 
 describe('TreeviewItemComponent', () => {
-    setupTestBed({ zoneless: true });
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule, BrowserModule, TreeViewItemComponent],

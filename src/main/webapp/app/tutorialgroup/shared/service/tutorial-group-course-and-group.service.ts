@@ -5,13 +5,13 @@ import { map } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 @Injectable({
     providedIn: 'root',
 })
 export class TutorialGroupCourseAndGroupService {
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
 

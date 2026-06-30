@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDetailLineChartComponent, SwitchTimeSpanDirection } from 'app/course/manage/detail/course-detail-line-chart.component';
@@ -17,8 +16,6 @@ class MockCourseManagementService {
 }
 
 describe('CourseDetailLineChartComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseDetailLineChartComponent>;
     let component: CourseDetailLineChartComponent;
     let componentRef: ComponentRef<CourseDetailLineChartComponent>;

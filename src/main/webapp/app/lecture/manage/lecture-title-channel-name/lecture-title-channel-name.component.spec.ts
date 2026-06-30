@@ -1,13 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-title-channel-name/lecture-title-channel-name.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 
 describe('LectureTitleChannelNameComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LectureTitleChannelNameComponent;
     let fixture: ComponentFixture<LectureTitleChannelNameComponent>;
 

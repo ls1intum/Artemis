@@ -10,10 +10,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('GitDiffReportModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: GitDiffReportModalComponent;
     let fixture: ComponentFixture<GitDiffReportModalComponent>;
     let dialogRef: DynamicDialogRef;

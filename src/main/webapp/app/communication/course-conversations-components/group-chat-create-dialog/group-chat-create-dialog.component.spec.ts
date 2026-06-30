@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -14,8 +13,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('GroupChatCreateDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: GroupChatCreateDialogComponent;
     let fixture: ComponentFixture<GroupChatCreateDialogComponent>;
     const course = { id: 1 };
@@ -41,7 +38,6 @@ describe('GroupChatCreateDialogComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(GroupChatCreateDialogComponent);
         component = fixture.componentInstance;
-        fixture.detectChanges();
         initializeDialog(component, fixture, {
             course,
         });

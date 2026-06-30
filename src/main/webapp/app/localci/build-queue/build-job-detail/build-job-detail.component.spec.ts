@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobDetailComponent } from './build-job-detail.component';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
@@ -14,8 +13,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('BuildJobDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildJobDetailComponent;
     let fixture: ComponentFixture<BuildJobDetailComponent>;
     let buildQueueService: BuildOverviewService;

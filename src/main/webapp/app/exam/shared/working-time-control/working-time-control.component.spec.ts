@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -10,8 +9,6 @@ import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-contro
 const createTestExam = (duration: number) => ({ workingTime: duration, startDate: dayjs.unix(0), endDate: dayjs.unix(duration) }) as Exam;
 
 describe('WorkingTimeControlComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: WorkingTimeControlComponent;
     let fixture: ComponentFixture<WorkingTimeControlComponent>;
 

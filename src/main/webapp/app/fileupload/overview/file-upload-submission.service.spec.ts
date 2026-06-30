@@ -6,7 +6,6 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FileUploadSubmissionService } from './file-upload-submission.service';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
@@ -14,8 +13,6 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('FileUploadSubmissionService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: FileUploadSubmissionService;
     let httpMock: HttpTestingController;
     let submissionService: SubmissionService;

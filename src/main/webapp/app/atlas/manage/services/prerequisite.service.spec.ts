@@ -30,10 +30,8 @@ import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.se
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CompetencyProgressDTO, CompetencyWithTailRelationResponseDTO, CourseCompetencyResponseDTO, toPrerequisite } from 'app/atlas/shared/dto/course-competency-response.dto';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('PrerequisiteService', () => {
-    setupTestBed({ zoneless: true });
     let prerequisiteService: PrerequisiteService;
     let httpTestingController: HttpTestingController;
     let defaultPrerequisiteDtos: CourseCompetencyResponseDTO[];

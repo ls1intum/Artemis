@@ -50,7 +50,7 @@ export class PasswordResetInitComponent implements AfterViewInit {
         this.externalCredentialProvider.set(profileInfo.externalCredentialProvider);
 
         // Get password reset link in user's language, falling back to English
-        const currentLanguage = this.translateService.getCurrentLang();
+        const currentLanguage = this.translateService.getCurrentLang() ?? 'en';
         this.externalPasswordResetLink.set(profileInfo.externalPasswordResetLinkMap?.[currentLanguage] ?? profileInfo.externalPasswordResetLinkMap?.['en']);
     }
 

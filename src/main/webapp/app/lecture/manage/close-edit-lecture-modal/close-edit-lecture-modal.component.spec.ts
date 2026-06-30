@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CloseEditLectureModalComponent } from 'app/lecture/manage/close-edit-lecture-modal/close-edit-lecture-modal.component';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -8,8 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 
 describe('CloseEditLectureModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CloseEditLectureModalComponent;
     let fixture: ComponentFixture<CloseEditLectureModalComponent>;
     let dialogRef: DynamicDialogRef;

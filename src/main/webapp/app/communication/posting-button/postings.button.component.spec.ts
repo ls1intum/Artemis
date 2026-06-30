@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
@@ -8,8 +7,6 @@ import { getElement } from 'test/helpers/utils/general-test.utils';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 describe('PostingButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<PostingButtonComponent>;
     let debugElement: DebugElement;
 

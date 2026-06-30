@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,8 +7,6 @@ import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/ima
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ImageCropperModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ImageCropperModalComponent;
     let fixture: ComponentFixture<ImageCropperModalComponent>;
     let dialogRef: DynamicDialogRef;

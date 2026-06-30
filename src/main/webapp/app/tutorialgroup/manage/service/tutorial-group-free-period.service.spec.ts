@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
@@ -9,8 +8,6 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { provideHttpClient } from '@angular/common/http';
 
 describe('TutorialGroupFreePeriodService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: TutorialGroupFreePeriodService;
     let httpMock: HttpTestingController;
     let elemDefault: TutorialGroupFreePeriod;

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
@@ -11,8 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 
 describe('ChatStatusBarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ChatStatusBarComponent;
     let fixture: ComponentFixture<ChatStatusBarComponent>;
 

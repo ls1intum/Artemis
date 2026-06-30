@@ -3,7 +3,6 @@ import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchNavigationViewComponent } from './global-search-navigation-view.component';
@@ -14,7 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
-import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
+import { GlobalSearchResult } from 'app/openapi/models/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -34,8 +33,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 describe('GlobalSearchNavigationViewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: GlobalSearchNavigationViewComponent;
     let fixture: ComponentFixture<GlobalSearchNavigationViewComponent>;
     let router: Router;

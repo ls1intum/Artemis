@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
@@ -26,8 +25,6 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('ExerciseScoresExportButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExerciseScoresExportButtonComponent;
     let fixture: ComponentFixture<ExerciseScoresExportButtonComponent>;
     let resultService: ResultService;

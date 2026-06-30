@@ -1,19 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 
 describe('ItemCountComponent test', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ItemCountComponent;
     let fixture: ComponentFixture<ItemCountComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), TranslateDirective],
+            imports: [TranslateDirective],
+            providers: [provideTranslateService()],
         })
             .compileComponents()
             .then(() => {

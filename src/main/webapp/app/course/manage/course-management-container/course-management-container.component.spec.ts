@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
@@ -100,8 +99,6 @@ class ControlsTestingComponent implements BarControlConfigurationProvider, After
 }
 
 describe('CourseManagementContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseManagementContainerComponent;
     let fixture: ComponentFixture<CourseManagementContainerComponent>;
     let courseService: CourseManagementService;

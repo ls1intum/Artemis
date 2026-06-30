@@ -73,7 +73,6 @@ vi.mock('@tumaet/apollon', async (importOriginal) => {
     };
 });
 
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -144,8 +143,6 @@ function mockApollonEditorModel(apollonEditor: ApollonEditor, model: UMLModel): 
 }
 
 describe('ModelingAssessmentComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ModelingAssessmentComponent>;
     let comp: ModelingAssessmentComponent;
     let translatePipe: ArtemisTranslatePipe;

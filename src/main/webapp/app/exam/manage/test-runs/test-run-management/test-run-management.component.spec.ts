@@ -23,11 +23,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Test Run Management Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TestRunManagementComponent;
     let fixture: ComponentFixture<TestRunManagementComponent>;
     let examManagementService: ExamManagementService;

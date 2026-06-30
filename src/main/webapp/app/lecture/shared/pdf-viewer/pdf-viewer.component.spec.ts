@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfViewerComponent } from './pdf-viewer.component';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -9,8 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PdfViewerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfViewerComponent;
     let fixture: ComponentFixture<PdfViewerComponent>;
     let mockThemeService: { currentTheme: ReturnType<typeof signal<Theme>> };

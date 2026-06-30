@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -9,8 +8,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ProgrammingExerciseVersionControlComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseVersionControlComponent>;
     let comp: ProgrammingExerciseVersionControlComponent;
     let componentRef: ComponentRef<ProgrammingExerciseVersionControlComponent>;

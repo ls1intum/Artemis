@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Router } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
@@ -14,8 +13,6 @@ import { Component } from '@angular/core';
 class MockModalComponent {}
 
 describe('QuizExercisePopupService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: QuizExercisePopupService;
     let dialogService: DialogService;
     let router: Router;

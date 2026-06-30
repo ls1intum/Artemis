@@ -1,18 +1,17 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { InformationBoxComponent } from './information-box.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('InformationBoxComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: InformationBoxComponent;
     let fixture: ComponentFixture<InformationBoxComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [InformationBoxComponent, TranslateModule.forRoot(), NgbTooltipModule],
+            imports: [InformationBoxComponent, NgbTooltipModule],
+            providers: [provideTranslateService()],
         }).compileComponents();
         fixture = TestBed.createComponent(InformationBoxComponent);
         component = fixture.componentInstance;

@@ -5,7 +5,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { GlobalSearchModalComponent } from './global-search-modal.component';
 import { SearchOverlayService } from '../../services/search-overlay.service';
@@ -16,8 +15,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
-import { GlobalSearchApiService } from 'app/openapi/api/globalSearchApi.service';
+import { GlobalSearchResult } from 'app/openapi/models/global-search-result';
+import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -28,7 +27,6 @@ import { GlobalSearchActionItemComponent } from '../action-item/global-search-ac
 import { GlobalSearchIrisAnswerComponent } from '../views/iris-answer/global-search-iris-answer.component';
 
 describe('GlobalSearchModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: GlobalSearchModalComponent;
     let fixture: ComponentFixture<GlobalSearchModalComponent>;
     let searchOverlayService: SearchOverlayService;
@@ -104,7 +102,7 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: OsDetectorService, useValue: mockOsDetectorService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: GlobalSearchApiService, useValue: mockSearchService },
+                { provide: GlobalSearchApi, useValue: mockSearchService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
             ],
@@ -275,7 +273,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
 
             const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-            dialog.onHide.emit();
+            dialog.onHide.emit({});
 
             expect(searchOverlayService.close).toHaveBeenCalled();
         });
@@ -285,7 +283,7 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
 
             const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-            dialog.visibleChange.emit(false);
+            dialog.visible.set(false);
 
             expect(searchOverlayService.close).toHaveBeenCalled();
         });

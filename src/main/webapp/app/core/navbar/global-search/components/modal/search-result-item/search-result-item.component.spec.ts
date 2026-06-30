@@ -1,17 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SearchResultItemComponent } from './search-result-item.component';
-import { GlobalSearchResult } from 'app/openapi/model/globalSearchResult';
+import { GlobalSearchResult } from 'app/openapi/models/global-search-result';
 import { faCube } from '@fortawesome/free-solid-svg-icons';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SearchResultItemComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: SearchResultItemComponent;
     let fixture: ComponentFixture<SearchResultItemComponent>;
 

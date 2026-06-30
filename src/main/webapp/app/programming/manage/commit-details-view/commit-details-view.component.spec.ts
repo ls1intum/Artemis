@@ -57,7 +57,6 @@ vi.mock('app/programming/shared/utils/diff.utils', async () => ({
     }),
 }));
 
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -90,8 +89,6 @@ type CommitDetailsViewInternals = Omit<CommitDetailsViewComponent, keyof CommitD
 const internals = (c: CommitDetailsViewComponent): CommitDetailsViewInternals => c as unknown as CommitDetailsViewInternals;
 
 describe('CommitDetailsViewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CommitDetailsViewComponent;
     let fixture: ComponentFixture<CommitDetailsViewComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;

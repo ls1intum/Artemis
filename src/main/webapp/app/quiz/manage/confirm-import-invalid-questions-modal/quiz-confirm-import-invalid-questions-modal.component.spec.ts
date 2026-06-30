@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from './quiz-confirm-import-invalid-questions-modal.component';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -8,8 +7,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('QuizConfirmImportInvalidQuestionsModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: QuizConfirmImportInvalidQuestionsModalComponent;
     let fixture: ComponentFixture<QuizConfirmImportInvalidQuestionsModalComponent>;
     let dialogRef: DynamicDialogRef;

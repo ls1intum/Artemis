@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -20,8 +19,6 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { User } from 'app/account/user/user.model';
 
 describe('CourseOverviewGuard', () => {
-    setupTestBed({ zoneless: true });
-
     let guard: CourseOverviewGuard;
     let courseStorageService: CourseStorageService;
     let courseManagementService: CourseManagementService;

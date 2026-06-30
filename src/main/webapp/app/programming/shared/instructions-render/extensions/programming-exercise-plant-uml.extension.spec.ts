@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
@@ -32,8 +31,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
  * - The per-diagram index comes from the array position (not mutable state), so no reset is needed
  */
 describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
-    setupTestBed({ zoneless: true });
-
     let extension: ProgrammingExercisePlantUmlExtensionWrapper;
 
     // Problem statements with varying numbers of PlantUML diagrams for testing

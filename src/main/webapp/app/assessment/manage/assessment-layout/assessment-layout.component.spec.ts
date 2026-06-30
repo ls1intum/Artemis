@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
@@ -24,7 +23,6 @@ import { AssessmentNote } from '../../shared/entities/assessment-note.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('AssessmentLayoutComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: AssessmentLayoutComponent;
     let fixture: ComponentFixture<AssessmentLayoutComponent>;
 

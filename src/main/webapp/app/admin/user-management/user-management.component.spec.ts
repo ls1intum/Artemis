@@ -4,7 +4,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subscription, of } from 'rxjs';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -38,8 +37,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('UserManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UserManagementComponent;
     let fixture: ComponentFixture<UserManagementComponent>;
     let userService: AdminUserService;

@@ -1,11 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Subject, of, throwError } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from './tutorial-group-registered-students.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
 
 interface TutorialGroupApiServiceMock {
     deregisterStudent: ReturnType<typeof vi.fn>;
@@ -27,8 +26,6 @@ function createRegisteredStudent(id: number, login: string): TutorialGroupStuden
 }
 
 describe('TutorialGroupRegisteredStudentsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: TutorialGroupRegisteredStudentsService;
     let alertService: AlertService;
 
@@ -51,7 +48,7 @@ describe('TutorialGroupRegisteredStudentsService', () => {
             providers: [
                 TutorialGroupRegisteredStudentsService,
                 {
-                    provide: TutorialGroupApiService,
+                    provide: TutorialGroupApi,
                     useValue: tutorialGroupApiServiceMock,
                 },
                 {

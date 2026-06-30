@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 
@@ -11,8 +10,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 
 describe('ProgrammingExerciseWebsocketService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ProgrammingExerciseWebsocketService;
     let websocketService: WebsocketService;
     let topicSubject: Subject<boolean>;

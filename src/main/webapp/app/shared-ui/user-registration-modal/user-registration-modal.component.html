@@ -11,7 +11,7 @@
     headerStyleClass="pb-1"
     contentStyleClass="pt-0"
 >
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <h4 class="m-0 d-flex align-items-center gap-2">
             <i class="pi pi-users" style="font-size: 1.5rem"></i>
             <span>{{ titleKey() | artemisTranslate }}</span>
@@ -80,7 +80,7 @@
         </div>
     </div>
 
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <button pButton type="button" severity="secondary" size="small" (click)="close()" jhiTranslate="entity.action.cancel"></button>
         <button pButton type="button" severity="primary" size="small" [disabled]="isRegisterDisabled()" (click)="register()">
             <span>{{ 'userRegistrationModal.registerButton' | artemisTranslate: { count: selectedCount() } }}</span>

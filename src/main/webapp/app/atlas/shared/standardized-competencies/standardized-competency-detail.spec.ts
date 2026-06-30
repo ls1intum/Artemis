@@ -8,10 +8,8 @@ import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardize
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('StandardizedCompetencyDetailComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<StandardizedCompetencyDetailComponent>;
     let component: StandardizedCompetencyDetailComponent;
     const defaultCompetency: StandardizedCompetencyDTO = {

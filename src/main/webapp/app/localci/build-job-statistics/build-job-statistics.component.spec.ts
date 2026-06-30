@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
 import { BuildJobStatistics, SpanType } from 'app/localci/shared/entities/build-job.model';
@@ -14,8 +13,6 @@ import { MockProvider } from 'ng-mocks';
 import { HttpErrorResponse } from '@angular/common/http';
 
 describe('BuildJobStatisticsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildJobStatisticsComponent;
     let fixture: ComponentFixture<BuildJobStatisticsComponent>;
     const mockActivatedRoute: any = {};

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureOverviewComponent, TargetAudience } from 'app/core/feature-overview/feature-overview.component';
@@ -11,8 +10,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Feature Overview Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: FeatureOverviewComponent;
     let fixture: ComponentFixture<FeatureOverviewComponent>;
     let debugElement: DebugElement;

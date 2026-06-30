@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackOnboardingModalComponent } from './feedback-onboarding-modal.component';
 import { LearnerProfileApiService } from '../../learner-profile-api.service';
@@ -8,7 +7,7 @@ import { LearnerProfileDTO } from '../../dto/learner-profile-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 class MockAlertService {
     addAlert = vi.fn();
@@ -16,8 +15,6 @@ class MockAlertService {
 }
 
 describe('FeedbackOnboardingModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FeedbackOnboardingModalComponent;
     let fixture: ComponentFixture<FeedbackOnboardingModalComponent>;
     let learnerProfileApiService: LearnerProfileApiService;
@@ -25,8 +22,14 @@ describe('FeedbackOnboardingModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FeedbackOnboardingModalComponent, TranslateModule.forRoot()],
-            providers: [MockProvider(LearnerProfileApiService), { provide: AlertService, useClass: MockAlertService }, provideHttpClient(), provideHttpClientTesting()],
+            imports: [FeedbackOnboardingModalComponent],
+            providers: [
+                MockProvider(LearnerProfileApiService),
+                { provide: AlertService, useClass: MockAlertService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                provideTranslateService(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackOnboardingModalComponent);

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -23,8 +22,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 
 describe('AttachmentVideoUnitFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let attachmentVideoUnitFormComponentFixture: ComponentFixture<AttachmentVideoUnitFormComponent>;
     let attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent;
 
@@ -354,7 +351,11 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue(validYouTubeUrl);
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
+        // The transform button is gated by [disabled]="!isTransformable". Under zoneless change
+        // detection the form-control status only propagates to that binding after the reactive flush
+        // settles, so wait for stability (and re-render) before clicking, otherwise the click is a no-op.
+        await attachmentVideoUnitFormComponentFixture.whenStable();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
         const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
         transformButton.click();
 
@@ -368,7 +369,11 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue(tumLiveUrl);
-        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
+        // The transform button is gated by [disabled]="!isTransformable". Under zoneless change
+        // detection the form-control status only propagates to that binding after the reactive flush
+        // settles, so wait for stability (and re-render) before clicking, otherwise the click is a no-op.
+        await attachmentVideoUnitFormComponentFixture.whenStable();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
         const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
         transformButton.click();

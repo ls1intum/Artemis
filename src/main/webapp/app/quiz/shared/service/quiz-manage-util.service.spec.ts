@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { isQuizEditable, isQuizQuestionValid } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
@@ -8,8 +7,6 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 describe('QuizManageUtil', () => {
-    setupTestBed({ zoneless: true });
-
     let quizExercise: QuizExercise;
 
     describe('isQuizEditable', () => {

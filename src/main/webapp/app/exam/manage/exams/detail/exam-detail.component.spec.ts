@@ -41,7 +41,6 @@ import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-compon
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
@@ -51,8 +50,6 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 class DummyComponent {}
 
 describe('ExamDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExamDetailComponent>;
     let component: ExamDetailComponent;
     let service: ExamManagementService;

@@ -17,10 +17,8 @@ import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('AgentChatModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<AgentChatModalComponent>;
     let component: AgentChatModalComponent;
 

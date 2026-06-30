@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -18,7 +17,7 @@ import { of, throwError } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
@@ -31,8 +30,6 @@ const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampl
 
 examples.forEach((activeConversation) => {
     describe('ConversationInfoComponent with ' + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationInfoComponent;
         let fixture: ComponentFixture<ConversationInfoComponent>;
         const course = { id: 1 } as Course;
@@ -51,7 +48,7 @@ examples.forEach((activeConversation) => {
         beforeEach(async () => {
             vi.useFakeTimers();
             TestBed.configureTestingModule({
-                imports: [ConversationInfoComponent, TranslateModule.forRoot(), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
+                imports: [ConversationInfoComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(ChannelService),
                     MockProvider(GroupChatService),
@@ -61,6 +58,7 @@ examples.forEach((activeConversation) => {
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: Router, useClass: MockRouter },
                     { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
+                    provideTranslateService(),
                 ],
             });
         });

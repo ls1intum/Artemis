@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock pdfjs-dist to avoid DOMMatrix issues in jsdom
 vi.mock('pdfjs-dist', () => {
@@ -42,8 +41,6 @@ vi.mock('app/foundation/util/global.utils', () => ({
 }));
 
 describe('PdfPreviewThumbnailGridComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfPreviewThumbnailGridComponent;
     let fixture: ComponentFixture<PdfPreviewThumbnailGridComponent>;
     let alertServiceMock: any;

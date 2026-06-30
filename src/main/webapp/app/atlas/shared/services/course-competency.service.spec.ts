@@ -12,10 +12,8 @@ import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.se
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { take } from 'rxjs/operators';
 import { CompetencyWithTailRelationResponseDTO, CourseCompetencyResponseDTO, toCompetency, toPrerequisite } from 'app/atlas/shared/dto/course-competency-response.dto';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetencyService', () => {
-    setupTestBed({ zoneless: true });
     let courseCompetencyService: CourseCompetencyService;
     let httpTestingController: HttpTestingController;
     let defaultCompetencies: CourseCompetencyResponseDTO[];

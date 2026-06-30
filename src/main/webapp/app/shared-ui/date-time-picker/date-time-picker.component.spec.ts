@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { DatePicker } from 'primeng/datepicker';
@@ -8,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('FormDateTimePickerComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: FormDateTimePickerComponent;
     let fixture: ComponentFixture<FormDateTimePickerComponent>;
 
@@ -161,7 +159,7 @@ describe('FormDateTimePickerComponent', () => {
         // "changed after checked" assertion, which the picker's overlay-open focus state churn would
         // otherwise trip in the test harness (not a production concern).
         async function openPanel(picker: DatePicker) {
-            picker.overlayVisible = true;
+            picker.overlayVisible.set(true);
             fixture.detectChanges(false);
             await fixture.whenStable();
             fixture.detectChanges(false);
@@ -181,7 +179,7 @@ describe('FormDateTimePickerComponent', () => {
             button!.click();
 
             expect(hideSpy).toHaveBeenCalledOnce();
-            expect(picker.overlayVisible).toBe(false);
+            expect(picker.overlayVisible()).toBe(false);
             // The displayed (default / current) time is committed in a single click, instead of requiring
             // the user to first nudge a spinner field.
             expect(component.value()).toBeDefined();
@@ -206,7 +204,7 @@ describe('FormDateTimePickerComponent', () => {
             const picker = innerPicker();
             await openPanel(picker);
 
-            expect(picker.showButtonBar).toBe(false);
+            expect(picker.showButtonBar()).toBe(false);
             expect(document.body.querySelector('.p-datepicker-buttonbar')).toBeNull();
         });
     });

@@ -1,11 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { signal } from '@angular/core';
+import { ChangeDetectorRef, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
@@ -36,8 +35,6 @@ const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampl
 
 examples.forEach((activeConversation) => {
     describe('ConversationMembersComponent with ' + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationMembersComponent;
         let fixture: ComponentFixture<ConversationMembersComponent>;
         let searchMembersOfConversationSpy: ReturnType<typeof vi.spyOn>;
@@ -161,12 +158,20 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(301);
             searchMembersOfConversationSpy.mockClear();
 
+            // `canAddUsersToConversation` is a plain function (not a signal); under zoneless change detection a
+            // changed return value does not mark the component's view dirty, so the view's ChangeDetectorRef must
+            // be marked for check before re-rendering. `fixture.changeDetectorRef` refers to the test host wrapper,
+            // not the component view, so resolve the component view's ChangeDetectorRef from its injector.
+            const componentCdr = fixture.componentRef.injector.get(ChangeDetectorRef);
+
             canAddUsersToConversation.mockReturnValue(false);
-            fixture.changeDetectorRef.detectChanges();
+            componentCdr.markForCheck();
+            fixture.detectChanges();
             expect(fixture.debugElement.nativeElement.querySelector('.addUsers')).toBeFalsy();
 
             canAddUsersToConversation.mockReturnValue(true);
-            fixture.changeDetectorRef.detectChanges();
+            componentCdr.markForCheck();
+            fixture.detectChanges();
             const addUsersButton = fixture.debugElement.nativeElement.querySelector('.addUsers');
             expect(addUsersButton).toBeTruthy();
 
@@ -176,7 +181,6 @@ examples.forEach((activeConversation) => {
                 close: vi.fn(),
             };
             const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as unknown as DynamicDialogRef);
-            fixture.changeDetectorRef.detectChanges();
 
             addUsersButton.click();
             vi.advanceTimersByTime(301);

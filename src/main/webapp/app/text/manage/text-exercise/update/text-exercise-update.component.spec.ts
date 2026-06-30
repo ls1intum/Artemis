@@ -34,11 +34,10 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -135,8 +134,6 @@ class StubTeamConfigFormGroupComponent {
 }
 
 describe('TextExercise Management Update Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TextExerciseUpdateComponent;
     let fixture: ComponentFixture<TextExerciseUpdateComponent>;
     let textExerciseService: TextExerciseService;
@@ -172,7 +169,7 @@ describe('TextExercise Management Update Component', () => {
         routeParams$ = new BehaviorSubject({ courseId: 1 });
 
         await TestBed.configureTestingModule({
-            imports: [TextExerciseUpdateComponent, TranslateModule.forRoot()],
+            imports: [TextExerciseUpdateComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -234,6 +231,7 @@ describe('TextExercise Management Update Component', () => {
                     },
                 },
                 { provide: ProfileService, useClass: MockProfileService },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(TextExerciseUpdateComponent, {

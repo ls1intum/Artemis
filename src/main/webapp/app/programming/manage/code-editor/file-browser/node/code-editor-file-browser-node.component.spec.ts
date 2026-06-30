@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ElementRef, Signal } from '@angular/core';
 import { CodeEditorFileBrowserFileComponent } from 'app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component';
@@ -21,8 +20,6 @@ const internals = (c: CodeEditorFileBrowserFileComponent): NodeInternals => c as
  * Testing through the concrete CodeEditorFileBrowserFileComponent implementation
  */
 describe('CodeEditorFileBrowserNodeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CodeEditorFileBrowserFileComponent>;
     let comp: CodeEditorFileBrowserFileComponent;
 

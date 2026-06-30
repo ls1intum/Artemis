@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -19,8 +18,6 @@ import { TranslateService } from '@ngx-translate/core';
  * preserves the DOM-state assertions while letting tests exercise the component end-to-end.
  */
 describe('TeamsImportFromFileFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TeamsImportFromFileFormComponent;
     let fixture: ComponentFixture<TeamsImportFromFileFormComponent>;
 

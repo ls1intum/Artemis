@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -11,8 +10,6 @@ import { SshUserSettingsComponent } from 'app/account/user/settings/ssh-settings
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 
 describe('SshUserSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SshUserSettingsComponent>;
     let comp: SshUserSettingsComponent;
     const mockKey = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJxKWdvcbNTWl4vBjsijoY5HN5dpjxU40huy1PFpdd2o comment';

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -13,8 +12,6 @@ import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('LectureUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LectureUnitComponent;
     let fixture: ComponentFixture<LectureUnitComponent>;
     let mockActivatedRoute: { snapshot: { queryParams: Record<string, any> } };

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ManageAssessmentButtonsComponent } from 'app/exercise/exercise-scores/manage-assessment-buttons/manage-assessment-buttons.component';
 import { MockProvider } from 'ng-mocks';
@@ -20,8 +19,6 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('ManageAssessmentButtonsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ManageAssessmentButtonsComponent>;
     let comp: ManageAssessmentButtonsComponent;
     let programmingAssessmentService: ProgrammingAssessmentManualResultService;

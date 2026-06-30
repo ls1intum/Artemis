@@ -264,7 +264,7 @@ export class TableViewComponent<T> {
 
         clearTimeout(this.debounceTimer);
         this.debounceTimer = setTimeout(() => {
-            this.dt().first = 0;
+            this.dt().first.set(0);
             this.dt().filterGlobal(value, 'contains');
         }, TableViewComponent.SEARCH_DEBOUNCE_MS);
     }
@@ -339,7 +339,7 @@ export class TableViewComponent<T> {
         this.searchFilter()?.resetSearchValue();
         clearTimeout(this.debounceTimer);
         const dt = this.dt();
-        dt.first = 0;
+        dt.first.set(0);
         dt.filters = {};
         this.handleLazyLoad({
             first: 0,
@@ -363,7 +363,7 @@ export class TableViewComponent<T> {
         this.currentFirst.set(0);
         this.currentPageSizeOverride.set(undefined);
         const dt = this.dt();
-        dt.first = 0;
+        dt.first.set(0);
         this.handleLazyLoad({
             first: 0,
             rows: this.effectivePageSize(),

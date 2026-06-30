@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,8 +15,6 @@ const makeUser = (id: number, isRegistered = false): UserForRegistration => ({
 const lazyEvent = { first: 0, rows: 10, filters: {}, globalFilter: null, multiSortMeta: undefined } as any;
 
 describe('UserRegistrationModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: UserRegistrationModalComponent;
     let fixture: ComponentFixture<UserRegistrationModalComponent>;
     let mockAlertService: { error: ReturnType<typeof vi.fn> };

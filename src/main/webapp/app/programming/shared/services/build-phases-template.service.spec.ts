@@ -2,14 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildPhasesTemplateService } from './build-phases-template.service';
 import { ProgrammingLanguage, ProjectType } from '../entities/programming-exercise.model';
 
 describe('BuildPhasesTemplateService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: BuildPhasesTemplateService;
     let httpMock: HttpTestingController;
 

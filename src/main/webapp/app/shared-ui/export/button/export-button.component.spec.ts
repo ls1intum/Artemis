@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
@@ -12,7 +11,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExportButtonComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ExportButtonComponent>;
     let comp: ExportButtonComponent;
     let dialogService: DialogService;

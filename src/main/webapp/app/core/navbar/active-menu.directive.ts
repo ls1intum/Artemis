@@ -15,7 +15,7 @@ export class ActiveMenuDirective implements OnInit {
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((event: LangChangeEvent) => {
             this.updateActiveFlag(event.lang);
         });
-        this.updateActiveFlag(this.translateService.getCurrentLang());
+        this.updateActiveFlag(this.translateService.getCurrentLang() ?? 'en');
     }
 
     updateActiveFlag(selectedLanguage: string) {

@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -11,8 +10,6 @@ import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-i
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 
 describe('BuildAgentsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: BuildAgentsService;
     let httpMock: HttpTestingController;
     let element: BuildAgentInformation;

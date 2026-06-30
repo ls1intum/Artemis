@@ -1,5 +1,4 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -29,8 +28,6 @@ import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participatio
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('Exercise Scores Component', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExerciseScoresComponent;
     let fixture: ComponentFixture<ExerciseScoresComponent>;
     let resultService: ResultService;

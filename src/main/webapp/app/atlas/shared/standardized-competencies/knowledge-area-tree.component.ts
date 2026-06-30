@@ -81,4 +81,8 @@ export class KnowledgeAreaTreeComponent {
 
     readonly knowledgeAreaTemplate = contentChild<TemplateRef<{ knowledgeArea: KnowledgeAreaForTree }>>('knowledgeAreaTemplate');
     readonly competencyTemplate = contentChild<TemplateRef<{ competency: StandardizedCompetencyForTree; knowledgeArea: KnowledgeAreaForTree }>>('competencyTemplate');
+
+    /** Exposed for the template so the single `<p-tree>` node template can branch on the node's `type`. */
+    protected readonly TREE_NODE_TYPE_KNOWLEDGE_AREA = TREE_NODE_TYPE_KNOWLEDGE_AREA;
+    protected readonly TREE_NODE_TYPE_COMPETENCY = TREE_NODE_TYPE_COMPETENCY;
 }

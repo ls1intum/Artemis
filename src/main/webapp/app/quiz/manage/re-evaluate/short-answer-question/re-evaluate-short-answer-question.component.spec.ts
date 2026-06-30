@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ReEvaluateShortAnswerQuestionComponent } from 'app/quiz/manage/re-evaluate/short-answer-question/re-evaluate-short-answer-question.component';
@@ -7,8 +6,6 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ReEvaluateShortAnswerQuestionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ReEvaluateShortAnswerQuestionComponent>;
     let component: ReEvaluateShortAnswerQuestionComponent;
 

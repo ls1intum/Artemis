@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -21,8 +20,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 
 describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent;
     let fixture: ComponentFixture<ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent>;
     let programmingExerciseService: ProgrammingExerciseService;

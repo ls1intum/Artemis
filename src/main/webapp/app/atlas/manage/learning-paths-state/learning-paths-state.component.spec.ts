@@ -12,10 +12,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { HealthStatus, LearningPathHealthDTO } from 'app/atlas/shared/entities/learning-path-health.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathsStateComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathsStateComponent;
     let fixture: ComponentFixture<LearningPathsStateComponent>;
     let learningPathApiService: LearningPathApiService;

@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { PasswordResetInitComponent } from 'app/account/password-reset/init/password-reset-init.component';
@@ -17,8 +16,6 @@ import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('PasswordResetInitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<PasswordResetInitComponent>;
     let comp: PasswordResetInitComponent;
 

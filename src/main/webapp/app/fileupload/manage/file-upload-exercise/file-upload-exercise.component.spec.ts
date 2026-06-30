@@ -8,8 +8,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { provideTranslateService } from '@ngx-translate/core';
 
 import 'app/foundation/util/array.extension';
 
@@ -26,8 +25,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { SortService } from 'app/foundation/service/sort.service';
 
 describe('FileUploadExerciseComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadExerciseComponent;
     let fixture: ComponentFixture<FileUploadExerciseComponent>;
     let courseExerciseService: CourseExerciseService;
@@ -52,7 +49,7 @@ describe('FileUploadExerciseComponent', () => {
         const course = createCourse();
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadExerciseComponent, TranslateModule.forRoot()],
+            imports: [FileUploadExerciseComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -78,6 +75,7 @@ describe('FileUploadExerciseComponent', () => {
                         sortByProperty: vi.fn((arr) => arr),
                     },
                 },
+                provideTranslateService(),
             ],
         }).compileComponents();
 

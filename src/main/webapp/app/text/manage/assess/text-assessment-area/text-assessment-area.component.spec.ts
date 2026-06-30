@@ -4,7 +4,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
@@ -20,8 +19,6 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 
 describe('TextAssessmentAreaComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TextAssessmentAreaComponent;
     let fixture: ComponentFixture<TextAssessmentAreaComponent>;
 

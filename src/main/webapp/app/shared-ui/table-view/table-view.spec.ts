@@ -1,4 +1,4 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TableLazyLoadEvent, TablePageEvent } from 'primeng/table';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,8 +11,6 @@ interface TestData {
 }
 
 describe('TableViewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TableViewComponent<TestData>;
     let fixture: ComponentFixture<TableViewComponent<TestData>>;
 
@@ -260,7 +258,7 @@ describe('TableViewComponent', () => {
     describe('reset', () => {
         it('should be a no-op in non-lazy mode', () => {
             fixture.componentRef.setInput('options', { lazy: false });
-            const mockTable = { first: 5, filters: {}, sortField: undefined, sortOrder: undefined };
+            const mockTable = { first: signal(5), filters: {}, sortField: undefined, sortOrder: undefined };
             vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
@@ -271,7 +269,7 @@ describe('TableViewComponent', () => {
         });
 
         it('should reset pagination state and emit a lazy load event at page 0 with cleared filters', () => {
-            const mockTable = { first: 50, filters: { global: { value: 'test', matchMode: 'contains' } }, sortField: 'name', sortOrder: 1 };
+            const mockTable = { first: signal(50), filters: { global: { value: 'test', matchMode: 'contains' } }, sortField: 'name', sortOrder: 1 };
             vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
             component.pageChange({ first: 50, rows: 10 });
             const onLazyLoadSpy = vi.fn();
@@ -281,7 +279,7 @@ describe('TableViewComponent', () => {
 
             expect(component['currentFirst']()).toBe(0);
             expect(component['currentPageSizeOverride']()).toBeUndefined();
-            expect(mockTable.first).toBe(0);
+            expect(mockTable.first()).toBe(0);
             expect(mockTable.filters).toEqual({});
             expect(onLazyLoadSpy).toHaveBeenCalledOnce();
             const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
@@ -292,7 +290,7 @@ describe('TableViewComponent', () => {
 
         it('should cancel any pending search debounce and fire exactly once', () => {
             vi.useFakeTimers();
-            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined, filterGlobal: vi.fn() };
+            const mockTable = { first: signal(0), filters: {}, sortField: undefined, sortOrder: undefined, filterGlobal: vi.fn() };
             vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
@@ -310,7 +308,7 @@ describe('TableViewComponent', () => {
     describe('reload', () => {
         it('should be a no-op in non-lazy mode', () => {
             fixture.componentRef.setInput('options', { lazy: false });
-            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+            const mockTable = { first: signal(0), filters: {}, sortField: undefined, sortOrder: undefined };
             vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
@@ -322,7 +320,7 @@ describe('TableViewComponent', () => {
 
         it('should reset to page 0 and emit a lazy load event preserving sort and active filter', () => {
             const mockTable = {
-                first: 50,
+                first: signal(50),
                 filters: { global: { value: 'my search', matchMode: 'contains' } },
                 sortField: 'name',
                 sortOrder: -1,
@@ -335,7 +333,7 @@ describe('TableViewComponent', () => {
             component.reload();
 
             expect(component['currentFirst']()).toBe(0);
-            expect(mockTable.first).toBe(0);
+            expect(mockTable.first()).toBe(0);
             expect(onLazyLoadSpy).toHaveBeenCalledOnce();
             const event = onLazyLoadSpy.mock.calls[0][0] as TableLazyLoadEvent;
             expect(event.first).toBe(0);
@@ -345,7 +343,7 @@ describe('TableViewComponent', () => {
         });
 
         it('should use null for globalFilter when no search is active', () => {
-            const mockTable = { first: 0, filters: {}, sortField: undefined, sortOrder: undefined };
+            const mockTable = { first: signal(0), filters: {}, sortField: undefined, sortOrder: undefined };
             vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
             const onLazyLoadSpy = vi.fn();
             component.onLazyLoad.subscribe(onLazyLoadSpy);
@@ -415,7 +413,7 @@ describe('TableViewComponent', () => {
     it('should debounce global search - single search', () => {
         vi.useFakeTimers();
 
-        const mockTable = { first: 0, filterGlobal: vi.fn() };
+        const mockTable = { first: signal(0), filterGlobal: vi.fn() };
         // Mock the dt viewChild
         vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
 
@@ -428,13 +426,13 @@ describe('TableViewComponent', () => {
         vi.advanceTimersByTime(TableViewComponent['SEARCH_DEBOUNCE_MS']);
 
         expect(mockTable.filterGlobal).toHaveBeenCalledWith('test search', 'contains');
-        expect(mockTable.first).toBe(0);
+        expect(mockTable.first()).toBe(0);
     });
 
     it('should debounce global search - cancel previous search', () => {
         vi.useFakeTimers();
 
-        const mockTable = { first: 0, filterGlobal: vi.fn() };
+        const mockTable = { first: signal(0), filterGlobal: vi.fn() };
         vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
 
         // First search
@@ -459,7 +457,7 @@ describe('TableViewComponent', () => {
     it('should trim and lowercase search value', () => {
         vi.useFakeTimers();
 
-        const mockTable = { first: 0, filterGlobal: vi.fn() };
+        const mockTable = { first: signal(0), filterGlobal: vi.fn() };
         vi.spyOn(component, 'dt').mockReturnValue(mockTable as any);
 
         component.onGlobalSearch('  TEST SEARCH  ');

@@ -54,7 +54,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -241,8 +240,6 @@ function sharedSetup(url: string[]) {
 }
 
 describe('ExamResultSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     sharedSetup(['', '']);
 
     it('should expand all exercises and call print when Export PDF is clicked', async () => {

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // ---- Mock ResizeObserver ----
 class MockResizeObserver {
@@ -15,17 +14,15 @@ global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
 
 // ---- Imports AFTER the mocks ----
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { YouTubePlayerComponent } from './youtube-player.component';
 
 describe('YouTubePlayerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<YouTubePlayerComponent>;
     let component: YouTubePlayerComponent;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({ imports: [YouTubePlayerComponent, TranslateModule.forRoot()] }).compileComponents();
+        await TestBed.configureTestingModule({ imports: [YouTubePlayerComponent], providers: [provideTranslateService()] }).compileComponents();
         fixture = TestBed.createComponent(YouTubePlayerComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('videoId', 'dQw4w9WgXcQ');

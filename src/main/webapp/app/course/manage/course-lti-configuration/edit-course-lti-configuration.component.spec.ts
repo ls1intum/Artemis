@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -29,8 +28,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { PaginatorState } from 'primeng/paginator';
 
 describe('Edit Course LTI Configuration Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: EditCourseLtiConfigurationComponent;
     let fixture: ComponentFixture<EditCourseLtiConfigurationComponent>;
     let courseService: CourseManagementService;

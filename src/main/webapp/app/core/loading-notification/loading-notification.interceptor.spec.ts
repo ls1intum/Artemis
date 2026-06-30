@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHandler, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
@@ -7,8 +6,6 @@ import { LoadingNotificationInterceptor } from 'app/core/loading-notification/lo
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
 
 describe('LoadingNotificationInterceptor', () => {
-    setupTestBed({ zoneless: true });
-
     let interceptor: LoadingNotificationInterceptor;
     let loadingNotificationServiceMock: LoadingNotificationService;
 

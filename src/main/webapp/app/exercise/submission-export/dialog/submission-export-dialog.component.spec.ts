@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/dialog/submission-export-dialog.component';
@@ -13,8 +12,6 @@ import { Subject, of } from 'rxjs';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('Submission Export Dialog Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<SubmissionExportDialogComponent>;
     let component: SubmissionExportDialogComponent;
 

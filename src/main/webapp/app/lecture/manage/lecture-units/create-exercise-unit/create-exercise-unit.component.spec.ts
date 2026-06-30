@@ -1,5 +1,4 @@
 import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -28,8 +27,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CreateExerciseUnitComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let createExerciseUnitComponentFixture: ComponentFixture<CreateExerciseUnitComponent>;
     let createExerciseUnitComponent: CreateExerciseUnitComponent;
 

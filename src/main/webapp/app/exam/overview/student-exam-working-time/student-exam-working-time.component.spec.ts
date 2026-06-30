@@ -4,11 +4,8 @@ import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('StudentExamWorkingTimeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<StudentExamWorkingTimeComponent>;
     let comp: StudentExamWorkingTimeComponent;
 

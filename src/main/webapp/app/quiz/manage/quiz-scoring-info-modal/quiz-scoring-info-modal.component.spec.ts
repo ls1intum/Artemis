@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { Dialog } from 'primeng/dialog';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal.component';
@@ -8,8 +7,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('QuizScoringInfoModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: QuizScoringInfoModalComponent;
     let fixture: ComponentFixture<QuizScoringInfoModalComponent>;
 
@@ -48,6 +45,6 @@ describe('QuizScoringInfoModalComponent', () => {
         fixture.detectChanges();
 
         const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-        expect(dialog.breakpoints).toEqual({ '850px': '95vw' });
+        expect(dialog.breakpoints()).toEqual({ '850px': '95vw' });
     });
 });

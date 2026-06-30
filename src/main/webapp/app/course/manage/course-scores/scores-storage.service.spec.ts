@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, distinctUntilChanged } from 'rxjs';
 
@@ -14,8 +13,6 @@ import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 import { ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ScoresStorageService', () => {
-    setupTestBed({ zoneless: true });
-
     let scoresStorageService: ScoresStorageService;
 
     beforeEach(() => {

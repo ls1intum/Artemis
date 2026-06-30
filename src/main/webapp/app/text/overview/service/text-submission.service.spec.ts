@@ -3,7 +3,6 @@
  * Tests CRUD operations and HTTP interactions for text submissions.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
@@ -15,7 +14,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { provideHttpClient } from '@angular/common/http';
 
 describe('TextSubmission Service', () => {
-    setupTestBed({ zoneless: true });
     let service: TextSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: TextSubmission;

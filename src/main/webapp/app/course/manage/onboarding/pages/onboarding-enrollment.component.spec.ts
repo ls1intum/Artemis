@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,8 +14,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('OnboardingEnrollmentComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: OnboardingEnrollmentComponent;
     let fixture: ComponentFixture<OnboardingEnrollmentComponent>;
     let course: Course;

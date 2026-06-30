@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
@@ -21,7 +20,6 @@ class TestComponent {
 }
 
 describe('DeleteDialogDirective', () => {
-    setupTestBed({ zoneless: true });
     let comp: TestComponent;
     let fixture: ComponentFixture<TestComponent>;
     let debugElement: DebugElement;

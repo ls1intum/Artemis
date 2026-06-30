@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
@@ -27,8 +26,6 @@ import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.m
 import { Post } from 'app/communication/shared/entities/post.model';
 
 describe('MetisConversationService', () => {
-    setupTestBed({ zoneless: true });
-
     let metisConversationService: MetisConversationService;
     let conversationService: ConversationService;
     let groupChatService: GroupChatService;

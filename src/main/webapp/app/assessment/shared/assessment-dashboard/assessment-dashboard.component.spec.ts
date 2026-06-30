@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -37,7 +36,6 @@ import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreCh
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('AssessmentDashboardComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: AssessmentDashboardComponent;
     let fixture: ComponentFixture<AssessmentDashboardComponent>;
 

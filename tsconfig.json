@@ -22,9 +22,9 @@
         "forceConsistentCasingInFileNames": true,
         "lib": ["es2024", "dom"],
         "typeRoots": ["node_modules/@types"],
-        "baseUrl": "./",
         "paths": {
-            "app/*": ["src/main/webapp/app/*"]
+            "app/*": ["./src/main/webapp/app/*"],
+            "src/*": ["./src/*"]
         },
         "importHelpers": true
     },

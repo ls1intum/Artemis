@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { JhiConnectionWarningComponent } from 'app/shared-ui/connection-warning/connection-warning.component';
@@ -9,7 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { vi } from 'vitest';
 
 describe('ConnectionWarning', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<JhiConnectionWarningComponent>;
     let component: JhiConnectionWarningComponent;
     let subject: BehaviorSubject<ConnectionState>;

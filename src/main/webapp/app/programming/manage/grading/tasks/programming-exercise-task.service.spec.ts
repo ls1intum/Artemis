@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ProgrammingExerciseTaskService } from 'app/programming/manage/grading/tasks/programming-exercise-task.service';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -17,8 +16,6 @@ import { firstValueFrom, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseTask Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ProgrammingExerciseTaskService;
 
     let alertService: AlertService;

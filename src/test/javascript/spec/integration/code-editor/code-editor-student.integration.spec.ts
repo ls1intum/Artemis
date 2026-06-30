@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type MockInstance } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
@@ -63,8 +62,6 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { getElement } from 'test/helpers/utils/general-test.utils';
 
 describe('CodeEditorStudentIntegration', () => {
-    setupTestBed({ zoneless: true });
-
     let container: CodeEditorStudentContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorStudentContainerComponent>;
     let containerDebugElement: DebugElement;

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { of } from 'rxjs';
@@ -13,8 +12,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CourseRegistrationButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseRegistrationButtonComponent>;
     let component: CourseRegistrationButtonComponent;
     let courseService: CourseManagementService;

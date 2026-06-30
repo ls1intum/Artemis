@@ -1,18 +1,15 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { PlagiarismCaseReviewComponent } from './plagiarism-case-review.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { MockComponent, MockModule } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('PlagiarismCaseReviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PlagiarismCaseReviewComponent;
     let fixture: ComponentFixture<PlagiarismCaseReviewComponent>;
 
@@ -24,7 +21,8 @@ describe('PlagiarismCaseReviewComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PlagiarismCaseReviewComponent, MockModule(NgbModule), MockModule(TranslateModule), MockComponent(PlagiarismSplitViewComponent)],
+            imports: [PlagiarismCaseReviewComponent, MockModule(NgbModule), MockComponent(PlagiarismSplitViewComponent)],
+            providers: [provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismCaseReviewComponent);

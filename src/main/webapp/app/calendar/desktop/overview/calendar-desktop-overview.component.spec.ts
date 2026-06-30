@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -21,8 +20,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-util';
 
 describe('CalendarDesktopOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CalendarDesktopOverviewComponent;
     let fixture: ComponentFixture<CalendarDesktopOverviewComponent>;
 

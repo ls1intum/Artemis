@@ -13,10 +13,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
 import { MockComponent } from 'ng-mocks';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetenciesRelationModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CourseCompetenciesRelationModalComponent;
     let fixture: ComponentFixture<CourseCompetenciesRelationModalComponent>;
     let courseCompetencyApiService: CourseCompetencyApiService;

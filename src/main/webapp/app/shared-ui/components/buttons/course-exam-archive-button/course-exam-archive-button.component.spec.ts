@@ -28,11 +28,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('Course Exam Archive Button Component', () => {
-    setupTestBed({ zoneless: true });
     let comp: CourseExamArchiveButtonComponent;
     let fixture: ComponentFixture<CourseExamArchiveButtonComponent>;
     let courseManagementService: CourseManagementService;

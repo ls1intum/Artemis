@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -11,7 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 const CHANNEL_NAME_PREFIX = '-- -!?-p --()';
 
 describe('TitleChannelNamePrimengComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: TitleChannelNamePrimengComponent;
     let fixture: ComponentFixture<TitleChannelNamePrimengComponent>;
 

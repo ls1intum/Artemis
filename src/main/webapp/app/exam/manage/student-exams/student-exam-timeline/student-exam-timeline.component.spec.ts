@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -41,8 +40,6 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 describe('Student Exam Timeline Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
     let component: StudentExamTimelineComponent;
     let submissionService: SubmissionService;

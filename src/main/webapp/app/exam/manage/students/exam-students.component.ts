@@ -502,7 +502,7 @@ export class ExamStudentsComponent implements OnDestroy {
         const showPopover = () => {
             const popover = this.individualExamsStatusPopover();
             const target = this.individualExamsStatusButton()?.nativeElement;
-            if (!popover || !target || popover.overlayVisible) {
+            if (!popover || !target || popover.overlayVisible()) {
                 return;
             }
             popover.show(event ?? new MouseEvent('click'), target);

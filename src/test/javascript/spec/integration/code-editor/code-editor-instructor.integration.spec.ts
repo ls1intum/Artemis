@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { type MockInstance } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock y-monaco so MonacoBinding does not require a real Monaco editor instance. Without this,
 // Vite tries to transform the real y-monaco.js, whose `monaco-editor/esm/...` deep import is not
@@ -14,7 +13,7 @@ vi.mock('y-monaco', () => {
 });
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ActivatedRoute, Params, Router } from '@angular/router';
@@ -88,8 +87,6 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('CodeEditorInstructorIntegration', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let domainService: DomainService;
@@ -118,7 +115,6 @@ describe('CodeEditorInstructorIntegration', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
-                TranslateModule.forRoot(),
                 MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CodeEditorInstructorAndEditorContainerComponent,
@@ -172,6 +168,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 }),
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideTranslateService(),
             ],
         }).compileComponents();
         containerFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);

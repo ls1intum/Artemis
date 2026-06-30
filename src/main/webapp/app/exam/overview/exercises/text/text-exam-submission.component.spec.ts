@@ -15,10 +15,7 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('TextExamSubmissionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
     let component: TextExamSubmissionComponent;
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { DOCUMENT } from '@angular/common';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -58,8 +57,6 @@ import {
 import { getElement } from 'test/helpers/utils/general-test.utils';
 
 describe('PostComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PostComponent;
     let fixture: ComponentFixture<PostComponent>;
     let debugElement: DebugElement;

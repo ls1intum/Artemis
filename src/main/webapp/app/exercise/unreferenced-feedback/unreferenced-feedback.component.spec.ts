@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -17,8 +16,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { provideHttpClient } from '@angular/common/http';
 
 describe('UnreferencedFeedbackComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: UnreferencedFeedbackComponent;
     let fixture: ComponentFixture<UnreferencedFeedbackComponent>;
     let sgiService: StructuredGradingCriterionService;

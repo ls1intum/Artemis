@@ -1,19 +1,19 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
-import { CalendarEvent } from 'app/openapi/model/calendarEvent';
+import { CalendarEventTypeEnum } from 'app/openapi/models/calendar-event';
 
-const eventTypeIconMap: Record<CalendarEvent.TypeEnum, IconProp> = {
-    [CalendarEvent.TypeEnum.Lecture]: faChalkboardUser,
-    [CalendarEvent.TypeEnum.Tutorial]: faPersonChalkboard,
-    [CalendarEvent.TypeEnum.Exam]: faGraduationCap,
-    [CalendarEvent.TypeEnum.QuizExercise]: faCheckDouble,
-    [CalendarEvent.TypeEnum.TextExercise]: faFont,
-    [CalendarEvent.TypeEnum.ModelingExercise]: faDiagramProject,
-    [CalendarEvent.TypeEnum.ProgrammingExercise]: faKeyboard,
-    [CalendarEvent.TypeEnum.FileUploadExercise]: faFileArrowUp,
+const eventTypeIconMap: Record<CalendarEventTypeEnum, IconProp> = {
+    ['LECTURE']: faChalkboardUser,
+    ['TUTORIAL']: faPersonChalkboard,
+    ['EXAM']: faGraduationCap,
+    ['QUIZ_EXERCISE']: faCheckDouble,
+    ['TEXT_EXERCISE']: faFont,
+    ['MODELING_EXERCISE']: faDiagramProject,
+    ['PROGRAMMING_EXERCISE']: faKeyboard,
+    ['FILE_UPLOAD_EXERCISE']: faFileArrowUp,
 };
 
-export function getIconForEventType(type: CalendarEvent.TypeEnum): IconProp {
+export function getIconForEventType(type: CalendarEventTypeEnum): IconProp {
     return eventTypeIconMap[type];
 }
 
@@ -36,17 +36,17 @@ export enum CalendarEventFilterOption {
     ExerciseEvents = 'exerciseEvents',
 }
 
-const eventTypeToColorClassMap: Record<CalendarEvent.TypeEnum, string> = {
-    [CalendarEvent.TypeEnum.Exam]: 'var(--pastel-teal)',
-    [CalendarEvent.TypeEnum.Lecture]: 'var(--pastel-blue)',
-    [CalendarEvent.TypeEnum.Tutorial]: 'var(--pastel-purple)',
-    [CalendarEvent.TypeEnum.TextExercise]: 'var(--pastel-cyan)',
-    [CalendarEvent.TypeEnum.ModelingExercise]: 'var(--pastel-cyan)',
-    [CalendarEvent.TypeEnum.ProgrammingExercise]: 'var(--pastel-cyan)',
-    [CalendarEvent.TypeEnum.FileUploadExercise]: 'var(--pastel-cyan)',
-    [CalendarEvent.TypeEnum.QuizExercise]: 'var(--pastel-cyan)',
+const eventTypeToColorClassMap: Record<CalendarEventTypeEnum, string> = {
+    ['EXAM']: 'var(--pastel-teal)',
+    ['LECTURE']: 'var(--pastel-blue)',
+    ['TUTORIAL']: 'var(--pastel-purple)',
+    ['TEXT_EXERCISE']: 'var(--pastel-cyan)',
+    ['MODELING_EXERCISE']: 'var(--pastel-cyan)',
+    ['PROGRAMMING_EXERCISE']: 'var(--pastel-cyan)',
+    ['FILE_UPLOAD_EXERCISE']: 'var(--pastel-cyan)',
+    ['QUIZ_EXERCISE']: 'var(--pastel-cyan)',
 };
 
-export function getColorForEventType(type: CalendarEvent.TypeEnum): string {
+export function getColorForEventType(type: CalendarEventTypeEnum): string {
     return eventTypeToColorClassMap[type];
 }

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ControlCenterComponent } from './control-center.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -15,8 +14,6 @@ import { MockProvider } from 'ng-mocks';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('ControlCenterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let componentRef: ComponentRef<ControlCenterComponent>;
     let fixture: ComponentFixture<ControlCenterComponent>;
     let course: Course;

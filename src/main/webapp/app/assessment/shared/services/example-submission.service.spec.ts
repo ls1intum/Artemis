@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
@@ -18,7 +17,6 @@ import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.se
 import { MockProvider } from 'ng-mocks';
 
 describe('Example Submission Service', () => {
-    setupTestBed({ zoneless: true });
     let httpMock: HttpTestingController;
     let service: ExampleSubmissionService;
     let expectedResult: any;

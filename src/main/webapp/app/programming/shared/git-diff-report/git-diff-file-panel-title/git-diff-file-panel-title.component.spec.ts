@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffFilePanelTitleComponent } from 'app/programming/shared/git-diff-report/git-diff-file-panel-title/git-diff-file-panel-title.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -7,8 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DiffInformation, FileStatus } from 'app/programming/shared/utils/diff.utils';
 
 describe('GitDiffFilePanelTitleComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<GitDiffFilePanelTitleComponent>;
 
     beforeEach(() => {

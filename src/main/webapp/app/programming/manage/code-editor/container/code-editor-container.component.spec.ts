@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorContainerComponent, CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import {
@@ -38,8 +37,6 @@ class MockFileService {
 const fileTreeChange$ = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
 
 describe('CodeEditorContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CodeEditorContainerComponent;
     let fixture: ComponentFixture<CodeEditorContainerComponent>;
     let alertService: AlertService;

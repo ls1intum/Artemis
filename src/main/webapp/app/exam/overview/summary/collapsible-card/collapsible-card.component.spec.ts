@@ -2,14 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CollapsibleCardComponent } from 'app/exam/overview/summary/collapsible-card/collapsible-card.component';
 import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 let fixture: ComponentFixture<CollapsibleCardComponent>;
 let component: CollapsibleCardComponent;
 
 describe('CollapsibleCardComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const toggleSpy = vi.fn();
 
     beforeEach(async () => {

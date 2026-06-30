@@ -4,7 +4,6 @@
  */
 import { Component, input } from '@angular/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
@@ -74,7 +73,6 @@ class MockDocumentationButtonComponent {
 }
 
 describe('TextExercise Management Detail Component', () => {
-    setupTestBed({ zoneless: true });
     let comp: TextExerciseDetailComponent;
     let fixture: ComponentFixture<TextExerciseDetailComponent>;
     let exerciseService: TextExerciseService;

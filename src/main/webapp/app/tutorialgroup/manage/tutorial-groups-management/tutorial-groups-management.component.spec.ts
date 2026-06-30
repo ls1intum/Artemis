@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DebugElement, EmbeddedViewRef, getDebugNode } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Router } from '@angular/router';
@@ -24,7 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
 interface TutorialGroupApiServiceMock {
@@ -32,8 +31,6 @@ interface TutorialGroupApiServiceMock {
 }
 
 describe('TutorialGroupsManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
     const configuration = generateExampleTutorialGroupsConfiguration({});
@@ -79,7 +76,7 @@ describe('TutorialGroupsManagementComponent', () => {
             imports: [TutorialGroupsManagementComponent],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(
@@ -102,14 +99,7 @@ describe('TutorialGroupsManagementComponent', () => {
         tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
         tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });
 
-        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: [tutorialGroupOne, tutorialGroupTwo],
-                    status: 200,
-                }),
-            ),
-        );
+        tutorialGroupApiServiceMock.getTutorialGroupsForCourse.mockReturnValue(of([tutorialGroupOne, tutorialGroupTwo]));
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
         getOneOfCourseSpy = vi
             .spyOn(configurationService, 'getOneOfCourse')
@@ -127,7 +117,7 @@ describe('TutorialGroupsManagementComponent', () => {
     it('should initialize', () => {
         expect(component).not.toBeNull();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
@@ -135,7 +125,7 @@ describe('TutorialGroupsManagementComponent', () => {
     it('should get all tutorial groups for course', () => {
         expect(component.tutorialGroups()).toEqual([tutorialGroupOne, tutorialGroupTwo]);
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
@@ -148,7 +138,7 @@ describe('TutorialGroupsManagementComponent', () => {
         const tutorialGroupImportButtonComponent = renderTitleBarActions().query(By.directive(TutorialGroupsImportButtonComponent)).componentInstance;
         tutorialGroupImportButtonComponent.importFinished.emit();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
@@ -160,7 +150,7 @@ describe('TutorialGroupsManagementComponent', () => {
         const tutorialGroupExportButtonComponent = renderTitleBarActions().query(By.directive(TutorialGroupsExportButtonComponent)).componentInstance;
         tutorialGroupExportButtonComponent.exportFinished.emit();
         expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1, 'response');
+        expect(tutorialGroupApiServiceMock.getTutorialGroupsForCourse).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });

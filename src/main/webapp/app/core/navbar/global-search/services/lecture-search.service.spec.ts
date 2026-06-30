@@ -2,13 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LectureSearchService } from './lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 
 describe('LectureSearchService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: LectureSearchService;
     let httpTesting: HttpTestingController;
 

@@ -10,6 +10,24 @@
  */
 import '@angular/compiler';
 import '@analogjs/vitest-angular/setup-snapshots';
+import { NgModule, provideZonelessChangeDetection } from '@angular/core';
+import { getTestBed } from '@angular/core/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
+
+// Initialize the Angular TestBed once for the whole Vitest run. This replaces the former per-spec
+// `setupTestBed({ zoneless: true })` (removed from every spec):
+//   - the client suite is zoneless (provideZonelessChangeDetection);
+//   - the dynamic JIT platform is required for ng-mocks' runtime mock generation;
+//   - ng-mocks manages its own per-test teardown, so destroyAfterEach is disabled;
+//   - many existing spec fixtures bind loose/unknown elements & attributes, so those are not
+//     treated as hard errors.
+@NgModule({ providers: [provideZonelessChangeDetection()] })
+class ArtemisZonelessTestModule {}
+getTestBed().initTestEnvironment([BrowserDynamicTestingModule, ArtemisZonelessTestModule], platformBrowserDynamicTesting(), {
+    teardown: { destroyAfterEach: false },
+    errorOnUnknownElements: false,
+    errorOnUnknownProperties: false,
+});
 // Mock the canvas 2D context in jsdom (used by the PDF preview and Apollon diagram specs).
 import 'vitest-canvas-mock';
 import { vi } from 'vitest';
@@ -89,7 +107,7 @@ if (typeof Element.prototype.matches === 'undefined') {
         let i = matches.length;
         while (--i >= 0 && matches.item(i) !== this) {}
         return i > -1;
-    };
+    } as typeof Element.prototype.matches;
 }
 
 // Mock getComputedStyle to handle CSS custom properties

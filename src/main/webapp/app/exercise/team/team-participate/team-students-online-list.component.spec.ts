@@ -9,7 +9,6 @@ vi.mock('@sentry/angular', () => ({
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import dayjs from 'dayjs/esm';
 import { Subject } from 'rxjs';
 import { User } from 'app/account/user/user.model';
@@ -22,8 +21,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('TeamStudentsOnlineListComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TeamStudentsOnlineListComponent>;
     let component: TeamStudentsOnlineListComponent;
     let accountService: AccountService;

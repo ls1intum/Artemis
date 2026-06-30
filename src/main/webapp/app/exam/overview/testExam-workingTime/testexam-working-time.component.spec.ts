@@ -5,11 +5,8 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-workingTime/test-exam-working-time.component';
 import { round } from 'app/foundation/util/utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('TestExamWorkingTimeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TestExamWorkingTimeComponent>;
     let comp: TestExamWorkingTimeComponent;
 

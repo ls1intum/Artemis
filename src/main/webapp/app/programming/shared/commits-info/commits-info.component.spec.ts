@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Signal } from '@angular/core';
 
@@ -28,8 +27,6 @@ type CommitsInfoInternals = CommitsInfoComponent & {
 const internals = (c: CommitsInfoComponent): CommitsInfoInternals => c as CommitsInfoInternals;
 
 describe('CommitsInfoComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CommitsInfoComponent;
     let fixture: ComponentFixture<CommitsInfoComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;

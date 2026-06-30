@@ -33,7 +33,7 @@
             size="small"
             [suggestions]="userSuggestions()"
             [placeholder]="'artemisApp.course.courseGroup.searchForUsers' | artemisTranslate"
-            [minLength]="1"
+            [minQueryLength]="1"
             [showClear]="true"
             optionLabel="login"
             (completeMethod)="onUserSearchComplete($event)"

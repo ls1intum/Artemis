@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock Blob.prototype.arrayBuffer which is not available in jsdom
 if (!Blob.prototype.arrayBuffer) {
@@ -76,8 +75,6 @@ vi.mock('pdf-lib', async () => {
 });
 
 describe('PdfPreviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfPreviewComponent;
     let fixture: ComponentFixture<PdfPreviewComponent>;
     let attachmentServiceMock: any;

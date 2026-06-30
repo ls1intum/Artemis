@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -48,8 +47,6 @@ class MockWrapperComponent {
 }
 
 describe('TutorialGroupTableWrapperTest', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<MockWrapperComponent>;
     let component: MockWrapperComponent;
     let tableInstance: TutorialGroupsTableComponent;
@@ -113,8 +110,6 @@ describe('TutorialGroupTableWrapperTest', () => {
 });
 
 describe('TutorialGroupsTableComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialGroupsTableComponent>;
     let component: TutorialGroupsTableComponent;
 

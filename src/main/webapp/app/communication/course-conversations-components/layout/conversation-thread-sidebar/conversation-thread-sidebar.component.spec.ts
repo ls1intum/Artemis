@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
@@ -17,8 +16,6 @@ import { TutorSuggestionComponent } from 'app/communication/course-conversations
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ConversationThreadSidebarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ConversationThreadSidebarComponent;
     let fixture: ComponentFixture<ConversationThreadSidebarComponent>;
     let componentRef: ComponentRef<ConversationThreadSidebarComponent>;

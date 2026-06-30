@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -7,8 +6,6 @@ import { GlobalNotificationSettingsService } from './global-notifications-settin
 import { firstValueFrom } from 'rxjs';
 
 describe('GlobalNotificationSettingsService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: GlobalNotificationSettingsService;
     let httpMock: HttpTestingController;
 

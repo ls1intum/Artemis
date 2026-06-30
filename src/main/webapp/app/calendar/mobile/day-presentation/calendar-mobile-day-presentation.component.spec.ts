@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { CalendarMobileDayPresentationComponent } from './calendar-mobile-day-presentation.component';
@@ -13,8 +12,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { By } from '@angular/platform-browser';
 
 describe('CalendarMobileDayPresentationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CalendarMobileDayPresentationComponent;
     let fixture: ComponentFixture<CalendarMobileDayPresentationComponent>;
 

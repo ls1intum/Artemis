@@ -8,7 +8,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { firstValueFrom, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FileUploadExerciseManagementResolve } from './file-upload-exercise-management-resolve.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
@@ -19,8 +18,6 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 describe('FileUploadExerciseManagementResolve', () => {
-    setupTestBed({ zoneless: true });
-
     let service: FileUploadExerciseManagementResolve;
     let fileUploadExerciseService: FileUploadExerciseService;
     let courseManagementService: CourseManagementService;

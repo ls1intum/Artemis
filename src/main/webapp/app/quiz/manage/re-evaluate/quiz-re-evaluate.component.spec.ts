@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { asyncScheduler, of } from 'rxjs';
 import { observeOn } from 'rxjs/operators';
@@ -27,8 +26,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'src/test/javascript/spec/helpers/mocks/service/mock-account.service';
 
 describe('QuizExercise Re-evaluate Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizReEvaluateComponent;
     let fixture: ComponentFixture<QuizReEvaluateComponent>;
     let quizService: QuizExerciseService;

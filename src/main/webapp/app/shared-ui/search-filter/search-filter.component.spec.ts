@@ -1,13 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SearchFilterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: SearchFilterComponent;
     let fixture: ComponentFixture<SearchFilterComponent>;
 

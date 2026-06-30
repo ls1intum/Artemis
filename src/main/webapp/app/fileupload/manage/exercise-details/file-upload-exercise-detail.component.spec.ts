@@ -8,9 +8,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { BehaviorSubject, Subscription, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import 'app/foundation/util/array.extension';
 
@@ -32,8 +31,6 @@ import { DetailOverviewListComponent, DetailType } from 'app/shared-ui/detail-ov
 import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 describe('FileUploadExerciseDetailComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FileUploadExerciseDetailComponent;
     let fixture: ComponentFixture<FileUploadExerciseDetailComponent>;
     let fileUploadExerciseService: FileUploadExerciseService;
@@ -79,7 +76,7 @@ describe('FileUploadExerciseDetailComponent', () => {
         routeParams$ = new BehaviorSubject({ exerciseId: 456 });
 
         await TestBed.configureTestingModule({
-            imports: [FileUploadExerciseDetailComponent, TranslateModule.forRoot()],
+            imports: [FileUploadExerciseDetailComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -103,6 +100,7 @@ describe('FileUploadExerciseDetailComponent', () => {
                         destroy: vi.fn(),
                     },
                 },
+                provideTranslateService(),
             ],
         })
             .overrideComponent(FileUploadExerciseDetailComponent, {

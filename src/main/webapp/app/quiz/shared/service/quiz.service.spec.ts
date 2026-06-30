@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
@@ -12,8 +11,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('Quiz Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ArtemisQuizService;
     const quiz = {
         mode: ExerciseMode.INDIVIDUAL,
@@ -265,8 +262,6 @@ describe('Quiz Service', () => {
 });
 
 describe('Quiz Service - Static Methods', () => {
-    setupTestBed({ zoneless: true });
-
     describe('isUninitialized', () => {
         it('should return true when quiz batch started but participation not initialized', () => {
             const quizExercise: QuizExercise = {
