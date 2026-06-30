@@ -77,6 +77,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     sidebarData = signal<SidebarData | undefined>(undefined);
     sidebarExams: SidebarCardElement[] = [];
     isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     isExamStarted = signal(false);
     withinWorkingTime: boolean;
 
@@ -263,6 +264,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     getLastSelectedExam(): number | undefined {
         return this.sessionStorageService.retrieve<number>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId());
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     toggleSidebar() {
