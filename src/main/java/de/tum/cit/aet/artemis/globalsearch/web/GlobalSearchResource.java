@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -149,23 +148,6 @@ public class GlobalSearchResource {
             }
         }
         return ResponseEntity.ok(resultDTOs);
-    }
-
-    /**
-     * GET /api/admin/search/debug : comprehensive Weaviate diagnostic report for a given entity.
-     * <p>
-     * Returns: UUID, collection name, raw stored properties, Java-side release_date filter simulation,
-     * and a live Weaviate query using the exact student release_date filter.
-     * Temporary debug endpoint — remove once the release_date investigation is complete.
-     *
-     * @param type     the entity type (e.g. "lecture_unit", "exercise")
-     * @param entityId the database ID of the entity
-     * @return 200 with the full diagnostic report
-     */
-    @GetMapping("admin/search/debug")
-    @EnforceAdmin
-    public ResponseEntity<Map<String, Object>> debugWeaviateEntity(@RequestParam("type") String type, @RequestParam("entityId") Long entityId) {
-        return ResponseEntity.ok(searchableEntityWeaviateService.buildDebugReport(type, entityId));
     }
 
     private static Set<String> parseTypes(String types) {
