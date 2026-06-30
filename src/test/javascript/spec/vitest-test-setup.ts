@@ -18,13 +18,16 @@ import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@ang
 // `setupTestBed({ zoneless: true })` (removed from every spec):
 //   - the client suite is zoneless (provideZonelessChangeDetection);
 //   - the dynamic JIT platform is required for ng-mocks' runtime mock generation;
-//   - ng-mocks manages its own per-test teardown, so destroyAfterEach is disabled;
+//   - destroyAfterEach (Angular's default) tears down each component + injector after its test;
+//     without it, components accumulate and their lingering async work (subscriptions, translate
+//     pipes) fires against already-destroyed injectors during teardown, which under zoneless surfaces
+//     as unhandled errors ("No provider for TranslateService", NG0950) that fail the Vitest run;
 //   - many existing spec fixtures bind loose/unknown elements & attributes, so those are not
 //     treated as hard errors.
 @NgModule({ providers: [provideZonelessChangeDetection()] })
 class ArtemisZonelessTestModule {}
 getTestBed().initTestEnvironment([BrowserDynamicTestingModule, ArtemisZonelessTestModule], platformBrowserDynamicTesting(), {
-    teardown: { destroyAfterEach: false },
+    teardown: { destroyAfterEach: true },
     errorOnUnknownElements: false,
     errorOnUnknownProperties: false,
 });
