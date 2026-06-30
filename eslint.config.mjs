@@ -106,7 +106,6 @@ export default tseslint.config(
             'src/test/vitest/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
-            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
             'src/test/javascript/spec/stub.js',
             // Root-level config files (not part of the Angular client)
             '*.js',
@@ -226,6 +225,7 @@ export default tseslint.config(
             'localRules/enforce-signal-apis': 'error',
             'localRules/enforce-cleanup-on-destroy': 'warn',
             'localRules/no-navigation-in-effect': 'error',
+            'localRules/no-as-unknown-cast': 'error',
         },
     },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived

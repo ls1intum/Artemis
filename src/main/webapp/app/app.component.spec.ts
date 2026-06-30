@@ -49,7 +49,10 @@ describe('AppComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: ExamParticipationService, useValue: { examIsStarted$: of(false), testRunStarted$: of(false) } },
                 { provide: LtiService, useValue: { isShownViaLti$: of(false) } },
-                { provide: FeatureToggleService, useValue: { getFeatureToggleActive: () => of(false) } },
+                {
+                    provide: FeatureToggleService,
+                    useValue: { getFeatureToggleActive: () => of(false), subscribeFeatureToggleUpdates: () => {}, unsubscribeFeatureToggleUpdates: () => {} },
+                },
                 { provide: SentryErrorHandler, useValue: { initSentry: vi.fn() } },
                 { provide: JhiLanguageHelper, useValue: { updateTitle: vi.fn() } },
                 provideHttpClient(),

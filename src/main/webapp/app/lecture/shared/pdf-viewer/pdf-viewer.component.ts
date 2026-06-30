@@ -1,10 +1,9 @@
-import { Location, NgTemplateOutlet } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import {
     ChangeDetectionStrategy,
     Component,
     DestroyRef,
     ElementRef,
-    HostListener,
     Injector,
     afterNextRender,
     computed,
@@ -15,141 +14,431 @@ import {
     signal,
     untracked,
     viewChild,
+    viewChildren,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import type { Dayjs } from 'dayjs/esm';
-import { TranslateService } from '@ngx-translate/core';
+import { firstValueFrom } from 'rxjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import {
+    faChevronDown,
+    faChevronUp,
+    faDownload,
+    faExpand,
+    faMagnifyingGlass,
+    faMagnifyingGlassMinus,
+    faMagnifyingGlassPlus,
+    faTimes,
+    faXmark,
+} from '@fortawesome/free-solid-svg-icons';
+import { InputTextModule } from 'primeng/inputtext';
+import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { SafeResourceUrlPipe } from 'app/foundation/pipes/safe-resource-url.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-viewer-iframe.types';
+import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
+import type { PdfDocumentObject, Rect, SearchResult } from '@embedpdf/models';
+
+/** A single rendered page: an object-URL image plus its CSS display size at the current scale. */
+interface RenderedPage {
+    index: number;
+    url: string;
+    width: number;
+    height: number;
+}
+
+/** A search-match rectangle in unscaled PDF page points, tagged with whether it belongs to the active match. */
+interface PageHighlight {
+    rect: Rect;
+    active: boolean;
+}
+
+const ZOOM_STEP = 1.25;
+const MIN_SCALE = 0.2;
+const MAX_SCALE = 6;
+const PAGE_GAP = 8;
 
 /**
- * Single-instance PDF viewer that can toggle between embedded and fullscreen display
- * without creating a second iframe or reloading the document.
+ * Single-instance PDF viewer rendered directly with the EmbedPDF PDFium engine (no iframe, no pdf.js).
+ * It renders every page to an image via the worker engine, overlays search highlights, and exposes a custom
+ * toolbar (search, zoom, page navigation, download, fullscreen). The public input/output contract is preserved
+ * so consumers (attachment-video-unit, lecture-unit, course-lecture-details) are unaffected.
+ *
+ * Text selection is intentionally not yet ported: it requires the heavier EmbedPDF selection/interaction-manager
+ * stack and is the weakest area of the engine; it is tracked as a follow-up.
  */
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, SafeResourceUrlPipe, NgTemplateOutlet],
+    imports: [FormsModule, FaIconComponent, InputTextModule, InputNumberModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PdfViewerComponent {
+    private static instanceCounter = 0;
+    private readonly docId = `pdf-viewer-${++PdfViewerComponent.instanceCounter}`;
+
     // Inputs
     pdfUrl = input<string | undefined>(undefined);
     uploadDate = input<Dayjs | undefined>(undefined);
     version = input<number | undefined>(undefined);
     initialPage = input<number | undefined>(undefined);
 
-    // Outputs
+    // Outputs (unchanged public contract)
     readonly pageRendered = output<{ pdfUrl: string }>();
     readonly loadError = output<{ pdfUrl: string }>();
     readonly downloadRequested = output<void>();
     readonly isFullscreenChange = output<boolean>();
     readonly currentPageChange = output<number>();
 
-    readonly pdfIframe = viewChild<ElementRef<HTMLIFrameElement>>('pdfIframe');
     readonly fullscreenWindow = viewChild<ElementRef<HTMLDivElement>>('fullscreenWindow');
-    readonly iframeReady = signal(false);
-    readonly isFullscreen = signal(false);
+    readonly pagesContainer = viewChild<ElementRef<HTMLDivElement>>('pagesContainer');
+    readonly toolbarCenter = viewChild<ElementRef<HTMLDivElement>>('toolbarCenter');
+    readonly pageInputElement = viewChild<InputNumber>('pageInput');
+    readonly pageElements = viewChildren<ElementRef<HTMLDivElement>>('pageRef');
 
     protected readonly isLoading = signal(false);
+    protected readonly isFullscreen = signal(false);
+    protected readonly renderedPages = signal<RenderedPage[]>([]);
+    protected readonly totalPages = signal(0);
+    protected readonly pageInputValue = signal<number | undefined>(1);
+    protected readonly searchQuery = signal('');
+    protected readonly searchMatchesCount = signal<{ current: number; total: number } | undefined>(undefined);
+
+    private readonly scale = signal(1);
+    private readonly currentPage = signal(1);
+    readonly currentPageSignal = this.currentPage.asReadonly();
+    private readonly doc = signal<PdfDocumentObject | undefined>(undefined);
+    private readonly searchResults = signal<SearchResult[]>([]);
+    private readonly activeResultIndex = signal(0);
+
+    // Icons
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
+    protected readonly faMagnifyingGlassMinus = faMagnifyingGlassMinus;
+    protected readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
+    protected readonly faChevronUp = faChevronUp;
+    protected readonly faChevronDown = faChevronDown;
+    protected readonly faTimes = faTimes;
+    protected readonly faDownload = faDownload;
+    protected readonly faExpand = faExpand;
+    protected readonly faXmark = faXmark;
 
     private readonly themeService = inject(ThemeService);
-    private readonly translateService = inject(TranslateService);
-    private readonly location = inject(Location);
+    private readonly http = inject(HttpClient);
+    private readonly pdfEngineService = inject(PdfEngineService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly injector = inject(Injector);
     private readonly hostElementRef = inject(ElementRef<HTMLElement>);
-    private readonly languageChange = toSignal(this.translateService.onLangChange);
-    private readonly currentPage = signal(1);
-    readonly currentPageSignal = this.currentPage.asReadonly();
+
+    protected readonly isDarkMode = computed(() => this.themeService.currentTheme() === Theme.DARK);
+    protected readonly scaleValue = this.scale.asReadonly();
+    protected readonly effectiveUploadDate = computed(() => this.uploadDate());
+    protected readonly effectiveVersion = computed(() => this.version());
+
+    /** Per-page search highlights (in PDF points); the template multiplies by the current scale. */
+    protected readonly pageHighlights = computed<Map<number, PageHighlight[]>>(() => {
+        const map = new Map<number, PageHighlight[]>();
+        const results = this.searchResults();
+        const active = this.activeResultIndex();
+        results.forEach((result, resultIndex) => {
+            const list = map.get(result.pageIndex) ?? [];
+            for (const rect of result.rects) {
+                list.push({ rect, active: resultIndex === active });
+            }
+            map.set(result.pageIndex, list);
+        });
+        return map;
+    });
+
+    private renderToken = 0;
+    private lastFullscreenState?: boolean;
+    private intersectionObserver?: IntersectionObserver;
     private drawerContentElement?: HTMLElement;
     private originalDrawerContentZIndex?: string;
 
-    protected readonly effectiveUploadDate = computed(() => this.uploadDate());
-    protected readonly effectiveVersion = computed(() => this.version());
-    readonly iframeSrc = computed(() => this.location.prepareExternalUrl('pdf-viewer-iframe'));
-
     constructor() {
-        this.registerDestroyCleanup();
-        this.setupPdfLoadingEffect();
-        this.setupThemeSyncEffect();
-        this.setupLanguageSyncEffect();
-        this.setupViewerModeSyncEffect();
-        this.setupFullscreenFocusEffect();
-    }
+        this.destroyRef.onDestroy(() => this.cleanup());
 
-    private registerDestroyCleanup(): void {
-        this.destroyRef.onDestroy(() => {
-            this.closeFullscreen();
+        // (Re)load whenever the PDF URL changes.
+        effect(() => {
+            const url = this.pdfUrl();
+            if (url) {
+                untracked(() => void this.loadPdf(url));
+            }
+        });
+
+        // Re-fit and re-render only when fullscreen actually toggles (the available width changes substantially).
+        // doc() is read untracked so a document load does not trigger an extra render here.
+        effect(() => {
+            const fullscreen = this.isFullscreen();
+            untracked(() => {
+                if (this.lastFullscreenState !== undefined && this.lastFullscreenState !== fullscreen && this.doc()) {
+                    this.refitAndRender();
+                }
+                this.lastFullscreenState = fullscreen;
+            });
+        });
+
+        // Re-observe page elements for current-page tracking whenever the rendered pages change.
+        effect(() => {
+            this.pageElements();
+            untracked(() => this.observePages());
+        });
+
+        // Recompute the toolbar compression level when relevant signals change.
+        effect(() => {
+            this.searchQuery();
+            this.totalPages();
+            this.isFullscreen();
+            untracked(() => this.scheduleToolbarCompressionUpdate());
         });
     }
 
-    private setupPdfLoadingEffect(): void {
-        effect(() => {
-            if (!this.iframeReady()) {
+    private async loadPdf(url: string): Promise<void> {
+        this.isLoading.set(true);
+        this.resetState();
+        const token = ++this.renderToken;
+        try {
+            const blob = await firstValueFrom(this.http.get(url, { responseType: 'blob' }));
+            const arrayBuffer = await blob.arrayBuffer();
+            const engine = await this.pdfEngineService.getEngine();
+            if (token !== this.renderToken) {
                 return;
             }
-
-            const pdfUrl = this.pdfUrl();
-            if (pdfUrl) {
-                untracked(() => this.loadPdf(pdfUrl, this.initialPage() ?? 1));
-            }
-        });
-    }
-
-    private setupThemeSyncEffect(): void {
-        effect(() => {
-            const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
-            if (this.iframeReady()) {
-                this.postMessageToIframe('themeChange', { isDarkMode });
-            }
-        });
-    }
-
-    private setupLanguageSyncEffect(): void {
-        effect(() => {
-            this.languageChange();
-            if (this.iframeReady()) {
-                this.postMessageToIframe('languageChange', { languageKey: this.getCurrentLanguageKey() });
-            }
-        });
-    }
-
-    private setupViewerModeSyncEffect(): void {
-        effect(() => {
-            if (this.iframeReady()) {
-                this.postMessageToIframe('viewerModeChange', { viewerMode: this.isFullscreen() ? 'fullscreen' : 'embedded' });
-            }
-        });
-    }
-
-    private setupFullscreenFocusEffect(): void {
-        effect(() => {
-            if (!this.isFullscreen()) {
+            const doc = await engine.openDocumentBuffer({ id: this.docId, content: arrayBuffer }).toPromise();
+            if (token !== this.renderToken) {
+                await engine
+                    .closeDocument(doc)
+                    .toPromise()
+                    .catch(() => {});
                 return;
             }
+            this.doc.set(doc);
+            this.totalPages.set(doc.pageCount);
+            this.scale.set(this.computeFitWidthScale(doc));
+            await this.renderAllPages(token);
 
-            const fullscreenWindow = this.fullscreenWindow()?.nativeElement;
-            if (fullscreenWindow) {
-                afterNextRender(
-                    () => {
-                        fullscreenWindow.focus();
-                    },
-                    { injector: this.injector },
-                );
+            const initialPage = this.initialPage() ?? 1;
+            this.setCurrentPage(initialPage);
+            if (initialPage > 1) {
+                afterNextRender(() => this.goToPage(initialPage), { injector: this.injector });
             }
-        });
+
+            this.isLoading.set(false);
+            this.pageRendered.emit({ pdfUrl: url });
+        } catch {
+            this.isLoading.set(false);
+            this.loadError.emit({ pdfUrl: url });
+        }
     }
 
-    /**
-     * Switches the embedded PDF viewer into fullscreen mode.
-     */
+    /** Renders every page to an object-URL image at the current scale (× devicePixelRatio for crispness). */
+    private async renderAllPages(token: number): Promise<void> {
+        const doc = this.doc();
+        if (!doc) {
+            return;
+        }
+        const engine = await this.pdfEngineService.getEngine();
+        const scale = this.scale();
+        const dpr = window.devicePixelRatio || 1;
+        const previous = this.renderedPages();
+        const pages: RenderedPage[] = [];
+        for (const page of doc.pages) {
+            const blob = await engine.renderPage(doc, page, { scaleFactor: scale * dpr }).toPromise();
+            if (token !== this.renderToken) {
+                URL.revokeObjectURL(URL.createObjectURL(blob));
+                return;
+            }
+            pages.push({
+                index: page.index,
+                url: URL.createObjectURL(blob),
+                width: page.size.width * scale,
+                height: page.size.height * scale,
+            });
+        }
+        this.renderedPages.set(pages);
+        previous.forEach((p) => URL.revokeObjectURL(p.url));
+    }
+
+    private refitAndRender(): void {
+        const doc = this.doc();
+        if (!doc) {
+            return;
+        }
+        // Recompute fit-to-width only when not manually zoomed away from a fit; simplest robust behavior: refit.
+        this.scale.set(this.computeFitWidthScale(doc));
+        void this.renderAllPages(++this.renderToken);
+    }
+
+    private computeFitWidthScale(doc: PdfDocumentObject): number {
+        const container = this.pagesContainer()?.nativeElement;
+        const available = (container?.clientWidth ?? 0) - 2 * PAGE_GAP;
+        const maxPageWidth = Math.max(1, ...doc.pages.map((p) => p.size.width));
+        if (available <= 0) {
+            return 1;
+        }
+        return Math.min(MAX_SCALE, Math.max(MIN_SCALE, available / maxPageWidth));
+    }
+
+    protected zoomIn(): void {
+        this.applyZoom(this.scale() * ZOOM_STEP);
+    }
+
+    protected zoomOut(): void {
+        this.applyZoom(this.scale() / ZOOM_STEP);
+    }
+
+    private applyZoom(nextScale: number): void {
+        const clamped = Math.min(MAX_SCALE, Math.max(MIN_SCALE, nextScale));
+        if (clamped === this.scale()) {
+            return;
+        }
+        this.scale.set(clamped);
+        void this.renderAllPages(++this.renderToken);
+    }
+
+    // ---- Page navigation -------------------------------------------------------------------------------------
+
+    private observePages(): void {
+        this.intersectionObserver?.disconnect();
+        const elements = this.pageElements();
+        const container = this.pagesContainer()?.nativeElement;
+        if (elements.length === 0 || !container) {
+            return;
+        }
+        const ratios = new Map<number, number>();
+        // Disconnected on teardown via destroyRef.onDestroy(() => this.cleanup()) and before each re-observe above.
+        // eslint-disable-next-line localRules/enforce-cleanup-on-destroy
+        this.intersectionObserver = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    const index = Number((entry.target as HTMLElement).dataset['pageIndex']);
+                    ratios.set(index, entry.intersectionRatio);
+                }
+                let bestIndex = 0;
+                let bestRatio = -1;
+                ratios.forEach((ratio, index) => {
+                    if (ratio > bestRatio) {
+                        bestRatio = ratio;
+                        bestIndex = index;
+                    }
+                });
+                if (bestRatio > 0) {
+                    this.setCurrentPage(bestIndex + 1);
+                }
+            },
+            { root: container, threshold: [0.1, 0.25, 0.5, 0.75, 1] },
+        );
+        elements.forEach((ref) => this.intersectionObserver!.observe(ref.nativeElement));
+    }
+
+    private setCurrentPage(page: number): void {
+        if (page < 1 || page > this.totalPages() || page === this.currentPage()) {
+            return;
+        }
+        this.currentPage.set(page);
+        this.pageInputValue.set(page);
+        this.currentPageChange.emit(page);
+    }
+
+    getCurrentPage(): number {
+        return this.currentPage();
+    }
+
+    goToPage(page: number): void {
+        if (!Number.isInteger(page) || page < 1 || page > this.totalPages()) {
+            return;
+        }
+        const element = this.pageElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === page - 1);
+        element?.nativeElement.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        this.currentPage.set(page);
+        this.pageInputValue.set(page);
+    }
+
+    protected onPageInputEnter(event: Event): void {
+        event.preventDefault();
+        this.pageInputElement()?.input?.nativeElement?.blur();
+    }
+
+    protected onPageInputFocus(): void {
+        window.setTimeout(() => this.pageInputElement()?.input?.nativeElement?.select(), 0);
+    }
+
+    protected confirmPageNavigation(): void {
+        const value = this.pageInputValue();
+        const total = this.totalPages();
+        if (total === 0) {
+            return;
+        }
+        if (value === undefined || !Number.isInteger(value) || value < 1 || value > total) {
+            this.pageInputValue.set(this.currentPage());
+        } else {
+            this.goToPage(value);
+        }
+    }
+
+    // ---- Search ----------------------------------------------------------------------------------------------
+
+    protected async performSearch(query: string): Promise<void> {
+        this.searchQuery.set(query);
+        const doc = this.doc();
+        if (!query.trim() || !doc) {
+            this.clearSearchResults();
+            return;
+        }
+        const engine = await this.pdfEngineService.getEngine();
+        const result = await engine.searchAllPages(doc, query).toPromise();
+        this.searchResults.set(result.results);
+        this.activeResultIndex.set(0);
+        this.searchMatchesCount.set(result.total > 0 ? { current: 1, total: result.total } : undefined);
+        if (result.total > 0) {
+            this.scrollToActiveResult();
+        }
+    }
+
+    protected onSearchInputEnter(event: Event): void {
+        event.preventDefault();
+        this.search(false);
+    }
+
+    /** Moves to the next (findPrevious=false) or previous (true) search match, wrapping around. */
+    protected search(findPrevious: boolean): void {
+        const total = this.searchResults().length;
+        if (total === 0) {
+            return;
+        }
+        const next = (this.activeResultIndex() + (findPrevious ? -1 : 1) + total) % total;
+        this.activeResultIndex.set(next);
+        this.searchMatchesCount.set({ current: next + 1, total });
+        this.scrollToActiveResult();
+    }
+
+    protected clearSearch(): void {
+        this.searchQuery.set('');
+        this.clearSearchResults();
+    }
+
+    private clearSearchResults(): void {
+        this.searchResults.set([]);
+        this.activeResultIndex.set(0);
+        this.searchMatchesCount.set(undefined);
+    }
+
+    private scrollToActiveResult(): void {
+        const result = this.searchResults()[this.activeResultIndex()];
+        if (result) {
+            this.goToPage(result.pageIndex + 1);
+        }
+    }
+
+    // ---- Download / fullscreen -------------------------------------------------------------------------------
+
+    protected triggerDownload(): void {
+        this.downloadRequested.emit();
+    }
+
     openFullscreen(): void {
         if (!this.pdfUrl() || this.isFullscreen()) {
             return;
@@ -157,11 +446,9 @@ export class PdfViewerComponent {
         this.applyFullscreenLayering();
         this.isFullscreen.set(true);
         this.isFullscreenChange.emit(true);
+        afterNextRender(() => this.fullscreenWindow()?.nativeElement.focus(), { injector: this.injector });
     }
 
-    /**
-     * Leaves fullscreen mode and restores layering changes applied for drawer contexts.
-     */
     closeFullscreen(): void {
         if (!this.isFullscreen()) {
             return;
@@ -171,133 +458,17 @@ export class PdfViewerComponent {
         this.resetFullscreenLayering();
     }
 
-    /**
-     * Handles Escape key events coming from the fullscreen overlay.
-     */
+    protected requestFullscreen(): void {
+        this.openFullscreen();
+    }
+
     onFullscreenEscape(event: Event): void {
         if (!this.isFullscreen()) {
             return;
         }
-
         event.preventDefault();
         event.stopPropagation();
         this.closeFullscreen();
-    }
-
-    getCurrentPage(): number {
-        return this.currentPage();
-    }
-
-    goToPage(page: number): void {
-        if (!Number.isInteger(page) || page < 1 || page === this.currentPage()) {
-            return;
-        }
-
-        this.currentPage.set(page);
-        if (this.iframeReady()) {
-            this.postMessageToIframe('setPage', { page });
-        }
-    }
-
-    @HostListener('window:message', ['$event'])
-    protected onWindowMessage(event: MessageEvent<IframeMessage>): void {
-        this.handleIframeMessage(event);
-    }
-
-    /** Handles iframe messages and ignores messages from invalid origins/sources. */
-    private handleIframeMessage(event: MessageEvent<IframeMessage>): void {
-        if (event.origin !== window.location.origin) {
-            return;
-        }
-
-        const iframe = this.pdfIframe()?.nativeElement;
-        if (!iframe?.contentWindow || event.source !== iframe.contentWindow) {
-            return;
-        }
-
-        if (!event.data || typeof event.data !== 'object') {
-            return;
-        }
-
-        const { type, data } = event.data;
-
-        if (type === 'ready') {
-            const wasReady = this.iframeReady();
-            this.iframeReady.set(true);
-            // Drag & drop in instructor view can re-initialize the iframe; when this happens, the current PDF must be loaded again.
-            if (wasReady) {
-                this.reloadCurrentPdf();
-            }
-            return;
-        }
-
-        if (type === 'pageChange' && typeof data?.page === 'number' && Number.isInteger(data.page) && data.page > 0) {
-            this.currentPage.set(data.page);
-            this.currentPageChange.emit(data.page);
-            return;
-        }
-
-        if (type === 'openFullscreen') {
-            this.openFullscreen();
-            return;
-        }
-
-        if (type === 'closeFullscreen') {
-            this.closeFullscreen();
-            return;
-        }
-
-        if (type === 'pageRendered') {
-            this.isLoading.set(false);
-            this.pageRendered.emit({ pdfUrl: data?.url ?? this.pdfUrl() ?? '' });
-            return;
-        }
-
-        if (type === 'pdfLoadError') {
-            this.isLoading.set(false);
-            this.loadError.emit({ pdfUrl: data?.url ?? this.pdfUrl() ?? '' });
-            return;
-        }
-
-        if (type === 'download') {
-            this.downloadRequested.emit();
-        }
-    }
-
-    private loadPdf(url: string, page: number): void {
-        const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
-        const languageKey = untracked(() => this.getCurrentLanguageKey());
-        this.isLoading.set(true);
-        this.currentPage.set(page);
-
-        this.postMessageToIframe('loadPDF', {
-            url,
-            initialPage: page,
-            isDarkMode,
-            languageKey,
-            viewerMode: this.isFullscreen() ? 'fullscreen' : 'embedded',
-        });
-    }
-
-    private getCurrentLanguageKey(): string {
-        return this.translateService.getCurrentLang() || 'en';
-    }
-
-    private reloadCurrentPdf(): void {
-        const pdfUrl = this.pdfUrl();
-        if (!pdfUrl) {
-            return;
-        }
-
-        const page = this.currentPage() || this.initialPage() || 1;
-        this.loadPdf(pdfUrl, page);
-    }
-
-    private postMessageToIframe(type: IframeMessageType, data: IframeMessageData): void {
-        const iframe = this.pdfIframe()?.nativeElement;
-        if (iframe?.contentWindow) {
-            iframe.contentWindow.postMessage({ type, data }, window.location.origin);
-        }
     }
 
     private applyFullscreenLayering(): void {
@@ -306,7 +477,6 @@ export class PdfViewerComponent {
         if (!drawerContent) {
             return;
         }
-
         this.drawerContentElement = drawerContent;
         this.originalDrawerContentZIndex = drawerContent.style.zIndex;
         drawerContent.style.zIndex = '4000';
@@ -316,9 +486,66 @@ export class PdfViewerComponent {
         if (!this.drawerContentElement) {
             return;
         }
-
         this.drawerContentElement.style.zIndex = this.originalDrawerContentZIndex ?? '';
         this.drawerContentElement = undefined;
         this.originalDrawerContentZIndex = undefined;
+    }
+
+    // ---- Toolbar compression (ported from the previous iframe content component) -----------------------------
+
+    private static readonly TOOLBAR_COMPACT_LEVELS = 5;
+    private static readonly TOOLBAR_COMPACT_CLASS_PREFIX = 'artemis-pdf-toolbar__center--compact-';
+
+    private scheduleToolbarCompressionUpdate(): void {
+        afterNextRender(() => this.updateToolbarCompressionLevel(), { injector: this.injector });
+    }
+
+    private updateToolbarCompressionLevel(): void {
+        const element = this.toolbarCenter()?.nativeElement;
+        if (!element || element.clientWidth === 0) {
+            return;
+        }
+        for (let level = 0; level <= PdfViewerComponent.TOOLBAR_COMPACT_LEVELS; level += 1) {
+            for (let applied = 1; applied <= PdfViewerComponent.TOOLBAR_COMPACT_LEVELS; applied += 1) {
+                element.classList.toggle(`${PdfViewerComponent.TOOLBAR_COMPACT_CLASS_PREFIX}${applied}`, level >= applied);
+            }
+            if (element.scrollWidth <= element.clientWidth || level === PdfViewerComponent.TOOLBAR_COMPACT_LEVELS) {
+                break;
+            }
+        }
+    }
+
+    // ---- Lifecycle -------------------------------------------------------------------------------------------
+
+    private resetState(): void {
+        this.renderedPages().forEach((p) => URL.revokeObjectURL(p.url));
+        this.renderedPages.set([]);
+        this.clearSearchResults();
+        this.searchQuery.set('');
+        this.totalPages.set(0);
+        this.currentPage.set(1);
+        this.pageInputValue.set(1);
+        const previousDoc = this.doc();
+        this.doc.set(undefined);
+        if (previousDoc) {
+            this.pdfEngineService
+                .getEngine()
+                .then((engine) => engine.closeDocument(previousDoc).toPromise())
+                .catch(() => {});
+        }
+    }
+
+    private cleanup(): void {
+        this.intersectionObserver?.disconnect();
+        this.renderToken++;
+        this.renderedPages().forEach((p) => URL.revokeObjectURL(p.url));
+        const doc = this.doc();
+        if (doc) {
+            this.pdfEngineService
+                .getEngine()
+                .then((engine) => engine.closeDocument(doc).toPromise())
+                .catch(() => {});
+        }
+        this.resetFullscreenLayering();
     }
 }

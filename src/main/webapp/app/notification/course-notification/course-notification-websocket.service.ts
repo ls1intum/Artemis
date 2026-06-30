@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
+import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
 import { Subject, Subscription } from 'rxjs';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
@@ -34,11 +34,6 @@ export class CourseNotificationWebsocketService implements OnDestroy {
     public websocketNotification$ = this.websocketNotificationSubject.asObservable();
 
     constructor() {
-        // The PDF viewer iframe route should stay lightweight and must not establish global websocket subscriptions.
-        if (window.location.pathname.includes('/pdf-viewer-iframe')) {
-            return;
-        }
-
         this.userSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
             if (user && (this.currentUser === undefined || this.currentUser.id !== user.id)) {
                 this.currentUser = user;
@@ -95,8 +90,8 @@ export class CourseNotificationWebsocketService implements OnDestroy {
                 notification.notificationId!,
                 notification.courseId!,
                 notification.notificationType!,
-                CourseNotificationCategory[notification.category as unknown as keyof typeof CourseNotificationCategory],
-                CourseNotificationViewingStatus[notification.status as unknown as keyof typeof CourseNotificationViewingStatus],
+                courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category)!,
+                courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status)!,
                 convertDateFromServer(notification.creationDate!)!,
                 notification.parameters!,
                 notification.relativeWebAppUrl!,

@@ -1,226 +1,175 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PdfViewerComponent } from './pdf-viewer.component';
-import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { PdfViewerComponent } from './pdf-viewer.component';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
+import { MockPdfEngineService, createMockPdfDocument } from 'test/helpers/mocks/service/mock-pdf-engine.service';
 
 describe('PdfViewerComponent', () => {
     setupTestBed({ zoneless: true });
 
     let component: PdfViewerComponent;
     let fixture: ComponentFixture<PdfViewerComponent>;
+    let httpMock: HttpTestingController;
+    let engineService: MockPdfEngineService;
     let mockThemeService: { currentTheme: ReturnType<typeof signal<Theme>> };
-    let translateService: MockTranslateService;
 
-    function sendIframeMessage(type: string, data?: any) {
-        const iframe = component.pdfIframe()?.nativeElement;
-        window.dispatchEvent(
-            new MessageEvent('message', {
-                data: { type, data },
-                origin: window.location.origin,
-                source: iframe?.contentWindow,
-            }),
-        );
-    }
+    const PDF_URL = 'https://example.com/lecture.pdf';
+    const task = <R>(value: R) => ({ toPromise: () => Promise.resolve(value), wait: (cb: (v: R) => void) => cb(value), abort: () => {} });
 
     beforeEach(async () => {
+        // jsdom does not implement object URLs nor scrollIntoView, both used by the viewer.
+        URL.createObjectURL = vi.fn(() => 'blob:mock');
+        URL.revokeObjectURL = vi.fn();
+        HTMLElement.prototype.scrollIntoView = vi.fn();
+
         mockThemeService = { currentTheme: signal(Theme.LIGHT) };
+        engineService = new MockPdfEngineService();
+
         await TestBed.configureTestingModule({
             imports: [PdfViewerComponent],
-            providers: [provideHttpClient(), { provide: ThemeService, useValue: mockThemeService }, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ThemeService, useValue: mockThemeService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: PdfEngineService, useValue: engineService },
+            ],
         }).compileComponents();
 
-        translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
-        translateService.use('en');
+        httpMock = TestBed.inject(HttpTestingController);
         fixture = TestBed.createComponent(PdfViewerComponent);
         component = fixture.componentInstance;
-        fixture.detectChanges();
     });
 
     afterEach(() => {
-        vi.clearAllMocks();
+        httpMock.verify();
+        vi.restoreAllMocks();
     });
 
-    it('should create and accept inputs', () => {
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.componentRef.setInput('version', 3);
-        fixture.componentRef.setInput('initialPage', 5);
-        fixture.detectChanges();
+    /** Drains the chained microtasks/macrotasks of the async load + render pipeline. */
+    async function flushAsync(): Promise<void> {
+        for (let i = 0; i < 8; i++) {
+            await new Promise<void>((resolve) => setTimeout(resolve, 0));
+            await fixture.whenStable();
+        }
+    }
 
+    /** Sets the PDF URL, flushes the HTTP blob, and waits for the engine load + render to settle. */
+    async function loadPdf(pageCount = 3): Promise<void> {
+        engineService.engine.openDocumentBuffer.mockReturnValue(task(createMockPdfDocument('doc', pageCount)) as any);
+        fixture.componentRef.setInput('pdfUrl', PDF_URL);
+        fixture.detectChanges();
+        httpMock.expectOne(PDF_URL).flush(new Blob(['%PDF-1.7'], { type: 'application/pdf' }));
+        await flushAsync();
+        fixture.detectChanges();
+    }
+
+    it('should create', () => {
         expect(component).toBeTruthy();
-        expect(component.pdfUrl()).toBe('test.pdf');
-        expect(component.version()).toBe(3);
-        expect(component.initialPage()).toBe(5);
-        expect(component.iframeSrc()).toBe('/pdf-viewer-iframe');
-        expect(component.isFullscreen()).toBe(false);
-        expect(fixture.nativeElement.querySelector('.pdf-fullscreen-overlay')).toBeFalsy();
     });
 
-    it('should handle ready message', () => {
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.detectChanges();
+    it('should fetch, open, and render every page of the PDF', async () => {
+        await loadPdf(3);
 
-        sendIframeMessage('ready');
-        fixture.detectChanges();
-
-        expect(component.iframeReady()).toBe(true);
+        expect(engineService.engine.openDocumentBuffer).toHaveBeenCalledOnce();
+        expect(engineService.engine.renderPage).toHaveBeenCalledTimes(3);
+        expect(component.totalPages()).toBe(3);
+        expect(component.renderedPages().length).toBe(3);
     });
 
-    it('should emit events (loadError, pageRendered, downloadRequested)', () => {
-        const loadErrorSpy = vi.fn();
-        const pageRenderedSpy = vi.fn();
-        const downloadSpy = vi.fn();
-        const currentPageSpy = vi.fn();
+    it('should emit pageRendered after a successful load', async () => {
+        const emitted = vi.fn();
+        component.pageRendered.subscribe(emitted);
 
-        component.loadError.subscribe(loadErrorSpy);
-        component.pageRendered.subscribe(pageRenderedSpy);
-        component.downloadRequested.subscribe(downloadSpy);
-        component.currentPageChange.subscribe(currentPageSpy);
+        await loadPdf();
 
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.detectChanges();
-
-        sendIframeMessage('pdfLoadError', { url: 'failed.pdf' });
-        expect(loadErrorSpy).toHaveBeenCalledWith({ pdfUrl: 'failed.pdf' });
-
-        sendIframeMessage('pageRendered', { url: 'rendered.pdf' });
-        expect(pageRenderedSpy).toHaveBeenCalledWith({ pdfUrl: 'rendered.pdf' });
-
-        sendIframeMessage('download');
-        expect(downloadSpy).toHaveBeenCalledOnce();
-
-        sendIframeMessage('pageChange', { page: 7 });
-        expect(currentPageSpy).toHaveBeenCalledWith(7);
+        expect(emitted).toHaveBeenCalledWith({ pdfUrl: PDF_URL });
+        expect(component.isLoading()).toBe(false);
     });
 
-    it('should enter fullscreen on openFullscreen message without triggering PDF reload', () => {
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+    it('should emit loadError when opening the document fails', async () => {
+        const emitted = vi.fn();
+        component.loadError.subscribe(emitted);
+        engineService.engine.openDocumentBuffer.mockReturnValue({ toPromise: () => Promise.reject(new Error('boom')), wait: () => {}, abort: () => {} } as any);
+
+        fixture.componentRef.setInput('pdfUrl', PDF_URL);
         fixture.detectChanges();
+        httpMock.expectOne(PDF_URL).flush(new Blob(['x'], { type: 'application/pdf' }));
+        await flushAsync();
 
-        sendIframeMessage('ready');
-        fixture.detectChanges();
-
-        const iframe = component.pdfIframe()?.nativeElement;
-        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
-        postMessageSpy.mockClear();
-
-        sendIframeMessage('openFullscreen');
-        fixture.detectChanges();
-
-        expect(component.isFullscreen()).toBe(true);
-        expect(fixture.nativeElement.querySelector('.pdf-fullscreen-overlay')).toBeTruthy();
-        expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'viewerModeChange', data: { viewerMode: 'fullscreen' } }), window.location.origin);
-        expect(postMessageSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'loadPDF' }), window.location.origin);
+        expect(emitted).toHaveBeenCalledWith({ pdfUrl: PDF_URL });
     });
 
-    it('should close fullscreen on closeFullscreen message and sync mode back to embedded', () => {
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.detectChanges();
-
-        sendIframeMessage('ready');
-        sendIframeMessage('openFullscreen');
-        fixture.detectChanges();
-        expect(component.isFullscreen()).toBe(true);
-
-        const iframe = component.pdfIframe()?.nativeElement;
-        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
-        postMessageSpy.mockClear();
-
-        sendIframeMessage('closeFullscreen');
-        fixture.detectChanges();
-
-        expect(component.isFullscreen()).toBe(false);
-        expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'viewerModeChange', data: { viewerMode: 'embedded' } }), window.location.origin);
-    });
-
-    it('should close fullscreen on Escape and stop event propagation', () => {
-        component.isFullscreen.set(true);
-        const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
-        const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
-
-        component.onFullscreenEscape(event);
-
-        expect(event.defaultPrevented).toBe(true);
-        expect(stopPropagationSpy).toHaveBeenCalledOnce();
-        expect(component.isFullscreen()).toBe(false);
-    });
-
-    it('should keep loading spinner visible until first pageRendered', () => {
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.detectChanges();
-
-        sendIframeMessage('ready');
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('.spinner-border')).toBeTruthy();
-        expect(fixture.nativeElement.querySelector('.pdf-iframe')?.classList.contains('pdf-iframe--hidden')).toBe(true);
-
-        sendIframeMessage('pageRendered', { url: 'test.pdf' });
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('.spinner-border')).toBeFalsy();
-        expect(fixture.nativeElement.querySelector('.pdf-iframe')?.classList.contains('pdf-iframe--hidden')).toBe(false);
-    });
-
-    it('should reload the current PDF when the iframe sends ready again', () => {
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.componentRef.setInput('initialPage', 3);
-        fixture.detectChanges();
-
-        const iframe = component.pdfIframe()?.nativeElement;
-        expect(iframe?.contentWindow).toBeTruthy();
-
-        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
-
-        sendIframeMessage('ready');
-        sendIframeMessage('pageChange', { page: 5 });
-        postMessageSpy.mockClear();
-
-        sendIframeMessage('ready');
-        fixture.detectChanges();
-
-        expect(postMessageSpy).toHaveBeenCalledWith(
-            expect.objectContaining({
-                type: 'loadPDF',
-                data: expect.objectContaining({ url: 'test.pdf', initialPage: 5, languageKey: 'en' }),
-            }),
-            window.location.origin,
+    it('should run a search through the engine and expose the match count', async () => {
+        await loadPdf();
+        engineService.engine.searchAllPages.mockReturnValue(
+            task({ results: [{ pageIndex: 0, charIndex: 0, charCount: 5, rects: [{ origin: { x: 1, y: 2 }, size: { width: 3, height: 4 } }], context: {} }], total: 1 }) as any,
         );
+
+        await component.performSearch('hello');
+
+        expect(engineService.engine.searchAllPages).toHaveBeenCalledWith(expect.anything(), 'hello');
+        expect(component.searchMatchesCount()).toEqual({ current: 1, total: 1 });
     });
 
-    it('should sync language changes to the iframe after it is ready', () => {
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.detectChanges();
+    it('should clear the search results', async () => {
+        await loadPdf();
+        engineService.engine.searchAllPages.mockReturnValue(task({ results: [{ pageIndex: 0, charIndex: 0, charCount: 1, rects: [], context: {} }], total: 1 }) as any);
+        await component.performSearch('x');
+        expect(component.searchMatchesCount()).toBeDefined();
 
-        sendIframeMessage('ready');
-        fixture.detectChanges();
+        component.clearSearch();
 
-        const iframe = component.pdfIframe()?.nativeElement;
-        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
-        postMessageSpy.mockClear();
-
-        translateService.use('de');
-        fixture.detectChanges();
-
-        expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'languageChange', data: { languageKey: 'de' } }), window.location.origin);
+        expect(component.searchQuery()).toBe('');
+        expect(component.searchMatchesCount()).toBeUndefined();
     });
 
-    it('goToPage posts a setPage message to the iframe when ready', () => {
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.detectChanges();
+    it('should re-render the pages when zooming in', async () => {
+        await loadPdf();
+        engineService.engine.renderPage.mockClear();
 
-        sendIframeMessage('ready');
-        fixture.detectChanges();
+        component.zoomIn();
+        await flushAsync();
 
-        const iframe = component.pdfIframe()?.nativeElement;
-        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
-        postMessageSpy.mockClear();
+        expect(engineService.engine.renderPage).toHaveBeenCalledTimes(3);
+    });
 
-        component.goToPage(4);
+    it('should toggle fullscreen and emit the change', async () => {
+        const emitted = vi.fn();
+        component.isFullscreenChange.subscribe(emitted);
+        await loadPdf();
 
-        expect(component.getCurrentPage()).toBe(4);
-        expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'setPage', data: { page: 4 } }), window.location.origin);
+        component.openFullscreen();
+        expect(component.isFullscreen()).toBe(true);
+        expect(emitted).toHaveBeenLastCalledWith(true);
+
+        component.closeFullscreen();
+        expect(component.isFullscreen()).toBe(false);
+        expect(emitted).toHaveBeenLastCalledWith(false);
+    });
+
+    it('should emit downloadRequested when the download button is triggered', () => {
+        const emitted = vi.fn();
+        component.downloadRequested.subscribe(emitted);
+
+        component['triggerDownload']();
+
+        expect(emitted).toHaveBeenCalledOnce();
+    });
+
+    it('should close the engine document on destroy', async () => {
+        await loadPdf();
+
+        fixture.destroy();
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+        expect(engineService.engine.closeDocument).toHaveBeenCalled();
     });
 });
