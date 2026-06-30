@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, effect, inject, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { faBell, faCog, faEnvelopeOpen, faFilter, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -82,6 +82,39 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
 
     constructor() {
         this.courseCategories.set(Object.keys(CourseNotificationCategory).filter((category) => isNaN(Number(category))));
+
+        effect((onCleanup) => {
+            const courseId = this.courseId();
+            this.settingInfo = undefined;
+            this.info = undefined;
+            this.selectableSettingPresets.set(undefined);
+            this.selectedSettingPreset.set(undefined);
+
+            const tryInitializeCourseNotificationValues = () => {
+                if (this.settingInfo && this.info) {
+                    this.initializeCourseNotificationValues();
+                }
+            };
+
+            const settingInfoSubscription = this.courseNotificationSettingService.getSettingInfo(courseId, false).subscribe((settingInfo) => {
+                if (settingInfo) {
+                    this.settingInfo = settingInfo;
+                    tryInitializeCourseNotificationValues();
+                }
+            });
+
+            const infoSubscription = this.courseNotificationService.getInfo().subscribe((info) => {
+                if (info.body) {
+                    this.info = info.body;
+                    tryInitializeCourseNotificationValues();
+                }
+            });
+
+            onCleanup(() => {
+                settingInfoSubscription.unsubscribe();
+                infoSubscription.unsubscribe();
+            });
+        });
     }
 
     ngAfterViewInit(): void {
@@ -100,26 +133,6 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     }
 
     ngOnInit(): void {
-        this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
-            if (settingInfo) {
-                this.settingInfo = settingInfo;
-
-                if (this.info) {
-                    this.initializeCourseNotificationValues();
-                }
-            }
-        });
-
-        this.courseNotificationService.getInfo().subscribe((info) => {
-            if (info.body) {
-                this.info = info.body;
-
-                if (this.settingInfo) {
-                    this.initializeCourseNotificationValues();
-                }
-            }
-        });
-
         this.courseNotificationCountSubscription = this.courseNotificationService.getNotificationCountForCourse$(this.courseId()).subscribe((count: number) => {
             this.courseNotificationCount.set(count);
         });
@@ -265,8 +278,8 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
      * both in the local state and on the server.
      */
     protected markAllAsReadClicked() {
-        this.updateCurrentCategoryNotificationsToSeenOnClient();
         this.updateCurrentCategoryNotificationsToSeenOnServer();
+        this.updateCurrentCategoryNotificationsToSeenOnClient();
     }
 
     /**

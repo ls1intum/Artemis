@@ -282,13 +282,15 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should mark all shown notifications as read on client and server', () => {
-        const updateClientSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
-        const updateServerSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnServer');
+        const unseenNotification1 = createMockNotification(1, 101, CourseNotificationCategory.COMMUNICATION);
+        const unseenNotification2 = createMockNotification(2, 101, CourseNotificationCategory.COMMUNICATION);
+        componentAsAny.notificationsForSelectedCategory.set([unseenNotification1, unseenNotification2]);
 
         componentAsAny.markAllAsReadClicked();
 
-        expect(updateClientSpy).toHaveBeenCalledOnce();
-        expect(updateServerSpy).toHaveBeenCalledOnce();
+        expect(courseNotificationService.setNotificationStatus).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        expect(courseNotificationService.setNotificationStatusInMap).toHaveBeenCalledWith(101, [1, 2], CourseNotificationViewingStatus.SEEN);
+        expect(courseNotificationService.decreaseNotificationCountBy).toHaveBeenCalledWith(101, 2);
     });
 
     it('should handle notification close button click', () => {
@@ -451,6 +453,21 @@ describe('CourseNotificationOverviewComponent', () => {
         it('should fetch the setting info and notification info on init', () => {
             expect(courseNotificationSettingService.getSettingInfo).toHaveBeenCalledWith(101, false);
             expect(courseNotificationService.getInfo).toHaveBeenCalledOnce();
+        });
+
+        it('should rebind setting and info subscriptions when courseId changes', () => {
+            const alternateSettingInfo: CourseNotificationSettingInfo = {
+                selectedPreset: 2,
+                notificationTypeChannels: { test: { PUSH: true, EMAIL: false, WEBAPP: true } },
+            };
+
+            vi.mocked(courseNotificationSettingService.getSettingInfo).mockReturnValueOnce(of(alternateSettingInfo));
+
+            fixture.componentRef.setInput('courseId', 202);
+            fixture.detectChanges();
+
+            expect(courseNotificationSettingService.getSettingInfo).toHaveBeenCalledWith(202, false);
+            expect(componentAsAny.selectedSettingPreset()).toEqual(mockNotificationSettingPresets[1]);
         });
 
         it('should initialize the selectable and selected presets once both responses are available', () => {

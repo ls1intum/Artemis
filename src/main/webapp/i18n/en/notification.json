@@ -336,7 +336,7 @@
                 "emptyTitle": "All done!",
                 "settingsTooltip": "Go to settings",
                 "archiveAllTooltip": "Clear all notifications",
-                "markAllAsRead": "Mark as Read",
+                "markAllAsRead": "Mark all as Read",
                 "emptyMessage": "Currently there are no notifications for this category."
             },
             "category": {

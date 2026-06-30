@@ -332,7 +332,7 @@
                 "sunday": "Sonntag"
             },
             "overview": {
-                "title": "Kurs Benachrichtigungen",
+                "title": "Kursbenachrichtigungen",
                 "emptyTitle": "Alles erledigt!",
                 "settingsTooltip": "Zu den Einstellungen",
                 "archiveAllTooltip": "Alle entfernen",
@@ -344,7 +344,7 @@
                 "communication": "Kommunikation"
             },
             "setting": {
-                "headline": "Kurs Benachrichtigungen"
+                "headline": "Kursbenachrichtigungen"
             },
             "channel": {
                 "email": "E-Mail",
