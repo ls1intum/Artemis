@@ -76,6 +76,7 @@ public class IrisCompetencyGenerationService {
                 "competency-extraction",
                 user.getSelectedLLMUsage(),
                 settings.variant().jsonValue(),
+                settings.supportLevel().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),

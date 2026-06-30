@@ -1,15 +1,15 @@
 <!-- @if can't be used for isShownViaLti as it removes the element from the DOM, disrupting dropdown stability for the More-Menu. -->
 <div class="sidebar-wrapper" [ngClass]="{ 'd-none': isShownViaLti() }">
     <div class="vw-100 bg-body">
-        <mat-sidenav-container
-            class="vw-100"
+        <div
+            class="layout-container vw-100"
             [ngClass]="{
                 'exam-wrapper exam-is-active': isExamStarted(),
                 'exam-height-dev': isExamStarted() && (!isProduction || isTestServer),
                 'container-closed': isNavbarCollapsed(),
             }"
         >
-            <mat-sidenav disableClose class="module-bg rounded-3" opened="true" mode="side" [hidden]="isExamStarted()">
+            <div class="sidebar module-bg rounded-3" [hidden]="isExamStarted()">
                 <jhi-course-sidebar
                     [course]="course()"
                     [sidebarItems]="sidebarItems()"
@@ -21,9 +21,10 @@
                     (courseActionItemClick)="courseActionItemClick($event)"
                     (toggleCollapseState)="toggleCollapseState()"
                 />
-            </mat-sidenav>
+            </div>
 
-            <mat-sidenav-content
+            <div
+                class="layout-content"
                 [ngClass]="{
                     'exam-wrapper': isExamStarted(),
                     'exam-height-dev': isExamStarted() && (!isProduction || isTestServer),
@@ -63,8 +64,8 @@
                         }
                     </div>
                 }
-            </mat-sidenav-content>
-        </mat-sidenav-container>
+            </div>
+        </div>
     </div>
 </div>
 <div class="course-body-container" [ngClass]="{ 'd-none': !isShownViaLti() }">
