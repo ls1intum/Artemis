@@ -49,7 +49,7 @@ class PyrisStatusUpdateStruggleTest {
     private PyrisStatusUpdateService service;
 
     // jobId "t", courseId 7, exerciseId 42, userId 3
-    private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L);
+    private final StruggleInterventionJob job = new StruggleInterventionJob("t", 7L, 42L, 3L, null, null, null, null);
 
     @BeforeEach
     void setUp() {

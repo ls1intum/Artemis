@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -113,30 +114,30 @@ class IrisStruggleInterventionServiceTriggerTest {
     void disabledSettings_doesNotReserveOrEnqueue() {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(disabledSettings());
 
-        var result = service.prepareTrigger(EX, user);
+        var result = service.prepareTrigger(EX, user, null, null, null, null);
 
         assertThat(result.accepted()).isFalse();
         assertThat(result.courseDisabled()).isTrue();   // Iris disabled => course-off for proactive purposes
-        verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong());
+        verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong(), any(), any(), any(), any());
     }
 
     @Test
     void proactiveDisabled_marksCourseDisabled() {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(proactiveOffSettings());
 
-        var result = service.prepareTrigger(EX, user);
+        var result = service.prepareTrigger(EX, user, null, null, null, null);
 
         assertThat(result.accepted()).isFalse();
         assertThat(result.courseDisabled()).isTrue();
-        verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong());
+        verify(pyrisJobService, never()).addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong(), any(), any(), any(), any());
     }
 
     @Test
     void enabled_reservesSlotAndReturnsToken() {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
-        when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX))).thenReturn(Optional.of("tok"));
+        when(pyrisJobService.addStruggleInterventionJobIfNonePending(eq(COURSE), eq(USER_ID), eq(EX), any(), any(), any(), any())).thenReturn(Optional.of("tok"));
 
-        var result = service.prepareTrigger(EX, user);
+        var result = service.prepareTrigger(EX, user, null, null, null, null);
 
         assertThat(result.accepted()).isTrue();
         assertThat(result.trigger().jobToken()).isEqualTo("tok");
@@ -146,9 +147,9 @@ class IrisStruggleInterventionServiceTriggerTest {
     @Test
     void overlappingTrigger_isSkipped() {
         when(irisSettingsService.getSettingsForCourse(course)).thenReturn(enabledSettings());
-        when(pyrisJobService.addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong())).thenReturn(Optional.empty());
+        when(pyrisJobService.addStruggleInterventionJobIfNonePending(anyLong(), anyLong(), anyLong(), any(), any(), any(), any())).thenReturn(Optional.empty());
 
-        var skipped = service.prepareTrigger(EX, user);
+        var skipped = service.prepareTrigger(EX, user, null, null, null, null);
 
         assertThat(skipped.accepted()).isFalse();
         assertThat(skipped.courseDisabled()).isFalse();  // in-flight, NOT course-off
@@ -159,7 +160,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         // The user reloaded on the async thread is no longer opted into LLM usage (aiSelectionDecision == null) -
         // sendToPyris must bail before any Pyris egress and release the reserved single-flight slot.
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
-        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "tok");
+        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "tok", null, null, null, null);
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), List.of(), 1);
 
         service.sendToPyris(prepared, signal, Map.of());

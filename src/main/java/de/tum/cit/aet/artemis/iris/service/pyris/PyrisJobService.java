@@ -160,12 +160,17 @@ public class PyrisJobService {
      * TTL matches the job TTL, so a crashed run self-heals. If writing the job map fails, the reservation is rolled
      * back (token-conditional) so the slot is never leaked.
      *
-     * @param courseId   the course the run belongs to
-     * @param userId     the struggling student
-     * @param exerciseId the exercise the student is struggling on
+     * @param courseId      the course the run belongs to
+     * @param userId        the struggling student
+     * @param exerciseId    the exercise the student is struggling on
+     * @param intent        the slot intent forwarded from the inbound request; null on legacy paths
+     * @param episodeId     the client-allocated episode UUID for async correlation; null when no episode was sent
+     * @param confirmReason the close-mode discriminator; null unless intent is {@code confirm_close}
+     * @param requestToken  the client-minted scoped-cancel UUID (A10); null on legacy paths
      * @return the minted job token, or empty if a run is already in flight for {@code (userId, exerciseId)}
      */
-    public Optional<String> addStruggleInterventionJobIfNonePending(long courseId, long userId, long exerciseId) {
+    public Optional<String> addStruggleInterventionJobIfNonePending(long courseId, long userId, long exerciseId, @Nullable String intent, @Nullable String episodeId,
+            @Nullable String confirmReason, @Nullable String requestToken) {
         var token = generateJobIdToken();
         var key = struggleInFlightKey(userId, exerciseId);
         String existing = getStruggleInFlightMap().putIfAbsent(key, token, jobTimeout, TimeUnit.SECONDS);
@@ -173,7 +178,7 @@ public class PyrisJobService {
             return Optional.empty();
         }
         try {
-            getPyrisJobMap().put(token, new StruggleInterventionJob(token, courseId, exerciseId, userId));
+            getPyrisJobMap().put(token, new StruggleInterventionJob(token, courseId, exerciseId, userId, intent, episodeId, confirmReason, requestToken));
         }
         catch (RuntimeException e) {
             getStruggleInFlightMap().remove(key, token); // roll back OUR reservation only (token-conditional)

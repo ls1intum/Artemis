@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 
 /**
  * Integration test for the cluster-atomic single-flight guard on {@link PyrisJobService}. Runs against a real
@@ -28,10 +29,10 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
         long userId = 9101L;
         long exerciseId = 9201L;
 
-        Optional<String> first = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId);
+        Optional<String> first = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null);
         assertThat(first).isPresent();
 
-        Optional<String> second = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId);
+        Optional<String> second = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null);
         assertThat(second).as("a second run for the same (user, exercise) must be skipped while the first is pending").isEmpty();
     }
 
@@ -41,17 +42,17 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
         long userId = 9102L;
         long exerciseId = 9202L;
 
-        String tokenA = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId).orElseThrow();
+        String tokenA = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null).orElseThrow();
 
         // removeJob is job-map-only and deliberately does NOT free the in-flight marker, so the pair stays reserved.
         pyrisJobService.removeJob(pyrisJobService.getJob(tokenA));
-        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId))
+        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null))
                 .as("removeJob must not free the in-flight marker; the pair must remain reserved").isEmpty();
 
         // Explicitly releasing the marker frees the pair for a new reservation.
         pyrisJobService.releaseStruggleInFlightMarker(tokenA, userId, exerciseId);
-        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId)).as("after releasing the marker the pair can be reserved again")
-                .isPresent();
+        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null))
+                .as("after releasing the marker the pair can be reserved again").isPresent();
     }
 
     @Test
@@ -61,17 +62,31 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
         long exerciseId = 9203L;
 
         // Reserve token A and fully release it (job + marker).
-        String tokenA = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId).orElseThrow();
+        String tokenA = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null).orElseThrow();
         pyrisJobService.releaseStruggleInFlightJob(tokenA, userId, exerciseId);
 
         // Reserve token B for the same pair.
-        String tokenB = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId).orElseThrow();
+        String tokenB = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null).orElseThrow();
         assertThat(tokenB).isNotEqualTo(tokenA);
 
         // A late/duplicate release carrying the stale token A must NOT clear B's reservation (token-conditional).
         pyrisJobService.releaseStruggleInFlightJob(tokenA, userId, exerciseId);
 
-        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId))
+        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, null, null, null, null))
                 .as("a stale release for token A must not free token B's still-pending reservation").isEmpty();
+    }
+
+    @Test
+    void jobCarriesIntentEpisodeIdConfirmReasonAndRequestToken() {
+        long courseId = 9004L;
+        long userId = 9104L;
+        long exerciseId = 9204L;
+
+        String token = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", "ep-42", "progress", "rt-uuid").orElseThrow();
+        var job = (StruggleInterventionJob) pyrisJobService.getJob(token);
+        assertThat(job.intent()).isEqualTo("decide");
+        assertThat(job.episodeId()).isEqualTo("ep-42");
+        assertThat(job.confirmReason()).isEqualTo("progress");
+        assertThat(job.requestToken()).isEqualTo("rt-uuid");
     }
 }

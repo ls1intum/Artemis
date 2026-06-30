@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
@@ -231,13 +233,16 @@ public class PyrisPipelineService {
      * @param courseDTO     the course DTO
      * @param chatHistory   read-only exercise-chat history (empty if no session exists yet)
      * @param exerciseId    for the single-flight release key on an ERROR stage
+     * @param intent        the slot intent ({@code decide} | {@code confirm_close} | {@code stale_check})
+     * @param episode       the client-allocated episode block (null when not sent)
      */
     public void executeStruggleInterventionPipeline(String variant, String jobToken, User user, PyrisStruggleSignalDTO signal, PyrisProgrammingExerciseDTO exerciseDTO,
-            PyrisSubmissionDTO submissionDTO, PyrisCourseDTO courseDTO, List<PyrisMessageDTO> chatHistory, long exerciseId) {
+            @Nullable PyrisSubmissionDTO submissionDTO, PyrisCourseDTO courseDTO, List<PyrisMessageDTO> chatHistory, long exerciseId, @Nullable String intent,
+            @Nullable StruggleEpisodeDTO episode) {
         var pyrisUser = toPyrisUserDTO(user);
         executePipeline("struggle-intervention", user.getSelectedLLMUsage(), variant, Optional.empty(), jobToken,
                 executionDto -> new PyrisStruggleInterventionPipelineExecutionDTO(signal, exerciseDTO, submissionDTO, chatHistory, courseDTO, pyrisUser, executionDto.settings(),
-                        executionDto.initialStages()),
+                        executionDto.initialStages(), intent, episode),
                 stages -> {
                     if (stages.stream().anyMatch(stage -> stage.state() == PyrisStageState.ERROR)) {
                         pyrisJobService.releaseStruggleInFlightJob(jobToken, user.getId(), exerciseId);

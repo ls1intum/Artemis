@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -107,11 +108,16 @@ public class IrisStruggleInterventionService {
      * @param exerciseId       the programming exercise id
      * @param signal           the struggle signal from the client engine
      * @param uncommittedFiles the student's live (uncommitted) working copy, merged on top of the latest submission
+     * @param intent           the slot intent ({@code decide} | {@code confirm_close} | {@code stale_check})
+     * @param episode          the client-allocated episode block (null when not sent by an older client)
+     * @param confirmReason    the close-mode discriminator (null unless intent is {@code confirm_close})
+     * @param requestToken     the scoped-cancel identity (A10); null on older clients
      * @param user             the requesting student
      * @return the trigger outcome (accepted + job token, or rejected with the course-off flag for the 202)
      */
-    public StruggleTriggerOutcome requestStruggleIntervention(long exerciseId, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles, User user) {
-        var prepared = prepareTrigger(exerciseId, user);
+    public StruggleTriggerOutcome requestStruggleIntervention(long exerciseId, PyrisStruggleSignalDTO signal, Map<String, String> uncommittedFiles, @Nullable String intent,
+            @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, User user) {
+        var prepared = prepareTrigger(exerciseId, user, intent, episode, confirmReason, requestToken);
         if (!prepared.accepted()) {
             return new StruggleTriggerOutcome(false, prepared.courseDisabled(), null);
         }
@@ -129,11 +135,16 @@ public class IrisStruggleInterventionService {
      * (spec §13), then reserve the single-flight slot by minting the job. A SINGLE settings read distinguishes a
      * deliberate course-off (Iris or proactive disabled) from a transient in-flight skip, both of which reject.
      *
-     * @param exerciseId the programming exercise id
-     * @param user       the requesting student
+     * @param exerciseId    the programming exercise id
+     * @param user          the requesting student
+     * @param intent        the slot intent; passed through to the job so async callbacks can route by intent
+     * @param episode       the client episode; the episodeId is stamped on the job for correlation
+     * @param confirmReason the close-mode discriminator; stamped on the job for A11 routing
+     * @param requestToken  the scoped-cancel UUID; stamped on the job for A10 cancel matching
      * @return a typed preparation: the reserved trigger, or a rejection tagged course-off vs in-flight
      */
-    public TriggerPreparation prepareTrigger(long exerciseId, User user) {
+    public TriggerPreparation prepareTrigger(long exerciseId, User user, @Nullable String intent, @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason,
+            @Nullable String requestToken) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
@@ -141,12 +152,14 @@ public class IrisStruggleInterventionService {
         if (!settings.enabled() || !settings.proactiveStruggleEnabled()) {
             return TriggerPreparation.courseOff();
         }
-        var tokenOpt = pyrisJobService.addStruggleInterventionJobIfNonePending(course.getId(), user.getId(), exerciseId);
+        String episodeId = episode != null ? episode.episodeId() : null;
+        var tokenOpt = pyrisJobService.addStruggleInterventionJobIfNonePending(course.getId(), user.getId(), exerciseId, intent, episodeId, confirmReason, requestToken);
         if (tokenOpt.isEmpty()) {
             log.info("Struggle intervention already in flight for user {} exercise {}, skipping", user.getId(), exerciseId);
             return TriggerPreparation.inFlight();
         }
-        return TriggerPreparation.triggered(new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), tokenOpt.get()));
+        return TriggerPreparation.triggered(
+                new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), tokenOpt.get(), intent, episode, confirmReason, requestToken));
     }
 
     /**
@@ -182,22 +195,8 @@ public class IrisStruggleInterventionService {
         var chatHistory = irisChatSessionRepository
                 .findLatestByEntityIdAndChatModeAndUserIdWithMessages(p.exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, p.userId(), Pageable.ofSize(1)).stream().findFirst()
                 .map(s -> pyrisDTOService.toPyrisMessageDTOListForStruggle(s.getMessages())).orElse(List.of());
-        pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory, p.exerciseId());
-    }
-
-    /**
-     * Latest submission for {@code (exercise, user)} - the same resolution the chat pipeline uses. Delegates to the
-     * package-private {@code getLatestSubmissionIfExists} helper on {@link AbstractIrisChatSessionService} (callable
-     * via the injected {@link IrisChatSessionService}, which lives in this package). Returns empty only when the
-     * student genuinely has no submission yet (then no live code is shipped - accepted v1 limitation; do NOT forge a
-     * submission).
-     *
-     * @param exercise the programming exercise (loaded with template/solution participations)
-     * @param user     the student
-     * @return the latest submission with eager results/feedback/build logs, or empty if none exists
-     */
-    private Optional<ProgrammingSubmission> latestSubmission(ProgrammingExercise exercise, User user) {
-        return irisChatSessionService.getLatestSubmissionIfExists(exercise, user);
+        pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory, p.exerciseId(),
+                p.intent(), p.episode());
     }
 
     /**
@@ -268,8 +267,27 @@ public class IrisStruggleInterventionService {
         return new PersistedProactive(session, saved);
     }
 
-    /** Immutable snapshot of the synchronously-prepared trigger (ids + payload only - NO entity crosses threads). */
-    public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String jobToken) {
+    /**
+     * Latest submission for {@code (exercise, user)} - the same resolution the chat pipeline uses. Delegates to the
+     * package-private {@code getLatestSubmissionIfExists} helper on {@link AbstractIrisChatSessionService} (callable
+     * via the injected {@link IrisChatSessionService}, which lives in this package). Returns empty only when the
+     * student genuinely has no submission yet (then no live code is shipped - accepted v1 limitation; do NOT forge a
+     * submission).
+     *
+     * @param exercise the programming exercise (loaded with template/solution participations)
+     * @param user     the student
+     * @return the latest submission with eager results/feedback/build logs, or empty if none exists
+     */
+    private Optional<ProgrammingSubmission> latestSubmission(ProgrammingExercise exercise, User user) {
+        return irisChatSessionService.getLatestSubmissionIfExists(exercise, user);
+    }
+
+    /**
+     * Immutable snapshot of the synchronously-prepared trigger (ids + payload only - NO entity crosses threads).
+     * The new episode/intent/confirmReason/requestToken fields are immutable value objects, safe to cross threads.
+     */
+    public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String jobToken, @Nullable String intent, @Nullable StruggleEpisodeDTO episode,
+            @Nullable String confirmReason, @Nullable String requestToken) {
     }
 
     /**
