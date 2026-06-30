@@ -1,7 +1,8 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -9,8 +10,6 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Objects;
@@ -20,12 +19,9 @@ import java.util.Set;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.Loader;
-import org.apache.pdfbox.cos.COSName;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDResources;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
-import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -53,6 +49,11 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 public class AttachmentVideoUnitService {
 
     private static final Logger log = LoggerFactory.getLogger(AttachmentVideoUnitService.class);
+
+    /**
+     * DPI used to render PDF pages for the content fingerprint. Low enough to keep rendering cheap, high enough to detect visual changes (replaced diagrams, vector graphics, ...).
+     */
+    private static final int FINGERPRINT_RENDER_DPI = 50;
 
     private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
@@ -243,9 +244,10 @@ public class AttachmentVideoUnitService {
     }
 
     /**
-     * Computes a content fingerprint for the given file. For PDFs this is a SHA-256 hash over the extracted text, the page count and the embedded images, so that re-serializing
-     * the same PDF (which changes the raw bytes but not the content) yields the same fingerprint, while a visual change such as a replaced diagram or screenshot is still detected.
-     * For non-PDF files (or PDFs that cannot be parsed) it falls back to a hash of the raw bytes.
+     * Computes a content fingerprint for the given file. For PDFs this is a SHA-256 hash over the page count and the rendered pixels of every page, so that re-serializing the same
+     * PDF (which changes the raw bytes but not the visual appearance) yields the same fingerprint, while any visual change - text, vector graphics, diagrams, images or annotations
+     * -
+     * is detected because it changes the rendered pixels. For non-PDF files (or PDFs that cannot be rendered) it falls back to a hash of the raw bytes.
      *
      * @param fileBytes the file content
      * @param filename  the original filename, used to detect PDFs
@@ -255,50 +257,21 @@ public class AttachmentVideoUnitService {
         if (filename != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(filename))) {
             try (PDDocument document = Loader.loadPDF(fileBytes)) {
                 StringBuilder fingerprintInput = new StringBuilder();
-                // Include the page count so that adding or removing pages is still detected for image-only PDFs without extractable text.
                 fingerprintInput.append(document.getNumberOfPages()).append('\n');
-                fingerprintInput.append(new PDFTextStripper().getText(document)).append('\n');
-                appendImageFingerprints(document, fingerprintInput);
+                PDFRenderer renderer = new PDFRenderer(document);
+                for (int pageIndex = 0; pageIndex < document.getNumberOfPages(); pageIndex++) {
+                    // Render at a low DPI in grayscale: enough to detect visual changes while keeping the rendering cheap. The page order is part of the fingerprint, so reordering
+                    // pages is detected as well.
+                    BufferedImage renderedPage = renderer.renderImageWithDPI(pageIndex, FINGERPRINT_RENDER_DPI, ImageType.GRAY);
+                    fingerprintInput.append(sha256Hex(((DataBufferByte) renderedPage.getRaster().getDataBuffer()).getData())).append('\n');
+                }
                 return sha256Hex(fingerprintInput.toString());
             }
             catch (IOException e) {
-                log.warn("Could not parse uploaded PDF for content fingerprinting, falling back to raw bytes: {}", e.getMessage());
+                log.warn("Could not render uploaded PDF for content fingerprinting, falling back to raw bytes: {}", e.getMessage());
             }
         }
         return sha256Hex(fileBytes);
-    }
-
-    /**
-     * Appends a hash of every embedded image's raw (encoded) stream to the fingerprint so that visual changes such as replaced diagrams or screenshots are detected even when the
-     * extracted text and page count are unchanged. The raw image streams are preserved when a PDF is re-serialized (images are not recompressed), so this keeps re-serialized but
-     * otherwise unchanged PDFs identical. The hashes are sorted to be independent of the order in which the PDF library reports the image resources.
-     *
-     * @param document         the parsed PDF document
-     * @param fingerprintInput the builder collecting the fingerprint input
-     */
-    private void appendImageFingerprints(PDDocument document, StringBuilder fingerprintInput) {
-        try {
-            List<String> imageHashes = new ArrayList<>();
-            for (PDPage page : document.getPages()) {
-                PDResources resources = page.getResources();
-                if (resources == null) {
-                    continue;
-                }
-                for (COSName xObjectName : resources.getXObjectNames()) {
-                    if (resources.getXObject(xObjectName) instanceof PDImageXObject imageXObject) {
-                        try (InputStream rawImageStream = imageXObject.getCOSObject().createRawInputStream()) {
-                            imageHashes.add(sha256Hex(rawImageStream.readAllBytes()));
-                        }
-                    }
-                }
-            }
-            Collections.sort(imageHashes);
-            imageHashes.forEach(imageHash -> fingerprintInput.append(imageHash).append('\n'));
-        }
-        catch (IOException e) {
-            // Best effort: if the images cannot be read, fall back to the text/page-count fingerprint rather than treating the file as changed.
-            log.warn("Could not include embedded images in the content fingerprint: {}", e.getMessage());
-        }
     }
 
     private static String sha256Hex(String value) {

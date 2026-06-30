@@ -268,6 +268,36 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         }
     }
 
+    /**
+     * Generates a PDF with the default text on every page and a filled vector rectangle (not an embedded image) of the given width on the first page. Two PDFs that differ only in
+     * {@code rectangleWidth} have the same text, page count and no embedded images, but differ visually only in their vector graphics.
+     *
+     * @param rectangleWidth the width of the vector rectangle
+     * @return MockMultipartFile attachment video unit pdf file containing a vector graphic
+     */
+    private MockMultipartFile createAttachmentVideoUnitPdfWithVectorGraphic(float rectangleWidth) throws IOException {
+        var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
+            for (int i = 1; i <= SLIDE_COUNT; i++) {
+                document.addPage(new PDPage());
+                try (PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1))) {
+                    contentStream.beginText();
+                    contentStream.setFont(font, 12);
+                    contentStream.newLineAtOffset(25, 500);
+                    contentStream.showText("This is the sample document");
+                    contentStream.endText();
+                    if (i == 1) {
+                        contentStream.addRect(100, 100, rectangleWidth, 100);
+                        contentStream.fill();
+                    }
+                }
+            }
+            document.save(outputStream);
+            return new MockMultipartFile("file", "lectureFile.pdf", "application/pdf", outputStream.toByteArray());
+        }
+    }
+
     private AttachmentVideoUnit updateAttachmentVideoUnitWithFile(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MockMultipartFile file) throws Exception {
         var builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null);
         builder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
@@ -448,6 +478,30 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // Upload a PDF with the same text and page count but a different image -> visual content changed -> version bumps again
         var afterImageB = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, afterImageAagain.getAttachment(), createAttachmentVideoUnitPdfWithImage(Color.BLUE));
         assertThat(afterImageB.getAttachment().getVersion()).isEqualTo(versionAfterImageA + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withSameTextButChangedVectorGraphic_shouldBumpVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Upload a PDF with the same text and page count but a vector graphic (no embedded image) -> visual content changed -> version bumps
+        var afterShapeA = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, createAttachmentVideoUnitPdfWithVectorGraphic(200));
+        int versionAfterShapeA = afterShapeA.getAttachment().getVersion();
+        assertThat(versionAfterShapeA).isEqualTo(originalVersion + 1);
+
+        // Re-upload the same vector graphic (freshly generated, different raw bytes) -> content unchanged -> no bump
+        var afterShapeAagain = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, afterShapeA.getAttachment(), createAttachmentVideoUnitPdfWithVectorGraphic(200));
+        assertThat(afterShapeAagain.getAttachment().getVersion()).isEqualTo(versionAfterShapeA);
+
+        // Upload a PDF whose only difference is the vector graphic (different rectangle size, same text/page count) -> version bumps again
+        var afterShapeB = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, afterShapeAagain.getAttachment(), createAttachmentVideoUnitPdfWithVectorGraphic(100));
+        assertThat(afterShapeB.getAttachment().getVersion()).isEqualTo(versionAfterShapeA + 1);
     }
 
     @Test
