@@ -9,14 +9,25 @@ buildscript {
             force "com.github.jknack:handlebars:4.5.2"
         }
     }
-    repositories {
-        mavenLocal()
-        // Preferred Maven Central mirror hosted in TUM AET infrastructure (avoids upstream 429s)
-        maven {
-            name = "reposiliteRepository"
-            url = "https://reposilite.aet.cit.tum.de/releases"
+    // The custom OpenAPI generator (generatorName "angular21") is only needed when regenerating the
+    // Angular client locally via `./gradlew openApiGenerate`. The generated client is committed, so CI
+    // never regenerates it and must not try to resolve this artifact (it lives only in Maven Local
+    // until published). Add it — and Maven Local — to the buildscript classpath solely for that task,
+    // so it is discovered by the org.openapi.generator plugin via ServiceLoader during regeneration.
+    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains("openapigenerate") }) {
+        repositories {
+            mavenLocal()
+            maven {
+                name = "reposiliteRepository"
+                url = "https://reposilite.aet.cit.tum.de/releases"
+            }
+            mavenCentral()
         }
-        mavenCentral()
+        dependencies {
+            // Build & install it with `./gradlew publishToMavenLocal` in
+            // https://github.com/ls1intum/openapi-generator-angular21.
+            classpath "de.tum.cit.aet:openapi-generator-angular21:1.0.0"
+        }
     }
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
@@ -24,11 +35,6 @@ buildscript {
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
             exclude group: "com.opencsv", module: "opencsv"
         }
-        // Custom OpenAPI generator (generatorName "angular21") used by gradle/openapi.gradle's
-        // openApiGenerate task. Placed on the buildscript classpath so the org.openapi.generator
-        // plugin discovers it via ServiceLoader. Resolved from Maven Local (publishToMavenLocal in
-        // https://github.com/ls1intum/openapi-generator-angular21).
-        classpath "de.tum.cit.aet:openapi-generator-angular21:1.0.0"
     }
 }
 
