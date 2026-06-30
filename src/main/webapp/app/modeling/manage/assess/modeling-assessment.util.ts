@@ -1,5 +1,5 @@
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { UMLModel, getAssessmentNameForArtemis } from '@tumaet/apollon/external';
+import { UMLModel, getAssessmentNameForArtemis } from '@tumaet/apollon';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { getModelElementIds } from '../../shared/apollon-model.util';
 

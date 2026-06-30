@@ -1,4 +1,4 @@
-import { SVG } from '@tumaet/apollon/external';
+import { SVG } from '@tumaet/apollon';
 
 /**
  * Converts svg to png.

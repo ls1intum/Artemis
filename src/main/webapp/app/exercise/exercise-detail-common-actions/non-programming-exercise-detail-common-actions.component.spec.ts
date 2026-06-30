@@ -18,7 +18,7 @@ import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-e
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UMLDiagramType } from '@tumaet/apollon/external';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

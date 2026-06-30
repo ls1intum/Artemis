@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon/external';
+import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';

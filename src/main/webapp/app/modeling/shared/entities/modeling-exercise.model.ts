@@ -2,7 +2,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { UMLDiagramType } from '@tumaet/apollon/external';
+import { UMLDiagramType } from '@tumaet/apollon';
 
 export class ModelingExercise extends Exercise {
     public diagramType?: UMLDiagramType;

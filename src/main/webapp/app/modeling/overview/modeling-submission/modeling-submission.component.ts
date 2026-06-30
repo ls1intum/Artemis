@@ -6,7 +6,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { captureException } from '@sentry/angular';
-import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon/external';
+import { type CollaborationUser, UMLDiagramType, UMLModel, collabColorFromName, importDiagram } from '@tumaet/apollon';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';

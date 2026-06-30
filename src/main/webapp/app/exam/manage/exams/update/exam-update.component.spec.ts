@@ -25,7 +25,7 @@ import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { UMLDiagramType } from '@tumaet/apollon/external';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';

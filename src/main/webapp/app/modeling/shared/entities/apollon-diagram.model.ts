@@ -1,4 +1,4 @@
-import { UMLDiagramType } from '@tumaet/apollon/external';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 
 export class ApollonDiagram implements BaseEntity {

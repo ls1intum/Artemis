@@ -12,7 +12,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { UMLDiagramType, UMLModel } from '@tumaet/apollon/external';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { AssessmentNamesForModelId, getNamesForAssessments } from 'app/modeling/manage/assess/modeling-assessment.util';
 
 const assessmentNames: AssessmentNamesForModelId = {

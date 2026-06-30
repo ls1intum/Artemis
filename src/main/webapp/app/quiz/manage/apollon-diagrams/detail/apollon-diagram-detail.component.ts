@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, ApollonView, Locale, UMLModel, importDiagram } from '@tumaet/apollon/external';
+import { ApollonEditor, ApollonMode, ApollonView, Locale, UMLModel, importDiagram } from '@tumaet/apollon';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';

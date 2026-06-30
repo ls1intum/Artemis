@@ -2,7 +2,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import dayjs from 'dayjs/esm';
+import dayjs from 'dayjs';
 
 export class MockMetisConversationService {
     get course(): Course | undefined {

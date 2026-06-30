@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output } from '@angular/core';
-import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon/external';
+import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
@@ -115,10 +115,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             );
         }
         this.initializeApollonEditor();
-        const highlightedElements = this.highlightedElements();
-        if (highlightedElements) {
-            this.updateHighlightedElements(highlightedElements);
-        }
+        this.updateHighlightedElements(this.highlightedElements());
         const elementCounts = this.elementCounts();
         if (elementCounts) {
             await this.updateElementCounts(elementCounts);
@@ -184,10 +181,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     private applyStateConfiguration() {
-        const highlightedElements = this.highlightedElements();
-        if (highlightedElements) {
-            this.updateHighlightedElements(highlightedElements);
-        }
+        // Always forward: passing undefined/empty clears stale overlays when highlighting is turned off.
+        this.updateHighlightedElements(this.highlightedElements());
     }
 
     /**
@@ -294,11 +289,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     /**
      * Applies the host-driven highlight overlay (element id -> CSS color) to the editor. Highlights are an
-     * ephemeral view overlay, not persisted in the model; an empty map clears them.
+     * ephemeral view overlay, not persisted in the model; an empty map or `undefined` clears them.
      *
-     * @param newElements a map of elementIds -> highlight color
+     * @param newElements a map of elementIds -> highlight color, or undefined to clear
      */
-    private updateHighlightedElements(newElements: Map<string, string>): void {
+    private updateHighlightedElements(newElements: Map<string, string> | undefined): void {
         this.apollonEditor?.setElementHighlights(newElements ?? null);
     }
 

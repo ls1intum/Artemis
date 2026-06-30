@@ -1,4 +1,4 @@
-import { ApollonEdge, ApollonEditor, ApollonNode, SVG, UMLModel } from '@tumaet/apollon/external';
+import { ApollonEdge, ApollonEditor, ApollonNode, SVG, UMLModel } from '@tumaet/apollon';
 import { Course } from 'app/course/shared/entities/course.model';
 import { convertRenderedSVGToPNG, cropRenderedSVGToElement, trimRenderedSVGToContent } from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';

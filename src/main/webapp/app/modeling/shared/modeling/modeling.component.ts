@@ -1,6 +1,6 @@
 import { Component, ElementRef, computed, input, model, viewChild } from '@angular/core';
 import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
-import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon/external';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { MODELING_EDITOR_MAX_HEIGHT, MODELING_EDITOR_MAX_WIDTH, MODELING_EDITOR_MIN_HEIGHT, MODELING_EDITOR_MIN_WIDTH } from 'app/foundation/constants/modeling.constants';
 import { ResizableEdges } from 'app/shared-ui/directives/resizable.directive';
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// IMPORTANT: The mock must be defined before '@tumaet/apollon/external' imports to prevent flaky client tests
+// IMPORTANT: The mock must be defined before '@tumaet/apollon' imports to prevent flaky client tests
 // Create mock class using vi.hoisted() to ensure it's available before vi.mock runs
 const { MockApollonEditor } = vi.hoisted(() => {
     const deepClone = (obj: any): any => (obj ? JSON.parse(JSON.stringify(obj)) : {});
@@ -67,8 +67,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 // Mock the entire ApollonEditor class to prevent React initialization,
 // which causes unhandled errors from async React scheduler callbacks
 // ("Should not already be working", "document global was defined") in jsdom.
-vi.mock('@tumaet/apollon/external', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('@tumaet/apollon/external')>();
+vi.mock('@tumaet/apollon', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
     return {
         ...actual,
         ApollonEditor: MockApollonEditor,
@@ -79,7 +79,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon/external';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -414,6 +414,21 @@ describe('ModelingAssessmentComponent', () => {
         setHighlights.mockClear();
         (comp as any).updateHighlightedElements(new Map<string, string>());
         expect(setHighlights).toHaveBeenCalledWith(new Map<string, string>());
+    });
+
+    it('clears stale highlight overlays when highlightedElements is reset to undefined', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('highlightedElements', new Map<string, string>([[ELEMENT_ID_1, 'red']]));
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+
+        const setHighlights = comp.apollonEditor!.setElementHighlights as unknown as ReturnType<typeof vi.fn>;
+        setHighlights.mockClear();
+
+        // Resetting the input to undefined must clear the overlay, not leave it stale.
+        fixture.componentRef.setInput('highlightedElements', undefined);
+        (comp as any).applyStateConfiguration();
+        expect(setHighlights).toHaveBeenCalledWith(null);
     });
 
     it('should update model', async () => {

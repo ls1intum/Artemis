@@ -22,7 +22,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { isEqual } from 'lodash-es';
-import { UMLDiagramType } from '@tumaet/apollon/external';
+import { UMLDiagramType } from '@tumaet/apollon';
 
 describe('ApollonDiagramList Component', () => {
     setupTestBed({ zoneless: true });

@@ -39,7 +39,7 @@ import { ExampleSubmission } from 'app/assessment/shared/entities/example-submis
 import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ApollonEditor, UMLDiagramType } from '@tumaet/apollon/external';
+import { ApollonEditor, UMLDiagramType } from '@tumaet/apollon';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

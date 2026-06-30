@@ -83,10 +83,10 @@ overrides:
     piscina: '5.2.0'
     postcss: '8.5.14'
     punycode: '2.3.1'
-    # @tumaet/apollon (>=4.7) requires react/react-dom ^19 as peers, and its /external
-    # build entry leaves React (plus @mui/@emotion/@xyflow) external for the host to
-    # provide. Artemis declares those peers directly but has no React code of its own;
-    # force the whole React subtree to a single 19.x so @mui/@xyflow can't pull React 18.
+    # @tumaet/apollon ships every dependency external and requires react/react-dom (and
+    # @xyflow/react) as peers. No Artemis code imports React, so we don't declare it; pnpm's
+    # auto-install-peers resolves it. These overrides force the whole React subtree to a single
+    # 19.x so nothing in the editor's dependency graph can pull a second (e.g. React 18) copy.
     react: '19.2.7'
     react-dom: '19.2.7'
     semver: '7.8.0'

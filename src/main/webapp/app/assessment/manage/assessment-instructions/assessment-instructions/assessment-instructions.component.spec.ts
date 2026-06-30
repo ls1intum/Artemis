@@ -11,7 +11,7 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { UMLDiagramType } from '@tumaet/apollon/external';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';

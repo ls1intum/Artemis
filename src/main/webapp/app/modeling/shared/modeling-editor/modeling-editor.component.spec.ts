@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { ApollonOptions } from '@tumaet/apollon/external';
+import type { ApollonOptions } from '@tumaet/apollon';
 
 type MockApollonOptions = Pick<ApollonOptions, 'model' | 'collaboration'>;
 
@@ -63,8 +63,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 });
 
 // Mock the entire ApollonEditor class to prevent React initialization
-vi.mock('@tumaet/apollon/external', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('@tumaet/apollon/external')>();
+vi.mock('@tumaet/apollon', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('@tumaet/apollon')>();
     return {
         ...actual,
         ApollonEditor: MockApollonEditor,
@@ -78,7 +78,7 @@ import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { UMLDiagramType, UMLModel } from '@tumaet/apollon/external';
+import { UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { cloneDeep } from 'lodash-es';
