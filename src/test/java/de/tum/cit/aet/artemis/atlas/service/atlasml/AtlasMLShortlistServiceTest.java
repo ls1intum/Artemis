@@ -67,12 +67,12 @@ class AtlasMLShortlistServiceTest {
         Map<Long, List<AtlasMLCompetencyDTO>> result = service.fetchShortlists(COURSE_ID, List.of(new ExerciseExtract(1L, "text")));
 
         assertThat(result).isEmpty();
-        verify(atlasMLApi, never()).suggestCompetencies(any());
+        verify(atlasMLApi, never()).suggestCompetenciesWithShortTimeout(any());
     }
 
     @Test
     void fetchShortlists_noToggleService_proceeds() {
-        when(atlasMLApi.suggestCompetencies(any())).thenReturn(response(competency(100L, "Loops")));
+        when(atlasMLApi.suggestCompetenciesWithShortTimeout(any())).thenReturn(response(competency(100L, "Loops")));
         AtlasMLShortlistService service = createService(Optional.of(atlasMLApi), Optional.empty(), 10);
 
         Map<Long, List<AtlasMLCompetencyDTO>> result = service.fetchShortlists(COURSE_ID, List.of(new ExerciseExtract(1L, "text")));
@@ -83,36 +83,36 @@ class AtlasMLShortlistServiceTest {
     @Test
     void fetchShortlists_enforcesCallBudget() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
-        when(atlasMLApi.suggestCompetencies(any())).thenReturn(response(competency(100L, "C")));
+        when(atlasMLApi.suggestCompetenciesWithShortTimeout(any())).thenReturn(response(competency(100L, "C")));
         AtlasMLShortlistService service = createService(Optional.of(atlasMLApi), Optional.of(featureToggleService), 2);
 
         Map<Long, List<AtlasMLCompetencyDTO>> result = service.fetchShortlists(COURSE_ID,
                 List.of(new ExerciseExtract(1L, "a"), new ExerciseExtract(2L, "b"), new ExerciseExtract(3L, "c"), new ExerciseExtract(4L, "d")));
 
         // Only the first two exercises are queried; the rest are dropped once the budget is spent.
-        verify(atlasMLApi, times(2)).suggestCompetencies(any());
+        verify(atlasMLApi, times(2)).suggestCompetenciesWithShortTimeout(any());
         assertThat(result).containsOnlyKeys(1L, 2L);
     }
 
     @Test
     void fetchShortlists_blankDescriptionSkippedWithoutSpendingBudget() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
-        when(atlasMLApi.suggestCompetencies(any())).thenReturn(response(competency(100L, "C")));
+        when(atlasMLApi.suggestCompetenciesWithShortTimeout(any())).thenReturn(response(competency(100L, "C")));
         AtlasMLShortlistService service = createService(Optional.of(atlasMLApi), Optional.of(featureToggleService), 1);
 
         Map<Long, List<AtlasMLCompetencyDTO>> result = service.fetchShortlists(COURSE_ID,
                 List.of(new ExerciseExtract(1L, "  "), new ExerciseExtract(2L, null), new ExerciseExtract(3L, "real")));
 
         // The two blank/null entries are skipped before the budget is touched, so the third still gets its call.
-        verify(atlasMLApi, times(1)).suggestCompetencies(any());
+        verify(atlasMLApi, times(1)).suggestCompetenciesWithShortTimeout(any());
         assertThat(result).containsOnlyKeys(3L);
     }
 
     @Test
     void fetchShortlists_perExerciseFailureIsolated() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
-        when(atlasMLApi.suggestCompetencies(argThat(request -> request != null && "boom".equals(request.description())))).thenThrow(new RuntimeException("AtlasML down"));
-        when(atlasMLApi.suggestCompetencies(argThat(request -> request != null && "ok".equals(request.description())))).thenReturn(response(competency(100L, "C")));
+        when(atlasMLApi.suggestCompetenciesWithShortTimeout(argThat(request -> request != null && "boom".equals(request.description())))).thenThrow(new RuntimeException("AtlasML down"));
+        when(atlasMLApi.suggestCompetenciesWithShortTimeout(argThat(request -> request != null && "ok".equals(request.description())))).thenReturn(response(competency(100L, "C")));
         AtlasMLShortlistService service = createService(Optional.of(atlasMLApi), Optional.of(featureToggleService), 10);
 
         Map<Long, List<AtlasMLCompetencyDTO>> result = service.fetchShortlists(COURSE_ID, List.of(new ExerciseExtract(1L, "boom"), new ExerciseExtract(2L, "ok")));
@@ -124,7 +124,7 @@ class AtlasMLShortlistServiceTest {
     @Test
     void fetchShortlists_emptyResponseProducesNoKey() {
         when(featureToggleService.isFeatureEnabled(Feature.AtlasML)).thenReturn(true);
-        when(atlasMLApi.suggestCompetencies(any())).thenReturn(response());
+        when(atlasMLApi.suggestCompetenciesWithShortTimeout(any())).thenReturn(response());
         AtlasMLShortlistService service = createService(Optional.of(atlasMLApi), Optional.of(featureToggleService), 10);
 
         Map<Long, List<AtlasMLCompetencyDTO>> result = service.fetchShortlists(COURSE_ID, List.of(new ExerciseExtract(1L, "text")));

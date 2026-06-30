@@ -551,12 +551,20 @@ public class CompetencyOrchestrationService {
     /**
      * Fetches and renders the per-exercise AtlasML similarity shortlist for the batch. The cleaned learning
      * text of each change is the AtlasML query; the result is the injection-safe block interpolated into the
-     * execute prompt. Best-effort: an unavailable or failing AtlasML yields the stub block (see {@link AtlasMLShortlistService}).
+     * execute prompt. Best-effort: an unavailable or failing AtlasML yields an omitted block (see {@link AtlasMLShortlistService}).
+     * The whole path is guarded here so an unexpected shortlist failure can never abort the surrounding
+     * orchestration-preparation try with an INTERNAL_ERROR — the section is simply dropped.
      */
     private String renderAtlasMLShortlist(long courseId, List<ExerciseChange> changes) {
-        List<AtlasMLShortlistService.ExerciseExtract> extracts = changes.stream()
-                .map(change -> new AtlasMLShortlistService.ExerciseExtract(change.exerciseId(), change.problemStatement())).toList();
-        return shortlistService.renderShortlist(shortlistService.fetchShortlists(courseId, extracts));
+        try {
+            List<AtlasMLShortlistService.ExerciseExtract> extracts = changes.stream()
+                    .map(change -> new AtlasMLShortlistService.ExerciseExtract(change.exerciseId(), change.problemStatement())).toList();
+            return shortlistService.renderShortlist(shortlistService.fetchShortlists(courseId, extracts));
+        }
+        catch (Exception ex) {
+            log.debug("AtlasML shortlist generation failed for course {}; continuing without shortlist: {}", courseId, ex.getMessage(), ex);
+            return "";
+        }
     }
 
     /**

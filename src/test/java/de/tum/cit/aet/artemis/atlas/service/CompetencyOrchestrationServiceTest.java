@@ -11,11 +11,13 @@ import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.
 import static de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO.Status.SUCCESS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
@@ -51,6 +53,7 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyIndexResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyOrchestrationResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService.RunInfo;
@@ -397,7 +400,10 @@ class CompetencyOrchestrationServiceTest {
         stubRunMap();
         when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Loops", "Learn loops", Map.of()));
         when(orchestratorToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
-        when(shortlistService.renderShortlist(any())).thenReturn("SHORTLIST_BLOCK");
+        // Sentinel map so we can prove the exact instance fetched is the one handed to renderShortlist (not a fresh/empty map).
+        Map<Long, List<AtlasMLCompetencyDTO>> fetched = Map.of(21L, List.of(new AtlasMLCompetencyDTO(99L, "Loops", "desc", COURSE_ID)));
+        when(shortlistService.fetchShortlists(eq(COURSE_ID), anyList())).thenReturn(fetched);
+        when(shortlistService.renderShortlist(same(fetched))).thenReturn("SHORTLIST_BLOCK");
         // Stop right after the prompt is rendered so we assert the render inputs without driving the LLM.
         when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
 
@@ -406,6 +412,8 @@ class CompetencyOrchestrationServiceTest {
         // The cleaned learning text is forwarded to AtlasML keyed by the exercise id...
         verify(shortlistService).fetchShortlists(eq(COURSE_ID),
                 argThat(extracts -> extracts.size() == 1 && extracts.getFirst().exerciseId() == 21L && "Learn loops".equals(extracts.getFirst().description())));
+        // ...the exact fetched map (not some other/empty map) is passed to renderShortlist...
+        verify(shortlistService).renderShortlist(same(fetched));
         // ...and the rendered block is wired into the execute prompt under the atlasMLShortlist variable.
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.forClass(Map.class);

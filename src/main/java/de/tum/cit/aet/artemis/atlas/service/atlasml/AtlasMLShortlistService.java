@@ -116,7 +116,9 @@ public class AtlasMLShortlistService {
             }
             used++;
             try {
-                SuggestCompetencyResponseDTO response = atlasMLApi.get().suggestCompetencies(new SuggestCompetencyRequestDTO(extract.description(), courseId));
+                // Short-timeout variant: this is an advisory best-effort signal, so it must not hold the per-course
+                // orchestration run lock on a slow/unreachable AtlasML (standard timeouts are 30s/60s).
+                SuggestCompetencyResponseDTO response = atlasMLApi.get().suggestCompetenciesWithShortTimeout(new SuggestCompetencyRequestDTO(extract.description(), courseId));
                 if (response != null && response.competencies() != null && !response.competencies().isEmpty()) {
                     shortlists.put(extract.exerciseId(), response.competencies());
                 }
