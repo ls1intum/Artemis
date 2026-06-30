@@ -132,9 +132,12 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void episodeOutcome_noRowYet_returnsAppliedFalse() throws Exception {
-        var result = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-none/proactive-outcome", IrisProactiveOutcome.DISMISSED,
-                EpisodeOutcomeAppliedDTO.class, HttpStatus.OK);
-        assertThat(result.applied()).isFalse();
+        // Assert the literal "applied":false is present on the wire. A NON_EMPTY annotation would produce {} for a
+        // boolean false, and deserialization of {} into a boolean primitive would silently yield false, making that
+        // assertion pass even with a broken serializer. The raw-string assertion closes that false-confidence gap.
+        String raw = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-none/proactive-outcome", IrisProactiveOutcome.DISMISSED, String.class,
+                HttpStatus.OK);
+        assertThat(raw).contains("\"applied\":false");
     }
 
     @Test
@@ -190,6 +193,67 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
         // First-terminal-wins: exactly one outcome, still DISMISSED.
         assertThat(irisMessageRepository.findEpisodeOutcomes("ep-firstwins")).containsExactly(IrisProactiveOutcome.DISMISSED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void episodeOutcome_twoRows_smallestIdIsStableTarget_secondCallIsNoop() throws Exception {
+        // Real H2 test: two persisted proactive rows for the same episodeId.
+        // Verifies: (a) outcome lands on smallest-id row; (b) second row insertion does not change target;
+        // (c) second writeEpisodeOutcome is a NO-OP and exactly ONE row carries the outcome;
+        // (d) findEpisodeOutcomes returns the same single outcome before and after the second row is inserted.
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student1);
+
+        // Insert row1 (smallest id, first persisted)
+        var msg1 = new IrisMessage();
+        msg1.addContent(new IrisTextMessageContent("hint-row1"));
+        msg1.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        msg1.setProactiveEpisodeId("ep-multirow");
+        var row1 = irisMessageService.saveMessage(msg1, session, IrisMessageSender.LLM);
+
+        // (d) before second row: no outcome yet
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow")).isEmpty();
+
+        // (a) first writeEpisodeOutcome: applied=true, outcome lands on row1 (the smallest-id row)
+        String raw1 = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-multirow/proactive-outcome", IrisProactiveOutcome.DISMISSED,
+                String.class, HttpStatus.OK);
+        assertThat(raw1).contains("\"applied\":true");
+        var reloadedRow1 = irisMessageRepository.findById(row1.getId()).orElseThrow();
+        assertThat(reloadedRow1.getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow")).containsExactly(IrisProactiveOutcome.DISMISSED);
+
+        // (b) Insert row2 (larger id, null outcome) - must NOT shift the target or duplicate the outcome.
+        // Use a fresh session reference so saveMessage reloads from the DB: after the PUT above, the test's original
+        // `session` object has an initialized (stale) messages collection. If we pass that stale session to saveMessage,
+        // the reload guard (Hibernate.isInitialized) is true and the cascade-save overwrites row1's committed outcome
+        // with null. A fresh session loaded here has the committed state (row1.proactiveOutcome = DISMISSED) so the
+        // cascade-save keeps it intact.
+        var freshSession = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student1);
+        var msg2 = new IrisMessage();
+        msg2.addContent(new IrisTextMessageContent("hint-row2"));
+        msg2.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        msg2.setProactiveEpisodeId("ep-multirow");
+        var row2 = irisMessageService.saveMessage(msg2, freshSession, IrisMessageSender.LLM);
+
+        assertThat(row2.getId()).isGreaterThan(row1.getId());                                          // row2 has a larger id
+        assertThat(irisMessageRepository.findById(row2.getId()).orElseThrow().getProactiveOutcome()).isNull(); // row2 carries no outcome
+        // Stable target is still row1
+        var target = irisMessageRepository.findFirstByProactiveEpisodeIdOrderByIdAsc("ep-multirow").orElseThrow();
+        assertThat(target.getId()).isEqualTo(row1.getId());
+
+        // (d) after second row: findEpisodeOutcomes still returns the same single outcome - not changed by new row
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow")).containsExactly(IrisProactiveOutcome.DISMISSED);
+
+        // (c) second writeEpisodeOutcome is a NO-OP: episode is already terminal -> applied=true but nothing written
+        String raw2 = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-multirow/proactive-outcome", IrisProactiveOutcome.DISMISSED,
+                String.class, HttpStatus.OK);
+        assertThat(raw2).contains("\"applied\":true");
+
+        // Exactly ONE row carries the outcome: row1 has DISMISSED, row2 still has null
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow")).containsExactly(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findById(row1.getId()).orElseThrow().getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findById(row2.getId()).orElseThrow().getProactiveOutcome()).isNull();
     }
 
     // ---- delete-proactive ----

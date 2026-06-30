@@ -47,15 +47,6 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     /**
-     * Deterministic write-target finder: returns the earliest-persisted message tagged with the given episode id.
-     * Used by A10 ({@code revealAmbient}) to locate the canonical row to promote.
-     *
-     * @param proactiveEpisodeId the client-allocated episode UUID
-     * @return the earliest IrisMessage with that episode id, or empty if none persisted yet
-     */
-    Optional<IrisMessage> findFirstByProactiveEpisodeIdOrderBySentAtAsc(String proactiveEpisodeId);
-
-    /**
      * Stable write-target finder for {@code writeEpisodeOutcome}: returns the FIRST-persisted row of the episode,
      * identified by the smallest id. Unlike ordering by {@code sentAt} (which is unstable - a delivery row that
      * persists late can carry an earlier {@code sentAt} but a larger id, shifting the "earliest-sentAt" target after a
