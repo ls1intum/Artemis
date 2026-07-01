@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusRequestDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
@@ -100,21 +102,22 @@ public class BonusResource {
      */
     @GetMapping({ "courses/{courseId}/exams/{examId}/bonuses", "courses/{courseId}/exams/{examId}/bonus" })
     @EnforceAtLeastStudent
-    public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(required = false) boolean includeSourceGradeSteps) {
+    public ResponseEntity<BonusResponseDTO> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId,
+            @RequestParam(required = false) boolean includeSourceGradeSteps) {
         log.debug("REST request to get bonus for exam: {}", examId);
         ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
         api.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
 
         var bonus = bonusRepository.findAllByBonusToExamId(examId).stream().findAny().orElseThrow(() -> new EntityNotFoundException("BonusToGradingScale exam", examId));
         bonus.setBonusStrategy(bonus.getBonusToGradingScale().getBonusStrategy());
-        filterBonusForResponse(bonus, includeSourceGradeSteps);
 
         GradingScale sourceGradingScale = bonus.getSourceGradingScale();
         if (sourceGradingScale != null && sourceGradingScale.getCourse() != null) {
+            // Override the source course's max points with the actually reachable points so the client computes grades correctly.
             sourceGradingScale.getCourse().setMaxPoints((int) getSourceReachablePoints(sourceGradingScale));
         }
 
-        return ResponseEntity.ok(bonus);
+        return ResponseEntity.ok(BonusResponseDTO.of(bonus, includeSourceGradeSteps));
     }
 
     private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double bonusToAchievedPoints, Double sourceAchievedPoints,
@@ -163,24 +166,32 @@ public class BonusResource {
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the exam to which the bonus belongs
-     * @param bonus    the bonus which will be created
+     * @param bonusDTO the bonus which will be created
      * @return ResponseEntity with status 201 (Created) with body the new bonus if no such exists for the course
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping({ "courses/{courseId}/exams/{examId}/bonuses", "courses/{courseId}/exams/{examId}/bonus" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<Bonus> createBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) throws URISyntaxException {
+    public ResponseEntity<BonusResponseDTO> createBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody BonusRequestDTO bonusDTO)
+            throws URISyntaxException {
         log.debug("REST request to create a bonus for exam: {}", examId);
-        if (bonus.getId() != null) {
+        if (bonusDTO.id() != null) {
             throw new BadRequestAlertException("A new bonus cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
         ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
         api.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        GradingScale sourceGradingScaleFromDb = gradingScaleRepository.findById(bonus.getSourceGradingScale().getId()).orElseThrow();
-        bonus.setSourceGradingScale(sourceGradingScaleFromDb);
+        if (bonusDTO.sourceGradingScaleId() == null) {
+            throw new BadRequestAlertException("A bonus requires a source grading scale", ENTITY_NAME, "sourceGradingScaleMissing");
+        }
+        GradingScale sourceGradingScaleFromDb = gradingScaleRepository.findById(bonusDTO.sourceGradingScaleId()).orElseThrow();
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScaleFromDb);
+
+        Bonus bonus = new Bonus();
+        bonus.setWeight(bonusDTO.weight());
+        bonus.setBonusStrategy(bonusDTO.bonusStrategy());
+        bonus.setSourceGradingScale(sourceGradingScaleFromDb);
 
         GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
         if (bonusRepository.existsByBonusToGradingScaleId(bonusToGradingScale.getId())) {
@@ -194,34 +205,8 @@ public class BonusResource {
         Bonus savedBonus = bonusService.saveBonus(bonus, true);
         gradingScaleRepository.save(bonusToGradingScale);
 
-        filterBonusForResponse(savedBonus, false);
         return ResponseEntity.created(new URI("/api/assessment/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
-    }
-
-    /**
-     * Sets redundant fields to null to save bandwidth and prevent circular dependencies.
-     * <p>
-     * Warning: Modifies the input argument.
-     *
-     * @param bonus that will be modified
-     */
-    private void filterBonusForResponse(Bonus bonus, boolean includeSourceGradeSteps) {
-        if (bonus == null) {
-            return;
-        }
-
-        GradingScale bonusTo = bonus.getBonusToGradingScale();
-        if (bonusTo != null) {
-            // This line breaks the circular dependency between savedBonus and bonusToGradingScale
-            bonusTo.setBonusFrom(null);
-            bonusTo.setGradeSteps(null);
-        }
-
-        GradingScale source = bonus.getSourceGradingScale();
-        if (source != null && !includeSourceGradeSteps) {
-            source.setGradeSteps(null);
-        }
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(BonusResponseDTO.of(savedBonus, false));
     }
 
     /**
@@ -235,10 +220,11 @@ public class BonusResource {
      */
     @PutMapping({ "courses/{courseId}/exams/{examId}/bonuses/{bonusId}", "courses/{courseId}/exams/{examId}/bonus/{bonusId}" })
     @EnforceAtLeastInstructor
-    public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId, @RequestBody Bonus updatedBonus) {
+    public ResponseEntity<BonusResponseDTO> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId,
+            @RequestBody BonusRequestDTO updatedBonus) {
         log.debug("REST request to update a updatedBonus: {}", bonusId);
 
-        if (!Objects.equals(updatedBonus.getId(), bonusId)) {
+        if (!Objects.equals(updatedBonus.id(), bonusId)) {
             throw new ConflictException("The updatedBonus id in the body and path do not match", ENTITY_NAME, "bonusIdMismatch");
         }
 
@@ -253,24 +239,29 @@ public class BonusResource {
                 .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", bonusId));
 
         boolean isSourceGradeScaleUpdated = false;
-        if (updatedBonus.getSourceGradingScale() != null && !existingBonus.getSourceGradingScale().getId().equals(updatedBonus.getSourceGradingScale().getId())) {
-            var sourceFromDb = gradingScaleRepository.findById(updatedBonus.getSourceGradingScale().getId()).orElseThrow();
+        if (updatedBonus.sourceGradingScaleId() != null && !existingBonus.getSourceGradingScale().getId().equals(updatedBonus.sourceGradingScaleId())) {
+            var sourceFromDb = gradingScaleRepository.findById(updatedBonus.sourceGradingScaleId()).orElseThrow();
             existingBonus.setSourceGradingScale(sourceFromDb);
             checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
             isSourceGradeScaleUpdated = true;
         }
 
-        // Apply values from the detached entity to the managed entity
-        existingBonus.setWeight(updatedBonus.getWeight());
-        existingBonus.setBonusStrategy(updatedBonus.getBonusStrategy());
+        // Apply values from the request DTO to the managed entity
+        existingBonus.setWeight(updatedBonus.weight());
+        existingBonus.setBonusStrategy(updatedBonus.bonusStrategy());
 
         bonusToGradingScale.addBonusFrom(existingBonus);
-        bonusToGradingScale.setBonusStrategy(updatedBonus.getBonusStrategy());
+        bonusToGradingScale.setBonusStrategy(updatedBonus.bonusStrategy());
+
+        // Validate grade types up front so a rejected update commits nothing (neither the bonusTo strategy below nor the
+        // bonus itself). The grading-scale save must stay before saveBonus: saveBonus(existingBonus) is the authoritative
+        // last write for the bonus's own fields (weight/source); otherwise the eagerly-loaded bonusFrom cascade from the
+        // grading-scale save overwrites the update with stale state.
+        bonusService.validateBonusGradeTypes(existingBonus, isSourceGradeScaleUpdated);
         gradingScaleRepository.save(bonusToGradingScale);
         Bonus savedBonus = bonusService.saveBonus(existingBonus, isSourceGradeScaleUpdated);
 
-        filterBonusForResponse(savedBonus, false);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(BonusResponseDTO.of(savedBonus, false));
     }
 
     private void checkIsAtLeastInstructorForGradingScaleCourse(GradingScale gradingScale) {
