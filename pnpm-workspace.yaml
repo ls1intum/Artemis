@@ -19,9 +19,10 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
-# Supply-chain guard: pnpm rejects dependencies published too recently. @tumaet/apollon is our own
-# org's package (ls1intum/tumaet) and we intentionally consume its just-released versions, so exempt
-# it from the minimum-release-age delay. The third-party deps stay under the guard.
+# Supply-chain: exempt our own @tumaet/apollon from pnpm's minimum-release-age delay. 5.0.0 was
+# published from ls1intum/Apollon (our org) hours before this bump, so any release-age guard would
+# otherwise block it. Temporary exception for the fresh cut — safe to drop once 5.0.0 has aged;
+# third-party deps are intentionally left under the guard.
 minimumReleaseAgeExclude:
     - '@tumaet/apollon'
 

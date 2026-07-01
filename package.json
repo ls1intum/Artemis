@@ -38,7 +38,7 @@
         "@sentry/core": "10.57.0",
         "@stomp/rx-stomp": "2.4.0",
         "@stomp/stompjs": "7.3.0",
-        "@tumaet/apollon": "file:vendor/tumaet-apollon-5.0.0.tgz",
+        "@tumaet/apollon": "5.0.0",
         "@vscode/codicons": "0.0.45",
         "@vscode/markdown-it-katex": "1.1.2",
         "bootstrap": "5.3.8",
