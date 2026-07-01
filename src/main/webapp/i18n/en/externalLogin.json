@@ -1,0 +1,17 @@
+{
+    "artemisApp": {
+        "externalLogin": {
+            "pageTitle": "Sign in to external client",
+            "redirecting": "Signing you in…",
+            "openHint": "If your editor does not open automatically, use the button below.",
+            "openManually": "Open editor",
+            "backHome": "Back to Artemis",
+            "error": {
+                "title": "Sign-in could not be completed",
+                "description": "The sign-in request is invalid or was rejected. Please start the sign-in again from your editor.",
+                "missingParams": "The sign-in link is missing required information. Please start the sign-in again from your editor.",
+                "codeIssuanceFailed": "The sign-in request could not be completed. Please start the sign-in again from your editor."
+            }
+        }
+    }
+}

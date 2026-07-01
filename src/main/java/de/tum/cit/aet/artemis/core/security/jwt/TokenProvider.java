@@ -138,8 +138,6 @@ public class TokenProvider {
      */
     @NonNull
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
-        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
-
         AuthenticationMethod authenticationMethod = AuthenticationMethod.fromAuthentication(authentication);
         if (authenticatedWithPasskey != null && authenticatedWithPasskey) {
             authenticationMethod = AuthenticationMethod.PASSKEY;
@@ -149,6 +147,47 @@ public class TokenProvider {
         if (authenticationMethod == AuthenticationMethod.PASSKEY && authentication.getDetails() instanceof Map<?, ?> details) {
             isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
         }
+
+        return buildToken(authentication, issuedAt, expiration, tool, authenticationMethod, isPasskeyApproved);
+    }
+
+    /**
+     * Creates a JWT for the given authentication with <b>explicitly supplied</b> authentication-method and
+     * passkey-approval claims, instead of deriving them from the (often claim-less) {@link Authentication}.
+     * <p>
+     * Used when re-minting a token from an existing session JWT (the external-client login handoff and the silent
+     * passkey token rotation), where the source {@link Authentication} is a plain
+     * {@link UsernamePasswordAuthenticationToken} rebuilt from claims and therefore no longer carries the original
+     * authentication method or passkey-approval. Passing them explicitly prevents a passkey/SAML session from
+     * silently degrading to a {@code password} token and prevents an approved passkey from losing its approval.
+     *
+     * @param authentication       the principal and authorities source
+     * @param issuedAt             the issued-at date, or now if {@code null}
+     * @param expiration           the expiration date
+     * @param tool                 the tool this token is used for, or {@code null} for a general access token
+     * @param authenticationMethod the authentication method to record; falls back to the authentication and then to
+     *                                 {@link AuthenticationMethod#PASSWORD} if {@code null}
+     * @param isPasskeyApproved    whether the passkey was super-admin approved
+     * @return JWT Token
+     */
+    @NonNull
+    public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool,
+            @Nullable AuthenticationMethod authenticationMethod, boolean isPasskeyApproved) {
+        AuthenticationMethod method = authenticationMethod != null ? authenticationMethod : AuthenticationMethod.fromAuthentication(authentication);
+        if (method == null) {
+            method = AuthenticationMethod.PASSWORD;
+        }
+        return buildToken(authentication, issuedAt, expiration, tool, method, isPasskeyApproved);
+    }
+
+    /**
+     * Builds and signs the JWT with the given claims. Shared by the claim-deriving and the explicit-claim
+     * {@code createToken} overloads so the token shape stays identical regardless of how the claims were obtained.
+     */
+    @NonNull
+    private String buildToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool,
+            @Nullable AuthenticationMethod authenticationMethod, boolean isPasskeyApproved) {
+        String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         // @formatter:off
         JwtBuilder jwtBuilder = Jwts.builder()

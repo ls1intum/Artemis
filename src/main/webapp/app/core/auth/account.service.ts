@@ -370,6 +370,17 @@ export class AccountService implements IAccountService {
     }
 
     /**
+     * Issues a one-time code for the external-client browser login handoff (e.g. the VS Code extension).
+     * Called from the guarded external-login page after the user has authenticated by any method.
+     *
+     * @param body the PKCE S256 code challenge and the external client's callback URI
+     * @return the one-time code to hand back to the external client
+     */
+    issueExternalLoginCode(body: { codeChallenge: string; callback: string }): Observable<{ code: string }> {
+        return this.http.post<{ code: string }>('api/core/external-login/code', body);
+    }
+
+    /**
      * Sends a request to the server to obtain the VCS access token for a specific participation.
      * Users can use this access token to clone the repository belonging to a participation.
      *

@@ -91,6 +91,18 @@ describe('AccountService', () => {
         expect(sshKey.label).toBe('test-label');
     });
 
+    it('should issue an external-login code', () => {
+        const body = { codeChallenge: 'the-challenge', callback: 'vscode://aet-tum.iris-thaumantias/external-login-callback' };
+        let received: { code: string } | undefined;
+        accountService.issueExternalLoginCode(body).subscribe((res) => (received = res));
+
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/core/external-login/code' });
+        expect(req.request.body).toEqual(body);
+        req.flush({ code: 'one-time-code' });
+
+        expect(received).toEqual({ code: 'one-time-code' });
+    });
+
     it('should fetch the user on identity if the userIdentity is defined yet (force=true)', async () => {
         accountService.userIdentity.set(user);
         expect(accountService.userIdentity()).toEqual(user);

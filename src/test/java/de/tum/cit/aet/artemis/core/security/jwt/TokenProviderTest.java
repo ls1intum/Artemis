@@ -286,6 +286,46 @@ class TokenProviderTest {
 
     }
 
+    @Nested
+    class CreateTokenWithExplicitClaimsTests {
+
+        @Test
+        void shouldHonorExplicitMethodAndApproval() {
+            // A plain username/password authentication carries no passkey info, yet the explicit claims must be recorded
+            // (this is the seam used when re-minting from an existing session JWT: external-login handoff, passkey rotation).
+            Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
+            Date expiration = new Date(System.currentTimeMillis() + ONE_MINUTE);
+
+            String token = tokenProvider.createToken(authentication, null, expiration, null, AuthenticationMethod.PASSKEY, true);
+
+            assertThat(tokenProvider.getAuthenticationMethod(token)).isEqualTo(AuthenticationMethod.PASSKEY);
+            assertThat(tokenProvider.isPasskeySuperAdminApproved(token)).isTrue();
+        }
+
+        @Test
+        void shouldRecordSaml2MethodExplicitly() {
+            Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
+            Date expiration = new Date(System.currentTimeMillis() + ONE_MINUTE);
+
+            String token = tokenProvider.createToken(authentication, null, expiration, null, AuthenticationMethod.SAML2, false);
+
+            assertThat(tokenProvider.getAuthenticationMethod(token)).isEqualTo(AuthenticationMethod.SAML2);
+            assertThat(tokenProvider.isPasskeySuperAdminApproved(token)).isFalse();
+        }
+
+        @Test
+        void shouldFallBackToAuthenticationDerivedMethodWhenExplicitMethodIsNull() {
+            // A null explicit method falls back to deriving it from the authentication (here: PASSWORD), never null.
+            Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
+            Date expiration = new Date(System.currentTimeMillis() + ONE_MINUTE);
+
+            String token = tokenProvider.createToken(authentication, null, expiration, null, null, false);
+
+            assertThat(tokenProvider.getAuthenticationMethod(token)).isEqualTo(AuthenticationMethod.PASSWORD);
+        }
+
+    }
+
     private String createUnsupportedToken() {
         return Jwts.builder().content("payload").signWith(key, Jwts.SIG.HS512).compact();
     }
