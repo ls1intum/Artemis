@@ -19,10 +19,10 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
-# Supply-chain: exempt our own @tumaet/apollon from pnpm's minimum-release-age delay. 5.0.0 was
-# published from ls1intum/Apollon (our org) hours before this bump, so any release-age guard would
-# otherwise block it. Temporary exception for the fresh cut — safe to drop once 5.0.0 has aged;
-# third-party deps are intentionally left under the guard.
+# Supply-chain: exempt our own @tumaet/apollon from pnpm's minimum-release-age delay. It is
+# maintained in our org (ls1intum/Apollon) and Artemis tracks its releases closely, so the
+# freshness delay would otherwise block legitimate upgrades. Third-party deps stay under the
+# guard. Revisit if Artemis ever pins Apollon to already-aged versions.
 minimumReleaseAgeExclude:
     - '@tumaet/apollon'
 
