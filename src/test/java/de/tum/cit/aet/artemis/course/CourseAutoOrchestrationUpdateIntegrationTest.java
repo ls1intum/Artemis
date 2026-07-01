@@ -56,14 +56,13 @@ class CourseAutoOrchestrationUpdateIntegrationTest extends AbstractSpringIntegra
         // A fresh course has no configuration row at all.
         assertThat(autoOrchestrationConfigurationRepository.findConfigByCourseId(course.getId())).isEmpty();
 
-        // The read-only autoOrchestratorEnabled flag is projected from the (here serialized) configuration.
         var configuration = new CourseAutoOrchestrationConfiguration();
         configuration.setEnabled(true);
         course.setAutoOrchestrationConfiguration(configuration);
 
-        Course updatedCourse = updateCourse(course);
-
-        assertThat(updatedCourse.getAutoOrchestratorEnabled()).isTrue();
+        // getAutoOrchestratorEnabled() is a READ_ONLY JSON projection (dropped on deserialization), so it cannot be
+        // asserted on the round-tripped response Course; the persistence check below is the authoritative assertion.
+        updateCourse(course);
 
         // Verify the configuration was persisted, proving the update path loaded and attached the managed
         // entity without relying on the eager findForUpdateById graph.

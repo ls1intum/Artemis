@@ -138,12 +138,16 @@ public record CourseUpdateDTO(
         }
         CourseAutoOrchestrationConfiguration autoOrchestrationConfiguration = course.getAutoOrchestrationConfiguration();
         boolean hasConfigToPersist = autoOrchestratorEnabled || debounceWindowSecondsOverride != null || maxDailyOrchestrationOverride != null;
-        if (autoOrchestrationConfiguration == null && hasConfigToPersist) {
-            autoOrchestrationConfiguration = new CourseAutoOrchestrationConfiguration();
-            autoOrchestrationConfiguration.setCourse(course);
-            course.setAutoOrchestrationConfiguration(autoOrchestrationConfiguration);
+        if (!hasConfigToPersist) {
+            // Fully default again: drop any existing row (orphanRemoval) so a row exists only for customized courses.
+            course.setAutoOrchestrationConfiguration(null);
         }
-        if (autoOrchestrationConfiguration != null) {
+        else {
+            if (autoOrchestrationConfiguration == null) {
+                autoOrchestrationConfiguration = new CourseAutoOrchestrationConfiguration();
+                autoOrchestrationConfiguration.setCourse(course);
+                course.setAutoOrchestrationConfiguration(autoOrchestrationConfiguration);
+            }
             autoOrchestrationConfiguration.setEnabled(autoOrchestratorEnabled);
             autoOrchestrationConfiguration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
             autoOrchestrationConfiguration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
