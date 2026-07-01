@@ -3,7 +3,7 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TooltipModule } from 'primeng/tooltip';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faMessage, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -14,6 +14,10 @@ import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-a
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { FormsModule } from '@angular/forms';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
 
@@ -27,7 +31,16 @@ interface FeedbackTypeConfig {
     standalone: true,
     templateUrl: './unified-feedback.component.html',
     styleUrls: ['./unified-feedback.component.scss'],
-    imports: [NgClass, FaIconComponent, TooltipModule],
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TooltipModule,
+        FormsModule,
+        ConfirmIconComponent,
+        GradingInstructionLinkIconComponent,
+        FeedbackSuggestionBadgeComponent,
+        AssessmentCorrectionRoundBadgeComponent,
+    ],
 })
 export class UnifiedFeedbackComponent implements AfterViewInit {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
@@ -144,6 +157,24 @@ export class UnifiedFeedbackComponent implements AfterViewInit {
     readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
 
     readonly canDismissWithoutConfirm = computed(() => this.feedbackCredits() === 0 && (this.feedbackDetail() ?? '').length === 0);
+
+    readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
+    readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
+    readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
+    readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
+    readonly gradingInstructionText = computed(() => this.feedback()?.gradingInstruction?.feedback);
+    readonly correctionStatusLabel = computed(() => {
+        const status = this.feedback()?.correctionStatus;
+        return status ? this.artemisTranslatePipe.transform(`artemisApp.exampleSubmission.feedback.${status}`) : undefined;
+    });
+    readonly isCorrectionStatusCorrect = computed(() => this.feedback()?.correctionStatus === 'CORRECT');
+
+    protected readonly Feedback = Feedback;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrashAlt = faTrashAlt;
+    protected readonly faCheck = faCheck;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';

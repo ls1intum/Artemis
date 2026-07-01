@@ -308,4 +308,79 @@ describe('UnifiedFeedbackComponent', () => {
 
         expect(emitSpy).toHaveBeenCalledOnce();
     });
+
+    it('should render an editable header with title input, points input, and delete toolbar', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(2);
+        component.feedbackDetail.set('Some detail');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const titleInput = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLInputElement;
+        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+        const detailInput = fixture.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement;
+
+        expect(titleInput).toBeTruthy();
+        expect(pointsInput).toBeTruthy();
+        expect(detailInput).toBeTruthy();
+        expect(detailInput.value).toBe('Some detail');
+        // credits=2, detail non-empty => confirmation required, so the plain dismiss button must not render
+        expect(fixture.nativeElement.querySelector('#dismiss-icon')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#confirm-icon')).toBeTruthy();
+    });
+
+    it('should render the plain dismiss button when nothing would be lost', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#dismiss-icon')).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('#confirm-icon')).toBeNull();
+    });
+
+    it('should emit onDelete when the plain dismiss button is clicked', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        const emitSpy = vi.fn();
+        component.onDelete.subscribe(emitSpy);
+
+        (fixture.nativeElement.querySelector('#dismiss-icon') as HTMLButtonElement).click();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should render suggestion accept/discard buttons and emit their events', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('isSuggestion', true);
+        fixture.detectChanges();
+        const acceptSpy = vi.fn();
+        const discardSpy = vi.fn();
+        component.onAcceptSuggestion.subscribe(acceptSpy);
+        component.onDiscardSuggestion.subscribe(discardSpy);
+
+        (fixture.nativeElement.querySelector('#accept-suggestion') as HTMLButtonElement).click();
+        (fixture.nativeElement.querySelector('#discard-suggestion') as HTMLButtonElement).click();
+
+        expect(acceptSpy).toHaveBeenCalledOnce();
+        expect(discardSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should show the grading instruction label and lock the points input when a grading instruction is attached', async () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const label = fixture.nativeElement.querySelector('.unified-feedback-rubric-label');
+        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+
+        expect(label?.textContent).toContain('Fixed rubric text');
+        expect(pointsInput.disabled).toBe(true);
+    });
 });
