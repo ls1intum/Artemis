@@ -96,16 +96,21 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     >(undefined);
     protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
+    // Tabs whose page title moves into the sidebar header (so the title bar hides its default title when expanded).
+    // Iris is intentionally excluded: it has no sidebar header to host the title, so its title bar keeps the title.
     protected readonly titleInSidebar = computed(() => {
         const componentRef = this.activatedComponentReference();
         return (
             componentRef instanceof CourseLecturesComponent ||
             componentRef instanceof CourseTutorialGroupsComponent ||
             componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent ||
-            componentRef instanceof CourseIrisComponent
+            componentRef instanceof CourseConversationsComponent
         );
     });
+
+    // Tabs whose collapse toggle moves into the sidebar/panel (so the title bar hides its toggle when expanded).
+    // Includes Iris, whose toggle lives in the chat-history panel header.
+    protected readonly toggleInSidebar = computed(() => this.titleInSidebar() || this.activatedComponentReference() instanceof CourseIrisComponent);
 
     protected readonly activeSidebarCollapsed = computed<boolean>(() => {
         const componentRef = this.activatedComponentReference();

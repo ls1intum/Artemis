@@ -20,6 +20,9 @@ class MockCourseChatbotComponent {
     toggleChatHistory = vi.fn();
 }
 
+// Structural view of the private chatbot viewChild, so the spies avoid `any`.
+type CourseIrisInternals = { courseChatbot: () => { isChatHistoryOpen: () => boolean; toggleChatHistory: () => void } | undefined };
+
 describe('CourseIrisComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -89,7 +92,7 @@ describe('CourseIrisComponent', () => {
 
     it('should derive isCollapsed from the chatbot chat-history open state', () => {
         const isChatHistoryOpen = signal(true);
-        vi.spyOn(component as any, 'courseChatbot').mockReturnValue({ isChatHistoryOpen, toggleChatHistory: vi.fn() });
+        vi.spyOn(component as unknown as CourseIrisInternals, 'courseChatbot').mockReturnValue({ isChatHistoryOpen, toggleChatHistory: vi.fn() });
 
         expect(component.isCollapsed()).toBe(false);
 
@@ -99,7 +102,7 @@ describe('CourseIrisComponent', () => {
 
     it('should toggle the chatbot chat history when toggleSidebar is called', () => {
         const toggleChatHistory = vi.fn();
-        vi.spyOn(component as any, 'courseChatbot').mockReturnValue({ isChatHistoryOpen: signal(true), toggleChatHistory });
+        vi.spyOn(component as unknown as CourseIrisInternals, 'courseChatbot').mockReturnValue({ isChatHistoryOpen: signal(true), toggleChatHistory });
 
         component.toggleSidebar();
 

@@ -20,6 +20,7 @@ export class CourseTitleBarComponent {
     pageTitle = input('');
     isExamStarted = input(false);
     titleInSidebar = input(false);
+    toggleInSidebar = input(false);
 
     toggleSidebar = output<void>();
 

@@ -773,52 +773,74 @@ describe('CourseOverviewComponent', () => {
     });
 
     describe('sidebar toggle relocation', () => {
+        // Structural view of the protected members under test, so the assertions avoid `any`.
+        type CourseOverviewInternals = {
+            titleInSidebar(): boolean;
+            toggleInSidebar(): boolean;
+            activeSidebarCollapsed(): boolean;
+            handleComponentActivation(componentRef: unknown): void;
+        };
+        const internals = (): CourseOverviewInternals => component as unknown as CourseOverviewInternals;
+
         it('should mark titleInSidebar true for the relocated list tabs', () => {
             for (const Ctor of [CourseLecturesComponent, CourseTutorialGroupsComponent, CourseExamsComponent, CourseConversationsComponent]) {
-                component.activatedComponentReference.set(Object.create(Ctor.prototype));
-                expect((component as any).titleInSidebar()).toBe(true);
+                component.activatedComponentReference.set(Object.create(Ctor.prototype) as InstanceType<typeof Ctor>);
+                expect(internals().titleInSidebar()).toBe(true);
             }
         });
 
         it('should mark titleInSidebar false for tabs that are not relocated', () => {
-            component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype));
-            expect((component as any).titleInSidebar()).toBe(false);
+            component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent);
+            expect(internals().titleInSidebar()).toBe(false);
         });
 
         it('should derive the active sidebar collapsed state from the active child signal', () => {
             const isCollapsed = signal(false);
-            const fakeLectures = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed });
+            const fakeLectures: CourseLecturesComponent = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed });
             component.activatedComponentReference.set(fakeLectures);
 
-            expect((component as any).activeSidebarCollapsed()).toBe(false);
+            expect(internals().activeSidebarCollapsed()).toBe(false);
 
             isCollapsed.set(true);
-            expect((component as any).activeSidebarCollapsed()).toBe(true);
+            expect(internals().activeSidebarCollapsed()).toBe(true);
         });
 
         it('should push the page title into the activated list tab', () => {
             const setPageTitle = vi.fn();
-            const fakeLectures = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed: signal(false), setPageTitle });
+            const fakeLectures: CourseLecturesComponent = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed: signal(false), setPageTitle });
             component.pageTitle.set('overview.lectures');
 
-            component.handleComponentActivation(fakeLectures);
+            internals().handleComponentActivation(fakeLectures);
 
             expect(setPageTitle).toHaveBeenCalledWith('overview.lectures');
         });
 
         it('should return false for activeSidebarCollapsed when there is no active component', () => {
             component.activatedComponentReference.set(undefined);
-            expect((component as any).activeSidebarCollapsed()).toBe(false);
+            expect(internals().activeSidebarCollapsed()).toBe(false);
         });
 
         it('should return false for activeSidebarCollapsed when the active component has no isCollapsed', () => {
-            component.activatedComponentReference.set({} as any);
-            expect((component as any).activeSidebarCollapsed()).toBe(false);
+            component.activatedComponentReference.set({} as unknown as CourseLecturesComponent);
+            expect(internals().activeSidebarCollapsed()).toBe(false);
         });
 
-        it('should mark titleInSidebar true for the Iris tab', () => {
-            component.activatedComponentReference.set(Object.create(CourseIrisComponent.prototype));
-            expect((component as any).titleInSidebar()).toBe(true);
+        it('should keep titleInSidebar false but toggleInSidebar true for the Iris tab', () => {
+            component.activatedComponentReference.set(Object.create(CourseIrisComponent.prototype) as CourseIrisComponent);
+            expect(internals().titleInSidebar()).toBe(false);
+            expect(internals().toggleInSidebar()).toBe(true);
+        });
+
+        it('should mark toggleInSidebar true for the list tabs and Iris', () => {
+            for (const Ctor of [CourseLecturesComponent, CourseTutorialGroupsComponent, CourseExamsComponent, CourseConversationsComponent, CourseIrisComponent]) {
+                component.activatedComponentReference.set(Object.create(Ctor.prototype) as InstanceType<typeof Ctor>);
+                expect(internals().toggleInSidebar()).toBe(true);
+            }
+        });
+
+        it('should mark toggleInSidebar false for tabs that are not relocated', () => {
+            component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent);
+            expect(internals().toggleInSidebar()).toBe(false);
         });
     });
 });
