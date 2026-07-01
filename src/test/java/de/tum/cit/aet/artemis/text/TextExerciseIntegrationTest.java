@@ -1675,6 +1675,40 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void reEvaluateTextExerciseWithCommentOnlyFeedbackDoesNotCrash() throws Exception {
+        // Regression test for re-evaluate with a comment-only feedback: re-evaluation recomputes every result's score
+        // via ResultRepository.calculateTotalPoints, which summed feedback.getCredits() unguarded. A comment-only text
+        // feedback carries no credits (null), so re-evaluation crashed with a 500 (NullPointerException) regardless of
+        // the deleteFeedback flag. The exercise has a grading instruction but the result's feedback is a plain comment
+        // not linked to it.
+        GradingCriterion criterion = de.tum.cit.aet.artemis.exercise.util.ExerciseFactory.generateGradingCriterion("test");
+        Set<GradingInstruction> instructions = de.tum.cit.aet.artemis.exercise.util.ExerciseFactory.generateGradingInstructions(criterion, 1, 0);
+        GradingInstruction instruction = instructions.iterator().next();
+        instruction.setCredits(4);
+        instruction.setUsageCount(0);
+        criterion.setStructuredGradingInstructions(instructions);
+        criterion.setExercise(textExercise);
+        textExercise.setGradingCriteria(new HashSet<>(Set.of(criterion)));
+        gradingCriterionRepository.save(criterion);
+
+        var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        var submission = participationUtilService.addSubmission(participation, ParticipationFactory.generateTextSubmission("test answer", Language.ENGLISH, true));
+        Result result = participationUtilService.addResultToSubmission(participation, submission);
+
+        // A comment-only text feedback with NO credits, not linked to any grading instruction (common in text assessment).
+        Feedback feedback = new Feedback();
+        feedback.setReference("9803f9f56659f1f54bba6c4c7f41c170f523e88b");
+        feedback.setDetailText("test");
+        participationUtilService.addFeedbackToResult(feedback, result);
+
+        // Dogus's flow: change the instruction's grade box, then click Re-evaluate.
+        instruction.setCredits(3);
+        request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate?deleteFeedback=false",
+                de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateTextExerciseWithExampleSubmission() throws Exception {
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
