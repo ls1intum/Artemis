@@ -148,11 +148,14 @@
                     }
                 }
                 @if (
+                    exercise().type === ExerciseType.PROGRAMMING &&
                     athenaEnabled &&
+                    !examMode() &&
                     hasUserAcceptedLLM() &&
                     exercise().allowFeedbackRequests &&
-                    programmingExercise()?.allowOnlineEditor === false &&
-                    (gradedParticipation() || practiceParticipation())
+                    exercise().feedbackSuggestionModule &&
+                    !programmingExercise()?.allowOnlineEditor &&
+                    hasSubmittedProgrammingSubmission()
                 ) {
                     <jhi-request-feedback-button
                         [exercise]="exercise()"
