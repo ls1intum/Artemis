@@ -804,5 +804,15 @@ describe('CourseOverviewComponent', () => {
 
             expect(setPageTitle).toHaveBeenCalledWith('overview.lectures');
         });
+
+        it('should return false for activeSidebarCollapsed when there is no active component', () => {
+            component.activatedComponentReference.set(undefined);
+            expect((component as any).activeSidebarCollapsed()).toBe(false);
+        });
+
+        it('should return false for activeSidebarCollapsed when the active component has no isCollapsed', () => {
+            component.activatedComponentReference.set({} as any);
+            expect((component as any).activeSidebarCollapsed()).toBe(false);
+        });
     });
 });

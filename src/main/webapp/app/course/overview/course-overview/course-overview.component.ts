@@ -112,7 +112,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             return false;
         }
         const collapsed = componentRef.isCollapsed;
-        return typeof collapsed === 'function' ? collapsed() : collapsed;
+        return (typeof collapsed === 'function' ? collapsed() : collapsed) ?? false;
     });
 
     // Icons
