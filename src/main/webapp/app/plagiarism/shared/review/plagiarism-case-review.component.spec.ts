@@ -9,6 +9,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 
 describe('PlagiarismCaseReviewComponent', () => {
     setupTestBed({ zoneless: true });
@@ -24,7 +25,7 @@ describe('PlagiarismCaseReviewComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PlagiarismCaseReviewComponent, MockModule(NgbModule), MockModule(TranslateModule), MockComponent(PlagiarismSplitViewComponent)],
+            imports: [PlagiarismCaseReviewComponent, MockModule(NgbModule), TranslateModule.forRoot(), MockComponent(PlagiarismSplitViewComponent)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismCaseReviewComponent);
@@ -43,6 +44,20 @@ describe('PlagiarismCaseReviewComponent', () => {
     it('should set plagiarismCase input', () => {
         fixture.componentRef.setInput('plagiarismCase', mockPlagiarismCase);
         expect(component.plagiarismCase()).toEqual(mockPlagiarismCase);
+    });
+
+    it('should not render split view for submissions without comparison data', () => {
+        const plagiarismCaseWithoutComparison = {
+            id: 1,
+            exercise: { id: 1 } as Exercise,
+            student: { login: 'student' },
+            plagiarismSubmissions: [{ id: 1 } as PlagiarismSubmission],
+        } as PlagiarismCase;
+
+        fixture.componentRef.setInput('plagiarismCase', plagiarismCaseWithoutComparison);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelectorAll('jhi-plagiarism-split-view')).toHaveLength(0);
     });
 
     it('should set forStudent input to false', () => {
