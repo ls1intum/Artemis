@@ -41,7 +41,7 @@ public class VcsAccessLogService {
 
     private final ParticipationRepository participationRepository;
 
-    @Value("${artemis.version-control.analytics.secret-key:default-vcs-analytics-secure-key}")
+    @Value("${artemis.version-control.analytics.secret-key}")
     private String analyticsSecretKey;
 
     VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository, VcsAnalyticsLogRepository vcsAnalyticsLogRepository, ParticipationRepository participationRepository) {
