@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Objects;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -23,6 +24,10 @@ public class AnalyticsHashUtils {
      * @return the hexadecimal string representation of the calculated HMAC
      */
     private static String calculateHmac(String data, String key) {
+        Objects.requireNonNull(data, "Data for HMAC calculation must not be null");
+        if (key == null || key.isBlank()) {
+            throw new IllegalStateException("VCS analytics secret key must be properly configured and not blank");
+        }
         try {
             SecretKeySpec secretKeySpec = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             Mac mac = Mac.getInstance("HmacSHA256");
@@ -52,6 +57,7 @@ public class AnalyticsHashUtils {
      * @return the assigned {@link ExperimentalGroup} enum constant for the user
      */
     public static ExperimentalGroup getGroup(Long userId, String secretKey) {
+        Objects.requireNonNull(userId, "userId must not be null");
         String hash = calculateHmac(String.valueOf(userId), secretKey);
         int groupIndex = Math.abs(hash.hashCode()) % 4;
         return ExperimentalGroup.values()[groupIndex];
@@ -66,6 +72,8 @@ public class AnalyticsHashUtils {
      * @return a secure hexadecimal string representing the masked user ID
      */
     public static String maskUserId(Long userId, Long courseId, String secretKey) {
+        Objects.requireNonNull(userId, "userId must not be null");
+        Objects.requireNonNull(courseId, "courseId must not be null");
         String input = userId + "-" + courseId;
         return calculateHmac(input, secretKey);
     }
