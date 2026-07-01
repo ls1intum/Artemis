@@ -68,7 +68,10 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 // This is needed to make sure that old exported programming exercises can be imported
                 if (!progEx.buildConfig) {
                     const buildConfig = new ProgrammingExerciseBuildConfig();
-                    const raw = exerciseJson as unknown as Partial<ProgrammingExerciseBuildConfig>;
+                    // Old exports serialized the build-config fields flat on the exercise object (before they were nested
+                    // under buildConfig). Those fields are disjoint from Exercise, so we view the parsed exercise as also
+                    // carrying the optional legacy build-config fields and copy them across.
+                    const raw = exerciseJson as Exercise & Partial<ProgrammingExerciseBuildConfig>;
                     Object.assign(buildConfig, raw);
                     progEx.buildConfig = copyBuildConfigFromExerciseJson(buildConfig);
                 }
