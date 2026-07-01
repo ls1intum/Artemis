@@ -1,7 +1,7 @@
 <form [formGroup]="onlineCourseConfigurationForm" (ngSubmit)="save()" #formDir="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.edit.configurationForCourse" [translateValues]="{ title: course?.title }">
-            LTI Configuration for course {{ course?.title }}
+        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.edit.configurationForCourse" [translateValues]="{ title: course()?.title }">
+            LTI Configuration for course {{ course()?.title }}
         </h4>
     </div>
     <h4 class="modal-title mt-4" id="generalConfiguration" jhiTranslate="artemisApp.lti.generalConfiguration"></h4>
@@ -27,7 +27,7 @@
             class="form-check-input"
             name="requireExistingUser"
             id="field_requireExistingUser"
-            [checked]="course.onlineCourseConfiguration?.requireExistingUser"
+            [checked]="course().onlineCourseConfiguration?.requireExistingUser"
             formControlName="requireExistingUser"
         />
         <label class="form-control-label" jhiTranslate="artemisApp.lti.requireExistingUser" for="field_requireExistingUser"></label>
@@ -42,8 +42,8 @@
                 <div ngbDropdown class="d-inline-block me-2">
                     <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
                         {{
-                            onlineCourseConfiguration.ltiPlatformConfiguration
-                                ? getLtiPlatform(onlineCourseConfiguration.ltiPlatformConfiguration)
+                            onlineCourseConfiguration().ltiPlatformConfiguration
+                                ? getLtiPlatform(onlineCourseConfiguration().ltiPlatformConfiguration!)
                                 : ('artemisApp.lti13.selectExternalTool' | artemisTranslate)
                         }}
                     </button>
@@ -52,7 +52,7 @@
                             <button
                                 type="button"
                                 (click)="setPlatform(platform)"
-                                [class.selected]="platform.id === onlineCourseConfiguration.ltiPlatformConfiguration?.id"
+                                [class.selected]="platform.id === onlineCourseConfiguration().ltiPlatformConfiguration?.id"
                                 [ngbTooltip]="platform.customName"
                                 ngbDropdownItem
                             >
@@ -64,16 +64,7 @@
                                 <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage() }" />
                             </div>
                             <div class="row justify-content-center">
-                                <ngb-pagination
-                                    [collectionSize]="totalItems()"
-                                    [(page)]="page"
-                                    [pageSize]="itemsPerPage()"
-                                    [maxSize]="5"
-                                    [rotate]="true"
-                                    [boundaryLinks]="true"
-                                    (pageChange)="transition()"
-                                    [disabled]="false"
-                                />
+                                <p-paginator [first]="(page() - 1) * itemsPerPage()" [rows]="itemsPerPage()" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
                             </div>
                         </div>
                     </div>

@@ -40,7 +40,6 @@
             "showMore": "Mehr anzeigen",
             "showLess": "Weniger anzeigen",
             "manage": "Verwalten",
-            "studentView": "Studentenansicht",
             "general": {
                 "noDataFound": "Keine Einträge gefunden.",
                 "noElementFoundWithAppliedFilter": "Keine Einträge für die angewendeten Filtereinstellungen gefunden."
@@ -123,7 +122,6 @@
                 "calendar": "Kalender"
             },
             "exerciseFilter": {
-                "filter": "Filter",
                 "modalTitle": "Aufgaben Filtern",
                 "dueDateRange": "Zeitraum der Einreichungsfrist",
                 "achievedScore": "Erreichtes Ergebnis",

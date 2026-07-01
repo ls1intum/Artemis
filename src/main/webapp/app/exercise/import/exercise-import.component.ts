@@ -1,4 +1,4 @@
-import { Component, Injector, OnInit, computed, inject, input } from '@angular/core';
+import { Component, Injector, OnInit, computed, inject, input, signal } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
@@ -14,7 +14,8 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule } from 'primeng/paginator';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
 
@@ -28,7 +29,7 @@ const DEFAULT_SORT_COLUMN = 'ID';
 @Component({
     selector: 'jhi-exercise-import',
     templateUrl: './exercise-import.component.html',
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExerciseCourseTitlePipe],
+    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, PaginatorModule, ExerciseCourseTitlePipe],
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     private injector = inject(Injector);
@@ -47,8 +48,8 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
         () => (this.dialogConfig?.data as ExerciseImportDialogData | undefined)?.programmingLanguage ?? this.programmingLanguage(),
     );
 
-    isCourseFilter = true;
-    isExamFilter = true;
+    readonly isCourseFilter = signal(true);
+    readonly isExamFilter = signal(true);
 
     titleKey: string;
 
@@ -98,12 +99,12 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     protected createOptions(): object {
-        return { isCourseFilter: this.isCourseFilter, isExamFilter: this.isExamFilter, programmingLanguage: this.selectedProgrammingLanguage() };
+        return { isCourseFilter: this.isCourseFilter(), isExamFilter: this.isExamFilter(), programmingLanguage: this.selectedProgrammingLanguage() };
     }
 
     override set sortedColumn(sortedColumn: string) {
         if (sortedColumn === 'COURSE_TITLE') {
-            if (this.isExamFilter && !this.isCourseFilter) {
+            if (this.isExamFilter() && !this.isCourseFilter()) {
                 sortedColumn = 'EXAM_TITLE';
             }
             // sort by course / exam title is not possible if course and exam exercises are mixed
@@ -118,13 +119,13 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     onCourseFilterChange() {
-        this.isCourseFilter = !this.isCourseFilter;
+        this.isCourseFilter.update((value) => !value);
         this.resetSortOnFilterChange();
         this.search.next();
     }
 
     onExamFilterChange() {
-        this.isExamFilter = !this.isExamFilter;
+        this.isExamFilter.update((value) => !value);
         this.resetSortOnFilterChange();
         this.search.next();
     }

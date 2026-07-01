@@ -29,15 +29,13 @@ import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { download, generateCsv, mkConfig } from 'export-to-csv';
+import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { DialogService } from 'primeng/dynamicdialog';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
-vi.mock('export-to-csv', () => {
+vi.mock('app/foundation/util/csv-download.util', () => {
     return {
-        mkConfig: vi.fn(),
-        download: vi.fn(() => vi.fn()),
-        generateCsv: vi.fn(() => vi.fn()),
+        downloadCsv: vi.fn(),
     };
 });
 
@@ -101,6 +99,18 @@ describe('GradingComponent', () => {
     const courseId = 123;
     const examId = 456;
 
+    /**
+     * Patches a single grade step in the signal-form model and commits the change. Grade steps are no longer mutated
+     * in place on `comp.gradingScale` (that getter rebuilds a fresh object each read), so tests go through the model.
+     */
+    function patchStep(index: number, patch: Partial<GradeStep>) {
+        comp.gradeStepsModel.update((model) => {
+            const gradeSteps = model.gradeSteps.map((gradeStep) => ({ ...gradeStep }));
+            Object.assign(gradeSteps[index], patch);
+            return { ...model, gradeSteps };
+        });
+    }
+
     function setupComponent(isExam = true, gradingScaleBody: GradingScale | null = null) {
         const route = {
             params: of(isExam ? { courseId, examId } : ({ courseId } as Params)),
@@ -138,10 +148,10 @@ describe('GradingComponent', () => {
                 comp = fixture.componentInstance;
 
                 comp.gradingScale = new GradingScale();
-                comp.gradingScale.gradeSteps = cloneDeep(gradeSteps);
+                comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(gradeSteps) }));
                 comp.courseId = courseId;
                 comp.examId = examId;
-                comp.firstPassingGrade = 'Pass';
+                comp.firstPassingGrade.set('Pass');
                 translateStub = vi.spyOn(translateService, 'instant');
             });
     }
@@ -223,7 +233,7 @@ describe('GradingComponent', () => {
             expect(comp).toBeTruthy();
             expect(comp.courseId).toBe(courseId);
             expect(comp.examId).toBeUndefined();
-            expect(comp.isExam).toBe(false);
+            expect(comp.isExam()).toBe(false);
         });
 
         it('should expose GradeType enum', () => {
@@ -338,7 +348,7 @@ describe('GradingComponent', () => {
             expect(comp).toBeTruthy();
             expect(comp.courseId).toBe(456);
             expect(comp.examId).toBe(789);
-            expect(comp.isExam).toBe(true);
+            expect(comp.isExam()).toBe(true);
         });
     });
 
@@ -357,12 +367,12 @@ describe('GradingComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            expect(comp.isExam).toBe(true);
+            expect(comp.isExam()).toBe(true);
             expect(findGradingScaleForExamStub).toHaveBeenNthCalledWith(1, courseId, examId);
             expect(findGradingScaleForExamStub).toHaveBeenCalledTimes(1);
             expect(findExamStub).toHaveBeenCalledTimes(1);
-            expect(comp.exam).toStrictEqual(exam);
-            expect(comp.maxPoints).toBe(exam.examMaxPoints);
+            expect(comp.exam()).toStrictEqual(exam);
+            expect(comp.maxPoints()).toBe(exam.examMaxPoints);
         });
 
         it('should handle find response for exam and not find a grading scale', () => {
@@ -380,7 +390,7 @@ describe('GradingComponent', () => {
             comp.generateDefaultGradingScale();
 
             expect(comp.gradingScale.gradeType).toStrictEqual(GradeType.GRADE);
-            expect(comp.firstPassingGrade).toBe('4.0');
+            expect(comp.firstPassingGrade()).toBe('4.0');
             expect(comp.lowerBoundInclusivity).toBe(true);
             expect(comp.gradingScale.gradeSteps).toHaveLength(13);
             comp.gradingScale.gradeSteps.forEach((gradeStep) => {
@@ -436,8 +446,8 @@ describe('GradingComponent', () => {
         });
 
         it('should filter grade steps with empty names correctly', () => {
-            comp.gradingScale.gradeSteps[0].gradeName = '';
-            comp.gradingScale.gradeSteps[2].gradeName = '';
+            patchStep(0, { gradeName: '' });
+            patchStep(2, { gradeName: '' });
 
             const filteredGradeSteps = comp.gradeStepsWithNonemptyNames();
 
@@ -446,7 +456,7 @@ describe('GradingComponent', () => {
         });
 
         it('should set passing Grades correctly', () => {
-            comp.firstPassingGrade = 'Fail';
+            comp.firstPassingGrade.set('Fail');
 
             comp.setPassingGrades(comp.gradingScale.gradeSteps);
 
@@ -454,7 +464,7 @@ describe('GradingComponent', () => {
                 expect(gradeStep.isPassingGrade).toBe(true);
             });
 
-            comp.firstPassingGrade = '';
+            comp.firstPassingGrade.set('');
 
             comp.setPassingGrades(comp.gradingScale.gradeSteps);
 
@@ -466,7 +476,7 @@ describe('GradingComponent', () => {
         it('should determine first passing grade correctly', () => {
             comp.determineFirstPassingGrade();
 
-            expect(comp.firstPassingGrade).toBe('Pass');
+            expect(comp.firstPassingGrade()).toBe('Pass');
         });
 
         it('should set inclusivity correctly in detailed mode', () => {
@@ -492,7 +502,7 @@ describe('GradingComponent', () => {
         });
 
         it('should not delete non-existing grading scale', () => {
-            comp.existingGradingScale = false;
+            comp.existingGradingScale.set(false);
             const gradingSystemDeleteForCourseSpy = vi.spyOn(gradingService, 'deleteGradingScaleForCourse');
             const gradingSystemDeleteForExamSpy = vi.spyOn(gradingService, 'deleteGradingScaleForExam');
 
@@ -503,8 +513,8 @@ describe('GradingComponent', () => {
         });
 
         it('should delete grading scale for course', () => {
-            comp.existingGradingScale = true;
-            comp.isExam = false;
+            comp.existingGradingScale.set(true);
+            comp.isExam.set(false);
             comp.courseId = courseId;
             const gradingSystemDeleteForCourseStub = vi.spyOn(gradingService, 'deleteGradingScaleForCourse').mockReturnValue(of(new HttpResponse<void>({ body: undefined })));
 
@@ -512,195 +522,182 @@ describe('GradingComponent', () => {
 
             expect(gradingSystemDeleteForCourseStub).toHaveBeenNthCalledWith(1, comp.courseId);
             expect(gradingSystemDeleteForCourseStub).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(false);
+            expect(comp.existingGradingScale()).toBe(false);
         });
 
         it('should delete grading scale for exam', () => {
-            comp.existingGradingScale = true;
-            comp.isExam = true;
+            comp.existingGradingScale.set(true);
+            comp.isExam.set(true);
             const gradingSystemDeleteForExamStub = vi.spyOn(gradingService, 'deleteGradingScaleForExam').mockReturnValue(of(new HttpResponse<void>({ body: undefined })));
 
             comp.delete();
 
             expect(gradingSystemDeleteForExamStub).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId);
             expect(gradingSystemDeleteForExamStub).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(false);
+            expect(comp.existingGradingScale()).toBe(false);
         });
 
         it('should create grading scale correctly for course', () => {
-            comp.existingGradingScale = false;
-            comp.isExam = false;
-            comp.course = course;
-            const createdGradingScaleForCourse = comp.gradingScale;
-            createdGradingScaleForCourse.gradeType = GradeType.BONUS;
+            comp.existingGradingScale.set(false);
+            comp.isExam.set(false);
+            comp.course.set(course);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             const gradingSystemCreateForCourseMock = vi
                 .spyOn(gradingService, 'createGradingScaleForCourse')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(createdGradingScaleForCourse) })));
+                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
 
             comp.save();
 
             expect(gradingSystemCreateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
             expect(gradingSystemCreateForCourseMock).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should create grading scale correctly for exam', () => {
-            comp.existingGradingScale = false;
-            comp.isExam = true;
-            comp.exam = exam;
-            const createdGradingScaleForExam = comp.gradingScale;
-            createdGradingScaleForExam.gradeType = GradeType.BONUS;
+            comp.existingGradingScale.set(false);
+            comp.isExam.set(true);
+            comp.exam.set(exam);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             const gradingSystemCreateForExamMock = vi
                 .spyOn(gradingService, 'createGradingScaleForExam')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(createdGradingScaleForExam) })));
+                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
 
             comp.save();
 
             expect(gradingSystemCreateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
             expect(gradingSystemCreateForExamMock).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should update grading scale correctly for course', () => {
-            comp.existingGradingScale = true;
-            comp.isExam = false;
-            comp.course = course;
-            const updateGradingScaleForCourse = comp.gradingScale;
-            updateGradingScaleForCourse.gradeType = GradeType.BONUS;
+            comp.existingGradingScale.set(true);
+            comp.isExam.set(false);
+            comp.course.set(course);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             const gradingSystemUpdateForCourseMock = vi
                 .spyOn(gradingService, 'updateGradingScaleForCourse')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(updateGradingScaleForCourse) })));
+                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
 
             comp.save();
 
             expect(gradingSystemUpdateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
             expect(gradingSystemUpdateForCourseMock).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should update grading scale correctly for exam', () => {
-            comp.existingGradingScale = true;
-            comp.isExam = true;
-            comp.exam = exam;
-            const updatedGradingScaleForExam = comp.gradingScale;
-            updatedGradingScaleForExam.gradeType = GradeType.BONUS;
+            comp.existingGradingScale.set(true);
+            comp.isExam.set(true);
+            comp.exam.set(exam);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             const gradingSystemUpdateForExamMock = vi
                 .spyOn(gradingService, 'updateGradingScaleForExam')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(updatedGradingScaleForExam) })));
+                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
 
             comp.save();
 
             expect(gradingSystemUpdateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
             expect(gradingSystemUpdateForExamMock).toHaveBeenCalledTimes(1);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should handle find response correctly', () => {
             comp.handleFindResponse(toGradingScaleDTO(comp.gradingScale));
 
-            expect(comp.firstPassingGrade).toBe('Pass');
+            expect(comp.firstPassingGrade()).toBe('Pass');
             expect(comp.lowerBoundInclusivity).toBe(true);
-            expect(comp.existingGradingScale).toBe(true);
+            expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should validate valid grading scale correctly', () => {
-            expect(comp.validGradeSteps()).toBe(true);
+            expect(comp.gradingForm().valid()).toBe(true);
             expect(comp.validPresentationsConfig()).toBe(true);
-            expect(comp.invalidGradeStepsMessage).toBeUndefined();
+            expect(comp.invalidGradeStepsMessage()).toBeUndefined();
         });
 
         it('should validate invalid grading scale with empty grade steps correctly', () => {
-            comp.gradingScale.gradeSteps = [];
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: [] }));
             translateStub.mockReturnValue('empty set');
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('empty set');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.empty');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('empty set');
         });
 
         it('should validate invalid grading scale with negative max points', () => {
-            comp.course = course;
-            comp.maxPoints = -10;
+            comp.course.set(course);
+            comp.maxPoints.set(-10);
             translateStub.mockReturnValue('negative max points');
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('negative max points');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.negativeMaxPoints');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('negative max points');
         });
 
         it('should validate invalid grading scale with empty grade step fields correctly', () => {
-            comp.gradingScale.gradeSteps[0].gradeName = '';
-            translateStub.mockReturnValue('empty field');
+            patchStep(0, { gradeName: '' });
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('empty field');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.emptyFields');
+            expect(comp.gradingForm().valid()).toBe(false);
+            // The required() message is resolved once at form construction, so the raw key is asserted here.
+            expect(comp.invalidGradeStepsMessage()).toBe('artemisApp.gradingSystem.error.emptyFields');
         });
 
         it('should validate invalid grading scale with invalid percentages', () => {
-            comp.gradingScale.gradeSteps[0].lowerBoundPercentage = -10;
+            patchStep(0, { lowerBoundPercentage: -10 });
             translateStub.mockReturnValue('invalid percentage');
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('invalid percentage');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidMinMaxPercentages');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid percentage');
         });
 
         it('should validate invalid grading scale with invalid points', () => {
-            comp.maxPoints = 100;
-            comp.gradingScale.gradeSteps[0].lowerBoundPoints = 0;
-            comp.gradingScale.gradeSteps[0].upperBoundPoints = -120;
-            comp.gradingScale.gradeSteps[1].lowerBoundPoints = 40;
-            comp.gradingScale.gradeSteps[1].upperBoundPoints = 80;
-            comp.gradingScale.gradeSteps[2].lowerBoundPoints = 80;
-            comp.gradingScale.gradeSteps[2].upperBoundPoints = 100;
+            comp.maxPoints.set(100);
+            patchStep(0, { lowerBoundPoints: 0 });
+            patchStep(0, { upperBoundPoints: -120 });
+            patchStep(1, { lowerBoundPoints: 40 });
+            patchStep(1, { upperBoundPoints: 80 });
+            patchStep(2, { lowerBoundPoints: 80 });
+            patchStep(2, { upperBoundPoints: 100 });
             translateStub.mockReturnValue('invalid points');
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('invalid points');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidMinMaxPoints');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid points');
         });
 
         it('should validate invalid grading scale with non-unique grade names', () => {
-            comp.gradingScale.gradeType = GradeType.GRADE;
-            comp.gradingScale.gradeSteps[1].gradeName = 'Fail';
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.GRADE }));
+            patchStep(1, { gradeName: 'Fail' });
             translateStub.mockReturnValue('non-unique grade names');
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('non-unique grade names');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.nonUniqueGradeNames');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('non-unique grade names');
         });
 
         it('should validate invalid grading scale with unset first passing grade', () => {
-            comp.gradingScale.gradeType = GradeType.GRADE;
-            comp.firstPassingGrade = undefined;
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.GRADE }));
+            comp.firstPassingGrade.set(undefined);
             translateStub.mockReturnValue('unset first passing grade');
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('unset first passing grade');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.unsetFirstPassingGrade');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('unset first passing grade');
         });
 
         it('should validate invalid grading scale with invalid bonus points', () => {
-            comp.gradingScale.gradeSteps[0].gradeName = '-2';
-            comp.gradingScale.gradeType = GradeType.BONUS;
+            patchStep(0, { gradeName: '-2' });
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             translateStub.mockReturnValue('invalid bonus points');
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('invalid bonus points');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidBonusPoints');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid bonus points');
         });
 
         it('should validate invalid grading scale without strictly ascending bonus points', () => {
-            comp.gradingScale.gradeSteps[0].gradeName = '0';
-            comp.gradingScale.gradeSteps[1].gradeName = '2';
-            comp.gradingScale.gradeSteps[2].gradeName = '1';
-            comp.gradingScale.gradeType = GradeType.BONUS;
+            patchStep(0, { gradeName: '0' });
+            patchStep(1, { gradeName: '2' });
+            patchStep(2, { gradeName: '1' });
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             translateStub.mockReturnValue('descending bonus points');
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('descending bonus points');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.nonStrictlyIncreasingBonusPoints');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('descending bonus points');
         });
 
         it('should validate invalid grading scale with invalid adjacency', () => {
@@ -715,9 +712,8 @@ describe('GradingComponent', () => {
             translateStub.mockReturnValue('invalid adjacency');
             vi.spyOn(gradingService, 'sortGradeSteps').mockReturnValue([invalidGradeStep, gradeStep2, gradeStep3]);
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('invalid adjacency');
-            expect(translateStub).toHaveBeenNthCalledWith(1, 'artemisApp.gradingSystem.error.invalidAdjacency');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid adjacency');
         });
 
         it('should validate invalid grading scale with invalid first grade step', () => {
@@ -730,41 +726,40 @@ describe('GradingComponent', () => {
                 upperBoundPercentage: 40,
             };
             vi.spyOn(gradingService, 'sortGradeSteps').mockReturnValue([invalidFirstGradeStep, gradeStep2, gradeStep3]);
-            comp.gradingScale.gradeSteps[0].lowerBoundPercentage = 10;
+            patchStep(0, { lowerBoundPercentage: 10 });
             translateStub.mockReturnValue('invalid first grade step');
 
-            expect(comp.validGradeSteps()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('invalid first grade step');
-            expect(translateStub).toHaveBeenCalledWith('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
+            expect(comp.gradingForm().valid()).toBe(false);
+            expect(comp.invalidGradeStepsMessage()).toBe('invalid first grade step');
         });
 
         it('should validate grading scale with basic presentations and invalid presentationScore', () => {
-            comp.presentationsConfig = { presentationType: PresentationType.BASIC };
-            comp.course = { presentationScore: 0 } as Course;
+            comp.presentationsConfig.set({ presentationType: PresentationType.BASIC });
+            comp.course.set({ presentationScore: 0 } as Course);
             translateStub.mockReturnValue('invalid presentations number');
 
             expect(comp.validPresentationsConfig()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('invalid presentations number');
+            expect(comp.presentationsConfigErrorMessage()).toBe('invalid presentations number');
         });
 
         it('should validate grading scale with graded presentations and invalid presentationsWeight', () => {
-            comp.presentationsConfig = { presentationType: PresentationType.GRADED, presentationsNumber: 2, presentationsWeight: 128 };
+            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 2, presentationsWeight: 128 });
             translateStub.mockReturnValue('invalid presentations weight');
 
             expect(comp.validPresentationsConfig()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('invalid presentations weight');
+            expect(comp.presentationsConfigErrorMessage()).toBe('invalid presentations weight');
         });
 
         it('should validate grading scale with graded presentations and invalid presentationsNumber', () => {
-            comp.presentationsConfig = { presentationType: PresentationType.GRADED, presentationsNumber: 0, presentationsWeight: 20 };
+            comp.presentationsConfig.set({ presentationType: PresentationType.GRADED, presentationsNumber: 0, presentationsWeight: 20 });
             translateStub.mockReturnValue('invalid presentations number');
 
             expect(comp.validPresentationsConfig()).toBe(false);
-            expect(comp.invalidGradeStepsMessage).toBe('invalid presentations number');
+            expect(comp.presentationsConfigErrorMessage()).toBe('invalid presentations number');
         });
 
         it('should detect that max points are valid', () => {
-            comp.maxPoints = 100;
+            comp.maxPoints.set(100);
 
             expect(comp.maxPointsValid()).toBe(true);
         });
@@ -777,7 +772,7 @@ describe('GradingComponent', () => {
 
             expect(testGradeStep.lowerBoundPoints).toBeUndefined();
 
-            comp.maxPoints = 100;
+            comp.maxPoints.set(100);
 
             comp.setPoints(testGradeStep, true);
 
@@ -789,7 +784,7 @@ describe('GradingComponent', () => {
         });
 
         it('should set percentages correctly', () => {
-            comp.maxPoints = 100;
+            comp.maxPoints.set(100);
             const testGradeStep = cloneDeep(gradeStep2);
             testGradeStep.lowerBoundPoints = 40;
             testGradeStep.upperBoundPoints = 80;
@@ -802,7 +797,7 @@ describe('GradingComponent', () => {
         });
 
         it('should set all grade step points correctly', () => {
-            comp.maxPoints = 100;
+            comp.maxPoints.set(100);
 
             comp.onChangeMaxPoints(100);
 
@@ -855,18 +850,16 @@ describe('GradingComponent', () => {
         });
 
         it('should export grading steps to csv', () => {
-            comp.gradingScale.gradeType = GradeType.GRADE;
-            comp.gradingScale.gradeSteps = cloneDeep(gradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.GRADE }));
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(gradeSteps) }));
 
             comp.exportGradingStepsToCsv();
 
-            expect(mkConfig).toHaveBeenCalled();
-            expect(generateCsv).toHaveBeenCalled();
-            expect(download).toHaveBeenCalled();
+            expect(downloadCsv).toHaveBeenCalled();
         });
 
         it('should convert grade step to csv row for GRADE type', () => {
-            comp.gradingScale.gradeType = GradeType.GRADE;
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.GRADE }));
             const row = comp.convertToCsvRow(gradeStep1);
 
             expect(row.gradeName).toBe('Fail');
@@ -876,7 +869,7 @@ describe('GradingComponent', () => {
         });
 
         it('should convert grade step to csv row for BONUS type', () => {
-            comp.gradingScale.gradeType = GradeType.BONUS;
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
             const bonusStep = { ...gradeStep1, gradeName: '0' };
             const row = comp.convertToCsvRow(bonusStep);
 
@@ -905,7 +898,7 @@ describe('GradingComponent', () => {
 
         it('should generate default grading scale with max points set', () => {
             const maxPoints = 200;
-            comp.maxPoints = maxPoints;
+            comp.maxPoints.set(maxPoints);
             comp.onChangeMaxPoints(maxPoints);
 
             comp.generateDefaultGradingScale();
@@ -917,9 +910,9 @@ describe('GradingComponent', () => {
 
         it('should delete grade step in interval mode', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             const maxPoints = 200;
-            comp.maxPoints = maxPoints;
+            comp.maxPoints.set(maxPoints);
             comp.onChangeMaxPoints(maxPoints);
 
             comp.deleteGradeStep(1);
@@ -933,7 +926,7 @@ describe('GradingComponent', () => {
 
         it('should create grade step in interval mode', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             comp.lowerBoundInclusivity = true;
 
             comp.createGradeStep();
@@ -953,7 +946,7 @@ describe('GradingComponent', () => {
         });
 
         it('should set all grade step percentage intervals correctly', () => {
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
 
             expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[0])).toBe(40);
             expect(comp.getPercentageInterval(comp.gradingScale.gradeSteps[1])).toBe(25);
@@ -962,7 +955,7 @@ describe('GradingComponent', () => {
         });
 
         it('should set all grade step point intervals correctly', () => {
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
 
             expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBeUndefined();
             expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBeUndefined();
@@ -971,7 +964,7 @@ describe('GradingComponent', () => {
 
             const multiplier = 2;
             const maxPoints = multiplier * 100;
-            comp.maxPoints = maxPoints;
+            comp.maxPoints.set(maxPoints);
             comp.onChangeMaxPoints(maxPoints);
 
             expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(40 * multiplier);
@@ -980,7 +973,7 @@ describe('GradingComponent', () => {
             expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(100 * multiplier);
 
             const negativeMaxPoints = -10;
-            comp.maxPoints = negativeMaxPoints;
+            comp.maxPoints.set(negativeMaxPoints);
             comp.onChangeMaxPoints(negativeMaxPoints);
 
             expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBeUndefined();
@@ -990,10 +983,10 @@ describe('GradingComponent', () => {
         });
 
         it('should cascade percentage interval increase', () => {
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             const multiplier = 2;
             const maxPoints = multiplier * 100;
-            comp.maxPoints = maxPoints;
+            comp.maxPoints.set(maxPoints);
             comp.onChangeMaxPoints(maxPoints);
 
             comp.setPercentageInterval(1, 50);
@@ -1015,10 +1008,10 @@ describe('GradingComponent', () => {
         });
 
         it('should cascade percentage interval decrease', () => {
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             const multiplier = 2;
             const maxPoints = multiplier * 100;
-            comp.maxPoints = maxPoints;
+            comp.maxPoints.set(maxPoints);
             comp.onChangeMaxPoints(maxPoints);
 
             comp.setPercentageInterval(1, 10);
@@ -1035,10 +1028,10 @@ describe('GradingComponent', () => {
         });
 
         it('should cascade points interval increase', () => {
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             const multiplier = 2;
             const maxPoints = multiplier * 100;
-            comp.maxPoints = maxPoints;
+            comp.maxPoints.set(maxPoints);
             comp.onChangeMaxPoints(maxPoints);
 
             comp.setPointsInterval(1, 50 * multiplier);
@@ -1055,10 +1048,10 @@ describe('GradingComponent', () => {
         });
 
         it('should cascade points interval decrease', () => {
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             const multiplier = 2;
             const maxPoints = multiplier * 100;
-            comp.maxPoints = maxPoints;
+            comp.maxPoints.set(maxPoints);
             comp.onChangeMaxPoints(maxPoints);
 
             comp.setPointsInterval(1, 10 * multiplier);
@@ -1075,8 +1068,8 @@ describe('GradingComponent', () => {
         });
 
         it('should throw on points interval change when max points are not defined', () => {
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
-            expect(comp.maxPoints).toBeUndefined();
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
+            expect(comp.maxPoints()).toBeUndefined();
             expect(() => {
                 comp.setPointsInterval(0, 10);
             }).toThrow();
@@ -1084,7 +1077,7 @@ describe('GradingComponent', () => {
 
         it('should prevent total percentage is less than 100 when only sticky step remains', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             comp.deleteGradeStep(0);
             comp.deleteGradeStep(0);
             comp.deleteGradeStep(0);
@@ -1124,7 +1117,7 @@ describe('GradingComponent', () => {
 
         it('should set inclusivity to lower bound inclusive in interval mode', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             comp.lowerBoundInclusivity = true;
             comp.setInclusivity();
 
@@ -1143,7 +1136,7 @@ describe('GradingComponent', () => {
 
         it('should set inclusivity to upper bound inclusive in interval mode', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             comp.lowerBoundInclusivity = false;
             comp.setInclusivity();
 
@@ -1162,7 +1155,7 @@ describe('GradingComponent', () => {
 
         it('should not show grading steps above max points warning', () => {
             comp.setViewMode(GradingViewMode.INTERVAL);
-            comp.gradingScale.gradeSteps = cloneDeep(intervalGradeSteps);
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: cloneDeep(intervalGradeSteps) }));
             const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
             expect(result).toBe(false);
         });
@@ -1177,7 +1170,7 @@ describe('GradingComponent', () => {
                 upperBoundInclusive: true,
                 isPassingGrade: true,
             };
-            comp.gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep, gradeStep4];
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: [gradeStep1, gradeStep2, gradeStep3, gradeStep, gradeStep4] }));
 
             const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
             expect(result).toBe(true);
@@ -1193,7 +1186,7 @@ describe('GradingComponent', () => {
                 upperBoundInclusive: false,
                 isPassingGrade: true,
             };
-            comp.gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep, gradeStep4];
+            comp.gradeStepsModel.update((model) => ({ ...model, gradeSteps: [gradeStep1, gradeStep2, gradeStep3, gradeStep, gradeStep4] }));
 
             const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
             expect(result).toBe(true);

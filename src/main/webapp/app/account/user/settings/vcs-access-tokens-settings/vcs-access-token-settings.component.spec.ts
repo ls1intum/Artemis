@@ -11,7 +11,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClient } from '@angular/common/http';
 import { VcsAccessTokensSettingsComponent } from 'app/account/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
 
@@ -39,7 +38,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -76,7 +75,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
         const createTokenButton = fixture.debugElement.query(By.css('#cancel-vcs-token-creation-button'));
         createTokenButton.triggerEventHandler('onClick', null);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.edit).toBeFalsy();
+        expect(comp.edit()).toBeFalsy();
     });
 
     it('should fail token creation with invalid date', () => {
@@ -92,8 +91,8 @@ describe('VcsAccessTokensSettingsComponent', () => {
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
         createTokenButton.triggerEventHandler('onClick', null);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.edit).toBeTruthy();
-        expect(comp.currentUser?.vcsAccessToken).toBeUndefined();
+        expect(comp.edit()).toBeTruthy();
+        expect(comp.currentUser()?.vcsAccessToken).toBeUndefined();
         expect(alertServiceMock.error).toHaveBeenCalled();
     });
 
@@ -107,13 +106,13 @@ describe('VcsAccessTokensSettingsComponent', () => {
 
         // add an invalid expiry date
         comp.expiryDate = dayjs().add(7, 'day');
-        comp.validExpiryDate = true;
+        comp.validExpiryDate.set(true);
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
         createTokenButton.triggerEventHandler('onClick', null);
         fixture.changeDetectorRef.detectChanges();
-        expect(comp.edit).toBeTruthy();
+        expect(comp.edit()).toBeTruthy();
         expect(alertServiceMock.error).toHaveBeenCalled();
     });
 
@@ -135,9 +134,9 @@ describe('VcsAccessTokensSettingsComponent', () => {
         createTokenButton.triggerEventHandler('onClick', null);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(comp.edit).toBeFalsy();
+        expect(comp.edit()).toBeFalsy();
         expect(accountServiceMock.addNewVcsAccessToken).toHaveBeenCalled();
-        expect(comp.currentUser!.vcsAccessToken).toEqual(newToken);
+        expect(comp.currentUser()!.vcsAccessToken).toEqual(newToken);
     });
 
     it('should delete vcs access token', () => {
@@ -154,21 +153,21 @@ describe('VcsAccessTokensSettingsComponent', () => {
         const newToken = 'new-token';
         accountServiceMock.addNewVcsAccessToken.mockReturnValue(of({ id: 1, vcsAccessToken: newToken, vcsAccessTokenExpiryDate: '11:20' } as User));
         comp.ngOnInit();
-        expect(comp.currentUser!.vcsAccessToken).toEqual(token);
+        expect(comp.currentUser()!.vcsAccessToken).toEqual(token);
         comp.deleteVcsAccessToken();
         expect(accountServiceMock.deleteUserVcsAccessToken).toHaveBeenCalled();
-        expect(comp.currentUser!.vcsAccessToken).toBeUndefined();
+        expect(comp.currentUser()!.vcsAccessToken).toBeUndefined();
     });
 
     function startTokenCreation() {
         comp.ngOnInit();
         fixture.detectChanges();
-        expect(comp.currentUser!.vcsAccessToken).toBeUndefined();
+        expect(comp.currentUser()!.vcsAccessToken).toBeUndefined();
 
         // click on new token button
         const addTokenButton = fixture.debugElement.query(By.css('#add-new-token-button'));
         addTokenButton.triggerEventHandler('onClick', null);
         fixture.detectChanges();
-        expect(comp.edit).toBeTruthy();
+        expect(comp.edit()).toBeTruthy();
     }
 });

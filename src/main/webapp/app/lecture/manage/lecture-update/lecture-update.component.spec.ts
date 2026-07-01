@@ -24,7 +24,6 @@ import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/d
 import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-title-channel-name/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
@@ -68,8 +67,6 @@ describe('LectureUpdateComponent', () => {
             imports: [
                 FormsModule,
                 MockModule(NgbTooltipModule),
-                OwlDateTimeModule,
-                OwlNativeDateTimeModule,
                 FontAwesomeTestingModule,
                 LectureUpdateComponent,
                 MockComponent(LectureTitleChannelNameComponent),
@@ -206,11 +203,11 @@ describe('LectureUpdateComponent', () => {
 
     it('should select process units checkbox', async () => {
         await configureActiveRouteMockAndCompileComponents();
-        lectureUpdateComponent.processUnitMode = false;
+        lectureUpdateComponent.processUnitMode.set(false);
         const selectProcessUnit = vi.spyOn(lectureUpdateComponent, 'onSelectProcessUnit');
         lectureUpdateComponent.onSelectProcessUnit();
         expect(selectProcessUnit).toHaveBeenCalledTimes(1);
-        expect(lectureUpdateComponent.processUnitMode).toBe(true);
+        expect(lectureUpdateComponent.processUnitMode()).toBe(true);
     });
 
     it('should navigate to previous state', async () => {
@@ -236,9 +233,9 @@ describe('LectureUpdateComponent', () => {
         await lectureUpdateComponentFixture.whenStable();
 
         lectureUpdateComponent.file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
-        lectureUpdateComponent.fileName = 'testFile';
+        lectureUpdateComponent.fileName.set('testFile');
         // Set processUnitMode after initialization to prevent ngOnInit from resetting it
-        lectureUpdateComponent.processUnitMode = true;
+        lectureUpdateComponent.processUnitMode.set(true);
         lectureUpdateComponent.lecture.set({ title: 'test1', channelName: 'test1', isTutorialLecture: false } as Lecture);
         const navigateSpy = vi.spyOn(router, 'navigate');
 
@@ -263,15 +260,15 @@ describe('LectureUpdateComponent', () => {
         expect(createSpy).toHaveBeenCalledTimes(1);
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1', channelName: 'test1', isTutorialLecture: false });
         expect(proceedToUnitSplitSpy).toHaveBeenCalledTimes(1);
-        expect(lectureUpdateComponent.processUnitMode).toBe(true);
+        expect(lectureUpdateComponent.processUnitMode()).toBe(true);
 
         const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-video-units', 'process'];
-        expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
+        expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName() } });
     });
 
     it('should call onFileChange on changed file', async () => {
         await configureActiveRouteMockAndCompileComponents();
-        lectureUpdateComponent.processUnitMode = false;
+        lectureUpdateComponent.processUnitMode.set(false);
         await lectureUpdateComponentFixture.whenStable();
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
 
@@ -281,7 +278,7 @@ describe('LectureUpdateComponent', () => {
         processUnit.checked = true;
         processUnit.dispatchEvent(new Event('change'));
         lectureUpdateComponentFixture.detectChanges();
-        lectureUpdateComponent.processUnitMode = true;
+        lectureUpdateComponent.processUnitMode.set(true);
         lectureUpdateComponentFixture.autoDetectChanges();
         const fileInput = lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
@@ -408,7 +405,7 @@ describe('LectureUpdateComponent', () => {
 
             lectureUpdateComponent.updateFormStatusBar();
 
-            expect(lectureUpdateComponent.formStatusSections).toEqual([
+            expect(lectureUpdateComponent.formStatusSections()).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: true },
                 { title: 'artemisApp.lecture.sections.period', valid: true },
                 { title: 'artemisApp.lecture.sections.units', valid: true },
@@ -429,7 +426,7 @@ describe('LectureUpdateComponent', () => {
 
             lectureUpdateComponent.updateFormStatusBar();
 
-            expect(lectureUpdateComponent.formStatusSections).toEqual([
+            expect(lectureUpdateComponent.formStatusSections()).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: false },
                 { title: 'artemisApp.lecture.sections.period', valid: true },
             ]);
@@ -452,7 +449,7 @@ describe('LectureUpdateComponent', () => {
 
             lectureUpdateComponent.updateFormStatusBar();
 
-            expect(lectureUpdateComponent.formStatusSections).toEqual([
+            expect(lectureUpdateComponent.formStatusSections()).toEqual([
                 { title: 'artemisApp.lecture.sections.title', valid: false },
                 { title: 'artemisApp.lecture.sections.period', valid: false },
                 { title: 'artemisApp.lecture.sections.units', valid: false },

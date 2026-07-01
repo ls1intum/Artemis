@@ -273,17 +273,17 @@ public class LtiDeepLinkingService {
      * Build a content URL for deep linking.
      */
     private String buildContentUrl(long courseId, String resourceType, String resourceId) {
-        return String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
+        return "%s/courses/%s/%s/%s".formatted(artemisServerUrl, courseId, resourceType, resourceId);
     }
 
     private String buildContentUrl(long courseId, String resourceType) {
-        return String.format("%s/courses/%s/%s", artemisServerUrl, courseId, resourceType);
+        return "%s/courses/%s/%s".formatted(artemisServerUrl, courseId, resourceType);
     }
 
     private String buildGroupedResourceUrl(long courseId, Set<Long> ids, String pathSegment, String queryParamKey, String alertKey) {
         long smallestId = ids.stream().min(Long::compareTo).orElseThrow(() -> new BadRequestAlertException("No IDs provided", "LTI", alertKey));
 
-        String baseUrl = String.format("%s/courses/%s/%s/%d", artemisServerUrl, courseId, pathSegment, smallestId);
+        String baseUrl = "%s/courses/%s/%s/%d".formatted(artemisServerUrl, courseId, pathSegment, smallestId);
         String joinedIds = ids.stream().map(String::valueOf).collect(Collectors.joining(","));
 
         return UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true).queryParam(queryParamKey, joinedIds).toUriString();

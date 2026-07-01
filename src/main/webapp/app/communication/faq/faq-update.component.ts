@@ -20,7 +20,7 @@ import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actio
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
 import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
@@ -29,7 +29,7 @@ import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-in
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
-    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent],
+    imports: [CategorySelectorPrimengComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent],
 })
 export class FaqUpdateComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -41,11 +41,20 @@ export class FaqUpdateComponent implements OnInit {
     private accountService = inject(AccountService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
-    faq: Faq;
-    isSaving: boolean;
-    isAllowedToSave: boolean;
-    existingCategories: FaqCategory[];
-    faqCategories: FaqCategory[];
+    // faq is deeply template-bound through [(ngModel)] and populated asynchronously from the route resolver, so it
+    // is backed by a signal to schedule change detection under zoneless. The getter/setter facade keeps the existing
+    // synchronous reads/writes ([(ngModel)] bindings, this.faq = ... assignments) unchanged.
+    private readonly _faq = signal<Faq>(undefined!);
+    get faq(): Faq {
+        return this._faq();
+    }
+    set faq(value: Faq) {
+        this._faq.set(value);
+    }
+    readonly isSaving = signal(false);
+    readonly isAllowedToSave = signal(false);
+    readonly existingCategories = signal<FaqCategory[]>([]);
+    readonly faqCategories = signal<FaqCategory[]>([]);
     courseId: number;
     isAtLeastInstructor = false;
     domainActionsDescription = [new FormulaAction()];
@@ -74,7 +83,7 @@ export class FaqUpdateComponent implements OnInit {
     readonly faBan = faBan;
 
     ngOnInit() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
         this.activatedRoute.parent?.data.subscribe((data) => {
             // Create a new faq to use unless we fetch an existing faq
@@ -86,7 +95,7 @@ export class FaqUpdateComponent implements OnInit {
                 this.loadCourseFaqCategories(course.id);
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
-            this.faqCategories = faq?.categories ? faq.categories : [];
+            this.faqCategories.set(faq?.categories ? faq.categories : []);
         });
         this.validate();
     }
@@ -105,7 +114,7 @@ export class FaqUpdateComponent implements OnInit {
      * This function is called by pressing save after creating or editing a faq
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         this.faq.faqState = this.isAtLeastInstructor ? FaqState.ACCEPTED : FaqState.PROPOSED;
         if (this.faq.id !== undefined) {
             this.subscribeToSaveResponse(this.faqService.update(this.courseId, UpdateFaqDTO.toUpdateDto(this.faq)));
@@ -131,7 +140,7 @@ export class FaqUpdateComponent implements OnInit {
         if (!this.faq.id) {
             this.faqService.find(this.courseId, faq.id!).subscribe({
                 next: (response: HttpResponse<Faq>) => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                     const faqBody = response.body;
                     if (faqBody) {
                         this.faq = faqBody;
@@ -162,7 +171,7 @@ export class FaqUpdateComponent implements OnInit {
      * @param errorRes the errorRes handed to the alert service
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
-        this.isSaving = false;
+        this.isSaving.set(false);
         if (errorRes.error?.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
         } else {
@@ -172,20 +181,20 @@ export class FaqUpdateComponent implements OnInit {
 
     updateCategories(categories: FaqCategory[]) {
         this.faq.categories = categories;
-        this.faqCategories = categories;
+        this.faqCategories.set(categories);
     }
 
     private loadCourseFaqCategories(courseId: number) {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
-            this.existingCategories = existingCategories;
+            this.existingCategories.set(existingCategories);
         });
     }
 
     validate() {
         if (this.faq.questionTitle && this.faq.questionAnswer) {
-            this.isAllowedToSave = this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0;
+            this.isAllowedToSave.set(this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0);
         } else {
-            this.isAllowedToSave = false;
+            this.isAllowedToSave.set(false);
         }
     }
 

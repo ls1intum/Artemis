@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -113,7 +112,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
         var ids = findSubmissionIdsAndDatesByParticipationId(participationId, pageable).stream().map(ProgrammingSubmissionIdAndSubmissionDateDTO::programmingSubmissionId).toList();
 
         if (ids.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
         }
 
         return findSubmissionsWithResultsByIdIn(ids);

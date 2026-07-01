@@ -71,7 +71,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -253,7 +253,7 @@ describe('TextExercise Management Update Component', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorComponent),
+                        MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
@@ -296,7 +296,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.update).toHaveBeenCalledWith(exercise, {});
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
             });
 
@@ -338,7 +338,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.create).toHaveBeenCalledWith(exercise);
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
                 expect(refreshSpy).toHaveBeenCalledOnce();
             });
         });
@@ -360,7 +360,7 @@ describe('TextExercise Management Update Component', () => {
                 await fixture.whenStable();
 
                 expect(textExerciseService.import).toHaveBeenCalledWith(exercise);
-                expect(component.isSaving).toBe(false);
+                expect(component.isSaving()).toBe(false);
             });
         });
     });
@@ -377,7 +377,7 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isExamMode).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise).toEqual(exercise);
         });
 
@@ -412,7 +412,7 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isExamMode).toBe(false);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise).toEqual(exercise);
         });
 
@@ -429,7 +429,7 @@ describe('TextExercise Management Update Component', () => {
             // Verify component is properly initialized
             expect(component.textExercise).toBeDefined();
             expect(component.backupExercise).toBeDefined();
-            expect(component.isSaving).toBe(false);
+            expect(component.isSaving()).toBe(false);
         });
     });
 
@@ -449,8 +449,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(false);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
@@ -496,8 +496,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(false);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(false);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
@@ -520,8 +520,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(true);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise.course).toBeUndefined();
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
@@ -547,8 +547,8 @@ describe('TextExercise Management Update Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(component.isImport).toBe(true);
-            expect(component.isExamMode).toBe(true);
+            expect(component.isImport()).toBe(true);
+            expect(component.isExamMode()).toBe(true);
             expect(component.textExercise.assessmentDueDate).toBeUndefined();
             expect(component.textExercise.releaseDate).toBeUndefined();
             expect(component.textExercise.dueDate).toBeUndefined();
@@ -565,12 +565,12 @@ describe('TextExercise Management Update Component', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        component.exerciseCategories = [];
+        component.exerciseCategories.set([]);
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
         component.updateCategories(newCategories);
 
         expect(component.textExercise.categories).toEqual(newCategories);
-        expect(component.exerciseCategories).toEqual(newCategories);
+        expect(component.exerciseCategories()).toEqual(newCategories);
     });
 });

@@ -15,11 +15,11 @@
                     [(ngModel)]="searchTerm"
                     placeholder="{{ 'artemisApp.exercise.name' | artemisTranslate }}"
                 />
-                @if (loading) {
+                @if (loading()) {
                     <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
                 }
             </div>
-            @if (content.resultsOnPage && content.resultsOnPage.length > 0) {
+            @if (content().resultsOnPage && content().resultsOnPage.length > 0) {
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead class="thead-dark">
@@ -58,13 +58,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @for (submission of content.resultsOnPage; track submission; let i = $index) {
+                            @for (submission of content().resultsOnPage; track submission; let i = $index) {
                                 <tr>
                                     <td>{{ i + 1 }}</td>
                                     <td>{{ submission.participation?.participantName }}</td>
                                     <td>{{ submission.submissionDate | artemisDate }}</td>
                                     <td>
-                                        <jhi-result [exercise]="exercise" [participation]="submission.participation!" />
+                                        <jhi-result [exercise]="exercise" [participation]="submission.participation!" [result]="getLatestResult(submission)" />
                                     </td>
                                     <td>
                                         {{ submission.submissionSize }}
@@ -86,16 +86,7 @@
                 }
             }
             <div class="d-flex justify-content-between p-2">
-                <ngb-pagination
-                    [maxSize]="5"
-                    [rotate]="true"
-                    [ellipses]="true"
-                    [boundaryLinks]="true"
-                    [collectionSize]="total"
-                    [(page)]="state.page"
-                    [pageSize]="state.pageSize"
-                    (pageChange)="onPageChange($event)"
-                />
+                <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
             </div>
         </div>
     }

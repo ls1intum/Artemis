@@ -20,7 +20,6 @@ import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-ac
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -40,7 +39,7 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(CourseManagementService),
@@ -102,6 +101,6 @@ describe('CreateTutorialGroupsConfigurationComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', course.id, 'tutorial-groups-checklist']);
         expect(updateCourseSpy).toHaveBeenCalledOnce();
-        expect(updateCourseSpy).toHaveBeenCalledWith(component.course);
+        expect(updateCourseSpy).toHaveBeenCalledWith(component.course());
     });
 });

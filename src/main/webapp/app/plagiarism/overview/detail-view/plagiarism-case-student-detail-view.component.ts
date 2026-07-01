@@ -1,11 +1,11 @@
-import { Component, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { getCourseFromExercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subscription, combineLatest } from 'rxjs';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -19,6 +19,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
+import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
@@ -37,7 +38,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
 
     courseId: number;
     plagiarismCaseId: number;
-    plagiarismCase: PlagiarismCase;
+    readonly plagiarismCase = signal<PlagiarismCase | undefined>(undefined);
 
     private paramSubscription: Subscription;
     readonly plagiarismVerdict = PlagiarismVerdict;
@@ -47,11 +48,11 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
 
     readonly pageType = PageType.PLAGIARISM_CASE_STUDENT;
     private postsSubscription: Subscription;
-    posts: Post[];
+    readonly posts = signal<Post[]>([]);
 
-    affectedExerciseRouterLink: (string | number)[];
+    readonly affectedExerciseRouterLink = signal<(string | number)[]>([]);
 
-    isAfterDueDate: boolean;
+    readonly isAfterDueDate = signal(false);
 
     readonly dayjs = dayjs;
 
@@ -62,35 +63,36 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
         }).subscribe(({ ancestorParams, params }: { ancestorParams: Params; params: Params }) => {
             this.courseId = ancestorParams.courseId;
             this.plagiarismCaseId = Number(params.plagiarismCaseId);
-            if (this.plagiarismCase?.id === this.plagiarismCaseId) {
+            if (this.plagiarismCase()?.id === this.plagiarismCaseId) {
                 return;
             }
             this.plagiarismCasesService.getPlagiarismCaseDetailForStudent(this.courseId, this.plagiarismCaseId).subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
-                    this.plagiarismCase = res.body!;
+                    const plagiarismCase = res.body!;
+                    this.plagiarismCase.set(plagiarismCase);
 
-                    const examId = this.plagiarismCase?.exercise?.exerciseGroup?.exam?.id;
+                    const examId = plagiarismCase.exercise?.examId;
                     if (examId) {
                         // Navigate to the exam result since individual exam exercises are not addressable.
-                        this.affectedExerciseRouterLink = ['/courses', this.courseId, 'exams', examId];
+                        this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exams', examId]);
                     } else {
-                        this.affectedExerciseRouterLink = ['/courses', this.courseId, 'exercises', this.plagiarismCase.exercise!.id!];
+                        this.affectedExerciseRouterLink.set(['/courses', this.courseId, 'exercises', plagiarismCase.exercise!.id!]);
                     }
 
-                    this.metisService.setCourse(getCourseFromExercise(this.plagiarismCase.exercise!)!);
+                    this.metisService.setCourse({ id: this.courseId, title: plagiarismCase.exercise?.courseTitle } as Course);
 
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({
-                        plagiarismCaseId: this.plagiarismCase!.id,
+                        plagiarismCaseId: plagiarismCase.id,
                     });
 
                     const now = dayjs();
-                    this.isAfterDueDate = now.isAfter(this.plagiarismCase.exercise?.dueDate);
+                    this.isAfterDueDate.set(now.isAfter(plagiarismCase.exercise?.dueDate));
                 },
             });
         });
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
-            this.posts = posts;
+            this.posts.set(posts);
         });
     }
 

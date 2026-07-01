@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
-import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
+import { DATE_TIME_PICKER_FORMAT, Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
@@ -43,9 +43,29 @@ export function generateUUID() {
  * Allows to enter date into the UI
  */
 export async function enterDate(page: Page, selector: string, date: dayjs.Dayjs) {
-    const dateInputField = page.locator(selector).locator('#date-input-field');
+    await fillDateTimePicker(page.locator(selector).locator('#date-input-field'), date);
+}
+
+/**
+ * Types a date into a PrimeNG p-datepicker input (the `jhi-date-time-picker` wrapper).
+ *
+ * The picker must be driven with real keystrokes: its `onUserInput` handler ignores any `input`
+ * event that is not preceded by a `keydown` (an `isKeydown` guard), so Playwright's `fill()` — which
+ * sets the value without keyboard events — is silently dropped. We clear the field and type the value
+ * in the picker's display format (DD.MM.YYYY HH:mm), then tab out to commit it to the form model.
+ */
+export async function fillDateTimePicker(dateInputField: Locator, date: dayjs.Dayjs, format: string = DATE_TIME_PICKER_FORMAT) {
     await expect(dateInputField).toBeEnabled();
-    await dateInputField.fill(dayjsToString(date), { force: true });
+    await dateInputField.click();
+    // Wait until the input is actually focused before typing; otherwise the first character(s) can be
+    // dropped while focus is still settling. Clear any existing value via the keyboard so focus is kept.
+    await expect(dateInputField).toBeFocused();
+    await dateInputField.press('ControlOrMeta+a');
+    await dateInputField.press('Delete');
+    // PrimeNG's onUserInput only reacts to input events preceded by a keydown, so type with real
+    // keystrokes; a small per-key delay keeps the picker from dropping characters under load.
+    await dateInputField.pressSequentially(date.format(format), { delay: 30 });
+    await dateInputField.press('Tab');
 }
 
 /**
@@ -70,23 +90,44 @@ export function getExamEndDateWithGrace(exam: Exam) {
 }
 
 export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page) {
-    const afterDueDate = getExamBuildAndTestAfterDueDate(exam);
-    if (afterDueDate.isAfter(dayjs())) {
-        const timeToWait = afterDueDate.diff(dayjs(), 'ms') + 2000;
-        console.log(`Waiting ${timeToWait}ms for build-after-due-date scheduling...`);
-        await page.waitForTimeout(timeToWait);
+    // For exam programming exercises the score-producing build "test" phase runs only AFTER_DUE_DATE, which
+    // the server schedules at dueDate + 15 min (the intended default; see
+    // AutomaticAfterDueDateService.BUILD_AND_TEST_OFFSET_MINUTES). Instead of waiting that long, trigger the
+    // instructor build-and-test for the exam's programming exercise on demand: by the time this is called the
+    // student's individual working period is already over, so the AFTER_DUE_DATE-gated phase runs and produces
+    // the score immediately. This is a no-op when the exam has no programming exercise. We authenticate as
+    // admin first so the helper works regardless of the caller's current auth state (some callers, e.g. the
+    // ExamResults "Assess all submissions" beforeAll, invoke it on a fresh page before logging in).
+    await Commands.login(page, admin);
+    const examAPIRequests = new ExamAPIRequests(page);
+    const exerciseAPIRequests = new ExerciseAPIRequests(page);
+    const exerciseGroups = await examAPIRequests.getExerciseGroups(exam);
+    const programmingExercise = exerciseGroups.flatMap((group) => group.exercises ?? []).find((exercise) => (exercise.type as string) === ExerciseType.PROGRAMMING);
+    if (!programmingExercise?.id) {
+        return;
     }
+    await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
+    await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
+    // The build above produces the automatic result, but for exam programming exercises the server also defaults
+    // the "Run Tests after Due Date" date to (latest exam end + grace + 15 min). Until that date passes, the server
+    // rejects manual assessment with 403 "Creating manual results is disabled for this exercise!"
+    // (ProgrammingExercise.areManualResultsAllowed). Mirror what an instructor would do to assess immediately and
+    // move the date into the recent past. We do this only now, after waiting for the build, so the new date is
+    // safely past the exam end date (the server keeps a client value only when it is not before the exam end).
+    await exerciseAPIRequests.setProgrammingExerciseBuildAndTestDateToPast(programmingExercise.id);
 }
 
 /**
  * This function is necessary to make the server and the client date comparable.
- * The server sometimes has 3 digit on the milliseconds and sometimes only 1 digit.
- * With this function we always cut the date string after the first digit.
+ * Dates are entered through the PrimeNG p-datepicker, which is minute-precision (it has no seconds
+ * field), so the persisted value is always truncated to the minute. We therefore compare only down
+ * to the minute (YYYY-MM-DDTHH:mm) and ignore seconds/milliseconds, which also avoids the server's
+ * varying millisecond digit count.
  * @param date the date as a string
- * @returns a date string with only one digit for the milliseconds
+ * @returns a date string trimmed to minute precision
  */
 export function trimDate(date: string) {
-    return date.slice(0, 19);
+    return date.slice(0, 16);
 }
 
 /**

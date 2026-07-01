@@ -206,19 +206,19 @@ describe('CourseLectureDetailsComponent', () => {
 
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).not.toBeNull();
-        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBe(true);
+        expect(courseLecturesDetailsComponent.hasPdfLectureUnit()).toBe(true);
     });
 
     it('should not display download PDF button', async () => {
         lecture.lectureUnits = [lectureUnit3];
-        courseLecturesDetailsComponent.lecture = lecture;
+        courseLecturesDetailsComponent.lecture.set(lecture);
         courseLecturesDetailsComponent.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).toBeNull();
-        expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBe(false);
+        expect(courseLecturesDetailsComponent.hasPdfLectureUnit()).toBe(false);
     });
 
     it('should not display manage button when user is only tutor', async () => {
@@ -323,7 +323,7 @@ describe('CourseLectureDetailsComponent', () => {
 
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
         expect(downloadFileSpy).toHaveBeenCalledWith(attachment.link, attachment.name);
-        expect(courseLecturesDetailsComponent.isDownloadingLink).toBeUndefined();
+        expect(courseLecturesDetailsComponent.isDownloadingLink()).toBeUndefined();
     });
 
     it('should download PDF file', async () => {
@@ -347,7 +347,7 @@ describe('CourseLectureDetailsComponent', () => {
         const lectureUnitService = TestBed.inject(LectureUnitService);
         const completeSpy = vi.spyOn(lectureUnitService, 'completeLectureUnit');
 
-        courseLecturesDetailsComponent.lecture = lecture;
+        courseLecturesDetailsComponent.lecture.set(lecture);
         courseLecturesDetailsComponent.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
 
@@ -363,7 +363,7 @@ describe('CourseLectureDetailsComponent', () => {
             videoUnit.videoSource = 'https://example.com/video.mp4';
             videoUnit.lecture = lecture;
 
-            courseLecturesDetailsComponent.lectureUnits = [videoUnit];
+            courseLecturesDetailsComponent.lectureUnits.set([videoUnit]);
             courseLecturesDetailsComponent.targetUnitId.set(100);
             courseLecturesDetailsComponent.targetVideoTimestamp.set(45.5);
 
@@ -379,7 +379,7 @@ describe('CourseLectureDetailsComponent', () => {
             pdfUnit.attachment.link = '/path/to/slides.pdf';
             pdfUnit.lecture = lecture;
 
-            courseLecturesDetailsComponent.lectureUnits = [pdfUnit];
+            courseLecturesDetailsComponent.lectureUnits.set([pdfUnit]);
             courseLecturesDetailsComponent.targetUnitId.set(101);
             courseLecturesDetailsComponent.targetPdfPage.set(5);
 
@@ -396,7 +396,7 @@ describe('CourseLectureDetailsComponent', () => {
             unitWithBoth.attachment.link = '/path/to/slides.pdf';
             unitWithBoth.lecture = lecture;
 
-            courseLecturesDetailsComponent.lectureUnits = [unitWithBoth];
+            courseLecturesDetailsComponent.lectureUnits.set([unitWithBoth]);
             courseLecturesDetailsComponent.targetUnitId.set(102);
             courseLecturesDetailsComponent.targetVideoTimestamp.set(45.5);
 
@@ -411,7 +411,7 @@ describe('CourseLectureDetailsComponent', () => {
             youtubeUnit.youtubeVideoId = 'dQw4w9WgXcQ';
             youtubeUnit.lecture = lecture;
 
-            courseLecturesDetailsComponent.lectureUnits = [youtubeUnit];
+            courseLecturesDetailsComponent.lectureUnits.set([youtubeUnit]);
             courseLecturesDetailsComponent.targetUnitId.set(103);
             courseLecturesDetailsComponent.targetVideoTimestamp.set(30);
 
@@ -428,7 +428,7 @@ describe('CourseLectureDetailsComponent', () => {
             youtubeUnitWithPdf.attachment.link = '/path/to/slides.pdf';
             youtubeUnitWithPdf.lecture = lecture;
 
-            courseLecturesDetailsComponent.lectureUnits = [youtubeUnitWithPdf];
+            courseLecturesDetailsComponent.lectureUnits.set([youtubeUnitWithPdf]);
             courseLecturesDetailsComponent.targetUnitId.set(104);
             courseLecturesDetailsComponent.targetVideoTimestamp.set(60);
             courseLecturesDetailsComponent.targetPdfPage.set(7);
@@ -446,13 +446,85 @@ describe('CourseLectureDetailsComponent', () => {
             unitWithoutVideo.attachment.link = '/path/to/document.pdf';
             unitWithoutVideo.lecture = lecture;
 
-            courseLecturesDetailsComponent.lectureUnits = [unitWithoutVideo];
+            courseLecturesDetailsComponent.lectureUnits.set([unitWithoutVideo]);
             courseLecturesDetailsComponent.targetUnitId.set(105);
             courseLecturesDetailsComponent.targetVideoTimestamp.set(45);
 
             courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
 
             expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
+        });
+    });
+
+    describe('Context Collection', () => {
+        it('collectVisibleContexts: returns empty array when no units', () => {
+            fixture.changeDetectorRef.detectChanges();
+
+            const contexts = courseLecturesDetailsComponent['collectVisibleContexts']();
+
+            expect(contexts).toEqual([]);
+        });
+
+        it('isElementVisible: returns false for null element', () => {
+            const result = courseLecturesDetailsComponent['isElementVisible'](null);
+
+            expect(result).toBe(false);
+        });
+
+        it('isElementVisible: returns true when element is in viewport', () => {
+            const mockElement = document.createElement('div');
+            vi.spyOn(mockElement, 'getBoundingClientRect').mockReturnValue({
+                top: 100,
+                bottom: 200,
+                left: 50,
+                right: 300,
+                width: 250,
+                height: 100,
+                x: 50,
+                y: 100,
+                toJSON: () => {},
+            } as DOMRect);
+
+            Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true });
+            Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+
+            const result = courseLecturesDetailsComponent['isElementVisible'](mockElement);
+
+            expect(result).toBe(true);
+        });
+
+        it('isElementVisible: returns false when element is below viewport', () => {
+            const mockElement = document.createElement('div');
+            vi.spyOn(mockElement, 'getBoundingClientRect').mockReturnValue({
+                top: 1000,
+                bottom: 1200,
+                left: 50,
+                right: 300,
+                width: 250,
+                height: 200,
+                x: 50,
+                y: 1000,
+                toJSON: () => {},
+            } as DOMRect);
+
+            Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true });
+            Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+
+            const result = courseLecturesDetailsComponent['isElementVisible'](mockElement);
+
+            expect(result).toBe(false);
+        });
+
+        it('contextProvider: returns a function that calls collectVisibleContexts', () => {
+            const collectSpy = vi.spyOn(courseLecturesDetailsComponent as any, 'collectVisibleContexts').mockReturnValue([]);
+
+            const provider = courseLecturesDetailsComponent.contextProvider();
+            expect(provider).toBeDefined();
+
+            const contexts = provider!();
+
+            expect(collectSpy).toHaveBeenCalledTimes(1);
+            expect(contexts).toEqual([]);
         });
     });
 });

@@ -121,6 +121,23 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         courseRepository.saveAndFlush(persistedCourse);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerPostPersistsAndIsNotOrphanRemoved() throws Exception {
+        // Regression test for the orphan-removal bug in PlagiarismAnswerPostService.createAnswerPost: it used to
+        // re-save the (detached) parent post after saving the new answer. Because Post.answers is
+        // @OneToMany(orphanRemoval = true), that merge could delete the just-created answer, intermittently losing it.
+        // The created answer must remain persisted.
+        Post parentPost = existingPostsWithAnswers.getFirst();
+        PlagiarismAnswerPostCreateRequestDTO createRequest = new PlagiarismAnswerPostCreateRequestDTO(new ParentPostDTO(parentPost.getId()), "Content Answer Post", false);
+
+        AnswerPostResponseDTO createdAnswerPost = request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", createRequest, AnswerPostResponseDTO.class,
+                HttpStatus.CREATED);
+
+        assertThat(createdAnswerPost.id()).isNotNull();
+        assertThat(answerPostRepository.findById(createdAnswerPost.id())).as("the created plagiarism answer post must not be orphan-removed by a parent-post re-save").isPresent();
+    }
+
     // Note: the previous testCreateExistingAnswerPost_badRequest case (creating with an existing id and expecting
     // BAD_REQUEST) is no longer expressible — the request DTO has no id field by construction, so the only way the
     // server could observe the case has been removed.

@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -106,6 +107,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
+    private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
@@ -116,7 +119,7 @@ public class ProgrammingExerciseCreationUpdateService {
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -136,32 +139,7 @@ public class ProgrammingExerciseCreationUpdateService {
         this.gitService = gitService;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
-    }
-
-    /**
-     * Setups the context of a new programming exercise. This includes:
-     * <ul>
-     * <li>The VCS project</li>
-     * <li>All repositories (test, exercise, solution)</li>
-     * <li>The template and solution participation</li>
-     * <li>VCS webhooks</li>
-     * </ul>
-     * The exercise gets set up in the following order:
-     * <ol>
-     * <li>Create all repositories for the new exercise</li>
-     * <li>Setup template and push it to the repositories</li>
-     * <li>Setup new build plans for exercise</li>
-     * <li>Add all webhooks</li>
-     * <li>Init scheduled jobs for exercise maintenance</li>
-     * </ol>
-     *
-     * @param programmingExercise The programmingExercise that should be setup
-     * @return The new setup exercise
-     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
-     * @throws IOException     If the template files couldn't be read
-     */
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
-        return createProgrammingExercise(programmingExercise, false);
+        this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
     }
 
     /**
@@ -174,6 +152,21 @@ public class ProgrammingExerciseCreationUpdateService {
      * @throws IOException     If the template files couldn't be read
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories) throws GitAPIException, IOException {
+        return createProgrammingExercise(programmingExercise, emptyRepositories, false);
+    }
+
+    /**
+     * Setups the context of a new programming exercise with optional repository cleanup for AI generation.
+     *
+     * @param programmingExercise           The programmingExercise that should be setup
+     * @param emptyRepositories             if true, clear sources in template, solution, and test repositories after setup
+     * @param skipRepositoryAndBuildTrigger if true, skip repository setups, initial submissions, and build plan setup
+     * @return The new setup exercise
+     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
+     * @throws IOException     If the template files couldn't be read
+     */
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean emptyRepositories, boolean skipRepositoryAndBuildTrigger)
+            throws GitAPIException, IOException {
         if (programmingExercise == null) {
             throw new BadRequestAlertException("ProgrammingExercise must not be null", "ProgrammingExercise", "programmingExerciseNull");
         }
@@ -220,10 +213,6 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
-        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, emptyRepositories);
-
-        programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
-
         // Make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(savedProgrammingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
@@ -231,8 +220,10 @@ public class ProgrammingExerciseCreationUpdateService {
 
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
-        programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(savedProgrammingExercise);
-        savedProgrammingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(savedProgrammingExercise.getId());
+        if (!skipRepositoryAndBuildTrigger) {
+            programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator, emptyRepositories);
+            savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
+        }
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
@@ -252,7 +243,25 @@ public class ProgrammingExerciseCreationUpdateService {
         // Restore competency links with proper exercise reference before final save
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
-        return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+
+        // Pre-provision repository-scoped VCS access tokens for all current course staff for the exercise's base repositories. Done asynchronously (after the exercise is saved) so
+        // exercise creation does not block on token generation for potentially many staff members; the clone-dialog lazy fallback covers the brief window before the tokens exist.
+        repositoryVcsAccessTokenService.ensureTokensForExerciseAsync(createdProgrammingExercise.getId());
+
+        return createdProgrammingExercise;
+    }
+
+    /**
+     * Creates initial submissions and build plans for an exercise whose repositories were initialized outside the regular creation flow.
+     *
+     * @param programmingExercise the programming exercise with initialized repositories
+     * @return the programming exercise with build plans created
+     */
+    public ProgrammingExercise setupBuildPlansAndTriggerInitialBuilds(ProgrammingExercise programmingExercise) {
+        programmingSubmissionService.createInitialSubmissions(programmingExercise);
+        programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(programmingExercise);
+        return programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
     }
 
     private void validateAiGenerationPreconditions(ProgrammingExercise programmingExercise) {
@@ -349,6 +358,11 @@ public class ProgrammingExerciseCreationUpdateService {
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
+        // Provision repository-scoped VCS access tokens for newly added base repositories (e.g. auxiliary repositories) for the course's staff. Done asynchronously (after the
+        // save)
+        // so updating an exercise does not block on token generation; the clone-dialog lazy fallback covers the brief window before the tokens exist.
+        repositoryVcsAccessTokenService.ensureTokensForExerciseAsync(savedProgrammingExercise.getId());
+
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
@@ -411,8 +425,14 @@ public class ProgrammingExerciseCreationUpdateService {
 
         programmingExercise.validateDates();
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
-            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+            try {
+                final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
+                setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+            }
+            catch (JsonProcessingException e) {
+                throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
+                        "invalidBuildPlanConfiguration");
+            }
         }
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);

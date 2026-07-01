@@ -14,7 +14,8 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -36,7 +37,7 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         NgbDropdownButtonItem,
         NgbDropdownItem,
         NgbTooltip,
-        NgbPagination,
+        PaginatorModule,
         FaIconComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
@@ -60,8 +61,8 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
     readonly scrollableContent = viewChild.required<ElementRef>('scrollableContent');
 
-    course: Course;
-    onlineCourseConfiguration: OnlineCourseConfiguration;
+    readonly course = signal<Course>(undefined!);
+    readonly onlineCourseConfiguration = signal<OnlineCourseConfiguration>(undefined!);
     onlineCourseConfigurationForm: FormGroup;
     readonly ltiConfiguredPlatforms = signal<LtiPlatformConfiguration[]>([]);
 
@@ -78,16 +79,17 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     ngOnInit() {
         this.route.data.subscribe(({ course }) => {
             if (course) {
-                this.course = course;
-                this.onlineCourseConfiguration = course.onlineCourseConfiguration;
+                this.course.set(course);
+                this.onlineCourseConfiguration.set(course.onlineCourseConfiguration);
             }
         });
 
+        const onlineCourseConfiguration = this.onlineCourseConfiguration();
         this.onlineCourseConfigurationForm = new FormGroup({
-            id: new FormControl(this.onlineCourseConfiguration.id),
-            userPrefix: new FormControl(this.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
-            requireExistingUser: new FormControl(this.onlineCourseConfiguration.requireExistingUser),
-            ltiPlatformConfiguration: new FormControl(this.onlineCourseConfiguration?.ltiPlatformConfiguration ?? null),
+            id: new FormControl(onlineCourseConfiguration.id),
+            userPrefix: new FormControl(onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
+            requireExistingUser: new FormControl(onlineCourseConfiguration.requireExistingUser),
+            ltiPlatformConfiguration: new FormControl(onlineCourseConfiguration?.ltiPlatformConfiguration ?? null),
         });
 
         this.loadInitialPlatforms();
@@ -121,13 +123,21 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     }
 
     /**
+     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the 1-indexed page.
+     */
+    onPageChange(event: PaginatorState): void {
+        this.page.set((event.page ?? 0) + 1);
+        this.transition();
+    }
+
+    /**
      * Save the changes to the online course configuration
      */
     save() {
         this.isSaving.set(true);
         const onlineCourseConfiguration = this.onlineCourseConfigurationForm.getRawValue();
         this.courseService
-            .updateOnlineCourseConfiguration(this.course.id!, onlineCourseConfiguration)
+            .updateOnlineCourseConfiguration(this.course().id!, onlineCourseConfiguration)
             .pipe(
                 finalize(() => {
                     this.isSaving.set(false);
@@ -161,11 +171,11 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
      * Returns to the lti configuration page
      */
     navigateToLtiConfigurationPage() {
-        this.router.navigate(['course-management', this.course.id!.toString(), 'lti-configuration']);
+        this.router.navigate(['course-management', this.course().id!.toString(), 'lti-configuration']);
     }
 
     setPlatform(platform: LtiPlatformConfiguration) {
-        this.onlineCourseConfiguration.ltiPlatformConfiguration = platform;
+        this.onlineCourseConfiguration().ltiPlatformConfiguration = platform;
         this.onlineCourseConfigurationForm.get('ltiPlatformConfiguration')?.setValue(platform);
     }
 

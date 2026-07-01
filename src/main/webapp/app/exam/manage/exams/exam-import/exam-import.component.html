@@ -11,12 +11,12 @@
         </div>
     }
     <!-- State 1: Selection of an exam for import -->
-    @if (!exam) {
+    @if (!exam()) {
         <div class="modal-body">
             <div class="form-group form-inline">
                 <span jhiTranslate="artemisApp.examManagement.import.search"></span>:
                 <input class="form-control ms-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
-                @if (loading) {
+                @if (loading()) {
                     <span class="ms-3" jhiTranslate="artemisApp.exercise.import.loading"></span>
                 }
             </div>
@@ -43,7 +43,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @for (exam of content.resultsOnPage; track trackId($index, exam)) {
+                    @for (exam of content().resultsOnPage; track trackId($index, exam)) {
                         <tr class="flex-row">
                             <td class="col-1">
                                 <span [class.ngb-highlight]="'' + exam.id === searchTerm"> {{ exam.id }}</span>
@@ -75,39 +75,34 @@
                 </tbody>
             </table>
             <div class="d-flex justify-content-between p-2">
-                <ngb-pagination
-                    [maxSize]="5"
-                    [rotate]="true"
-                    [ellipses]="true"
-                    [boundaryLinks]="true"
-                    [collectionSize]="total"
-                    [(page)]="state.page"
-                    [pageSize]="state.pageSize"
-                    (pageChange)="onPageChange($event)"
-                />
+                <p-paginator [first]="(state.page - 1) * state.pageSize" [rows]="state.pageSize" [totalRecords]="total()" (onPageChange)="onPaginatorPageChange($event)" />
             </div>
         </div>
     }
     <!-- State 2: Selection of exercises to be imported after an exam was selected -->
-    @if (exam && subsequentExerciseGroupSelection()) {
-        <div class="modal-body">
-            <div class="form-group form-inline">
-                @if (!isImportingExercises) {
-                    <p jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation"></p>
-                }
-                @if (isImportingExercises) {
-                    <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting"></p>
-                }
+    @if (exam(); as selectedExam) {
+        @if (subsequentExerciseGroupSelection()) {
+            <div class="modal-body">
+                <div class="form-group form-inline">
+                    @if (!isImportingExercises()) {
+                        <p jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation"></p>
+                    }
+                    @if (isImportingExercises()) {
+                        <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting"></p>
+                    }
+                </div>
+                <jhi-exam-exercise-import [exam]="selectedExam" [importInSameCourse]="isImportInSameCourse()" [targetCourseId]="targetCourseId()" />
             </div>
-            <jhi-exam-exercise-import [exam]="exam!" [importInSameCourse]="isImportInSameCourse" />
-        </div>
-        <div class="modal-footer">
-            <jhi-button
-                (onClick)="performImportOfExerciseGroups()"
-                [title]="'artemisApp.exercise.import.table.doImport'"
-                [disabled]="isImportingExercises"
-                [isLoading]="isImportingExercises"
-            />
-        </div>
+            <div class="modal-footer">
+                <jhi-button
+                    (onClick)="performImportOfExerciseGroups()"
+                    [title]="'artemisApp.exercise.import.table.doImport'"
+                    [disabled]="isImportingExercises()"
+                    [isLoading]="isImportingExercises()"
+                />
+            </div>
+        }
     }
 </form>
+
+<jhi-exam-import-progress-dialog />

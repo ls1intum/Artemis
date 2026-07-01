@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -61,7 +61,7 @@ public class ExerciseVersionService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final Optional<ModelingRepositoryApi> modelingRepositoryApi;
 
@@ -80,7 +80,7 @@ public class ExerciseVersionService {
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
-            QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
+            QuizExerciseRepository quizExerciseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
             ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher,
             com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
@@ -88,7 +88,7 @@ public class ExerciseVersionService {
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.textExerciseRepository = textExerciseRepository;
+        this.textRepositoryApi = textRepositoryApi;
         this.modelingRepositoryApi = modelingRepositoryApi;
         this.fileUploadApi = fileUploadApi;
         this.userRepository = userRepository;
@@ -171,7 +171,7 @@ public class ExerciseVersionService {
             previousVersion.ifPresent(prev -> {
                 try {
                     List<CommentThreadDTO> updatedThreads = exerciseReviewVersionChangeService.updateThreadsForVersionChange(prev.getExerciseSnapshot(), exerciseSnapshot).stream()
-                            .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).collect(Collectors.toUnmodifiableList());
+                            .filter(thread -> thread.getId() != null).map(thread -> new CommentThreadDTO(thread, List.of())).toList();
                     for (CommentThreadDTO updatedThread : updatedThreads) {
                         exerciseEditorSyncService.broadcastReviewThreadUpdate(exercise.getId(), ReviewThreadSyncDTO.threadUpdated(updatedThread));
                     }
@@ -210,7 +210,7 @@ public class ExerciseVersionService {
         Exercise fetched = switch (exerciseType) {
             case PROGRAMMING -> programmingExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case QUIZ -> quizExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
-            case TEXT -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
+            case TEXT -> textRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case MODELING -> modelingRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
         };

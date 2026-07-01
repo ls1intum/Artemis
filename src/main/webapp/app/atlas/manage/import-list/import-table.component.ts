@@ -7,7 +7,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { faSort, faSortDown, faSortUp, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
-import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -26,7 +27,7 @@ export type Column<T extends BaseEntity> = {
 
 @Component({
     selector: 'jhi-import-table',
-    imports: [NgbPagination, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, FormsModule, NgbTypeaheadModule, CommonModule],
+    imports: [PaginatorModule, ArtemisTranslatePipe, TranslateDirective, FontAwesomeModule, FormsModule, NgbTypeaheadModule, CommonModule],
     templateUrl: './import-table.component.html',
     styleUrl: './import-table.component.scss',
 })
@@ -71,6 +72,14 @@ export class ImportTableComponent<T extends BaseEntity> {
         });
     }
 
+    /**
+     * Runs the current paginated search and applies its result to the table.
+     *
+     * Several searches can be in flight simultaneously (the initial unfiltered load plus debounced loads
+     * issued while typing) and their responses may return out of order. A response is therefore only applied
+     * when the search state it was issued with still matches the current state; otherwise a newer request has
+     * superseded it and the stale response is discarded so the table never shows results for an old query.
+     */
     private async loadData(): Promise<void> {
         try {
             this.isLoading.set(true);
@@ -82,6 +91,15 @@ export class ImportTableComponent<T extends BaseEntity> {
                 pageSize: this.pageSize(),
             };
             const result = await lastValueFrom(this.pagingService.search(searchState));
+            // A newer request has superseded this one; discard its (now stale) response.
+            if (
+                searchState.searchTerm !== this.searchTerm() ||
+                searchState.page !== this.page() ||
+                searchState.sortedColumn !== this.sortedColumn() ||
+                searchState.sortingOrder !== this.sortingOrder()
+            ) {
+                return;
+            }
             const filteredResults = this.filterSearchResult(result);
             this.searchResult.set(filteredResults);
         } catch (error) {
@@ -113,6 +131,11 @@ export class ImportTableComponent<T extends BaseEntity> {
     protected async setPage(page: number): Promise<void> {
         this.page.set(page);
         await this.loadData();
+    }
+
+    /** PrimeNG paginator page change (0-indexed) converted to the 1-indexed page used here. */
+    protected onPageChange(event: PaginatorState): void {
+        void this.setPage((event.page ?? 0) + 1);
     }
 
     protected search(): void {

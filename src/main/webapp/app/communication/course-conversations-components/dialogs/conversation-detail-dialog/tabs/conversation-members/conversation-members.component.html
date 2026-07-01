@@ -38,17 +38,17 @@
                         size="small"
                     />
                 </div>
-                @if (isSearching) {
+                @if (isSearching()) {
                     <div class="col-12">
                         <small class="form-text text-body-secondary d-inline-block" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.searching"></small>
                     </div>
                 }
             </div>
         </div>
-        @if (members && members.length > 0) {
+        @if (members().length > 0) {
             <div class="members-list">
                 <ul class="list-group">
-                    @for (user of members; track trackIdentity(i, user); let i = $index) {
+                    @for (user of members(); track trackIdentity(i, user); let i = $index) {
                         <li
                             class="list-group-item"
                             [id]="'user-' + user.id"
@@ -64,18 +64,10 @@
             </div>
             <div class="members-footer">
                 <div class="d-flex justify-content-center">
-                    <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
+                    <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
                 </div>
                 <div class="d-flex justify-content-center">
-                    <ngb-pagination
-                        [collectionSize]="totalItems"
-                        [(page)]="page"
-                        [pageSize]="itemsPerPage"
-                        [maxSize]="5"
-                        [rotate]="true"
-                        [boundaryLinks]="true"
-                        (pageChange)="transition()"
-                    />
+                    <p-paginator [first]="(page() - 1) * itemsPerPage" [rows]="itemsPerPage" [totalRecords]="totalItems()" (onPageChange)="onPageChange($event)" />
                 </div>
             </div>
         }

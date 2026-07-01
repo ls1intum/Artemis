@@ -10,23 +10,16 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DialogService } from 'primeng/dynamicdialog';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
-import { MatAutocomplete, MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AutoComplete, AutoCompleteCompleteEvent, AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
-import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { MatFormField } from '@angular/material/form-field';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MatOption } from '@angular/material/core';
-import { AsyncPipe } from '@angular/common';
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -47,16 +40,8 @@ import { Authority } from 'app/foundation/constants/authority.constants';
         TranslateDirective,
         TooltipModule,
         HelpIconComponent,
-        MatFormField,
-        MatChipGrid,
-        MatChipRow,
-        MatChipRemove,
+        AutoComplete,
         FaIconComponent,
-        MatAutocompleteTrigger,
-        MatChipInput,
-        MatAutocomplete,
-        MatOption,
-        AsyncPipe,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
@@ -90,11 +75,11 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly EMAIL_MAX_LENGTH = 100;
     readonly REGISTRATION_NUMBER_MAX_LENGTH = 20;
 
-    /** The user being edited */
-    user: User;
+    /** The user being edited. Signal so async mutations (route resolver data, organizations fetched via HTTP) render under zoneless. */
+    readonly user = signal<User>(undefined!);
 
     /** Available languages for selection */
-    languages: string[];
+    readonly languages = signal<string[]>(undefined!);
 
     /** Available authorities for selection */
     readonly authorities = signal<string[]>([]);
@@ -120,16 +105,10 @@ export class UserManagementUpdateComponent implements OnInit {
     readonly isSaving = signal(false);
 
     /** All available groups for autocomplete */
-    allGroups: string[];
+    allGroups: string[] = [];
 
-    /** Filtered groups based on input */
-    filteredGroups: Observable<string[]>;
-
-    /** Separator key codes for chip input */
-    readonly separatorKeysCodes = [ENTER, COMMA, TAB];
-
-    /** Form control for group autocomplete */
-    readonly groupCtrl = new FormControl();
+    /** Suggestions shown in the group autocomplete dropdown, recomputed on each keystroke via {@link onGroupComplete}. */
+    readonly groupSuggestions = signal<string[]>([]);
 
     /** Authority to translation key mapping */
     private readonly authorityTranslationKeys: Record<string, string> = {
@@ -155,13 +134,14 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     ngOnInit(): void {
         // create a new user, and only overwrite it if we fetch a user to edit
-        this.user = new User();
+        this.user.set(new User());
         this.route.parent!.data.subscribe(({ user }) => {
             if (user) {
-                this.user = user.body ? user.body : user;
-                this.oldLogin = this.user.login;
-                this.organizationService.getOrganizationsByUser(this.user.id!).subscribe((organizations) => {
-                    this.user.organizations = organizations;
+                this.user.set(user.body ? user.body : user);
+                this.oldLogin = this.user().login;
+                this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
+                    // Rebuild the user reference so the async organization update renders under zoneless.
+                    this.user.update((currentUser) => ({ ...currentUser, organizations }) as User);
                 });
             }
         });
@@ -174,10 +154,6 @@ export class UserManagementUpdateComponent implements OnInit {
                     }
                 });
             }
-            this.filteredGroups = this.groupCtrl.valueChanges.pipe(
-                startWith(undefined),
-                map((value) => (value ? this.filter(value) : this.allGroups.slice())),
-            );
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.userService.authorities().subscribe((authorities) => {
@@ -185,13 +161,13 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.accountService.isSuperAdmin() ? authorities : authorities.filter((authority) => authority !== Authority.SUPER_ADMIN && authority !== Authority.ADMIN),
             );
         });
-        this.languages = this.languageHelper.getAll();
+        this.languages.set(this.languageHelper.getAll());
         // Empty array for new user
-        if (!this.user.id) {
-            this.user.groups = [];
+        if (!this.user().id) {
+            this.user().groups = [];
         }
         // Set password to undefined. ==> If it still is undefined on save, it won't be changed for existing users. It will be random for new users
-        this.user.password = undefined;
+        this.user().password = undefined;
         this.initializeForm();
     }
 
@@ -201,8 +177,8 @@ export class UserManagementUpdateComponent implements OnInit {
      * Returns to the overview page if there is no previous state, and we created a new user
      */
     previousState() {
-        if (this.user.id) {
-            this.navigationUtilService.navigateBack(['admin', 'user-management', this.user.login!.toString()]);
+        if (this.user().id) {
+            this.navigationUtilService.navigateBack(['admin', 'user-management', this.user().login!.toString()]);
         } else {
             this.navigationUtilService.navigateBack(['admin', 'user-management']);
         }
@@ -215,20 +191,21 @@ export class UserManagementUpdateComponent implements OnInit {
     save(): void {
         this.isSaving.set(true);
         // temporarily store the user groups and organizations in variables, because they are not part of the edit form
-        const userGroups = this.user.groups;
-        const userOrganizations = this.user.organizations;
-        this.user = this.editForm.getRawValue();
-        this.user.groups = userGroups;
-        this.user.organizations = userOrganizations;
-        if (this.user.id) {
-            this.userService.update(this.user).subscribe({
+        const userGroups = this.user().groups;
+        const userOrganizations = this.user().organizations;
+        const updatedUser: User = this.editForm.getRawValue();
+        updatedUser.groups = userGroups;
+        updatedUser.organizations = userOrganizations;
+        this.user.set(updatedUser);
+        if (updatedUser.id) {
+            this.userService.update(updatedUser).subscribe({
                 next: () => {
-                    if (this.isJenkins && this.user.login !== this.oldLogin && !this.user.password) {
+                    if (this.isJenkins && updatedUser.login !== this.oldLogin && !updatedUser.password) {
                         this.alertService.addAlert({
                             type: AlertType.WARNING,
                             message: 'artemisApp.userManagement.jenkinsChange',
                             timeout: 0,
-                            translationParams: { oldLogin: this.oldLogin, newLogin: this.user.login },
+                            translationParams: { oldLogin: this.oldLogin, newLogin: updatedUser.login },
                         });
                     }
                     this.onSaveSuccess();
@@ -236,7 +213,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 error: () => this.onSaveError(),
             });
         } else {
-            this.userService.create(this.user).subscribe({
+            this.userService.create(updatedUser).subscribe({
                 next: () => this.onSaveSuccess(),
                 error: () => this.onSaveError(),
             });
@@ -244,11 +221,7 @@ export class UserManagementUpdateComponent implements OnInit {
     }
 
     shouldRandomizePassword(useRandomPassword: any) {
-        if (useRandomPassword) {
-            this.user.password = undefined;
-        } else {
-            this.user.password = '';
-        }
+        this.user().password = useRandomPassword ? undefined : '';
     }
 
     /**
@@ -262,13 +235,13 @@ export class UserManagementUpdateComponent implements OnInit {
             closable: true,
             dismissableMask: true,
             data: {
-                organizations: this.user.organizations,
+                organizations: this.user().organizations,
             } as OrganizationSelectorDialogData,
         });
         dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
-                // Create a new array reference to trigger change detection with OnPush
-                this.user.organizations = [...(this.user.organizations ?? []), organization];
+                // Rebuild the user reference (new organizations array) so the async dialog result renders under zoneless.
+                this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }) as User);
             }
         });
     }
@@ -278,19 +251,38 @@ export class UserManagementUpdateComponent implements OnInit {
      * @param organization to remove
      */
     removeOrganizationFromUser(organization: Organization) {
-        this.user.organizations = this.user.organizations!.filter((userOrganization) => userOrganization.id !== organization.id);
+        // Rebuild the user reference (new organizations array) so the updated list renders under zoneless.
+        this.user.update(
+            (currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }) as User,
+        );
     }
 
     /**
-     * Adds a group to the user
-     * @param user to add the group to
-     * @param event chip input event
+     * Recomputes the autocomplete suggestions for the typed query, excluding groups already assigned to the user.
+     * @param event the p-autoComplete complete event carrying the current query
      */
-    onGroupAdd(user: User, event: MatChipInputEvent) {
-        const groupString = (event.value || '').trim();
+    onGroupComplete(event: AutoCompleteCompleteEvent): void {
+        const query = event.query;
+        const candidates = query ? this.filter(query) : (this.allGroups ?? []).slice();
+        const assigned = this.user().groups ?? [];
+        this.groupSuggestions.set(candidates.filter((group) => !assigned.includes(group)));
+    }
+
+    /**
+     * Adds a group to the user from the typed free-text value (Enter key). The group is only added if it is a known
+     * group; {@link addGroup} performs that validation. Clears the input afterwards.
+     * @param user to add the group to
+     * @param event the keyboard event coming from the input
+     */
+    onGroupAdd(user: User, event: Event) {
+        // Cancel the Enter key before reading the input so it does not also submit the surrounding
+        // (ngSubmit)="save()" user edit form (which would save and navigate away while adding a group).
+        event.preventDefault();
+        event.stopPropagation();
+        const input = event.target as HTMLInputElement;
+        const groupString = (input.value || '').trim();
         this.addGroup(user, groupString);
-        this.groupCtrl.setValue('');
-        event.chipInput!.clear();
+        input.value = '';
     }
 
     /**
@@ -300,16 +292,24 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     onGroupRemove(user: User, group: string) {
         user.groups = user.groups?.filter((userGroup) => userGroup !== group);
+        this.commitUser(user);
     }
 
     /**
-     * Adds the selected group from panel to the user
-     * @param event autocomplete event
+     * Adds the selected group from the autocomplete dropdown to the user.
+     * @param event the p-autoComplete select event carrying the chosen group label
      */
-    onSelected(event: MatAutocompleteSelectedEvent): void {
-        const groupString = (event.option.viewValue || '').trim();
-        this.addGroup(this.user, groupString);
-        this.groupCtrl.setValue('');
+    onGroupSelect(event: AutoCompleteSelectEvent): void {
+        const groupString = (event.value || '').trim();
+        this.addGroup(this.user(), groupString);
+    }
+
+    /**
+     * Removes the group whose chip token was removed via the built-in p-autoComplete remove icon.
+     * @param event the p-autoComplete unselect event carrying the removed group label
+     */
+    onGroupUnselect(event: AutoCompleteUnselectEvent): void {
+        this.onGroupRemove(this.user(), event.value);
     }
 
     private initializeForm() {
@@ -330,12 +330,12 @@ export class UserManagementUpdateComponent implements OnInit {
             internal: [{ disabled: true }], // initially disabled, will be enabled if user.id is undefined
         });
         // Conditionally enable or disable 'internal' input based on user.id
-        if (this.user.id !== undefined) {
+        if (this.user().id !== undefined) {
             this.editForm.get('internal')?.disable(); // Artemis does not support to edit the internal flag for existing users
         } else {
             this.editForm.get('internal')?.enable(); // New users can either be internal or external
         }
-        this.editForm.patchValue(this.user);
+        this.editForm.patchValue(this.user());
     }
 
     /**
@@ -369,11 +369,19 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     private addGroup(user: User, groupString: string) {
         if (groupString && this.allGroups.includes(groupString) && !user.groups?.includes(groupString)) {
-            if (!user.groups) {
-                user.groups = [];
-            }
-            user.groups.push(groupString);
+            // Assign a NEW array (rather than mutating in place) so the one-way `[ngModel]="user().groups"` sees a
+            // changed reference and PrimeNG's AutoComplete re-renders the chip for the freshly added group.
+            user.groups = [...(user.groups ?? []), groupString];
+            this.commitUser(user);
         }
+    }
+
+    /**
+     * Rebuild the user signal reference after an in-place mutation so the dependent template (chip list) re-renders under zoneless.
+     * Only rebuilds when the mutated object is the currently held user to avoid clobbering unrelated state.
+     */
+    private commitUser(user: User) {
+        this.user.update((currentUser) => (currentUser === user ? ({ ...currentUser } as User) : currentUser));
     }
 
     /**

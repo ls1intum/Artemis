@@ -1,11 +1,10 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -46,10 +45,6 @@ import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/c
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
     imports: [
         NgClass,
-        MatSidenavContainer,
-        MatSidenavContent,
-        MatSidenav,
-        RouterLink,
         RouterOutlet,
         NgTemplateOutlet,
         FaIconComponent,
@@ -79,10 +74,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesChannel: string;
     private quizExercisesSubscription?: Subscription;
     private examStartedSubscription: Subscription;
-    manageViewLink = signal<string[]>(['']);
 
-    protected selectableSettingPresets: CourseNotificationSettingPreset[];
-    protected selectedSettingPreset?: CourseNotificationSettingPreset;
+    protected readonly selectableSettingPresets = signal<CourseNotificationSettingPreset[] | undefined>(undefined);
+    protected readonly selectedSettingPreset = signal<CourseNotificationSettingPreset | undefined>(undefined);
     private info?: CourseNotificationInfo;
     private settingInfo?: CourseNotificationSettingInfo;
 
@@ -100,6 +94,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         | CourseDashboardComponent
         | undefined
     >(undefined);
+    protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
     // Icons
     faTimes = faTimes;
@@ -165,10 +160,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * Sets up selectable presets, and the currently selected preset.
      */
     private initializeCourseNotificationValues() {
-        this.selectableSettingPresets = this.info!.presets;
+        this.selectableSettingPresets.set(this.info!.presets);
 
-        this.selectedSettingPreset =
-            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!;
+        this.selectedSettingPreset.set(
+            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,
+        );
     }
 
     /**
@@ -177,13 +173,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
      * @param presetTypeId - The ID of the selected preset (0 for custom settings)
      */
     presetSelected(presetTypeId: number) {
-        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset);
+        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset());
 
-        this.selectedSettingPreset = presetTypeId === 0 ? undefined : this.selectableSettingPresets.find((preset) => preset.typeId === presetTypeId)!;
-    }
-
-    protected handleNavigationEndActions() {
-        this.determineManageViewLink();
+        this.selectedSettingPreset.set(presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId)!);
     }
 
     handleCourseIdChange(courseId: number): void {
@@ -193,37 +185,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
-    }
-
-    determineManageViewLink() {
-        if (!this.course()) {
-            return;
-        }
-
-        const courseIdString = this.courseId().toString();
-        const routerUrl = this.router.url;
-        const baseManagementPath = ['/course-management', courseIdString];
-        const routeMappings = [
-            { urlPart: 'exams', targetPath: [...baseManagementPath, 'exams'] },
-            { urlPart: 'exercises', targetPath: [...baseManagementPath, 'exercises'] },
-            { urlPart: 'lectures', targetPath: [...baseManagementPath, 'lectures'], permissionCheck: () => this.course()?.isAtLeastEditor },
-            { urlPart: 'communication', targetPath: [...baseManagementPath, 'communication'] },
-            { urlPart: 'learning-path', targetPath: [...baseManagementPath, 'learning-paths-management'], permissionCheck: () => this.course()?.isAtLeastInstructor },
-            { urlPart: 'competencies', targetPath: [...baseManagementPath, 'competency-management'], permissionCheck: () => this.course()?.isAtLeastInstructor },
-            { urlPart: 'faq', targetPath: [...baseManagementPath, 'faqs'] },
-            { urlPart: 'statistics', targetPath: [...baseManagementPath, 'course-statistics'] },
-            {
-                urlPart: 'tutorial-groups',
-                targetPath: [...baseManagementPath, 'tutorial-groups-checklist'],
-                permissionCheck: () => this.course()?.isAtLeastInstructor || this.course()?.tutorialGroupsConfiguration,
-            },
-        ];
-
-        const matchedRoute = routeMappings.find((route) => {
-            return routerUrl.includes(route.urlPart) && (!route.permissionCheck || route.permissionCheck());
-        });
-
-        this.manageViewLink.set(matchedRoute ? matchedRoute.targetPath : baseManagementPath);
     }
 
     /**
@@ -289,7 +250,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.activatedComponentReference.set(componentRef);
         }
 
-        this.isSidebarCollapsed.update((value) => value ?? false);
+        if (componentRef instanceof CourseExercisesComponent) {
+            componentRef.setPageTitle(this.pageTitle());
+        }
+
+        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.getShowRefreshButton();
     }
 
@@ -489,14 +455,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                 }
             });
         }
-    }
-
-    /** Navigate to a new Course */
-    switchCourse(course: Course) {
-        const url = ['courses', course.id, 'dashboard'];
-        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            void this.router.navigate(url);
-        });
     }
 
     ngOnDestroy() {

@@ -12,7 +12,7 @@
                 <a [href]="FEATURE_REQUEST_URL" class="footer-text ms-3" target="_blank" jhiTranslate="feature"></a>
             </li>
             <li>
-                <a [href]="email" class="footer-text ms-3" target="_top" jhiTranslate="contact"></a>
+                <a [href]="email()" class="footer-text ms-3" target="_top" jhiTranslate="contact"></a>
             </li>
             <li>
                 <a [href]="RELEASE_NOTES_URL" class="footer-text ms-3" target="_blank" jhiTranslate="releaseNotes"></a>
@@ -32,71 +32,73 @@
             }
         </ol>
     </div>
-    @if (data && data.projectManagers) {
-        <div class="row ms-4 me-4 mb-4">
-            @for (pm of data.projectManagers; track pm) {
-                <div class="project-manager">
-                    <div class="card-body">
-                        <div class="row ms-1">
-                            <div class="col-md-4"><img class="img-fluid w-100 rounded" [src]="pm.photoDirectory" /></div>
-                            <div class="col-md-8">
-                                <h4 class="font-weight-bold">{{ pm.fullName }}</h4>
-                                <h5>{{ 'artemisApp.aboutUsOverview.roles.' + pm.role | artemisTranslate }}</h5>
-                                <span>
-                                    <i></i>
-                                    <a href="{{ pm.website }}" target="_blank" rel="noopener noreferrer" jhiTranslate="artemisApp.aboutUsOverview.website"></a>
-                                </span>
+    @if (data(); as data) {
+        @if (data.projectManagers) {
+            <div class="row ms-4 me-4 mb-4">
+                @for (pm of data.projectManagers; track pm) {
+                    <div class="project-manager">
+                        <div class="card-body">
+                            <div class="row ms-1">
+                                <div class="col-md-4"><img class="img-fluid w-100 rounded" [src]="pm.photoDirectory" /></div>
+                                <div class="col-md-8">
+                                    <h4 class="font-weight-bold">{{ pm.fullName }}</h4>
+                                    <h5>{{ 'artemisApp.aboutUsOverview.roles.' + pm.role | artemisTranslate }}</h5>
+                                    <span>
+                                        <i></i>
+                                        <a href="{{ pm.website }}" target="_blank" rel="noopener noreferrer" jhiTranslate="artemisApp.aboutUsOverview.website"></a>
+                                    </span>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
-    @if (data && data.contributors) {
-        <div class="mt-5 ms-2 me-2">
-            <h3 class="font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.contributors"></h3>
-            <div class="row">
-                @for (contributor of data.contributors; track contributor) {
-                    <div class="contributor text-center">
-                        <img class="img-fluid" [src]="contributor.photoDirectory" />
-                        <div class="text-center">
-                            <small id="contributorsName" class="font-weight-bold">{{ contributor.fullName }}</small>
                         </div>
                     </div>
                 }
             </div>
-        </div>
+        }
+        @if (data.contributors) {
+            <div class="mt-5 ms-2 me-2">
+                <h3 class="font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.contributors"></h3>
+                <div class="row">
+                    @for (contributor of data.contributors; track contributor) {
+                        <div class="contributor text-center">
+                            <img class="img-fluid" [src]="contributor.photoDirectory" />
+                            <div class="text-center">
+                                <small id="contributorsName" class="font-weight-bold">{{ contributor.fullName }}</small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
     }
     <div class="mt-5 ms-2 me-2">
         <h3 class="font-weight-bold" jhiTranslate="artemisApp.git.title"></h3>
         <div>
             <div class="inline-block fixed-width" jhiTranslate="artemisApp.git.branch"></div>
-            <div class="inline-block">{{ gitBranchName }}</div>
+            <div class="inline-block">{{ gitBranchName() }}</div>
         </div>
         <div>
             <div class="inline-block fixed-width" jhiTranslate="artemisApp.git.commit"></div>
-            <div class="inline-block">{{ gitCommitId }}</div>
+            <div class="inline-block">{{ gitCommitId() }}</div>
         </div>
     </div>
     <div class="mt-5 ms-2 me-2">
         <h3 class="font-weight-bold" jhiTranslate="artemisApp.operatorInfo.title"></h3>
         <div>
             <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.name"></div>
-            <div class="inline-block">{{ operatorName }}</div>
+            <div class="inline-block">{{ operatorName() }}</div>
         </div>
-        @if (operatorAdminName) {
+        @if (operatorAdminName()) {
             <div>
                 <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.admin"></div>
-                <div class="inline-block">{{ operatorAdminName }}</div>
+                <div class="inline-block">{{ operatorAdminName() }}</div>
             </div>
         }
-        @if (operatorContactEmail) {
+        @if (operatorContactEmail()) {
             <div>
                 <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.adminEmail"></div>
                 <div class="inline-block">
-                    <a [href]="email" class="footer-text" target="_top">
-                        {{ operatorContactEmail }}
+                    <a [href]="email()" class="footer-text" target="_top">
+                        {{ operatorContactEmail() }}
                     </a>
                 </div>
             </div>

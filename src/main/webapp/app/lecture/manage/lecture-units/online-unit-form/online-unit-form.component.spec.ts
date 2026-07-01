@@ -11,7 +11,6 @@ import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onl
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,8 +32,6 @@ describe('OnlineUnitFormComponent', () => {
                 ReactiveFormsModule,
                 FormsModule,
                 MockModule(NgbTooltipModule),
-                OwlDateTimeModule,
-                OwlNativeDateTimeModule,
                 FontAwesomeTestingModule,
                 OnlineUnitFormComponent,
                 FormDateTimePickerComponent,
@@ -146,7 +143,7 @@ describe('OnlineUnitFormComponent', () => {
         onlineUnitFormComponentFixture.detectChanges();
 
         onlineUnitFormComponentFixture.componentRef.setInput('formData', formData);
-        onlineUnitFormComponent.ngOnChanges();
+        onlineUnitFormComponentFixture.detectChanges();
 
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(formData.name);
         expect(onlineUnitFormComponent.releaseDateControl?.value).toEqual(formData.releaseDate);
@@ -170,7 +167,7 @@ describe('OnlineUnitFormComponent', () => {
         onlineUnitFormComponentFixture.componentRef.setInput('formData', {
             source: 'example.com',
         });
-        onlineUnitFormComponent.ngOnChanges();
+        onlineUnitFormComponentFixture.detectChanges();
 
         // WHEN
         onlineUnitFormComponent.onLinkChanged();

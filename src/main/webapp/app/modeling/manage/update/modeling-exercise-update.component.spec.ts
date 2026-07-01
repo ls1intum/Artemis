@@ -43,7 +43,7 @@ import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-gra
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FormStatusBarComponent } from 'app/shared-ui/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
@@ -243,7 +243,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                         MockComponent(DocumentationButtonComponent),
                         MockComponent(FormStatusBarComponent),
                         MockComponent(FormFooterComponent),
-                        MockComponent(CategorySelectorComponent),
+                        MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(DifficultyPickerComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(CompetencySelectionComponent),
@@ -298,7 +298,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(expect.objectContaining({ channelName: 'test' }));
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
         });
 
@@ -330,7 +330,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(expect.objectContaining({ id: 123 }), {});
                 expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
 
             it('should show backend error alert and reset saving state on save error', async () => {
@@ -348,7 +348,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 await fixture.whenStable();
 
                 expect(alertSpy).toHaveBeenCalledWith('modelingExercise.update.error', 'modelingExercise.update.error.message', { exerciseId: 123 });
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
 
             it('should show generic error alert when save error has no backend title', async () => {
@@ -359,7 +359,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 await fixture.whenStable();
 
                 expect(alertSpy).toHaveBeenCalledWith('error.http.400');
-                expect(comp.isSaving).toBe(false);
+                expect(comp.isSaving()).toBe(false);
             });
         });
     });
@@ -389,13 +389,13 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
 
         it('should load exercise categories', async () => {
@@ -437,13 +437,13 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(false);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(false);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseId);
-            expect(comp.existingCategories).toEqual(categories);
+            expect(comp.existingCategories()).toEqual(categories);
         });
     });
 
@@ -468,8 +468,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.course).toBeUndefined();
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
@@ -499,8 +499,8 @@ describe('ModelingExerciseUpdateComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            expect(comp.isImport).toBe(true);
-            expect(comp.isExamMode).toBe(true);
+            expect(comp.isImport()).toBe(true);
+            expect(comp.isExamMode()).toBe(true);
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
@@ -549,12 +549,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        comp.exerciseCategories = [];
+        comp.exerciseCategories.set([]);
         const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
         comp.updateCategories(newCategories);
 
         expect(comp.modelingExercise.categories).toEqual(newCategories);
-        expect(comp.exerciseCategories).toEqual(newCategories);
+        expect(comp.exerciseCategories()).toEqual(newCategories);
     });
 
     it('should properly clean up subscriptions on destroy', async () => {

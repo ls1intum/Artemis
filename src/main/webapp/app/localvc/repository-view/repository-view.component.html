@@ -1,69 +1,71 @@
 <ng-container>
-    @if (!loadingParticipation && !participationCouldNotBeFetched) {
+    @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
         <jhi-code-editor-container
             [isProblemStatementVisible]="false"
-            [showInlineFeedback]="showInlineFeedback"
+            [showInlineFeedback]="showInlineFeedback()"
             [editable]="false"
             [buildable]="false"
-            [participation]="participation"
+            [participation]="participation()"
             [showEditorInstructions]="showEditorInstructions"
             [allowHiddenFiles]="true"
             [isTutorAssessment]="true"
             [readOnlyManualFeedback]="true"
-            [course]="getCourseFromExercise(exercise)"
+            [course]="getCourseFromExercise(exercise())"
         >
             <div editorTitle>
                 <h1 jhiTranslate="artemisApp.repository.source"></h1>
             </div>
             <div class="d-flex ps-3" editorTitleActions>
-                @if (resultHasInlineFeedback) {
+                @if (resultHasInlineFeedback()) {
                     <jhi-button
                         [btnType]="ButtonType.PRIMARY_OUTLINE"
-                        [title]="'artemisApp.repository.toggleInlineFeedback.' + (showInlineFeedback ? 'hide' : 'show')"
-                        (onClick)="showInlineFeedback = !showInlineFeedback"
+                        [title]="'artemisApp.repository.toggleInlineFeedback.' + (showInlineFeedback() ? 'hide' : 'show')"
+                        (onClick)="showInlineFeedback.set(!showInlineFeedback())"
                     />
                 }
             </div>
             <div editorToolbar style="text-align: right">
-                @if (result) {
-                    <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" style="padding-right: 20px" />
+                @if (result()) {
+                    <jhi-result [result]="result()" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise()" style="padding-right: 20px" />
                 }
-                @if (routeCommitHistory) {
-                    <a [routerLink]="routeCommitHistory" class="btn btn-primary">
+                @if (routeCommitHistory()) {
+                    <a [routerLink]="routeCommitHistory()" class="btn btn-primary">
                         <fa-icon [icon]="faClockRotateLeft" />
                         <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory"></span>
                     </a>
                 }
-                @if (vcsAccessLogRoute && enableVcsAccessLog && allowVcsAccessLog) {
-                    <a [routerLink]="vcsAccessLogRoute" class="btn btn-primary">
+                @if (vcsAccessLogRoute() && enableVcsAccessLog() && allowVcsAccessLog()) {
+                    <a [routerLink]="vcsAccessLogRoute()" class="btn btn-primary">
                         <fa-icon [icon]="faClockRotateLeft" />
                         <span jhiTranslate="artemisApp.repository.vcsAccessLog.openVcsAccessLog"></span>
                     </a>
                 }
 
-                @if (exercise?.allowOfflineIde) {
+                @if (exercise()?.allowOfflineIde) {
                     <jhi-code-button
-                        [loading]="!!exercise.loading"
+                        [loading]="!!exercise()!.loading"
                         [smallButtons]="false"
-                        [participations]="[participation]"
-                        [exercise]="exercise"
-                        [repositoryUri]="repositoryUri"
+                        [participations]="participation() ? [participation()] : []"
+                        [exercise]="exercise()"
+                        [repositoryUri]="repositoryUri()"
+                        [repositoryType]="repositoryType()"
+                        [auxiliaryRepositoryId]="auxiliaryRepositoryId()"
                         [routerLinkForRepositoryView]="[]"
                     />
                 }
 
-                @if (exercise?.id) {
-                    @if (repositoryType === 'USER') {
-                        <jhi-programming-exercise-student-repo-download [buttonSize]="ButtonSize.MEDIUM" [exerciseId]="exercise.id!" [participationId]="participation.id!" />
+                @if (exercise()?.id) {
+                    @if (repositoryType() === 'USER') {
+                        <jhi-programming-exercise-student-repo-download [buttonSize]="ButtonSize.MEDIUM" [exerciseId]="exercise()!.id!" [participationId]="participation().id!" />
                     } @else {
-                        <jhi-programming-exercise-instructor-repo-download [repositoryType]="repositoryType" [exerciseId]="exercise.id!" [buttonSize]="ButtonSize.MEDIUM" />
+                        <jhi-programming-exercise-instructor-repo-download [repositoryType]="repositoryType()" [exerciseId]="exercise()!.id!" [buttonSize]="ButtonSize.MEDIUM" />
                     }
                 }
             </div>
             <jhi-programming-exercise-instructions
                 editorSidebar
-                [exercise]="exercise"
-                [participation]="participation"
+                [exercise]="exercise()"
+                [participation]="participation()"
                 [personalParticipation]="true"
                 class="instructions-wrapper__content card-body p-0"
             />

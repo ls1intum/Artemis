@@ -18,7 +18,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { PDFDocument } from 'pdf-lib';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbModule, NgbPopover, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
@@ -77,7 +77,8 @@ export interface HiddenPageMap {
         TranslateDirective,
         ConfirmAutofocusButtonComponent,
         PdfPreviewDateBoxComponent,
-        NgbModule,
+        NgbPopover,
+        NgbTooltipModule,
     ],
 })
 export class PdfPreviewComponent implements OnInit, OnDestroy {
@@ -93,7 +94,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     protected readonly Array = Array;
 
-    courseId: number;
+    readonly courseId = signal<number>(undefined!);
 
     // Signals
     attachment = signal<Attachment | undefined>(undefined);
@@ -155,7 +156,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.isPdfLoading.set(true);
-        this.courseId = Number(this.route?.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route?.parent?.snapshot.paramMap.get('courseId')));
         this.route.data.subscribe((data) => {
             if ('attachment' in data) {
                 this.attachment.set(data.attachment);
@@ -196,7 +197,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         if (fileType === 'attachment') {
             subscription = this.attachmentService
-                .getAttachmentFile(this.courseId, this.attachment()!.id!)
+                .getAttachmentFile(this.courseId(), this.attachment()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -206,7 +207,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentSub = subscription;
         } else {
             subscription = this.attachmentVideoUnitService
-                .getAttachmentFile(this.courseId, this.attachmentVideoUnit()!.id!)
+                .getAttachmentFile(this.courseId(), this.attachmentVideoUnit()!.id!)
                 .pipe(finalize(() => this.isPdfLoading.set(false)))
                 .subscribe({
                     next: (blob: Blob) => this.processPdfBlob(blob, slides),
@@ -1012,9 +1013,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     navigateToCourseManagement(): void {
         if (this.attachment()) {
-            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachment()!.lecture!.id, 'attachments']);
+            this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachment()!.lecture!.id, 'attachments']);
         } else {
-            this.router.navigate(['course-management', this.courseId, 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
+            this.router.navigate(['course-management', this.courseId(), 'lectures', this.attachmentVideoUnit()!.lecture!.id, 'unit-management']);
         }
     }
 }

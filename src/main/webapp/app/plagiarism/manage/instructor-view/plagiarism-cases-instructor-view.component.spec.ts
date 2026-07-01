@@ -15,7 +15,6 @@ import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
@@ -54,12 +53,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
         type: ExerciseType.TEXT,
     } as TextExercise;
 
-    const studentLoginA = 'studentA';
-    const plagiarismSubmission1 = {
-        id: 1,
-        studentLogin: studentLoginA,
-    } as PlagiarismSubmission;
-
     const plagiarismCase1 = {
         id: 1,
         exercise: exercise1,
@@ -72,13 +65,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
         verdictDate: date,
         post: {
             id: 1,
-            answers: [
-                {
-                    author: { id: 1 },
-                },
-            ],
         },
-        plagiarismSubmissions: [plagiarismSubmission1],
+        plagiarismSubmissionCount: 1,
+        hasStudentAnswer: true,
     } as PlagiarismCase;
     const plagiarismCase2 = {
         id: 2,
@@ -147,11 +136,11 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should set plagiarism cases and exercises on initialization', async () => {
         component.ngOnInit();
         await Promise.resolve();
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
         expect(component.examId).toBe(0);
-        expect(component.plagiarismCases).toEqual([plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4]);
-        expect(component.exercisesWithPlagiarismCases).toEqual([exercise1, exercise2]);
-        expect(component.groupedPlagiarismCases).toEqual({
+        expect(component.plagiarismCases()).toEqual([plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4]);
+        expect(component.exercisesWithPlagiarismCases()).toEqual([exercise1, exercise2]);
+        expect(component.groupedPlagiarismCases()).toEqual({
             1: [plagiarismCase1, plagiarismCase2],
             2: [plagiarismCase3, plagiarismCase4],
         });
@@ -162,7 +151,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.ngOnInit();
         await Promise.resolve();
 
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
         expect(component.examId).toBe(0);
         expect(plagiarismCasesService.getCoursePlagiarismCasesForInstructor).toHaveBeenCalledOnce();
         expect(plagiarismCasesService.getExamPlagiarismCasesForInstructor).not.toHaveBeenCalled();
@@ -178,7 +167,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.ngOnInit();
         await Promise.resolve();
 
-        expect(component.courseId).toBe(1);
+        expect(component.courseId()).toBe(1);
         expect(component.examId).toBe(1);
         expect(plagiarismCasesService.getCoursePlagiarismCasesForInstructor).not.toHaveBeenCalled();
         expect(plagiarismCasesService.getExamPlagiarismCasesForInstructor).toHaveBeenCalledOnce();
@@ -227,7 +216,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     it('should export plagiarism cases as CSV', () => {
         const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
-        component.plagiarismCases = [plagiarismCase1, plagiarismCase4];
+        component.plagiarismCases.set([plagiarismCase1, plagiarismCase4]);
         const expectedBlob = [
             'Student Login; Matr. Nr.; Exercise;Verdict; Verdict Date\n',
             `Student 1; -; Test Exercise 1; PLAGIARISM; ${date}; Test Instructor 1\n`,

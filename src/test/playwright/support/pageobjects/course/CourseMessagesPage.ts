@@ -546,6 +546,40 @@ export class CourseMessagesPage {
         await membersButton.waitFor({ state: 'visible', timeout: 10000 });
     }
 
+    /**
+     * Opens a conversation and waits until a specific post has rendered in the message list.
+     *
+     * {@link openConversation} only guarantees the conversation has *activated* (its members button
+     * is shown). Under heavy parallel multi-node load the initial message-list fetch/render occasionally
+     * races a freshly created post (or the activation itself), so the post is briefly absent from an
+     * otherwise-active conversation and the subsequent {@link checkMessage} times out. A full reload
+     * re-issues the message-list request — which, against the shared database, returns the persisted
+     * post — and re-renders the list. Retrying the reload before failing keeps callers testing their
+     * actual behavior rather than this load-induced rendering race (the same mitigation
+     * {@link openConversation} already uses for activation and the bookmark-persistence test uses after
+     * its reload).
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the conversation to open.
+     * @param postID - The ID of the post that must be visible before returning.
+     */
+    async openConversationAndWaitForPost(courseID: number, conversationID: number, postID: number) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt === 0) {
+                await this.openConversation(courseID, conversationID);
+            } else {
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+            }
+            try {
+                await this.getSinglePost(postID).waitFor({ state: 'visible', timeout: 12000 });
+                return;
+            } catch {
+                // Post not rendered yet — fall through to a reload, which re-fetches the message list.
+            }
+        }
+        throw new Error(`Post #item-${postID} did not render in conversation ${conversationID} after activating and reloading`);
+    }
+
     async listMembersButton(courseID: number, conversationID: number) {
         const membersButton = this.page.locator('.members');
         try {
@@ -773,6 +807,122 @@ export class CourseMessagesPage {
     }
 
     /**
+     * Completes an already-open forward dialog: selects the destination conversation by name and sends.
+     * @param destinationName - The name of the destination channel/conversation to forward to.
+     * @param extraContent - Optional additional message content to include with the forward.
+     */
+    private async completeForwardDialog(destinationName: string, extraContent?: string) {
+        const dialog = this.page.locator('jhi-forward-message-dialog');
+        const input = dialog.locator('input.tag-input');
+        // the dialog selects on (mousedown) so the option is chosen before the input blur closes the dropdown
+        const option = dialog.locator('.autocomplete-dropdown .list-group-item-action', { hasText: destinationName }).first();
+        // The autocomplete dropdown re-renders as the debounced search resolves, so the matched option can detach between
+        // becoming visible and the mousedown — an unbounded dispatchEvent then hangs until the test timeout. Re-type and
+        // re-select as a unit with a bounded mousedown so a detach retries quickly instead of hanging.
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await input.fill('');
+            await input.fill(destinationName);
+            try {
+                await option.waitFor({ state: 'visible', timeout: 5000 });
+                await option.dispatchEvent('mousedown', { timeout: 5000 });
+                break;
+            } catch (error) {
+                if (attempt === 2) {
+                    throw error;
+                }
+            }
+        }
+        if (extraContent) {
+            await setMonacoEditorContent(this.page, 'jhi-forward-message-dialog jhi-markdown-editor-monaco', extraContent);
+        }
+        // forwarding first creates the container post, then the forwarded-message link(s)
+        const forwardResponse = this.page.waitForResponse((resp) => resp.url().includes('/forwarded-messages') && resp.request().method() === 'POST');
+        await dialog.locator('.modal-footer button.btn-primary').click();
+        await forwardResponse;
+        await dialog.waitFor({ state: 'hidden', timeout: 10000 });
+    }
+
+    /**
+     * Forwards a message to a destination channel and waits until the forward is persisted.
+     * @param messageId - The ID of the message to forward.
+     * @param destinationName - The name of the destination channel.
+     * @param extraContent - Optional additional message content.
+     */
+    async forwardMessageToChannel(messageId: number, destinationName: string, extraContent?: string) {
+        await this.forwardMessage(messageId);
+        await this.completeForwardDialog(destinationName, extraContent);
+    }
+
+    /**
+     * Forwards a thread reply (answer post) to a destination channel.
+     * @param parentMessageId - The ID of the message whose thread contains the reply.
+     * @param replyId - The ID of the reply to forward.
+     * @param destinationName - The name of the destination channel.
+     * @param extraContent - Optional additional message content.
+     */
+    async forwardReplyToChannel(parentMessageId: number, replyId: number, destinationName: string, extraContent?: string) {
+        await this.openThreadForMessage(parentMessageId);
+        const replyLocator = this.page.locator(`.expanded-thread #item-${replyId}`);
+        await replyLocator.scrollIntoViewIfNeeded();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await replyLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+        // jhi-answer-post renders its context dropdown as a sibling of the #item-<id> div (not inside it),
+        // so scope the click to the surrounding jhi-answer-post host instead of the #item-<id> element
+        await this.page.locator(`jhi-answer-post:has(#item-${replyId})`).locator('.dropdown-menu.show .forward').click();
+        await this.completeForwardDialog(destinationName, extraContent);
+    }
+
+    /**
+     * Asserts that a forwarded-message preview containing the given source content is visible in the open conversation.
+     * @param expectedSourceContent - The content of the original (forwarded) posting.
+     */
+    async checkForwardedPreview(expectedSourceContent: string) {
+        const forwarded = this.page.locator('.forwarded-message-container', { hasText: expectedSourceContent });
+        await expect(forwarded.first()).toBeVisible({ timeout: 10000 });
+    }
+
+    /**
+     * Opens a conversation and waits until a forwarded-message preview containing the given source content has rendered,
+     * reloading between attempts.
+     *
+     * The forwarded preview is only populated after the conversation's forwarded-messages fetch AND the (access-checked)
+     * source-post / source-answer fetch both succeed. Under heavy multi-node load the just-created forward can briefly be
+     * invisible to the node that serves the destination conversation, so {@link openConversation} (which only waits for the
+     * conversation to *activate*) returns before the forwarded-messages fetch sees it — and the source fetch then never
+     * fires. A reload re-issues those fetches against the shared database, which by then has the persisted forward. This is
+     * the same load-induced rendering-race mitigation {@link openConversationAndWaitForPost} uses for plain posts. A visible
+     * preview proves the whole chain — including the access-checked source fetch — succeeded for an accessible source.
+     *
+     * @param courseID - The ID of the course the conversation belongs to.
+     * @param conversationID - The ID of the destination conversation to open.
+     * @param expectedSourceContent - The content of the original (forwarded) posting that must appear in the preview.
+     */
+    async openConversationAndWaitForForwardedPreview(courseID: number, conversationID: number, expectedSourceContent: string) {
+        const forwarded = this.page.locator('.forwarded-message-container', { hasText: expectedSourceContent });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (attempt === 0) {
+                await this.openConversation(courseID, conversationID);
+            } else {
+                await this.page.reload({ waitUntil: 'domcontentloaded' });
+            }
+            try {
+                await expect(forwarded.first()).toBeVisible({ timeout: 12000 });
+                return;
+            } catch {
+                // Forwarded message not yet propagated/rendered — fall through to a reload, which re-fetches it.
+            }
+        }
+        throw new Error(`Forwarded preview containing "${expectedSourceContent}" did not render in conversation ${conversationID} after opening and reloading`);
+    }
+
+    /**
      * Pins or unpins a message via the context menu.
      * @param messageId - The ID of the message to pin/unpin.
      */
@@ -880,5 +1030,45 @@ export class CourseMessagesPage {
             // Wait for the acceptance to be processed
             await this.page.waitForLoadState('domcontentloaded');
         }
+    }
+
+    /**
+     * Returns the scrollable message-list container that hosts the infinite-scroll directive.
+     */
+    getScrollableMessagesContainer() {
+        return this.page.locator('#scrollableDiv');
+    }
+
+    /**
+     * Scrolls the message list to the very top. In a conversation this brings the top sentinel of the
+     * infinite-scroll directive into view, which triggers loading of the next (older) page of messages.
+     */
+    async scrollMessagesToTop() {
+        const container = this.getScrollableMessagesContainer();
+        await container.waitFor({ state: 'visible', timeout: 30000 });
+        await container.evaluate((element) => element.scrollTo({ top: 0 }));
+    }
+
+    /**
+     * Returns the number of currently rendered posts in the message list.
+     */
+    async getRenderedPostCount(): Promise<number> {
+        return this.page.locator('.post-item').count();
+    }
+
+    /**
+     * Runs a course-wide search for the given term via the global search bar.
+     * @param term - The search term.
+     */
+    async searchCourseWide(term: string) {
+        await this.page.locator('input[name="searchText"]').fill(term);
+        await this.page.locator('#search-submit').click();
+    }
+
+    /**
+     * Returns the number of currently rendered course-wide search result posts.
+     */
+    async getRenderedSearchResultCount(): Promise<number> {
+        return this.page.locator('#scrollableDiv [id^="item-"]').count();
     }
 }

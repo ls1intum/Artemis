@@ -1,13 +1,13 @@
-<div id="cardFiles" class="card file-browser resizable-filebrowser" [ngStyle]="collapsed ? { height: '250px' } : { height: '100%' }">
+<div id="cardFiles" class="card file-browser" [ngStyle]="collapsed() ? { height: '250px' } : { height: '100%' }">
     <div class="card-header d-flex justify-content-center bg-primary text-white" [class.d-none]="!showHeader()" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title justify-content-center">
-            @if (!collapsed) {
+            @if (!collapsed()) {
                 <span>
                     <fa-icon [icon]="faFolderOpen" />
                     <span class="ms-2" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser"></span>
                 </span>
             }
-            @if (collapsed) {
+            @if (collapsed()) {
                 <span class="collapsed-file-browser">
                     <fa-icon class="top-icon" [icon]="faChevronRight" />
                     <span class="header" jhiTranslate="artemisApp.editor.fileBrowser.fileBrowser"></span>
@@ -23,7 +23,7 @@
         <div class="card-second-header">
             <button
                 id="create_file_root"
-                [disabled]="disableActions() || isLoadingFiles || commitState() === CommitState.CONFLICT"
+                [disabled]="disableActions() || isLoadingFiles() || commitState() === CommitState.CONFLICT"
                 class="btn"
                 (click)="setCreatingFileInRoot(FileType.FILE)"
                 title="{{ 'artemisApp.editor.fileBrowser.createFileRoot' | artemisTranslate }}"
@@ -33,7 +33,7 @@
             </button>
             <button
                 id="create_folder_root"
-                [disabled]="disableActions() || isLoadingFiles || commitState() === CommitState.CONFLICT"
+                [disabled]="disableActions() || isLoadingFiles() || commitState() === CommitState.CONFLICT"
                 class="btn ms-2"
                 (click)="setCreatingFileInRoot(FileType.FOLDER)"
                 title="{{ 'artemisApp.editor.fileBrowser.createFolderRoot' | artemisTranslate }}"
@@ -43,56 +43,56 @@
             </button>
             <button
                 id="compress_tree"
-                [disabled]="isLoadingFiles"
+                [disabled]="isLoadingFiles()"
                 class="btn ms-auto"
                 (click)="toggleTreeCompress()"
                 title="{{ 'artemisApp.editor.fileBrowser.compressTree' | artemisTranslate }}"
             >
-                <fa-icon [icon]="compressFolders ? faAngleDoubleUp : faAngleDoubleDown" />
+                <fa-icon [icon]="compressFolders() ? faAngleDoubleUp : faAngleDoubleDown" />
             </button>
         </div>
     }
     <!-- File Tree -->
     <div class="card-body">
         <!-- Root level create file/folder tree element -->
-        @if (creatingFile && creatingFile[0] === '') {
+        @if (creatingFile() && creatingFile()![0] === '') {
             <jhi-code-editor-file-browser-create-node
-                [createFileType]="creatingFile![1]"
+                [createFileType]="creatingFile()![1]"
                 [folder]="''"
                 (onClearCreatingFile)="clearCreatingFile()"
                 (onCreateFile)="onCreateFile($event)"
             />
         }
-        @if (!isLoadingFiles) {
-            <treeview #treeview [maxHeight]="treeViewMaxHeight" [items]="filesTreeViewItem" [itemTemplate]="itemTemplate" />
+        @if (!isLoadingFiles()) {
+            <treeview #treeview [maxHeight]="treeViewMaxHeight" [items]="filesTreeViewItem()" [itemTemplate]="itemTemplate" />
         }
         <!-- Loading files indicator -->
-        @if (isLoadingFiles) {
+        @if (isLoadingFiles()) {
             <div class="text-center lead text-body-secondary pt-2">
                 <fa-icon [icon]="faCircleNotch" animation="spin" />
                 <span jhiTranslate="artemisApp.editor.loadingFiles"></span>
             </div>
         }
     </div>
-    @if (!collapsed && !displayOnly()) {
+    @if (!collapsed() && !displayOnly()) {
         <jhi-code-editor-status #status [editorState]="editorState()" [commitState]="commitState()" />
     }
 </div>
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
     <!--Problem Statement-->
-    @if (repositoryFiles?.[item.value] === FileType.PROBLEM_STATEMENT) {
+    @if (repositoryFiles()?.[item.value] === FileType.PROBLEM_STATEMENT) {
         <jhi-code-editor-file-browser-problem-statement [item]="item" [badges]="fileBadges()?.[item.value] ?? []" (onNodeSelect)="handleNodeSelected(item)" />
     }
     <!--folder-->
-    @if (repositoryFiles?.[item.value] === FileType.FOLDER) {
+    @if (repositoryFiles()?.[item.value] === FileType.FOLDER) {
         <jhi-code-editor-file-browser-folder
             [item]="item"
-            [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
+            [isBeingRenamed]="!!renamingFile() && renamingFile()![0] === item.value"
             [hasUnsavedChanges]="unsavedFiles().includes(item.value)"
             [hasError]="errorFiles().includes(item.value)"
             [onCollapseExpand]="onCollapseExpand"
-            [isCompressed]="compressFolders"
+            [isCompressed]="compressFolders()"
             [disableActions]="disableActions() || commitState() === CommitState.CONFLICT"
             [badges]="getFolderBadges(item)"
             (onSetRenamingNode)="setRenamingFile(item)"
@@ -104,12 +104,12 @@
         />
     }
     <!--file-->
-    @if (repositoryFiles?.[item.value] === FileType.FILE) {
+    @if (repositoryFiles()?.[item.value] === FileType.FILE) {
         <jhi-code-editor-file-browser-file
             [item]="item"
-            [hasChanges]="repositoryFilesWithInformationAboutChange?.[item.value] ?? false"
+            [hasChanges]="repositoryFilesWithInformationAboutChange()?.[item.value] ?? false"
             [badges]="fileBadges()?.[item.value] ?? []"
-            [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
+            [isBeingRenamed]="!!renamingFile() && renamingFile()![0] === item.value"
             [hasUnsavedChanges]="unsavedFiles().includes(item.value)"
             [hasError]="errorFiles().includes(item.value)"
             [disableActions]="disableActions() || commitState() === CommitState.CONFLICT"
@@ -121,9 +121,9 @@
         />
     }
     <!--new item-->
-    @if (creatingFile && creatingFile[0] === item.value) {
+    @if (creatingFile() && creatingFile()![0] === item.value) {
         <jhi-code-editor-file-browser-create-node
-            [createFileType]="creatingFile![1]"
+            [createFileType]="creatingFile()![1]"
             [folder]="''"
             (onClearCreatingFile)="clearCreatingFile()"
             (onCreateFile)="onCreateFile($event)"

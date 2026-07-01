@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
@@ -18,13 +18,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class ExamChecklistExerciseGroupTableComponent {
     quizExamMaxPoints = input.required<number>();
     exerciseGroups = input.required<ExerciseGroup[]>();
-    exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
+    readonly exerciseGroupVariantColumns = signal<ExerciseGroupVariantColumn[]>([]);
     readonly getIcon = getIcon;
     readonly getIconTooltip = getIconTooltip;
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
-    totalParticipants: number;
+    readonly totalParticipants = signal<number>(undefined!);
 
     constructor() {
         effect(() => {
@@ -33,7 +33,8 @@ export class ExamChecklistExerciseGroupTableComponent {
     }
 
     private recomputeColumns() {
-        this.exerciseGroupVariantColumns = []; // Clear any previously existing entries
+        const exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = []; // Clear any previously existing entries
+        let totalParticipants = this.totalParticipants();
         if (this.exerciseGroups()) {
             let exerciseGroupIndex = 1;
             this.exerciseGroups()!.forEach((exerciseGroup) => {
@@ -43,7 +44,7 @@ export class ExamChecklistExerciseGroupTableComponent {
 
                 if (!exerciseGroup.exercises || exerciseGroup.exercises.length === 0) {
                     exerciseGroupVariantColumn.noExercises = true;
-                    this.exerciseGroupVariantColumns.push(exerciseGroupVariantColumn);
+                    exerciseGroupVariantColumns.push(exerciseGroupVariantColumn);
                 } else {
                     // set points and checks
                     const maxPoints = exerciseGroup.exercises?.[0].maxPoints;
@@ -54,7 +55,7 @@ export class ExamChecklistExerciseGroupTableComponent {
 
                     exerciseGroupVariantColumn.noExercises = false;
                     let exerciseVariantIndex = 1;
-                    this.totalParticipants = 0;
+                    totalParticipants = 0;
                     exerciseGroup.exercises!.forEach((exercise, index) => {
                         // generate columns for each exercise
                         let exerciseVariantColumn;
@@ -73,15 +74,17 @@ export class ExamChecklistExerciseGroupTableComponent {
                         exerciseVariantColumn.exerciseNumberOfParticipations = exercise.numberOfParticipations ? exercise.numberOfParticipations : 0;
                         exerciseVariantColumn.exerciseMaxPoints = exercise.maxPoints;
 
-                        this.totalParticipants += exerciseVariantColumn.exerciseNumberOfParticipations;
+                        totalParticipants += exerciseVariantColumn.exerciseNumberOfParticipations;
 
-                        this.exerciseGroupVariantColumns.push(exerciseVariantColumn);
+                        exerciseGroupVariantColumns.push(exerciseVariantColumn);
                         exerciseVariantIndex++;
                     });
                 }
                 exerciseGroupIndex++;
             });
         }
+        this.totalParticipants.set(totalParticipants);
+        this.exerciseGroupVariantColumns.set(exerciseGroupVariantColumns);
     }
 
     protected readonly ExerciseType = ExerciseType;

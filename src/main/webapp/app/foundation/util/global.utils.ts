@@ -61,7 +61,7 @@ export function getCurrentLocaleSignal(translateService: TranslateService): Sign
 }
 
 export function getIsMobileSignal(breakpointObserver: BreakpointObserver): Signal<boolean> {
-    return toSignal(breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: false });
+    return toSignal(breakpointObserver.observe([Breakpoints.Handset]).pipe(map((result) => result.matches)), { initialValue: breakpointObserver.isMatched(Breakpoints.Handset) });
 }
 
 /**

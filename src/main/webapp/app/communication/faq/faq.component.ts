@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
@@ -17,7 +17,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -34,7 +34,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
     imports: [
         CustomExerciseCategoryBadgeComponent,
         SearchFilterComponent,
-        NgbModule,
+        NgbDropdownModule,
         HtmlForMarkdownPipe,
         TranslateDirective,
         FontAwesomeModule,
@@ -50,18 +50,18 @@ export class FaqComponent implements OnInit, OnDestroy {
     protected readonly FaqState = FaqState;
     faqs: Faq[];
     course: Course;
-    filteredFaqs: Faq[];
-    existingCategories: FaqCategory[];
-    courseId: number;
-    hasCategories = false;
-    isAtLeastInstructor = false;
-    irisEnabled = false;
+    readonly filteredFaqs = signal<Faq[]>([]);
+    readonly existingCategories = signal<FaqCategory[]>([]);
+    readonly courseId = signal<number>(undefined!);
+    readonly hasCategories = signal(false);
+    readonly isAtLeastInstructor = signal(false);
+    readonly irisEnabled = signal(false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     private routeDataSubscription: Subscription;
 
-    activeFilters = new Set<string>();
+    readonly activeFilters = signal(new Set<string>());
     searchInput = new BehaviorSubject<string>('');
     predicate = 'id';
     ascending = true;
@@ -94,9 +94,9 @@ export class FaqComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.loadAll();
-        this.loadCourseFaqCategories(this.courseId);
+        this.loadCourseFaqCategories(this.courseId());
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
         });
@@ -104,13 +104,13 @@ export class FaqComponent implements OnInit, OnDestroy {
             const course = data['course'];
             if (course) {
                 this.course = course;
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+                this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(course));
             }
         });
         const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
         if (irisEnabled) {
-            this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
-                this.irisEnabled = response?.settings?.enabled || false;
+            this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId()).subscribe((response) => {
+                this.irisEnabled.set(response?.settings?.enabled || false);
             });
         }
     }
@@ -132,25 +132,27 @@ export class FaqComponent implements OnInit, OnDestroy {
     private handleDeleteSuccess(faqId: number) {
         this.faqs = this.faqs.filter((faq) => faq.id !== faqId);
         this.dialogErrorSource.next('');
-        this.loadCourseFaqCategories(this.courseId);
+        this.loadCourseFaqCategories(this.courseId());
     }
 
     toggleFilters(category: string) {
-        this.activeFilters = this.faqService.toggleFilter(category, this.activeFilters);
+        this.activeFilters.set(this.faqService.toggleFilter(category, this.activeFilters()));
         this.refreshFaqList(this.searchInput.getValue());
     }
 
     private applyFilters(): void {
-        this.filteredFaqs = this.faqService.applyFilters(this.activeFilters, this.faqs);
+        this.filteredFaqs.set(this.faqService.applyFilters(this.activeFilters(), this.faqs));
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.filteredFaqs, this.predicate, this.ascending);
+        // sortByProperty sorts in place and returns the same array reference; spread into a new
+        // array so the signal emits a fresh reference and the template re-renders (zoneless).
+        this.filteredFaqs.set([...this.sortService.sortByProperty(this.filteredFaqs(), this.predicate, this.ascending)]);
     }
 
     private loadAll() {
         this.faqService
-            .findAllByCourseId(this.courseId)
+            .findAllByCourseId(this.courseId())
             .pipe(map((res: HttpResponse<Faq[]>) => res.body))
             .subscribe({
                 next: (res: Faq[]) => {
@@ -164,25 +166,29 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     private loadCourseFaqCategories(courseId: number) {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
-            this.existingCategories = existingCategories;
-            this.hasCategories = existingCategories.length > 0;
-            this.checkAppliedFilter(this.activeFilters, this.existingCategories);
+            this.existingCategories.set(existingCategories);
+            this.hasCategories.set(existingCategories.length > 0);
+            this.checkAppliedFilter(this.activeFilters(), this.existingCategories());
         });
     }
 
     private checkAppliedFilter(activeFilters: Set<string>, existingCategories: FaqCategory[]) {
-        activeFilters.forEach((activeFilter) => {
+        const updatedFilters = new Set(activeFilters);
+        updatedFilters.forEach((activeFilter) => {
             if (!existingCategories.some((category) => category.category === activeFilter)) {
-                activeFilters.delete(activeFilter);
+                updatedFilters.delete(activeFilter);
             }
         });
+        this.activeFilters.set(updatedFilters);
         this.applyFilters();
     }
 
     private applySearch(searchTerm: string) {
-        this.filteredFaqs = this.filteredFaqs.filter((faq) => {
-            return this.faqService.hasSearchTokens(faq, searchTerm);
-        });
+        this.filteredFaqs.set(
+            this.filteredFaqs().filter((faq) => {
+                return this.faqService.hasSearchTokens(faq, searchTerm);
+            }),
+        );
     }
 
     setSearchValue(searchValue: string) {
@@ -217,7 +223,7 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     ingestFaqsInPyris() {
         if (this.faqs.first()) {
-            this.faqService.ingestFaqsInPyris(this.courseId).subscribe({
+            this.faqService.ingestFaqsInPyris(this.courseId()).subscribe({
                 next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allFaqsSuccess'),
                 error: () => {
                     this.alertService.error('artemisApp.iris.ingestionAlert.allFaqsError');

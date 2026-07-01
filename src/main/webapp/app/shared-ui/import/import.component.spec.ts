@@ -2,8 +2,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { PaginatorState } from 'primeng/paginator';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ImportComponent } from 'app/shared-ui/import/import.component';
@@ -50,14 +50,7 @@ describe('ImportComponent', () => {
         } as unknown as DynamicDialogRef;
 
         TestBed.configureTestingModule({
-            imports: [
-                FormsModule,
-                DummyImportComponent,
-                MockComponent(ButtonComponent),
-                MockComponent(NgbPagination),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-            ],
+            imports: [FormsModule, DummyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
             providers: [MockProvider(DummyPagingService), MockProvider(SortService), { provide: DynamicDialogRef, useValue: dialogRef }],
         })
             .compileComponents()
@@ -92,7 +85,7 @@ describe('ImportComponent', () => {
 
     it('should initialize the content', () => {
         fixture.detectChanges();
-        expect(comp.content).toEqual({ resultsOnPage: [], numberOfPages: 0 });
+        expect(comp.content()).toEqual({ resultsOnPage: [], numberOfPages: 0 });
     });
 
     it('should initialize the subjects', () => {
@@ -109,7 +102,7 @@ describe('ImportComponent', () => {
         comp.state = { ...state };
         comp.ngOnInit();
         middleExpectation();
-        expect(comp.content).toEqual(searchResult);
+        expect(comp.content()).toEqual(searchResult);
         comp.sortRows();
         expect(sortByPropertyStub).toHaveBeenCalledWith(searchResult.resultsOnPage, comp.sortedColumn, comp.listSorting);
     };
@@ -193,13 +186,13 @@ describe('ImportComponent', () => {
         comp.onPageChange(expectedPageNumber);
         vi.advanceTimersByTime(0);
         expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
 
         expectedPageNumber = 2;
         comp.onPageChange(expectedPageNumber);
         vi.advanceTimersByTime(0);
         expect(comp.page).toBe(expectedPageNumber);
-        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+        expect(comp.total()).toBe(numberOfPages * defaultPageSize);
 
         // Page number should be changed unless it is falsy.
         comp.onPageChange(0);
@@ -208,6 +201,14 @@ describe('ImportComponent', () => {
 
         // Number of times onPageChange is called with a truthy value.
         expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('onPaginatorPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+        const onPageChangeSpy = vi.spyOn(comp, 'onPageChange');
+        comp.onPaginatorPageChange({ page: 2 } as PaginatorState);
+        expect(onPageChangeSpy).toHaveBeenCalledWith(3);
+        comp.onPaginatorPageChange({} as PaginatorState);
+        expect(onPageChangeSpy).toHaveBeenCalledWith(1);
     });
 
     it('should sort rows with default values', () => {

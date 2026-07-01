@@ -13,7 +13,6 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { OnlineUnitFormComponent } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
-import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -30,7 +29,7 @@ describe('EditOnlineUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [OwlNativeDateTimeModule],
+            imports: [],
             providers: [
                 MockProvider(OnlineUnitService),
                 MockProvider(AlertService),
@@ -105,11 +104,11 @@ describe('EditOnlineUnitComponent', () => {
         editOnlineUnitComponentFixture.detectChanges(); // onInit
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitOfResponse);
         expect(findByIdStub).toHaveBeenCalledTimes(1);
-        expect(editOnlineUnitComponent.formData.name).toEqual(onlineUnitOfResponse.name);
-        expect(editOnlineUnitComponent.formData.releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
-        expect(editOnlineUnitComponent.formData.description).toEqual(onlineUnitOfResponse.description);
-        expect(editOnlineUnitComponent.formData.source).toEqual(onlineUnitOfResponse.source);
-        expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData);
+        expect(editOnlineUnitComponent.formData().name).toEqual(onlineUnitOfResponse.name);
+        expect(editOnlineUnitComponent.formData().releaseDate).toEqual(onlineUnitOfResponse.releaseDate);
+        expect(editOnlineUnitComponent.formData().description).toEqual(onlineUnitOfResponse.description);
+        expect(editOnlineUnitComponent.formData().source).toEqual(onlineUnitOfResponse.source);
+        expect(onlineUnitFormComponent.formData()).toEqual(editOnlineUnitComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {

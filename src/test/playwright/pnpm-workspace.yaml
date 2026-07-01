@@ -8,8 +8,9 @@ autoInstallPeers: true
 # Dependency overrides. pnpm 11 reads overrides from this file in preference to
 # `pnpm.overrides` in package.json (which it silently ignores).
 overrides:
-    nodemailer: '8.0.7'
+    nodemailer: '9.0.1'
     lodash: '4.18.1'
+    shell-quote: '1.8.4'
 
 allowBuilds:
     esbuild: true

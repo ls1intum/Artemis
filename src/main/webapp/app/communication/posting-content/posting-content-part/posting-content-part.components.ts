@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import {
     faAt,
@@ -17,7 +17,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/communication/posting-content/enlarge-slide-image/enlarge-slide-image.component';
-import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from 'primeng/dynamicdialog';
 import { AccountService } from 'app/core/auth/account.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -30,17 +30,18 @@ import { FileService } from 'app/foundation/service/file.service';
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['../../metis.component.scss'],
     imports: [RouterLink, FaIconComponent, HtmlForPostingMarkdownPipe, TranslateDirective],
+    providers: [DialogService],
 })
 export class PostingContentPartComponent implements OnInit {
     private fileService = inject(FileService);
-    private dialog = inject(MatDialog);
+    private dialogService = inject(DialogService);
     private accountService = inject(AccountService);
 
     postingContentPart = input<PostingContentPart>();
     userReferenceClicked = output<string>();
     channelReferenceClicked = output<number>();
 
-    imageNotFound = false;
+    readonly imageNotFound = signal(false);
     hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
@@ -85,8 +86,8 @@ export class PostingContentPartComponent implements OnInit {
     protected readonly faQuestion = faQuestion;
 
     protected readonly ReferenceType = ReferenceType;
-    processedContentBeforeReference: string;
-    processedContentAfterReference: string;
+    readonly processedContentBeforeReference = signal<string>(undefined!);
+    readonly processedContentAfterReference = signal<string>(undefined!);
 
     private initialized = false;
 
@@ -116,7 +117,7 @@ export class PostingContentPartComponent implements OnInit {
     }
 
     toggleImageNotFound(): void {
-        this.imageNotFound = true;
+        this.imageNotFound.set(true);
     }
 
     /**
@@ -124,11 +125,11 @@ export class PostingContentPartComponent implements OnInit {
      */
     processContent() {
         if (this.postingContentPart()?.contentBeforeReference) {
-            this.processedContentBeforeReference = this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || '');
+            this.processedContentBeforeReference.set(this.normalizeSpacing(this.postingContentPart()?.contentBeforeReference || ''));
         }
 
         if (this.postingContentPart()?.contentAfterReference) {
-            this.processedContentAfterReference = this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || '');
+            this.processedContentAfterReference.set(this.normalizeSpacing(this.postingContentPart()?.contentAfterReference || ''));
         }
     }
 
@@ -142,9 +143,12 @@ export class PostingContentPartComponent implements OnInit {
      * @param slideToReference {string} the reference to the slide
      */
     enlargeImage(slideToReference: string) {
-        this.dialog.open(EnlargeSlideImageComponent, {
+        this.dialogService.open(EnlargeSlideImageComponent, {
             data: { slideToReference },
-            maxWidth: '95vw',
+            modal: true,
+            dismissableMask: true,
+            closeOnEscape: true,
+            style: { 'max-width': '95vw' },
         });
     }
 

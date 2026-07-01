@@ -1,5 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output, untracked, viewChild } from '@angular/core';
-import interact from 'interactjs';
+import { Component, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -15,14 +14,25 @@ import { PostComponent } from 'app/communication/post/post.component';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { ResizableConstraints, ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
+    imports: [
+        FaIconComponent,
+        TranslateDirective,
+        NgbTooltip,
+        PostComponent,
+        MessageReplyInlineInputComponent,
+        ArtemisTranslatePipe,
+        NgClass,
+        TutorSuggestionComponent,
+        ResizableDirective,
+    ],
 })
-export class ConversationThreadSidebarComponent implements AfterViewInit, OnDestroy {
+export class ConversationThreadSidebarComponent {
     readonly scrollBody = viewChild<ElementRef<HTMLDivElement>>('scrollBody');
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
     threadContainer = viewChild<ElementRef>('threadContainer');
@@ -41,8 +51,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
             const conversation = this.activeConversation();
             untracked(() => {
                 if (conversation) {
-                    this.conversation = conversation as ConversationDTO;
-                    this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
+                    this.conversation.set(conversation as ConversationDTO);
+                    this.hasChannelModerationRights.set(getAsChannelDTO(this.conversation())?.hasChannelModerationRights ?? false);
                 }
             });
         });
@@ -50,17 +60,17 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
             const activePost = this.activePost();
             untracked(() => {
                 if (activePost) {
-                    this.post = activePost;
-                    this.createdAnswerPost = this.createEmptyAnswerPost();
+                    this.post.set(activePost);
+                    this.createdAnswerPost.set(this.createEmptyAnswerPost());
                 }
             });
         });
     }
 
-    post?: Post;
-    createdAnswerPost: AnswerPost;
-    conversation: ConversationDTO;
-    hasChannelModerationRights = false;
+    readonly post = signal<Post | undefined>(undefined);
+    readonly createdAnswerPost = signal<AnswerPost>(undefined!);
+    readonly conversation = signal<ConversationDTO>(undefined!);
+    readonly hasChannelModerationRights = signal(false);
 
     // Icons
     faXmark = faXmark;
@@ -70,7 +80,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
     readonly faExpand = faExpand;
     readonly faCompress = faCompress;
 
-    isExpanded = false;
+    readonly isExpanded = signal(false);
 
     /**
      * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
@@ -79,7 +89,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
     createEmptyAnswerPost(): AnswerPost {
         const answerPost = new AnswerPost();
         answerPost.content = '';
-        answerPost.post = this.post;
+        answerPost.post = this.post();
         return answerPost;
     }
 
@@ -93,7 +103,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
         if (this.threadContainer()) {
             this.threadContainer()!.nativeElement.style.width = '';
         }
-        this.isExpanded = !this.isExpanded;
+        this.isExpanded.update((expanded) => !expanded);
         this.expandTooltip()?.close();
     }
 
@@ -105,39 +115,13 @@ export class ConversationThreadSidebarComponent implements AfterViewInit, OnDest
         this.conversationSelectionState.setOpenPostId(undefined);
     }
 
-    private interactable: ReturnType<typeof interact> | undefined;
-
     /**
-     * makes message thread section expandable by configuring 'interact'
+     * Width constraints for the resizable thread section, based on the viewport width when the sidebar opens.
+     * Mirrors the previous interact.js restrictSize modifier (min 30% of the window width, max full width). Held in
+     * a signal with a stable reference (instead of a getter returning a fresh object every change-detection cycle),
+     * which avoided the layout thrash that made the sidebar open jankily.
      */
-    ngAfterViewInit(): void {
-        this.interactable = interact('.expanded-thread')
-            .resizable({
-                edges: { left: '.draggable-left', right: false, bottom: false, top: false },
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: window.innerWidth * 0.3, height: 0 },
-                        max: { width: window.innerWidth, height: 0 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', function (event: any) {
-                event.target.classList.remove('card-resizable');
-            })
-            .on('resizemove', function (event: any) {
-                const target = event.target;
-                target.style.width = event.rect.width + 'px';
-            });
-    }
-
-    ngOnDestroy(): void {
-        this.interactable?.unset();
-    }
+    readonly resizableConstraints = signal<ResizableConstraints>({ minWidth: window.innerWidth * 0.3, maxWidth: window.innerWidth }).asReadonly();
 
     scrollEditorIntoView(): void {
         this.scrollBody()?.nativeElement?.scrollTo({

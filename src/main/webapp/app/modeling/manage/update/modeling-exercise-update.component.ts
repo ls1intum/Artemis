@@ -22,7 +22,7 @@ import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-grou
 import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
@@ -55,7 +55,7 @@ import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedbac
         FormStatusBarComponent,
         ExerciseTitleChannelNameComponent,
         HelpIconComponent,
-        CategorySelectorComponent,
+        CategorySelectorPrimengComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
@@ -97,26 +97,35 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
 
-    modelingExercise: ModelingExercise;
+    // modelingExercise is deeply template-bound through [(ngModel)] and populated asynchronously from the route
+    // resolver, so it is backed by a signal to schedule change detection under zoneless. The getter/setter facade
+    // keeps the existing synchronous reads/writes ([(ngModel)] bindings, this.modelingExercise = ... assignments) unchanged.
+    private readonly _modelingExercise = signal<ModelingExercise>(undefined!);
+    get modelingExercise(): ModelingExercise {
+        return this._modelingExercise();
+    }
+    set modelingExercise(value: ModelingExercise) {
+        this._modelingExercise.set(value);
+    }
     backupExercise: ModelingExercise;
-    exampleSolution: UMLModel;
-    isSaving: boolean;
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
+    readonly exampleSolution = signal<UMLModel>(undefined!);
+    readonly isSaving = signal(false);
+    readonly exerciseCategories = signal<ExerciseCategory[]>([]);
+    readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
     domainActionsProblemStatement = [new FormulaAction()];
     domainActionsExampleSolution = [new FormulaAction()];
-    isImport: boolean;
-    isExamMode: boolean;
+    readonly isImport = signal<boolean>(undefined!);
+    readonly isExamMode = signal<boolean>(undefined!);
 
-    formSectionStatus: FormSectionStatus[];
+    readonly formSectionStatus = signal<FormSectionStatus[]>(undefined!);
 
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
     teamSubscription?: Subscription;
 
     get editType(): EditType {
-        if (this.isImport) {
+        if (this.isImport()) {
             return EditType.IMPORT;
         }
 
@@ -163,7 +172,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
-                this.exampleSolution = importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel));
+                this.exampleSolution.set(importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel)));
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);
@@ -171,16 +180,16 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
         this.activatedRoute.url
             .pipe(
-                tap(
-                    (segments) =>
-                        (this.isImport = segments.some((segment) => segment.path === 'import', (this.isExamMode = segments.some((segment) => segment.path === 'exercise-groups')))),
-                ),
+                tap((segments) => {
+                    this.isExamMode.set(segments.some((segment) => segment.path === 'exercise-groups'));
+                    this.isImport.set(segments.some((segment) => segment.path === 'import'));
+                }),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     let courseId;
 
-                    if (!this.isExamMode) {
-                        this.exerciseCategories = this.modelingExercise.categories || [];
+                    if (!this.isExamMode()) {
+                        this.exerciseCategories.set(this.modelingExercise.categories || []);
                         if (this.modelingExercise.course) {
                             courseId = this.modelingExercise.course!.id!;
                         } else {
@@ -196,11 +205,11 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                             this.modelingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
                         }
                     }
-                    if (this.isImport) {
+                    if (this.isImport()) {
                         // The target course where we want to import into
                         courseId = params['courseId'];
 
-                        if (this.isExamMode) {
+                        if (this.isExamMode()) {
                             // The target exerciseGroupId where we want to import into
                             const { exerciseGroupId, examId } = params;
 
@@ -216,13 +225,13 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     }
 
                     loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
-                        this.existingCategories = existingCategories;
+                        this.existingCategories.set(existingCategories);
                     });
                 }),
             )
             .subscribe();
 
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.notificationText = undefined;
     }
 
@@ -232,7 +241,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     async calculateFormSectionStatus() {
-        this.formSectionStatus = [
+        this.formSectionStatus.set([
             {
                 title: 'artemisApp.exercise.sections.general',
                 valid: this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent()?.isValid() ?? true,
@@ -241,18 +250,20 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.modelingExercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode || (!this.modelingExercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true))),
+                valid: Boolean(
+                    this.isExamMode() || (!this.modelingExercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true)),
+                ),
                 empty:
                     isEmpty(this.modelingEditor()?.getCurrentModel()?.nodes) ||
-                    (!this.isExamMode && !this.modelingExercise.exampleSolutionPublicationDate) ||
+                    (!this.isExamMode() && !this.modelingExercise.exampleSolutionPublicationDate) ||
                     !this.modelingExercise.exampleSolutionExplanation,
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean((this.points()?.valid ?? true) && (this.bonusPoints()?.valid ?? true) && (this.isExamMode || this.timelineStatus().valid)),
-                empty: !this.isExamMode && this.timelineStatus().empty,
+                valid: Boolean((this.points()?.valid ?? true) && (this.bonusPoints()?.valid ?? true) && (this.isExamMode() || this.timelineStatus().valid)),
+                empty: !this.isExamMode() && this.timelineStatus().empty,
             },
-        ];
+        ]);
     }
 
     /**
@@ -261,7 +272,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
      */
     updateCategories(categories: ExerciseCategory[]): void {
         this.modelingExercise.categories = categories;
-        this.exerciseCategories = categories;
+        this.exerciseCategories.set(categories);
     }
 
     /**
@@ -314,15 +325,15 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
-        this.isSaving = true;
+        this.isSaving.set(true);
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
-            .save(this.modelingExercise, this.isExamMode, this.notificationText)
+            .save(this.modelingExercise, this.isExamMode(), this.notificationText)
             .subscribe({
                 next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
                 complete: () => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                 },
             });
     }
@@ -336,7 +347,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
 
     private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
-        this.isSaving = false;
+        this.isSaving.set(false);
 
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
         this.calendarService.reloadEvents();
@@ -348,6 +359,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         } else {
             onError(this.alertService, errorRes);
         }
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 }

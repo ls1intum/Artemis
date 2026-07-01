@@ -12,9 +12,9 @@ import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -905,7 +905,7 @@ public class HazelcastConfiguration {
         log.debug("Binding Hazelcast to interface {}", networkInterface);
         System.setProperty("hazelcast.local.localAddress", networkInterface);
         System.setProperty("hazelcast.local.publicAddress", networkInterface);
-        config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(networkInterface));
+        config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Set.of(networkInterface));
 
         config.setProperty("hazelcast.socket.bind.any", "false");
         config.setProperty("hazelcast.socket.server.bind.any", "false");
@@ -1341,6 +1341,7 @@ public class HazelcastConfiguration {
      * <li><strong>atlas-session-exercise-preview:</strong> Cross-node fallback for exercise mapping preview DTOs</li>
      * <li><strong>atlas-session-relation-preview:</strong> Cross-node fallback for relation mapping preview DTOs</li>
      * <li><strong>atlas-session-preview-history:</strong> Atlas preview history for incremental updates</li>
+     * <li><strong>atlas-content-change-accumulator:</strong> Per-course debounce buckets that drive the automatic competency orchestrator</li>
      * <li><strong>nodeMetrics:</strong> Per-node metrics snapshots (TTL 60s, no backups) for the multi-node admin metrics page</li>
      * </ul>
      *
@@ -1365,6 +1366,13 @@ public class HazelcastConfiguration {
         // MapConfig changes after the proxy is built are silently ignored on most cluster topologies.
         // Must be longer than the longest plausible LLM session (GPT-5.4 + medium reasoning ~5min).
         config.getMapConfigs().put("atlas-orchestrator-runs", new MapConfig().setBackupCount(0).setTimeToLiveSeconds(30 * 60));
+        // Per-course buckets for the automatic competency orchestrator. Entries are claimed by the
+        // scheduler after the debounce window elapses. 48h TTL gives a one-day safety margin so
+        // cap-deferred batches survive into the next day even with debounce + scheduler skew
+        // (a strict 24h would expire entries before the next-day claim).
+        config.getMapConfigs().put("atlas-content-change-accumulator",
+                new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()).setTimeToLiveSeconds(48 * 60 * 60));
+        config.getMapConfigs().put("iris-dashboard-schedule-state", new MapConfig().setBackupCount(artemisProperties.getCache().getHazelcast().getBackupCount()));
     }
 
     /**
