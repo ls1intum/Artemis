@@ -12,7 +12,7 @@
             <column name="masked_user_id" type="varchar(64)">
                 <constraints nullable="false"/>
             </column>
-            <column name="experimental_group" type="tinyint(3)">
+            <column name="experimental_group" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
             <column name="repository_action_type" type="tinyint(3)">
@@ -25,6 +25,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
         </createTable>

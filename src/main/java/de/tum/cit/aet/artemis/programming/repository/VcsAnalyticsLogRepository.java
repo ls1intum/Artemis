@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAnalyticsLog;
 public interface VcsAnalyticsLogRepository extends ArtemisJpaRepository<VcsAnalyticsLog, Long> {
 
     /**
-     * Retrieves last entry of masked user Id
+     * Retrieves last entry of masked user Id for given exercise id
      *
      * @return latest vcsAnalyticsLog entry
      */
@@ -27,10 +27,11 @@ public interface VcsAnalyticsLogRepository extends ArtemisJpaRepository<VcsAnaly
                 SELECT vcsAnalyticsLog
                 FROM VcsAnalyticsLog vcsAnalyticsLog
                 WHERE vcsAnalyticsLog.maskedUserId = :maskedUserId
+                AND vcsAnalyticsLog.exerciseId = :exerciseId
                 ORDER BY vcsAnalyticsLog.timestamp DESC
                 LIMIT 1
             """)
-    Optional<VcsAnalyticsLog> findLatestByMaskedUserId(@Param("maskedUserId") String maskedUserId);
+    Optional<VcsAnalyticsLog> findLatestByMaskedUserIdAndExerciseId(@Param("maskedUserId") String maskedUserId, @Param("exerciseId") Long exerciseId);
 
     /**
      * Retrieves the courseId for given participationId

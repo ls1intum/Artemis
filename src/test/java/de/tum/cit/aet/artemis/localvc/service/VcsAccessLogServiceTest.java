@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -21,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
@@ -53,11 +55,17 @@ class VcsAccessLogServiceTest {
         testUser.setId(1L);
         testUser.setLogin("student1");
 
+        ProgrammingExercise mockExercise = mock(ProgrammingExercise.class);
+        lenient().when(mockExercise.getId()).thenReturn(42L);
+
         programmingParticipation = mock(ProgrammingExerciseStudentParticipation.class);
         lenient().when(programmingParticipation.getId()).thenReturn(12L);
 
+        lenient().when(programmingParticipation.getExercise()).thenReturn(mockExercise);
+
         baseParticipation = mock(Participation.class);
         lenient().when(baseParticipation.getId()).thenReturn(12L);
+        lenient().when(baseParticipation.getExercise()).thenReturn(mockExercise);
     }
 
     @Test
@@ -102,7 +110,7 @@ class VcsAccessLogServiceTest {
 
         when(vcsAccessLogRepository.findNewestByRepositoryUri(anyString())).thenReturn(Optional.of(existingLog));
         when(vcsAnalyticsLogRepository.findCourseIdByParticipationId(12L)).thenReturn(Optional.of(10L));
-        when(vcsAnalyticsLogRepository.findLatestByMaskedUserId(anyString())).thenReturn(Optional.of(existingAnalytics));
+        when(vcsAnalyticsLogRepository.findLatestByMaskedUserIdAndExerciseId(anyString(), anyLong())).thenReturn(Optional.of(existingAnalytics));
 
         vcsAccessLogService.updateRepositoryActionType(repoUri, RepositoryActionType.CLONE);
 

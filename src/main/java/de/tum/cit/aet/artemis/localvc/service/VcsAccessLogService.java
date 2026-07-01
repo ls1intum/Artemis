@@ -65,21 +65,20 @@ public class VcsAccessLogService {
         VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash,
                 ipAddress);
         vcsAccessLogRepository.save(accessLogEntry);
-        saveAnalyticsLog(user, participation.getId(), actionType, authenticationMechanism);
+        saveAnalyticsLog(user, participation.getId(), participation.getExercise().getId(), actionType, authenticationMechanism);
     }
 
     /**
      * Helper function to save the analytics entry to vcsAnalyticsRepository
      *
      */
-    private void saveAnalyticsLog(User user, Long participationId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism) {
+    private void saveAnalyticsLog(User user, Long participationId, Long exerciseId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism) {
         Optional<Long> optionalCourseId = vcsAnalyticsLogRepository.findCourseIdByParticipationId(participationId);
         if (optionalCourseId.isPresent()) {
             Long courseId = optionalCourseId.get();
             ExperimentalGroup experimentalGroup = AnalyticsHashUtils.getGroup(user.getId());
             String maskedId = AnalyticsHashUtils.maskUserId(user.getId(), courseId);
-
-            VcsAnalyticsLog analyticsLogEntry = new VcsAnalyticsLog(maskedId, courseId, experimentalGroup, actionType, authenticationMechanism);
+            VcsAnalyticsLog analyticsLogEntry = new VcsAnalyticsLog(maskedId, courseId, exerciseId, experimentalGroup, actionType, authenticationMechanism);
             vcsAnalyticsLogRepository.save(analyticsLogEntry);
         }
         else {
@@ -133,7 +132,8 @@ public class VcsAccessLogService {
         if (optionalCourseId.isPresent()) {
             Long courseId = optionalCourseId.get();
             String maskedUserId = AnalyticsHashUtils.maskUserId(user.getId(), courseId);
-            Optional<VcsAnalyticsLog> vcsAnalyticsLog = vcsAnalyticsLogRepository.findLatestByMaskedUserId(maskedUserId);
+            Long exerciseId = vcsAccessLog.getParticipation().getExercise().getId();
+            Optional<VcsAnalyticsLog> vcsAnalyticsLog = vcsAnalyticsLogRepository.findLatestByMaskedUserIdAndExerciseId(maskedUserId, exerciseId);
             if (vcsAnalyticsLog.isPresent()) {
                 vcsAnalyticsLog.get().setRepositoryActionType(repositoryActionType);
                 vcsAnalyticsLogRepository.save(vcsAnalyticsLog.get());
@@ -149,8 +149,10 @@ public class VcsAccessLogService {
     @Async
     public void saveVcsAccesslog(VcsAccessLog vcsAccessLog) {
         vcsAccessLogRepository.save(vcsAccessLog);
-        if (vcsAccessLog.getParticipation() != null && vcsAccessLog.getUser() != null) {
-            saveAnalyticsLog(vcsAccessLog.getUser(), vcsAccessLog.getParticipation().getId(), vcsAccessLog.getRepositoryActionType(), vcsAccessLog.getAuthenticationMechanism());
+        Participation participation = vcsAccessLog.getParticipation();
+        if (participation != null && vcsAccessLog.getUser() != null) {
+            saveAnalyticsLog(vcsAccessLog.getUser(), participation.getId(), participation.getExercise().getId(), vcsAccessLog.getRepositoryActionType(),
+                    vcsAccessLog.getAuthenticationMechanism());
         }
     }
 

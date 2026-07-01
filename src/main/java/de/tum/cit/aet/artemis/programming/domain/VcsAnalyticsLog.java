@@ -27,8 +27,11 @@ public class VcsAnalyticsLog extends DomainObject {
     @Column(name = "course_id")
     private Long courseId;
 
+    @Column(name = "exercise_id")
+    private Long exerciseId;
+
     @Column(name = "experimental_group", nullable = false)
-    @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.STRING)
     private ExperimentalGroup experimentalGroup;
 
     @Column(name = "repository_action_type", nullable = false)
@@ -42,10 +45,11 @@ public class VcsAnalyticsLog extends DomainObject {
     @Column(name = "timestamp")
     private ZonedDateTime timestamp;
 
-    public VcsAnalyticsLog(String maskedUserId, Long courseId, ExperimentalGroup experimentalGroup, RepositoryActionType repositoryActionType,
+    public VcsAnalyticsLog(String maskedUserId, Long courseId, Long exerciseId, ExperimentalGroup experimentalGroup, RepositoryActionType repositoryActionType,
             AuthenticationMechanism authenticationMechanism) {
         this.maskedUserId = maskedUserId;
         this.courseId = courseId;
+        this.exerciseId = exerciseId;
         this.experimentalGroup = experimentalGroup;
         this.repositoryActionType = repositoryActionType;
         this.authenticationMechanism = authenticationMechanism;
@@ -69,6 +73,14 @@ public class VcsAnalyticsLog extends DomainObject {
 
     public void setCourseId(Long courseId) {
         this.courseId = courseId;
+    }
+
+    public Long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(Long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 
     public ExperimentalGroup getExperimentalGroup() {
