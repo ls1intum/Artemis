@@ -1,1 +1,23 @@
 @import '../../shared/course-base-container/course-base-container.component';
+
+// Establish a positioning context so the overlaid action bar (below) anchors to the content area.
+.layout-content {
+    position: relative;
+}
+
+// For tabs that opt in, the shared action bar floats over the top of the content column, offset past
+// the secondary sidebar, so the sidebar itself reaches the very top. It slides to full width when the
+// sidebar collapses, reusing the same 0.1s timing as the sidebar-width transition (no vertical jump).
+jhi-course-title-bar.title-bar-over-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    // 263px == secondary sidebar width (255px) + 8px gap, matching .content-sidebar-width.
+    left: 263px;
+    z-index: 3;
+    transition: left 0.1s ease-in-out;
+
+    &.collapsed {
+        left: 0;
+    }
+}

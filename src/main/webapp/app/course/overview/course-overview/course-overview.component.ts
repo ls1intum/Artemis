@@ -112,6 +112,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     // Includes Iris, whose toggle lives in the chat-history panel header.
     protected readonly toggleInSidebar = computed(() => this.titleInSidebar() || this.activatedComponentReference() instanceof CourseIrisComponent);
 
+    // When active, the shared action bar is overlaid on top of the content column (offset past the sidebar)
+    // instead of spanning full width, so the tab's sidebar can rise to the very top (like the exercises tab).
+    protected readonly actionBarOverContent = computed(() => this.activatedComponentReference() instanceof CourseConversationsComponent);
+
     protected readonly activeSidebarCollapsed = computed<boolean>(() => {
         const componentRef = this.activatedComponentReference();
         if (!componentRef) {
