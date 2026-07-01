@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextMessageConten
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -91,11 +92,55 @@ public class PyrisDTOService {
     public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
-        Map<String, String> committedFiles = getFilteredRepositoryContents((ProgrammingExerciseParticipation) submission.getParticipation());
+        var participation = (ProgrammingExerciseParticipation) submission.getParticipation();
+        Map<String, String> committedFiles = getFilteredRepositoryContents(participation);
         Map<String, String> mergedRepository = new HashMap<>(committedFiles);
         mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path
-        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submission.getParticipation().isPracticeMode(),
-                submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
+        var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, participation.getProgrammingExercise().getProgrammingLanguage());
+        // submittedRepositoryAvailable = we actually read the submitted repo (non-empty committed set). Lets Pyris
+        // tell "no code changed since the submission" apart from "the submitted code could not be read" (both would
+        // otherwise be an empty submittedRepository, e.g. on a repository-fetch failure).
+        boolean submittedRepositoryAvailable = !committedFiles.isEmpty();
+        return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submittedRepository, submittedRepositoryAvailable,
+                submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
+    }
+
+    /**
+     * The committed (last-submitted-build) version of ONLY the CODE files the client changed locally, so Pyris can diff
+     * live-vs-submitted. Uses the same language predicate as {@link #getFilteredRepositoryContents} (non-language files
+     * such as README are skipped). A changed existing code file contributes its committed content; a genuinely new
+     * local code file contributes {@code ""} (all-added); unchanged code files are skipped.
+     * <p>
+     * If {@code committedFiles} is empty (the submitted repository could not be fetched, or there are no commits yet),
+     * an empty map is returned rather than fabricating an all-added diff for every changed file: a "new file" is only
+     * claimed when the committed set was actually read.
+     *
+     * @param committedFiles   the (language-filtered) committed repository contents; empty if unavailable
+     * @param uncommittedFiles the student's live working-copy files from the client
+     * @param language         the exercise programming language (may be null)
+     * @return the committed side of the changed code files, keyed by path; empty if nothing diffable
+     */
+    static Map<String, String> buildSubmittedRepository(Map<String, String> committedFiles, Map<String, String> uncommittedFiles, ProgrammingLanguage language) {
+        boolean committedReadable = !committedFiles.isEmpty();
+        Map<String, String> submittedRepository = new HashMap<>();
+        for (var entry : uncommittedFiles.entrySet()) {
+            var path = entry.getKey();
+            if (language != null && !language.matchesFileExtension(path)) {
+                continue; // non-language file (e.g. README): not part of the code diff
+            }
+            var committed = committedFiles.get(path);
+            if (committed == null) {
+                if (committedReadable) {
+                    submittedRepository.put(path, ""); // genuinely new local code file
+                }
+                // else: committed set unavailable -> do not fabricate an all-added diff
+            }
+            else if (!committed.equals(entry.getValue())) {
+                submittedRepository.put(path, committed); // changed existing code file
+            }
+            // unchanged code file: skip
+        }
+        return submittedRepository;
     }
 
     /**
@@ -199,8 +244,13 @@ public class PyrisDTOService {
             if (feedback.getHasLongFeedbackText()) {
                 text = feedback.getLongFeedback().orElseThrow().getText();
             }
-            var testCaseName = feedback.getTestCase() == null ? feedback.getText() : feedback.getTestCase().getTestName();
-            return new PyrisFeedbackDTO(text, testCaseName, Objects.requireNonNullElse(feedback.getCredits(), 0D));
+            var testCase = feedback.getTestCase();
+            var testCaseName = testCase == null ? feedback.getText() : testCase.getTestName();
+            // positive is the authoritative outcome and is TRI-STATE: true=passed, false=failed,
+            // null=not executed (Artemis semantics). Forward it verbatim so Pyris never shows an
+            // unexecuted test as a failure. hasTestCase distinguishes a real test case from non-test
+            // feedback (which is otherwise stuffed into testCaseName above).
+            return new PyrisFeedbackDTO(text, testCaseName, Objects.requireNonNullElse(feedback.getCredits(), 0D), feedback.isPositive(), testCase != null);
         }).toList();
 
         return new PyrisResultDTO(toInstant(latestResult.getCompletionDate()), latestResult.isSuccessful(), feedbacks);
