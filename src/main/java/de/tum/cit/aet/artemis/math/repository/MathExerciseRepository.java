@@ -37,10 +37,7 @@ public interface MathExerciseRepository extends JpaRepository<MathExercise, Long
             SELECT e FROM MathExercise e
                 LEFT JOIN FETCH e.course
                 LEFT JOIN FETCH e.exampleSubmissions exampleSubmissions
-                LEFT JOIN FETCH exampleSubmissions.submission submission
-                LEFT JOIN FETCH submission.results result
-                LEFT JOIN FETCH result.feedbacks
-                LEFT JOIN FETCH result.assessor
+                LEFT JOIN FETCH exampleSubmissions.submission
             WHERE e.id = :id
             """)
     Optional<MathExercise> findByIdWithCourseAndExampleSubmissions(@Param("id") Long id);

@@ -87,14 +87,24 @@ public class MathExerciseUtilService {
      * @return the saved ExampleSubmission
      */
     public ExampleSubmission addExampleSubmissionToMathExercise(MathExercise exercise, String content) {
-        MathSubmission submission = MathExerciseFactory.generateMathSubmission(true);
-        submission.setExampleSubmission(true);
-        submission.setContent(content);
-        submission = mathSubmissionRepository.save(submission);
+        MathSubmission submission = saveExampleMathSubmission(content);
         ExampleSubmission exampleSubmission = new ExampleSubmission();
         exampleSubmission.setExercise(exercise);
         exampleSubmission.setSubmission(submission);
         return exampleSubmissionRepository.save(exampleSubmission);
+    }
+
+    /**
+     * Creates and persists a MathSubmission flagged as an example submission carrying the given {@code content}.
+     *
+     * @param content the opaque work payload stored on the MathSubmission
+     * @return the saved MathSubmission
+     */
+    private MathSubmission saveExampleMathSubmission(String content) {
+        MathSubmission submission = MathExerciseFactory.generateMathSubmission(true);
+        submission.setExampleSubmission(true);
+        submission.setContent(content);
+        return mathSubmissionRepository.save(submission);
     }
 
     /**
@@ -108,10 +118,7 @@ public class MathExerciseUtilService {
      * @return the saved ExampleSubmission (its submission has one result with one feedback)
      */
     public ExampleSubmission addExampleSubmissionWithAssessmentToMathExercise(MathExercise exercise, String content, double score, String feedbackText) {
-        MathSubmission submission = MathExerciseFactory.generateMathSubmission(true);
-        submission.setExampleSubmission(true);
-        submission.setContent(content);
-        submission = mathSubmissionRepository.save(submission);
+        MathSubmission submission = saveExampleMathSubmission(content);
 
         Feedback feedback = new Feedback();
         feedback.setDetailText(feedbackText);

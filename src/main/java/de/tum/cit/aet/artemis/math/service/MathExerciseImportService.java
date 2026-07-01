@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.math.config.MathEnabled;
 import de.tum.cit.aet.artemis.math.domain.MathExercise;
 import de.tum.cit.aet.artemis.math.domain.MathSubmission;
 import de.tum.cit.aet.artemis.math.repository.MathExerciseRepository;
+import de.tum.cit.aet.artemis.math.repository.MathSubmissionRepository;
 
 @Conditional(MathEnabled.class)
 @Lazy
@@ -38,12 +40,16 @@ public class MathExerciseImportService extends ExerciseImportService {
 
     private final MathExerciseRepository mathExerciseRepository;
 
+    private final MathSubmissionRepository mathSubmissionRepository;
+
     private final ChannelService channelService;
 
-    public MathExerciseImportService(MathExerciseRepository mathExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService) {
+    public MathExerciseImportService(MathExerciseRepository mathExerciseRepository, MathSubmissionRepository mathSubmissionRepository,
+            ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService,
+            FeedbackService feedbackService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.mathExerciseRepository = mathExerciseRepository;
+        this.mathSubmissionRepository = mathSubmissionRepository;
         this.channelService = channelService;
     }
 
@@ -136,9 +142,12 @@ public class MathExerciseImportService extends ExerciseImportService {
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setContent(((MathSubmission) originalSubmission).getContent());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
-            // Only copy an assessment if one exists and was eagerly loaded, otherwise skip it to avoid a LazyInitializationException.
-            if (Hibernate.isInitialized(originalSubmission.getResults()) && originalSubmission.getLatestResult() != null) {
-                newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, gradingInstructionCopyTracker));
+            // Load the assessment graph (result + feedbacks + assessor) in a separate targeted query instead of eagerly fetching
+            // it on the exercise-import query, which would grow that query's fetch graph beyond the allowed size.
+            Result originalResult = mathSubmissionRepository.findByIdWithResultsAndFeedbacksAndAssessor(originalSubmission.getId()).map(MathSubmission::getLatestResult)
+                    .orElse(null);
+            if (originalResult != null) {
+                newSubmission.addResult(copyExampleResult(originalResult, newSubmission, gradingInstructionCopyTracker));
                 newSubmission = submissionRepository.saveAndFlush(newSubmission);
             }
         }

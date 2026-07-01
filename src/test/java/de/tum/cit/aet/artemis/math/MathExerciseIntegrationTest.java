@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.math.domain.MathExercise;
 import de.tum.cit.aet.artemis.math.domain.MathSubmission;
 import de.tum.cit.aet.artemis.math.dto.MathExerciseDTO;
 import de.tum.cit.aet.artemis.math.repository.MathExerciseRepository;
+import de.tum.cit.aet.artemis.math.repository.MathSubmissionRepository;
 import de.tum.cit.aet.artemis.math.util.MathExerciseFactory;
 import de.tum.cit.aet.artemis.math.util.MathExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -30,6 +31,9 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private MathExerciseRepository mathExerciseRepository;
+
+    @Autowired
+    private MathSubmissionRepository mathSubmissionRepository;
 
     @Autowired
     private MathExerciseUtilService mathExerciseUtilService;
@@ -188,15 +192,17 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         long originalResultId = originalExampleSubmission.getSubmission().getResults().getFirst().getId();
 
         MathExerciseDTO importTarget = new MathExerciseDTO(null, "Imported With Assessment", null, "Prove that 0 + x = x.", "Prove that 0 + x = x", "Apply add_zero_left.", null,
-                null, 10.0, 0.0, IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, ZonedDateTime.now().minusDays(1), null, ZonedDateTime.now().plusDays(1),
-                ZonedDateTime.now().plusDays(2), null, course.getId(), false);
+                null, 10.0, 0.0, IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, ZonedDateTime.now().minusDays(1), null,
+                ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), null, course.getId(), false);
 
         MathExerciseDTO result = request.postWithResponseBody("/api/math/math-exercises/import?sourceExerciseId=" + exercise.getId(), importTarget, MathExerciseDTO.class,
                 HttpStatus.CREATED);
 
         MathExercise imported = mathExerciseRepository.findByIdWithCourseAndExampleSubmissions(result.id()).orElseThrow();
-        Submission copiedSubmission = imported.getExampleSubmissions().iterator().next().getSubmission();
-        // The multi-join fetch must yield exactly one (non-duplicated) result, copied as a distinct entity with its feedback and score.
+        long copiedSubmissionId = imported.getExampleSubmissions().iterator().next().getSubmission().getId();
+        // Reload the copied submission's assessment via the targeted query (the exercise query no longer eagerly fetches results).
+        MathSubmission copiedSubmission = mathSubmissionRepository.findByIdWithResultsAndFeedbacksAndAssessor(copiedSubmissionId).orElseThrow();
+        // The assessment must be copied as exactly one distinct result with its feedback and score.
         assertThat(copiedSubmission.getResults()).hasSize(1);
         Result copiedResult = copiedSubmission.getResults().getFirst();
         assertThat(copiedResult.getId()).isNotEqualTo(originalResultId);

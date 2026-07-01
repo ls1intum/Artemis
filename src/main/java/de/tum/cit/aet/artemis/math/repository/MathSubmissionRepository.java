@@ -24,6 +24,15 @@ public interface MathSubmissionRepository extends JpaRepository<MathSubmission, 
     @Query("SELECT s FROM MathSubmission s LEFT JOIN FETCH s.results WHERE s.id = :id")
     Optional<MathSubmission> findByIdWithResults(@Param("id") Long id);
 
+    @Query("""
+            SELECT s FROM MathSubmission s
+                LEFT JOIN FETCH s.results result
+                LEFT JOIN FETCH result.feedbacks
+                LEFT JOIN FETCH result.assessor
+            WHERE s.id = :id
+            """)
+    Optional<MathSubmission> findByIdWithResultsAndFeedbacksAndAssessor(@Param("id") Long id);
+
     @Query("SELECT s FROM MathSubmission s LEFT JOIN FETCH s.results LEFT JOIN FETCH s.participation p LEFT JOIN FETCH p.exercise WHERE s.id = :id")
     Optional<MathSubmission> findByIdWithResultsAndParticipation(@Param("id") Long id);
 
