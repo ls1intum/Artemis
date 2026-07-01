@@ -9,7 +9,7 @@
                     <tr>
                         <th>{{ 'artemisApp.examManagement.testExam.examMode' | artemisTranslate }}:</th>
                         <td>
-                            <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
+                            <jhi-exam-mode-badge [exam]="exam()" />
                         </td>
                     </tr>
                 }

@@ -1,7 +1,7 @@
-import { signal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { vi } from 'vitest';
 
 import { ExerciseTimelineComponent, TimelineItem } from './exercise-timeline.component';
@@ -42,25 +42,19 @@ describe('ExerciseTimeline', () => {
             kind: 'optional',
             labelStringKey: 'release',
             internalDate: releaseDate.toDate(),
-            isBeforePreviousDate: false,
-            isInputRequiredButUndefined: false,
-            tooltip: undefined,
+            violationKey: undefined,
         });
         expect(internalTimelineItems[1]).toMatchObject({
             kind: 'required',
             labelStringKey: 'due',
             internalDate: dueDate.toDate(),
-            isBeforePreviousDate: true,
-            isInputRequiredButUndefined: false,
-            tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
+            violationKey: 'artemisApp.exercise.timelineDateOrderTooltip',
         });
         expect(internalTimelineItems[2]).toMatchObject({
             kind: 'required',
             labelStringKey: 'assessment',
             internalDate: undefined,
-            isBeforePreviousDate: false,
-            isInputRequiredButUndefined: true,
-            tooltip: 'artemisApp.exercise.timelineDateRequiredTooltip',
+            violationKey: 'artemisApp.exercise.timelineDateRequiredTooltip',
         });
     });
 
@@ -78,11 +72,11 @@ describe('ExerciseTimeline', () => {
         expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
         expect(emittedStatuses.at(-1)).toEqual({ valid: true, empty: false });
 
-        timelineItems[1].date.set(undefined);
+        (timelineItems[1].date as WritableSignal<Dayjs | undefined>).set(undefined);
         fixture.detectChanges();
 
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
-        expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true });
+        expect(component.timelineStatus()).toEqual({ valid: false, empty: false });
+        expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: false });
     });
 
     it('should require another timeline item only when the dependent date is set', () => {
@@ -96,18 +90,16 @@ describe('ExerciseTimeline', () => {
         fixture.componentRef.setInput('timelineItems', [dueDateItem, assessmentDateItem]);
 
         expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemDateUndefined: false,
-            tooltip: undefined,
+            violationKey: undefined,
         });
         expect(component.timelineStatus()).toEqual({ valid: true, empty: true });
 
         assessmentDateItem.date.set(dayjs('2026-01-10T10:00:00Z'));
 
         expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemDateUndefined: true,
-            tooltip: 'artemisApp.exercise.timelineOtherRequiredDateTooltip',
+            violationKey: 'artemisApp.exercise.timelineOtherRequiredDateTooltip',
         });
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
+        expect(component.timelineStatus()).toEqual({ valid: false, empty: false });
     });
 
     it('should update timeline item date', () => {
@@ -173,7 +165,7 @@ describe('ExerciseTimeline', () => {
         // flagged invalid so the user is notified and saving is blocked (PR #13009 review).
         expect(input.value).toBe('0.06.2026 16:23');
         expect(item.date()).toBe(initialDate);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
         expect(component.timelineStatus().valid).toBe(false);
     });
 
@@ -187,7 +179,7 @@ describe('ExerciseTimeline', () => {
 
         expect(input.value).toBe('00.06.2026 16:23');
         expect(item.date()).toBe(initialDate);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
     });
 
     it('should flag invalid manual input on blur even without a current date value', () => {
@@ -199,7 +191,7 @@ describe('ExerciseTimeline', () => {
 
         expect(input.value).toBe('0.06.2026 16:23');
         expect(item.date()).toBeUndefined();
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
     });
 
     it('should clear the invalid flag and set the date when a valid date is entered after an invalid one', () => {
@@ -207,11 +199,11 @@ describe('ExerciseTimeline', () => {
         fixture.componentRef.setInput('timelineItems', [item]);
 
         component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
 
         component.handleManualInput(item, { target: { value: '02.01.2026 12:30' } } as unknown as Event);
 
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
+        expect(component.internalTimelineItems()[0].violationKey).toBeUndefined();
         expect(item.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBe(true);
     });
 
@@ -220,11 +212,11 @@ describe('ExerciseTimeline', () => {
         fixture.componentRef.setInput('timelineItems', [item]);
 
         component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
+        expect(component.internalTimelineItems()[0].violationKey).toBe('artemisApp.exercise.timelineDateInvalidTooltip');
 
         component.handleManualInput(item, { target: { value: '' } } as unknown as Event);
 
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
+        expect(component.internalTimelineItems()[0].violationKey).toBeUndefined();
         expect(item.date()).toBeUndefined();
     });
 

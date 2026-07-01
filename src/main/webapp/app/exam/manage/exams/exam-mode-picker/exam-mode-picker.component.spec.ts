@@ -7,14 +7,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-const exam = {
-    id: 2,
-};
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+
 describe('ExamModePickerComponent', () => {
     setupTestBed({ zoneless: true });
 
     let component: ExamModePickerComponent;
     let fixture: ComponentFixture<ExamModePickerComponent>;
+    let exam: any;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -24,6 +24,7 @@ describe('ExamModePickerComponent', () => {
 
         fixture = TestBed.createComponent(ExamModePickerComponent);
         component = fixture.componentInstance;
+        exam = { id: 2 };
     });
 
     afterEach(() => {
@@ -35,7 +36,7 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', true);
         fixture.detectChanges();
-        component.setExamMode(true);
+        component.setExamMode(ExamMode.TEST);
         expect(component.exam()).toEqual(examCopy);
     });
 
@@ -43,8 +44,8 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
-        component.setExamMode(true);
-        expect(component.exam().testExam).toBe(true);
+        component.setExamMode(ExamMode.TEST);
+        expect(component.exam().examMode).toBe(ExamMode.TEST);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 
@@ -52,8 +53,17 @@ describe('ExamModePickerComponent', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('disableInput', false);
         fixture.detectChanges();
-        component.setExamMode(false);
-        expect(component.exam().testExam).toBe(false);
+        component.setExamMode(ExamMode.REAL);
+        expect(component.exam().examMode).toBe(ExamMode.REAL);
         expect(component.exam().numberOfCorrectionRoundsInExam).toBe(1);
+    });
+
+    it('should set exam mode TEST_WITH_SIMULATION', () => {
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('disableInput', false);
+        fixture.detectChanges();
+        component.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        expect(component.exam().examMode).toBe(ExamMode.TEST_WITH_SIMULATION);
+        expect(component.exam().numberOfCorrectionRoundsInExam).toBe(0);
     });
 });

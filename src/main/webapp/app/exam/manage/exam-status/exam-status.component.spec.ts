@@ -16,6 +16,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 enum DateOffsetType {
     HOURS = 'hours',
@@ -50,7 +51,7 @@ describe('ExamStatusComponent', () => {
         testExam.startDate = startDate;
         testExam.endDate = dayjs().add(endDateOffset, offsetType);
         testExam.examMaxPoints = 10;
-        testExam.testExam = true;
+        testExam.examMode = ExamMode.TEST;
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('course', {} as Course);
     };

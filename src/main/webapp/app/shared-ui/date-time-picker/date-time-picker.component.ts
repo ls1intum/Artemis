@@ -1,12 +1,13 @@
 import { AfterViewInit, Component, computed, forwardRef, input, model, output, signal, viewChild } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TimeZoneWarningComponent } from 'app/shared-ui/date-time-picker/time-zone-warning.component';
 
 export enum DateTimePickerType {
     CALENDAR,
@@ -25,10 +26,19 @@ export enum DateTimePickerType {
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
     ],
-    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        FaStackComponent,
+        NgbTooltip,
+        FaIconComponent,
+        FaStackItemSizeDirective,
+        FormsModule,
+        DatePickerModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TimeZoneWarningComponent,
+    ],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor, AfterViewInit {
-    protected readonly faGlobe = faGlobe;
     protected readonly faClock = faClock;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTriangleExclamation = faTriangleExclamation;
@@ -307,13 +317,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
         picker.hideOverlay();
     }
 
-    /**
-     * Get the current time zone of the user / browser
-     */
-    get currentTimeZone(): string {
-        return Intl.DateTimeFormat().resolvedOptions().timeZone;
-    }
-
     startDate = computed(() => {
         return this.convertToDate(this.startAt?.() ?? dayjs().startOf('minutes'));
     });
@@ -334,6 +337,4 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
     convertToDate(value?: dayjs.Dayjs) {
         return value != undefined && value.isValid() ? value.toDate() : null;
     }
-
-    protected readonly DateTimePickerType = DateTimePickerType;
 }

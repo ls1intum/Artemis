@@ -30,6 +30,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -235,7 +236,7 @@ describe('CoursesComponent', () => {
             visibleDate: visibleDate1.subtract(10, 'minutes'),
             course: courseEmpty,
             workingTime: 3600,
-            testExam: true,
+            examMode: ExamMode.TEST,
         };
         const course6 = { id: 3, exams: [testExam1], exercises: [exercise1] };
         const coursesForDashboard = new CoursesForDashboardDTO();

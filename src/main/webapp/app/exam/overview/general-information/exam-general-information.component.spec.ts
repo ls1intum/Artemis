@@ -8,6 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 let fixture: ComponentFixture<ExamGeneralInformationComponent>;
 let component: ExamGeneralInformationComponent;
@@ -22,7 +23,7 @@ let exam = {
     title: 'Test Exam',
     startDate,
     endDate,
-    testExam: false,
+    examMode: ExamMode.REAL,
 } as Exam;
 
 let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
@@ -31,7 +32,7 @@ describe('ExamGeneralInformationComponent', () => {
     setupTestBed({ zoneless: true });
 
     beforeEach(() => {
-        exam = { id: 1, title: 'ExamForTesting', startDate, endDate, testExam: false } as Exam;
+        exam = { id: 1, title: 'ExamForTesting', startDate, endDate, examMode: ExamMode.REAL } as Exam;
         studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
@@ -99,7 +100,7 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should detect an TestExam and set the currentDate correctly', () => {
-        const testExam = { ...exam, testExam: true } as Exam;
+        const testExam = { ...exam, examMode: ExamMode.TEST } as Exam;
         const minimumNowRange = dayjs();
         fixture.componentRef.setInput('exam', testExam);
         fixture.componentRef.setInput('studentExam', studentExam);

@@ -18,6 +18,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { User } from 'app/account/user/user.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('CourseOverviewGuard', () => {
     setupTestBed({ zoneless: true });
@@ -32,7 +33,7 @@ describe('CourseOverviewGuard', () => {
         id: 1,
         visibleDate: dayjs().subtract(1, 'days'),
         startDate: dayjs().subtract(30, 'minutes'),
-        testExam: false,
+        examMode: ExamMode.REAL,
     } as Exam;
 
     const lecture = new Lecture();

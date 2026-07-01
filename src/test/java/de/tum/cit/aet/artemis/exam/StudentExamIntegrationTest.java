@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -481,6 +482,38 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testStartExercises_testExamWithSimulation_noDuplicateParticipations() throws Exception {
+        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
+        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setWorkingTime(3600);
+        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSimulation.setExamMaxPoints(19);
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Register student to exam
+        var examUser = new de.tum.cit.aet.artemis.exam.domain.ExamUser();
+        examUser.setUser(student1);
+        examUser.setExam(testExamWithSimulation);
+        examUserRepository.save(examUser);
+
+        // Generate student exams
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/generate-missing-student-exams", null, HttpStatus.OK,
+                null);
+
+        // Start exercises for the simulation exam for the first time
+        int firstGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
+        assertThat(firstGenerated).isEqualTo(testExamWithSimulation.getExerciseGroups().size());
+
+        // Start exercises for the simulation exam a second time, this should reuse participations
+        int secondGenerated = de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil.prepareExerciseStart(request, testExamWithSimulation, course1);
+        assertThat(secondGenerated).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStudentExamForConduction() throws Exception {
         List<StudentExam> studentExams = prepareStudentExamsForConduction(false, true, NUMBER_OF_STUDENTS);
 
@@ -524,7 +557,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         var examEndDate = ZonedDateTime.now().plusMinutes(3);
         var exam = examUtilService.addExam(course1, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         var examUser5 = new ExamUser();
         examUser5.setExam(exam);
         examUser5.setUser(student1);
@@ -615,7 +648,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         course2 = courseUtilService.addEmptyCourse();
         exam2 = examUtilService.addExam(course2, examVisibleDate, examStartDate, examEndDate);
 
-        exam2.setTestExam(isTestExam);
+        exam2.setExamMode(isTestExam ? ExamMode.TEST : ExamMode.REAL);
         exam2 = examRepository.save(exam2);
 
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
@@ -2894,6 +2927,82 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
                     .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             assertThat(studentParticipation.getInitializationDate()).isCloseTo(studentExamForConduction.getStartedDate(), within(1, ChronoUnit.SECONDS));
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testConductionOfTestExamWithSimulationUsesFixedSimulationEndDate() throws Exception {
+        Exam testExamWithSimulation = examUtilService.addTestExam(course1);
+        testExamWithSimulation = examUtilService.addTextModelingProgrammingExercisesToExam(testExamWithSimulation, false, true);
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        testExamWithSimulation.setExamMaxPoints(19);
+        testExamWithSimulation.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithSimulation.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        testExamWithSimulation.setWorkingTime(3600);
+        testExamWithSimulation.setEndDate(ZonedDateTime.now().plusHours(2));
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Register student to exam
+        var examUser = new ExamUser();
+        examUser.setUser(student1);
+        examUser.setExam(testExamWithSimulation);
+        examUserRepository.save(examUser);
+        testExamWithSimulation.addExamUser(examUser);
+        testExamWithSimulation = examRepository.save(testExamWithSimulation);
+
+        // Add pre-generated student exam for the active simulation phase
+        examUtilService.addStudentExamForTestExam(testExamWithSimulation, student1);
+
+        StudentExam studentExamForStart = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/own-student-exam", HttpStatus.OK,
+                StudentExam.class);
+
+        StudentExam studentExamForConduction = request.get(
+                "/api/exam/courses/" + course1.getId() + "/exams/" + testExamWithSimulation.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction",
+                HttpStatus.OK, StudentExam.class);
+
+        assertThat(studentExamForConduction.getWorkingTime()).isEqualTo(testExamWithSimulation.getWorkingTime());
+        assertThat(studentExamForConduction.getIndividualEndDate()).isCloseTo(testExamWithSimulation.getStartDate().plusSeconds(testExamWithSimulation.getWorkingTime()),
+                within(10, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testConductionOfTestExamWithSimulationPracticeAttemptBoundary() {
+        Exam testExamWithSimulation = new Exam();
+        testExamWithSimulation.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        ZonedDateTime startDate = ZonedDateTime.now().minusMinutes(10);
+        testExamWithSimulation.setStartDate(startDate);
+        int workingTime = 3600;
+        testExamWithSimulation.setWorkingTime(workingTime);
+
+        // Simulation end date is startDate + workingTime
+        ZonedDateTime simulationEndDate = testExamWithSimulation.getSimulationEndDate();
+
+        // 1. Started exactly at simulationEndDate
+        StudentExam studentExamAtBoundary = new StudentExam();
+        studentExamAtBoundary.setExam(testExamWithSimulation);
+        studentExamAtBoundary.setWorkingTime(workingTime);
+        studentExamAtBoundary.setStartedAndStartDate(simulationEndDate);
+
+        assertThat(studentExamAtBoundary.getIndividualEndDate()).isEqualTo(simulationEndDate.plusSeconds(workingTime));
+
+        // 2. Started strictly after simulationEndDate
+        StudentExam studentExamAfterBoundary = new StudentExam();
+        studentExamAfterBoundary.setExam(testExamWithSimulation);
+        studentExamAfterBoundary.setWorkingTime(workingTime);
+        ZonedDateTime afterSimulationEndDate = simulationEndDate.plusSeconds(1);
+        studentExamAfterBoundary.setStartedAndStartDate(afterSimulationEndDate);
+
+        assertThat(studentExamAfterBoundary.getIndividualEndDate()).isEqualTo(afterSimulationEndDate.plusSeconds(workingTime));
+
+        // 3. Started strictly before simulationEndDate
+        StudentExam studentExamBeforeBoundary = new StudentExam();
+        studentExamBeforeBoundary.setExam(testExamWithSimulation);
+        studentExamBeforeBoundary.setWorkingTime(workingTime);
+        ZonedDateTime beforeSimulationEndDate = simulationEndDate.minusSeconds(1);
+        studentExamBeforeBoundary.setStartedAndStartDate(beforeSimulationEndDate);
+
+        assertThat(studentExamBeforeBoundary.getIndividualEndDate()).isEqualTo(startDate.plusSeconds(workingTime));
     }
 
     @Test

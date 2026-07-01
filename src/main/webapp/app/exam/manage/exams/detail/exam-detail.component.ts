@@ -4,6 +4,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
@@ -26,6 +27,7 @@ import { ExamChecklistComponent } from '../exam-checklist-component/exam-checkli
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -39,6 +41,7 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
         ExamChecklistComponent,
         DetailOverviewListComponent,
         FeatureOverlayComponent,
+        ExamModeBadgeComponent,
     ],
     providers: [ArtemisDurationFromSecondsPipe],
 })
@@ -52,6 +55,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
+
+    protected readonly isRealExam = isRealExam;
 
     readonly exam = signal<Exam>(undefined!);
     formattedStartText?: SafeHtml;
@@ -119,6 +124,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
 
     getExamDetailSections() {
         const exam = this.exam();
+        const isTestExamValue = !isRealExam(exam);
+
         this.examDetailSections.set([
             {
                 headline: 'artemisApp.exam.detail.sections.general',
@@ -128,8 +135,12 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     { type: DetailType.Text, title: 'artemisApp.examManagement.examiner', data: { text: exam.examiner } },
                     { type: DetailType.Text, title: 'artemisApp.examManagement.moduleNumber', data: { text: exam.moduleNumber } },
                     { type: DetailType.Date, title: 'artemisApp.examManagement.visibleDate', data: { date: exam.visibleDate } },
-                    { type: DetailType.Date, title: 'artemisApp.exam.startDate', data: { date: exam.startDate } },
-                    { type: DetailType.Date, title: 'artemisApp.exam.endDate', data: { date: exam.endDate } },
+                    {
+                        type: DetailType.Date,
+                        title: isTestExamValue ? 'artemisApp.examManagement.testExam.startDate' : 'artemisApp.exam.startDate',
+                        data: { date: exam.startDate },
+                    },
+                    { type: DetailType.Date, title: isTestExamValue ? 'artemisApp.examManagement.testExam.endDate' : 'artemisApp.exam.endDate', data: { date: exam.endDate } },
                     { type: DetailType.Date, title: 'artemisApp.exam.publishResultsDate', data: { date: exam.publishResultsDate } },
                     { type: DetailType.Date, title: 'artemisApp.exam.examStudentReviewStart', data: { date: exam.examStudentReviewStart } },
                     { type: DetailType.Date, title: 'artemisApp.exam.examStudentReviewEnd', data: { date: exam.examStudentReviewEnd } },
@@ -205,7 +216,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         });
 
         const numberOfExerciseGroups = this.exam().exerciseGroups?.length ?? 0;
-        const isTestExam = this.exam().testExam ?? false;
+        const isTestExam = !isRealExam(this.exam());
         const isTestCourse = this.exam().course?.testCourse ?? false;
 
         return {
@@ -216,7 +227,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             'artemisApp.examManagement.delete.summary.numberFileUploadExercises': numberOfExercisesPerType.get(ExerciseType.FILE_UPLOAD),
             'artemisApp.examManagement.delete.summary.numberQuizExercises': numberOfExercisesPerType.get(ExerciseType.QUIZ),
             'artemisApp.examManagement.delete.summary.numberRepositories': numberOfProgrammingExerciseParticipations,
-            'artemisApp.examManagement.delete.summary.isTestExam': isTestExam,
+            'artemisApp.examManagement.delete.summary.testExam': isTestExam,
             'artemisApp.examManagement.delete.summary.isTestCourse': isTestCourse,
         };
     }

@@ -25,7 +25,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { SubmissionExerciseType, SubmissionType, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
@@ -63,6 +63,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('TextSubmissionAssessmentComponent', () => {
     setupTestBed({ zoneless: true });

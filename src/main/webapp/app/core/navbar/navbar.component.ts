@@ -42,6 +42,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
 import { getCurrentRouteSignal } from '../../foundation/route/getCurrentRouteSignal';
 import { Course } from 'app/course/shared/entities/course.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 @Component({
     selector: 'jhi-navbar',
@@ -945,7 +946,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (
             this.studentExam?.exam &&
             this.studentExam.exam.id === this.examId &&
-            !this.studentExam.exam.testExam &&
+            this.studentExam.exam.examMode === ExamMode.REAL &&
             !this.studentExam.testRun &&
             this.studentExam.exam.startDate &&
             this.studentExam.exam.endDate &&

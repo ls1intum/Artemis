@@ -13,11 +13,11 @@ import { Subject, of } from 'rxjs';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { DialogService } from 'primeng/dynamicdialog';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('ProgrammingExercise Instructor Trigger Build Component', () => {
     setupTestBed({ zoneless: true });

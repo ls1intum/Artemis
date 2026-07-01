@@ -17,6 +17,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 export interface ExamImportDialogData {
     subsequentExerciseGroupSelection?: boolean;
@@ -38,6 +39,7 @@ export interface ExamImportDialogData {
         PaginatorModule,
         ExamExerciseImportComponent,
         ExamImportProgressDialogComponent,
+        ExamModeBadgeComponent,
     ],
 })
 export class ExamImportComponent extends ImportComponent<Exam> implements OnInit {

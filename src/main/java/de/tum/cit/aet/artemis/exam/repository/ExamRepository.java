@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -88,7 +88,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                     OR c.teachingAssistantGroupName IN :groupNames
                     OR c.editorGroupName IN :groupNames
                     OR c.instructorGroupName IN :groupNames
-                    OR e.testExam = TRUE
+                    OR e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 )
             """)
     Set<Exam> findByCourseIdForUser(@Param("courseId") Long courseId, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
@@ -128,7 +128,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO(
-                e.id, e.title, e.startDate, e.endDate, e.testExam, e.course.id, e.course.title
+                e.id, e.title, e.startDate, e.endDate, (e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL), e.course.id, e.course.title
             )
             FROM Exam e
             WHERE :fromDate <= e.visibleDate
@@ -510,7 +510,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE e.course.id IN :courseIds
                 AND e.visibleDate <= :visible
                 AND e.endDate >= :end
-                AND e.testExam = FALSE
+                AND e.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND registeredUsers.user.id = :userId
             """)
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
@@ -533,23 +533,20 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     Set<ExamCalendarEventDTO> getExamCalendarEventDTOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO(
-                exam.title,
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamWorkingTimeDTO(
                 exam.id,
-                exam.moduleNumber,
-                exam.startDate,
-                se.workingTime,
-                exam.examMaxPoints
+                se.workingTime
             )
             FROM Exam exam
             JOIN exam.studentExams se
             WHERE exam.course.id = :courseId
               AND se.user.id  = :studentId
-              AND exam.testExam  = FALSE
+              AND se.testRun = FALSE
+              AND exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
               AND exam.visibleDate <= :now
             """)
 
-    Set<ExamSidebarDataDTO> findSidebarDataForRealStudentExamsByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now, @Param("studentId") long studentId);
+    Set<ExamWorkingTimeDTO> findWorkingTimesForRealStudentExamsByCourseId(@Param("courseId") long courseId, @Param("now") ZonedDateTime now, @Param("studentId") long studentId);
 
     @Query("""
             SELECT DISTINCT exam.id

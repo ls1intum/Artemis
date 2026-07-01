@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -71,9 +72,9 @@ import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUpdateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
@@ -286,8 +287,39 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGenerateStudentExamsForSimulationExam() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
+        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
+        examRepository.save(exam);
+
+        generateStudentExams(exam);
+
+        verifyStudentsExamAndExercises(exam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateMissingStudentExams() throws Exception {
         Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+
+        generateStudentExams(exam);
+
+        registerNewStudentsToExam(exam, 1);
+        generateMissingStudentExams(exam, 1);
+        verifyStudentsExamAndExercises(exam);
+
+        generateMissingStudentExams(exam, 0);
+        verifyStudentsExamAndExercises(exam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGenerateMissingStudentExamsForSimulationExam() throws Exception {
+        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
+        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
+        examRepository.save(exam);
 
         generateStudentExams(exam);
 
@@ -582,7 +614,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testCreateExam_failsWithWorkingTimeTooHigh() throws Exception {
         // Test with a test exam where workingTime is directly validated
         Exam exam = ExamFactory.generateExam(course1, "examWorkingTimeTest");
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         exam.setNumberOfCorrectionRoundsInExam(0);
         exam.setWorkingTime(2592001); // Max allowed is 2592000 seconds (30 days)
 
@@ -1454,7 +1486,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     private Exam validExamWithCustomFieldValues() {
         Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("Exam Title");
-        exam.setTestExam(false);
+        exam.setExamMode(ExamMode.REAL);
         /// Artemis truncates to 6 sub-second digits
         final var baseTime = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
         exam.setVisibleDate(baseTime.minusHours(1));
@@ -1493,7 +1525,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(actualExam.getChannelName()).isEqualTo(expectedExam.getChannelName());
         assertThat(actualExam.getCourseName()).isEqualTo(expectedExam.getCourseName());
 
-        assertThat(actualExam.isTestExam()).isFalse();
+        assertThat(!actualExam.getExamMode().isReal()).isFalse();
         assertThat(actualExam.getRandomizeExerciseOrder()).isTrue();
 
         /// For the times we need to give a slight tolerance because Artemis truncates the times to 6 sub-second digits
@@ -1976,7 +2008,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
                 .exam();
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
-        assertThat(received.isTestExam()).isFalse();
+        assertThat(!received.getExamMode().isReal()).isFalse();
         assertThat(received.getWorkingTime()).isEqualTo(3000);
         assertThat(received.getStartText()).isEqualTo("Start Text");
         assertThat(received.getEndText()).isEqualTo("End Text");
@@ -2499,18 +2531,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamSidebarDataForRealExams() throws Exception {
+    void testGetExamWorkingTimesForRealExams() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
         Exam testExam = examUtilService.addTestExam(course);
         StudentExam studentExam1 = examUtilService.addStudentExamWithUser(exam, student1);
         examUtilService.addStudentExamWithUser(testExam, student1);
-        Set<ExamSidebarDataDTO> examSidebarData = request.getSet("/api/exam/courses/" + course.getId() + "/real-exams-sidebar-data", HttpStatus.OK, ExamSidebarDataDTO.class);
-        assertThat(examSidebarData).hasSize(1);
-        ExamSidebarDataDTO element = examSidebarData.iterator().next();
-        assertThat(element.id()).isEqualTo(exam.getId());
-        assertThat(element.title()).isEqualTo(exam.getTitle());
+        Set<ExamWorkingTimeDTO> examWorkingTimes = request.getSet("/api/exam/courses/" + course.getId() + "/real-exam-working-times", HttpStatus.OK, ExamWorkingTimeDTO.class);
+        assertThat(examWorkingTimes).hasSize(1);
+        ExamWorkingTimeDTO element = examWorkingTimes.iterator().next();
+        assertThat(element.examId()).isEqualTo(exam.getId());
         assertThat(element.workingTime()).isEqualTo(studentExam1.getWorkingTime());
-        assertThat(element.startDate().withZoneSameInstant(ZoneId.systemDefault())).isCloseTo(exam.getStartDate(), within(1, ChronoUnit.SECONDS));
     }
 }

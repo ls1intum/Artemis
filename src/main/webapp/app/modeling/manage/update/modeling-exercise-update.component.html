@@ -187,7 +187,7 @@
                         <option value="Sfc" jhiTranslate="artemisApp.DiagramType.Sfc"></option>
                     </select>
                 </div>
-                @if (!isExamMode() || modelingExercise.exerciseGroup?.exam?.testExam) {
+                @if (!isExamMode() || !isRealExam(modelingExercise.exerciseGroup?.exam)) {
                     <jhi-exercise-feedback-suggestion-options [exercise]="modelingExercise" [dueDate]="modelingExercise.dueDate" />
                 }
                 <jhi-presentation-score-checkbox [exercise]="modelingExercise" />

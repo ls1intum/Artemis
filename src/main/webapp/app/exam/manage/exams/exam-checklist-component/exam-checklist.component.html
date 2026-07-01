@@ -1,9 +1,9 @@
 @if (exam()?.course?.isAtLeastInstructor) {
     <div>
         <h2>
-            <span jhiTranslate="artemisApp.examManagement.checklist.{{ isTestExam() ? 'testExam.' : '' }}title"></span>
+            <span jhiTranslate="artemisApp.examManagement.checklist.{{ isActingAsTestExam() ? 'testExam.' : '' }}title"></span>
         </h2>
-        @if (!isTestExam()) {
+        @if (!isActingAsTestExam()) {
             <p>
                 <span>
                     {{ 'artemisApp.examManagement.checklist.introduction' | artemisTranslate }}
@@ -11,15 +11,14 @@
                     {{ 'artemisApp.examManagement.checklist.introductionPart2' | artemisTranslate }}
                 </span>
             </p>
-        }
-        @if (isTestExam()) {
+        } @else {
             <p>
                 <!-- documentation currently missing. -->
                 <span jhiTranslate="artemisApp.examManagement.checklist.testExam.introduction"></span>
             </p>
         }
         <br />
-        <h3 jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExam() ? 'testExam.' : '' }}examPreparation"></h3>
+        <h3 jhiTranslate="artemisApp.examStatus.preparation.{{ isActingAsTestExam() ? 'testExam.' : '' }}examPreparation"></h3>
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
@@ -131,7 +130,7 @@
                             </a>
                         </td>
                     </tr>
-                    @if (!isTestExam()) {
+                    @if (!isActingAsTestExam()) {
                         <tr>
                             <td>3</td>
                             <td>
@@ -216,13 +215,13 @@
                         </tr>
                     }
                     <tr>
-                        <td>{{ isTestExam() ? 3 : 6 }}</td>
+                        <td>{{ isActingAsTestExam() ? 3 : 6 }}</td>
                         <td>
                             <span jhiTranslate="artemisApp.examManagement.checklist.tableItem.examDetails"></span>
                         </td>
                         <td>
                             <span jhiTranslate="artemisApp.examManagement.checklist.descriptionItem.examDetails"></span>
-                            @if (isTestExam()) {
+                            @if (isActingAsTestExam()) {
                                 <hr />
                                 <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }} :</span>
                                 <!-- Additional hints for test exams, as several steps are automated compared to the normal exam and therefore do not need to be performed by the user -->
@@ -258,7 +257,7 @@
             </table>
         </div>
         <hr />
-        <h3 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam() ? 'testExam.' : '' }}examConduction"></h3>
+        <h3 jhiTranslate="artemisApp.examStatus.conduction.{{ !isRealExam() ? 'testExam.' : '' }}examConduction"></h3>
         <b
             jhiTranslate="artemisApp.examManagement.checklist.conductionPlannedFromTo"
             [translateValues]="{
@@ -381,7 +380,7 @@
             </table>
         </div>
         <hr />
-        @if (!isTestExam()) {
+        @if (isRealExam()) {
             <h3 jhiTranslate="artemisApp.examStatus.correction.examCorrection"></h3>
             <div class="table-responsive">
                 <table class="table table-striped">

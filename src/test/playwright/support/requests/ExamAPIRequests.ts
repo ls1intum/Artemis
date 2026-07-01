@@ -1,6 +1,7 @@
 import { Course } from 'app/course/shared/entities/course.model';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
@@ -24,7 +25,7 @@ export class ExamAPIRequests {
      * @param options - An object containing the options for creating the exam.
      *   - course: The course to which the exam belongs (optional, default: undefined).
      *   - title: The title of the exam (optional, default: auto-generated).
-     *   - testExam: Set to true to create a test exam (optional, default: false).
+     *   - examMode: Set to a non-REAL type to create a test exam (optional, default: REAL).
      *   - visibleDate: The date when the exam becomes visible (optional, default: current date).
      *   - startDate: The start date of the exam (optional, default: current date + 1 day).
      *   - endDate: The end date of the exam (optional, default: current date + 2 days).
@@ -42,7 +43,7 @@ export class ExamAPIRequests {
     async createExam(options: {
         course?: Course;
         title?: string;
-        testExam?: boolean;
+        examMode?: ExamMode;
         visibleDate?: dayjs.Dayjs;
         startDate?: dayjs.Dayjs;
         endDate?: dayjs.Dayjs;
@@ -61,7 +62,7 @@ export class ExamAPIRequests {
         const {
             course,
             title = tempTitle,
-            testExam = false,
+            examMode = ExamMode.REAL,
             visibleDate = dayjsToString(dayjs().subtract(1, 'day')),
             startDate = dayjsToString(dayjs().add(1, 'day')),
             endDate = dayjsToString(dayjs().add(2, 'day')),
@@ -79,7 +80,7 @@ export class ExamAPIRequests {
             ...examTemplate,
             course,
             title,
-            testExam,
+            examMode,
             visibleDate,
             startDate,
             endDate,
@@ -94,7 +95,7 @@ export class ExamAPIRequests {
             channelName: titleLowercase(title),
         } as Exam;
 
-        if (testExam) {
+        if (examMode !== ExamMode.REAL) {
             exam.numberOfCorrectionRoundsInExam = 0;
         }
 

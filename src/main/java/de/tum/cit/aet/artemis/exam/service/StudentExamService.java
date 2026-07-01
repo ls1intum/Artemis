@@ -197,7 +197,7 @@ public class StudentExamService {
         log.debug("    Potentially save submissions in {}", formatDurationFrom(start));
 
         // NOTE: from here on, we only handle test runs and test exams
-        if (!studentExamFromClient.isTestRun() && !studentExamFromClient.isTestExam()) {
+        if (!studentExamFromClient.isTestRun() && studentExamFromClient.getExamMode().isReal()) {
             return;
         }
 
@@ -236,7 +236,7 @@ public class StudentExamService {
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             throw new BadRequestAlertException("Student exam must be submitted before requesting feedback", "StudentExam", "studentExamNotSubmitted");
         }
-        if (!studentExam.isTestExam()) {
+        if (studentExam.getExamMode().isReal()) {
             throw new BadRequestAlertException("Athena feedback is only available for test exams", "StudentExam", "notTestExam");
         }
         if (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty()) {
@@ -788,8 +788,9 @@ public class StudentExamService {
             // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
             var studentParticipations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), student.getId());
             // we start the exercise if no participation was found that was already fully initialized
-            if (studentExam.isTestExam() || studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
-                    && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+            if (studentExam.getExam().isTestOrPractice(ZonedDateTime.now()) || studentParticipations.stream()
+                    .noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student) && studentParticipation.getInitializationState() != null
+                            && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
                 try {
                     // Load lazy property
                     if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
@@ -840,17 +841,21 @@ public class StudentExamService {
         sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
 
         try (var threadPool = Executors.newFixedThreadPool(10)) {
-            var futures = studentExams.stream()
-                    .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations, true), threadPool)
-                            .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
-                                    generatedParticipations.size(), startedAt, lock))
-                            .exceptionally(throwable -> {
-                                log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
-                                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
-                                        generatedParticipations.size(), startedAt, lock);
-                                return null;
-                            }))
-                    .toArray(CompletableFuture[]::new);
+            var futures = studentExams.stream().map(studentExam -> CompletableFuture.runAsync(() -> {
+                List<StudentParticipation> localParticipations = new ArrayList<>();
+                setUpExerciseParticipationsAndSubmissions(studentExam, localParticipations, true);
+                if (!studentExam.getExamMode().isReal() && !localParticipations.isEmpty()) {
+                    studentExam.setStudentParticipations(localParticipations);
+                    studentExamRepository.save(studentExam);
+                }
+                generatedParticipations.addAll(localParticipations);
+            }, threadPool).thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
+                    generatedParticipations.size(), startedAt, lock)).exceptionally(throwable -> {
+                        log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
+                        sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
+                                generatedParticipations.size(), startedAt, lock);
+                        return null;
+                    })).toArray(CompletableFuture[]::new);
             return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
                 threadPool.shutdown();
                 sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,

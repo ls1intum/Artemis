@@ -104,3 +104,11 @@ export type ExerciseCommit = {
     message: string;
     result?: string;
 };
+
+// ExamMode
+// Copied from src/main/webapp/app/exam/shared/entities/exam.model.ts
+export enum ExamMode {
+    REAL = 'REAL',
+    TEST = 'TEST',
+    TEST_WITH_SIMULATION = 'TEST_WITH_SIMULATION',
+}

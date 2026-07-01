@@ -67,6 +67,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LoginService } from 'app/core/login/login.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 class MockBreadcrumb {
     label: string;
@@ -508,6 +509,7 @@ describe('NavbarComponent', () => {
             workingTime: 60,
             exam: {
                 id: 1,
+                examMode: ExamMode.REAL,
                 startDate: now.add(1, 'minute'),
                 endDate: now.add(2, 'minutes'),
                 gracePeriod: 180,

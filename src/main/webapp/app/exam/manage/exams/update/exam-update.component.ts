@@ -7,8 +7,11 @@ import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal, 
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Dialog } from 'primeng/dialog';
+import { MessageModule } from 'primeng/message';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -19,11 +22,10 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
+import { normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExamModePickerComponent } from '../exam-mode-picker/exam-mode-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -32,6 +34,9 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
+import { ExamConductionComponent } from 'app/exam/manage/exams/update/exam-conduction/exam-conduction.component';
+import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -54,6 +59,9 @@ import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/co
         ConfirmEntityNameComponent,
         Dialog,
         ExamImportProgressDialogComponent,
+        MessageModule,
+        SelectButtonModule,
+        ExamConductionComponent,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -99,6 +107,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         const value = this.confirmEntityNameValue();
         return !value || !this.exam?.title || value !== this.exam.title;
     });
+    readonly examConductionValid = signal(false);
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
@@ -120,7 +129,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
                 }
 
                 // test exam only feature automatic assessment
-                if (exam.testExam) {
+                if (!isRealExam(exam)) {
                     exam.numberOfCorrectionRoundsInExam = 0;
                 } else if (!exam.numberOfCorrectionRoundsInExam) {
                     exam.numberOfCorrectionRoundsInExam = 1;
@@ -157,29 +166,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         this.componentActive = false;
     }
 
-    /**
-     * Sets the exam working time in minutes.
-     * @param minutes
-     */
-    set workingTimeInMinutes(minutes: number) {
-        this.exam.workingTime = minutes * 60;
-    }
-
-    /**
-     * Returns the exam working time in minutes.
-     */
-    get workingTimeInMinutes(): number {
-        return this.exam.workingTime ? this.exam.workingTime / 60 : 0;
-    }
-
-    /**
-     * Returns the exam working time in minutes, rounded to one decimal place.
-     * Used for display purposes.
-     */
-    get workingTimeInMinutesRounded(): number {
-        return Math.round(this.workingTimeInMinutes * 10) / 10;
-    }
-
     get oldWorkingTime(): number | undefined {
         return normalWorkingTime(this.originalStartDate, this.originalEndDate);
     }
@@ -205,67 +191,12 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
     }
 
-    /**
-     * Updates the working time for real exams based on the start and end dates.
-     */
-    updateExamWorkingTime() {
-        if (this.exam.testExam) return;
-
-        this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
-    }
-
     onExamModeChange() {
-        if (this.exam.testExam) {
-            // Preserve the rounded value
+        if (!isRealExam(this.exam)) {
             this.exam.examWithAttendanceCheck = false;
-            this.roundWorkingTime();
-        } else {
-            // Otherwise, the working time should depend on the dates as usual
-            this.updateExamWorkingTime();
-        }
-    }
-
-    /**
-     * Rounds the working time of the exam in minutes such that it only has one decimal place.
-     */
-    roundWorkingTime() {
-        this.workingTimeInMinutes = this.workingTimeInMinutesRounded;
-    }
-
-    /**
-     * Checks if the exam visibility date is set too early relative to the exam start date.
-     * If the visibility date is more than 4 hours (240 minutes) before the start date.
-     * it indicates that the visibility date is set too early.
-     *
-     * @returns {boolean} true if the visibility date is more than 4 hours before the start date, false otherwise.
-     */
-    get checkExamVisibilityTime(): boolean {
-        if (!this.isVisibleDateSet || !this.isStartDateSet) {
-            return false;
-        }
-
-        const visibleDate = dayjs(this.exam.visibleDate);
-        const startDate = dayjs(this.exam.startDate);
-
-        // Calculate the difference in minutes
-        const differenceInMinutes = startDate.diff(visibleDate, 'minute');
-
-        // Check if the difference is more than 4 hours (240 minutes)
-        return differenceInMinutes > 240;
-    }
-
-    /**
-     * Returns the maximum working time in minutes for test exams.
-     */
-    get maxWorkingTimeInMinutes(): number {
-        if (!this.exam.testExam) return 0;
-
-        if (this.exam.startDate && this.exam.endDate) {
-            // This considers decimal places as well.
-            return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm', true);
-        } else {
-            // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
-            return this.isImport() ? this.workingTimeInMinutes : 0;
+            this.exam.numberOfCorrectionRoundsInExam = 0;
+        } else if (!this.exam.numberOfCorrectionRoundsInExam) {
+            this.exam.numberOfCorrectionRoundsInExam = 1;
         }
     }
 
@@ -410,24 +341,19 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     get isValidConfiguration(): boolean {
-        const examConductionDatesValid =
-            this.isVisibleDateSet && this.isStartDateSet && this.isValidStartDate && this.isEndDateSet && this.isValidEndDate && this.isValidVisibleDateValue;
+        const examConductionValid = this.examConductionValid();
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
-        const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
         const examValidNumberOfExercises = this.isValidNumberOfExercises;
-        const examValidGracePeriod = this.isValidGracePeriod;
         return (
-            examConductionDatesValid &&
+            examConductionValid &&
             examReviewDatesValid &&
             examNumberOfCorrectionsValid &&
             examMaxPointsValid &&
-            examValidWorkingTime &&
             examValidExampleSolutionPublicationDate &&
-            examValidNumberOfExercises &&
-            examValidGracePeriod
+            examValidNumberOfExercises
         );
     }
 
@@ -444,26 +370,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         return this.exam.numberOfExercisesInExam >= 1 && this.exam.numberOfExercisesInExam <= 100;
     }
 
-    /**
-     * Returns a boolean indicating whether the exam's visible date is set.
-     *
-     * @returns {boolean} `true` if the exam's visible date is set, `false` otherwise.
-     */
-    get isVisibleDateSet(): boolean {
-        return !!this.exam.visibleDate;
-    }
-
-    /**
-     * Checks if the visible date of the exam is valid.
-     *
-     * @returns {boolean} `true` if the visible date is valid, `false` otherwise.
-     */
-    get isValidVisibleDateValue(): boolean {
-        return dayjs(this.exam.visibleDate).isValid();
-    }
-
     get isValidNumberOfCorrectionRounds(): boolean {
-        if (this.exam.testExam) {
+        if (!isRealExam(this.exam)) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
@@ -473,127 +381,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 
     get isValidMaxPoints(): boolean {
         return !!this.exam?.examMaxPoints && this.exam?.examMaxPoints > 0 && this.exam?.examMaxPoints <= 9999;
-    }
-
-    /**
-     * Returns a boolean indicating whether the exam's grace period is valid.
-     * The grace period is valid if it's not set, or if it's between 0 and 3600 seconds.
-     *
-     * @returns {boolean} `true` if the exam's grace period is valid, `false` otherwise.
-     */
-    get isValidGracePeriod(): boolean {
-        if (this.exam.gracePeriod === undefined || this.exam.gracePeriod === null) {
-            return true;
-        }
-        return this.exam.gracePeriod >= 0 && this.exam.gracePeriod <= 3600;
-    }
-
-    /**
-     * Returns a boolean indicating whether the exam's start date is set.
-     *
-     * @returns {boolean} `true` if the exam's start date is set, `false` otherwise.
-     */
-    get isStartDateSet(): boolean {
-        return !!this.exam.startDate;
-    }
-
-    /**
-     * Checks if the start date of the exam is valid.
-     *
-     * @returns {boolean} `true` if the start date is valid, `false` otherwise.
-     */
-    get isValidStartDateValue(): boolean {
-        return dayjs(this.exam.startDate).isValid();
-    }
-
-    /**
-     * Validates the given StartDate.
-     * For real exams, the visibleDate has to be strictly prior the startDate.
-     * For test exams, the visibleDate has to be prior or equal to the startDate.
-     */
-    get isValidStartDate(): boolean {
-        if (this.isVisibleDateSet && this.isValidVisibleDateValue) {
-            if (this.exam.testExam) {
-                return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
-            } else {
-                return dayjs(this.exam.startDate).isAfter(this.exam.visibleDate);
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Returns a boolean indicating whether the exam's end date is set.
-     *
-     * @returns {boolean} `true` if the exam's end date is set, `false` otherwise.
-     */
-    get isEndDateSet(): boolean {
-        return !!this.exam.endDate;
-    }
-
-    /**
-     * Checks if the end date of the exam is valid.
-     *
-     * @returns {boolean} `true` if the end date is valid, `false` otherwise.
-     */
-    get isValidEndDateValue(): boolean {
-        return dayjs(this.exam.endDate).isValid();
-    }
-
-    /**
-     * Validates the EndDate inputted by the user.
-     */
-    get isValidEndDate(): boolean {
-        if (this.isStartDateSet && this.isValidStartDateValue) {
-            return dayjs(this.exam.endDate).isAfter(this.exam.startDate);
-        }
-        return true;
-    }
-
-    /**
-     * Maximum working time in seconds (30 days).
-     */
-    readonly maxWorkingTimeSeconds = 2592000;
-
-    /**
-     * Validates the WorkingTime.
-     * For test exams, the WorkingTime should be at least 1 and smaller / equal to the working window,
-     * and must not exceed 30 days (2592000 seconds).
-     * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference,
-     * and must not exceed 30 days (2592000 seconds).
-     */
-    get validateWorkingTime(): boolean {
-        if (this.exam.testExam) {
-            if (this.exam.workingTime === undefined || this.exam.workingTime < 1) {
-                return false;
-            }
-            // Check 30-day limit
-            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
-                return false;
-            }
-            if (this.exam.startDate && this.exam.endDate) {
-                return this.exam.workingTime <= dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
-            }
-            return false;
-        }
-        if (this.exam.workingTime && this.exam.startDate && this.exam.endDate) {
-            // Check 30-day limit for real exams as well
-            if (this.exam.workingTime > this.maxWorkingTimeSeconds) {
-                return false;
-            }
-            return this.exam.workingTime === dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
-        }
-        return false;
-    }
-
-    /**
-     * Returns true if the working time exceeds the maximum allowed limit of 30 days.
-     */
-    get isWorkingTimeTooHigh(): boolean {
-        if (this.exam.workingTime === undefined || this.exam.workingTime === null) {
-            return false;
-        }
-        return this.exam.workingTime > this.maxWorkingTimeSeconds;
     }
 
     get isValidPublishResultsDate(): boolean {
@@ -673,6 +460,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     get saveTitle(): string {
         return this.isImport() ? 'entity.action.import' : 'entity.action.save';
     }
+
+    protected readonly ExamMode = ExamMode;
+    protected readonly isRealExam = isRealExam;
 }
 
 /**

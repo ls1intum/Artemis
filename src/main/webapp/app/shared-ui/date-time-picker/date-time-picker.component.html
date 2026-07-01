@@ -9,10 +9,7 @@
     </fa-stack>
 }
 @if (shouldDisplayTimeZoneWarning()) {
-    <fa-stack ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
-        <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey" />
-        <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary" />
-    </fa-stack>
+    <jhi-time-zone-warning />
 }
 <div class="d-flex position-relative" [class.invalid-date-input]="showErrorBorder()">
     <p-datepicker

@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -420,6 +421,20 @@ public class ExamUtilService {
     }
 
     /**
+     * Creates and saves a test Exam with simulation without ExerciseGroups and Exercises.
+     *
+     * @param course The Course to which the Exam should be added
+     * @return The newly created Exam
+     */
+    public Exam addTestExamWithSimulation(Course course) {
+        Exam exam = ExamFactory.generateTestExam(course);
+        exam.setExamMode(ExamMode.TEST_WITH_SIMULATION);
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(5));
+        exam.setWorkingTime(600); // 10 minutes working time
+        return examRepository.save(exam);
+    }
+
+    /**
      * Creates and saves a test Exam without Exercises and registers the given user to the Exam.
      *
      * @param course The Course to which the Exam should be added
@@ -646,7 +661,7 @@ public class ExamUtilService {
         registeredExamUser.setExam(exam);
         registeredExamUser = examUserRepository.save(registeredExamUser);
         exam.addExamUser(registeredExamUser);
-        exam.setTestExam(false);
+        exam.setExamMode(ExamMode.REAL);
         examRepository.save(exam);
         var studentExam = new StudentExam();
         studentExam.setExam(exam);

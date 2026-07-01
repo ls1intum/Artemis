@@ -27,6 +27,7 @@ import { TableLazyLoadEvent } from 'primeng/table';
 import { ConfirmationService } from 'primeng/api';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamStudentsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -184,7 +185,7 @@ describe('ExamStudentsComponent', () => {
 
         it('isTestExam should be true when exam.testExam is set', () => {
             fixture.detectChanges();
-            component.exam.set({ ...examWithCourse, testExam: true });
+            component.exam.set({ ...examWithCourse, examMode: ExamMode.TEST });
             expect(component.isTestExam()).toBe(true);
         });
 

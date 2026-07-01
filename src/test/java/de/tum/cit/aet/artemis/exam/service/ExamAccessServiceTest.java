@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -124,12 +125,16 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         exam1 = examUtilService.addExamWithExerciseGroup(course1, true);
         exam2 = examUtilService.addExamWithExerciseGroup(course2, true);
         testExam1 = examUtilService.addTestExamWithExerciseGroup(course1, true);
+        var testExamExerciseGroup = testExam1.getExerciseGroups().getFirst();
         testExam1 = examRepository.save(testExam1);
         ExamUser examUser = new ExamUser();
         examUser.setExam(testExam1);
         examUser.setUser(student1);
         examUser = examUserRepository.save(examUser);
         testExam1.setExamUsers(Set.of(examUser));
+        QuizExercise testExamQuiz = QuizExerciseFactory.generateQuizExerciseForExam(testExamExerciseGroup);
+        testExamExerciseGroup.addExercise(testExamQuiz);
+        exerciseRepository.save(testExamQuiz);
         testExam2 = examUtilService.addTestExamWithExerciseGroup(course2, true);
         testExam2 = examRepository.save(testExam2);
         ExamUser examUser1 = new ExamUser();
@@ -436,7 +441,12 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGetOrCreateStudentExamElseThrow_testExamEnded() {
         testExam1.setEndDate(ZonedDateTime.now().minusHours(5));
         examRepository.save(testExam1);
-        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenAlertException.class)
+                .satisfies(exception -> {
+                    AccessForbiddenAlertException accessForbiddenAlertException = (AccessForbiddenAlertException) exception;
+                    assertThat(accessForbiddenAlertException.getEntityName()).isEqualTo("Exam");
+                    assertThat(accessForbiddenAlertException.getErrorKey()).isEqualTo("examHasAlreadyEnded");
+                });
     }
 
     @Test
@@ -455,6 +465,65 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         StudentExam studentExam2 = examAccessService.getOrCreateStudentExamElseThrow(course2.getId(), testExam2.getId());
         assertThat(studentExam2.equals(studentExamForTestExam2)).isEqualTo(true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_simulationActiveReturnsExistingAttempt() {
+        configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
+
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
+
+        assertThat(studentExam.getId()).isEqualTo(studentExamForTestExam1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_simulationActiveGeneratesNewAttemptIfRegistered() {
+        studentExamRepository.delete(studentExamForTestExam1);
+        configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
+
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
+
+        assertThat(studentExam).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER") // student2 is typically not registered
+    void testGetOrCreateStudentExamElseThrow_simulationActiveThrowsIfNotRegistered() {
+        configureTestExam(testExam1, ZonedDateTime.now().minusMinutes(10), 3600, 180, true, ZonedDateTime.now().plusHours(2));
+
+        // student2 is not registered for testExam1
+        assertThatThrownBy(() -> examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class)
+                .hasMessageContaining("User is not registered for the exam.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOrCreateStudentExamElseThrow_simulationAndPracticeCreatesNewAttemptAfterPracticeStart() {
+        configureTestExam(testExam1, ZonedDateTime.now().minusHours(2), 1800, 180, true, ZonedDateTime.now().plusHours(2));
+        markStudentExamSubmitted(studentExamForTestExam1);
+
+        StudentExam studentExam = examAccessService.getOrCreateStudentExamElseThrow(course1.getId(), testExam1.getId());
+
+        assertThat(studentExam.getId()).isNotEqualTo(studentExamForTestExam1.getId());
+    }
+
+    private void configureTestExam(Exam exam, ZonedDateTime startDate, int workingTime, int gracePeriod, boolean testExamWithSimulation, ZonedDateTime endDate) {
+        exam.setVisibleDate(startDate.minusMinutes(10));
+        exam.setStartDate(startDate);
+        exam.setWorkingTime(workingTime);
+        exam.setGracePeriod(gracePeriod);
+        exam.setExamMode(testExamWithSimulation ? ExamMode.TEST_WITH_SIMULATION : ExamMode.TEST);
+        exam.setEndDate(endDate);
+        examRepository.save(exam);
+    }
+
+    private void markStudentExamSubmitted(StudentExam studentExam) {
+        studentExam.setStartedAndStartDate(ZonedDateTime.now().minusMinutes(20));
+        studentExam.setSubmitted(true);
+        studentExam.setSubmissionDate(ZonedDateTime.now().minusMinutes(10));
+        studentExamRepository.save(studentExam);
     }
 
     @Test

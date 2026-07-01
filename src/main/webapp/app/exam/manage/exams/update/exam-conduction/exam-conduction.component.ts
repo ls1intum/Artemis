@@ -1,0 +1,119 @@
+import { Component, computed, effect, model, output, signal } from '@angular/core';
+import { ExerciseTimelineComponent, ExerciseTimelineStatus, TimelineItem } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { Dayjs } from 'dayjs/esm';
+import { InputNumber } from 'primeng/inputnumber';
+import { FormsModule } from '@angular/forms';
+import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { Message } from 'primeng/message';
+import { normalWorkingTime } from 'app/exam/overview/exam.utils';
+
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+
+@Component({
+    selector: 'jhi-exam-conduction',
+    imports: [ExerciseTimelineComponent, InputNumber, FormsModule, HelpIconComponent, TranslateDirective, Message],
+    templateUrl: './exam-conduction.component.html',
+})
+export class ExamConductionComponent {
+    readonly max_working_time_in_minutes = 43200 as const;
+    readonly max_grace_period_in_seconds = 3600 as const;
+
+    readonly visibleFrom = model.required<Dayjs | undefined>();
+    readonly startOfWorkingTime = model.required<Dayjs | undefined>();
+    readonly endOfWorkingTime = model.required<Dayjs | undefined>();
+
+    readonly workingTime = model.required<number | undefined>(); // seconds
+    gracePeriod = model.required<number | undefined>(); // seconds
+
+    readonly examMode = model.required<ExamMode | undefined>();
+    readonly isTestExam = computed(() => this.examMode() !== ExamMode.REAL);
+
+    readonly examTimelineStatusChange = output<boolean>();
+
+    constructor() {
+        effect(() => {
+            this.examTimelineStatusChange.emit(this.isExamTimelineValid());
+        });
+
+        effect(() => {
+            this.workingTime.update((workingTime) => (!this.isTestExam() ? (normalWorkingTime(this.startOfWorkingTime(), this.endOfWorkingTime()) ?? 0) : workingTime));
+        });
+    }
+
+    readonly timelineItems = computed(() => {
+        const isTestExam = this.isTestExam();
+
+        const items: TimelineItem[] = [
+            {
+                kind: 'required',
+                labelStringKey: 'artemisApp.examManagement.visibleDate',
+                date: this.visibleFrom,
+                helpKey: 'artemisApp.examManagement.visibleDateTooltip',
+            },
+            {
+                kind: 'required',
+                labelStringKey: isTestExam ? 'artemisApp.examManagement.testExam.startDate' : 'artemisApp.examManagement.startDate',
+                date: this.startOfWorkingTime,
+                mustBeStrictlyAfterPrevious: !isTestExam,
+                helpKey: 'artemisApp.examManagement.startDateTooltip',
+            },
+            {
+                kind: 'required',
+                labelStringKey: isTestExam ? 'artemisApp.examManagement.testExam.endDate' : 'artemisApp.examManagement.endDate',
+                date: this.endOfWorkingTime,
+                mustBeStrictlyAfterPrevious: true,
+                helpKey: 'artemisApp.examManagement.endDateTooltip',
+            },
+        ];
+        return items;
+    });
+
+    readonly maxWorkingTimeInMinutes = computed(() => {
+        const startOfWorkingTime = this.startOfWorkingTime();
+        const endOfWorkingTime = this.endOfWorkingTime();
+        if (!this.isTestExam() || !startOfWorkingTime || !endOfWorkingTime) {
+            return this.max_working_time_in_minutes;
+        }
+        return Math.max(0, Math.min(this.max_working_time_in_minutes, endOfWorkingTime.diff(startOfWorkingTime, 'minute', true)));
+    });
+
+    readonly isWorkingTimeValid = computed(() => {
+        const workingTime = this.workingTime() ?? 0;
+        if (workingTime > this.maxWorkingTimeInMinutes() * 60) {
+            return false;
+        }
+        if (!this.isTestExam()) {
+            return true;
+        }
+        const startOfWorkingTime = this.startOfWorkingTime();
+        const endOfWorkingTime = this.endOfWorkingTime();
+        return workingTime > 0 && (!startOfWorkingTime || !endOfWorkingTime || workingTime <= endOfWorkingTime.diff(startOfWorkingTime, 'second'));
+    });
+
+    readonly isGracePeriodValid = computed(() => {
+        const gracePeriod = this.gracePeriod();
+        return gracePeriod === undefined || (gracePeriod >= 0 && gracePeriod <= this.max_grace_period_in_seconds);
+    });
+
+    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: false, empty: false });
+
+    private readonly isExamTimelineValid = computed(() => this.timelineStatus().valid && this.isWorkingTimeValid() && this.isGracePeriodValid());
+
+    readonly testExamWithSimulation = computed(() => this.examMode() === ExamMode.TEST_WITH_SIMULATION);
+
+    readonly showVisibleFromWarning = computed(() => {
+        const visibleFrom = this.visibleFrom();
+        const startOfWorkingTime = this.startOfWorkingTime();
+
+        if (!visibleFrom || !startOfWorkingTime) {
+            return false;
+        }
+
+        // Calculate the difference in minutes
+        const differenceInMinutes = startOfWorkingTime.diff(visibleFrom, 'minute');
+
+        // Check if the difference is more than 4 hours (240 minutes)
+        return differenceInMinutes > 240;
+    });
+}

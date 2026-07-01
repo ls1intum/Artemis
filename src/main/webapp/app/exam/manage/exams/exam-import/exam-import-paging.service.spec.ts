@@ -11,6 +11,7 @@ import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('Exam Import Paging Service', () => {
     setupTestBed({ zoneless: true });
@@ -22,7 +23,7 @@ describe('Exam Import Paging Service', () => {
         id: 1,
         title: 'RealExam For Testing',
         course: undefined,
-        testExam: false,
+        examMode: ExamMode.REAL,
     } as Exam;
 
     beforeEach(() => {

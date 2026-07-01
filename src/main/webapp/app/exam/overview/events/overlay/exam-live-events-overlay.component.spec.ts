@@ -9,6 +9,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExamLiveEventsOverlayComponent', () => {
     setupTestBed({ zoneless: true });
@@ -34,6 +36,7 @@ describe('ExamLiveEventsOverlayComponent', () => {
                 provideHttpClientTesting(),
                 { provide: DynamicDialogRef, useValue: mockDialogRef },
                 { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
     });

@@ -35,6 +35,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamRequestAiFeedbackButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -46,8 +47,8 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     const user = { id: 1, name: 'Test User' } as User;
     const course = { id: 1, accuracyOfScores: 2 } as Course;
 
-    const exam = { id: 1, title: 'ExamForTesting', testExam: false, course } as Exam;
-    const testExam = { id: 2, title: 'TestExam for Testing', testExam: true, course } as Exam;
+    const exam = { id: 1, title: 'ExamForTesting', examMode: ExamMode.REAL, course } as Exam;
+    const testExam = { id: 2, title: 'TestExam for Testing', examMode: ExamMode.TEST, course } as Exam;
     const exerciseGroup = { exam, title: 'exercise group' } as ExerciseGroup;
 
     const textSubmission = { id: 1, submitted: true } as TextSubmission;
