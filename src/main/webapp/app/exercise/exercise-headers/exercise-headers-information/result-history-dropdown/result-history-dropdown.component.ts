@@ -63,6 +63,9 @@ export class ResultHistoryDropdownComponent {
     });
 
     activeResultId = computed(() => {
+        if (this.exercise().type === ExerciseType.PROGRAMMING) {
+            return this.displayedResults()[0]?.id;
+        }
         return this.selectedResultId() ?? this.latestResultId();
     });
 
@@ -260,8 +263,6 @@ export class ResultHistoryDropdownComponent {
         if (!participation) {
             return;
         }
-        this.selectedResultId.set(result.id);
-
         const exercise = this.exercise();
         const templateStatus = evaluateTemplateStatus(exercise, participation, result, false, MissingResultInformation.NONE);
         const exerciseServiceToUse = this.exerciseCacheService ?? this.exerciseService;
