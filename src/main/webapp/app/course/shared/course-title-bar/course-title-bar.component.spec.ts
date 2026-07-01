@@ -161,14 +161,14 @@ describe('CourseTitleBarComponent', () => {
         expect(fixture.debugElement.query(By.directive(CourseTitleBarTitleComponent))).toBeNull();
     });
 
-    it('should show the default title when titleInSidebar is true and the sidebar is collapsed', () => {
+    it('should also hide the default title when titleInSidebar is true and the sidebar is collapsed', () => {
         fixture.componentRef.setInput('hasSidebar', true);
         fixture.componentRef.setInput('titleInSidebar', true);
         fixture.componentRef.setInput('isSidebarCollapsed', true);
         fixture.componentRef.setInput('pageTitle', 'overview.lectures');
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.directive(CourseTitleBarTitleComponent))).toBeTruthy();
+        expect(fixture.debugElement.query(By.directive(CourseTitleBarTitleComponent))).toBeNull();
     });
 
     it('should hide the toggle button when toggleInSidebar is true and the sidebar is expanded', () => {
