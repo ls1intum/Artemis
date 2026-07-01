@@ -2651,4 +2651,11 @@ describe('IrisBaseChatbotComponent', () => {
         toggleButton.triggerEventHandler('click', null);
         expect(setVisibilitySpy).toHaveBeenCalledWith(false);
     });
+
+    it('should not render the chat history collapse toggle when chat history is unavailable', () => {
+        fixture.componentRef.setInput('isChatHistoryAvailable', false);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
+    });
 });
