@@ -161,7 +161,7 @@
     <div #pagesContainer class="pdf-pages" [class.pdf-pages--hidden]="isLoading()">
         @for (page of renderedPages(); track page.index) {
             <div #pageRef class="pdf-page" [attr.data-page-index]="page.index" [id]="'pdf-page-' + page.index" [style.width.px]="page.width" [style.height.px]="page.height">
-                <img class="pdf-page__image" [src]="page.url" [style.width.px]="page.width" [style.height.px]="page.height" alt="" draggable="false" />
+                <canvas #pageCanvas class="pdf-page__canvas" [attr.data-page-index]="page.index" [style.width.px]="page.width" [style.height.px]="page.height"></canvas>
                 @for (highlight of pageHighlights().get(page.index) ?? []; track $index) {
                     <div
                         class="pdf-page__highlight"
@@ -171,6 +171,32 @@
                         [style.width.px]="highlight.rect.size.width * scaleValue()"
                         [style.height.px]="highlight.rect.size.height * scaleValue()"
                     ></div>
+                }
+                @for (link of pageLinks().get(page.index) ?? []; track $index) {
+                    @if (link.url) {
+                        <a
+                            class="pdf-page__link"
+                            [href]="link.url"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            [attr.aria-label]="link.url"
+                            [style.left.px]="link.rect.origin.x * scaleValue()"
+                            [style.top.px]="link.rect.origin.y * scaleValue()"
+                            [style.width.px]="link.rect.size.width * scaleValue()"
+                            [style.height.px]="link.rect.size.height * scaleValue()"
+                        ></a>
+                    } @else if (link.targetPage) {
+                        <button
+                            type="button"
+                            class="pdf-page__link"
+                            [attr.aria-label]="('artemisApp.attachmentVideoUnit.pdfViewer.goToPage' | artemisTranslate) + ' ' + link.targetPage"
+                            (click)="goToPage(link.targetPage)"
+                            [style.left.px]="link.rect.origin.x * scaleValue()"
+                            [style.top.px]="link.rect.origin.y * scaleValue()"
+                            [style.width.px]="link.rect.size.width * scaleValue()"
+                            [style.height.px]="link.rect.size.height * scaleValue()"
+                        ></button>
+                    }
                 }
             </div>
         }

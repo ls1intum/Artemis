@@ -38,12 +38,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
-import type { PdfDocumentObject, Rect, SearchResult } from '@embedpdf/models';
+import type { PdfDocumentObject, PdfLinkAnnoObject, PdfLinkTarget, PdfPageObject, Rect, SearchResult } from '@embedpdf/models';
+import { PdfActionType, PdfAnnotationSubtype } from '@embedpdf/models';
 
-/** A single rendered page: an object-URL image plus its CSS display size at the current scale. */
+/** A single page slot: its CSS display size at the current scale. Its <canvas> is drawn lazily when visible. */
 interface RenderedPage {
     index: number;
-    url: string;
     width: number;
     height: number;
 }
@@ -54,10 +54,22 @@ interface PageHighlight {
     active: boolean;
 }
 
+/**
+ * A clickable link overlay on a page (rectangle in unscaled PDF page points). Exactly one target is set:
+ * `url` for an external link (opens in a new tab) or `targetPage` (1-based) to jump within the document.
+ */
+interface PageLink {
+    rect: Rect;
+    url?: string;
+    targetPage?: number;
+}
+
 const ZOOM_STEP = 1.25;
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 6;
 const PAGE_GAP = 8;
+/** Pages rendered eagerly on load for an instant first paint; the rest render on demand as they scroll into view. */
+const INITIAL_EAGER_PAGES = 3;
 
 /**
  * Single-instance PDF viewer rendered directly with the EmbedPDF PDFium engine (no iframe, no pdf.js).
@@ -98,6 +110,7 @@ export class PdfViewerComponent {
     readonly toolbarCenter = viewChild<ElementRef<HTMLDivElement>>('toolbarCenter');
     readonly pageInputElement = viewChild<InputNumber>('pageInput');
     readonly pageElements = viewChildren<ElementRef<HTMLDivElement>>('pageRef');
+    readonly pageCanvasElements = viewChildren<ElementRef<HTMLCanvasElement>>('pageCanvas');
 
     protected readonly isLoading = signal(false);
     protected readonly isFullscreen = signal(false);
@@ -113,6 +126,8 @@ export class PdfViewerComponent {
     private readonly doc = signal<PdfDocumentObject | undefined>(undefined);
     private readonly searchResults = signal<SearchResult[]>([]);
     private readonly activeResultIndex = signal(0);
+    /** Clickable link overlays per page index, fetched lazily when a page is rendered. */
+    protected readonly pageLinks = signal<Map<number, PageLink[]>>(new Map());
 
     // Icons
     protected readonly faMagnifyingGlass = faMagnifyingGlass;
@@ -159,6 +174,11 @@ export class PdfViewerComponent {
     private programmaticScrollUntil = 0;
     private lastFullscreenState?: boolean;
     private intersectionObserver?: IntersectionObserver;
+    private renderObserver?: IntersectionObserver;
+    // Virtualization bookkeeping: which page indices are drawn, currently drawing, and within the render buffer.
+    private readonly renderedIndices = new Set<number>();
+    private readonly renderingIndices = new Set<number>();
+    private readonly visibleIndices = new Set<number>();
     private drawerContentElement?: HTMLElement;
     private originalDrawerContentZIndex?: string;
 
@@ -224,15 +244,23 @@ export class PdfViewerComponent {
             this.doc.set(doc);
             this.totalPages.set(doc.pageCount);
             this.scale.set(this.computeFitWidthScale(doc));
-            await this.renderAllPages(token);
+            // Show the (sized) page slots immediately so the layout appears at once, like the instructor view.
+            this.buildPlaceholders(doc);
+            this.isLoading.set(false);
 
             const initialPage = this.initialPage() ?? 1;
             this.setCurrentPage(initialPage);
-            if (initialPage > 1) {
-                afterNextRender(() => this.goToPage(initialPage), { injector: this.injector });
-            }
-
-            this.isLoading.set(false);
+            // Eager-render the first pages (and jump to the initial page) once the <canvas> slots exist; the
+            // IntersectionObserver renders the remaining pages on demand as they scroll into the viewport.
+            afterNextRender(
+                () => {
+                    void this.renderPagesFrom(0, INITIAL_EAGER_PAGES, token);
+                    if (initialPage > 1) {
+                        this.goToPage(initialPage);
+                    }
+                },
+                { injector: this.injector },
+            );
             this.pageRendered.emit({ pdfUrl: url });
         } catch {
             // Ignore failures from a superseded load (the pdfUrl changed while this one was in flight) so a
@@ -244,33 +272,126 @@ export class PdfViewerComponent {
         }
     }
 
-    /** Renders every page to an object-URL image at the current scale (× devicePixelRatio for crispness). */
-    private async renderAllPages(token: number): Promise<void> {
-        const doc = this.doc();
-        if (!doc) {
-            return;
-        }
-        const engine = await this.pdfEngineService.getEngine();
+    /** Builds sized, empty page slots for every page at the current scale (their canvases are drawn on demand). */
+    private buildPlaceholders(doc: PdfDocumentObject): void {
         const scale = this.scale();
-        const dpr = window.devicePixelRatio || 1;
-        const previous = this.renderedPages();
-        const pages: RenderedPage[] = [];
-        for (const page of doc.pages) {
-            const blob = await engine.renderPage(doc, page, { scaleFactor: scale * dpr }).toPromise();
+        this.renderedIndices.clear();
+        this.renderingIndices.clear();
+        this.visibleIndices.clear();
+        this.renderedPages.set(doc.pages.map((page) => ({ index: page.index, width: page.size.width * scale, height: page.size.height * scale })));
+    }
+
+    /** Renders `count` consecutive pages starting at `start` directly into their canvases (used for eager first paint). */
+    private async renderPagesFrom(start: number, count: number, token: number): Promise<void> {
+        const total = this.totalPages();
+        for (let index = start; index < Math.min(start + count, total); index += 1) {
             if (token !== this.renderToken) {
-                // Superseded by a newer render: revoke the object URLs created so far so they do not leak.
-                pages.forEach((p) => URL.revokeObjectURL(p.url));
                 return;
             }
-            pages.push({
-                index: page.index,
-                url: URL.createObjectURL(blob),
-                width: page.size.width * scale,
-                height: page.size.height * scale,
-            });
+            await this.renderPage(index, token);
         }
-        this.renderedPages.set(pages);
-        previous.forEach((p) => URL.revokeObjectURL(p.url));
+    }
+
+    /**
+     * Renders a single page directly onto its <canvas> via the engine's raw pixel output (renderPageRaw +
+     * putImageData) — no PNG encoding, blob, or <img> load. No-op if the page is already rendered/rendering, the
+     * render was superseded, or its canvas is not in the DOM.
+     */
+    private async renderPage(index: number, token: number): Promise<void> {
+        if (token !== this.renderToken || this.renderedIndices.has(index) || this.renderingIndices.has(index)) {
+            return;
+        }
+        const doc = this.doc();
+        const page = doc?.pages[index];
+        const canvas = this.pageCanvasElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === index)?.nativeElement;
+        if (!doc || !page || !canvas) {
+            return;
+        }
+        this.renderingIndices.add(index);
+        try {
+            const engine = await this.pdfEngineService.getEngine();
+            const dpr = window.devicePixelRatio || 1;
+            const image = await engine.renderPageRaw(doc, page, { scaleFactor: this.scale() * dpr }).toPromise();
+            if (token !== this.renderToken) {
+                return;
+            }
+            canvas.width = image.width;
+            canvas.height = image.height;
+            const context = canvas.getContext('2d');
+            if (context) {
+                context.putImageData(new ImageData(image.data, image.width, image.height), 0, 0);
+                this.renderedIndices.add(index);
+                void this.loadPageLinks(index, doc, page, token);
+            }
+        } catch {
+            // Leave the page as a blank slot if it fails to render; do not break the rest of the viewer.
+        } finally {
+            this.renderingIndices.delete(index);
+        }
+    }
+
+    /** Fetches a page's link annotations once and stores clickable overlays for it (best-effort). */
+    private async loadPageLinks(index: number, doc: PdfDocumentObject, page: PdfPageObject, token: number): Promise<void> {
+        if (this.pageLinks().has(index)) {
+            return;
+        }
+        try {
+            const engine = await this.pdfEngineService.getEngine();
+            const annotations = await engine.getPageAnnotations(doc, page).toPromise();
+            if (token !== this.renderToken) {
+                return;
+            }
+            const links: PageLink[] = [];
+            for (const annotation of annotations) {
+                if (annotation.type !== PdfAnnotationSubtype.LINK) {
+                    continue;
+                }
+                const resolved = this.resolveLinkTarget((annotation as PdfLinkAnnoObject).target);
+                if (resolved) {
+                    links.push({ rect: annotation.rect, url: resolved.url, targetPage: resolved.targetPage });
+                }
+            }
+            if (links.length > 0) {
+                this.pageLinks.update((map) => {
+                    const next = new Map(map);
+                    next.set(index, links);
+                    return next;
+                });
+            }
+        } catch {
+            // Links are a best-effort enhancement; ignore failures.
+        }
+    }
+
+    /** Resolves a link annotation target to an external URL or an internal (1-based) target page, if supported. */
+    private resolveLinkTarget(target: PdfLinkTarget | undefined): { url?: string; targetPage?: number } | undefined {
+        if (!target) {
+            return undefined;
+        }
+        if (target.type === 'destination') {
+            return { targetPage: target.destination.pageIndex + 1 };
+        }
+        const action = target.action;
+        if (action.type === PdfActionType.URI) {
+            return { url: action.uri };
+        }
+        if (action.type === PdfActionType.Goto || action.type === PdfActionType.RemoteGoto) {
+            return { targetPage: action.destination.pageIndex + 1 };
+        }
+        return undefined;
+    }
+
+    /** Releases a page's canvas backing store once it scrolls far off-screen, so memory stays bounded. */
+    private clearPage(index: number): void {
+        if (!this.renderedIndices.has(index)) {
+            return;
+        }
+        const canvas = this.pageCanvasElements().find((ref) => Number(ref.nativeElement.dataset['pageIndex']) === index)?.nativeElement;
+        if (canvas) {
+            canvas.width = 0;
+            canvas.height = 0;
+        }
+        this.renderedIndices.delete(index);
     }
 
     private refitAndRender(): void {
@@ -280,7 +401,29 @@ export class PdfViewerComponent {
         }
         // Recompute fit-to-width only when not manually zoomed away from a fit; simplest robust behavior: refit.
         this.scale.set(this.computeFitWidthScale(doc));
-        void this.renderAllPages(++this.renderToken);
+        this.rerenderAfterScaleChange(doc);
+    }
+
+    /**
+     * After a scale change, resize every page slot and drop all rendered canvases (they hold pixels at the old
+     * scale), then re-render the pages that were on screen at the new scale once the resized canvases are laid out.
+     */
+    private rerenderAfterScaleChange(doc: PdfDocumentObject): void {
+        const token = ++this.renderToken;
+        const scale = this.scale();
+        const toRerender = new Set<number>([...this.renderedIndices, ...this.visibleIndices]);
+        this.renderedIndices.clear();
+        this.renderingIndices.clear();
+        this.renderedPages.set(doc.pages.map((page) => ({ index: page.index, width: page.size.width * scale, height: page.size.height * scale })));
+        const indices = toRerender.size > 0 ? [...toRerender] : [0];
+        afterNextRender(
+            () => {
+                for (const index of indices) {
+                    void this.renderPage(index, token);
+                }
+            },
+            { injector: this.injector },
+        );
     }
 
     private computeFitWidthScale(doc: PdfDocumentObject): number {
@@ -303,22 +446,46 @@ export class PdfViewerComponent {
 
     private applyZoom(nextScale: number): void {
         const clamped = Math.min(MAX_SCALE, Math.max(MIN_SCALE, nextScale));
-        if (clamped === this.scale()) {
+        const doc = this.doc();
+        if (clamped === this.scale() || !doc) {
             return;
         }
         this.scale.set(clamped);
-        void this.renderAllPages(++this.renderToken);
+        this.rerenderAfterScaleChange(doc);
     }
 
     // ---- Page navigation -------------------------------------------------------------------------------------
 
     private observePages(): void {
         this.intersectionObserver?.disconnect();
+        this.renderObserver?.disconnect();
         const elements = this.pageElements();
         const container = this.pagesContainer()?.nativeElement;
         if (elements.length === 0 || !container) {
             return;
         }
+
+        // Render observer: draws pages within ~1.5 viewports of the visible area and releases those that scroll
+        // far away, so only a small window of pages is rendered at any time (bounded memory, no upfront work).
+        // Disconnected on teardown via destroyRef.onDestroy(() => this.cleanup()) and before each re-observe above.
+        // eslint-disable-next-line localRules/enforce-cleanup-on-destroy
+        this.renderObserver = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    const index = Number((entry.target as HTMLElement).dataset['pageIndex']);
+                    if (entry.isIntersecting) {
+                        this.visibleIndices.add(index);
+                        void this.renderPage(index, this.renderToken);
+                    } else {
+                        this.visibleIndices.delete(index);
+                        this.clearPage(index);
+                    }
+                }
+            },
+            { root: container, rootMargin: '150% 0px' },
+        );
+        elements.forEach((ref) => this.renderObserver!.observe(ref.nativeElement));
+
         const ratios = new Map<number, number>();
         // Disconnected on teardown via destroyRef.onDestroy(() => this.cleanup()) and before each re-observe above.
         // eslint-disable-next-line localRules/enforce-cleanup-on-destroy
@@ -541,8 +708,11 @@ export class PdfViewerComponent {
     // ---- Lifecycle -------------------------------------------------------------------------------------------
 
     private resetState(): void {
-        this.renderedPages().forEach((p) => URL.revokeObjectURL(p.url));
+        this.renderedIndices.clear();
+        this.renderingIndices.clear();
+        this.visibleIndices.clear();
         this.renderedPages.set([]);
+        this.pageLinks.set(new Map());
         this.clearSearchResults();
         this.searchQuery.set('');
         this.totalPages.set(0);
@@ -560,8 +730,8 @@ export class PdfViewerComponent {
 
     private cleanup(): void {
         this.intersectionObserver?.disconnect();
+        this.renderObserver?.disconnect();
         this.renderToken++;
-        this.renderedPages().forEach((p) => URL.revokeObjectURL(p.url));
         const doc = this.doc();
         if (doc) {
             this.pdfEngineService

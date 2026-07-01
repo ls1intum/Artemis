@@ -10,6 +10,7 @@ import { PdfViewerComponent } from './pdf-viewer.component';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { MockPdfEngineService, createMockPdfDocument } from 'test/helpers/mocks/service/mock-pdf-engine.service';
+import { PdfActionType, PdfAnnotationSubtype } from '@embedpdf/models';
 
 describe('PdfViewerComponent', () => {
     setupTestBed({ zoneless: true });
@@ -24,9 +25,7 @@ describe('PdfViewerComponent', () => {
     const task = <R>(value: R) => ({ toPromise: () => Promise.resolve(value), wait: (cb: (v: R) => void) => cb(value), abort: () => {} });
 
     beforeEach(async () => {
-        // jsdom does not implement object URLs nor scrollIntoView, both used by the viewer.
-        URL.createObjectURL = vi.fn(() => 'blob:mock');
-        URL.revokeObjectURL = vi.fn();
+        // jsdom does not implement scrollIntoView (used by goToPage); canvas 2d is provided by vitest-canvas-mock.
         HTMLElement.prototype.scrollIntoView = vi.fn();
 
         mockThemeService = { currentTheme: signal(Theme.LIGHT) };
@@ -75,12 +74,15 @@ describe('PdfViewerComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should fetch, open, and render every page of the PDF', async () => {
+    it('should fetch, open, and render the initial pages to canvas', async () => {
         await loadPdf(3);
 
         expect(engineService.engine.openDocumentBuffer).toHaveBeenCalledOnce();
-        expect(engineService.engine.renderPage).toHaveBeenCalledTimes(3);
+        // Pages are rendered directly to canvas via renderPageRaw (no blob/img); the first pages render eagerly.
+        expect(engineService.engine.renderPageRaw).toHaveBeenCalled();
+        expect(engineService.engine.renderPage).not.toHaveBeenCalled();
         expect(component['totalPages']()).toBe(3);
+        // A sized slot exists for every page even though only the visible/eager ones are drawn.
         expect(component['renderedPages']().length).toBe(3);
     });
 
@@ -131,14 +133,16 @@ describe('PdfViewerComponent', () => {
         expect(component['searchMatchesCount']()).toBeUndefined();
     });
 
-    it('should re-render the pages when zooming in', async () => {
+    it('should re-render the on-screen pages when zooming in', async () => {
         await loadPdf();
-        engineService.engine.renderPage.mockClear();
+        engineService.engine.renderPageRaw.mockClear();
 
         component['zoomIn']();
         await flushAsync();
+        fixture.detectChanges();
+        await flushAsync();
 
-        expect(engineService.engine.renderPage).toHaveBeenCalledTimes(3);
+        expect(engineService.engine.renderPageRaw).toHaveBeenCalled();
     });
 
     it('should toggle fullscreen and emit the change', async () => {
@@ -245,10 +249,10 @@ describe('PdfViewerComponent', () => {
         expect(component['scale']()).toBeGreaterThanOrEqual(0.2);
     });
 
-    it('should revoke previous page object URLs and close the old document when a new PDF is loaded', async () => {
+    it('should close the old document and render the new one when the PDF URL changes', async () => {
         await loadPdf(3);
-        (URL.revokeObjectURL as ReturnType<typeof vi.fn>).mockClear();
         engineService.engine.closeDocument.mockClear();
+        engineService.engine.renderPageRaw.mockClear();
 
         const SECOND_URL = 'https://example.com/other.pdf';
         engineService.engine.openDocumentBuffer.mockReturnValue(task(createMockPdfDocument('doc2', 2)) as any);
@@ -258,9 +262,33 @@ describe('PdfViewerComponent', () => {
         await flushAsync();
         fixture.detectChanges();
 
-        expect(URL.revokeObjectURL).toHaveBeenCalled();
         expect(engineService.engine.closeDocument).toHaveBeenCalled();
+        expect(engineService.engine.renderPageRaw).toHaveBeenCalled();
         expect(component['totalPages']()).toBe(2);
+        expect(component['renderedPages']().length).toBe(2);
+    });
+
+    it('should expose external and internal link overlays for a rendered page', async () => {
+        engineService.engine.getPageAnnotations.mockReturnValue(
+            task([
+                {
+                    type: PdfAnnotationSubtype.LINK,
+                    rect: { origin: { x: 10, y: 20 }, size: { width: 30, height: 12 } },
+                    target: { type: 'action', action: { type: PdfActionType.URI, uri: 'https://example.com' } },
+                },
+                {
+                    type: PdfAnnotationSubtype.LINK,
+                    rect: { origin: { x: 5, y: 5 }, size: { width: 10, height: 10 } },
+                    target: { type: 'destination', destination: { pageIndex: 4 } },
+                },
+            ]) as any,
+        );
+
+        await loadPdf(3);
+        await flushAsync();
+
+        const links = component['pageLinks']().get(0);
+        expect(links).toEqual([expect.objectContaining({ url: 'https://example.com', targetPage: undefined }), expect.objectContaining({ url: undefined, targetPage: 5 })]);
     });
 
     it('should close fullscreen on escape', async () => {

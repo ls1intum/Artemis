@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
@@ -70,7 +70,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly fileService = inject(FileService);
-    private readonly router = inject(Router);
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
@@ -198,11 +197,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 });
         }
-    }
-
-    redirectToLectureManagement(): void {
-        const lecture = this.lecture();
-        this.router.navigate(['course-management', lecture?.course?.id, 'lectures', lecture?.id]);
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {

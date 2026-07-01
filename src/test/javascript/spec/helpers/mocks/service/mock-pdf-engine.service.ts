@@ -30,6 +30,7 @@ export class MockPdfEngineService {
         openDocumentUrl: vi.fn((file: { id: string }) => task(createMockPdfDocument(file.id, 3))),
         renderPage: vi.fn(() => task(new Blob(['pdf-page'], { type: 'image/png' }))),
         renderPageRaw: vi.fn(() => task({ data: new Uint8ClampedArray(2 * 2 * 4), width: 2, height: 2 })),
+        getPageAnnotations: vi.fn(() => task([])),
         searchAllPages: vi.fn(() => task({ results: [], total: 0 })),
         createDocument: vi.fn((id: string) => task(createMockPdfDocument(id, 0))),
         importPages: vi.fn(() => task([])),

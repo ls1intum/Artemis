@@ -229,12 +229,27 @@ $toolbar-compact-hidden-selectors: (
 }
 
 .artemis-pdf-toolbar__page-navigation .p-inputnumber {
-    width: 2.1rem;
+    width: 2.4rem;
 }
 
-.artemis-pdf-toolbar__page-input {
+// The page-number <input> is rendered inside PrimeNG's p-inputNumber template (a child component), so this
+// component's emulated style scope does not reach it: neither inputStyleClass nor the shared toolbar-input rule
+// above apply, and the input otherwise keeps PrimeNG's default width AND height. ::ng-deep is required to pin it
+// to its wrapper and give it the same compact height/padding as the other toolbar controls (otherwise it is too
+// tall/wide, overflows the bar, and the resulting overflow hides the zoom controls under compression).
+:host ::ng-deep .artemis-pdf-toolbar__page-navigation .p-inputnumber input {
     width: 100%;
+    height: var(--toolbar-control-height) !important;
+    min-height: var(--toolbar-control-height) !important;
+    padding: 0 0.25rem !important;
+    font-size: 0.8rem !important;
+    line-height: 1.1;
     text-align: center;
+    box-sizing: border-box;
+    border: 1px solid var(--toolbar-input-border-color) !important;
+    border-radius: 0.25rem !important;
+    background-color: var(--toolbar-surface-color) !important;
+    color: var(--toolbar-text-color) !important;
 }
 
 .artemis-pdf-toolbar__page-total {
@@ -321,12 +336,12 @@ $toolbar-compact-hidden-selectors: (
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
-.pdf-page__image {
+.pdf-page__canvas {
     display: block;
     user-select: none;
 }
 
-.pdf-viewer-surface.dark-mode .pdf-page__image {
+.pdf-viewer-surface.dark-mode .pdf-page__canvas {
     filter: invert(1) hue-rotate(180deg);
 }
 
@@ -339,6 +354,21 @@ $toolbar-compact-hidden-selectors: (
 
 .pdf-page__highlight--active {
     background-color: var(--artemis-search-highlight-selected-bg-color);
+}
+
+// Transparent clickable overlay sitting on top of a link annotation's rectangle in the page canvas.
+.pdf-page__link {
+    position: absolute;
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+
+    &:hover {
+        background-color: rgba(0, 120, 255, 0.15);
+    }
 }
 
 // ---- Footer -------------------------------------------------------------------------------------------------
