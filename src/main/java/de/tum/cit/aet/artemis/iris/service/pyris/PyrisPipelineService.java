@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -182,12 +182,10 @@ public class PyrisPipelineService {
      * @param textExerciseDTO        the optional text exercise DTO if this is due to a specific event
      * @param submissionDTO          the optional submission DTO if this is due to a specific event
      * @param programmingExerciseDTO the optional programming exercise DTO if this is due to a specific event
-     * @param postDTO                the post DTO containing the post
+     * @param post                   the post the session is about
      */
     public void executeTutorSuggestionPipeline(String variant, String supportLevel, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureId,
-            Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO,
-            PostDTO postDTO) {
-        var post = postDTO.post();
+            Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO, Post post) {
         var course = post.getCoursePostingBelongsTo();
         if (course == null) {
             throw new IllegalStateException("Course not found for post " + post.getId());
