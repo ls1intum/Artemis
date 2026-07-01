@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.atlas.dto;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Lightweight projection of a course's Atlas auto-orchestration configuration. Read on the
  * accumulator hot path ({@code record} / {@code claimDueBatch} / {@code listDueCourseIds}) so the
@@ -13,5 +15,6 @@ import org.jspecify.annotations.Nullable;
  * @param debounceWindowSecondsOverride per-course debounce window override in seconds, or {@code null} to use the global default
  * @param maxDailyOrchestrationOverride per-course daily run cap override, or {@code null} to use the global default
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseAutoOrchestrationConfigDTO(boolean autoOrchestratorEnabled, @Nullable Integer debounceWindowSecondsOverride, @Nullable Integer maxDailyOrchestrationOverride) {
 }
