@@ -19,7 +19,7 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/fo
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { faBars, faBook, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -42,6 +42,7 @@ import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
 import { getCurrentRouteSignal } from '../../foundation/route/getCurrentRouteSignal';
 import { Course } from 'app/course/shared/entities/course.model';
+import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -71,6 +72,7 @@ import { Course } from 'app/course/shared/entities/course.model';
         GlobalSearchNavbarComponent,
         ImageComponent,
         SlicePipe,
+        CourseNotificationOverviewComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -96,7 +98,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faWrench = faWrench;
     protected readonly faLock = faLock;
     protected readonly faFlag = faFlag;
-    protected readonly faBook = faBook;
     protected readonly faSignOutAlt = faSignOutAlt;
     protected readonly faChevronRight = faChevronRight;
     protected readonly faUserShield = faUserShield;
@@ -138,6 +139,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
     readonly studentViewLink = computed(() => this.getStudentViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
     readonly managementViewLink = computed(() => this.getManagementViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
+
+    readonly currentUrl = signal<string>('');
+
+    readonly isStudentCourseView = computed(() => this.currentUrl().startsWith('/courses') && !!this.currentCourse()?.id && !this.isExamActive() && !this.isExamStarted());
 
     courseTitle = signal<string | undefined>(undefined);
     exerciseTitle = signal<string | undefined>(undefined);
@@ -410,6 +415,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Fills the breadcrumbs array with entries for admin and course-management routes
      */
     private buildBreadcrumbs(fullURI: string): void {
+        this.currentUrl.set(fullURI ?? '');
         this.breadcrumbs.set([]);
         this.breadcrumbSubscriptions?.forEach((subscription) => subscription.unsubscribe());
         this.breadcrumbSubscriptions = [];

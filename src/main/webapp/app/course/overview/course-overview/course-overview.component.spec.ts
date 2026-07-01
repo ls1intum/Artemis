@@ -56,11 +56,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
-import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -150,9 +145,6 @@ describe('CourseOverviewComponent', () => {
     let findOneForRegistrationStub: ReturnType<typeof vi.spyOn>;
     let courseSidebarService: CourseSidebarService;
     let profileService: ProfileService;
-    let courseNotificationSettingService: CourseNotificationSettingService;
-    let courseNotificationService: CourseNotificationService;
-
     let metisConversationService: MetisConversationService;
 
     const course = {
@@ -160,27 +152,10 @@ describe('CourseOverviewComponent', () => {
         courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     } as Course;
 
-    const mockCourseId = 123;
-
-    const mockNotificationSettingPresets: CourseNotificationSettingPreset[] = [
-        { typeId: 1, identifier: 'All Notifications', presetMap: { test: { PUSH: true, EMAIL: true, WEBAPP: true } } },
-        { typeId: 2, identifier: 'Important Only', presetMap: { test: { PUSH: true, EMAIL: false, WEBAPP: true } } },
-        { typeId: 3, identifier: 'Minimal', presetMap: { test: { PUSH: false, EMAIL: false, WEBAPP: true } } },
-    ];
-
-    const mockSettingInfo: CourseNotificationSettingInfo = {
-        selectedPreset: 1,
-        notificationTypeChannels: { test: { PUSH: true, EMAIL: true, WEBAPP: true } },
-    };
-
-    const mockNotificationInfo: CourseNotificationInfo = {
-        presets: mockNotificationSettingPresets,
-        notificationTypes: {},
-    };
-
     beforeEach(async () => {
         route = {
             params: of({ courseId: course1.id }) as Params,
+            data: of({}),
             snapshot: { firstChild: { routeConfig: { path: `courses/${course1.id}/exercises` } } },
         } as ActivatedRoute;
         router = new MockRouter();
@@ -218,7 +193,6 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
-                MockProvider(CourseNotificationSettingService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -248,8 +222,6 @@ describe('CourseOverviewComponent', () => {
         metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
         jhiWebsocketServiceSubscribeSpy = vi.spyOn(jhiWebsocketService, 'subscribe');
         vi.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
-        courseNotificationSettingService = TestBed.inject(CourseNotificationSettingService);
-        courseNotificationService = TestBed.inject(CourseNotificationService);
         // default for findOneForDashboardStub is to return the course
         findOneForDashboardStub = vi.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
             of(
@@ -267,9 +239,6 @@ describe('CourseOverviewComponent', () => {
             activeProfiles: [PROFILE_PROD],
             testServer: false,
         } as unknown as ProfileInfo);
-        vi.spyOn(courseNotificationSettingService, 'getSettingInfo').mockReturnValue(of(mockSettingInfo));
-        vi.spyOn(courseNotificationService, 'getInfo').mockReturnValue(of(new HttpResponse({ body: mockNotificationInfo })));
-        vi.spyOn(courseNotificationSettingService, 'setSettingPreset').mockImplementation(() => {});
     });
 
     afterEach(() => {
@@ -705,64 +674,5 @@ describe('CourseOverviewComponent', () => {
 
         courseSidebarService.toggleSidebar();
         expect(component.isSidebarCollapsed()).toBe(true);
-    });
-
-    it('should initialize course notification values when both settingInfo and info are available', async () => {
-        component.courseId.set(mockCourseId);
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        const selectableSettingPresets = (component as any).selectableSettingPresets();
-        const selectedSettingPreset = (component as any).selectedSettingPreset();
-
-        expect(selectableSettingPresets).toBeDefined();
-        expect(selectableSettingPresets).toEqual(mockNotificationSettingPresets);
-        expect(selectedSettingPreset).toBeDefined();
-        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[0]);
-    });
-
-    it('should select a new notification preset when presetSelected is called', async () => {
-        const setSettingPresetSpy = vi.spyOn(courseNotificationSettingService, 'setSettingPreset');
-
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        component.presetSelected(2);
-
-        const selectedSettingPreset = (component as any).selectedSettingPreset();
-
-        expect(selectedSettingPreset).toBeDefined();
-        expect(selectedSettingPreset).toEqual(mockNotificationSettingPresets[1]);
-        expect(setSettingPresetSpy).toHaveBeenCalledWith(1, 2, mockNotificationSettingPresets[0]);
-    });
-
-    it('should set selectedSettingPreset to undefined when custom settings are selected', async () => {
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        component.presetSelected(0);
-
-        const selectedSettingPreset = (component as any).selectedSettingPreset();
-
-        expect(selectedSettingPreset).toBeUndefined();
-        expect(courseNotificationSettingService.setSettingPreset).toHaveBeenCalledWith(1, 0, mockNotificationSettingPresets[0]);
-    });
-
-    it('should update notification settings when both services return data', async () => {
-        component.courseId.set(mockCourseId);
-        const getSettingInfoSpy = vi.spyOn(courseNotificationSettingService, 'getSettingInfo').mockImplementation(() => {
-            return of(undefined);
-        });
-
-        await component.ngOnInit();
-        fixture.detectChanges();
-
-        getSettingInfoSpy.mockReturnValue(of(mockSettingInfo));
-
-        (component as any).settingInfo = mockSettingInfo;
-        (component as any).initializeCourseNotificationValues();
-
-        expect((component as any).selectableSettingPresets()).toBeDefined();
-        expect((component as any).selectedSettingPreset()).toBeDefined();
     });
 });

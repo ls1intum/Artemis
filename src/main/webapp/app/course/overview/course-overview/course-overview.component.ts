@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -6,14 +7,12 @@ import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
-import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { TeamService } from 'app/exercise/team/team.service';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
@@ -29,12 +28,6 @@ import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
-import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
@@ -43,18 +36,7 @@ import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/c
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [
-        NgClass,
-        RouterOutlet,
-        NgTemplateOutlet,
-        FaIconComponent,
-        TranslateDirective,
-        CourseNotificationOverviewComponent,
-        CourseTitleBarComponent,
-        CourseSidebarComponent,
-        CourseNotificationPresetPickerComponent,
-        CourseUnenrollmentModalComponent,
-    ],
+    imports: [NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, CourseTitleBarComponent, CourseSidebarComponent, CourseUnenrollmentModalComponent],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -66,8 +48,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
     private calendarService = inject(CalendarService);
-    protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
-    protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
     private toggleSidebarEventSubscription: Subscription;
     private teamAssignmentUpdateListener: Subscription;
@@ -75,15 +55,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private quizExercisesSubscription?: Subscription;
     private examStartedSubscription: Subscription;
 
-    protected readonly selectableSettingPresets = signal<CourseNotificationSettingPreset[] | undefined>(undefined);
-    protected readonly selectedSettingPreset = signal<CourseNotificationSettingPreset | undefined>(undefined);
-    private info?: CourseNotificationInfo;
-    private settingInfo?: CourseNotificationSettingInfo;
-
     showUnenrollModal = signal<boolean>(false);
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
-    showRefreshButton = signal<boolean>(false);
     activatedComponentReference = signal<
         | CourseExercisesComponent
         | CourseLecturesComponent
@@ -96,17 +70,18 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     >(undefined);
     protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
+    readonly showRefreshButton = toSignal(this.route.data.pipe(map((data) => !!data['showRefreshButton'])), { initialValue: false });
+
     // Icons
     faTimes = faTimes;
-    faEye = faEye;
     faWrench = faWrench;
     faTable = faTable;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
-    faSync = faSync;
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
+    faSync = faSync;
 
     async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
@@ -120,26 +95,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.courseId.set(id);
-
-            this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
-                if (settingInfo) {
-                    this.settingInfo = settingInfo;
-
-                    if (this.info) {
-                        this.initializeCourseNotificationValues();
-                    }
-                }
-            });
-
-            this.courseNotificationService.getInfo().subscribe((info) => {
-                if (info.body) {
-                    this.info = info.body;
-
-                    if (this.settingInfo) {
-                        this.initializeCourseNotificationValues();
-                    }
-                }
-            });
         });
         await super.ngOnInit();
 
@@ -155,28 +110,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         await this.initAfterCourseLoad();
     }
 
-    /**
-     * Initializes component values once both settingInfo and info are available.
-     * Sets up selectable presets, and the currently selected preset.
-     */
-    private initializeCourseNotificationValues() {
-        this.selectableSettingPresets.set(this.info!.presets);
-
-        this.selectedSettingPreset.set(
-            this.settingInfo!.selectedPreset === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === this.settingInfo!.selectedPreset)!,
-        );
-    }
-
-    /**
-     * Handles selection of a notification preset.
-     *
-     * @param presetTypeId - The ID of the selected preset (0 for custom settings)
-     */
-    presetSelected(presetTypeId: number) {
-        this.courseNotificationSettingService.setSettingPreset(this.courseId(), presetTypeId, this.selectedSettingPreset());
-
-        this.selectedSettingPreset.set(presetTypeId === 0 ? undefined : this.selectableSettingPresets()!.find((preset) => preset.typeId === presetTypeId)!);
-    }
+    protected handleNavigationEndActions() {}
 
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
@@ -256,7 +190,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
-        this.getShowRefreshButton();
     }
 
     handleToggleSidebar(): void {
@@ -267,10 +200,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         childRouteComponent?.toggleSidebar();
         const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : (childRouteComponent!.isCollapsed as boolean);
         this.isSidebarCollapsed.set(componentCollapsed);
-    }
-
-    getShowRefreshButton(): void {
-        this.showRefreshButton.set(this.route.snapshot.firstChild?.data?.showRefreshButton ?? false);
     }
 
     getSidebarItems(): SidebarItem[] {
