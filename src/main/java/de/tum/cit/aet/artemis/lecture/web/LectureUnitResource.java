@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitCombinedStatusDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
@@ -110,7 +111,7 @@ public class LectureUnitResource {
      */
     @PutMapping("lectures/{lectureId}/lecture-units-order")
     @EnforceAtLeastEditorInLecture
-    public ResponseEntity<List<LectureUnit>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
+    public ResponseEntity<List<LectureUnitDTO>> updateLectureUnitsOrder(@PathVariable Long lectureId, @RequestBody List<Long> orderedLectureUnitIds) {
         log.debug("REST request to update the order of lecture units of lecture: {}", lectureId);
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
 
@@ -132,8 +133,11 @@ public class LectureUnitResource {
 
         lecture.reorderLectureUnits(orderedLectureUnitIds);
 
-        lecture = lectureRepository.save(lecture);
-        return ResponseEntity.ok(lecture.getLectureUnits());
+        lectureRepository.save(lecture);
+
+        // Reload with competency links eagerly fetched so the polymorphic LectureUnitDTO mapping can read them outside the persistence context (no open-session-in-view).
+        Lecture reorderedLecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
+        return ResponseEntity.ok(reorderedLecture.getLectureUnits().stream().map(LectureUnitDTO::of).toList());
     }
 
     /**

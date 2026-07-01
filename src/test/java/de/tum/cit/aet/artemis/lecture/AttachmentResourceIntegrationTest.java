@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
@@ -73,15 +74,17 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         params.add("notificationText", notificationText);
         MockMultipartFile file = fileUpdate ? new MockMultipartFile("file", "test.txt", MediaType.TEXT_PLAIN_VALUE, "testContent".getBytes()) : null;
 
-        var actualAttachment = request.putWithMultipartFile("/api/lecture/attachments/" + attachment.getId(), attachment, "attachment", file, Attachment.class, HttpStatus.OK,
+        var actualAttachment = request.putWithMultipartFile("/api/lecture/attachments/" + attachment.getId(), attachment, "attachment", file, AttachmentDTO.class, HttpStatus.OK,
                 params);
-        var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).orElseThrow();
+        var expectedAttachment = attachmentRepository.findById(actualAttachment.id()).orElseThrow();
 
-        assertThat(actualAttachment.getName()).isEqualTo("new name");
-        var ignoringFields = new String[] { "name", "fileService", "filePathService", "entityFileService", "prevLink", "lecture.lectureUnits", "lecture.posts", "lecture.course",
-                "lecture.attachments", "lecture.lectureTranscriptions" };
-        assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
-        verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment);
+        assertThat(actualAttachment.name()).isEqualTo("new name");
+        assertThat(actualAttachment.id()).isEqualTo(expectedAttachment.getId());
+        assertThat(actualAttachment.link()).isEqualTo(expectedAttachment.getLink());
+        assertThat(actualAttachment.version()).isEqualTo(expectedAttachment.getVersion());
+        assertThat(actualAttachment.attachmentType()).isEqualTo(expectedAttachment.getAttachmentType());
+        assertThat(actualAttachment.lecture().id()).isEqualTo(lecture.getId());
+        verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(expectedAttachment);
     }
 
     @Test
@@ -89,17 +92,19 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     void getAttachment() throws Exception {
         attachment = attachmentRepository.save(attachment);
         attachment.setName("new name");
-        var actualAttachment = request.get("/api/lecture/attachments/" + attachment.getId(), HttpStatus.OK, Attachment.class);
-        assertThat(actualAttachment).isEqualTo(attachment);
+        var actualAttachment = request.get("/api/lecture/attachments/" + attachment.getId(), HttpStatus.OK, AttachmentDTO.class);
+        assertThat(actualAttachment.id()).isEqualTo(attachment.getId());
+        assertThat(actualAttachment.link()).isEqualTo(attachment.getLink());
+        assertThat(actualAttachment.lecture().id()).isEqualTo(lecture.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAttachmentsForLecture() throws Exception {
         attachment = attachmentRepository.save(attachment);
-        var actualAttachments = request.getList("/api/lecture/lectures/" + lecture.getId() + "/attachments", HttpStatus.OK, Attachment.class);
+        var actualAttachments = request.getList("/api/lecture/lectures/" + lecture.getId() + "/attachments", HttpStatus.OK, AttachmentDTO.class);
         assertThat(actualAttachments).hasSize(1);
-        assertThat(actualAttachments.stream().findFirst()).contains(attachment);
+        assertThat(actualAttachments.getFirst().id()).isEqualTo(attachment.getId());
     }
 
     @Test
