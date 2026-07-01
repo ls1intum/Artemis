@@ -507,9 +507,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // succeed. The shared title validation (Exercise#validateTitle, also used by the programming edit path that the
         // bug was reported on) previously rejected such titles with an ASCII-only pattern.
         textExercise.setTitle("Lärche Übung");
-        TextExercise updated = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class,
-                HttpStatus.OK);
-        assertThat(updated.getTitle()).isEqualTo("Lärche Übung");
+        TextExerciseResponseDTO updated = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExerciseResponseDTO.class, HttpStatus.OK);
+        assertThat(updated.title()).isEqualTo("Lärche Übung");
     }
 
     @Test
@@ -1599,14 +1599,14 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), shortText);
 
         var path = "/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        request.get(path, HttpStatus.BAD_REQUEST, PlagiarismResult.class, plagiarismUtilService.getPlagiarismOptions(50, 0, 5));
+        request.get(path, HttpStatus.BAD_REQUEST, String.class, plagiarismUtilService.getPlagiarismOptions(50, 0, 5));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismNoSubmissions() throws Exception {
         var path = "/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        request.get(path, HttpStatus.BAD_REQUEST, PlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        request.get(path, HttpStatus.BAD_REQUEST, String.class, plagiarismUtilService.getDefaultPlagiarismOptions());
     }
 
     @Test
@@ -1614,7 +1614,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testCheckPlagiarism_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        request.get("/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.FORBIDDEN, PlagiarismResult.class,
+        request.get("/api/text/text-exercises/" + textExercise.getId() + "/check-plagiarism", HttpStatus.FORBIDDEN, String.class,
                 plagiarismUtilService.getDefaultPlagiarismOptions());
     }
 
@@ -1637,8 +1637,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResultWithoutExercise() throws Exception {
-        PlagiarismResult result = request.get("/api/text/text-exercises/" + 10000000 + "/plagiarism-result", HttpStatus.NOT_FOUND, PlagiarismResult.class);
-        assertThat(result).isNull();
+        String result = request.get("/api/text/text-exercises/" + 10000000 + "/plagiarism-result", HttpStatus.NOT_FOUND, String.class);
+        assertThat(result).isNullOrEmpty();
     }
 
     @Test

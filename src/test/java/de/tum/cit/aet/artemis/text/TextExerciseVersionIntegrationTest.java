@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -63,15 +64,15 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
         textExercise.setChannelName("channel");
 
         // Act: Create the exercise
-        TextExercise createdExercise = request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
-                TextExercise.class, HttpStatus.CREATED);
+        TextExerciseResponseDTO createdExercise = request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExerciseResponseDTO.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(createdExercise).isNotNull();
-        assertThat(createdExercise.getId()).isNotNull();
+        assertThat(createdExercise.id()).isNotNull();
 
         // Assert: Verify exercise version was created
-        exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);
+        exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);
     }
 
     @ParameterizedTest
@@ -87,21 +88,21 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
         textExercise.setExampleSolution("Updated example solution");
 
         // Act: Update the exercise
-        TextExercise updatedExercise;
+        TextExerciseResponseDTO updatedExercise;
         if (reEvaluate) {
             updatedExercise = request.putWithResponseBody("/api/text/text-exercises/" + exerciseId + "/re-evaluate?deleteFeedback=false",
-                    de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
+                    de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.OK);
         }
         else {
-            updatedExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class,
-                    HttpStatus.OK);
+            updatedExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                    TextExerciseResponseDTO.class, HttpStatus.OK);
         }
 
         // Assert: Verify operation succeeded
         assertThat(updatedExercise).isNotNull();
 
         // Assert: Verify new exercise version was created
-        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(updatedExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);
+        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(updatedExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);
 
         // Verify that the new version is different from the previous version
         assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)
@@ -118,14 +119,14 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
         ExerciseVersion originalVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(textExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);
 
         var newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(),
-                de.tum.cit.aet.artemis.text.dto.ImportTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.CREATED);
+                de.tum.cit.aet.artemis.text.dto.ImportTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.CREATED);
 
         // Assert: Verify operation succeeded
         assertThat(newTextExercise).isNotNull();
-        assertThat(newTextExercise.getId()).isNotNull();
+        assertThat(newTextExercise.id()).isNotNull();
 
         // Assert: Verify new exercise version was created
-        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(newTextExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);
+        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(newTextExercise.id(), TEST_PREFIX + "instructor1", ExerciseType.TEXT);
 
         // Verify that the new version is different from the original version
         assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)

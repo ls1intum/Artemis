@@ -84,6 +84,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
@@ -3036,7 +3037,7 @@ public class CourseTestService {
                         new ComplaintResponseRequestDTO.ComplaintRequestDTO(complaintResponse.getComplaint().getId(), complaintResponse.getComplaint().isAccepted())),
                 null, new HashSet<>());
         request.putWithResponseBody("/api/text/participations/" + result1.getSubmission().getParticipation().getId() + "/submissions/" + result1.getSubmission().getId()
-                + "/text-assessment-after-complaint", assessmentUpdate, Result.class, HttpStatus.OK);
+                + "/text-assessment-after-complaint", assessmentUpdate, ResultDTO.class, HttpStatus.OK);
 
         // Feedback request
         Complaint feedbackRequest = new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
@@ -3053,7 +3054,7 @@ public class CourseTestService {
                         new ComplaintResponseRequestDTO.ComplaintRequestDTO(feedbackResponse.getComplaint().getId(), feedbackResponse.getComplaint().isAccepted())),
                 null, new HashSet<>());
         request.putWithResponseBody("/api/text/participations/" + result2.getSubmission().getParticipation().getId() + "/submissions/" + result2.getSubmission().getId()
-                + "/text-assessment-after-complaint", feedbackUpdate, Result.class, HttpStatus.OK);
+                + "/text-assessment-after-complaint", feedbackUpdate, ResultDTO.class, HttpStatus.OK);
 
         // Wait for async participant score calculation to complete
         // Use longer timeout for slow CI environments where async tasks may take longer
