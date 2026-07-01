@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -44,6 +46,8 @@ import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentDTO;
+import de.tum.cit.aet.artemis.text.dto.TextBlockDTO;
+import de.tum.cit.aet.artemis.text.dto.TextExampleResultDTO;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
@@ -263,18 +267,21 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
-        final Result exampleResult = request.get(
-                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK, Result.class);
-        final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
+        final TextExampleResultDTO exampleResult = request.get(
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                TextExampleResultDTO.class);
+        final List<TextBlockDTO> blocks = exampleResult.submission().blocks();
         assertThat(blocks).hasSize(2);
         List<Feedback> feedbacks = new ArrayList<>();
-        final Iterator<TextBlock> textBlockIterator = blocks.iterator();
-        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1").reference(textBlockIterator.next().getId()));
-        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL).detailText("nice submission 2").reference(textBlockIterator.next().getId()));
-        var dto = new TextAssessmentDTO();
-        dto.setFeedbacks(feedbacks);
-        request.putWithResponseBody("/api/text/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto,
-                Result.class, HttpStatus.OK);
+        final Iterator<TextBlockDTO> textBlockIterator = blocks.iterator();
+        feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL).detailText("nice submission 1").reference(textBlockIterator.next().id()));
+        feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL).detailText("nice submission 2").reference(textBlockIterator.next().id()));
+        var dto = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null);
+        ResultDTO response = request.putWithResponseBody(
+                "/api/text/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto, ResultDTO.class,
+                HttpStatus.OK);
+        assertThat(response.exampleResult()).as("response uses the text ResultDTO contract").isTrue();
+        assertThat(response.feedbacks()).hasSize(2);
         Result storedResult = resultRepository.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
@@ -286,15 +293,15 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
-        final Result exampleResult = request.get(
-                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK, Result.class);
-        final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
+        final TextExampleResultDTO exampleResult = request.get(
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                TextExampleResultDTO.class);
+        final List<TextBlockDTO> blocks = exampleResult.submission().blocks();
         assertThat(blocks).hasSize(2);
         List<Feedback> feedbacks = ParticipationFactory.generateManualFeedback();
-        var dto = new TextAssessmentDTO();
-        dto.setFeedbacks(feedbacks);
+        var dto = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null);
         long randomId = 1233;
-        request.putWithResponseBody("/api/text/exercises/" + textExercise.getId() + "/example-submissions/" + randomId + "/example-text-assessment", dto, Result.class,
+        request.putWithResponseBody("/api/text/exercises/" + textExercise.getId() + "/example-submissions/" + randomId + "/example-text-assessment", dto, ResultDTO.class,
                 HttpStatus.NOT_FOUND);
         assertThat(exampleSubmissionRepository.findBySubmissionId(randomId)).isEmpty();
     }
@@ -305,16 +312,16 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
         participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
-        final Result exampleResult = request.get(
-                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK, Result.class);
-        final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
+        final TextExampleResultDTO exampleResult = request.get(
+                "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK,
+                TextExampleResultDTO.class);
+        final List<TextBlockDTO> blocks = exampleResult.submission().blocks();
         assertThat(blocks).hasSize(2);
         List<Feedback> feedbacks = ParticipationFactory.generateManualFeedback();
-        var dto = new TextAssessmentDTO();
-        dto.setFeedbacks(feedbacks);
+        var dto = new TextAssessmentDTO(feedbacks.stream().map(FeedbackDTO::of).toList(), null, null);
         long randomId = 1233;
-        request.putWithResponseBody("/api/text/exercises/" + randomId + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto, Result.class,
-                HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/exercises/" + randomId + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto,
+                ResultDTO.class, HttpStatus.BAD_REQUEST);
         assertThat(exampleSubmissionRepository.findBySubmissionId(randomId)).isEmpty();
     }
 

@@ -13,6 +13,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { provideHttpClient } from '@angular/common/http';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
 
 describe('TextSubmission Service', () => {
     setupTestBed({ zoneless: true });
@@ -114,5 +116,32 @@ describe('TextSubmission Service', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
+    });
+
+    it('keeps the locked result and text blocks (nested in participation.submissions) on the new-assessment response', () => {
+        // Regression guard: the response no longer carries results/blocks on the top-level submission; they live in
+        // participation.submissions[*]. The mapping must hoist them so the assessment editor receives the locked result id
+        // it needs to save/submit, instead of overwriting participation.submissions with a result-less submission.
+        const lockedResult = { id: 99 } as Result;
+        const block = { id: 'block-1', text: 'segment' } as TextBlock;
+        const nestedSubmission = { id: 5, results: [lockedResult], blocks: [block] } as TextSubmission;
+        const participation = new StudentParticipation();
+        participation.submissions = [nestedSubmission];
+        const topLevel = { id: 5, participation } as TextSubmission; // no top-level results/blocks, mirroring the DTO
+
+        let received: TextSubmission | undefined;
+        service
+            .getSubmissionWithoutAssessment(1, 'lock')
+            .pipe(take(1))
+            .subscribe((resp) => (received = resp));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(topLevel);
+
+        expect(received).toBeDefined();
+        expect(received!.results).toEqual([lockedResult]);
+        expect(received!.blocks).toEqual([block]);
+        // the participation the editor reads (participation.submissions.last()) must still carry the locked result
+        expect(received!.participation!.submissions![0].results).toEqual([lockedResult]);
     });
 });

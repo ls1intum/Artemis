@@ -782,9 +782,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
             else {
-                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit
-                // TODO: what happens if getCredits is null?
-                totalPoints += feedback.getCredits();
+                // in case no structured grading instruction was applied on the assessment model we just sum the feedback credit.
+                // A comment-only feedback carries no credits (null); treat it as 0 so score calculation (e.g. during re-evaluation) does not fail.
+                totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
             }
         }
         return totalPoints;

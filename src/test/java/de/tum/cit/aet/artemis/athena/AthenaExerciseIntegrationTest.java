@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -90,7 +91,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         textExercise.setId(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.CREATED);
     }
 
     @Test
@@ -99,7 +101,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         textExercise.setId(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -110,11 +113,11 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        TextExercise updatedExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
-                TextExercise.class, HttpStatus.OK);
+        TextExerciseResponseDTO updatedExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise),
+                TextExerciseResponseDTO.class, HttpStatus.OK);
 
         // Wait for async Weaviate upsert operation to complete to prevent race conditions
-        assertExerciseExistsInWeaviate(weaviateService, updatedExercise);
+        assertExerciseExistsInWeaviate(weaviateService, textExerciseRepository.findByIdElseThrow(updatedExercise.id()));
     }
 
     @Test
@@ -122,7 +125,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     void testUpdateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -133,7 +137,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
         textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
-        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -143,7 +148,8 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(group);
         examTextExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/text/text-exercises", examTextExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(examTextExercise), TextExerciseResponseDTO.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -154,8 +160,9 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         TextExercise testExamTextExercise = TextExerciseFactory.generateTextExerciseForExam(group);
         testExamTextExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
-        TextExercise created = request.postWithResponseBody("/api/text/text-exercises", testExamTextExercise, TextExercise.class, HttpStatus.CREATED);
-        assertThat(created.getFeedbackSuggestionModule()).isEqualTo(ATHENA_MODULE_TEXT_TEST);
+        TextExerciseResponseDTO created = request.postWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(testExamTextExercise),
+                TextExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(created.feedbackSuggestionModule()).isEqualTo(ATHENA_MODULE_TEXT_TEST);
     }
 
     @Test
@@ -166,9 +173,9 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
         TextExercise testExamTextExercise = textExerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(group));
         testExamTextExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
 
-        TextExercise updated = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(testExamTextExercise),
-                TextExercise.class, HttpStatus.OK);
-        assertThat(updated.getFeedbackSuggestionModule()).isEqualTo(ATHENA_MODULE_TEXT_TEST);
+        TextExerciseResponseDTO updated = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(testExamTextExercise),
+                TextExerciseResponseDTO.class, HttpStatus.OK);
+        assertThat(updated.feedbackSuggestionModule()).isEqualTo(ATHENA_MODULE_TEXT_TEST);
     }
 
     @Test
@@ -216,18 +223,18 @@ class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
                 ProgrammingExercise.class);
         ProgrammingExercise updatedProgrammingExerciseRestrictedModule = request.get("/api/programming/programming-exercises/" + programmingExerciseRestrictedModule.getId(),
                 HttpStatus.OK, ProgrammingExercise.class);
-        TextExercise updatedTextExercise = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
-        TextExercise updatedTextExerciseRestrictedModule = request.get("/api/text/text-exercises/" + textExerciseRestrictedModule.getId(), HttpStatus.OK, TextExercise.class);
+        TextExerciseResponseDTO updatedTextExercise = request.get("/api/text/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExerciseResponseDTO.class);
+        TextExerciseResponseDTO updatedTextExerciseRestrictedModule = request.get("/api/text/text-exercises/" + textExerciseRestrictedModule.getId(), HttpStatus.OK,
+                TextExerciseResponseDTO.class);
 
         // Check that the default exercises still have their module set
         assertThat(updatedProgrammingExercise.getFeedbackSuggestionModule()).as("Athena module for the programming exercise was unchanged")
                 .isEqualTo(programmingExercise.getFeedbackSuggestionModule());
-        assertThat(updatedTextExercise.getFeedbackSuggestionModule()).as("Athena module for the text exercise was unchanged").isEqualTo(textExercise.getFeedbackSuggestionModule());
+        assertThat(updatedTextExercise.feedbackSuggestionModule()).as("Athena module for the text exercise was unchanged").isEqualTo(textExercise.getFeedbackSuggestionModule());
 
         // Check that the two additional exercises do not have a restricted module set
         assertThat(updatedProgrammingExerciseRestrictedModule.getFeedbackSuggestionModule())
                 .as("access to restricted Athena module for the programming exercise was revoked successfully").isNull();
-        assertThat(updatedTextExerciseRestrictedModule.getFeedbackSuggestionModule()).as("access to restricted Athena module for the text exercise was revoked successfully")
-                .isNull();
+        assertThat(updatedTextExerciseRestrictedModule.feedbackSuggestionModule()).as("access to restricted Athena module for the text exercise was revoked successfully").isNull();
     }
 }

@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
-import { toUpdateTextExerciseDTO } from 'app/text/manage/text-exercise/service/update-text-exercise-dto.model';
+import { toImportTextExerciseDTO, toUpdateTextExerciseDTO } from 'app/text/manage/text-exercise/service/update-text-exercise-dto.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { PlagiarismResultDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
@@ -26,11 +26,8 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * @param textExercise that should be stored of type {TextExercise}
      */
     create(textExercise: TextExercise): Observable<EntityResponseType> {
-        let copy = ExerciseService.convertExerciseDatesFromClient(textExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<TextExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .post<TextExercise>(this.resourceUrl, toUpdateTextExerciseDTO(textExercise), { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -42,11 +39,10 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceTextExercise: TextExercise) {
-        let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceTextExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
-            .post<TextExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceTextExercise.id}`, copy, { observe: 'response' })
+            .post<TextExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceTextExercise.id}`, toImportTextExerciseDTO(adaptedSourceTextExercise), {
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

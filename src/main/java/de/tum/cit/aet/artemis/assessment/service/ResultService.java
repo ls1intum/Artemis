@@ -816,8 +816,15 @@ public class ResultService {
         if (feedbackList == null) {
             return;
         }
-        List<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId).toList();
-        longFeedbackTextRepository.deleteByFeedbackIds(feedbackIdsWithLongText);
+        final Set<Long> updatedFeedbackIds = feedbackList.stream().map(Feedback::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        final Set<Long> feedbackIdsWithLongText = feedbackList.stream().filter(feedback -> feedback.getHasLongFeedbackText() && feedback.getId() != null).map(Feedback::getId)
+                .collect(Collectors.toSet());
+
+        // If an existing long feedback is replaced by short text, the incoming feedback is no longer marked as long.
+        // Use the persisted result state to still clean up the old LongFeedbackText row for that feedback id.
+        result.getFeedbacks().stream().filter(feedback -> feedback.getId() != null && updatedFeedbackIds.contains(feedback.getId()) && feedback.getHasLongFeedbackText())
+                .map(Feedback::getId).forEach(feedbackIdsWithLongText::add);
+        longFeedbackTextRepository.deleteByFeedbackIds(new ArrayList<>(feedbackIdsWithLongText));
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
         result.updateAllFeedbackItems(feedbacks, true);
     }

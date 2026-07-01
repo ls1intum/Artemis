@@ -46,6 +46,11 @@ import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismAccessApi;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.dto.TextExerciseResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.TextParticipationDTO;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionRequestDTO;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionResponseDTO;
+import de.tum.cit.aet.artemis.text.dto.TextSubmissionWithoutAssessmentDTO;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.text.service.TextAssessmentService;
@@ -107,18 +112,18 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     /**
      * POST /exercises/{exerciseId}/text-submissions : Create a new textSubmission. This is called when a student saves their answer
      *
-     * @param exerciseId     the id of the exercise for which to init a participation
-     * @param textSubmission the textSubmission to create
+     * @param exerciseId        the id of the exercise for which to init a participation
+     * @param textSubmissionDTO the text submission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastStudent
-    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
-        log.debug("REST request to save text submission : {}", textSubmission);
-        if (textSubmission.getId() != null) {
+    public ResponseEntity<TextSubmissionResponseDTO> createTextSubmission(@PathVariable Long exerciseId, @Valid @RequestBody TextSubmissionRequestDTO textSubmissionDTO) {
+        log.debug("REST request to save text submission for exercise {} (language {}, submitted {})", exerciseId, textSubmissionDTO.language(), textSubmissionDTO.submitted());
+        if (textSubmissionDTO.id() != null) {
             throw new BadRequestAlertException("A new text submission cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        return handleTextSubmission(exerciseId, textSubmission);
+        return handleTextSubmission(exerciseId, toTextSubmission(textSubmissionDTO));
     }
 
     /**
@@ -126,23 +131,51 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * This function is called by the text editor for saving and submitting text submissions.
      * The submit specific handling occurs in the TextSubmissionService.createTextSubmission() and save() methods.
      *
-     * @param exerciseId     the id of the exercise for which to init a participation
-     * @param textSubmission the textSubmission to update
+     * @param exerciseId        the id of the exercise for which to init a participation
+     * @param textSubmissionDTO the text submission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission, or with status 400 (Bad Request) if the textSubmission is not valid, or with status
      *         500 (Internal Server Error) if the textSubmission couldn't be updated
      */
     @PutMapping("exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastStudent
-    public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable long exerciseId, @Valid @RequestBody TextSubmission textSubmission) {
-        log.debug("REST request to update text submission: {}", textSubmission);
-        if (textSubmission.getId() == null) {
-            return createTextSubmission(exerciseId, textSubmission);
+    public ResponseEntity<TextSubmissionResponseDTO> updateTextSubmission(@PathVariable long exerciseId, @Valid @RequestBody TextSubmissionRequestDTO textSubmissionDTO) {
+        log.debug("REST request to update text submission {} for exercise {} (language {}, submitted {})", textSubmissionDTO.id(), exerciseId, textSubmissionDTO.language(),
+                textSubmissionDTO.submitted());
+        if (textSubmissionDTO.id() == null) {
+            return createTextSubmission(exerciseId, textSubmissionDTO);
         }
-        return handleTextSubmission(exerciseId, textSubmission);
+        final TextSubmission textSubmission = toTextSubmission(textSubmissionDTO);
+        // The request DTO no longer carries results, so reconstruct the Athena-result fork signal from the persisted
+        // submission: if the existing submission already has a result (e.g. Athena auto-feedback), autosave must create a
+        // fresh submission instead of overwriting the result-bearing one.
+        boolean existingSubmissionHasResults = textSubmissionRepository.findWithEagerResultsAssessorById(textSubmissionDTO.id()).map(existing -> !existing.getResults().isEmpty())
+                .orElse(false);
+        return handleTextSubmission(exerciseId, textSubmission, existingSubmissionHasResults);
+    }
+
+    /**
+     * Maps the request DTO to a transient text submission, copying only the client-editable fields. The participation is
+     * resolved server-side from the exercise and the current user and is never taken from the request body.
+     *
+     * @param textSubmissionDTO the request DTO
+     * @return a transient text submission carrying only id, text, language and submitted
+     */
+    private TextSubmission toTextSubmission(TextSubmissionRequestDTO textSubmissionDTO) {
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.setId(textSubmissionDTO.id());
+        textSubmission.setText(textSubmissionDTO.text());
+        textSubmission.setLanguage(textSubmissionDTO.language());
+        textSubmission.setSubmitted(Boolean.TRUE.equals(textSubmissionDTO.submitted()));
+        return textSubmission;
     }
 
     @NonNull
-    private ResponseEntity<TextSubmission> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
+    private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
+        return handleTextSubmission(exerciseId, textSubmission, false);
+    }
+
+    @NonNull
+    private ResponseEntity<TextSubmissionResponseDTO> handleTextSubmission(long exerciseId, TextSubmission textSubmission, boolean forceNewSubmission) {
         long start = System.currentTimeMillis();
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
@@ -160,11 +193,16 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Check if the user is allowed to submit
         textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
 
+        if (forceNewSubmission) {
+            textSubmission.setId(null);
+        }
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user);
         textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
         log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
-        return ResponseEntity.ok(textSubmission);
+        // Include the student: this is the student's own submission and the client checks participation ownership
+        // (isOwnerOfParticipation) on the returned participation. hideDetails keeps the participant for the owner.
+        return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission, true));
     }
 
     /**
@@ -175,7 +213,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("text-submissions/{submissionId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable long submissionId) {
+    public ResponseEntity<TextSubmissionResponseDTO> getTextSubmissionWithResults(@PathVariable long submissionId) {
         log.debug("REST request to get text submission: {}", submissionId);
         var textSubmission = textSubmissionRepository.findWithEagerResultsAssessorByIdElseThrow(submissionId);
         var participation = textSubmission.getParticipation();
@@ -185,10 +223,10 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             checkSubmissionAccessForStudent(participation);
             checkPotentialPlagiarismCaseForStudent(textSubmission);
             anonymizeSubmissionForStudent(textSubmission);
-            return ResponseEntity.ok(textSubmission);
+            return ResponseEntity.ok(TextSubmissionResponseDTO.of(textSubmission));
         }
 
-        return ResponseEntity.ok().body(textSubmission);
+        return ResponseEntity.ok().body(TextSubmissionResponseDTO.of(textSubmission, true));
     }
 
     /**
@@ -204,10 +242,21 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/text-submissions")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Submission>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+    public ResponseEntity<List<TextSubmissionResponseDTO>> getAllTextSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all TextSubmissions");
-        return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
+        // Reuse the shared access checks, fetching, hideDetails and Athena-result filtering, then map the entities to DTOs.
+        ResponseEntity<List<Submission>> response = super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
+        List<Submission> submissions = response.getBody();
+        if (submissions == null) {
+            return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).build();
+        }
+        // Tutors must not see the student behind a submission; instructors may.
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        List<TextSubmissionResponseDTO> submissionDTOs = submissions.stream().map(submission -> TextSubmissionResponseDTO.of((TextSubmission) submission, includeStudent)).toList();
+        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(submissionDTOs);
     }
 
     /**
@@ -222,7 +271,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("exercises/{exerciseId}/text-submission-without-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<TextSubmissionWithoutAssessmentDTO> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "head", defaultValue = "false") boolean skipAssessmentOrderOptimization,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a text submission without assessment");
@@ -243,7 +292,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         // No more unassessed submissions
         if (optionalTextSubmission.isEmpty()) {
-            return ResponseEntity.ok(null);
+            return ResponseEntity.ok((TextSubmissionWithoutAssessmentDTO) null);
         }
 
         TextSubmission textSubmission = optionalTextSubmission.get();
@@ -261,9 +310,16 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         studentParticipation.setExercise(exercise);
         textSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
         // Remove sensitive information of submission depending on user
-        textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithGroupsAndAuthorities());
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        textSubmissionService.hideDetails(textSubmission, user);
 
-        return ResponseEntity.ok().body(textSubmission);
+        // The client resolves the participation via submission.participation; it carries the exercise and the locked
+        // submission with its results. Tutors must not see the student (double-blind); instructors may, matching the
+        // previous hideDetails behavior which only stripped the participant for non-instructors.
+        boolean includeStudent = authCheckService.isAtLeastInstructorForExercise(exercise, user);
+        studentParticipation.setSubmissions(Set.of(textSubmission));
+        TextParticipationDTO participationDTO = TextParticipationDTO.of(studentParticipation, includeStudent).withExercise(TextExerciseResponseDTO.of((TextExercise) exercise));
+        return ResponseEntity.ok().body(TextSubmissionWithoutAssessmentDTO.of(textSubmission, participationDTO));
     }
 
     /**
