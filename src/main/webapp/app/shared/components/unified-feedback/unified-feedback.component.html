@@ -6,18 +6,124 @@
             </div>
         }
 
+        @if (feedback() && (isSuggestion() || Feedback.isFeedbackSuggestion(feedback()!))) {
+            <jhi-feedback-suggestion-badge [feedback]="feedback()!" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText()" />
+        }
+
         <div class="unified-feedback-main">
             <div class="unified-feedback-header">
                 <div class="unified-feedback-header-left">
                     <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
-                    @if (inferredTitle()) {
+                    @if (editable()) {
+                        <input
+                            class="unified-feedback-title-input"
+                            type="text"
+                            [ngModel]="displayTitle()"
+                            (ngModelChange)="onTitleInput($event)"
+                            [placeholder]="defaultTitlePlaceholder()"
+                            [attr.aria-label]="defaultTitlePlaceholder()"
+                            [disabled]="readOnly()"
+                        />
+                    } @else if (inferredTitle()) {
                         <span class="unified-feedback-title" [pTooltip]="inferredTitle()!" tooltipPosition="top">{{ inferredTitle() }}</span>
                     }
                 </div>
-                <div class="unified-feedback-points">{{ formattedPoints() }}</div>
+                <div class="unified-feedback-header-right">
+                    @if (editable()) {
+                        <input
+                            class="unified-feedback-points-input"
+                            type="number"
+                            step="0.5"
+                            [ngModel]="feedbackCredits() ?? 0"
+                            (ngModelChange)="feedbackCredits.set($event ?? 0)"
+                            [attr.aria-label]="pointsAriaLabel()"
+                            [disabled]="readOnly() || !!feedback()?.gradingInstruction"
+                        />
+                        <div class="unified-feedback-toolbar">
+                            @if (feedback()?.gradingInstruction) {
+                                <jhi-grading-instruction-link-icon [feedback]="feedback()!" />
+                            }
+                            @if (isSuggestion()) {
+                                <button
+                                    type="button"
+                                    id="accept-suggestion"
+                                    class="unified-feedback-icon-btn"
+                                    [attr.aria-label]="acceptSuggestionAriaLabel()"
+                                    (click)="onAcceptSuggestion.emit()"
+                                >
+                                    <fa-icon [icon]="faCheck" />
+                                </button>
+                                <button
+                                    type="button"
+                                    id="discard-suggestion"
+                                    class="unified-feedback-icon-btn"
+                                    [attr.aria-label]="discardSuggestionAriaLabel()"
+                                    (click)="onDiscardSuggestion.emit()"
+                                >
+                                    <fa-icon [icon]="faTimes" />
+                                </button>
+                            } @else if (!readOnly()) {
+                                @if (canDismissWithoutConfirm()) {
+                                    <button
+                                        type="button"
+                                        id="dismiss-icon"
+                                        class="unified-feedback-icon-btn"
+                                        [attr.aria-label]="dismissTooltip()"
+                                        (click)="handleDeleteConfirmed()"
+                                    >
+                                        <fa-icon [icon]="faTimes" />
+                                    </button>
+                                } @else {
+                                    <jhi-confirm-icon
+                                        id="confirm-icon"
+                                        [initialIcon]="faTimes"
+                                        [confirmIcon]="faTrashAlt"
+                                        [initialTooltip]="dismissTooltip()"
+                                        [confirmTooltip]="dismissConfirmTooltip()"
+                                        (confirmEvent)="handleDeleteConfirmed()"
+                                    />
+                                }
+                            }
+                        </div>
+                    } @else {
+                        <div class="unified-feedback-points">{{ formattedPoints() }}</div>
+                    }
+                </div>
             </div>
 
-            @if (feedbackContent()) {
+            @if (editable()) {
+                @if (gradingInstructionText()) {
+                    <div class="unified-feedback-rubric-label">
+                        <span>{{ gradingInstructionText() }}</span>
+                        <fa-icon [icon]="faQuestionCircle" [pTooltip]="rubricHint()" tooltipPosition="top" />
+                    </div>
+                }
+                <div class="unified-feedback-detail-row">
+                    <ng-content select="[unifiedFeedbackExtraControls]" />
+                    <textarea
+                        #detailTextarea
+                        class="unified-feedback-detail-input"
+                        rows="2"
+                        [ngModel]="feedbackDetail() ?? ''"
+                        (ngModelChange)="feedbackDetail.set($event)"
+                        (input)="onDetailInput()"
+                        [disabled]="readOnly()"
+                        [placeholder]="detailPlaceholder()"
+                        [attr.aria-label]="feedbackDetailAriaLabel()"
+                    ></textarea>
+                </div>
+                @if (correctionStatusLabel()) {
+                    <div class="unified-feedback-correction-status">
+                        <span [class.text-success]="isCorrectionStatusCorrect()" [class.text-danger]="!isCorrectionStatusCorrect()">{{ correctionStatusLabel() }}</span>
+                        @if (!isCorrectionStatusCorrect()) {
+                            <fa-icon class="text-warning" [icon]="faExclamationTriangle" />
+                        }
+                    </div>
+                }
+                @if (feedback(); as fb) {
+                    <jhi-assessment-correction-round-badge [feedback]="fb" [highlightDifferences]="highlightDifferences()" />
+                }
+            } @else if (feedbackContent()) {
                 <div class="unified-feedback-text" [innerHTML]="feedbackContent()"></div>
             }
         </div>

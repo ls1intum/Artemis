@@ -1,11 +1,12 @@
 <div (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
     <div class="col-md-6">
-        <button
-            class="add-unreferenced-feedback btn btn-success mt-4"
-            (click)="addUnreferencedFeedback()"
+        <p-button
+            [label]="'artemisApp.fileUploadAssessment.addFeedback' | artemisTranslate"
+            severity="success"
+            class="mt-4"
             [disabled]="readOnly()"
-            jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"
-        ></button>
+            (onClick)="addUnreferencedFeedback()"
+        />
         <div class="row mt-4">
             <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback"></h4>
             @if (unreferencedFeedback.length + feedbackSuggestions().length === 0) {

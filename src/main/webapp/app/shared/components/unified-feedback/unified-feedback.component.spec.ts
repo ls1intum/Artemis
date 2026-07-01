@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { vi } from 'vitest';
 
 describe('UnifiedFeedbackComponent', () => {
     setupTestBed({ zoneless: true });
@@ -35,6 +36,16 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.type()).toBeUndefined();
         expect(component.title()).toBeUndefined();
         expect(component.reference()).toBeUndefined();
+    });
+
+    it('should have editable-mode defaults', () => {
+        expect(component.editable()).toBe(false);
+        expect(component.isSuggestion()).toBe(false);
+        expect(component.readOnly()).toBe(false);
+        expect(component.useDefaultFeedbackSuggestionBadgeText()).toBe(false);
+        expect(component.feedbackTitle()).toBeUndefined();
+        expect(component.feedbackDetail()).toBeUndefined();
+        expect(component.feedbackCredits()).toBe(0);
     });
 
     it('should infer needs_revision type by default when points = 0', () => {
@@ -216,5 +227,173 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.detectChanges();
         expect(component.inferredType()).toBe('non_compliant');
         expect(component.inferredAlertClass()).toBe('alert-danger');
+    });
+
+    it('should infer type from feedbackCredits when editable, ignoring the points input', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('points', 5); // must be ignored in editable mode
+        component.feedbackCredits.set(-2);
+        fixture.detectChanges();
+        expect(component.inferredType()).toBe('non_compliant');
+        expect(component.inferredAlertClass()).toBe('alert-danger');
+
+        component.feedbackCredits.set(3);
+        fixture.detectChanges();
+        expect(component.inferredType()).toBe('correct');
+        expect(component.inferredAlertClass()).toBe('alert-success');
+    });
+
+    it('should expose a stripped display title and re-apply the suggestion prefix on edit', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set('FeedbackSuggestion:accepted:Missing null check');
+        fixture.detectChanges();
+        expect(component.displayTitle()).toBe('Missing null check');
+
+        component.onTitleInput('Null check is missing');
+        expect(component.feedbackTitle()).toBe('FeedbackSuggestion:accepted:Null check is missing');
+    });
+
+    it('should not add a prefix when editing a plain (non-suggestion) title', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(undefined);
+        fixture.detectChanges();
+        expect(component.displayTitle()).toBe('');
+
+        component.onTitleInput('Encapsulation broken');
+        expect(component.feedbackTitle()).toBe('Encapsulation broken');
+    });
+
+    it('should expose the auto-derived label as a placeholder for the title input', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+        expect(component.defaultTitlePlaceholder()).toBe('artemisApp.feedback.type.positive');
+    });
+
+    it('should allow dismissal without confirmation only when credits are 0, detail text is empty, and title is empty', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(true);
+
+        component.feedbackDetail.set('Some text');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(false);
+
+        component.feedbackDetail.set('');
+        component.feedbackCredits.set(1);
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(false);
+
+        component.feedbackCredits.set(0);
+        component.feedbackTitle.set('Encapsulation broken');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(false);
+    });
+
+    it('should treat undefined feedbackCredits as 0 when checking dismissal without confirmation', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(undefined as unknown as number);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(true);
+    });
+
+    it('should emit onDelete directly when dismissal needs no confirmation', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        const emitSpy = vi.fn();
+        component.onDelete.subscribe(emitSpy);
+
+        component.toggleDeleteConfirm();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should emit onDelete when handleDeleteConfirmed is called', () => {
+        const emitSpy = vi.fn();
+        component.onDelete.subscribe(emitSpy);
+
+        component.handleDeleteConfirmed();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should render an editable header with title input, points input, and delete toolbar', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(2);
+        component.feedbackDetail.set('Some detail');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const titleInput = fixture.nativeElement.querySelector('.unified-feedback-title-input') as HTMLInputElement;
+        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+        const detailInput = fixture.nativeElement.querySelector('.unified-feedback-detail-input') as HTMLTextAreaElement;
+
+        expect(titleInput).toBeTruthy();
+        expect(pointsInput).toBeTruthy();
+        expect(detailInput).toBeTruthy();
+        expect(detailInput.value).toBe('Some detail');
+        // credits=2, detail non-empty => confirmation required, so the plain dismiss button must not render
+        expect(fixture.nativeElement.querySelector('#dismiss-icon')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#confirm-icon')).toBeTruthy();
+    });
+
+    it('should render the plain dismiss button when nothing would be lost', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#dismiss-icon')).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('#confirm-icon')).toBeNull();
+    });
+
+    it('should emit onDelete when the plain dismiss button is clicked', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        const emitSpy = vi.fn();
+        component.onDelete.subscribe(emitSpy);
+
+        (fixture.nativeElement.querySelector('#dismiss-icon') as HTMLButtonElement).click();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should render suggestion accept/discard buttons and emit their events', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('isSuggestion', true);
+        fixture.detectChanges();
+        const acceptSpy = vi.fn();
+        const discardSpy = vi.fn();
+        component.onAcceptSuggestion.subscribe(acceptSpy);
+        component.onDiscardSuggestion.subscribe(discardSpy);
+
+        (fixture.nativeElement.querySelector('#accept-suggestion') as HTMLButtonElement).click();
+        (fixture.nativeElement.querySelector('#discard-suggestion') as HTMLButtonElement).click();
+
+        expect(acceptSpy).toHaveBeenCalledOnce();
+        expect(discardSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should show the grading instruction label and lock the points input when a grading instruction is attached', async () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('feedback', { credits: 2, gradingInstruction: { feedback: 'Fixed rubric text', credits: 2 } } as any);
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const label = fixture.nativeElement.querySelector('.unified-feedback-rubric-label');
+        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+
+        expect(label?.textContent).toContain('Fixed rubric text');
+        expect(pointsInput.disabled).toBe(true);
     });
 });

@@ -1,128 +1,44 @@
-<div>
-    @if (Feedback.isFeedbackSuggestion(feedback())) {
-        <jhi-feedback-suggestion-badge [feedback]="feedback()" [useDefaultText]="true" />
-    }
-    @if (!readOnly()) {
-        <div class="close">
-            @if (canDismiss) {
-                <fa-icon [icon]="faTimes" [ngbTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate" (click)="dismiss()" id="dismiss-icon" />
-            } @else {
-                <jhi-confirm-icon
-                    [initialIcon]="faTimes"
-                    [confirmIcon]="faTrash"
-                    [initialTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedback' | artemisTranslate"
-                    [confirmTooltip]="'artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation' | artemisTranslate"
-                    (confirmEvent)="dismiss()"
-                    id="confirm-icon"
-                />
-            }
-        </div>
-    }
-    <div class="row">
-        <div class="form-group col-md-10 m-0">
-            <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedbackWithColon" for="detailText-{{ textBlock().id }}"></label>
-            @if (feedback().gradingInstruction!) {
-                <div class="d-inline">
-                    <span class="fw-bold">{{ feedback().gradingInstruction!.feedback }}</span>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" />
-                </div>
-            }
-        </div>
-        <div class="form-group col-md-1 text-end m-0">
-            <label jhiTranslate="artemisApp.exercise.score" for="score-{{ textBlock().id }}"></label>
-        </div>
-        @if (feedback().gradingInstruction!) {
-            <div class="form-group col-md-1 m-0">
-                <jhi-grading-instruction-link-icon [feedback]="feedback()" />
-            </div>
-        }
-    </div>
-    <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
-        <div class="input-group">
-            <div class="input-group-prepend">
-                @if (criteria()) {
-                    <div class="dropdown" ngbDropdown>
-                        <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
-                        <!--if there is only one criterion, dropdown-menu contains its instructions-->
-                        @if (criteria()!.length === 1) {
-                            <ul ngbDropdownMenu>
-                                <jhi-textblock-feedback-dropdown [criterion]="criteria()![0]" [feedback]="feedback()" (didChange)="didChange()" />
-                            </ul>
-                        } @else {
-                            <ul class="dropdown-menu" ngbDropdownMenu>
-                                @for (criterion of criteria(); track criterion) {
-                                    <li>
-                                        @if (criterion.title) {
-                                            <a class="dropdown-item"> {{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /> </a>
-                                        } @else {
-                                            <a class="dropdown-item"
-                                                >(No title)
-                                                <fa-icon class="float-end" [icon]="faAngleRight" />
-                                            </a>
-                                        }
-                                        <ul class="dropdown-menu dropdown-submenu">
-                                            <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />
-                                        </ul>
-                                    </li>
+<jhi-unified-feedback
+    #unifiedFeedback
+    [editable]="true"
+    [readOnly]="readOnly()"
+    [feedback]="feedback()"
+    [highlightDifferences]="highlightDifferences()"
+    [useDefaultFeedbackSuggestionBadgeText]="true"
+    [(feedbackTitle)]="feedback().text"
+    [(feedbackDetail)]="feedback().detailText"
+    [(feedbackCredits)]="feedback().credits!"
+    (feedbackTitleChange)="didChange()"
+    (feedbackDetailChange)="didChange()"
+    (feedbackCreditsChange)="onScoreChange()"
+    (onDelete)="dismiss()"
+    (keydown.escape)="escKeyup()"
+>
+    @if (criteria(); as criteriaList) {
+        @if (criteriaList.length > 0) {
+            <div unifiedFeedbackExtraControls class="dropdown" ngbDropdown (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
+                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" [attr.aria-label]="connectToInstructionAriaLabel()"></button>
+                @if (criteriaList.length === 1) {
+                    <ul ngbDropdownMenu>
+                        <jhi-textblock-feedback-dropdown [criterion]="criteriaList[0]" [feedback]="feedback()" (didChange)="didChange()" />
+                    </ul>
+                } @else {
+                    <ul class="dropdown-menu" ngbDropdownMenu>
+                        @for (criterion of criteriaList; track criterion) {
+                            <li>
+                                @if (criterion.title) {
+                                    <a class="dropdown-item">{{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /></a>
+                                } @else {
+                                    <a class="dropdown-item">(No title)<fa-icon class="float-end" [icon]="faAngleRight" /></a>
                                 }
-                            </ul>
+                                <ul class="dropdown-menu dropdown-submenu">
+                                    <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />
+                                </ul>
+                            </li>
                         }
-                        <!--if there is more than one criterion, the dropdown-menu contains the criteria titles with submenus of the corresponding instructions-->
-                    </div>
+                    </ul>
                 }
             </div>
-            <div class="form-group col-md-10">
-                <textarea
-                    class="form-control"
-                    rows="1"
-                    [placeholder]="
-                        feedback().gradingInstruction!
-                            ? ('artemisApp.assessment.additionalFeedbackCommentPlaceholder' | artemisTranslate)
-                            : ('artemisApp.assessment.feedbackCommentPlaceholder' | artemisTranslate)
-                    "
-                    id="feedback-editor-text-input"
-                    [(ngModel)]="feedback().detailText"
-                    #detailText
-                    (keyup)="textareaAutogrow()"
-                    (keydown.escape)="escKeyup()"
-                    (focus)="inFocus()"
-                    [readOnly]="readOnly()"
-                    [disabled]="readOnly()"
-                    (ngModelChange)="didChange()"
-                ></textarea>
-            </div>
-            <div class="form-group col-md-1 text-end">
-                <input
-                    class="form-control"
-                    type="number"
-                    step="0.5"
-                    [(ngModel)]="feedback().credits"
-                    id="feedback-editor-points-input"
-                    (keydown.escape)="escKeyup()"
-                    (click)="onScoreClick($event)"
-                    (focus)="inFocus()"
-                    (ngModelChange)="didChange()"
-                    [readOnly]="feedback().gradingInstruction || readOnly()"
-                    [disabled]="!!feedback().gradingInstruction || readOnly()"
-                />
-            </div>
-        </div>
-    </div>
-    <!-- Text showing whether the tutor feedback is correct or not (upon validation on the server) -->
-    @if (feedback().correctionStatus !== undefined) {
-        <div>
-            @if (feedback().correctionStatus === 'CORRECT') {
-                <span class="text-success">{{ 'artemisApp.exampleSubmission.feedback.' + feedback().correctionStatus! | artemisTranslate }} </span>
-            }
-            @if (feedback().correctionStatus !== 'CORRECT') {
-                <span class="text-danger">{{ 'artemisApp.exampleSubmission.feedback.' + feedback().correctionStatus! | artemisTranslate }} </span>
-            }
-            <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
-            @if (feedback().correctionStatus !== 'CORRECT') {
-                <fa-icon class="text-warning" [icon]="faExclamationTriangle" />
-            }
-        </div>
+        }
     }
-    <!-- correction round label-->
-    <jhi-assessment-correction-round-badge [feedback]="feedback()" [highlightDifferences]="highlightDifferences()" />
-</div>
+</jhi-unified-feedback>

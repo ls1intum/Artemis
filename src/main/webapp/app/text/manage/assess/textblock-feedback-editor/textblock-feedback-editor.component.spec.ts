@@ -116,6 +116,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         vi.spyOn(component, 'escKeyup');
         const event = new KeyboardEvent('keydown', {
             key: 'Esc',
+            bubbles: true,
         });
         const textarea = fixture.nativeElement.querySelector('textarea');
         textarea.dispatchEvent(event);
@@ -136,14 +137,14 @@ describe('TextBlockFeedbackEditorComponent', () => {
     it('should show link icon when feedback is associated with grading instruction', () => {
         component.feedback().gradingInstruction = new GradingInstruction();
         fixture.changeDetectorRef.detectChanges();
-        const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
         expect(linkIcon).toBeTruthy();
     });
 
     it('should not show link icon when feedback is not associated with grading instruction', () => {
         component.feedback().gradingInstruction = undefined;
         fixture.changeDetectorRef.detectChanges();
-        const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
+        const linkIcon = compiled.querySelector('jhi-grading-instruction-link-icon');
         expect(linkIcon).toBeFalsy();
     });
 
@@ -157,12 +158,12 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.MANUAL);
     });
 
-    it('should set correctionStatus of the feedback to undefined on score click', () => {
+    it('should set correctionStatus of the feedback to undefined when the score changes', () => {
         // given
         component.feedback().correctionStatus = FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK;
 
         // when
-        component.onScoreClick(new MouseEvent(''));
+        component.onScoreChange();
 
         // then
         expect(component.feedback().correctionStatus).toBeUndefined();

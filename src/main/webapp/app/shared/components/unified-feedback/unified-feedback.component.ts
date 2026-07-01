@@ -1,9 +1,9 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TooltipModule } from 'primeng/tooltip';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faMessage, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -13,6 +13,11 @@ import {
 import { AssessmentNamesForModelId } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
+import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
+import { GradingInstructionLinkIconComponent } from 'app/shared-ui/grading-instruction-link-icon/grading-instruction-link-icon.component';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { FormsModule } from '@angular/forms';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
 
@@ -26,9 +31,18 @@ interface FeedbackTypeConfig {
     standalone: true,
     templateUrl: './unified-feedback.component.html',
     styleUrls: ['./unified-feedback.component.scss'],
-    imports: [NgClass, FaIconComponent, TooltipModule],
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TooltipModule,
+        FormsModule,
+        ConfirmIconComponent,
+        GradingInstructionLinkIconComponent,
+        FeedbackSuggestionBadgeComponent,
+        AssessmentCorrectionRoundBadgeComponent,
+    ],
 })
-export class UnifiedFeedbackComponent {
+export class UnifiedFeedbackComponent implements AfterViewInit {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private localeConversionService = inject(LocaleConversionService);
 
@@ -41,6 +55,23 @@ export class UnifiedFeedbackComponent {
     feedback = input<Feedback | undefined>(undefined);
     assessmentsNames = input<AssessmentNamesForModelId | undefined>(undefined);
     showReference = input<boolean>(true);
+
+    editable = input<boolean>(false);
+    isSuggestion = input<boolean>(false);
+    readOnly = input<boolean>(false);
+    useDefaultFeedbackSuggestionBadgeText = input<boolean>(false);
+    highlightDifferences = input<boolean>(false);
+
+    feedbackTitle = model<string | undefined>(undefined);
+    feedbackDetail = model<string | undefined>(undefined);
+    feedbackCredits = model<number>(0);
+
+    readonly onDelete = output<void>();
+    readonly onAcceptSuggestion = output<void>();
+    readonly onDiscardSuggestion = output<void>();
+
+    private readonly detailTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('detailTextarea');
+    private readonly confirmIcon = viewChild(ConfirmIconComponent);
 
     private readonly feedbackTypeConfigs: Record<FeedbackType, FeedbackTypeConfig> = {
         correct: { icon: faCheck, alertClass: 'alert-success' },
@@ -56,6 +87,8 @@ export class UnifiedFeedbackComponent {
         non_compliant: 'artemisApp.feedback.type.needsRevision',
     };
 
+    private readonly effectivePoints = computed(() => (this.editable() ? (this.feedbackCredits() ?? 0) : this.points()));
+
     readonly inferredType = computed(() => {
         const explicitType = this.type();
         if (explicitType) {
@@ -66,7 +99,7 @@ export class UnifiedFeedbackComponent {
             return 'needs_revision';
         }
 
-        const points = this.points();
+        const points = this.effectivePoints();
         if (points > 0) {
             return 'correct';
         }
@@ -118,6 +151,85 @@ export class UnifiedFeedbackComponent {
         const key = `artemisApp.assessment.detail.points.${Math.abs(points) === 1 ? 'one' : 'many'}`;
         return this.artemisTranslatePipe.transform(key, { points: formatted });
     });
+
+    readonly displayTitle = computed(() => this.stripFeedbackSuggestionPrefix(this.feedbackTitle() ?? ''));
+
+    readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
+
+    readonly canDismissWithoutConfirm = computed(() => (this.feedbackCredits() ?? 0) === 0 && (this.feedbackDetail() ?? '').length === 0 && this.displayTitle().length === 0);
+
+    readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
+    readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
+    readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
+    readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
+    readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));
+    readonly feedbackDetailAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedback'));
+    readonly acceptSuggestionAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.detail.accept'));
+    readonly discardSuggestionAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.detail.discard'));
+    readonly gradingInstructionText = computed(() => this.feedback()?.gradingInstruction?.feedback);
+    readonly correctionStatusLabel = computed(() => {
+        const status = this.feedback()?.correctionStatus;
+        return status ? this.artemisTranslatePipe.transform(`artemisApp.exampleSubmission.feedback.${status}`) : undefined;
+    });
+    readonly isCorrectionStatusCorrect = computed(() => this.feedback()?.correctionStatus === 'CORRECT');
+
+    protected readonly Feedback = Feedback;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrashAlt = faTrashAlt;
+    protected readonly faCheck = faCheck;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+
+    private currentTitlePrefix(): string {
+        const raw = this.feedbackTitle() ?? '';
+        for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
+            if (raw.startsWith(prefix)) {
+                return prefix;
+            }
+        }
+        return '';
+    }
+
+    onTitleInput(value: string): void {
+        this.feedbackTitle.set(`${this.currentTitlePrefix()}${value}`);
+    }
+
+    handleDeleteConfirmed(): void {
+        this.onDelete.emit();
+    }
+
+    toggleDeleteConfirm(): void {
+        if (this.canDismissWithoutConfirm()) {
+            this.handleDeleteConfirmed();
+        } else {
+            this.confirmIcon()?.toggle();
+        }
+    }
+
+    focusTextarea(): void {
+        const textarea = this.detailTextarea()?.nativeElement;
+        textarea?.focus();
+        this.autogrowDetailTextarea();
+    }
+
+    onDetailInput(): void {
+        this.autogrowDetailTextarea();
+    }
+
+    ngAfterViewInit(): void {
+        if (this.editable()) {
+            this.autogrowDetailTextarea();
+        }
+    }
+
+    private autogrowDetailTextarea(): void {
+        const textarea = this.detailTextarea()?.nativeElement;
+        if (!textarea) {
+            return;
+        }
+        textarea.style.height = '0px';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }
 
     private stripFeedbackSuggestionPrefix(text: string): string {
         for (const prefix of [FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
