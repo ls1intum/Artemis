@@ -78,8 +78,8 @@ export class FaqService {
      * Converts a faqs categories into a json string (to send them to the server). Does nothing if no categories exist
      * @param faq the faq
      */
-    static stringifyFaqCategories(faq: CreateFaqDTO | UpdateFaqDTO): string[] | undefined {
-        return faq.categories?.map((category) => JSON.stringify(category));
+    static stringifyFaqCategories(faq: CreateFaqDTO | UpdateFaqDTO) {
+        return faq.categories?.map((category) => JSON.stringify(category) as unknown as FaqCategory);
     }
 
     convertFaqCategoriesAsStringFromServer(categories: string[]): FaqCategory[] {
@@ -104,8 +104,7 @@ export class FaqService {
     static parseFaqCategories(faq?: Faq) {
         if (faq?.categories) {
             faq.categories = faq.categories.map((category) => {
-                // Server sends categories as JSON strings; the model field carries FaqCategory objects after parsing.
-                const categoryObj = typeof category === 'string' ? JSON.parse(category) : category;
+                const categoryObj = JSON.parse(category as unknown as string);
                 return new FaqCategory(categoryObj.category, categoryObj.color);
             });
         }

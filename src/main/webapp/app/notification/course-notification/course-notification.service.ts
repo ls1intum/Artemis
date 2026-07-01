@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
+import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription, of, tap } from 'rxjs';
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
@@ -498,8 +498,8 @@ export class CourseNotificationService implements OnDestroy {
         if (res.body && res.body.content) {
             res.body.content.forEach((notification) => {
                 notification.creationDate = convertDateFromServer(notification.creationDate);
-                notification.category = courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category);
-                notification.status = courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status);
+                notification.category = CourseNotificationCategory[notification.category as unknown as keyof typeof CourseNotificationCategory];
+                notification.status = CourseNotificationViewingStatus[notification.status as unknown as keyof typeof CourseNotificationViewingStatus];
                 if (notification.parameters && notification.parameters['courseTitle']) {
                     notification.courseName = notification.parameters['courseTitle'] as string;
                 }

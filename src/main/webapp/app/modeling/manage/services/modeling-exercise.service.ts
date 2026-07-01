@@ -22,7 +22,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
         let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
@@ -56,7 +56,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     import(adaptedSourceModelingExercise: ModelingExercise) {
         let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceModelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<ModelingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceModelingExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));

@@ -111,7 +111,7 @@ export class ExampleSubmissionService {
         if (jsonCopy.exercise) {
             jsonCopy.exercise = ExerciseService.convertExerciseDatesFromClient(jsonCopy.exercise);
             jsonCopy.exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(jsonCopy.exercise!);
-            ExerciseService.stringifyExerciseCategories(jsonCopy.exercise);
+            jsonCopy.exercise.categories = ExerciseService.stringifyExerciseCategories(jsonCopy.exercise);
         }
         return jsonCopy;
     }

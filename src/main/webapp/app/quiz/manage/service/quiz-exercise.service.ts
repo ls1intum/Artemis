@@ -35,7 +35,7 @@ export class QuizExerciseService {
      */
     create(quizExercise: QuizExercise, files: Map<string, Blob>): Observable<EntityResponseType> {
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
         const exerciseDTO = convertQuizExerciseToCreationDTO(copy);
 
@@ -71,7 +71,7 @@ export class QuizExerciseService {
     import(adaptedSourceQuizExercise: QuizExercise, files: Map<string, Blob>) {
         let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceQuizExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
         const formData = new FormData();
         formData.append('exercise', objectToJsonBlob(copy));
@@ -94,7 +94,7 @@ export class QuizExerciseService {
     update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
         const exerciseDTO = toQuizExerciseUpdateDTO(copy);
         const formData = new FormData();

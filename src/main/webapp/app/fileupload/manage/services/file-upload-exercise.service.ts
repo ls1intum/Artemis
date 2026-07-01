@@ -26,7 +26,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
         copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
@@ -119,7 +119,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         }
         let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceFileUploadExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
             .post<FileUploadExercise>(`${this.resourceUrl}/import?sourceId=${adaptedSourceFileUploadExercise.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));

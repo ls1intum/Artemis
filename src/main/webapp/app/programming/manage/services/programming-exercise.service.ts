@@ -68,7 +68,7 @@ export class ProgrammingExerciseService {
     automaticSetup(programmingExercise: ProgrammingExercise, emptyRepositories = false): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         const params = new HttpParams().set('emptyRepositories', String(emptyRepositories));
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
@@ -156,7 +156,7 @@ export class ProgrammingExerciseService {
         const options = createRequestOption(importOptions);
         const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
 
-        ExerciseService.stringifyExerciseCategories(exercise);
+        exercise.categories = ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
             .post<ProgrammingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
@@ -547,7 +547,7 @@ export class ProgrammingExerciseService {
     importFromFile(exercise: ProgrammingExercise, courseId: number): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(exercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         const formData = new FormData();
         formData.append('file', exercise.zipFileForImport!);
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });

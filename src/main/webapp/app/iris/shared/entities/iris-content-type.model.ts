@@ -127,55 +127,20 @@ export function getMcqData(content: IrisMessageContent): McqData | undefined {
     return undefined;
 }
 
-/**
- * Validates that a plain object has the full McqQuestionData shape: a non-empty question string,
- * a non-empty explanation string, and an options array with at least 2 valid McqOption entries.
- * @param obj the value to validate
- * @returns true if obj is a valid McqQuestionData
- */
-function isValidMcqQuestion(obj: unknown): obj is McqQuestionData {
-    if (typeof obj !== 'object' || obj == null) {
-        return false;
-    }
-    const rec = obj as Record<string, unknown>;
-    if (typeof rec['question'] !== 'string' || rec['question'].length === 0) {
-        return false;
-    }
-    if (typeof rec['explanation'] !== 'string' || rec['explanation'].length === 0) {
-        return false;
-    }
-    const options = rec['options'];
-    return Array.isArray(options) && options.length >= 2 && options.every(isValidMcqOption);
-}
-
-/**
- * Runtime type guard that checks whether the given message content is a fully valid MCQ set.
- * Validates type ('mcq-set') and that questions is a non-empty array of valid McqQuestionData,
- * mirroring the validation {@link isMcqContent} performs for a single MCQ.
- * @param content the message content to check
- * @returns true if the content is JSON content containing a valid McqSetData payload
- */
-export function isMcqSetContent(content: IrisMessageContent): content is IrisJsonMessageContent & { attributes: McqSetData } {
+export function isMcqSetContent(content: IrisMessageContent): boolean {
     if (!isJsonContent(content)) {
         return false;
     }
-    const attrs = content.attributes;
-    if (attrs?.['type'] !== 'mcq-set') {
-        return false;
-    }
-    const questions = attrs['questions'];
-    return Array.isArray(questions) && questions.length > 0 && questions.every(isValidMcqQuestion);
+    return content.attributes?.['type'] === 'mcq-set';
 }
 
-/**
- * Extracts typed McqSetData from a message content if it represents a valid MCQ set.
- * Uses the isMcqSetContent type guard for full shape validation instead of an unchecked cast.
- * @param content the message content to extract from
- * @returns the McqSetData if the content is a valid MCQ set, undefined otherwise
- */
 export function getMcqSetData(content: IrisMessageContent): McqSetData | undefined {
-    if (isMcqSetContent(content)) {
-        return content.attributes;
+    if (!isJsonContent(content)) {
+        return undefined;
+    }
+    const attrs = content.attributes;
+    if (attrs?.['type'] === 'mcq-set') {
+        return attrs as unknown as McqSetData;
     }
     return undefined;
 }

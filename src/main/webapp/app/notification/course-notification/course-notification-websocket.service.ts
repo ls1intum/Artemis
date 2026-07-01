@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
+import { CourseNotification } from 'app/notification/shared/entities/course-notification/course-notification';
 import { Subject, Subscription } from 'rxjs';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
@@ -86,18 +86,12 @@ export class CourseNotificationWebsocketService implements OnDestroy {
             return this.courseWebsocketSubscriptions[courseId];
         }
         this.courseWebsocketSubscriptions[courseId] = this.websocketService.subscribe('/user/topic/notification/' + courseId).subscribe((notification: CourseNotification) => {
-            const category = courseNotificationEnumValueFromName(CourseNotificationCategory, notification.category);
-            const status = courseNotificationEnumValueFromName(CourseNotificationViewingStatus, notification.status);
-            // Skip malformed or forward-incompatible payloads whose category/status do not map to a known enum value.
-            if (category === undefined || status === undefined) {
-                return;
-            }
             const courseNotification = new CourseNotification(
                 notification.notificationId!,
                 notification.courseId!,
                 notification.notificationType!,
-                category,
-                status,
+                CourseNotificationCategory[notification.category as unknown as keyof typeof CourseNotificationCategory],
+                CourseNotificationViewingStatus[notification.status as unknown as keyof typeof CourseNotificationViewingStatus],
                 convertDateFromServer(notification.creationDate!)!,
                 notification.parameters!,
                 notification.relativeWebAppUrl!,

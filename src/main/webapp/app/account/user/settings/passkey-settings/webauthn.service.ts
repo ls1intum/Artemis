@@ -202,7 +202,7 @@ export class WebauthnService {
                 throw new InvalidCredentialError();
             }
 
-            const credential = getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential);
+            const credential = getLoginCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
             if (!credential) {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
                 throw new InvalidCredentialError();

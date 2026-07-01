@@ -86,7 +86,7 @@ export class ProgrammingExerciseSharingService {
             copy.solutionParticipation = { ...filteredSolutionParticipation } as SolutionProgrammingExerciseParticipation;
         }
 
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
 
         return copy as ProgrammingExercise;
     }

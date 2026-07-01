@@ -106,11 +106,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     // courseId is template-bound and written asynchronously (inside the route subscription), so it is backed by a
     // signal to schedule change detection. The public getter/setter preserves external assignment by the learning path parent.
-    // The backing signal is honestly typed as number | undefined (its construction-time value is genuinely undefined);
-    // the getter narrows with a single non-null assertion because courseId is always assigned before it is ever read.
-    private readonly _courseId = signal<number | undefined>(undefined);
+    private readonly _courseId = signal<number>(undefined as unknown as number);
     public get courseId(): number {
-        return this._courseId()!;
+        return this._courseId();
     }
     public set courseId(value: number) {
         this._courseId.set(value);

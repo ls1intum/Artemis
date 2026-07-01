@@ -248,13 +248,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     readonly groupChartData = computed(() => {
         const dataPerGroup = new Map<ExerciseType, ChartData<'bar', number[], string>>();
         for (const [exerciseType, exerciseGroup] of this.ngxExerciseGroups()) {
-            // Adapt each NgxExercise to a ChartMultiSeriesEntry: its title is optional, so fall back to an empty
-            // label (the stacked-bar adapter requires a string name); series is already structurally compatible.
-            const entries: ChartMultiSeriesEntry[] = exerciseGroup.map((ngxExercise) => ({
-                name: ngxExercise.name ?? '',
-                series: ngxExercise.series,
-            }));
-            dataPerGroup.set(exerciseType, multiSeriesToStackedBarData(entries, this.barColors()));
+            dataPerGroup.set(exerciseType, multiSeriesToStackedBarData(exerciseGroup as unknown as ChartMultiSeriesEntry[], this.barColors()));
         }
         return dataPerGroup;
     });

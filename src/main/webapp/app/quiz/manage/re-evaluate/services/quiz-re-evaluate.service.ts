@@ -26,7 +26,7 @@ export class QuizReEvaluateService {
      */
     private convert(quizExercise: QuizExercise): QuizExerciseReEvaluateDTO {
         const copy: QuizExercise = Object.assign({}, quizExercise);
-        ExerciseService.stringifyExerciseCategories(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return convertQuizExerciseToReEvaluateDTO(copy);
     }
 }
