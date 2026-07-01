@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnifiedFeedbackComponent } from './unified-feedback.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { vi } from 'vitest';
 
 describe('UnifiedFeedbackComponent', () => {
     setupTestBed({ zoneless: true });
@@ -35,6 +36,16 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.type()).toBeUndefined();
         expect(component.title()).toBeUndefined();
         expect(component.reference()).toBeUndefined();
+    });
+
+    it('should have editable-mode defaults', () => {
+        expect(component.editable()).toBe(false);
+        expect(component.isSuggestion()).toBe(false);
+        expect(component.readOnly()).toBe(false);
+        expect(component.useDefaultFeedbackSuggestionBadgeText()).toBe(false);
+        expect(component.feedbackTitle()).toBeUndefined();
+        expect(component.feedbackDetail()).toBeUndefined();
+        expect(component.feedbackCredits()).toBe(0);
     });
 
     it('should infer needs_revision type by default when points = 0', () => {
@@ -216,5 +227,85 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.detectChanges();
         expect(component.inferredType()).toBe('non_compliant');
         expect(component.inferredAlertClass()).toBe('alert-danger');
+    });
+
+    it('should infer type from feedbackCredits when editable, ignoring the points input', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('points', 5); // must be ignored in editable mode
+        component.feedbackCredits.set(-2);
+        fixture.detectChanges();
+        expect(component.inferredType()).toBe('non_compliant');
+        expect(component.inferredAlertClass()).toBe('alert-danger');
+
+        component.feedbackCredits.set(3);
+        fixture.detectChanges();
+        expect(component.inferredType()).toBe('correct');
+        expect(component.inferredAlertClass()).toBe('alert-success');
+    });
+
+    it('should expose a stripped display title and re-apply the suggestion prefix on edit', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set('FeedbackSuggestion:accepted:Missing null check');
+        fixture.detectChanges();
+        expect(component.displayTitle()).toBe('Missing null check');
+
+        component.onTitleInput('Null check is missing');
+        expect(component.feedbackTitle()).toBe('FeedbackSuggestion:accepted:Null check is missing');
+    });
+
+    it('should not add a prefix when editing a plain (non-suggestion) title', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackTitle.set(undefined);
+        fixture.detectChanges();
+        expect(component.displayTitle()).toBe('');
+
+        component.onTitleInput('Encapsulation broken');
+        expect(component.feedbackTitle()).toBe('Encapsulation broken');
+    });
+
+    it('should expose the auto-derived label as a placeholder for the title input', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(2);
+        fixture.detectChanges();
+        expect(component.defaultTitlePlaceholder()).toBe('artemisApp.feedback.type.positive');
+    });
+
+    it('should allow dismissal without confirmation only when credits are 0 and detail text is empty', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(true);
+
+        component.feedbackDetail.set('Some text');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(false);
+
+        component.feedbackDetail.set('');
+        component.feedbackCredits.set(1);
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(false);
+    });
+
+    it('should emit onDelete directly when dismissal needs no confirmation', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(0);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        const emitSpy = vi.fn();
+        component.onDelete.subscribe(emitSpy);
+
+        component.toggleDeleteConfirm();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should emit onDelete when handleDeleteConfirmed is called', () => {
+        const emitSpy = vi.fn();
+        component.onDelete.subscribe(emitSpy);
+
+        component.handleDeleteConfirmed();
+
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 });
