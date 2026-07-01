@@ -65,7 +65,7 @@ export interface UpdateTextExerciseDTO {
  * needed during import. Matches the server-side ImportTextExerciseDTO record.
  */
 export interface ImportTextExerciseDTO extends UpdateTextExerciseDTO {
-    plagiarismDetectionConfig?: unknown;
+    plagiarismDetectionConfig?: TextExercise['plagiarismDetectionConfig'];
 }
 
 /**
@@ -151,8 +151,7 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
  * @returns the corresponding ImportTextExerciseDTO
  */
 export function toImportTextExerciseDTO(textExercise: TextExercise): ImportTextExerciseDTO {
-    return {
-        ...toUpdateTextExerciseDTO(textExercise),
-        plagiarismDetectionConfig: textExercise.plagiarismDetectionConfig,
-    };
+    const dto: ImportTextExerciseDTO = toUpdateTextExerciseDTO(textExercise);
+    dto.plagiarismDetectionConfig = textExercise.plagiarismDetectionConfig;
+    return dto;
 }

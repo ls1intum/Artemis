@@ -1338,7 +1338,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
                 // COURSE_TITLE / EXAM_TITLE navigations only make sense for one exercise category, mirroring the shared
                 // helper. With the filter applied each yields a single result, so sorting holds trivially; we still assert
-                // the endpoint returns the sorted page and (for EXAM_TITLE) compare via the DTO's examTitle().
+                // the endpoint returns the sorted page and compare through the DTO fields the client reads.
                 if (sort.equals("EXAM_TITLE")) {
                     params.add("isCourseFilter", "false");
                 }
@@ -1361,10 +1361,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         return switch (sort) {
             case "ID" -> Comparator.comparing(TextExerciseListItemDTO::id);
             case "TITLE" -> Comparator.comparing(TextExerciseListItemDTO::title);
-            // FIXME-DTO: TextExerciseListItemDTO carries courseId() but not the course title, so COURSE_TITLE sorting
-            // cannot be verified by value through this boundary. The course-filtered page contains a single exercise,
-            // so any comparator is trivially satisfied; fall back to id ordering to keep the assertion meaningful.
-            case "COURSE_TITLE" -> Comparator.comparing(TextExerciseListItemDTO::id);
+            case "COURSE_TITLE" -> Comparator.comparing(dto -> dto.course() != null ? dto.course().title() : null, Comparator.nullsLast(String::compareTo));
             case "EXAM_TITLE" -> Comparator.comparing(TextExerciseListItemDTO::examTitle);
             default -> throw new IllegalStateException("Unexpected value: " + sort);
         };

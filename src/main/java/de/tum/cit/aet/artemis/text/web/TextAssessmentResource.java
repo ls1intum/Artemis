@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -548,16 +549,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // and cleanup paths (ResultService) key on feedback id.
         feedback.setId(dto.id());
         feedback.setCredits(dto.credits());
-        // The read DTO carries only the preview of long feedback (the full text lives in a separate LongFeedbackText that
-        // is never sent to the client). For an existing long feedback, reload the full text and set it so the re-save
-        // keeps the complete feedback instead of downgrading it to the preview that setDetailText would otherwise store.
-        if (dto.hasLongFeedbackText() && dto.id() != null) {
-            final String fullDetailText = longFeedbackTextRepository.findByFeedbackId(dto.id()).map(LongFeedbackText::getText).orElse(dto.detailText());
-            feedback.setDetailText(fullDetailText);
-        }
-        else {
-            feedback.setDetailText(dto.detailText());
-        }
+        feedback.setDetailText(detailTextFromDto(dto));
         feedback.setText(dto.text());
         feedback.setReference(dto.reference());
         feedback.setType(dto.type());
@@ -568,6 +560,20 @@ public class TextAssessmentResource extends AssessmentResource {
             feedback.setGradingInstruction(gradingInstruction);
         }
         return feedback;
+    }
+
+    private String detailTextFromDto(final FeedbackDTO dto) {
+        if (!dto.hasLongFeedbackText() || dto.id() == null) {
+            return dto.detailText();
+        }
+
+        // The read DTO can carry only the stored preview of long feedback, but the editor loads the full long text before
+        // changes. Reload the old full text only for preview-only saves; otherwise preserve the user's edited detail text.
+        final boolean dtoContainsOnlyPreview = feedbackRepository.findById(dto.id()).map(feedback -> Objects.equals(dto.detailText(), feedback.getDetailText())).orElse(false);
+        if (dto.detailText() == null || dtoContainsOnlyPreview) {
+            return longFeedbackTextRepository.findByFeedbackId(dto.id()).map(LongFeedbackText::getText).orElse(dto.detailText());
+        }
+        return dto.detailText();
     }
 
     /**

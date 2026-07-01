@@ -211,6 +211,61 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentWithEditedLongFeedbackUsesRequestDetailText() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result result = textSubmission.getLatestResult();
+
+        Feedback longFeedback = new Feedback();
+        longFeedback.setCredits(1.0);
+        longFeedback.setType(FeedbackType.MANUAL_UNREFERENCED);
+        longFeedback.setDetailText("Original long feedback ".repeat(100));
+        participationUtilService.addFeedbackToResult(longFeedback, result);
+        final long feedbackId = longFeedback.getId();
+
+        FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
+        final String editedLongText = "Edited long feedback ".repeat(100);
+        FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedLongText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+        TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
+        request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
+                ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
+
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId).orElseThrow().getText()).as("edited long feedback text is persisted").isEqualTo(editedLongText);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveAssessmentWithExistingLongFeedbackCanBeShortened() throws Exception {
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some submitted text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        Result result = textSubmission.getLatestResult();
+
+        Feedback longFeedback = new Feedback();
+        longFeedback.setCredits(1.0);
+        longFeedback.setType(FeedbackType.MANUAL_UNREFERENCED);
+        longFeedback.setDetailText("Original long feedback ".repeat(100));
+        participationUtilService.addFeedbackToResult(longFeedback, result);
+        final long feedbackId = longFeedback.getId();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).as("setup: long feedback exists").isPresent();
+
+        FeedbackDTO feedbackDTO = FeedbackDTO.of(longFeedback);
+        final String editedShortText = "Short edited feedback";
+        FeedbackDTO editedFeedbackDTO = new FeedbackDTO(feedbackDTO.id(), feedbackDTO.text(), editedShortText, feedbackDTO.hasLongFeedbackText(), feedbackDTO.reference(),
+                feedbackDTO.credits(), feedbackDTO.positive(), feedbackDTO.type(), feedbackDTO.visibility(), feedbackDTO.gradingInstruction());
+        TextAssessmentDTO body = new TextAssessmentDTO(List.of(editedFeedbackDTO), null, null);
+        request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
+                ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
+
+        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
+                .filter(feedback -> Objects.equals(feedback.getId(), feedbackId)).findFirst().orElseThrow();
+        assertThat(persistedFeedback.getDetailText()).as("shortened feedback text is persisted").isEqualTo(editedShortText);
+        assertThat(persistedFeedback.getHasLongFeedbackText()).as("shortened feedback no longer advertises long text").isFalse();
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedbackId)).as("stale long feedback text is removed").isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void retrieveParticipationForSubmission_studentHidden() throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
@@ -494,6 +549,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participation).as("participation found").isNotNull();
         assertThat(participation.submissions().getLast().results().getFirst()).as("result found").isNotNull();
         assertThat(participation.submissions().getLast().results().getFirst().assessor()).as("assessor of participation is hidden").isNull();
+        assertThat(participation.exercise().course()).as("course projection is present for the complaint section").isNotNull();
+        assertThat(participation.exercise().course().complaintsEnabled()).as("student complaint section reads course.complaintsEnabled").isTrue();
+        assertThat(participation.exercise().course().requestMoreFeedbackEnabled()).as("student complaint section reads course.requestMoreFeedbackEnabled").isTrue();
     }
 
     @Test
@@ -651,9 +709,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         // The client needs the exam information to check if results are published yet: TextExerciseResponseDTO flattens this to examId()/examPublishResultsDate().
         assertThat(participation.exercise()).isNotNull();
         assertThat(participation.exercise().examId()).as("exam id is exposed so the client can resolve the exam").isNotNull();
-        // FIXME-DTO: TextExerciseResponseDTO does not carry the exam's isTestExam() flag; the text editor uses exam.isTestExam() to decide test-exam handling. Missing field:
-        // Exam.isTestExam.
-        assertThat(exam.isTestExam()).isTrue();
+        assertThat(participation.exercise().exerciseGroup()).as("the nested exam shape is exposed so the client can detect exam mode").isNotNull();
+        assertThat(participation.exercise().exerciseGroup().exam()).as("the nested exam reference is exposed").isNotNull();
+        assertThat(participation.exercise().exerciseGroup().exam().testExam()).as("test-exam flag is exposed for the text editor").isTrue();
     }
 
     @Test

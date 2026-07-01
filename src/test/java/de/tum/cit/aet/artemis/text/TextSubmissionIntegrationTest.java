@@ -28,6 +28,11 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
@@ -77,10 +82,19 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private TeamRepository teamRepository;
 
     @Autowired
+    private ExamTestRepository examRepository;
+
+    @Autowired
+    private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
     private PostTestRepository postRepository;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -466,6 +480,35 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission preserved = testSubmissionTestRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(existing.getId());
         assertThat(preserved.getText()).as("the result-bearing submission must not be overwritten by autosave").isEqualTo(originalText);
         assertThat(preserved.getResults()).as("the Athena result on the existing submission is preserved").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void updateExamTextSubmissionWithExistingResultForksNewSubmission() throws Exception {
+        TextExercise examTextExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        Exam exam = examTextExercise.getExerciseGroup().getExam();
+        exam.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        exam.setEndDate(ZonedDateTime.now().plusMinutes(60));
+        examRepository.save(exam);
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        StudentExam studentExam = examUtilService.addStudentExam(exam);
+        studentExam.setWorkingTime(3600);
+        studentExam.setUser(student);
+        studentExam.addExercise(examTextExercise);
+        studentExamRepository.save(studentExam);
+
+        TextSubmission existing = textExerciseUtilService.saveTextSubmission(examTextExercise, ParticipationFactory.generateTextSubmission("exam answer", Language.ENGLISH, true),
+                TEST_PREFIX + "student1");
+        participationUtilService.addResultToSubmission(existing, AssessmentType.AUTOMATIC_ATHENA);
+        final String originalText = existing.getText();
+
+        TextSubmissionRequestDTO requestBody = new TextSubmissionRequestDTO(existing.getId(), "exam autosaved replacement text", Language.ENGLISH, false);
+        request.putWithResponseBody("/api/text/exercises/" + examTextExercise.getId() + "/text-submissions", requestBody, TextSubmissionResponseDTO.class, HttpStatus.OK);
+
+        TextSubmission preserved = testSubmissionTestRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(existing.getId());
+        assertThat(preserved.getText()).as("real exam duplicate-submission handling must not overwrite the result-bearing submission").isEqualTo(originalText);
+        assertThat(preserved.getResults()).as("the Athena result on the existing exam submission is preserved").isNotEmpty();
     }
 
     @Test
