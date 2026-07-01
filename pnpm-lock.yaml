@@ -147,8 +147,8 @@ importers:
         specifier: 7.3.0
         version: 7.3.0
       '@tumaet/apollon':
-        specifier: 5.0.0
-        version: 5.0.0(@types/react@19.2.17)(@xyflow/react@12.9.3(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
+        specifier: 5.0.1
+        version: 5.0.1(@types/react@19.2.17)(@xyflow/react@12.9.3(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)
       '@vscode/codicons':
         specifier: 0.0.45
         version: 0.0.45
@@ -3233,8 +3233,8 @@ packages:
     resolution: {integrity: sha512-Y8cK9aggNRsqJVaKUlEYs4s7CvQ1b1ta2DVPyAimb0I2qhzjNk+A+mxvll/klL0RlfuIUei8BF7YWiua4kQqww==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
-  '@tumaet/apollon@5.0.0':
-    resolution: {integrity: sha512-OT1FbtqytudSjKPDEUO28riI8Ivk+xltYiUR/rjdQBwTKUrRCg9B8S7YzKPl586vG4KKma0pRC/J9R727agtcQ==}
+  '@tumaet/apollon@5.0.1':
+    resolution: {integrity: sha512-cqs187fWY1C5dcTyoadYo7WdIEFiIRV5Q8DRqgR0wNJ9ieYJGDc+At3YyIn9kTb+MaiHsneXuq81zt9ekxagZA==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@xyflow/react': ^12.9.0
@@ -9902,7 +9902,7 @@ snapshots:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 10.2.5
 
-  '@tumaet/apollon@5.0.0(@types/react@19.2.17)(@xyflow/react@12.9.3(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)':
+  '@tumaet/apollon@5.0.1(@types/react@19.2.17)(@xyflow/react@12.9.3(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(use-sync-external-store@1.6.0(react@19.2.7))(y-protocols@1.0.7(yjs@13.6.31))(yjs@13.6.31)':
     dependencies:
       '@base-ui/react': 1.6.0(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       '@chenglou/pretext': 0.0.8
