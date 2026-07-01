@@ -289,7 +289,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             // Guard against the internal `model.setValue('')` that clears Monaco before the Yjs binding is created (see initializeProblemStatementSync). While the initial sync is
             // still pending, a blank value is never a real user edit; propagating it to the parent would wipe the persisted problem statement if the exercise is saved before the sync
             // finalizes (issue #13046). Non-blank content still propagates so the model is restored once the real statement arrives.
-            if (!problemStatement.trim() && this.problemStatementSyncService.isAwaitingInitialSync()) {
+            if (this.problemStatementSyncService.isAwaitingInitialSync() && problemStatement.trim().length === 0) {
                 return;
             }
             if (this.suppressUnsavedForNextProblemStatementChange) {

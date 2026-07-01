@@ -285,9 +285,11 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         final var problemStatementEndpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
         request.patchWithResponseBody(problemStatementEndpoint, existingStatement, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
 
-        // Act: perform a metadata update whose problem statement arrives blank because the editor has not populated it yet (the #13046 race).
+        // Act: perform a metadata update whose problem statement arrives blank because the editor has not populated it yet (the #13046 race). A whitespace-only value is used on
+        // purpose: it stays present in the serialized DTO (unlike "", which @JsonInclude(NON_EMPTY) would omit), so the server-side isBlank() guard is exercised, mirroring the
+        // transient blank the client editor emits during its initial sync.
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        programmingExercise.setProblemStatement(null);
+        programmingExercise.setProblemStatement("   ");
         request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
                 ProgrammingExercise.class, HttpStatus.OK);
 
