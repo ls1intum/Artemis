@@ -985,5 +985,13 @@ examples.forEach((activeConversation) => {
                 expect(closeSidebarSpy).toHaveBeenCalled();
             });
         });
+
+        it('should update the page title signal via setPageTitle', () => {
+            expect(component.pageTitle()).toBe('');
+
+            component.setPageTitle('overview.communication');
+
+            expect(component.pageTitle()).toBe('overview.communication');
+        });
     });
 });

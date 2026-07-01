@@ -42,6 +42,10 @@
                         [collapseState]="DEFAULT_COLLAPSE_STATE"
                         [inCommunication]="true"
                         [reEmitNonDistinctSidebarEvents]="true"
+                        [pageTitle]="pageTitle()"
+                        [showSidebarToggle]="true"
+                        [isSidebarCollapsed]="isCollapsed()"
+                        (toggleSidebar)="toggleSidebar()"
                     />
                 </div>
                 @if (course() && !activeConversation() && isCodeOfConductPresented()) {

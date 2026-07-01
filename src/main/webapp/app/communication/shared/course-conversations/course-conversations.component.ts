@@ -188,6 +188,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     readonly accordionConversationGroups = signal<AccordionGroups>(undefined!);
     readonly sidebarConversations = signal<SidebarCardElement[]>([]);
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     readonly focusPostId = signal<number | undefined>(undefined);
     focusReplyId: number | undefined = undefined;
     readonly openThreadOnFocus = signal(false);
@@ -626,6 +627,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     toggleSidebar() {
         this.setIsCollapsed(!this.isCollapsed());
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     closeSidebarOnMobile() {
