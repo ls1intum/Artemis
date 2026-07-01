@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -2636,5 +2637,18 @@ describe('IrisBaseChatbotComponent', () => {
             const comp = createComponentWithStages(stages);
             expect(comp.shouldShowStatusBar()).toBe(false);
         });
+    });
+
+    it('should render a collapse toggle in the chat history header and collapse on click', () => {
+        fixture.componentRef.setInput('isChatHistoryAvailable', true);
+        component.isChatHistoryOpen.set(true);
+        fixture.detectChanges();
+
+        const setVisibilitySpy = vi.spyOn(component, 'setChatHistoryVisibility');
+        const toggleButton = fixture.debugElement.query(By.css('.btn-sidebar-collapse'));
+
+        expect(toggleButton).toBeTruthy();
+        toggleButton.triggerEventHandler('click', null);
+        expect(setVisibilitySpy).toHaveBeenCalledWith(false);
     });
 });

@@ -45,8 +45,9 @@
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
                     <div class="chat-history-top">
-                        <div class="px-2 mt-2 mb-3">
+                        <div class="px-2 mt-2 mb-3 d-flex align-items-center gap-2">
                             <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
+                            <jhi-course-sidebar-toggle-button [isCollapsed]="false" (toggleSidebar)="setChatHistoryVisibility(false)" />
                         </div>
 
                         <div class="new-chat-button" (click)="openNewSession()" role="button" tabindex="0" (keydown.enter)="openNewSession()" (keydown.space)="openNewSession()">

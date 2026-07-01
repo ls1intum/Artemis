@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Component, input } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -87,18 +87,23 @@ describe('CourseIrisComponent', () => {
         expect(component.courseId()).toBeUndefined();
     });
 
-    it('should toggle isCollapsed when toggleSidebar is called', () => {
-        expect(component.isCollapsed).toBe(false);
+    it('should derive isCollapsed from the chatbot chat-history open state', () => {
+        const isChatHistoryOpen = signal(true);
+        vi.spyOn(component as any, 'courseChatbot').mockReturnValue({ isChatHistoryOpen, toggleChatHistory: vi.fn() });
 
-        component.toggleSidebar();
-        expect(component.isCollapsed).toBe(true);
+        expect(component.isCollapsed()).toBe(false);
 
-        component.toggleSidebar();
-        expect(component.isCollapsed).toBe(false);
+        isChatHistoryOpen.set(false);
+        expect(component.isCollapsed()).toBe(true);
     });
 
-    it('should initialize isCollapsed to false', () => {
-        expect(component.isCollapsed).toBe(false);
+    it('should toggle the chatbot chat history when toggleSidebar is called', () => {
+        const toggleChatHistory = vi.fn();
+        vi.spyOn(component as any, 'courseChatbot').mockReturnValue({ isChatHistoryOpen: signal(true), toggleChatHistory });
+
+        component.toggleSidebar();
+
+        expect(toggleChatHistory).toHaveBeenCalled();
     });
 
     it('should navigate to exercises when the user opts out of AI via the chat service', async () => {

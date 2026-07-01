@@ -102,7 +102,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             componentRef instanceof CourseLecturesComponent ||
             componentRef instanceof CourseTutorialGroupsComponent ||
             componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent
+            componentRef instanceof CourseConversationsComponent ||
+            componentRef instanceof CourseIrisComponent
         );
     });
 

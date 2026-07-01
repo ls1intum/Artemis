@@ -68,6 +68,7 @@ import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
+import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
@@ -813,6 +814,11 @@ describe('CourseOverviewComponent', () => {
         it('should return false for activeSidebarCollapsed when the active component has no isCollapsed', () => {
             component.activatedComponentReference.set({} as any);
             expect((component as any).activeSidebarCollapsed()).toBe(false);
+        });
+
+        it('should mark titleInSidebar true for the Iris tab', () => {
+            component.activatedComponentReference.set(Object.create(CourseIrisComponent.prototype));
+            expect((component as any).titleInSidebar()).toBe(true);
         });
     });
 });

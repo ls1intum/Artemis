@@ -98,4 +98,17 @@ describe('CourseChatbotComponent', () => {
 
         expect(mockBaseChatbot.setChatHistoryVisibility).toHaveBeenCalledWith(false);
     });
+
+    it('should expose isChatHistoryOpen from the base chatbot', () => {
+        const isChatHistoryOpen = vi.fn().mockReturnValue(false);
+        vi.spyOn(component as any, 'irisBaseChatbot').mockReturnValue({ isChatHistoryOpen });
+
+        expect(component.isChatHistoryOpen()).toBe(false);
+    });
+
+    it('should default isChatHistoryOpen to true when the base chatbot is not available', () => {
+        vi.spyOn(component as any, 'irisBaseChatbot').mockReturnValue(undefined);
+
+        expect(component.isChatHistoryOpen()).toBe(true);
+    });
 });
