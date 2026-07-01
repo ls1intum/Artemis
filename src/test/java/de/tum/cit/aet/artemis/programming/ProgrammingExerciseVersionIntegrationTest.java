@@ -272,6 +272,30 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
                 .isNotEqualTo(originalVersion.getExerciseSnapshot());
     }
 
+    /**
+     * Regression test for issue #13046: a metadata-only update (e.g. editing just the categories) must never delete the problem statement. The problem statement is owned by the
+     * collaborative (Yjs) editor and its dedicated PATCH endpoint, so a blank/absent value in the metadata update reflects an editor that has not finished its initial sync yet
+     * and must be treated as "unchanged" rather than wiping the persisted statement.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_blankProblemStatement_keepsExistingProblemStatement() throws Exception {
+        // Arrange: persist a known, non-empty problem statement via the dedicated endpoint, as the collaborative editor would.
+        final String existingStatement = "This problem statement must survive a metadata-only update";
+        final var problemStatementEndpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/problem-statement";
+        request.patchWithResponseBody(problemStatementEndpoint, existingStatement, ProgrammingExercise.class, HttpStatus.OK, MediaType.TEXT_PLAIN);
+
+        // Act: perform a metadata update whose problem statement arrives blank because the editor has not populated it yet (the #13046 race).
+        ExerciseVersionUtilService.updateExercise(programmingExercise);
+        programmingExercise.setProblemStatement(null);
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
+
+        // Assert: the metadata update must not have wiped the persisted problem statement.
+        ProgrammingExercise reloaded = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloaded.getProblemStatement()).as("a metadata-only update must not delete the problem statement (#13046)").isEqualTo(existingStatement);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateProgrammingExercise_createsExerciseVersion() throws Exception {
