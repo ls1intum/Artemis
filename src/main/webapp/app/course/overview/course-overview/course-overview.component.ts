@@ -96,6 +96,25 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     >(undefined);
     protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
+    protected readonly titleInSidebar = computed(() => {
+        const componentRef = this.activatedComponentReference();
+        return (
+            componentRef instanceof CourseLecturesComponent ||
+            componentRef instanceof CourseTutorialGroupsComponent ||
+            componentRef instanceof CourseExamsComponent ||
+            componentRef instanceof CourseConversationsComponent
+        );
+    });
+
+    protected readonly activeSidebarCollapsed = computed<boolean>(() => {
+        const componentRef = this.activatedComponentReference();
+        if (!componentRef) {
+            return false;
+        }
+        const collapsed = componentRef.isCollapsed;
+        return typeof collapsed === 'function' ? collapsed() : collapsed;
+    });
+
     // Icons
     faTimes = faTimes;
     faEye = faEye;
@@ -250,7 +269,13 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             this.activatedComponentReference.set(componentRef);
         }
 
-        if (componentRef instanceof CourseExercisesComponent) {
+        if (
+            componentRef instanceof CourseExercisesComponent ||
+            componentRef instanceof CourseLecturesComponent ||
+            componentRef instanceof CourseTutorialGroupsComponent ||
+            componentRef instanceof CourseExamsComponent ||
+            componentRef instanceof CourseConversationsComponent
+        ) {
             componentRef.setPageTitle(this.pageTitle());
         }
 

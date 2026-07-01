@@ -1,4 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { signal } from '@angular/core';
+import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
+import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
+import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
@@ -764,5 +769,40 @@ describe('CourseOverviewComponent', () => {
 
         expect((component as any).selectableSettingPresets()).toBeDefined();
         expect((component as any).selectedSettingPreset()).toBeDefined();
+    });
+
+    describe('sidebar toggle relocation', () => {
+        it('should mark titleInSidebar true for the relocated list tabs', () => {
+            for (const Ctor of [CourseLecturesComponent, CourseTutorialGroupsComponent, CourseExamsComponent, CourseConversationsComponent]) {
+                component.activatedComponentReference.set(Object.create(Ctor.prototype));
+                expect((component as any).titleInSidebar()).toBe(true);
+            }
+        });
+
+        it('should mark titleInSidebar false for tabs that are not relocated', () => {
+            component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype));
+            expect((component as any).titleInSidebar()).toBe(false);
+        });
+
+        it('should derive the active sidebar collapsed state from the active child signal', () => {
+            const isCollapsed = signal(false);
+            const fakeLectures = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed });
+            component.activatedComponentReference.set(fakeLectures);
+
+            expect((component as any).activeSidebarCollapsed()).toBe(false);
+
+            isCollapsed.set(true);
+            expect((component as any).activeSidebarCollapsed()).toBe(true);
+        });
+
+        it('should push the page title into the activated list tab', () => {
+            const setPageTitle = vi.fn();
+            const fakeLectures = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed: signal(false), setPageTitle });
+            component.pageTitle.set('overview.lectures');
+
+            component.handleComponentActivation(fakeLectures);
+
+            expect(setPageTitle).toHaveBeenCalledWith('overview.lectures');
+        });
     });
 });

@@ -34,7 +34,8 @@
                     @if (showCourseTitleBar()) {
                         <jhi-course-title-bar
                             [hasSidebar]="hasSidebar()"
-                            [isSidebarCollapsed]="isSidebarCollapsed()"
+                            [isSidebarCollapsed]="activeSidebarCollapsed()"
+                            [titleInSidebar]="titleInSidebar()"
                             [pageTitle]="pageTitle()"
                             [isExamStarted]="isExamStarted()"
                             (toggleSidebar)="toggleSidebar()"
