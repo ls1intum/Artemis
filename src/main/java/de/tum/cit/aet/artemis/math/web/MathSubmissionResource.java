@@ -103,6 +103,8 @@ public class MathSubmissionResource {
             // attach the categories-loaded exercise so the DTO can project it without a LazyInitializationException
             participation.setExercise(mathExercise);
         }
+        // Strip solution/grading data before returning the exercise to a student (nulls example solution when unpublished).
+        mathExercise.filterSensitiveInformation();
         return MathSubmissionDTO.of(saved);
     }
 
@@ -139,6 +141,8 @@ public class MathSubmissionResource {
         MathSubmission submission;
         submission = latestSubmission.map(mathSubmission -> mathSubmissionRepository.findByIdWithResults(mathSubmission.getId()).orElseThrow()).orElseGet(MathSubmission::new);
         submission.setParticipation(participation);
+        // Strip solution/grading data before returning the exercise through the editor DTO (nulls example solution when unpublished).
+        mathExercise.filterSensitiveInformation();
         return ResponseEntity.ok(MathSubmissionDTO.of(submission));
     }
 
@@ -164,6 +168,9 @@ public class MathSubmissionResource {
             // A StudentParticipation persists after un-enrollment, so ownership alone is not sufficient: require current STUDENT membership.
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, mathExercise, null);
         }
+        // Defensive: the current query does not fetch categories (so the DTO omits the exercise), but filter anyway so this
+        // student-facing endpoint never leaks solution/grading data if the exercise is ever projected here.
+        mathExercise.filterSensitiveInformation();
         return ResponseEntity.ok(MathSubmissionDTO.of(submission));
     }
 

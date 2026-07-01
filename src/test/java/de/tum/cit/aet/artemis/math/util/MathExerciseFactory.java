@@ -28,7 +28,7 @@ public class MathExerciseFactory {
 
     public static MathExerciseDTO generateMathExerciseDTO(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         return new MathExerciseDTO(null, "Math Exercise", null, "Prove that 0 + x = x.", "Prove that 0 + x = x", "Apply add_zero_left.", null, null, 10.0, 0.0,
-                IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, null, releaseDate, null, dueDate, assessmentDueDate, null, course.getId(), false);
+                IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, releaseDate, null, dueDate, assessmentDueDate, null, course.getId(), false);
     }
 
     public static MathSubmissionDTO generateMathSubmissionDTO(boolean submitted) {

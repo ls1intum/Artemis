@@ -54,6 +54,17 @@ public class MathExercise extends Exercise {
         this.manualDerivation = manualDerivation;
     }
 
+    /**
+     * Set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
+     */
+    @Override
+    public void filterSensitiveInformation() {
+        if (!isExampleSolutionPublished()) {
+            setExampleSolution(null);
+        }
+        super.filterSensitiveInformation();
+    }
+
     @Override
     public String getType() {
         return "math";

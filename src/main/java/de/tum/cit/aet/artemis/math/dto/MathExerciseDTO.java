@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.math.domain.MathExercise;
  * @param presentationScoreEnabled               whether presentation scores are tracked
  * @param secondCorrectionEnabled                whether a second correction round is enabled
  * @param feedbackSuggestionModule               the AI feedback suggestion module identifier
- * @param gradingInstructions                    free-text grading instructions for tutors
  * @param releaseDate                            when the exercise becomes visible to students
  * @param startDate                              when students can start working
  * @param dueDate                                submission deadline
@@ -41,9 +40,8 @@ import de.tum.cit.aet.artemis.math.domain.MathExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record MathExerciseDTO(Long id, String title, String shortName, String problemStatement, String description, String exampleSolution, Set<String> categories,
         DifficultyLevel difficulty, Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments,
-        Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions,
-        ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, Long courseId,
-        Boolean manualDerivation) {
+        Boolean allowFeedbackRequests, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, ZonedDateTime releaseDate,
+        ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, Long courseId, Boolean manualDerivation) {
 
     /**
      * @param exercise the entity to project
@@ -54,8 +52,8 @@ public record MathExerciseDTO(Long id, String title, String shortName, String pr
         return new MathExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getProblemStatement(), exercise.getDescription(),
                 exercise.getExampleSolution(), exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(),
                 exercise.getIncludedInOverallScore(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
-                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(),
-                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), courseId,
+                exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getReleaseDate(),
+                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), courseId,
                 exercise.isManualDerivation());
     }
 
@@ -74,7 +72,6 @@ public record MathExerciseDTO(Long id, String title, String shortName, String pr
         exercise.setMaxPoints(maxPoints);
         exercise.setBonusPoints(bonusPoints);
         exercise.setIncludedInOverallScore(includedInOverallScore);
-        exercise.setGradingInstructions(gradingInstructions);
         exercise.setReleaseDate(releaseDate);
         exercise.setStartDate(startDate);
         exercise.setDueDate(dueDate);

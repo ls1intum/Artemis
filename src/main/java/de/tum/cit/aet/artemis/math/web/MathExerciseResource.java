@@ -28,12 +28,14 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.math.config.MathEnabled;
 import de.tum.cit.aet.artemis.math.domain.MathExercise;
@@ -64,15 +66,19 @@ public class MathExerciseResource {
 
     private final ExerciseSpecificationService exerciseSpecificationService;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     private final AuthorizationCheckService authCheckService;
 
     public MathExerciseResource(MathExerciseRepository mathExerciseRepository, MathExerciseImportService mathExerciseImportService, CourseRepository courseRepository,
-            UserRepository userRepository, ExerciseSpecificationService exerciseSpecificationService, AuthorizationCheckService authCheckService) {
+            UserRepository userRepository, ExerciseSpecificationService exerciseSpecificationService, ExerciseDeletionService exerciseDeletionService,
+            AuthorizationCheckService authCheckService) {
         this.mathExerciseRepository = mathExerciseRepository;
         this.mathExerciseImportService = mathExerciseImportService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseSpecificationService = exerciseSpecificationService;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.authCheckService = authCheckService;
     }
 
@@ -163,12 +169,14 @@ public class MathExerciseResource {
      * @return an empty response
      */
     @DeleteMapping("math-exercises/{exerciseId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteMathExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to delete MathExercise : {}", exerciseId);
         MathExercise exercise = mathExerciseRepository.findByIdWithCategoriesAndCourse(exerciseId).orElseThrow();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        mathExerciseRepository.deleteById(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        // NOTE: we use the exerciseDeletionService here, because it cleans up all related entities (participations, submissions,
+        // results, channels, competency links, etc.) in the correct order. A direct repository delete fails on FK constraints.
+        exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }
 

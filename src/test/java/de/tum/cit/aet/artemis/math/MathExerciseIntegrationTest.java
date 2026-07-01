@@ -11,9 +11,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.math.domain.MathExercise;
+import de.tum.cit.aet.artemis.math.domain.MathSubmission;
 import de.tum.cit.aet.artemis.math.dto.MathExerciseDTO;
 import de.tum.cit.aet.artemis.math.repository.MathExerciseRepository;
 import de.tum.cit.aet.artemis.math.util.MathExerciseFactory;
@@ -144,7 +148,7 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importMathExercise_preservesManualDerivation() throws Exception {
         MathExerciseDTO importTarget = new MathExerciseDTO(null, "Imported Math Exercise", null, "Prove that 0 + x = x.", "Prove that 0 + x = x", "Apply add_zero_left.", null,
-                null, 10.0, 0.0, IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, null, ZonedDateTime.now().minusDays(1), null,
+                null, 10.0, 0.0, IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, ZonedDateTime.now().minusDays(1), null,
                 ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), null, course.getId(), true);
 
         MathExerciseDTO result = request.postWithResponseBody("/api/math/math-exercises/import?sourceExerciseId=" + exercise.getId(), importTarget, MathExerciseDTO.class,
@@ -152,5 +156,52 @@ class MathExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         assertThat(result).isNotNull();
         assertThat(result.manualDerivation()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importMathExercise_copiesExampleSubmissionInsteadOfSharing() throws Exception {
+        ExampleSubmission originalExampleSubmission = mathExerciseUtilService.addExampleSubmissionToMathExercise(exercise, "example work");
+        long originalSubmissionId = originalExampleSubmission.getSubmission().getId();
+
+        MathExerciseDTO importTarget = new MathExerciseDTO(null, "Imported With Example", null, "Prove that 0 + x = x.", "Prove that 0 + x = x", "Apply add_zero_left.", null, null,
+                10.0, 0.0, IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, ZonedDateTime.now().minusDays(1), null, ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(2), null, course.getId(), false);
+
+        // Import must succeed: sharing the template's submission would violate the unique @OneToOne constraint on ExampleSubmission.submission.
+        MathExerciseDTO result = request.postWithResponseBody("/api/math/math-exercises/import?sourceExerciseId=" + exercise.getId(), importTarget, MathExerciseDTO.class,
+                HttpStatus.CREATED);
+
+        MathExercise imported = mathExerciseRepository.findByIdWithCourseAndExampleSubmissions(result.id()).orElseThrow();
+        assertThat(imported.getExampleSubmissions()).hasSize(1);
+        Submission copiedSubmission = imported.getExampleSubmissions().iterator().next().getSubmission();
+        assertThat(copiedSubmission).isNotNull();
+        // The copy must be a distinct submission, not the shared template one, so deleting either exercise cannot cascade-remove the other's data.
+        assertThat(copiedSubmission.getId()).isNotEqualTo(originalSubmissionId);
+        assertThat(((MathSubmission) copiedSubmission).getContent()).isEqualTo("example work");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importMathExercise_copiesExampleSubmissionAssessment() throws Exception {
+        ExampleSubmission originalExampleSubmission = mathExerciseUtilService.addExampleSubmissionWithAssessmentToMathExercise(exercise, "assessed work", 7.0, "good derivation");
+        long originalResultId = originalExampleSubmission.getSubmission().getResults().getFirst().getId();
+
+        MathExerciseDTO importTarget = new MathExerciseDTO(null, "Imported With Assessment", null, "Prove that 0 + x = x.", "Prove that 0 + x = x", "Apply add_zero_left.", null,
+                null, 10.0, 0.0, IncludedInOverallScore.INCLUDED_COMPLETELY, false, false, false, false, null, ZonedDateTime.now().minusDays(1), null, ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(2), null, course.getId(), false);
+
+        MathExerciseDTO result = request.postWithResponseBody("/api/math/math-exercises/import?sourceExerciseId=" + exercise.getId(), importTarget, MathExerciseDTO.class,
+                HttpStatus.CREATED);
+
+        MathExercise imported = mathExerciseRepository.findByIdWithCourseAndExampleSubmissions(result.id()).orElseThrow();
+        Submission copiedSubmission = imported.getExampleSubmissions().iterator().next().getSubmission();
+        // The multi-join fetch must yield exactly one (non-duplicated) result, copied as a distinct entity with its feedback and score.
+        assertThat(copiedSubmission.getResults()).hasSize(1);
+        Result copiedResult = copiedSubmission.getResults().getFirst();
+        assertThat(copiedResult.getId()).isNotEqualTo(originalResultId);
+        assertThat(copiedResult.getScore()).isEqualTo(7.0);
+        assertThat(copiedResult.getFeedbacks()).hasSize(1);
+        assertThat(copiedResult.getFeedbacks().iterator().next().getDetailText()).isEqualTo("good derivation");
     }
 }

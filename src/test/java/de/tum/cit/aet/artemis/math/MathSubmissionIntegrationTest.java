@@ -141,6 +141,34 @@ class MathSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForMathEditor_doesNotLeakUnpublishedExampleSolutionToStudent() throws Exception {
+        // The default exercise has an example solution but no publication date (unpublished), so a student must not receive it.
+        MathSubmission saved = mathExerciseUtilService.createAndSaveSubmissionForExercise(exercise, TEST_PREFIX + "student1", false);
+
+        MathSubmissionDTO result = request.get("/api/math/participations/" + saved.getParticipation().getId() + "/math-editor", HttpStatus.OK, MathSubmissionDTO.class);
+
+        assertThat(result.participation()).isNotNull();
+        assertThat(result.participation().exercise()).isNotNull();
+        assertThat(result.participation().exercise().exampleSolution()).isNull();
+        // student-facing problem instructions (description) must still be present
+        assertThat(result.participation().exercise().description()).isEqualTo("Prove that 0 + x = x");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createMathSubmission_doesNotLeakUnpublishedExampleSolutionToStudent() throws Exception {
+        MathSubmissionDTO submissionDTO = MathExerciseFactory.generateMathSubmissionDTO(false);
+
+        MathSubmissionDTO result = request.postWithResponseBody("/api/math/exercises/" + exercise.getId() + "/math-submissions", submissionDTO, MathSubmissionDTO.class,
+                HttpStatus.OK);
+
+        assertThat(result.participation()).isNotNull();
+        assertThat(result.participation().exercise()).isNotNull();
+        assertThat(result.participation().exercise().exampleSolution()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getMathSubmission_asOwner_returnsOk() throws Exception {
         MathSubmission saved = mathExerciseUtilService.createAndSaveSubmissionForExercise(exercise, TEST_PREFIX + "student1", false);
 
