@@ -12,7 +12,7 @@ import { ModelingExplanationEditorComponent } from '../modeling-explanation-edit
 import { captureException } from '@sentry/angular';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
-import { artemisApollonTheme } from 'app/modeling/shared/apollon-theme.util';
+import { applyArtemisApollonThemeToDocument, artemisApollonTheme } from 'app/modeling/shared/apollon-theme.util';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
@@ -152,6 +152,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         const editorContainer = this.editorContainer();
         if (editorContainer) {
+            // Stamp the Artemis theme on <html> so Apollon's :root-scoped chrome ramp
+            // follows Artemis (the mount inherits it); `theme` below themes the mount.
+            applyArtemisApollonThemeToDocument();
             this.apollonEditor = new ApollonEditor(editorContainer.nativeElement, {
                 model: umlModel,
                 mode: ApollonMode.Modelling,

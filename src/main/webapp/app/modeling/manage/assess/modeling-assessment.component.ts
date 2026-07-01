@@ -14,7 +14,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { artemisApollonTheme } from 'app/modeling/shared/apollon-theme.util';
+import { applyArtemisApollonThemeToDocument, artemisApollonTheme } from 'app/modeling/shared/apollon-theme.util';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -155,6 +155,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private initializeApollonEditor() {
         this.handleFeedback();
 
+        // Stamp the Artemis theme on <html> so Apollon's :root-scoped chrome ramp
+        // follows Artemis (the mount inherits it); `theme` below themes the mount.
+        applyArtemisApollonThemeToDocument();
         this.apollonEditor = new ApollonEditor(this.editorContainer()!.nativeElement, {
             mode: ApollonMode.Assessment,
             readonly: this.readOnly(),

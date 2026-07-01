@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { hasQuizRelevantElements } from 'app/modeling/shared/apollon-model.util';
-import { artemisApollonTheme } from 'app/modeling/shared/apollon-theme.util';
+import { applyArtemisApollonThemeToDocument, artemisApollonTheme } from 'app/modeling/shared/apollon-theme.util';
 import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
@@ -143,6 +143,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             availableViews: [ApollonView.Modelling, ApollonView.Highlight],
             theme: artemisApollonTheme(),
         } as ConstructorParameters<typeof ApollonEditor>[1];
+        // Stamp the Artemis theme on <html> so Apollon's :root-scoped chrome ramp
+        // follows Artemis (the mount inherits it); `theme` above themes the mount.
+        applyArtemisApollonThemeToDocument();
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
