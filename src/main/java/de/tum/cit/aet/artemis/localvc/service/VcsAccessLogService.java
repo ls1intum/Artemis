@@ -8,6 +8,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
@@ -39,6 +40,9 @@ public class VcsAccessLogService {
     private final VcsAnalyticsLogRepository vcsAnalyticsLogRepository;
 
     private final ParticipationRepository participationRepository;
+
+    @Value("${artemis.version-control.analytics.secret-key:default-vcs-analytics-secure-key}")
+    private String analyticsSecretKey;
 
     VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository, VcsAnalyticsLogRepository vcsAnalyticsLogRepository, ParticipationRepository participationRepository) {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
@@ -76,8 +80,8 @@ public class VcsAccessLogService {
         Optional<Long> optionalCourseId = vcsAnalyticsLogRepository.findCourseIdByParticipationId(participationId);
         if (optionalCourseId.isPresent()) {
             Long courseId = optionalCourseId.get();
-            ExperimentalGroup experimentalGroup = AnalyticsHashUtils.getGroup(user.getId());
-            String maskedId = AnalyticsHashUtils.maskUserId(user.getId(), courseId);
+            ExperimentalGroup experimentalGroup = AnalyticsHashUtils.getGroup(user.getId(), analyticsSecretKey);
+            String maskedId = AnalyticsHashUtils.maskUserId(user.getId(), courseId, analyticsSecretKey);
             VcsAnalyticsLog analyticsLogEntry = new VcsAnalyticsLog(maskedId, courseId, exerciseId, experimentalGroup, actionType, authenticationMechanism);
             vcsAnalyticsLogRepository.save(analyticsLogEntry);
         }
@@ -131,7 +135,7 @@ public class VcsAccessLogService {
         Optional<Long> optionalCourseId = vcsAnalyticsLogRepository.findCourseIdByParticipationId(participation.getId());
         if (optionalCourseId.isPresent()) {
             Long courseId = optionalCourseId.get();
-            String maskedUserId = AnalyticsHashUtils.maskUserId(user.getId(), courseId);
+            String maskedUserId = AnalyticsHashUtils.maskUserId(user.getId(), courseId, analyticsSecretKey);
             Long exerciseId = vcsAccessLog.getParticipation().getExercise().getId();
             Optional<VcsAnalyticsLog> vcsAnalyticsLog = vcsAnalyticsLogRepository.findLatestByMaskedUserIdAndExerciseId(maskedUserId, exerciseId);
             if (vcsAnalyticsLog.isPresent()) {

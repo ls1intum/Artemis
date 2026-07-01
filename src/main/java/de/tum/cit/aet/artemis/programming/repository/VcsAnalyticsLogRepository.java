@@ -19,9 +19,11 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAnalyticsLog;
 public interface VcsAnalyticsLogRepository extends ArtemisJpaRepository<VcsAnalyticsLog, Long> {
 
     /**
-     * Retrieves last entry of masked user Id for given exercise id
+     * Retrieves the latest VCS analytics log entry for a given masked user ID and exercise ID.
      *
-     * @return latest vcsAnalyticsLog entry
+     * @param maskedUserId the anonymized user identifier
+     * @param exerciseId   the unique identifier of the programming exercise
+     * @return an Optional containing the latest VcsAnalyticsLog entry if found, or empty otherwise
      */
     @Query("""
                 SELECT vcsAnalyticsLog
@@ -34,8 +36,10 @@ public interface VcsAnalyticsLogRepository extends ArtemisJpaRepository<VcsAnaly
     Optional<VcsAnalyticsLog> findLatestByMaskedUserIdAndExerciseId(@Param("maskedUserId") String maskedUserId, @Param("exerciseId") Long exerciseId);
 
     /**
-     * Retrieves the courseId for given participationId
+     * Retrieves the courseId for a given participationId, handling both standard and exam modes via COALESCE.
      *
+     * @param participationId the unique identifier of the student participation
+     * @return an Optional containing the resolved course ID if found, or empty otherwise
      */
     @Query(value = """
             SELECT COALESCE(e.course_id, ex.course_id)

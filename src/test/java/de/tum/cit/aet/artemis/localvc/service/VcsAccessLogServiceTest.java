@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -54,6 +55,8 @@ class VcsAccessLogServiceTest {
         testUser = new User();
         testUser.setId(1L);
         testUser.setLogin("student1");
+
+        ReflectionTestUtils.setField(vcsAccessLogService, "analyticsSecretKey", "test-secure-key-for-vcs-analytics");
 
         ProgrammingExercise mockExercise = mock(ProgrammingExercise.class);
         lenient().when(mockExercise.getId()).thenReturn(42L);
