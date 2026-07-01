@@ -30,7 +30,7 @@ public interface VcsAnalyticsLogRepository extends ArtemisJpaRepository<VcsAnaly
                 FROM VcsAnalyticsLog vcsAnalyticsLog
                 WHERE vcsAnalyticsLog.maskedUserId = :maskedUserId
                 AND vcsAnalyticsLog.exerciseId = :exerciseId
-                ORDER BY vcsAnalyticsLog.timestamp DESC
+                ORDER BY vcsAnalyticsLog.timestamp DESC, vcsAnalyticsLog.id DESC
                 LIMIT 1
             """)
     Optional<VcsAnalyticsLog> findLatestByMaskedUserIdAndExerciseId(@Param("maskedUserId") String maskedUserId, @Param("exerciseId") Long exerciseId);

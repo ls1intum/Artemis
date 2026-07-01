@@ -36,5 +36,10 @@
             <column name="course_id"/>
             <column name="experimental_group"/>
         </createIndex>
+        <createIndex indexName="vcs_analytics_log_lookup_idx" tableName="vcs_analytics_log">
+            <column name="masked_user_id"/>
+            <column name="exercise_id"/>
+            <column name="timestamp"/>
+        </createIndex>
     </changeSet>
 </databaseChangeLog>
