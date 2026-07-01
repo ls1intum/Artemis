@@ -388,7 +388,8 @@ export class ExerciseService {
      */
     static stringifyExerciseCategories(exercise: { categories?: (ExerciseCategory | string)[] }): void {
         if (exercise.categories) {
-            exercise.categories = exercise.categories.map((category) => JSON.stringify(category));
+            // Skip already-serialized entries so a second call (e.g. on a reused DTO) does not double-encode them.
+            exercise.categories = exercise.categories.map((category) => (typeof category === 'string' ? category : JSON.stringify(category)));
         }
     }
 

@@ -79,7 +79,8 @@ export class FaqService {
      * @param faq the faq
      */
     static stringifyFaqCategories(faq: CreateFaqDTO | UpdateFaqDTO): string[] | undefined {
-        return faq.categories?.map((category) => JSON.stringify(category));
+        // Skip already-serialized entries so a second call does not double-encode them.
+        return faq.categories?.map((category) => (typeof category === 'string' ? category : JSON.stringify(category)));
     }
 
     convertFaqCategoriesAsStringFromServer(categories: string[]): FaqCategory[] {

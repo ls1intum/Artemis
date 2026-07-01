@@ -57,6 +57,10 @@ export function courseNotificationEnumValueFromName<E extends number>(enumObject
     if (name === undefined) {
         return undefined;
     }
+    // Idempotent: an already-resolved numeric member is returned as-is (a valid member has a reverse-mapped name string).
+    if (typeof name === 'number') {
+        return typeof enumObject[name] === 'string' ? name : undefined;
+    }
     const member = enumObject[name];
     return typeof member === 'number' ? member : undefined;
 }
