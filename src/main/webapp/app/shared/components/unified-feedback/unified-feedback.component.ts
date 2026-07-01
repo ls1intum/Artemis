@@ -87,7 +87,7 @@ export class UnifiedFeedbackComponent implements AfterViewInit {
         non_compliant: 'artemisApp.feedback.type.needsRevision',
     };
 
-    private readonly effectivePoints = computed(() => (this.editable() ? this.feedbackCredits() : this.points()));
+    private readonly effectivePoints = computed(() => (this.editable() ? (this.feedbackCredits() ?? 0) : this.points()));
 
     readonly inferredType = computed(() => {
         const explicitType = this.type();
@@ -156,12 +156,16 @@ export class UnifiedFeedbackComponent implements AfterViewInit {
 
     readonly defaultTitlePlaceholder = computed(() => this.artemisTranslatePipe.transform(this.feedbackTypeTitleKeys[this.inferredType()]));
 
-    readonly canDismissWithoutConfirm = computed(() => this.feedbackCredits() === 0 && (this.feedbackDetail() ?? '').length === 0);
+    readonly canDismissWithoutConfirm = computed(() => (this.feedbackCredits() ?? 0) === 0 && (this.feedbackDetail() ?? '').length === 0 && this.displayTitle().length === 0);
 
     readonly detailPlaceholder = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackCommentPlaceholder'));
     readonly rubricHint = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint'));
     readonly dismissTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedback'));
     readonly dismissConfirmTooltip = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.dismissFeedbackConfirmation'));
+    readonly pointsAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.exercise.score'));
+    readonly feedbackDetailAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.feedback'));
+    readonly acceptSuggestionAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.detail.accept'));
+    readonly discardSuggestionAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.assessment.detail.discard'));
     readonly gradingInstructionText = computed(() => this.feedback()?.gradingInstruction?.feedback);
     readonly correctionStatusLabel = computed(() => {
         const status = this.feedback()?.correctionStatus;

@@ -21,6 +21,7 @@
                             [ngModel]="displayTitle()"
                             (ngModelChange)="onTitleInput($event)"
                             [placeholder]="defaultTitlePlaceholder()"
+                            [attr.aria-label]="defaultTitlePlaceholder()"
                             [disabled]="readOnly()"
                         />
                     } @else if (inferredTitle()) {
@@ -33,8 +34,9 @@
                             class="unified-feedback-points-input"
                             type="number"
                             step="0.5"
-                            [ngModel]="feedbackCredits()"
-                            (ngModelChange)="feedbackCredits.set($event)"
+                            [ngModel]="feedbackCredits() ?? 0"
+                            (ngModelChange)="feedbackCredits.set($event ?? 0)"
+                            [attr.aria-label]="pointsAriaLabel()"
                             [disabled]="readOnly() || !!feedback()?.gradingInstruction"
                         />
                         <div class="unified-feedback-toolbar">
@@ -42,15 +44,33 @@
                                 <jhi-grading-instruction-link-icon [feedback]="feedback()!" />
                             }
                             @if (isSuggestion()) {
-                                <button type="button" id="accept-suggestion" class="unified-feedback-icon-btn" (click)="onAcceptSuggestion.emit()">
+                                <button
+                                    type="button"
+                                    id="accept-suggestion"
+                                    class="unified-feedback-icon-btn"
+                                    [attr.aria-label]="acceptSuggestionAriaLabel()"
+                                    (click)="onAcceptSuggestion.emit()"
+                                >
                                     <fa-icon [icon]="faCheck" />
                                 </button>
-                                <button type="button" id="discard-suggestion" class="unified-feedback-icon-btn" (click)="onDiscardSuggestion.emit()">
+                                <button
+                                    type="button"
+                                    id="discard-suggestion"
+                                    class="unified-feedback-icon-btn"
+                                    [attr.aria-label]="discardSuggestionAriaLabel()"
+                                    (click)="onDiscardSuggestion.emit()"
+                                >
                                     <fa-icon [icon]="faTimes" />
                                 </button>
                             } @else if (!readOnly()) {
                                 @if (canDismissWithoutConfirm()) {
-                                    <button type="button" id="dismiss-icon" class="unified-feedback-icon-btn" (click)="handleDeleteConfirmed()">
+                                    <button
+                                        type="button"
+                                        id="dismiss-icon"
+                                        class="unified-feedback-icon-btn"
+                                        [attr.aria-label]="dismissTooltip()"
+                                        (click)="handleDeleteConfirmed()"
+                                    >
                                         <fa-icon [icon]="faTimes" />
                                     </button>
                                 } @else {
@@ -89,6 +109,7 @@
                         (input)="onDetailInput()"
                         [disabled]="readOnly()"
                         [placeholder]="detailPlaceholder()"
+                        [attr.aria-label]="feedbackDetailAriaLabel()"
                     ></textarea>
                 </div>
                 @if (correctionStatusLabel()) {

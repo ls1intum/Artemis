@@ -1,4 +1,4 @@
-import { Component, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, inject, input, output, viewChild } from '@angular/core';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -11,6 +11,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextblockFeedbackDropdownComponent } from './dropdown/textblock-feedback-dropdown.component';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-text-block-feedback-editor',
@@ -22,6 +23,7 @@ export class TextBlockFeedbackEditorComponent {
     private route = inject(ActivatedRoute);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
     textBlock = input<TextBlock>(new TextBlock());
     feedback = input<Feedback>(new Feedback());
@@ -35,6 +37,8 @@ export class TextBlockFeedbackEditorComponent {
     private readonly unifiedFeedback = viewChild.required(UnifiedFeedbackComponent);
 
     faAngleRight = faAngleRight;
+
+    readonly connectToInstructionAriaLabel = computed(() => this.artemisTranslatePipe.transform('artemisApp.textAssessment.feedbackEditor.connectToInstruction'));
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);

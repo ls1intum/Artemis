@@ -270,7 +270,7 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.defaultTitlePlaceholder()).toBe('artemisApp.feedback.type.positive');
     });
 
-    it('should allow dismissal without confirmation only when credits are 0 and detail text is empty', () => {
+    it('should allow dismissal without confirmation only when credits are 0, detail text is empty, and title is empty', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackCredits.set(0);
         component.feedbackDetail.set('');
@@ -285,6 +285,19 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackCredits.set(1);
         fixture.detectChanges();
         expect(component.canDismissWithoutConfirm()).toBe(false);
+
+        component.feedbackCredits.set(0);
+        component.feedbackTitle.set('Encapsulation broken');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(false);
+    });
+
+    it('should treat undefined feedbackCredits as 0 when checking dismissal without confirmation', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(undefined as unknown as number);
+        component.feedbackDetail.set('');
+        fixture.detectChanges();
+        expect(component.canDismissWithoutConfirm()).toBe(true);
     });
 
     it('should emit onDelete directly when dismissal needs no confirmation', () => {

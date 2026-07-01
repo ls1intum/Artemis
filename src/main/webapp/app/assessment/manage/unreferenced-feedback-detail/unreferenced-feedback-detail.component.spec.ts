@@ -70,18 +70,6 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
-    it('should emit the assessment change after deletion', () => {
-        fixture.componentRef.setInput('feedback', {
-            id: 1,
-            detailText: 'feedback1',
-            credits: 1.5,
-        } as Feedback);
-        const emitSpy = vi.spyOn(comp.onFeedbackDelete, 'emit');
-        comp.delete();
-
-        expect(emitSpy).toHaveBeenCalledTimes(1);
-    });
-
     it('exposes delete() as the sole deletion entry point for the unified feedback card', () => {
         fixture.componentRef.setInput('feedback', { id: 1, detailText: 'feedback1', credits: 1.5 } as Feedback);
         const emitSpy = vi.spyOn(comp.onFeedbackDelete, 'emit');

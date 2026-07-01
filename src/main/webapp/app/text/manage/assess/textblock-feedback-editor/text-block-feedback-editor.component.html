@@ -15,28 +15,30 @@
     (keydown.escape)="escKeyup()"
 >
     @if (criteria(); as criteriaList) {
-        <div unifiedFeedbackExtraControls class="dropdown" ngbDropdown (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
-            <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button"></button>
-            @if (criteriaList.length === 1) {
-                <ul ngbDropdownMenu>
-                    <jhi-textblock-feedback-dropdown [criterion]="criteriaList[0]" [feedback]="feedback()" (didChange)="didChange()" />
-                </ul>
-            } @else {
-                <ul class="dropdown-menu" ngbDropdownMenu>
-                    @for (criterion of criteriaList; track criterion) {
-                        <li>
-                            @if (criterion.title) {
-                                <a class="dropdown-item">{{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /></a>
-                            } @else {
-                                <a class="dropdown-item">(No title)<fa-icon class="float-end" [icon]="faAngleRight" /></a>
-                            }
-                            <ul class="dropdown-menu dropdown-submenu">
-                                <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />
-                            </ul>
-                        </li>
-                    }
-                </ul>
-            }
-        </div>
+        @if (criteriaList.length > 0) {
+            <div unifiedFeedbackExtraControls class="dropdown" ngbDropdown (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
+                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" [attr.aria-label]="connectToInstructionAriaLabel()"></button>
+                @if (criteriaList.length === 1) {
+                    <ul ngbDropdownMenu>
+                        <jhi-textblock-feedback-dropdown [criterion]="criteriaList[0]" [feedback]="feedback()" (didChange)="didChange()" />
+                    </ul>
+                } @else {
+                    <ul class="dropdown-menu" ngbDropdownMenu>
+                        @for (criterion of criteriaList; track criterion) {
+                            <li>
+                                @if (criterion.title) {
+                                    <a class="dropdown-item">{{ criterion.title }}&nbsp;<fa-icon class="float-end" [icon]="faAngleRight" /></a>
+                                } @else {
+                                    <a class="dropdown-item">(No title)<fa-icon class="float-end" [icon]="faAngleRight" /></a>
+                                }
+                                <ul class="dropdown-menu dropdown-submenu">
+                                    <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
     }
 </jhi-unified-feedback>
