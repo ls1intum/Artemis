@@ -19,7 +19,7 @@ import java.nio.file.Path;
  * {@code run.sh}/{@code build.sh} test-harness script (a {@code .sh} is "binary" in Artemis's coarse extension list) as binary and wrongly drop it from the produced tree. The
  * content test is the precise signal: a NUL byte in the leading window (no text encoding Artemis uses embeds NUL) or a byte sequence that is not valid UTF-8.
  */
-final class BinaryContent {
+public final class BinaryContent {
 
     /**
      * The leading window inspected for binary markers. A jar/zip/png reveals itself (NUL bytes, invalid UTF-8) within the first bytes; reading more would not change the verdict.
@@ -66,7 +66,7 @@ final class BinaryContent {
      * @param path the working-tree file to inspect
      * @return {@code true} if the file's leading window is binary; {@code false} if it is text or could not be read
      */
-    static boolean isBinaryFile(Path path) {
+    public static boolean isBinaryFile(Path path) {
         try (var stream = Files.newInputStream(path)) {
             byte[] window = stream.readNBytes(SNIFF_LIMIT);
             return isBinary(window);

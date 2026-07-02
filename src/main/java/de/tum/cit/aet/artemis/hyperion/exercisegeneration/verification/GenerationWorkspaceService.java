@@ -384,7 +384,13 @@ public class GenerationWorkspaceService {
         }
     }
 
-    static String directoryFor(RepositoryType repositoryType) {
+    /**
+     * Maps a repository type to the stable workspace sub-directory name the generation workspace lays out on disk.
+     *
+     * @param repositoryType the repository type to place
+     * @return the sub-directory name ({@code template}, {@code solution}, {@code tests}, or the lower-cased type name for any other value)
+     */
+    public static String directoryFor(RepositoryType repositoryType) {
         return switch (repositoryType) {
             case TEMPLATE -> "template";
             case SOLUTION -> "solution";

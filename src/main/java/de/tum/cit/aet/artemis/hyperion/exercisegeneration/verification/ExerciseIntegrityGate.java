@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  * The gates are static and side-effect-free so they are unit-testable without Docker, and so the residue-strip half can be reused by {@link GenerationWorkspaceService} on
  * read-back.
  */
-final class ExerciseIntegrityGate {
+public final class ExerciseIntegrityGate {
 
     /**
      * The CI checkout directory names — the sibling repositories CI lays out next to each other, never legitimate top-level source folders. A file whose first path component is
@@ -99,7 +99,7 @@ final class ExerciseIntegrityGate {
      * @param path the tests-repo-relative path
      * @return {@code true} if the file is part of the immutable harness
      */
-    static boolean isHarnessFile(String path) {
+    public static boolean isHarnessFile(String path) {
         String base = basename(path).toLowerCase(Locale.ROOT);
         if (HARNESS_FILE_NAMES.contains(base)) {
             return true;
