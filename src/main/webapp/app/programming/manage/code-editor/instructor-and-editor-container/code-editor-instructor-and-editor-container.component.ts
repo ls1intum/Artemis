@@ -427,8 +427,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Returns whether code generation is available for the current exercise.
-     * Hyperion code generation currently supports Java programming exercises only.
+     * Returns whether code generation is available for the current exercise (Java exercises only).
      */
     protected canGenerateCode(): boolean {
         return this.exercise?.programmingLanguage === ProgrammingLanguage.JAVA;

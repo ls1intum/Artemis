@@ -57,7 +57,7 @@ class HyperionSolutionRepositoryServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        // ChatClient merges request options into the model's options, so the mocked ChatModel must return non-null options from both getters.
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
