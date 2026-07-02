@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
+import de.tum.cit.aet.artemis.modeling.dto.ApollonDiagramDTO;
 import de.tum.cit.aet.artemis.modeling.dto.ApollonDiagramUpdateDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
 
@@ -70,7 +71,7 @@ public class ApollonDiagramResource {
      */
     @PostMapping({ "courses/{courseId}/apollon-diagrams", "course/{courseId}/apollon-diagrams" })
     @EnforceAtLeastTutor
-    public ResponseEntity<ApollonDiagram> createApollonDiagram(@Valid @RequestBody ApollonDiagramUpdateDTO dto, @PathVariable Long courseId) throws URISyntaxException {
+    public ResponseEntity<ApollonDiagramDTO> createApollonDiagram(@Valid @RequestBody ApollonDiagramUpdateDTO dto, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram for course: {}", courseId);
 
         if (dto.id() != null) {
@@ -86,7 +87,7 @@ public class ApollonDiagramResource {
 
         ApollonDiagram apollonDiagram = dto.toEntity();
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
-        return ResponseEntity.created(new URI("/api/modeling/apollon-diagrams/" + result.getId())).body(result);
+        return ResponseEntity.created(new URI("/api/modeling/apollon-diagrams/" + result.getId())).body(ApollonDiagramDTO.of(result));
     }
 
     /**
@@ -99,7 +100,7 @@ public class ApollonDiagramResource {
      */
     @PutMapping({ "courses/{courseId}/apollon-diagrams", "course/{courseId}/apollon-diagrams" })
     @EnforceAtLeastTutor
-    public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagramUpdateDTO diagramUpdateDTO, @PathVariable Long courseId) {
+    public ResponseEntity<ApollonDiagramDTO> updateApollonDiagram(@RequestBody ApollonDiagramUpdateDTO diagramUpdateDTO, @PathVariable Long courseId) {
         log.debug("REST request to update ApollonDiagram : {}", diagramUpdateDTO);
 
         if (diagramUpdateDTO.id() == null) {
@@ -120,7 +121,7 @@ public class ApollonDiagramResource {
         diagramUpdateDTO.applyTo(existingDiagram);
 
         ApollonDiagram result = apollonDiagramRepository.save(existingDiagram);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(ApollonDiagramDTO.of(result));
     }
 
     /**
@@ -144,13 +145,14 @@ public class ApollonDiagramResource {
      */
     @GetMapping({ "courses/{courseId}/apollon-diagrams", "course/{courseId}/apollon-diagrams" })
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ApollonDiagram>> getDiagramsByCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<ApollonDiagramDTO>> getDiagramsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagrams matching current course");
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
-        return ResponseEntity.ok(apollonDiagramRepository.findDiagramsByCourseId(courseId));
+        List<ApollonDiagramDTO> diagrams = apollonDiagramRepository.findDiagramsByCourseId(courseId).stream().map(ApollonDiagramDTO::of).toList();
+        return ResponseEntity.ok(diagrams);
     }
 
     /**
@@ -162,14 +164,14 @@ public class ApollonDiagramResource {
      */
     @GetMapping({ "courses/{courseId}/apollon-diagrams/{apollonDiagramId}", "course/{courseId}/apollon-diagrams/{apollonDiagramId}" })
     @EnforceAtLeastTutor
-    public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
+    public ResponseEntity<ApollonDiagramDTO> getApollonDiagram(@PathVariable Long apollonDiagramId, @PathVariable Long courseId) {
         log.debug("REST request to get ApollonDiagram : {}", apollonDiagramId);
         ApollonDiagram apollonDiagram = apollonDiagramRepository.findByIdElseThrow(apollonDiagramId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
-        return ResponseEntity.ok().body(apollonDiagram);
+        return ResponseEntity.ok().body(ApollonDiagramDTO.of(apollonDiagram));
     }
 
     /**
