@@ -3,7 +3,15 @@
 }
 @if (exam()) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam()?.submitted && !examStartConfirmed()) {
-        <jhi-exam-participation-cover [startView]="true" [exam]="exam()" [studentExam]="studentExam()" [testRunStartTime]="testStartTime()" (onExamStarted)="examStarted($event)" />
+        <jhi-exam-participation-cover
+            [startView]="true"
+            [exam]="exam()"
+            [studentExam]="studentExam()"
+            [testRunStartTime]="testStartTime()"
+            [isSidebarCollapsed]="isSidebarCollapsed()"
+            (toggleSidebar)="toggleSidebar()"
+            (onExamStarted)="examStarted($event)"
+        />
     }
     @if (studentExam()) {
         <!-- exam() participation -->

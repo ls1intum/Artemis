@@ -127,6 +127,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly studentExamId = signal<number>(undefined!);
     readonly testStartTime = signal<dayjs.Dayjs | undefined>(undefined);
 
+    readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    readonly toggleSidebar = (): void => this.sidebarToggle()?.();
+
     // determines if component was once drawn visited
     readonly pageComponentVisited = signal<boolean[]>(undefined!);
 
@@ -324,6 +328,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      *                               locally cached sync state of each submission is kept (so not-yet-saved answers stay
      *                               isSynced=false and are re-sent) instead of marking everything as synced.
      */
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
+    }
+
     examStarted(studentExam: StudentExam, resumedFromFailedSave = false) {
         if (studentExam) {
             // Keep working time

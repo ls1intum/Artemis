@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
@@ -11,7 +11,7 @@ import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-i
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
-import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { ExamParticipationComponent } from 'app/exam/overview/exam-participation/exam-participation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
@@ -39,7 +39,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
     styleUrls: ['./course-exams.component.scss'],
-    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -83,6 +83,13 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
+
+    private readonly activeExamDetails = signal<ExamParticipationComponent | undefined>(undefined);
+
+    constructor() {
+        // Push the collapse state and toggle into the active exam participation so its start cover can render the toggle in its header when collapsed.
+        effect(() => this.activeExamDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
+    }
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
@@ -314,6 +321,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams);
         this.updateSidebarData();
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof ExamParticipationComponent) {
+            this.activeExamDetails.set(componentRef);
+        }
     }
 
     onSubRouteDeactivate() {
