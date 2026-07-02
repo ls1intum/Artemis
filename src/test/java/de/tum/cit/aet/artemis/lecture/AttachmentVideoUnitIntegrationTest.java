@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.client.ExpectedCount;
@@ -78,6 +79,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
@@ -458,11 +462,34 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnitWithIdenticalUploadBackfillsMissingHashWithoutBumpingVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+        String originalLink = persistedAttachment.getLink();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        jdbcTemplate.update("UPDATE attachment SET sha256_hash = NULL WHERE id = ?", persistedAttachment.getId());
+        persistedAttachment.setSha256Hash(null);
+
+        var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachment);
+        var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, identicalStoredFile);
+
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion);
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getLink()).isEqualTo(originalLink);
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getSha256Hash()).hasSize(64);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnitWithDifferentUploadBumpsVersionAndStoresHash() throws Exception {
         var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
         var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
         int originalVersion = persistedAttachment.getVersion();
+        String originalHash = persistedAttachment.getSha256Hash();
 
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
 
@@ -471,6 +498,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion + 1);
         assertThat(updatedAttachmentVideoUnit.getAttachment().getSha256Hash()).hasSize(64);
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getSha256Hash()).isNotEqualTo(originalHash);
     }
 
     @Test
