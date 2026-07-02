@@ -66,12 +66,10 @@
                                     </a>
                                 </div>
                             }
-                            @if (plagiarismCase.plagiarismSubmissions) {
+                            @if (plagiarismCase.plagiarismSubmissionCount !== undefined) {
                                 <div class="col-2 text-center">
                                     <span>
-                                        {{
-                                            'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions?.length }
-                                        }}
+                                        {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissionCount } }}
                                     </span>
                                 </div>
                             }

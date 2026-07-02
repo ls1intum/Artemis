@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -37,6 +37,7 @@ import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-c
 import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
+import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -99,6 +100,17 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
+
+    // ViewChildren to access all attachment/video unit components
+    private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
+
+    // Context provider for the chatbot
+    readonly contextsProvider: LectureContextsProvider = {
+        getVisibleContexts: () => this.collectVisibleContexts(),
+    };
+
+    /** Context provider function for the chatbot button */
+    readonly contextProvider = computed<(() => IrisMessageContextDTO[]) | undefined>(() => () => this.collectVisibleContexts());
 
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
@@ -278,5 +290,101 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramsSubscription?.unsubscribe();
         this.courseParamsSubscription?.unsubscribe();
+    }
+
+    private isElementVisible(element: Element | null): boolean {
+        if (!element) return false;
+        const rect = element.getBoundingClientRect();
+        const vh = window.innerHeight || document.documentElement.clientHeight;
+        const vw = window.innerWidth || document.documentElement.clientWidth;
+        return rect.top < vh && rect.bottom > 0 && rect.left < vw && rect.right > 0;
+    }
+
+    /**
+     * Collects context from all visible and expanded attachment/video units.
+     * Uses a snapshot-based approach: calculates visibility at the moment this method is called
+     * (when the user sends a message) rather than continuously tracking visibility.
+     * Returns a list of video and/or slides context objects.
+     *
+     * Visibility: Any part of the element visible in the viewport counts.
+     */
+    private collectVisibleContexts(): IrisMessageContextDTO[] {
+        const units = this.attachmentVideoUnits();
+        if (!units || units.length === 0) {
+            return [];
+        }
+
+        const contexts: IrisMessageContextDTO[] = [];
+
+        units.forEach((unitComponent) => {
+            const unit = unitComponent.lectureUnit();
+            const unitId = unit?.id;
+
+            // Skip if no ID or unit is collapsed
+            if (!unitId || unitComponent.isCollapsed()) {
+                return;
+            }
+
+            // Snapshot: Calculate visibility NOW (when message is sent)
+            const element = document.querySelector(`[data-unit-id="${unitId}"]`);
+            if (!element) {
+                return;
+            }
+
+            // Check if any part of unit is in viewport
+            const isUnitVisible = this.isElementVisible(element);
+
+            if (!isUnitVisible) {
+                return; // Unit not visible → skip
+            }
+
+            // Unit is visible → check individual materials (PDF viewer, video player)
+            const provider = unitComponent.contextProvider();
+            if (!provider) {
+                return;
+            }
+
+            // Check if PDF viewer is visible
+            const pdfViewer = element.querySelector('jhi-pdf-viewer');
+            if (pdfViewer) {
+                const isPdfVisible = this.isElementVisible(pdfViewer);
+
+                if (isPdfVisible) {
+                    const pdfPage = provider.getCurrentPdfPage?.();
+                    if (pdfPage != null) {
+                        const slidesContext: IrisSlidesContextDTO = {
+                            type: 'slides',
+                            lectureUnitId: unitId,
+                            page: pdfPage,
+                        };
+                        contexts.push(slidesContext);
+                    }
+                }
+            }
+
+            // Check if video player is visible
+            const videoPlayer = element.querySelector('jhi-video-player, jhi-youtube-player');
+            if (videoPlayer) {
+                const isVideoVisible = this.isElementVisible(videoPlayer);
+
+                if (isVideoVisible) {
+                    // Only include video context if it has been played (not just showing thumbnail)
+                    const hasBeenPlayed = provider.hasVideoBeenPlayed?.() ?? false;
+                    if (hasBeenPlayed) {
+                        const videoTimestamp = provider.getCurrentVideoTimestamp?.();
+                        if (videoTimestamp != null) {
+                            const videoContext: IrisVideoContextDTO = {
+                                type: 'video',
+                                lectureUnitId: unitId,
+                                timestamp: videoTimestamp,
+                            };
+                            contexts.push(videoContext);
+                        }
+                    }
+                }
+            }
+        });
+
+        return contexts;
     }
 }
