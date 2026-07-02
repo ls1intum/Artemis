@@ -41,6 +41,9 @@ describe('no-raw-tailwind-color-palette', () => {
                 { code: '<div class="border-t-(--p-red-500)"></div>', errors: [{ messageId: 'primitivePalette', data: { cls: 'border-t-(--p-red-500)' } }] },
                 // Arbitrary hex color value.
                 { code: '<div class="bg-[#f00]"></div>', errors: [{ messageId: 'rawPalette', data: { cls: 'bg-[#f00]' } }] },
+                // Bracketed arbitrary form must be caught too, not just the v4 `(...)` shorthand.
+                { code: '<div class="text-[var(--p-red-500)]"></div>', errors: [{ messageId: 'primitivePalette', data: { cls: 'text-[var(--p-red-500)]' } }] },
+                { code: '<div class="bg-[var(--danger)]"></div>', errors: [{ messageId: 'arbitraryStateToken', data: { cls: 'bg-[var(--danger)]' } }] },
                 // The older arbitrary brand-state form is superseded by the named state-* utilities.
                 { code: '<div class="text-(--danger)"></div>', errors: [{ messageId: 'arbitraryStateToken', data: { cls: 'text-(--danger)' } }] },
                 { code: '<div class="bg-(--success)"></div>', errors: [{ messageId: 'arbitraryStateToken', data: { cls: 'bg-(--success)' } }] },

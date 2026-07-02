@@ -18,6 +18,8 @@ describe('no-bootstrap-classes', () => {
                 { code: '<div class="me-1"></div>' },
                 { code: '<div class="gap-2"></div>' },
                 { code: '<div class="flex"></div>' },
+                // text-primary is a tailwindcss-primeui token (PrimeNG primary), NOT Bootstrap — must stay valid.
+                { code: '<div class="text-primary"></div>' },
                 { code: '<div class="col-span-3"></div>' },
                 { code: '<div class="h-full w-full"></div>' },
                 // `h-auto` / `w-auto` are shared (width:auto) and stay valid.
@@ -51,6 +53,7 @@ describe('no-bootstrap-classes', () => {
                 { code: '<span class="badge"></span>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'badge' } }] },
                 { code: '<div class="card"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'card' } }] },
                 { code: '<div class="alert"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'alert' } }] },
+                { code: '<div class="text-secondary"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'text-secondary' } }] },
                 { code: '<div class="row"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'row' } }] },
                 { code: '<div class="col-md-3"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'col-md-3' } }] },
                 { code: '<div class="d-flex"></div>', errors: [{ messageId: 'bootstrapClass', data: { cls: 'd-flex' } }] },

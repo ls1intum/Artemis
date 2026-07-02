@@ -54,6 +54,9 @@ export const BANNED = [
     // Bootstrap semantic text colors with no brand-bound Tailwind equivalent -> text-muted-color / tokens
     /^text-muted$/,
     /^text-body(-secondary|-tertiary|-emphasis)?$/,
+    // Bootstrap greyscale text colors with no tailwindcss-primeui equivalent -> text-muted-color / semantic
+    // token. `text-primary`/`text-white`/`text-black` are NOT listed: they collide with PrimeUI / Tailwind.
+    /^text-(secondary|light|dark)$/,
     // Bootstrap semantic state colors (text/border/bg) -> named state tokens, e.g. text-state-danger,
     // bg-state-success, border-state-warning, text-state-info (the arbitrary `text-(--danger)` form is itself
     // banned by no-raw-tailwind-color-palette). Only danger/success/warning/info are matched: those are

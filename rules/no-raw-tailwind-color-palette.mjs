@@ -84,19 +84,27 @@ const COLOR_PREFIXES = [
 // lets a single class attribute report every offending class.
 const RAW_PALETTE = new RegExp(`(?<![\\w-])(?:${COLOR_PREFIXES.join('|')})-(?:(?:${TAILWIND_COLOR_NAMES.join('|')})-\\d{2,3}(?:/\\d+)?!?|\\[(?:#|rgb|hsl)[^\\]]*\\]?)`, 'g');
 
-// A color prefix followed by an arbitrary value referencing a PrimeNG PRIMITIVE palette token,
-// e.g. `text-(--p-red-500)`, `bg-(--p-green-300)`. Semantic tokens (--p-primary-color, --p-text-muted-color,
-// --danger, --surface-100) have no `<colorname>-<number>` shape and are therefore NOT matched.
-const PRIMITIVE_UTILITY = new RegExp(`(?<![\\w-])(?:${COLOR_PREFIXES.join('|')})-\\(--p-(?:${TAILWIND_COLOR_NAMES.join('|')})-\\d{2,3}\\)`, 'g');
+// A color prefix followed by an arbitrary value referencing a PrimeNG PRIMITIVE palette token, in EITHER
+// arbitrary form: the v4 shorthand `text-(--p-red-500)` OR the bracketed `text-[var(--p-green-300)]`.
+// Semantic tokens (--p-primary-color, --p-text-muted-color, --danger, --surface-100) have no
+// `<colorname>-<number>` shape and are therefore NOT matched.
+const PRIMITIVE_UTILITY = new RegExp(
+    `(?<![\\w-])(?:${COLOR_PREFIXES.join('|')})-(?:\\(\\s*--p-(?:${TAILWIND_COLOR_NAMES.join('|')})-\\d{2,3}\\s*\\)|\\[\\s*var\\(\\s*--p-(?:${TAILWIND_COLOR_NAMES.join('|')})-\\d{2,3}\\s*\\)\\s*\\])`,
+    'g',
+);
 
 // `var(--p-<colorname>-<number>)` anywhere in a bound expression source — catches the inline-style escape
 // hatch, e.g. `[style.color]="'var(--p-red-500)'"`, `[color]="'var(--p-green-500)'"`.
 const PRIMITIVE_VAR = new RegExp(`var\\(\\s*--p-(?:${TAILWIND_COLOR_NAMES.join('|')})-\\d{2,3}\\s*\\)`, 'g');
 
-// The older arbitrary brand-state form, e.g. `text-(--danger)`, `bg-(--success)`. Superseded by the named
-// `state-*` utilities (collision-free, dark-mode correct). Only the four brand-state vars are matched, so
-// component-local arbitrary vars (`--artemis-alert-*`) and `var(--danger)` inside `[style.*]` are unaffected.
-const STATE_ARBITRARY = new RegExp(`(?<![\\w-])(?:${COLOR_PREFIXES.join('|')})-\\(--(?:danger|success|warning|info)\\)`, 'g');
+// The older arbitrary brand-state form, in EITHER form: `text-(--danger)` OR the bracketed
+// `text-[var(--success)]`. Superseded by the named `state-*` utilities (collision-free, dark-mode correct).
+// Only the four brand-state vars are matched, so component-local arbitrary vars (`--artemis-alert-*`) and
+// `var(--danger)` inside `[style.*]` are unaffected.
+const STATE_ARBITRARY = new RegExp(
+    `(?<![\\w-])(?:${COLOR_PREFIXES.join('|')})-(?:\\(\\s*--(?:danger|success|warning|info)\\s*\\)|\\[\\s*var\\(\\s*--(?:danger|success|warning|info)\\s*\\)\\s*\\])`,
+    'g',
+);
 
 function scanWith(regex, messageId, text, node, context) {
     if (typeof text !== 'string') {
