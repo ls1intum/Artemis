@@ -145,7 +145,7 @@ public class HadesService implements StatelessCIService {
             health = new ConnectorHealth("pong".equals(hadesStatus), additionalInfo);
         }
         catch (Exception ex) {
-            health = new ConnectorHealth(false, additionalInfo, ex);
+            health = new ConnectorHealth(false, additionalInfo, new ContinuousIntegrationException("Hades Server is down"));
         }
         return health;
     }
