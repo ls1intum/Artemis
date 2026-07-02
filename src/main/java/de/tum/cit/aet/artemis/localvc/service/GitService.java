@@ -43,6 +43,7 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -271,9 +272,14 @@ public class GitService extends AbstractGitService {
                 }
                 catch (JGitInternalException | NoHeadException | TransportException e) {
                     // E.g., LockFailedException
+                    // The repository must be closed before deleting its directory: open pack file handles prevent the
+                    // deletion on network file systems (NFS), which would leave a corrupt working copy behind that breaks
+                    // every subsequent access. Same pattern as AbstractGitService.deleteLocalRepository.
+                    repository.closeBeforeDelete();
                     // cleanup the folder to avoid problems in the future.
                     // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
-                    if (!FileUtils.deleteQuietly(localPath.toFile())) {
+                    // 'deleteQuietly' also returns false when there was nothing to delete, so only report an error if the directory is actually left behind.
+                    if (!FileUtils.deleteQuietly(localPath.toFile()) && Files.exists(localPath)) {
                         log.error("Could not delete directory after failed pull: {}", localPath.toAbsolutePath());
                     }
                     throw new GitException(e);
@@ -299,7 +305,9 @@ public class GitService extends AbstractGitService {
             catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
-                if (!FileUtils.deleteQuietly(localPath.toFile())) {
+                // 'deleteQuietly' also returns false when there was nothing to delete (JGit's CloneCommand already cleans up
+                // its own directory on failure), so only report an error if the directory is actually left behind.
+                if (!FileUtils.deleteQuietly(localPath.toFile()) && Files.exists(localPath)) {
                     log.error("Could not delete directory after failed clone: {}", localPath.toAbsolutePath());
                 }
                 throw new GitException(e);
@@ -742,6 +750,37 @@ public class GitService extends AbstractGitService {
     }
 
     /**
+     * Checks whether the bare repository at the given URI is healthy, i.e. it can be opened and has at least one branch.
+     * <p>
+     * An unhealthy repository is either corrupt (e.g. a half-deleted skeleton without HEAD and config, as left behind by a
+     * partially failed deletion) or unborn (created, but it never received its initial branch, e.g. after a failed ref
+     * update during a repository copy). In both cases the repository does not contain any commits on any branch, so it can
+     * safely be deleted and recreated without losing data. False is only returned for these definitive diagnoses; an
+     * unexpected failure during the check (e.g. a transient I/O error) throws instead, so that callers do not mistake a
+     * healthy repository for a corrupt one and delete it.
+     *
+     * @param repositoryUri the URI of the bare repository to check
+     * @return true if the repository can be opened and has at least one branch (loose or packed), false if it is definitively unborn or corrupt
+     * @throws GitException if the health of the repository could not be determined
+     */
+    public boolean isBareRepositoryHealthy(LocalVCRepositoryUri repositoryUri) {
+        var localPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        builder.setBare().setGitDir(localPath.toFile()).setMustExist(true);
+        try (org.eclipse.jgit.lib.Repository repository = builder.build()) {
+            return !repository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS).isEmpty();
+        }
+        catch (RepositoryNotFoundException e) {
+            // The directory is definitively not a git repository (e.g. a half-deleted skeleton without HEAD and config)
+            log.warn("Bare repository at {} is not a valid git repository, considering it corrupt: {}", localPath, e.getMessage());
+            return false;
+        }
+        catch (IOException | RuntimeException e) {
+            throw new GitException("Could not check the health of the bare repository at " + localPath, e);
+        }
+    }
+
+    /**
      * Creates a new bare Git repository at the specified target location,
      * containing a single commit that includes all files from the source repository.
      * <p>
@@ -808,7 +847,7 @@ public class GitService extends AbstractGitService {
             RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
             refUpdate.setNewObjectId(newCommitId);
             refUpdate.setForceUpdate(true);
-            refUpdate.update();
+            verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
             return getBareRepository(targetRepoUri, true);
         }
     }
@@ -888,11 +927,30 @@ public class GitService extends AbstractGitService {
                 RefUpdate refUpdate = targetRepo.updateRef("refs/heads/" + sourceBranch);
                 refUpdate.setNewObjectId(headCommitId);
                 refUpdate.setForceUpdate(true);
-                RefUpdate.Result result = refUpdate.update();
-                log.debug("RefUpdate result: {}", result);
+                verifyRefUpdateResult(refUpdate.update(), "refs/heads/" + sourceBranch, targetRepoUri);
             }
 
             return getBareRepository(targetRepoUri, true);
+        }
+    }
+
+    /**
+     * Verifies that a ref update during a bare-repository copy succeeded. Acceptable results are NEW (fresh repository),
+     * FORCED and FAST_FORWARD (forced update of an existing ref) and NO_CHANGE (idempotent re-copy). Any other result
+     * (e.g. REJECTED, LOCK_FAILURE, IO_FAILURE) does not throw on its own but would leave the target repository unborn
+     * (without any branch), which breaks every subsequent access to it. Failing the copy instead lets the caller clean
+     * up the broken target repository.
+     *
+     * @param result        the result of the ref update
+     * @param refName       the name of the ref that was updated, e.g. "refs/heads/main"
+     * @param targetRepoUri the URI of the repository the ref belongs to
+     * @throws IOException if the ref update failed, so that the caller cleans up the broken target repository instead of returning it
+     */
+    // package-private for testing
+    static void verifyRefUpdateResult(RefUpdate.Result result, String refName, LocalVCRepositoryUri targetRepoUri) throws IOException {
+        switch (result) {
+            case NEW, FORCED, FAST_FORWARD, NO_CHANGE -> log.debug("Updated {} in {} with result {}", refName, targetRepoUri, result);
+            default -> throw new IOException("Could not update " + refName + " in target repository " + targetRepoUri + ": ref update result was " + result);
         }
     }
 

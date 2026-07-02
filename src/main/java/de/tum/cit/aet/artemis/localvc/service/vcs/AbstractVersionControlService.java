@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.exception.GitException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -70,12 +71,32 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         final String targetRepoSlug = targetProjectKeyLowerCase + "-" + targetRepositoryName;
         final var sourceRepoUri = getCloneRepositoryUri(sourceProjectKey, sourceRepositoryName);
         final var targetRepoUri = getCloneRepositoryUri(targetProjectKey, targetRepoSlug);
-        final boolean targetRepositoryExistedBeforeCopy = repositoryExists(targetRepoUri);
+        boolean targetRepositoryExistedBeforeCopy = repositoryExists(targetRepoUri);
+        if (targetRepositoryExistedBeforeCopy) {
+            boolean targetRepositoryHealthy;
+            try {
+                targetRepositoryHealthy = gitService.isBareRepositoryHealthy(targetRepoUri);
+            }
+            catch (GitException ex) {
+                // The health of the pre-existing repository could not be determined (e.g. a transient I/O error):
+                // abort the copy instead of risking the deletion of a healthy repository.
+                throw new VersionControlException("Could not check the health of the target repository " + targetRepoSlug + " before copying", ex);
+            }
+            if (!targetRepositoryHealthy) {
+                // Self-healing: a previous failed copy or a partially failed deletion left a broken target repository behind
+                // (unborn or corrupt, without any branch, so no student data can be lost). Copying onto it would fail forever,
+                // so delete it and copy as if it never existed. If this deletion fails, it intentionally surfaces as a
+                // LocalVCInternalException (a VersionControlException), since the copy could not have succeeded either way.
+                log.warn("Target repository {} exists but is unborn or corrupt; deleting it so the copy can recreate it", targetRepoUri);
+                deleteRepository(targetRepoUri);
+                targetRepositoryExistedBeforeCopy = false;
+            }
+        }
         try (Repository targetRepo = withHistory ? gitService.copyBareRepositoryWithHistory(sourceRepoUri, targetRepoUri, sourceBranch)
                 : gitService.copyBareRepositoryWithoutHistory(sourceRepoUri, targetRepoUri, sourceBranch)) {
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
-        catch (IOException | LargeObjectException ex) {
+        catch (IOException | RuntimeException ex) {
             // Clean up only repositories created during this copy attempt. If a repository already existed before, it must not be removed.
             if (!targetRepositoryExistedBeforeCopy) {
                 try {

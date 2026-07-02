@@ -46,9 +46,11 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jspecify.annotations.NonNull;
 import org.mockito.ArgumentCaptor;
@@ -2405,6 +2407,55 @@ public class ProgrammingExerciseTestService {
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
                 .matches(exception -> !exception.getMessage().isEmpty());
+    }
+
+    // TEST
+    public void copyRepository_selfHealsBrokenTargetRepository(boolean unborn) throws Exception {
+        Team team = setupTeamForBadRequestForStartExercise();
+
+        // Replace the healthy team repository created by the shared setup with a broken one
+        String teamRepoSlug = exercise.getProjectKey().toLowerCase() + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase();
+        LocalVCRepositoryUri targetRepoUri = versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), teamRepoSlug);
+        versionControlService.deleteRepository(targetRepoUri);
+        Path targetPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
+        if (unborn) {
+            // an unborn bare repository: created, but it never received its initial branch (e.g. after a failed ref update)
+            Git.init().setDirectory(targetPath.toFile()).setBare(true).call().close();
+        }
+        else {
+            // a corrupt skeleton as left behind by a partially failed deletion: directories without HEAD or config
+            Files.createDirectories(targetPath.resolve("refs").resolve("heads"));
+            Files.createDirectories(targetPath.resolve("objects"));
+        }
+
+        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true);
+
+        // Starting the exercise must replace the broken repository instead of failing on it forever
+        var participation = participationService.startExercise(exercise, team, false);
+
+        assertThat(participation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
+        try (Repository targetRepository = new FileRepositoryBuilder().setBare().setGitDir(targetPath.toFile()).setMustExist(true).build()) {
+            assertThat(targetRepository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)).as("the broken repository should have been recreated with the default branch")
+                    .isNotEmpty();
+        }
+    }
+
+    // TEST
+    public void copyRepository_keepsHealthyPreexistingTargetOnFailedCopy() throws Exception {
+        Team team = setupTeamForBadRequestForStartExercise();
+
+        // The shared setup pre-creates a healthy team repository (with an initial commit); a failed copy must not delete it (see #12777)
+        String teamRepoSlug = exercise.getProjectKey().toLowerCase() + "-" + (userPrefix + TEAM_SHORT_NAME).toLowerCase();
+        LocalVCRepositoryUri targetRepoUri = versionControlService.getCloneRepositoryUri(exercise.getProjectKey(), teamRepoSlug);
+        Path targetPath = targetRepoUri.getLocalRepositoryPath(localVCBasePath);
+        assertThat(targetPath).as("precondition: the target repository exists before the copy").exists();
+
+        assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false));
+
+        try (Repository targetRepository = new FileRepositoryBuilder().setBare().setGitDir(targetPath.toFile()).setMustExist(true).build()) {
+            assertThat(targetRepository.getRefDatabase().getRefsByPrefix(Constants.R_HEADS)).as("the healthy pre-existing repository must be preserved on a failed copy")
+                    .isNotEmpty();
+        }
     }
 
     @NonNull
