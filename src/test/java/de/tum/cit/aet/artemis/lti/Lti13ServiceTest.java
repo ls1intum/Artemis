@@ -506,8 +506,10 @@ class Lti13ServiceTest {
         assertThat(body.get("gradingProgress").asText()).as("Parameter missing in score publish request: gradingProgress").isNotNull();
 
         assertThat(body.get("comment").asText()).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
-        assertThat(body.get("scoreGiven").asDouble()).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
-        assertThat(body.get("scoreMaximum").asDouble()).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
+        // score (60%) / 100 * maxPoints (80) = 48.0 absolute points — per LTI AGS spec scoreGiven must not be a relative value
+        double expectedScoreGiven = scoreGiven / 100.0 * state.exercise().getMaxPoints();
+        assertThat(body.get("scoreGiven").asDouble()).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(expectedScoreGiven);
+        assertThat(body.get("scoreMaximum").asDouble()).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(state.exercise().getMaxPoints());
 
         assertThat(launch.getScoreLineItemUrl() + "/scores").as("Score publish request was sent to a wrong URI").isEqualTo(urlCapture.getValue());
 
