@@ -10,16 +10,18 @@ type RequestOptionValue = string | number | boolean;
  */
 type RequestOptions = { sort?: RequestOptionValue[] } & Record<string, RequestOptionValue | RequestOptionValue[]>;
 
-export const createRequestOption = (req?: RequestOptions | RequestOptionValue): HttpParams => {
+export const createRequestOption = <T extends object>(req?: T | RequestOptionValue): HttpParams => {
     let options: HttpParams = new HttpParams();
     if (req && typeof req === 'object') {
-        Object.keys(req).forEach((key) => {
+        // Callers pass a variety of typed query/option objects; treat them uniformly as request parameters.
+        const request = req as RequestOptions;
+        Object.keys(request).forEach((key) => {
             if (key !== 'sort') {
-                options = options.set(key, req[key] as RequestOptionValue);
+                options = options.set(key, request[key] as RequestOptionValue);
             }
         });
-        if (req.sort) {
-            req.sort.forEach((val) => {
+        if (request.sort) {
+            request.sort.forEach((val) => {
                 options = options.append('sort', val);
             });
         }
@@ -27,17 +29,18 @@ export const createRequestOption = (req?: RequestOptions | RequestOptionValue): 
     return options;
 };
 
-export const createNestedRequestOption = (req?: RequestOptions | RequestOptionValue, parentKey?: string): HttpParams => {
+export const createNestedRequestOption = <T extends object>(req?: T | RequestOptionValue, parentKey?: string): HttpParams => {
     let options: HttpParams = new HttpParams();
     if (req && typeof req === 'object') {
-        Object.keys(req).forEach((key) => {
+        const request = req as RequestOptions;
+        Object.keys(request).forEach((key) => {
             if (key !== 'sort') {
                 const optionKey = parentKey ? `${parentKey}.${key}` : key;
-                options = options.set(optionKey, req[key] as RequestOptionValue);
+                options = options.set(optionKey, request[key] as RequestOptionValue);
             }
         });
-        if (req.sort) {
-            req.sort.forEach((val) => {
+        if (request.sort) {
+            request.sort.forEach((val) => {
                 const optionKey = parentKey ? `${parentKey}.sort` : 'sort';
                 options = options.append(optionKey, val);
             });
