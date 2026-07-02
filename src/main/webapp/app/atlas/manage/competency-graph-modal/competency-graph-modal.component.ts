@@ -74,7 +74,7 @@ export class CompetencyGraphModalComponent {
             resizable: false,
             showHeader: false,
             styleClass: 'competency-graph-modal',
-            data: <CompetencyGraphModalData>{ learningPathId, name },
+            data: { learningPathId, name },
         });
     }
 }

@@ -146,7 +146,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
                 // relative score percentage
                 relScore: score * 100,
                 // relative points percentage
-                relPoints: stats && totalPoints > 0 ? ((stats.numPassed! * score * maxPoints) / totalPoints) * 100 : 0,
+                relPoints: stats && totalPoints > 0 ? ((stats.numPassed * score * maxPoints) / totalPoints) * 100 : 0,
             };
         });
 

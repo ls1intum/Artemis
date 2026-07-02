@@ -349,7 +349,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(this.participation()));
 
         // reconnect participation <--> submission
-        this.participation().submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
+        this.participation().submissions = [omit(modelingSubmission, 'participation')];
 
         this.modelingExercise.set(this.participation().exercise as ModelingExercise);
         this.course.set(getCourseFromExercise(this.modelingExercise()));

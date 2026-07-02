@@ -134,28 +134,18 @@ export class TeamsImportFromFileFormComponent {
      * @param entries All entries of the csv file
      */
     convertCsvEntries(entries: CsvEntry[]): StudentWithTeam[] {
-        return entries.map(
-            (entry) =>
-                ({
-                    registrationNumber: entry[csvColumns.registrationNumber] || entry[csvColumns.matrikelNummer] || entry[csvColumns.matriculationNumber] || undefined,
-                    username:
-                        entry[csvColumns.login] ||
-                        entry[csvColumns.username] ||
-                        entry[csvColumns.user] ||
-                        entry[csvColumns.benutzer] ||
-                        entry[csvColumns.benutzerName] ||
-                        undefined,
-                    firstName: entry[csvColumns.firstName] || entry[csvColumns.vorname] || undefined,
-                    lastName:
-                        entry[csvColumns.lastName] ||
-                        entry[csvColumns.familyName] ||
-                        entry[csvColumns.surname] ||
-                        entry[csvColumns.name] ||
-                        entry[csvColumns.nachname] ||
-                        undefined,
-                    teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || undefined,
-                }) as StudentWithTeam,
-        );
+        return entries.map((entry): StudentWithTeam => {
+            const student: StudentWithTeam = {
+                registrationNumber: entry[csvColumns.registrationNumber] || entry[csvColumns.matrikelNummer] || entry[csvColumns.matriculationNumber] || undefined,
+                username:
+                    entry[csvColumns.login] || entry[csvColumns.username] || entry[csvColumns.user] || entry[csvColumns.benutzer] || entry[csvColumns.benutzerName] || undefined,
+                firstName: entry[csvColumns.firstName] || entry[csvColumns.vorname] || undefined,
+                lastName:
+                    entry[csvColumns.lastName] || entry[csvColumns.familyName] || entry[csvColumns.surname] || entry[csvColumns.name] || entry[csvColumns.nachname] || undefined,
+                teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || '',
+            };
+            return student;
+        });
     }
 
     /**

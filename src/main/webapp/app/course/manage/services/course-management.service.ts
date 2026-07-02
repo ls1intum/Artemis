@@ -225,7 +225,7 @@ export class CourseManagementService implements OnDestroy {
                     const courses: Course[] = [];
                     res.body.courses?.forEach((courseForDashboardDTO) => {
                         if (courseForDashboardDTO.course.id) {
-                            this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
+                            this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
 
                             // Setting the helper attribute in the course so we can use it in the course overview guard.
                             courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
@@ -256,7 +256,7 @@ export class CourseManagementService implements OnDestroy {
                 if (res.body) {
                     const courseForDashboardDTO: CourseForDashboardDTO = res.body;
                     if (courseForDashboardDTO.course.id) {
-                        this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
+                        this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course.id, courseForDashboardDTO.courseNotificationCount);
 
                         // Setting the helper attribute in the course so we can use it in the course overview guard.
                         courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;

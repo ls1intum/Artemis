@@ -88,7 +88,7 @@ export class SaveExerciseCommand<T extends Exercise> {
 
         return saveObservable.pipe(
             mergeMap(callServer),
-            map((res) => res.body! as T),
+            map((res) => res.body!),
         );
     }
 }

@@ -191,7 +191,7 @@ export class ExamRequestAiFeedbackButtonComponent {
         if (choice === LLM_MODAL_DISMISSED) {
             return;
         }
-        const decision = choice as LLMSelectionDecision;
+        const decision = choice;
         const hasAccepted = this.isAcceptedLLMSelection(decision);
         this.userService
             .updateLLMSelectionDecision(decision)

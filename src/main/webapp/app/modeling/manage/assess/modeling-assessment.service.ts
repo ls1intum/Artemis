@@ -82,7 +82,7 @@ export class ModelingAssessmentService {
             result.submission.submissionDate = convertDateFromServer(result.submission.submissionDate);
         }
         if (result.submission?.participation) {
-            result.submission!.participation!.initializationDate = convertDateFromServer(result.submission.participation.initializationDate);
+            result.submission.participation.initializationDate = convertDateFromServer(result.submission.participation.initializationDate);
         }
 
         return res.clone({ body: result });

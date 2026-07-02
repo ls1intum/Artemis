@@ -279,7 +279,7 @@ export class CourseScoresComponent implements OnInit {
             const stats = this.studentStatistics();
             const maxPoints = this.maxNumberOfOverallPoints();
             const course = this.course();
-            this.scoresToDisplay.set(stats.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxPoints, course!)));
+            this.scoresToDisplay.set(stats.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxPoints, course)));
             this.highlightBar(HighlightType.AVERAGE);
         });
     }
@@ -330,7 +330,7 @@ export class CourseScoresComponent implements OnInit {
             const reachablePointsWithPresentation = (-maxOverall / (presentationsWeight - 100)) * 100;
             const reachablePresentationPoints = (reachablePointsWithPresentation * presentationsWeight) / 100.0;
             const course = this.course();
-            this.maxNumberOfPresentationPoints.set(roundValueSpecifiedByCourseSettings(reachablePresentationPoints, course!));
+            this.maxNumberOfPresentationPoints.set(roundValueSpecifiedByCourseSettings(reachablePresentationPoints, course));
             this.maxNumberOfOverallPoints.set(maxOverall + this.maxNumberOfPresentationPoints());
         }
     }
@@ -405,7 +405,7 @@ export class CourseScoresComponent implements OnInit {
         const course = this.course()!;
 
         if (studentStatistics.presentationScore > 0 && presentationsNumber > 0 && maxPresentationPoints > 0) {
-            const presentationPointAvg = studentStatistics.presentationScore / presentationsNumber!;
+            const presentationPointAvg = studentStatistics.presentationScore / presentationsNumber;
             const presentationPoints = (maxPresentationPoints * presentationPointAvg) / 100.0;
 
             studentStatistics.presentationPoints = roundValueSpecifiedByCourseSettings(presentationPoints, course);
@@ -486,7 +486,7 @@ export class CourseScoresComponent implements OnInit {
     setUpGradingScale(gradingScaleDTO: GradingScaleDTO) {
         this.gradingScaleExists.set(true);
         gradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(gradingScaleDTO.gradeSteps.gradeSteps);
-        this.gradingScale.set(toEntity(gradingScaleDTO, this.course()!));
+        this.gradingScale.set(toEntity(gradingScaleDTO, this.course()));
         this.isBonus.set(gradingScaleDTO.gradeSteps.gradeType === GradeType.BONUS);
         this.maxGrade.set(this.gradingService.maxGrade(gradingScaleDTO.gradeSteps.gradeSteps));
     }
@@ -529,13 +529,15 @@ export class CourseScoresComponent implements OnInit {
         if (!studentStatistics.gradeScores.length) {
             // Currently the server does not return CourseScoresStudentStatistics for users without participations,
             // but this should handle noParticipation grade if the server response changes.
-            return {
+            const noParticipationGradeStep: Partial<GradeStep> = {
                 gradeName: gradingScale.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
-            } as GradeStep;
-        } else if (plagiarismMap[studentStatistics.student.id!]) {
-            return {
+            };
+            return noParticipationGradeStep as GradeStep;
+        } else if (plagiarismMap[studentStatistics.student.id]) {
+            const plagiarismGradeStep: Partial<GradeStep> = {
                 gradeName: gradingScale.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
-            } as GradeStep;
+            };
+            return plagiarismGradeStep as GradeStep;
         } else {
             const overallPercentageForStudent = studentStatistics.overallPoints && maxOverall ? (studentStatistics.overallPoints / maxOverall) * 100 : 0;
             return this.gradingService.findMatchingGradeStep(gradingScale.gradeSteps, overallPercentageForStudent);

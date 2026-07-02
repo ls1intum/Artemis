@@ -44,7 +44,7 @@ export class ExerciseStatisticsComponent implements OnInit {
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             const exercise = exerciseResponse.body!;
             this.exercise.set(exercise);
-            this.course.set(getCourseFromExercise(exercise)!);
+            this.course.set(getCourseFromExercise(exercise));
         });
         this.service.getExerciseStatistics(exerciseId).subscribe((res: ExerciseManagementStatisticsDto) => {
             this.exerciseStatistics.set(res);

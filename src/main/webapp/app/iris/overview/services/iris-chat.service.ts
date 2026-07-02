@@ -366,7 +366,7 @@ export class IrisChatService implements OnDestroy {
         }
 
         const generation = this.stateGeneration;
-        return this.irisChatHttpService.rateMessage(this.sessionId, message.id!, !!helpful).pipe(
+        return this.irisChatHttpService.rateMessage(this.sessionId, message.id, !!helpful).pipe(
             map((r: HttpResponse<IrisMessageResponseDTO>) => this.mapMessageDTO(r.body!)),
             tap((m) => {
                 if (this.stateGeneration !== generation) return;

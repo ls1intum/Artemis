@@ -60,7 +60,7 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
             forceRun: parsed.forceRun ?? false,
             resultPaths: parsed.resultPaths ?? [],
         })),
-    } as BuildPlanPhases;
+    };
 }
 
 function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {

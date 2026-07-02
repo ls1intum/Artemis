@@ -43,7 +43,7 @@ export class FormStatusBarComponent implements AfterViewInit {
             return;
         }
 
-        const navbarElement = document.querySelector('jhi-navbar') as HTMLElement | null;
+        const navbarElement = document.querySelector('jhi-navbar');
         const navbarHeightPx = navbarElement?.getBoundingClientRect().height ?? 0;
         const statusBarHeightPx = this.statusBar()?.nativeElement?.getBoundingClientRect().height ?? 0;
 

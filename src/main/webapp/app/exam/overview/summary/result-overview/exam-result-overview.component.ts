@@ -211,7 +211,7 @@ export class ExamResultOverviewComponent implements OnInit {
     private hasAtLeastOneResult(): boolean {
         const exercises = this.studentExamWithGrade()?.studentExam?.exercises;
         if (exercises?.length && exercises.length > 0) {
-            return exercises!.some((exercise) => getAllResultsOfAllSubmissions(exercise.studentParticipations?.[0]?.submissions).length! > 0);
+            return exercises.some((exercise) => getAllResultsOfAllSubmissions(exercise.studentParticipations?.[0]?.submissions).length > 0);
         }
         return false;
     }

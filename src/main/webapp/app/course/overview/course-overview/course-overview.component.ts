@@ -124,7 +124,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
             this.isSidebarCollapsed.update((value) => {
                 const componentRef = this.activatedComponentReference();
-                const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+                const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : componentRef?.isCollapsed;
                 return componentCollapsed ?? !value;
             });
         });
@@ -161,7 +161,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         this.courseActionItems.set(this.getCourseActionItems());
         const componentRef = this.activatedComponentReference();
-        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : componentRef?.isCollapsed;
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.sidebarItems.set(this.getSidebarItems());
         await this.initAfterCourseLoad();
@@ -277,7 +277,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
         const childRouteComponent = this.activatedComponentReference();
         childRouteComponent?.toggleSidebar();
-        const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : (childRouteComponent!.isCollapsed as boolean);
+        const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : childRouteComponent!.isCollapsed;
         this.isSidebarCollapsed.set(componentCollapsed);
     }
 

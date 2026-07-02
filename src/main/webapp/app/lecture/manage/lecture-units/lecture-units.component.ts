@@ -265,9 +265,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
         lectureUnit.lecture.id = this.lecture().id;
         lectureUnit.lecture.course = this.lecture().course;
 
-        this.currentlyProcessedTextUnit.set(lectureUnit as TextUnit);
-        this.currentlyProcessedOnlineUnit.set(lectureUnit as OnlineUnit);
-        this.currentlyProcessedAttachmentVideoUnit.set(lectureUnit as AttachmentVideoUnit);
+        this.currentlyProcessedTextUnit.set(lectureUnit);
+        this.currentlyProcessedOnlineUnit.set(lectureUnit);
+        this.currentlyProcessedAttachmentVideoUnit.set(lectureUnit);
 
         this.isTextUnitFormOpen.set(lectureUnit.type === LectureUnitType.TEXT);
         this.isExerciseUnitFormOpen.set(lectureUnit.type === LectureUnitType.EXERCISE);

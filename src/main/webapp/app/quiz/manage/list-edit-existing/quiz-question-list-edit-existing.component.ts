@@ -103,7 +103,7 @@ export class QuizQuestionListEditExistingComponent {
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
             next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -128,7 +128,7 @@ export class QuizQuestionListEditExistingComponent {
         this.quizExerciseService.findForExam(selectedExam.id!).subscribe({
             next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),

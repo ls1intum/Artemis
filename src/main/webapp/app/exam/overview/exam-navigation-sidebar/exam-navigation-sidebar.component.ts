@@ -208,7 +208,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
 
     isOnlyOfflineIDE(exercise: Exercise): boolean {
         if (exercise instanceof ProgrammingExercise) {
-            const programmingExercise = exercise as ProgrammingExercise;
+            const programmingExercise = exercise;
             return programmingExercise.allowOfflineIde === true && programmingExercise.allowOnlineEditor === false;
         }
         return false;

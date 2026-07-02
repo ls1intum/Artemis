@@ -95,7 +95,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
             try {
                 // work on a copy if removeAssessments mutates
-                const umlModel = { ...model } as UMLModel;
+                const umlModel = { ...model };
                 ModelingEditorComponent.removeAssessments(umlModel);
                 this.apollonEditor.model = umlModel;
             } catch (err) {

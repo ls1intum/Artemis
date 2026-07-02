@@ -763,7 +763,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     handleOriginalVersion() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-        const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
+        const link = addPublicFilePrefix(this.lectureUnit().attachment!.link);
 
         if (link) {
             this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);

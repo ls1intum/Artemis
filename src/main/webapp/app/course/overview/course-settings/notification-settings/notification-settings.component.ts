@@ -54,9 +54,9 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
         );
 
         if (this.settingInfo!.selectedPreset === 0) {
-            this.updateSpecificationArrayByNotificationMap(this.settingInfo!.notificationTypeChannels!, this.settingInfo!.notificationTypeChannels![1] === undefined);
+            this.updateSpecificationArrayByNotificationMap(this.settingInfo!.notificationTypeChannels, this.settingInfo!.notificationTypeChannels[1] === undefined);
         } else if (this.settingInfo!.selectedPreset !== 0) {
-            this.updateSpecificationArrayByNotificationMap(this.selectedSettingPreset()!.presetMap!, true);
+            this.updateSpecificationArrayByNotificationMap(this.selectedSettingPreset()!.presetMap, true);
         }
 
         this.isLoading.set(false);
@@ -133,7 +133,7 @@ export class NotificationSettingsComponent extends CourseSettingCategoryDirectiv
      */
     private updateSpecificationArrayByNotificationMap(notificationMap: CourseNotificationSettingsMap, useValue: boolean) {
         const notificationSpecifications: CourseNotificationSettingSpecification[] = [];
-        Object.entries(this.info!.notificationTypes!).forEach(([key, value]) => {
+        Object.entries(this.info!.notificationTypes).forEach(([key, value]) => {
             notificationSpecifications.push(new CourseNotificationSettingSpecification(value, Number(key), notificationMap[useValue ? value : key]));
         });
         this.notificationSpecifications.set(notificationSpecifications);

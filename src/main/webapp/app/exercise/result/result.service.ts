@@ -93,7 +93,7 @@ export class ResultService implements IResultService {
      * @param short flag that indicates if the resultString should use the short format
      */
     private getResultStringDefinedParameters(result: Result, exercise: Exercise, participation: Participation, short: boolean | undefined): string {
-        const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
+        const relativeScore = roundValueSpecifiedByCourseSettings(result.score, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
             if (isAthenaAIResult(result)) {
@@ -101,7 +101,7 @@ export class ResultService implements IResultService {
             }
             return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         } else {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, participation, relativeScore, points, short);
+            return this.getResultStringProgrammingExercise(result, exercise, participation, relativeScore, points, short);
         }
     }
 
@@ -180,7 +180,7 @@ export class ResultService implements IResultService {
             buildAndTestMessage = this.translateService.instant('artemisApp.result.resultString.buildSuccessfulTests', {
                 numberOfTestsPassed:
                     result.passedTestCaseCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.passedTestCaseCount,
-                numberOfTestsTotal: result.testCaseCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.testCaseCount,
+                numberOfTestsTotal: result.testCaseCount >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.testCaseCount,
             });
         }
 
@@ -220,7 +220,7 @@ export class ResultService implements IResultService {
             return this.translateService.instant('artemisApp.result.resultString.programmingCodeIssues', {
                 relativeScore,
                 buildAndTestMessage,
-                numberOfIssues: result.codeIssueCount! >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.codeIssueCount,
+                numberOfIssues: result.codeIssueCount >= this.MAX_VALUE_PROGRAMMING_RESULT_INTS ? `${this.MAX_VALUE_PROGRAMMING_RESULT_INTS}+` : result.codeIssueCount,
                 points,
             });
         } else {
@@ -284,7 +284,7 @@ export class ResultService implements IResultService {
 
     private convertResultDatesFromServer(result: Result) {
         result.completionDate = convertDateFromServer(result.completionDate);
-        ParticipationService.convertParticipationDatesFromServer(result.submission?.participation as StudentParticipation);
+        ParticipationService.convertParticipationDatesFromServer(result.submission?.participation);
         SubmissionService.convertSubmissionDateFromServer(result.submission);
     }
 

@@ -482,14 +482,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private getPostIdsWithForwardedMessages(): number[] {
         return this.posts()
             .filter((post) => post.hasForwardedMessages && post.id !== undefined)
-            .map((post) => post.id!) as number[];
+            .map((post) => post.id!);
     }
 
     /**
      * Converts list of forwarded message groups to a map from post ID to message list.
      */
     private mapForwardedMessages(groups: ForwardedMessagesGroupDTO[]): Map<number, ForwardedMessageDTO[]> {
-        return new Map(groups.map((group) => [group.id!, group.messages!]));
+        return new Map(groups.map((group) => [group.id!, group.messages]));
     }
 
     /**
@@ -550,9 +550,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             if (Array.isArray(response) && response.length > 0) {
                 const first = response[0];
                 if ((first as Post).conversation !== undefined) {
-                    fetchedPosts = response as Post[];
+                    fetchedPosts = response;
                 } else if ((first as AnswerPost).resolvesPost !== undefined) {
-                    fetchedAnswerPosts = response as AnswerPost[];
+                    fetchedAnswerPosts = response;
                 }
             }
         });

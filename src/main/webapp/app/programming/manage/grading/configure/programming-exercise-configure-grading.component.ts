@@ -627,7 +627,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 .disableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!)
                 .pipe(
                     tap(() => {
-                        this.programmingExercise!.submissionPolicy!.active = false;
+                        this.programmingExercise.submissionPolicy!.active = false;
                         this.commitProgrammingExercise();
                     }),
                 )
@@ -637,7 +637,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 .enableSubmissionPolicyOfProgrammingExercise(this.programmingExercise.id!)
                 .pipe(
                     tap(() => {
-                        this.programmingExercise!.submissionPolicy!.active = true;
+                        this.programmingExercise.submissionPolicy!.active = true;
                         this.commitProgrammingExercise();
                     }),
                 )
@@ -842,7 +842,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     private updateTestCases(editedTestCase: ProgrammingExerciseTestCase, field: EditableField, newValue: EditableFieldValue, displayType: TestCaseView): void {
         const mapFunction = (testCase: ProgrammingExerciseTestCase): ProgrammingExerciseTestCase =>
-            testCase.id !== editedTestCase.id ? testCase : ({ ...testCase, [field]: newValue } as ProgrammingExerciseTestCase);
+            testCase.id !== editedTestCase.id ? testCase : { ...testCase, [field]: newValue };
         switch (displayType) {
             case TestCaseView.TABLE:
                 this.filteredTestCasesForTable = this.filteredTestCasesForTable.map(mapFunction);
@@ -867,7 +867,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     private updateStaticCodeAnalysisCategories(editedCategory: StaticCodeAnalysisCategory, field: EditableField, newValue: EditableFieldValue): void {
         const filterFunction = (category: StaticCodeAnalysisCategory): StaticCodeAnalysisCategory =>
-            category.id !== editedCategory.id ? category : ({ ...category, [field]: newValue } as StaticCodeAnalysisCategory);
+            category.id !== editedCategory.id ? category : { ...category, [field]: newValue };
 
         this.staticCodeAnalysisCategoriesForTable.set(this.staticCodeAnalysisCategoriesForTable().map(filterFunction));
         this.backupStaticCodeAnalysisCategories = this.backupStaticCodeAnalysisCategories.map(filterFunction);

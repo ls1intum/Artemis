@@ -139,7 +139,7 @@ export class ModelingSubmissionService {
         const url = `${this.resourceUrl}/participations/${participationId}/submissions-with-results`;
         return this.http.get<ModelingSubmission[]>(url).pipe(
             map((submissions: ModelingSubmission[]) => {
-                return submissions.map((submission) => this.submissionService.convertSubmissionFromServer(submission) as ModelingSubmission);
+                return submissions.map((submission) => this.submissionService.convertSubmissionFromServer(submission));
             }),
         );
     }

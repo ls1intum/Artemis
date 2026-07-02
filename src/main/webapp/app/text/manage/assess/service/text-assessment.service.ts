@@ -22,7 +22,10 @@ import { convertDateFromServer } from 'app/foundation/util/date.utils';
 
 type EntityResponseType = HttpResponse<Result>;
 type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;
-type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[]; assessmentNote?: string };
+// The text blocks are sent as plain request objects (without the submissionId and TextBlock's private/computed
+// members), so the request shape is the public subset of TextBlock rather than TextBlock itself.
+type TextBlockRequest = Pick<TextBlock, 'id' | 'type' | 'startIndex' | 'endIndex' | 'text'>;
+type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlockRequest[]; assessmentNote?: string };
 
 @Injectable({
     providedIn: 'root',
@@ -143,7 +146,7 @@ export class TextAssessmentService {
         let params = new HttpParams();
         if (resultId && resultId > 0) {
             // in case resultId is set, we do not need the correction round
-            params = params.set('resultId', resultId!.toString());
+            params = params.set('resultId', resultId.toString());
         } else {
             params = params.set('correction-round', correctionRound.toString());
         }
@@ -162,11 +165,11 @@ export class TextAssessmentService {
                     const submission = participation.submissions!.last()!;
                     let result;
                     if (resultId) {
-                        result = getSubmissionResultById(submission, resultId);
+                        result = getSubmissionResultById(submission, resultId)!;
                     } else {
                         result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
                     }
-                    TextAssessmentService.reconnectResultsParticipation(participation, submission, result!);
+                    TextAssessmentService.reconnectResultsParticipation(participation, submission, result);
                 }),
                 map<HttpResponse<StudentParticipation>, StudentParticipation>((response: HttpResponse<StudentParticipation>) => response.body!),
             );
@@ -209,7 +212,7 @@ export class TextAssessmentService {
             };
         });
 
-        return { feedbacks, textBlocks: textBlocksRequestObjects, assessmentNote } as TextAssessmentDTO;
+        return { feedbacks, textBlocks: textBlocksRequestObjects, assessmentNote };
     }
 
     private convertResultEntityResponseTypeFromServer(res: EntityResponseType): EntityResponseType {

@@ -10,7 +10,6 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-problem-statement',
@@ -36,7 +35,7 @@ export class ProblemStatementComponent implements OnInit {
     /** Returns the exercise as ProgrammingExercise if it's a programming exercise, undefined otherwise */
     readonly programmingExercise = computed(() => {
         const ex = this.exercise();
-        return ex?.type === ExerciseType.PROGRAMMING ? (ex as ProgrammingExercise) : undefined;
+        return ex?.type === ExerciseType.PROGRAMMING ? ex : undefined;
     });
 
     readonly isStandalone = signal(false);

@@ -109,7 +109,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     onTextEditorInput(event: Event) {
         this.studentSubmission().isSynced = false;
-        this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
+        this.textEditorInput.next((event.target as HTMLTextAreaElement).value);
     }
 
     private updateViewFromSubmissionVersion() {

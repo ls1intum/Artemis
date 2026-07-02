@@ -60,7 +60,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
         this.routerLink = this.router.url;
         const participation = this.participation();
         participation.exercise = this.exercise();
-        const latestSubmission = getLatestSubmission(participation) as ProgrammingSubmission | undefined;
+        const latestSubmission: ProgrammingSubmission | undefined = getLatestSubmission(participation);
         this.submission.set(latestSubmission);
         this.result = getLatestSubmissionResult(latestSubmission);
         if (this.result && latestSubmission) {

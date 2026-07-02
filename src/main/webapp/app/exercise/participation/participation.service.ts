@@ -263,11 +263,11 @@ export class ParticipationService {
                 }
             } else if (participations[0].type === ParticipationType.PROGRAMMING) {
                 if (nonTestRunParticipations.length) {
-                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations);
                     mergedParticipations.push(combinedParticipation);
                 }
                 if (testRunParticipations.length) {
-                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations as ProgrammingExerciseStudentParticipation[]);
+                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations);
                     mergedParticipations.push(combinedParticipationTestRun);
                 }
             }

@@ -10,8 +10,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
 import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/services/programming-exercise-timeline-update-dto.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
@@ -399,10 +397,10 @@ export class ProgrammingExerciseService {
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
-            copy.templateParticipation = _omit(copy.templateParticipation, ['exercise', 'results']) as TemplateProgrammingExerciseParticipation;
+            copy.templateParticipation = _omit(copy.templateParticipation, ['exercise', 'results']);
         }
         if (copy.solutionParticipation) {
-            copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']) as SolutionProgrammingExerciseParticipation;
+            copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']);
         }
 
         return copy as ProgrammingExercise;

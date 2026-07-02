@@ -62,7 +62,7 @@ export class ExerciseScoresExportButtonComponent {
                 scrollToTopOfPage();
                 return;
             }
-            const isTeamExercise = !!(results[0].result!.submission!.participation! as StudentParticipation).team;
+            const isTeamExercise = !!(results[0].result.submission!.participation! as StudentParticipation).team;
             const gradingCriteria: GradingCriterion[] = ExerciseScoresExportButtonComponent.sortedGradingCriteria(exercise);
 
             let keys;

@@ -4,7 +4,7 @@ import { User } from 'app/account/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
-import { OrganizationSelectorComponent, OrganizationSelectorDialogData } from 'app/admin/organization-selector/organization-selector.component';
+import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -141,7 +141,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 this.oldLogin = this.user().login;
                 this.organizationService.getOrganizationsByUser(this.user().id!).subscribe((organizations) => {
                     // Rebuild the user reference so the async organization update renders under zoneless.
-                    this.user.update((currentUser) => ({ ...currentUser, organizations }) as User);
+                    this.user.update((currentUser) => ({ ...currentUser, organizations }));
                 });
             }
         });
@@ -236,12 +236,12 @@ export class UserManagementUpdateComponent implements OnInit {
             dismissableMask: true,
             data: {
                 organizations: this.user().organizations,
-            } as OrganizationSelectorDialogData,
+            },
         });
         dialogRef?.onClose.subscribe((organization) => {
             if (organization !== undefined) {
                 // Rebuild the user reference (new organizations array) so the async dialog result renders under zoneless.
-                this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }) as User);
+                this.user.update((currentUser) => ({ ...currentUser, organizations: [...(currentUser.organizations ?? []), organization] }));
             }
         });
     }
@@ -252,9 +252,7 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     removeOrganizationFromUser(organization: Organization) {
         // Rebuild the user reference (new organizations array) so the updated list renders under zoneless.
-        this.user.update(
-            (currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }) as User,
-        );
+        this.user.update((currentUser) => ({ ...currentUser, organizations: currentUser.organizations!.filter((userOrganization) => userOrganization.id !== organization.id) }));
     }
 
     /**
@@ -381,7 +379,7 @@ export class UserManagementUpdateComponent implements OnInit {
      * Only rebuilds when the mutated object is the currently held user to avoid clobbering unrelated state.
      */
     private commitUser(user: User) {
-        this.user.update((currentUser) => (currentUser === user ? ({ ...currentUser } as User) : currentUser));
+        this.user.update((currentUser) => (currentUser === user ? { ...currentUser } : currentUser));
     }
 
     /**

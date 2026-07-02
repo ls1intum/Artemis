@@ -761,7 +761,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      */
     setQuestionText(textPartId: string): void {
         const rowColumn: string[] = textPartId.split('-').slice(1);
-        this.textParts()[Number(rowColumn[0])][Number(rowColumn[1])] = (<HTMLInputElement>document.getElementById(textPartId)).value;
+        this.textParts()[Number(rowColumn[0])][Number(rowColumn[1])] = (document.getElementById(textPartId) as HTMLInputElement).value;
         this.shortAnswerQuestion.text = this.textParts()
             .map((textPart) => textPart.join(' '))
             .join('\n');

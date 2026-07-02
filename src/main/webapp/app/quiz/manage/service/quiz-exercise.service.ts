@@ -272,7 +272,7 @@ export class QuizExerciseService {
                 if ((question as DragAndDropQuestion).dragItems) {
                     (question as DragAndDropQuestion).dragItems?.forEach((dragItem, drag_index) => {
                         if (dragItem.pictureFilePath) {
-                            const filePath = dragItem.pictureFilePath!;
+                            const filePath = dragItem.pictureFilePath;
                             const fileNameExtension = filePath.split('.').last();
                             filePromises.push(this.fetchFilePromise(`q${questionIndex}_dragItem-${drag_index}.${fileNameExtension}`, zip, filePath));
                         }

@@ -44,7 +44,6 @@ import { LinkifyService } from 'app/communication/link-preview/services/linkify.
 import { PlagiarismPostService } from 'app/plagiarism/shared/services/plagiarism-post.service';
 import { PlagiarismPostCreationDtoModel } from 'app/plagiarism/shared/entities/plagiarism-post-creation-dto.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -116,7 +115,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
                 this.verdictMessage.set(plagiarismCase.verdictMessage ?? '');
                 this.verdictPointDeduction.set(plagiarismCase.verdictPointDeduction ?? 0);
-                this.metisService.setCourse({ id: this.courseId(), title: plagiarismCase.exercise?.courseTitle } as Course);
+                this.metisService.setCourse({ id: this.courseId(), title: plagiarismCase.exercise?.courseTitle });
                 this.metisService.setPageType(this.pageType);
                 this.metisService.getFilteredPosts({
                     plagiarismCaseId: plagiarismCase.id,

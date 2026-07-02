@@ -166,7 +166,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
                 // when the result identity actually changes.
                 distinctUntilChanged((previous, current) => previous?.id === current?.id),
                 tap((result) => {
-                    this.result.set(result!);
+                    this.result.set(result);
                 }),
                 switchMap((result) => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
@@ -187,7 +187,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
      * Mutates the input parameter result.
      */
     loadAndAttachResultDetails(participation: Participation, result: Result): Observable<Result> {
-        return this.resultService.getFeedbackDetailsForResult(participation.id!, result).pipe(
+        return this.resultService.getFeedbackDetailsForResult(participation.id, result).pipe(
             map((res) => res?.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;

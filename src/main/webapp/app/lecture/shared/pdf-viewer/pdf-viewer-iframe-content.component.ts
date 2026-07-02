@@ -371,7 +371,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     }
 
     private getPdfViewerApplication(): PDFViewerApplication | undefined {
-        return this.pdfNotificationService.onPDFJSInitSignal() as PDFViewerApplication | undefined;
+        return this.pdfNotificationService.onPDFJSInitSignal();
     }
 
     private dispatchFindCommand(type: 'find' | 'again', query: string, highlightAll: boolean, findPrevious: boolean): void {

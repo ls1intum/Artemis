@@ -137,7 +137,7 @@ export class ExamExerciseImportComponent implements OnInit {
             exerciseGroup.exercises?.forEach((exercise) => {
                 if (exercise.type === ExerciseType.PROGRAMMING && exercise.title) {
                     if (duplicated.has(exercise.title)) {
-                        this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title!, '']);
+                        this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title, '']);
                         exercise.title = '';
                     } else {
                         duplicated.add(exercise.title);
@@ -177,9 +177,9 @@ export class ExamExerciseImportComponent implements OnInit {
             return;
         }
 
-        if (this.selectedExercises!.get(exerciseGroup)!.has(exercise)) {
+        if (this.selectedExercises.get(exerciseGroup)!.has(exercise)) {
             // Case Exercise is already selected -> delete
-            this.selectedExercises!.get(exerciseGroup)!.delete(exercise);
+            this.selectedExercises.get(exerciseGroup)!.delete(exercise);
             // The title or short name of the exercise is not considered to be duplicated. In case it was duplicated
             // before, the set with duplicates has to be updated (checked again if any objects can be removed from the map).
             if (this.exercisesWithDuplicatedTitles.delete(exercise.id!)) {
@@ -190,7 +190,7 @@ export class ExamExerciseImportComponent implements OnInit {
                 this.removeProgrammingExerciseFromDuplicates(exercise.shortName!, false);
             }
         } else {
-            this.selectedExercises!.get(exerciseGroup)!.add(exercise);
+            this.selectedExercises.get(exerciseGroup)!.add(exercise);
             if (exercise.type === ExerciseType.PROGRAMMING) {
                 this.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, true);
                 this.checkForDuplicatedTitlesOrShortNamesOfProgrammingExercise(exercise, exerciseGroup, false);
@@ -205,7 +205,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exerciseGroup the corresponding exercise group i.e. the key of the map
      */
     exerciseIsSelected(exercise: Exercise, exerciseGroup: ExerciseGroup): boolean {
-        return this.selectedExercises!.get(exerciseGroup)!.has(exercise);
+        return this.selectedExercises.get(exerciseGroup)!.has(exercise);
     }
 
     /**
@@ -214,7 +214,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exerciseGroup the corresponding exercise group
      */
     exerciseGroupContainsExercises(exerciseGroup: ExerciseGroup): boolean {
-        return this.selectedExercises!.get(exerciseGroup)!.size > 0;
+        return this.selectedExercises.get(exerciseGroup)!.size > 0;
     }
 
     /**
@@ -223,7 +223,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exerciseGroup the corresponding exercise group
      */
     exerciseGroupContainsProgrammingExercises(exerciseGroup: ExerciseGroup): boolean {
-        return !!this.containsProgrammingExercises!.get(exerciseGroup);
+        return !!this.containsProgrammingExercises.get(exerciseGroup);
     }
 
     /**
@@ -232,7 +232,7 @@ export class ExamExerciseImportComponent implements OnInit {
      */
     getBlocklistTitleOfProgrammingExercise(exerciseId: number): string {
         const title = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.first();
-        return title ? title! : ``;
+        return title ? title : ``;
     }
 
     /**
@@ -241,7 +241,7 @@ export class ExamExerciseImportComponent implements OnInit {
      */
     getBlocklistShortNameOfProgrammingExercise(exerciseId: number): string {
         const shortName = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.last();
-        return shortName ? shortName! : ``;
+        return shortName ? shortName : ``;
     }
 
     /**

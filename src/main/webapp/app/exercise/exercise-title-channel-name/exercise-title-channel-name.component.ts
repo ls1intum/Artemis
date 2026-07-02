@@ -5,6 +5,10 @@ import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 
+// Empty placeholder used as the default when no exercise input is provided; all fields are undefined so template
+// accesses (title, channelName, id, type) stay safe. Assigned via a variable so it is not an object-literal assertion.
+const emptyExercisePlaceholder: Partial<Exercise> = {};
+
 /**
  * @deprecated Use {@link ExerciseTitleChannelNamePrimengComponent} instead.
  */
@@ -18,7 +22,7 @@ export class ExerciseTitleChannelNameComponent {
     readonly isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     readonly courseId = input<number>();
 
-    readonly exercise = input<Exercise>({} as Exercise);
+    readonly exercise = input<Exercise>(emptyExercisePlaceholder as Exercise);
     readonly titlePattern = input<string>();
     readonly minTitleLength = input<number>();
     readonly isExamMode = input<boolean>(false);

@@ -222,8 +222,8 @@ export class ProgrammingExerciseTaskService {
             }
 
             testCase.testCaseStats = testStats;
-            task.stats!.numPassed += testStats.numPassed;
-            task.stats!.numFailed += testStats.numFailed;
+            task.stats.numPassed += testStats.numPassed;
+            task.stats.numFailed += testStats.numFailed;
         }
 
         return task;

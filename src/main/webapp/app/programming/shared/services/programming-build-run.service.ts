@@ -70,11 +70,11 @@ export class ProgrammingBuildRunService implements OnDestroy {
     getBuildRunUpdates(programmingExerciseId: number) {
         const subject = this.buildRunSubjects[programmingExerciseId];
         if (subject) {
-            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<BuildRunState>;
+            return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined));
         }
         const newSubject = new BehaviorSubject<BuildRunState | undefined>(undefined);
         this.buildRunSubjects[programmingExerciseId] = newSubject;
         this.subscribeWebsocket(programmingExerciseId);
-        return newSubject.pipe(filter((stateObj) => stateObj !== undefined)) as Observable<BuildRunState>;
+        return newSubject.pipe(filter((stateObj) => stateObj !== undefined));
     }
 }

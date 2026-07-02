@@ -175,7 +175,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
      */
     @HostListener('document:click', ['$event.target'])
     protected onClickOutside(target: EventTarget | null) {
-        const clickedInside = this.elementRef.nativeElement.contains(target as Node | null);
+        const clickedInside = this.elementRef.nativeElement.contains(target);
         if (!clickedInside && this.isShown()) {
             this.isShown.set(false);
             this.updateCurrentCategoryNotificationsToSeenOnClient();

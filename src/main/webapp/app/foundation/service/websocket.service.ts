@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { IWatchParams, ReconnectionTimeMode, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
-import { IMessage, StompHeaders } from '@stomp/stompjs';
+import { IMessage } from '@stomp/stompjs';
 import { parseJson } from 'app/foundation/util/json.util';
 import { gunzipSync, gzipSync, strFromU8, strToU8 } from 'fflate';
 import { BehaviorSubject, EMPTY, Observable, Subscription, of, timer } from 'rxjs';
@@ -304,7 +304,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         const url = `//${window.location.host}/websocket/websocket`;
         const config: RxStompConfig = {
             brokerURL: url,
-            connectHeaders: {} as StompHeaders,
+            connectHeaders: {},
             heartbeatOutgoing: 10000, // should be identical to the server settings
             heartbeatIncoming: 10000, // should be identical to the server settings
             reconnectDelay: 500, // initial value is quite small, will be increased by ReconnectionTimeMode.EXPONENTIAL

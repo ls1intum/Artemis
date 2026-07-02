@@ -70,7 +70,7 @@ export class ExamRoomsComponent implements OnInit {
         return {
             examRooms: this.numberOfUniqueExamRooms(),
             examSeats: this.numberOfUniqueExamSeats(),
-        } as ExamRoomOverviewNumberOfAvailable;
+        };
     });
     readonly hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
     readonly examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
@@ -208,13 +208,10 @@ export class ExamRoomsComponent implements OnInit {
     }
 
     private calculateExamRoomData() {
-        return this.overview()?.newestUniqueExamRooms?.map(
-            (examRoomDTO) =>
-                ({
-                    ...examRoomDTO,
-                    defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
-                    maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
-                }) as ExamRoomDTOExtended,
-        );
+        return this.overview()?.newestUniqueExamRooms?.map((examRoomDTO) => ({
+            ...examRoomDTO,
+            defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
+            maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
+        }));
     }
 }

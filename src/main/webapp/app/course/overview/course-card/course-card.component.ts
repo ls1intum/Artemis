@@ -106,7 +106,7 @@ export class CourseCardComponent {
         if (course.exercises && course.exercises.length > 0) {
             this._exerciseCount.set(course.exercises.length);
 
-            const nextExercisesWithAnyScore = this.exerciseService.getNextExercisesForDays(course.exercises!);
+            const nextExercisesWithAnyScore = this.exerciseService.getNextExercisesForDays(course.exercises);
             // filters out every already successful (100%) exercise, only exercises left that still need work
             const nextExercises = nextExercisesWithAnyScore.filter((exercise: Exercise) => !exercise.studentParticipations?.[0]?.submissions?.[0]?.results?.[0]?.successful);
 

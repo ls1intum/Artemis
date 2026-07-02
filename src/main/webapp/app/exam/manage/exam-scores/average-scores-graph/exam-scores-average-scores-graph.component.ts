@@ -103,7 +103,7 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     }
 
     roundAndPerformLocalConversion(points: number | undefined) {
-        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course()), this.course()!.accuracyOfScores!);
+        return this.localeConversionService.toLocaleString(roundValueSpecifiedByCourseSettings(points, this.course()), this.course().accuracyOfScores);
     }
 
     /**

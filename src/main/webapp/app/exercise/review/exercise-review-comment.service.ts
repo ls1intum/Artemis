@@ -12,7 +12,6 @@ import {
     ExerciseEditorSyncEventType,
     ExerciseEditorSyncService,
     ExerciseEditorSyncTarget,
-    ReviewThreadSyncUpdateEvent,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
@@ -735,7 +734,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
         if (event.eventType !== ExerciseEditorSyncEventType.REVIEW_THREAD_UPDATE || event.target !== ExerciseEditorSyncTarget.REVIEW_COMMENTS) {
             return;
         }
-        const reviewUpdateEvent = event as ReviewThreadSyncUpdateEvent;
+        const reviewUpdateEvent = event;
         const reviewUpdate: ReviewThreadSyncUpdate = {
             action: reviewUpdateEvent.action,
             exerciseId: reviewUpdateEvent.exerciseId,

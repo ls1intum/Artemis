@@ -220,14 +220,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.loadingInitialSubmission.set(false);
         this.submission.set(submission);
         const studentParticipation = this.submission()!.participation as StudentParticipation;
-        this.modelingExercise.set(studentParticipation.exercise as ModelingExercise);
-        this.course.set(getCourseFromExercise(this.modelingExercise()!));
+        this.modelingExercise.set(studentParticipation.exercise);
+        this.course.set(getCourseFromExercise(this.modelingExercise()));
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(submission, this.resultId()));
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.correctionRound.set(submission.results?.findIndex((result) => result.id === this.resultId())!);
         } else {
-            this.result.set(getSubmissionResultByCorrectionRound(this.submission()!, this.correctionRound()));
+            this.result.set(getSubmissionResultByCorrectionRound(this.submission(), this.correctionRound()));
         }
         this.hasAssessmentDueDatePassed.set(!!this.modelingExercise()?.assessmentDueDate && dayjs(this.modelingExercise()!.assessmentDueDate).isBefore(dayjs()));
 
@@ -378,7 +378,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             let isBeforeAssessmentDueDate = true;
             // Add check as the assessmentDueDate must not be set for exercises
             if (this.modelingExercise()!.assessmentDueDate) {
-                isBeforeAssessmentDueDate = dayjs().isBefore(this.modelingExercise()!.assessmentDueDate!);
+                isBeforeAssessmentDueDate = dayjs().isBefore(this.modelingExercise()!.assessmentDueDate);
             }
             // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor() && isBeforeAssessmentDueDate;
@@ -445,7 +445,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
             // if the assessment is before the assessment due date, don't show the confirm submission button
-            const isBeforeAssessmentDueDate = this.modelingExercise()?.assessmentDueDate && dayjs().isBefore(this.modelingExercise()!.assessmentDueDate!);
+            const isBeforeAssessmentDueDate = this.modelingExercise()?.assessmentDueDate && dayjs().isBefore(this.modelingExercise()!.assessmentDueDate);
             if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
             } else {
@@ -653,7 +653,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * and instead set the score boundaries on the server.
      */
     calculateTotalScore() {
-        const maxPoints = getTotalMaxPoints(this.modelingExercise()!);
+        const maxPoints = getTotalMaxPoints(this.modelingExercise());
         const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
         this.totalScore.set(getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints));
     }

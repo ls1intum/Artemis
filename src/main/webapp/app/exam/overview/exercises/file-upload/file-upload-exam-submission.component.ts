@@ -144,11 +144,11 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if ((this.studentSubmission().isSynced && this.studentSubmission().filePath) || (this.examTimeline() && this.studentSubmission().filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
-            const filePath = this.studentSubmission()!.filePath!.split('/');
+            const filePath = this.studentSubmission().filePath!.split('/');
             const submittedFileName = filePath.last()!;
             this.submittedFileName.set(submittedFileName);
             const fileName = submittedFileName.split('.');
-            this.submittedFileExtension.set(fileName.last()!);
+            this.submittedFileExtension.set(fileName.last());
         }
     }
 
@@ -160,7 +160,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (!this.submissionFile) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission() as FileUploadSubmission, this.exercise().id!, this.submissionFile).subscribe({
+        this.fileUploadSubmissionService.update(this.studentSubmission(), this.exercise().id!, this.submissionFile).subscribe({
             next: (res) => {
                 const submissionFromServer = res.body!;
                 this.studentSubmission().filePath = submissionFromServer.filePath;

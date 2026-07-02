@@ -48,20 +48,18 @@ export class CourseDashboardService {
                     if (response.body.exerciseMetrics && response.body.exerciseMetrics.exerciseInformation) {
                         // The network payload transports the raw wire shape (see RawExerciseInformation) even though the model type is already the converted one.
                         response.body.exerciseMetrics.exerciseInformation = this.convertToExerciseInformation(
-                            response.body.exerciseMetrics.exerciseInformation as Record<string, unknown>,
+                            response.body.exerciseMetrics.exerciseInformation,
                             response.body.exerciseMetrics?.categories ?? {},
                             response.body.exerciseMetrics.teamId,
                         );
                     }
                     if (response.body.lectureUnitStudentMetricsDTO && response.body.lectureUnitStudentMetricsDTO.lectureUnitInformation) {
                         response.body.lectureUnitStudentMetricsDTO.lectureUnitInformation = this.convertToLectureUnitInformation(
-                            response.body.lectureUnitStudentMetricsDTO.lectureUnitInformation as Record<string, unknown>,
+                            response.body.lectureUnitStudentMetricsDTO.lectureUnitInformation,
                         );
                     }
                     if (response.body.competencyMetrics && response.body.competencyMetrics.competencyInformation) {
-                        response.body.competencyMetrics.competencyInformation = this.convertToCompetencyInformation(
-                            response.body.competencyMetrics.competencyInformation as Record<string, unknown>,
-                        );
+                        response.body.competencyMetrics.competencyInformation = this.convertToCompetencyInformation(response.body.competencyMetrics.competencyInformation);
                     }
                 }
                 return response;
@@ -74,57 +72,48 @@ export class CourseDashboardService {
         categories: { [key: number]: (string | null)[] },
         teamId?: { [key: number]: number },
     ): { [key: string]: ExerciseInformation } {
-        return Object.keys(exerciseInformation).reduce(
-            (acc, key) => {
-                const exerciseCategories =
-                    categories[Number(key)]
-                        ?.filter((category): category is string => category !== null)
-                        .map((category) => {
-                            const categoryObj = parseJson<SerializedExerciseCategory>(category);
-                            return new ExerciseCategory(categoryObj.category, categoryObj.color);
-                        }) || [];
-                const exercise = exerciseInformation[key] as RawExerciseInformation;
-                acc[key] = {
-                    ...exercise,
-                    startDate: dayjs(exercise.start),
-                    dueDate: exercise.due ? dayjs(exercise.due) : undefined,
-                    type: this.mapToExerciseType(exercise.type),
-                    categories: exerciseCategories,
-                    studentAssignedTeamId: teamId ? teamId?.[Number(key)] : undefined,
-                };
-                return acc;
-            },
-            {} as { [key: string]: ExerciseInformation },
-        );
+        return Object.keys(exerciseInformation).reduce<{ [key: string]: ExerciseInformation }>((acc, key) => {
+            const exerciseCategories =
+                categories[Number(key)]
+                    ?.filter((category): category is string => category !== null)
+                    .map((category) => {
+                        const categoryObj = parseJson<SerializedExerciseCategory>(category);
+                        return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                    }) || [];
+            const exercise = exerciseInformation[key] as RawExerciseInformation;
+            acc[key] = {
+                ...exercise,
+                startDate: dayjs(exercise.start),
+                dueDate: exercise.due ? dayjs(exercise.due) : undefined,
+                type: this.mapToExerciseType(exercise.type),
+                categories: exerciseCategories,
+                studentAssignedTeamId: teamId ? teamId?.[Number(key)] : undefined,
+            };
+            return acc;
+        }, {});
     }
 
     private convertToLectureUnitInformation(lectureUnitInformation: Record<string, unknown>): { [key: string]: LectureUnitInformation } {
-        return Object.keys(lectureUnitInformation).reduce(
-            (acc, key) => {
-                const lectureUnit = lectureUnitInformation[key] as RawLectureUnitInformation;
-                acc[key] = {
-                    ...lectureUnit,
-                    releaseDate: dayjs(lectureUnit.releaseDate),
-                    type: this.mapToLectureUnitType(lectureUnit.type),
-                };
-                return acc;
-            },
-            {} as { [key: string]: LectureUnitInformation },
-        );
+        return Object.keys(lectureUnitInformation).reduce<{ [key: string]: LectureUnitInformation }>((acc, key) => {
+            const lectureUnit = lectureUnitInformation[key] as RawLectureUnitInformation;
+            acc[key] = {
+                ...lectureUnit,
+                releaseDate: dayjs(lectureUnit.releaseDate),
+                type: this.mapToLectureUnitType(lectureUnit.type),
+            };
+            return acc;
+        }, {});
     }
 
     private convertToCompetencyInformation(competencyInformation: Record<string, unknown>): { [key: string]: CompetencyInformation } {
-        return Object.keys(competencyInformation).reduce(
-            (acc, key) => {
-                const competency = competencyInformation[key] as RawCompetencyInformation;
-                acc[key] = {
-                    ...competency,
-                    softDueDate: competency.softDueDate ? dayjs(competency.softDueDate) : undefined,
-                };
-                return acc;
-            },
-            {} as { [key: string]: CompetencyInformation },
-        );
+        return Object.keys(competencyInformation).reduce<{ [key: string]: CompetencyInformation }>((acc, key) => {
+            const competency = competencyInformation[key] as RawCompetencyInformation;
+            acc[key] = {
+                ...competency,
+                softDueDate: competency.softDueDate ? dayjs(competency.softDueDate) : undefined,
+            };
+            return acc;
+        }, {});
     }
 
     // Validating identity-narrower: the raw string from the network already matches the typed enum's value

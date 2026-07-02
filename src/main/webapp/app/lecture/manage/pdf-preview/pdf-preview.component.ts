@@ -396,8 +396,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @returns `true` if the initial and current hidden pages differ, indicating a change; otherwise, `false`.
      */
     hiddenPagesChanged() {
-        const initial = this.initialHiddenPages()!;
-        const current = this.hiddenPages()!;
+        const initial = this.initialHiddenPages();
+        const current = this.hiddenPages();
         return JSON.stringify(initial) !== JSON.stringify(current);
     }
 
@@ -688,7 +688,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     private async updateAttachmentVideoUnit(instructorPdfFile: File, hiddenPages: HiddenPage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment!);
+            this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment);
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
             const formData = new FormData();
@@ -912,7 +912,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             }
         } finally {
             this.isPdfLoading.set(false);
-            this.fileInput()!.nativeElement.value = '';
+            this.fileInput().nativeElement.value = '';
         }
     }
 

@@ -64,7 +64,7 @@ function determineShowMissingAutomaticFeedbackInformation(
     if (latestDueDate) {
         setShowMissingAutomaticFeedbackInformation(latestDueDate, preparedParameters);
     } else {
-        exerciseService.getLatestDueDate(exercise!.id!).subscribe((latestDueDate) => {
+        exerciseService.getLatestDueDate(exercise.id!).subscribe((latestDueDate) => {
             if (latestDueDate) {
                 setShowMissingAutomaticFeedbackInformation(latestDueDate, preparedParameters);
             }

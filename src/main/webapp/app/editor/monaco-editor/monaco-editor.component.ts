@@ -459,13 +459,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (this.diffListenersAttached || !this._diffEditor) return;
         this.diffListenersAttached = true;
 
-        this.diffUpdateListener = this._diffEditor!.onDidUpdateDiff(() => {
+        this.diffUpdateListener = this._diffEditor.onDidUpdateDiff(() => {
             const monacoLineChanges = this._diffEditor!.getLineChanges() ?? [];
             const lineChange = convertMonacoLineChanges(monacoLineChanges);
             this.diffChanged.emit({ ready: true, lineChange });
         });
 
-        this.diffLayoutListener = this._diffEditor!.getOriginalEditor().onDidLayoutChange((info) => {
+        this.diffLayoutListener = this._diffEditor.getOriginalEditor().onDidLayoutChange((info) => {
             this.diffOriginalPaneLayoutChanged.emit(info.width);
         });
     }
@@ -839,7 +839,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     setLineDecorationsHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
         if (!this.lineDecorationsHoverButton) {
             this.lineDecorationsFoldingBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.folding);
-            this.lineDecorationsWidthBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.lineDecorationsWidth) as string | number;
+            this.lineDecorationsWidthBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.lineDecorationsWidth);
         }
         this.lineDecorationsHoverButton?.dispose();
         this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(

@@ -15,11 +15,10 @@ export class StudentsRoomDistributionService {
     readonly availableRooms: Signal<RoomForDistributionDTO[]> = computed(() => this.availableRoomsInternal() ?? []);
     readonly capacityData: Signal<ExamDistributionCapacityDTO> = computed(
         () =>
-            this.capacityDataInternal() ??
-            ({
+            this.capacityDataInternal() ?? {
                 combinedDefaultCapacity: 0,
                 combinedMaximumCapacity: 0,
-            } as ExamDistributionCapacityDTO),
+            },
     );
 
     /**

@@ -111,7 +111,7 @@ export class HealthModalComponent {
         if (!this.isBuildAgentsArray(value, detailKey)) {
             return [];
         }
-        const agents = value as BuildAgentDetail[];
+        const agents = value;
         return agents.map((agent) => (this.isSimplifiedBuildAgent(agent) ? this.formatSimplifiedBuildAgent(agent) : this.formatLegacyBuildAgent(agent)));
     }
 

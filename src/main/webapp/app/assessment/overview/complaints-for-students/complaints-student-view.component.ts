@@ -103,7 +103,7 @@ export class ComplaintsStudentViewComponent implements OnInit {
             .findBySubmissionId(this.submission.id!)
             .pipe(filter((res) => !!res.body))
             .subscribe((res: HttpResponse<ComplaintDTO>) => {
-                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()!));
+                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body!, this.result()));
             });
     }
 

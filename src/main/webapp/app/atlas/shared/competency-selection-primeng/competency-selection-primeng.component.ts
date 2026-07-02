@@ -150,15 +150,12 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         });
         this.competencyLinks.set(competencyLinks);
         this.checkboxStates.set(
-            competencyLinks.reduce(
-                (states, competencyLink) => {
-                    if (competencyLink.competency?.id) {
-                        states[competencyLink.competency.id] = !!this.selectedCompetencyLinks?.find((value) => value.competency?.id === competencyLink.competency?.id);
-                    }
-                    return states;
-                },
-                {} as Record<number, boolean>,
-            ),
+            competencyLinks.reduce<Record<number, boolean>>((states, competencyLink) => {
+                if (competencyLink.competency?.id) {
+                    states[competencyLink.competency.id] = !!this.selectedCompetencyLinks?.find((value) => value.competency?.id === competencyLink.competency?.id);
+                }
+                return states;
+            }, {}),
         );
     }
 
@@ -246,15 +243,12 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         // Rebuild checkbox states to match the current selection
         const selectedIds = new Set((this.selectedCompetencyLinks ?? []).map((l) => l.competency?.id).filter(Boolean));
         this.checkboxStates.set(
-            this.competencyLinks()!.reduce(
-                (states, cl) => {
-                    if (cl.competency?.id) {
-                        states[cl.competency.id] = selectedIds.has(cl.competency.id);
-                    }
-                    return states;
-                },
-                {} as Record<number, boolean>,
-            ),
+            this.competencyLinks()!.reduce<Record<number, boolean>>((states, cl) => {
+                if (cl.competency?.id) {
+                    states[cl.competency.id] = selectedIds.has(cl.competency.id);
+                }
+                return states;
+            }, {}),
         );
     }
 

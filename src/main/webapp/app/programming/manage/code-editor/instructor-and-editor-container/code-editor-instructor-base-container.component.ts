@@ -114,7 +114,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.paramSub = this.route!.params.subscribe((params) => {
+        this.paramSub = this.route.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
             const repositoryType = params['repositoryType'];
             const repositoryId = Number(params['repositoryId']);
@@ -234,7 +234,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribeDomainChange()
             .pipe(
                 filter((domain) => !!domain),
-                map((domain) => domain as DomainChange),
+                map((domain) => domain),
                 tap(([domainType, domainValue]) => {
                     this.applyDomainChange(domainType, domainValue);
                 }),
@@ -283,7 +283,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             (this.selectedParticipation as SolutionProgrammingExerciseParticipation).programmingExercise = exercise;
         } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
             this.selectedRepository = RepositoryType.ASSIGNMENT;
-            this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
+            this.selectedParticipation = this.exercise.studentParticipations[0];
             this.selectedParticipation.exercise = exercise;
         } else {
             this.onError('participationNotFound');
@@ -404,7 +404,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
         const assignmentParticipationId = this.exercise.studentParticipations![0].id!;
         this.exercise.studentParticipations = [];
-        this.participationService!.delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
+        this.participationService
+            .delete(assignmentParticipationId, { deleteBuildPlan: true, deleteRepository: true })
             .pipe(
                 catchError(() => throwError(() => new Error('participationCouldNotBeDeleted'))),
                 tap(() => {

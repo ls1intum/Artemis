@@ -195,7 +195,7 @@ export class ExerciseService {
      */
     getDeletionSummary(exercise: Exercise): Observable<EntitySummary> {
         if (exercise.id === undefined || exercise.type === undefined) {
-            return of({} as EntitySummary);
+            return of<EntitySummary>({});
         }
 
         return this.http.get<ExerciseDeletionSummaryDTO>(`${this.resourceUrl}/${exercise.id}/deletion-summary`, { observe: 'response' }).pipe(
@@ -261,7 +261,7 @@ export class ExerciseService {
                     return true;
                 }
 
-                const dueDate = exercise.dueDate!;
+                const dueDate = exercise.dueDate;
                 return dayjs().isBefore(dueDate) && dayjs().add(delayInDays, 'day').isSameOrAfter(dueDate);
             })
             .sort((exerciseA: Exercise, exerciseB: Exercise) => {
@@ -289,7 +289,7 @@ export class ExerciseService {
                     return {
                         exerciseTitles: new Set(details.exerciseTitles ?? []),
                         shortNames: new Set(details.shortNames ?? []),
-                    } as CourseExistingExerciseDetailsType;
+                    };
                 }),
             );
     }
@@ -555,7 +555,7 @@ export class ExerciseService {
 
     public setAccessRightsExerciseEntityResponseType(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
+            this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body);
         }
         return res;
     }
@@ -610,7 +610,7 @@ export class ExerciseService {
 
         switch (exercise.type) {
             case ExerciseType.MODELING:
-                modelingExercise = exercise as ModelingExercise;
+                modelingExercise = exercise;
                 if (modelingExercise.exampleSolutionModel) {
                     exampleSolutionUML = parseJson<UMLModel>(modelingExercise.exampleSolutionModel);
                 }
@@ -623,7 +623,7 @@ export class ExerciseService {
                 }
                 break;
             case ExerciseType.PROGRAMMING:
-                programmingExercise = exercise as ProgrammingExercise;
+                programmingExercise = exercise;
                 break;
         }
 

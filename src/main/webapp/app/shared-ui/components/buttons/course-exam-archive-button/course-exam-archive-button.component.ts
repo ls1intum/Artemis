@@ -319,7 +319,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         if (this.archiveMode() === 'Exam' && exam) {
             this.examService.archiveExam(course.id, exam.id!).subscribe();
         } else {
-            this.courseService.archiveCourse(course.id!).subscribe();
+            this.courseService.archiveCourse(course.id).subscribe();
         }
     }
 

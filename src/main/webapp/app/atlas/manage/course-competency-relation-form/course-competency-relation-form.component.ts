@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
-import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -79,7 +79,7 @@ export class CourseCompetencyRelationFormComponent {
             const response = await this.courseCompetencyApiService.getSuggestedCompetencyRelations(courseId);
             this.suggestedRelations.set(response.relations ?? []);
             // Auto-select all suggestions when fetched, but exclude existing relations
-            const allIndices = new Set((response.relations ?? []).map((_, index) => index).filter((index) => !this.doesSuggestionAlreadyExist(response.relations![index])));
+            const allIndices = new Set((response.relations ?? []).map((_, index) => index).filter((index) => !this.doesSuggestionAlreadyExist(response.relations[index])));
             this.selectedSuggestions.set(allIndices);
         } catch (error) {
             // Non-blocking: show toast but keep UI working
@@ -247,7 +247,7 @@ export class CourseCompetencyRelationFormComponent {
                 relationType: this.relationType()!,
             });
             this.relations.update((relations) => [...relations, courseCompetencyRelation]);
-            this.selectedRelationId.set(courseCompetencyRelation.id!);
+            this.selectedRelationId.set(courseCompetencyRelation.id);
         } catch (error) {
             this.alertService.error(error.message);
         } finally {
@@ -269,7 +269,7 @@ export class CourseCompetencyRelationFormComponent {
         try {
             this.isLoading.set(true);
             const newRelationType = this.relationType()!;
-            await this.courseCompetencyApiService.updateCourseCompetencyRelation(this.courseId(), this.selectedRelationId()!, <UpdateCourseCompetencyRelationDTO>{
+            await this.courseCompetencyApiService.updateCourseCompetencyRelation(this.courseId(), this.selectedRelationId()!, {
                 newRelationType: newRelationType,
             });
             this.relations.update((relations) =>

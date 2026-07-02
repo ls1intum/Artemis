@@ -12,7 +12,6 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -179,9 +178,9 @@ export class ParticipationSubmissionComponent implements OnInit {
                         this.programmingExerciseService.findWithTemplateAndSolutionParticipation(params['exerciseId'], true).subscribe((exerciseResponse) => {
                             const exercise = exerciseResponse.body!;
                             this.exercise.set(exercise);
-                            this.exerciseStatusBadge.set(dayjs().isAfter(dayjs(exercise.dueDate!)) ? 'bg-danger' : 'bg-success');
-                            const templateParticipation = (exercise as ProgrammingExercise).templateParticipation;
-                            const solutionParticipation = (exercise as ProgrammingExercise).solutionParticipation;
+                            this.exerciseStatusBadge.set(dayjs().isAfter(dayjs(exercise.dueDate)) ? 'bg-danger' : 'bg-success');
+                            const templateParticipation = exercise.templateParticipation;
+                            const solutionParticipation = exercise.solutionParticipation;
 
                             let submissions: ProgrammingSubmission[] | undefined;
                             // Check if requested participationId belongs to the template or solution participation
@@ -189,12 +188,12 @@ export class ParticipationSubmissionComponent implements OnInit {
                                 this.participation.set(templateParticipation);
                                 // This is needed to access the exercise in the result details
                                 templateParticipation.programmingExercise = exercise;
-                                submissions = templateParticipation.submissions as ProgrammingSubmission[];
+                                submissions = templateParticipation.submissions;
                             } else if (this._participationId === solutionParticipation?.id) {
                                 this.participation.set(solutionParticipation);
                                 // This is needed to access the exercise in the result details
                                 solutionParticipation.programmingExercise = exercise;
-                                submissions = solutionParticipation.submissions as ProgrammingSubmission[];
+                                submissions = solutionParticipation.submissions;
                             } else {
                                 // Should not happen
                                 this.alertService.error('artemisApp.participation.noParticipation');
@@ -283,7 +282,7 @@ export class ParticipationSubmissionComponent implements OnInit {
             this.dueDate.set(getExerciseDueDate(exercise, participation));
             afterDueDate = hasExerciseDueDatePassed(exercise, participation);
         } else if (exercise) {
-            afterDueDate = dayjs().isAfter(dayjs(exercise.dueDate!));
+            afterDueDate = dayjs().isAfter(dayjs(exercise.dueDate));
         }
 
         this.exerciseStatusBadge.set(afterDueDate ? 'bg-danger' : 'bg-success');

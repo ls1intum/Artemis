@@ -699,7 +699,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        popover.show(event, event.currentTarget as HTMLElement | undefined);
+        popover.show(event, event.currentTarget);
     }
 
     /**
@@ -1540,7 +1540,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id!).subscribe({
+        this.consistencyCheckService.checkConsistencyForProgrammingExercise(exercise.id).subscribe({
             // This first consistency check ensures, that the exercise has all repositories set up
             // This does not yet check the actual content of the exercise
             next: (inconsistencies: ConsistencyCheckError[]) => {

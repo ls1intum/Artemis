@@ -261,6 +261,22 @@ export default tseslint.config(
             '@typescript-eslint/no-explicit-any': 'error',
         },
     },
+    // Curb unsafe `as` casts in production code without banning `as` outright (downcasts the type system cannot
+    // infer — e.g. `event.target as HTMLInputElement` — remain the honest tool and stay allowed). Two targeted rules:
+    //   - `no-unnecessary-type-assertion`: removes redundant casts that do not change the type (noise, and they
+    //     silently hide the day the underlying type shifts). Auto-fixable.
+    //   - `consistent-type-assertions` with `objectLiteralTypeAssertions: 'never'`: forbids `{ … } as T` on object
+    //     literals, which bypasses excess-property checking. Use `satisfies T` (verifies shape, keeps the inferred
+    //     type) or a type annotation instead. `assertionStyle: 'as'` keeps `as const` and ordinary downcasts legal.
+    // The stronger `as any` / `as unknown` bans live in the localRules block above. Specs may cast freely (excluded).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-unnecessary-type-assertion': 'error',
+            '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'as', objectLiteralTypeAssertions: 'never' }],
+        },
+    },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
     // state and effect() for genuine side effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs),
     // so this is a consistency preference, not a correctness rule. Existing migration-backlog files are excluded above

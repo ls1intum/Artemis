@@ -95,7 +95,7 @@ export abstract class QuizExerciseValidationDirective {
             ? []
             : this.quizExercise()
                   .quizQuestions?.map((question, index) => {
-                      if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions!.some((option) => !option.explanation)) {
+                      if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (question as MultipleChoiceQuestion).answerOptions!.some((option) => !option.explanation)) {
                           return {
                               translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
                               translateValues: { index: index + 1 },

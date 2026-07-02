@@ -46,7 +46,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         const copy = FileUploadExerciseService.formatFilePattern(fileUploadExercise);
         const dto = toUpdateFileUploadExerciseDTO(copy);
         return this.http
-            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id!}`, dto, { params: options, observe: 'response' })
+            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

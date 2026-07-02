@@ -64,7 +64,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                     if (!unit) {
                         return;
                     }
-                    const attach = unit.attachment || ({} as Attachment);
+                    const attach = unit.attachment || {};
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
                     unit.attachment = undefined;
                     attach.attachmentVideoUnit = undefined;

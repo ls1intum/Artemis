@@ -230,9 +230,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.routeAndDataSubscription = combineLatest([
             this.route.data,
             this.route.params,
-            this.route.parent?.params ?? of({} as Params),
-            this.route.parent?.parent?.params ?? of({} as Params),
-            this.route.parent?.parent?.parent?.params ?? of({} as Params),
+            this.route.parent?.params ?? of<Params>({}),
+            this.route.parent?.parent?.params ?? of<Params>({}),
+            this.route.parent?.parent?.parent?.params ?? of<Params>({}),
         ]).subscribe(([data, params, parentParams, grandParentParams, greatGrandParentParams]) => {
             this.mode.set(this.inputMode() ?? data.mode);
             // exerciseId: own params (old componentless route) or parent params (new component-based route)
@@ -890,7 +890,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.questionScores.set({});
             this.submission().submittedAnswers?.forEach((submittedAnswer) => {
                 // limit decimal places
-                this.questionScores()[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
+                this.questionScores()[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints, course);
             }, this);
             this.updateLiveHeaderInfo(this.hasAnyAnswer());
         }
@@ -1061,8 +1061,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.syncSubmitState();
         this.submission.set(result.submission as QuizSubmission);
         // make sure the additional information (explanations, correct answers) is available
-        const participation = this.submission().participation as StudentParticipation | undefined;
-        const quizExercise = participation?.exercise as QuizExercise | undefined;
+        const participation: StudentParticipation | undefined = this.submission().participation;
+        const quizExercise = participation?.exercise;
         if (quizExercise) {
             this.transferInformationToQuizExercise(quizExercise);
         }

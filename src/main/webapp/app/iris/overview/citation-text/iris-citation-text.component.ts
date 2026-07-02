@@ -322,14 +322,14 @@ export class IrisCitationTextComponent {
     @HostListener('click', ['$event'])
     onHostClick(event: MouseEvent): void {
         const target = event.target as HTMLElement;
-        const summaryItem = target.closest('.iris-citation__summary-item--clickable') as HTMLElement | null;
+        const summaryItem = target.closest<HTMLElement>('.iris-citation__summary-item--clickable');
         if (summaryItem) {
             event.stopPropagation();
             this.navigateToCitation(summaryItem);
             return;
         }
 
-        const citation = target.closest('.iris-citation--clickable') as HTMLElement | null;
+        const citation = target.closest<HTMLElement>('.iris-citation--clickable');
         if (citation) {
             const summaryElement = target.closest('.iris-citation__summary');
             if (!summaryElement) {
@@ -339,9 +339,9 @@ export class IrisCitationTextComponent {
             }
         }
 
-        const summary = target.closest('.iris-citation__summary') as HTMLElement | null;
+        const summary = target.closest('.iris-citation__summary');
         if (summary && !target.closest('.iris-citation__nav')) {
-            const activeSummaryItem = summary.querySelector('.iris-citation__summary-item.is-active.iris-citation__summary-item--clickable') as HTMLElement | null;
+            const activeSummaryItem = summary.querySelector<HTMLElement>('.iris-citation__summary-item.is-active.iris-citation__summary-item--clickable');
             if (activeSummaryItem) {
                 event.stopPropagation();
                 this.navigateToCitation(activeSummaryItem);
@@ -391,12 +391,12 @@ export class IrisCitationTextComponent {
 
         if (!citation) return;
 
-        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
+        const summary = citation.querySelector('.iris-citation__summary');
         if (!summary) return;
 
         // Different boundaries for horizontal and vertical collision detection
-        const bubble = citation.closest('.bubble-left') as HTMLElement | null;
-        const messagesDiv = citation.closest('div.messages') as HTMLElement | null;
+        const bubble = citation.closest('.bubble-left');
+        const messagesDiv = citation.closest('div.messages');
         const defaultBoundary = citation.closest('jhi-iris-citation-text') as HTMLElement;
 
         const horizontalBoundary = bubble ?? defaultBoundary;
@@ -447,7 +447,7 @@ export class IrisCitationTextComponent {
 
         // Only remove the flipped class - don't reset CSS properties to avoid visual jump during fade-out
         // Properties will be reset on next mouseover anyway
-        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
+        const summary = citation.querySelector('.iris-citation__summary');
         summary?.classList.remove('iris-citation__summary--flipped');
     }
 }

@@ -71,8 +71,8 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnDestroy {
     public ngOnInit() {
         const minFontSize = this.minFontSize();
         const maxFontSize = this.maxFontSize();
-        this.fitTextMinFontSize = minFontSize === 'inherit' ? Number(this.computed.fontSize) : minFontSize!;
-        this.fitTextMaxFontSize = maxFontSize === 'inherit' ? Number(this.computed.fontSize) : maxFontSize!;
+        this.fitTextMinFontSize = minFontSize === 'inherit' ? Number(this.computed.fontSize) : minFontSize;
+        this.fitTextMaxFontSize = maxFontSize === 'inherit' ? Number(this.computed.fontSize) : maxFontSize;
     }
 
     public ngAfterViewInit() {

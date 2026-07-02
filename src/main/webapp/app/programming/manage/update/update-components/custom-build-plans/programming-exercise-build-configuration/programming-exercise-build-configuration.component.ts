@@ -200,10 +200,10 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     parseDockerFlagsToString() {
-        const newEnv = {} as { [key: string]: string } | undefined;
+        const newEnv: { [key: string]: string } = {};
         this.envVars().forEach(([key, value]) => {
             if (key.trim()) {
-                newEnv![key] = value;
+                newEnv[key] = value;
             }
         });
         const network = this.network() === '' ? undefined : this.network();

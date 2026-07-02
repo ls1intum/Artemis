@@ -197,6 +197,6 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private sortCommitsByTimestampDesc(commitInfos: CommitInfo[]) {
-        return commitInfos.sort((a, b) => (dayjs(b.timestamp!).isAfter(dayjs(a.timestamp!)) ? 1 : -1));
+        return commitInfos.sort((a, b) => (dayjs(b.timestamp).isAfter(dayjs(a.timestamp)) ? 1 : -1));
     }
 }

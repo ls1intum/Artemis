@@ -71,7 +71,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         const startIsMidnight: boolean = tutorialGroupFreePeriod.start!.hour() === 0 && tutorialGroupFreePeriod.start!.minute() === 0;
         const endIsMidnight: boolean = tutorialGroupFreePeriod.end!.hour() === 23 && tutorialGroupFreePeriod.end!.minute() === 59;
 
-        return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day') && startIsMidnight && endIsMidnight;
+        return tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end, 'day') && startIsMidnight && endIsMidnight;
     }
 
     get freePeriods(): TutorialGroupFreePeriod[] {
@@ -79,7 +79,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     }
 
     public static isFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod): boolean {
-        return !tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end!, 'day');
+        return !tutorialGroupFreePeriod.start!.isSame(tutorialGroupFreePeriod.end, 'day');
     }
 
     get freePeriodsWithinDay(): TutorialGroupFreePeriod[] {

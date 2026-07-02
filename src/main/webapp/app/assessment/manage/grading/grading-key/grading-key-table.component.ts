@@ -75,7 +75,7 @@ export class GradingKeyTableComponent implements OnInit {
                         this.gradingService.setGradePoints(this.gradeSteps(), maxPoints);
                     } else {
                         // for exams the max points filed should equal the total max points (otherwise exams can't be started)
-                        this.gradingService.setGradePoints(this.gradeSteps(), gradeSteps.maxPoints!);
+                        this.gradingService.setGradePoints(this.gradeSteps(), gradeSteps.maxPoints);
                     }
                 }
                 this.hasPointsSet.set(this.gradingService.hasPointsSet(this.gradeSteps()));

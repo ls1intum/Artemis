@@ -87,7 +87,7 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
             totalStudents,
             usableCapacity,
             percentage,
-        } as CapacityDisplayDTO;
+        };
     }
 
     openDialog(): void {
@@ -201,7 +201,7 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     }
 
     pickSelectedRoom(event: { item: RoomForDistributionDTO }): void {
-        const selectedRoom: RoomForDistributionDTO = event.item as RoomForDistributionDTO;
+        const selectedRoom: RoomForDistributionDTO = event.item;
 
         if (this.selectedRooms().every((room) => room.id !== selectedRoom.id)) {
             this.selectedRooms.update((rooms) => [...rooms, selectedRoom]);

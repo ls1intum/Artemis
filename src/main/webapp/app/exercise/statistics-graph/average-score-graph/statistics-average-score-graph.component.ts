@@ -216,15 +216,12 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     private setupChart(exerciseModels: CourseManagementStatisticsModel[]): void {
         this.barChartLabels = exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map((exercise) => exercise.exerciseName);
         this.chartEntries.set(
-            exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map(
-                (exercise, index) =>
-                    ({
-                        name: this.barChartLabels[index],
-                        value: exercise.averageScore,
-                        exerciseType: exercise.exerciseType,
-                        exerciseId: exercise.exerciseId,
-                    }) as ExerciseStatisticsEntry,
-            ),
+            exerciseModels.slice(this.currentPeriod(), 10 + this.currentPeriod()).map((exercise, index) => ({
+                name: this.barChartLabels[index],
+                value: exercise.averageScore,
+                exerciseType: exercise.exerciseType,
+                exerciseId: exercise.exerciseId,
+            })),
         );
         this.barColors.set(this.chartEntries().map((exercise) => this.determineColor(exercise.value)));
     }

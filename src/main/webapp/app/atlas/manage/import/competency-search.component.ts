@@ -48,7 +48,7 @@ export class CompetencySearchComponent {
      * Update a single field on the search model. Used by template event bindings.
      */
     updateSearchField(field: 'title' | 'description' | 'courseTitle' | 'semester', value: string) {
-        this.search.update((s) => ({ ...s, [field]: value }) as CourseCompetencyFilter);
+        this.search.update((s) => ({ ...s, [field]: value }));
     }
 
     /**

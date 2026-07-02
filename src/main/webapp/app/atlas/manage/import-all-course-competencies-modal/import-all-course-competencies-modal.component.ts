@@ -71,11 +71,12 @@ export class ImportAllCourseCompetenciesModalComponent {
     }
 
     public selectCourse(course: Course): void {
-        const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>{
+        const importOptions = {
             sourceCourseId: course.id,
             ...this.importSettings(),
         };
-        this.dialogRef.close(<ImportAllCourseCompetenciesResult>{
+        const courseCompetencyImportOptions = importOptions as CourseCompetencyImportOptionsDTO;
+        this.dialogRef.close({
             course,
             courseCompetencyImportOptions,
         });

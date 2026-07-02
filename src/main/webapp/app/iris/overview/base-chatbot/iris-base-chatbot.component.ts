@@ -285,7 +285,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         () =>
             this.isLoading() ||
             !this.active() ||
-            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo()!.currentMessageCount === this.rateLimitInfo()!.rateLimit) ||
+            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
             this.hasActiveStage(),
     );
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
@@ -294,7 +294,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !!this.suggestions()?.length &&
             this.isAIEnabled() &&
             this.active() &&
-            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo()!.currentMessageCount !== this.rateLimitInfo()!.rateLimit) &&
+            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo().currentMessageCount !== this.rateLimitInfo().rateLimit) &&
             !this.hasActiveStage(),
     );
     readonly isScrolledToBottom = signal(true);

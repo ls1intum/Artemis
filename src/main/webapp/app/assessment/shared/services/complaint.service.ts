@@ -326,7 +326,7 @@ export class ComplaintService implements IComplaintService {
         }
 
         if (resultDto.submission) {
-            const submission = { id: resultDto.submission.id } as Submission;
+            const submission: Submission = { id: resultDto.submission.id };
 
             if (resultDto.submission.participation) {
                 const participation = Object.assign(new StudentParticipation(), {
@@ -335,11 +335,12 @@ export class ComplaintService implements IComplaintService {
 
                 const exerciseDto = resultDto.submission.participation.exercise;
                 if (exerciseDto || resultDto.exerciseTitle) {
-                    participation.exercise = {
+                    const exercise: Partial<Exercise> = {
                         id: exerciseDto?.id,
                         type: exerciseDto?.type,
                         title: resultDto.exerciseTitle,
-                    } as Exercise;
+                    };
+                    participation.exercise = exercise as Exercise;
                 }
                 submission.participation = participation;
             }

@@ -352,7 +352,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution));
                         break;
                     case ExerciseType.PROGRAMMING:
-                        this.programmingExercise.set(exercise as ProgrammingExercise);
+                        this.programmingExercise.set(exercise);
                         break;
                 }
 
@@ -585,7 +585,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             const latestResult = getLatestSubmissionResult(submission);
             if (latestResult) {
                 // reconnect some associations
-                latestResult!.submission = submission;
+                latestResult.submission = submission;
                 setLatestSubmissionResult(submission, latestResult);
             }
             return submission;
@@ -687,7 +687,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 next: (res: HttpResponse<TutorParticipationDTO>) => {
                     const dto = res.body!;
                     this.tutorParticipation.set(dto);
-                    this.tutorParticipationStatus.set(dto.status!);
+                    this.tutorParticipationStatus.set(dto.status);
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,
@@ -809,7 +809,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     toggleSecondCorrection() {
         this.togglingSecondCorrectionButton.set(true);
         this.exerciseService.toggleSecondCorrection(this.exerciseId()).subscribe((res: boolean) => {
-            this.secondCorrectionEnabled.set(res as boolean);
+            this.secondCorrectionEnabled.set(res);
             this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
             this.togglingSecondCorrectionButton.set(false);
         });

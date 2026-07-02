@@ -180,7 +180,7 @@ export abstract class Exercise implements BaseEntity {
  */
 export function getIcon(exerciseType?: ExerciseType): IconProp {
     if (!exerciseType) {
-        return faQuestion as IconProp;
+        return faQuestion;
     }
 
     const icons: Record<string, IconProp> = {
@@ -191,7 +191,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
     };
 
-    return icons[exerciseType] ?? (faQuestion as IconProp);
+    return icons[exerciseType] ?? faQuestion;
 }
 
 export function getIconTooltip(exerciseType?: ExerciseType): string {

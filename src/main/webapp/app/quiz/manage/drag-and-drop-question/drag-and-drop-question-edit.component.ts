@@ -206,7 +206,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             this.setBackgroundFileFromFile(new File([question.importedFiles.get('diagram-background.png')!], 'diagram-background.png'));
             for (const dragItem of question.dragItems ?? []) {
                 if (dragItem.pictureFilePath && question.importedFiles.has(dragItem.pictureFilePath)) {
-                    this.changeToPictureDragItemFromFile(dragItem, new File([question.importedFiles.get(dragItem.pictureFilePath!)!], dragItem.pictureFilePath!));
+                    this.changeToPictureDragItemFromFile(dragItem, new File([question.importedFiles.get(dragItem.pictureFilePath)!], dragItem.pictureFilePath));
                 }
             }
         }
@@ -1002,7 +1002,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                         );
 
                         dataUrl = canvas.toDataURL('image/png');
-                        const dragItemCreated = this.createImageDragItemFromFile(this.dataUrlToFile(dataUrl, 'placeholder' + someLocation.posX!))!;
+                        const dragItemCreated = this.createImageDragItemFromFile(this.dataUrlToFile(dataUrl, 'placeholder' + someLocation.posX!));
                         const dndMapping = new DragAndDropMapping(dragItemCreated, someLocation);
                         question.correctMappings!.push(dndMapping);
                     }

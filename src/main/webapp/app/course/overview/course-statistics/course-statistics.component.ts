@@ -402,7 +402,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                         if (participation.id && results.length) {
                             const participationResult: ParticipationResultDTO | undefined = this.scoresStorageService.getStoredParticipationResult(participation.id);
                             if (participationResult?.rated) {
-                                const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, course);
+                                const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score, course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);
                                 const roundedParticipationPoints = roundValueSpecifiedByCourseSettings((participationResult.score! * exercise.maxPoints!) / 100, course);
                                 const missedScore = roundValueSpecifiedByCourseSettings(100 - cappedParticipationScore, course);
@@ -420,7 +420,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                         } else {
                             if (
                                 participation.initializationState === InitializationState.FINISHED &&
-                                (!exercise.dueDate || participation.initializationDate?.isBefore(exercise.dueDate!))
+                                (!exercise.dueDate || participation.initializationDate?.isBefore(exercise.dueDate))
                             ) {
                                 // 4 = NOT_GRADED
                                 series[4].value = 100;

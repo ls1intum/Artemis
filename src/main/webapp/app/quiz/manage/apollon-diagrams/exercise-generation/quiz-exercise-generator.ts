@@ -387,7 +387,7 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
                 continue;
             }
             if (mappings.has(dragElementSibling.id!)) {
-                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id!)!);
+                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id!));
                 mappings.set(dragItemElementId, [...mappings.get(dragItemElementId)!, mapping]);
             }
         }

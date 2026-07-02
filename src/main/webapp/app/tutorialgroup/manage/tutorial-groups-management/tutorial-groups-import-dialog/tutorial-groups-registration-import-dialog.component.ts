@@ -4,7 +4,6 @@ import { cleanString } from 'app/foundation/util/utils';
 import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject } from 'rxjs';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -236,13 +235,13 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
             .map((csvRow) => {
                 const registration: TutorialGroupImportData = {
                     title: csvRow[usedTitleHeader]?.trim() || '',
-                } as TutorialGroupImportData;
+                };
                 registration.student = {
                     registrationNumber: csvRow[usedRegistrationNumberHeader]?.trim() || '',
                     login: csvRow[usedLoginHeader]?.trim() || '',
                     firstName: csvRow[usedFirstNameHeader]?.trim() || '',
                     lastName: csvRow[usedLastNameHeader]?.trim() || '',
-                } as StudentDTO;
+                };
                 registration.campus = csvRow[usedCampusHeader]?.trim() || '';
                 registration.capacity = csvRow[usedCapacityHeader] ? Number(csvRow[usedCapacityHeader]) : undefined;
                 registration.language = csvRow[usedLanguageHeader]?.trim() || '';

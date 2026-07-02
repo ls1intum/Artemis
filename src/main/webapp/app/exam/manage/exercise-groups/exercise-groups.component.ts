@@ -122,7 +122,7 @@ export class ExerciseGroupsComponent implements OnInit {
             next: ([examRes, examInfoDTO]) => {
                 this.exam.set(examRes.body!);
                 this.exerciseGroups.set(this.exam()!.exerciseGroups);
-                this.course.set(this.exam()!.course!);
+                this.course.set(this.exam()!.course);
                 this.latestIndividualEndDate.set(examInfoDTO ? examInfoDTO.body!.latestIndividualEndDate : undefined);
                 this.setupExerciseGroupToExerciseTypesDict();
             },
