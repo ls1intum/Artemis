@@ -11,9 +11,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -57,10 +60,13 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -72,6 +78,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Lazy
 @Service
 public class ParticipationService {
+
+    private static final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
@@ -98,11 +106,13 @@ public class ParticipationService {
 
     private final ResultRepository resultRepository;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -114,6 +124,7 @@ public class ParticipationService {
         this.uriService = uriService;
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.resultRepository = resultRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
     }
 
     /**
@@ -239,9 +250,67 @@ public class ParticipationService {
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         // Step 1a) create the student repository (based on the template repository)
-        participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
+        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), participation);
 
         return startProgrammingParticipation(participation);
+    }
+
+    /**
+     * Resolves the template repository URI of the given programming exercise and repairs it if necessary.
+     * <p>
+     * For old exercises, the stored template repository URI might be missing or stored in a legacy format (e.g. from before the migration to the integrated code lifecycle or
+     * with a repository slug that does not follow the current naming conventions) that {@link ProgrammingExercise#getVcsTemplateRepositoryUri()} cannot parse, in which case it
+     * returns null. Without repair, starting the exercise would fail with an internal server error that students cannot resolve themselves. This method reconstructs the
+     * canonical local VC URI from the project key and the repository slug (taken from the stored URI if present, otherwise derived from the naming convention), verifies that
+     * a valid git repository actually exists for it, and persists the repaired URI so that subsequent operations (e.g. exports, plagiarism checks) work again as well.
+     *
+     * @param exercise the programming exercise with an initialized template participation
+     * @return the resolved template repository URI, never null
+     * @throws VersionControlException if the template repository URI cannot be repaired, i.e. the exercise is misconfigured and an instructor or admin needs to fix it
+     */
+    private LocalVCRepositoryUri resolveTemplateRepositoryUri(ProgrammingExercise exercise) {
+        VersionControlService versionControl = versionControlService.orElseThrow();
+        var templateRepositoryUri = exercise.getVcsTemplateRepositoryUri();
+        if (templateRepositoryUri != null && versionControl.isValidGitRepository(templateRepositoryUri)) {
+            return templateRepositoryUri;
+        }
+        String storedUri = exercise.getTemplateRepositoryUri();
+        for (String repositorySlug : candidateTemplateRepositorySlugs(exercise, storedUri)) {
+            LocalVCRepositoryUri repairedUri = versionControl.getCloneRepositoryUri(exercise.getProjectKey(), repositorySlug);
+            if (versionControl.isValidGitRepository(repairedUri)) {
+                log.warn("Repaired the template repository URI of exercise {} from '{}' to '{}'", exercise.getId(), storedUri, repairedUri);
+                exercise.setTemplateRepositoryUri(repairedUri.toString());
+                templateProgrammingExerciseParticipationRepository.save(exercise.getTemplateParticipation());
+                return repairedUri;
+            }
+        }
+        log.error("Cannot repair the template repository URI '{}' of exercise {}: no matching repository exists in the local VC", storedUri, exercise.getId());
+        throw new VersionControlException("The template repository of this exercise is not accessible. Please contact your instructor.");
+    }
+
+    /**
+     * Determines the candidate repository slugs for repairing a broken template repository URI: first the slug taken from the stored URI (if it can be extracted),
+     * then the slug derived from the naming convention. The caller picks the first candidate for which a repository actually exists.
+     *
+     * @param exercise  the programming exercise
+     * @param storedUri the raw template repository URI stored in the database, may be null or malformed
+     * @return the list of candidate repository slugs, never empty
+     */
+    private List<String> candidateTemplateRepositorySlugs(ProgrammingExercise exercise, String storedUri) {
+        List<String> candidateSlugs = new ArrayList<>();
+        if (storedUri != null) {
+            try {
+                candidateSlugs.add(uriService.getRepositorySlugFromRepositoryUriString(storedUri));
+            }
+            catch (VersionControlException e) {
+                log.debug("Cannot extract a repository slug from the stored template repository URI '{}' of exercise {}", storedUri, exercise.getId());
+            }
+        }
+        String conventionSlug = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
+        if (!candidateSlugs.contains(conventionSlug)) {
+            candidateSlugs.add(conventionSlug);
+        }
+        return candidateSlugs;
     }
 
     /**
@@ -259,10 +328,10 @@ public class ParticipationService {
         // Step 1a) create the student repository (based on the template repository or graded participation)
         if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
                 && optionalGradedStudentParticipation.get() instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
-            participation = copyRepository(exercise, programmingExerciseStudentParticipation.getVcsRepositoryUri(), participation);
+            participation = copyRepository(exercise, programmingExerciseStudentParticipation::getVcsRepositoryUri, participation);
         }
         else {
-            participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUri(), participation);
+            participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), participation);
         }
 
         // For practice mode 1 is always set. For more information see Participation.class
@@ -394,7 +463,7 @@ public class ParticipationService {
             // Note: we make sure to use the correct programming exercises here to avoid org.hibernate.LazyInitializationException later
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case they want to further participate after the due date)
-            programmingParticipation = copyRepository(programmingExercise, programmingExercise.getVcsTemplateRepositoryUri(), programmingParticipation);
+            programmingParticipation = copyRepository(programmingExercise, () -> resolveTemplateRepositoryUri(programmingExercise), programmingParticipation);
             programmingParticipation = configureRepository(programmingParticipation);
             participation = programmingParticipation;
         }
@@ -448,10 +517,26 @@ public class ParticipationService {
         return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
     }
 
-    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, LocalVCRepositoryUri sourceUri,
+    /**
+     * Copies the repository behind the source URI to create the repository of the given participation, unless the participation already has a repository.
+     * The source URI is provided as a supplier so that its resolution (which might involve repairing a broken template repository URI, see
+     * {@link #resolveTemplateRepositoryUri}) only happens when the repository actually needs to be copied.
+     *
+     * @param programmingExercise the programming exercise the participation belongs to
+     * @param sourceUriSupplier   supplies the URI of the repository to copy from, only evaluated if the copy is actually performed
+     * @param participation       the participation for which the repository should be created
+     * @return the updated participation
+     */
+    private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, Supplier<LocalVCRepositoryUri> sourceUriSupplier,
             ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
+            LocalVCRepositoryUri sourceUri = sourceUriSupplier.get();
+            if (sourceUri == null) {
+                // fail fast with a meaningful message instead of a NullPointerException deep in the git checkout (see issue #12840)
+                throw new VersionControlException("The source repository URI for copying the repository of participation " + participation.getId() + " of exercise "
+                        + programmingExercise.getId() + " is missing");
+            }
             final var projectKey = programmingExercise.getProjectKey();
             final var repoName = participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions

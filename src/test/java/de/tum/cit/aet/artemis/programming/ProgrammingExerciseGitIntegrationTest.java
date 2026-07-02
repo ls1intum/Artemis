@@ -99,6 +99,14 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void testGetOrCheckoutRepositoryWithNullUriThrowsEntityNotFoundException() {
+        // A participation without a repository URI (e.g. because the repository was never created) must lead to a
+        // meaningful EntityNotFoundException (404) instead of a NullPointerException (500), see GitService.getLocalPathOfRepo
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> gitService.getOrCheckoutRepository(null, true, defaultBranch, false));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
     void testGitOperationsWithLocalVC() throws Exception {
         // Create a LocalVC repository (acts as remote) and seed with an initial commit
         var projectKey = "PROGEXGIT";

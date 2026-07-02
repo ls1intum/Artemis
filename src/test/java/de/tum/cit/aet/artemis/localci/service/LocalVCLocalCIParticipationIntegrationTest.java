@@ -77,6 +77,62 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testStartParticipationRepairsUnparseableTemplateRepositoryUri() throws Exception {
+        String projectKey = programmingExercise.getProjectKey();
+        programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+
+        // Prepare the template repository to copy the student assignment repository from.
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
+        // Store the template repository URI in a legacy format (pre-LocalVC, no "git" path segment) that LocalVCRepositoryUri cannot parse.
+        // Starting the exercise must repair the URI instead of failing with an internal server error (see issue #12840).
+        templateParticipation.setRepositoryUri("https://bitbucket.example.com/scm/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+
+        // The stored template repository URI should have been repaired to the canonical local VC format
+        var repairedTemplateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipation.getId()).orElseThrow();
+        assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+
+        templateRepository.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    void testStartParticipationRepairsTemplateRepositoryUriPointingToMissingRepository() throws Exception {
+        String projectKey = programmingExercise.getProjectKey();
+        programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+
+        // Prepare the template repository (with the conventional slug) to copy the student assignment repository from.
+        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
+        // Store a syntactically valid local VC URI that points to a repository which does not exist on disk.
+        // Starting the exercise must fall back to the repository derived from the naming convention and repair the URI.
+        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-doesnotexist.git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+
+        // The stored template repository URI should have been repaired to point to the existing repository
+        var repairedTemplateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipation.getId()).orElseThrow();
+        assertThat(repairedTemplateParticipation.getRepositoryUri()).isEqualTo(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+
+        templateRepository.resetLocalRepo();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetVcsAccessLog() throws Exception {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
