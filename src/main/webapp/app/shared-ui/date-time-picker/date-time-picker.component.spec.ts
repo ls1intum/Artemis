@@ -371,4 +371,113 @@ describe('FormDateTimePickerComponent', () => {
         expect(dayjs(component.maxDate())).toEqual(expectedMaxDate);
         expect(dayjs(component.startDate())).toEqual(expectedStartDate);
     });
+
+    describe('onPickerPaste', () => {
+        type WithInnerPicker = { innerPicker: () => Partial<DatePicker> | undefined };
+
+        function makePasteEvent(target: HTMLInputElement): ClipboardEvent {
+            // ClipboardEvent is unavailable in jsdom; only `target` is accessed by onPickerPaste.
+            return { target } as unknown as ClipboardEvent;
+        }
+
+        function stubPicker(picker: Partial<DatePicker> | undefined) {
+            vi.spyOn(component as unknown as WithInnerPicker, 'innerPicker').mockReturnValue(picker);
+        }
+
+        it('sets isKeydown=true on the inner picker so PrimeNG processes the pasted text', () => {
+            fixture.detectChanges();
+            const picker: Partial<DatePicker> = { isKeydown: false };
+            stubPicker(picker);
+
+            const input = document.createElement('input');
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(picker.isKeydown).toBe(true);
+        });
+
+        it('selects all text for a context-menu paste when cursor is just positioned (no selection)', () => {
+            fixture.detectChanges();
+            stubPicker({ isKeydown: false });
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            // Simulate cursor positioned mid-field (no selection: selectionStart === selectionEnd)
+            input.selectionStart = 8;
+            input.selectionEnd = 8;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            // No preceding keydown → context-menu paste
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).toHaveBeenCalledOnce();
+        });
+
+        it('selects all text for a context-menu paste even when PrimeNG isKeydown is stale-true (arrow key pressed before paste)', () => {
+            fixture.detectChanges();
+            // PrimeNG sets isKeydown=true on every keydown, including arrow keys.
+            // A context-menu paste after a caret-move keydown must still select-all.
+            stubPicker({ isKeydown: true });
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            input.selectionStart = 8;
+            input.selectionEnd = 8;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            component.onPickerKeydown(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).toHaveBeenCalledOnce();
+        });
+
+        it('does not select-all for a context-menu paste when text is already selected', () => {
+            fixture.detectChanges();
+            stubPicker({ isKeydown: false });
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            input.selectionStart = 0;
+            input.selectionEnd = 16;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).not.toHaveBeenCalled();
+        });
+
+        it('does not select-all for a Ctrl+V paste', () => {
+            fixture.detectChanges();
+            const picker: Partial<DatePicker> = { isKeydown: false };
+            stubPicker(picker);
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            input.selectionStart = 8;
+            input.selectionEnd = 8;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            component.onPickerKeydown(new KeyboardEvent('keydown', { key: 'v', ctrlKey: true }));
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).not.toHaveBeenCalled();
+            expect(picker.isKeydown).toBe(true);
+        });
+
+        it('does not select-all for Shift+Insert (treated as keyboard paste)', () => {
+            const picker: Partial<DatePicker> = { isKeydown: false };
+            stubPicker(picker);
+
+            const input = document.createElement('input');
+            input.value = '13.06.2026 08:00';
+            input.selectionStart = 8;
+            input.selectionEnd = 8;
+            const selectSpy = vi.spyOn(input, 'select');
+
+            component.onPickerKeydown(new KeyboardEvent('keydown', { key: 'Insert', shiftKey: true }));
+            component.onPickerPaste(makePasteEvent(input));
+
+            expect(selectSpy).not.toHaveBeenCalled();
+            expect(picker.isKeydown).toBe(true);
+        });
+    });
 });

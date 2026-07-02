@@ -381,6 +381,133 @@ describe('TutorialFreePeriodFormComponent', () => {
         expect(component.isStartBeforeEnd).toBe(false);
     });
 
+    describe('edit-mode tab-switch restore', () => {
+        it('restores endDate when switching Day → Period in edit mode', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: validEndDateBerlinFreePeriod,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            component.setTimeFrame(TimeFrame.Day);
+            expect(component.form.get('endDate')!.value).toBeFalsy();
+
+            component.setTimeFrame(TimeFrame.Period);
+            expect(component.form.get('endDate')!.value).toBe(validEndDateBerlinFreePeriod);
+            expect(component.form.get('startDate')!.value).toBe(validStartDateBerlin);
+        });
+
+        it('restores startTime and endTime when switching Day → PeriodWithinDay in edit mode', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: validStartTimeBerlin,
+                endTime: validEndTimeBerlin,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            component.setTimeFrame(TimeFrame.Day);
+            expect(component.form.get('startTime')!.value).toBeFalsy();
+            expect(component.form.get('endTime')!.value).toBeFalsy();
+
+            component.setTimeFrame(TimeFrame.PeriodWithinDay);
+            expect(component.form.get('startTime')!.value).toBe(validStartTimeBerlin);
+            expect(component.form.get('endTime')!.value).toBe(validEndTimeBerlin);
+        });
+
+        it('restores user-edited endDate (not original formData value) after a tab round-trip', () => {
+            const editedEndDate = dayjs('2021-03-15T00:00:00').tz('Europe/Berlin').toDate();
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: validEndDateBerlinFreePeriod,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            component.form.get('endDate')!.setValue(editedEndDate);
+
+            component.setTimeFrame(TimeFrame.Day);
+            expect(component.form.get('endDate')!.value).toBeFalsy();
+
+            component.setTimeFrame(TimeFrame.Period);
+            expect(component.form.get('endDate')!.value).toBe(editedEndDate);
+        });
+
+        it('does not restore endDate when the user deliberately cleared it before switching tabs', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: validEndDateBerlinFreePeriod,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            // User explicitly clears endDate while on the Period tab
+            component.form.get('endDate')!.setValue(undefined);
+
+            // Switch away and back
+            component.setTimeFrame(TimeFrame.Day);
+            component.setTimeFrame(TimeFrame.Period);
+
+            // endDate must stay empty — the clear must not be overwritten.
+            // Cleared date controls reset to null (Angular FormControl.reset()), not undefined;
+            // a restore regression would put the original Date back, which toBeNull() also catches.
+            expect(component.form.get('endDate')!.value).toBeNull();
+        });
+
+        it('does not restore startTime/endTime when the user deliberately cleared them before switching tabs', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: validStartTimeBerlin,
+                endTime: validEndTimeBerlin,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            // User explicitly clears the time controls while on the PeriodWithinDay tab
+            component.form.get('startTime')!.setValue(undefined);
+            component.form.get('endTime')!.setValue(undefined);
+
+            // Switch away and back
+            component.setTimeFrame(TimeFrame.Day);
+            component.setTimeFrame(TimeFrame.PeriodWithinDay);
+
+            // Both time controls must stay empty (reset to null, see endDate test above)
+            expect(component.form.get('startTime')!.value).toBeNull();
+            expect(component.form.get('endTime')!.value).toBeNull();
+        });
+
+        it('does not restore startDate when the user has deliberately cleared it', () => {
+            fixture.componentRef.setInput('isEditMode', true);
+            fixture.componentRef.setInput('formData', {
+                startDate: validStartDateBerlin,
+                endDate: undefined,
+                startTime: undefined,
+                endTime: undefined,
+                reason: validReason,
+            });
+            fixture.detectChanges();
+
+            component.startDateControl!.setValue(undefined);
+
+            component.setTimeFrame(TimeFrame.Period);
+            expect(component.form.get('startDate')!.value).toBeFalsy();
+        });
+    });
+
     // === helper functions ===
     const setFormValues = (startDate: Date | undefined, endDate: Date | undefined, startTime: Date | undefined, endTime: Date | undefined, reason: string) => {
         component.startDateControl!.setValue(startDate);
