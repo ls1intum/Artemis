@@ -25,7 +25,8 @@ import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes,
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
-import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -85,12 +86,14 @@ export class CourseUpdateComponent implements OnInit {
     private readonly fileService = inject(FileService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
+    private readonly featureToggleService = inject(FeatureToggleService);
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
+    private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
     private readonly destroyRef = inject(DestroyRef);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
@@ -147,6 +150,11 @@ export class CourseUpdateComponent implements OnInit {
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
+    // Global auto-orchestration defaults, fetched when Atlas is active, shown as the override-field
+    // placeholders so instructors see what an empty override resolves to. `undefined` until loaded
+    // (or if the fetch fails) — the template falls back to a plain "Use default" label.
+    readonly debounceWindowSecondsDefault = signal<number | undefined>(undefined);
+    readonly maxDailyOrchestrationDefault = signal<number | undefined>(undefined);
 
     private courseStorageService = inject(CourseStorageService);
 
@@ -213,6 +221,27 @@ export class CourseUpdateComponent implements OnInit {
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
         this.isAthenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
+        // Load the global auto-orchestration defaults to display as override placeholders. Best-effort:
+        // if the feature toggle is off or the request fails, the placeholders stay on the plain
+        // "Use default" label.
+        if (this.atlasEnabled()) {
+            // The defaults endpoint is gated by FeatureToggle.AtlasAgent (and 403s when it is off), the same
+            // toggle that hides the override controls. Only fetch when the toggle is active to avoid a failing
+            // request on every course-edit load in deployments where the agent feature is disabled.
+            firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent))
+                .then((atlasAgentActive) => {
+                    if (!atlasAgentActive) {
+                        return undefined;
+                    }
+                    return this.competencyOrchestrationApiService.getDefaults().then((defaults) => {
+                        this.debounceWindowSecondsDefault.set(defaults.debounceWindowSeconds);
+                        this.maxDailyOrchestrationDefault.set(defaults.maxDailyOrchestrations);
+                    });
+                })
+                .catch(() => {
+                    // Defaults are non-essential; leave the placeholders on the generic label.
+                });
+        }
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
@@ -244,6 +273,10 @@ export class CourseUpdateComponent implements OnInit {
                 semester: new FormControl(this.course.semester),
                 testCourse: new FormControl(this.course.testCourse),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
+                autoOrchestratorEnabled: new FormControl(this.course.autoOrchestratorEnabled ?? false),
+                // Seconds / daily run counts: reject fractional values in addition to the lower bound.
+                debounceWindowSecondsOverride: new FormControl(this.course.debounceWindowSecondsOverride, { validators: [Validators.min(1), Validators.pattern(/^\d+$/)] }),
+                maxDailyOrchestrationOverride: new FormControl(this.course.maxDailyOrchestrationOverride, { validators: [Validators.min(1), Validators.pattern(/^\d+$/)] }),
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
@@ -640,6 +673,19 @@ export class CourseUpdateComponent implements OnInit {
     changeRestrictedAthenaModulesEnabled() {
         this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
         this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
+    }
+
+    /**
+     * Reset the per-course override inputs when auto-orchestration is turned off. The override fields
+     * are hidden by an @if on the toggle, so without this they would retain stale values that
+     * getRawValue() would still carry into the update DTO. Clearing them keeps the saved config in
+     * sync with what the instructor can see.
+     */
+    changeAutoOrchestratorEnabled() {
+        if (!this.courseForm.controls['autoOrchestratorEnabled'].value) {
+            this.courseForm.controls['debounceWindowSecondsOverride'].setValue(undefined);
+            this.courseForm.controls['maxDailyOrchestrationOverride'].setValue(undefined);
+        }
     }
 
     /**

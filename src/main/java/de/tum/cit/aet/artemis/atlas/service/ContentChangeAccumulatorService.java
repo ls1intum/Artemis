@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
+import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CourseAutoOrchestrationConfigurationRepository;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
 
@@ -50,15 +53,60 @@ public class ContentChangeAccumulatorService {
 
     private final Clock clock;
 
-    private final int debounceWindowSeconds;
+    /** Global default debounce window; used whenever a course has no per-course override. */
+    private final int defaultDebounceWindowSeconds;
 
-    private final int dailyCap;
+    /** Global default daily cap; used whenever a course has no per-course override. */
+    private final int defaultDailyCap;
 
-    public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider, Clock clock, AtlasOrchestratorProperties properties) {
+    private final CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository;
+
+    public ContentChangeAccumulatorService(Optional<DistributedDataProvider> distributedDataProvider, Clock clock, AtlasOrchestratorProperties properties,
+            CourseAutoOrchestrationConfigurationRepository autoOrchestrationConfigurationRepository) {
         this.distributedDataProvider = distributedDataProvider;
         this.clock = clock;
-        this.debounceWindowSeconds = properties.debounceWindowSeconds();
-        this.dailyCap = properties.maxDailyOrchestrations();
+        this.defaultDebounceWindowSeconds = properties.debounceWindowSeconds();
+        this.defaultDailyCap = properties.maxDailyOrchestrations();
+        this.autoOrchestrationConfigurationRepository = autoOrchestrationConfigurationRepository;
+    }
+
+    /**
+     * Resolve the effective debounce window for a course, preferring its per-course override and
+     * falling back to the global default when no override is set. The config is read live from the
+     * database (never duplicated into the distributed accumulator state) so an instructor toggle
+     * takes effect on the next tick.
+     *
+     * @param courseId the course to resolve the debounce window for
+     * @return the effective debounce window in seconds
+     */
+    private int resolveDebounceWindowSeconds(long courseId) {
+        return resolveDebounceWindowSeconds(autoOrchestrationConfigurationRepository.findConfigByCourseId(courseId).orElse(null));
+    }
+
+    /**
+     * Resolve the effective debounce window from an already-loaded config, applying the same
+     * fall-back-to-global-default semantics ({@code null} or non-positive override → global default).
+     * Lets the scheduler hot path resolve the config once per course per tick and thread the result
+     * through the claim path instead of re-querying.
+     *
+     * @param config the per-course config (may be {@code null} when no row exists)
+     * @return the effective debounce window in seconds
+     */
+    int resolveDebounceWindowSeconds(@Nullable CourseAutoOrchestrationConfigDTO config) {
+        Integer override = config == null ? null : config.debounceWindowSecondsOverride();
+        return override != null && override > 0 ? override : defaultDebounceWindowSeconds;
+    }
+
+    /**
+     * Resolve the effective daily run cap from an already-loaded config, applying the same
+     * fall-back-to-global-default semantics ({@code null} or non-positive override → global default).
+     *
+     * @param config the per-course config (may be {@code null} when no row exists)
+     * @return the effective daily run cap
+     */
+    int resolveDailyCap(@Nullable CourseAutoOrchestrationConfigDTO config) {
+        Integer override = config == null ? null : config.maxDailyOrchestrationOverride();
+        return override != null && override > 0 ? override : defaultDailyCap;
     }
 
     /** Lazily resolve the shared accumulator map (see {@link #resolveMap}). */
@@ -112,13 +160,17 @@ public class ContentChangeAccumulatorService {
      * @return course ids ready for the scheduler to attempt a claim against
      */
     public Set<Long> listDueCourseIds() {
-        Instant cutoff = Instant.now(clock).minus(Duration.ofSeconds(debounceWindowSeconds));
+        Instant now = Instant.now(clock);
         Set<Long> due = new HashSet<>();
         for (var entry : map().entrySet()) {
             ContentChangeAccumulator acc = entry.getValue();
             if (acc == null || !acc.hasContent()) {
                 continue;
             }
+            // Resolve the debounce window per course so a per-course override is honoured here, not
+            // only at claim time — otherwise a course with a longer window would be listed as due
+            // before it should be.
+            Instant cutoff = now.minus(Duration.ofSeconds(resolveDebounceWindowSeconds(entry.getKey())));
             if (!acc.lastEventTime().isAfter(cutoff)) {
                 due.add(entry.getKey());
             }
@@ -142,7 +194,22 @@ public class ContentChangeAccumulatorService {
      * @return the drained batch, or {@link Optional#empty()} when no batch is eligible right now
      */
     public Optional<BatchClaim> claimDueBatch(long courseId) {
-        return claim(courseId, dailyCap, true, false);
+        CourseAutoOrchestrationConfigDTO config = autoOrchestrationConfigurationRepository.findConfigByCourseId(courseId).orElse(null);
+        return claim(courseId, resolveDebounceWindowSeconds(config), resolveDailyCap(config), true, false);
+    }
+
+    /**
+     * Variant of {@link #claimDueBatch(long)} that takes the already-resolved debounce window and
+     * daily cap, so the scheduler hot path can resolve the per-course config once per tick and avoid
+     * re-querying it here. Behaviour is otherwise identical to {@link #claimDueBatch(long)}.
+     *
+     * @param courseId              the course whose accumulated ids should be drained
+     * @param debounceWindowSeconds the effective debounce window in seconds (already resolved)
+     * @param dailyCap              the effective daily run cap (already resolved)
+     * @return the drained batch, or {@link Optional#empty()} when no batch is eligible right now
+     */
+    public Optional<BatchClaim> claimDueBatch(long courseId, int debounceWindowSeconds, int dailyCap) {
+        return claim(courseId, debounceWindowSeconds, dailyCap, true, false);
     }
 
     /**
@@ -156,16 +223,18 @@ public class ContentChangeAccumulatorService {
      * @return the drained batch, or {@link Optional#empty()} when the accumulator is empty
      */
     public Optional<BatchClaim> claimBatchNow(long courseId) {
-        return claim(courseId, Integer.MAX_VALUE, false, true);
+        // skipDebounce bypasses the window entirely, so the resolved window is irrelevant here.
+        return claim(courseId, 0, Integer.MAX_VALUE, false, true);
     }
 
     /**
      * Atomically drain and reset a course's bucket under the per-key lock. {@code countQuota} bumps
      * the daily-run counter (scheduled claims) and enforces {@code cap}; {@code skipDebounce}
-     * bypasses the debounce check (manual force-drain). Leaves the entry untouched and returns empty
-     * when nothing is eligible.
+     * bypasses the debounce check (manual force-drain). The debounce window is passed in already
+     * resolved so the scheduler hot path performs no config query here. Leaves the entry untouched
+     * and returns empty when nothing is eligible.
      */
-    private Optional<BatchClaim> claim(long courseId, int cap, boolean countQuota, boolean skipDebounce) {
+    private Optional<BatchClaim> claim(long courseId, int debounceWindowSeconds, int cap, boolean countQuota, boolean skipDebounce) {
         Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
         Duration debounceWindow = Duration.ofSeconds(debounceWindowSeconds);
@@ -247,6 +316,35 @@ public class ContentChangeAccumulatorService {
                 next = next.with(exerciseId, now);
             }
             currentMap.put(courseId, refundDailyRun ? next.refundDailyRun(today) : next);
+        }
+        finally {
+            currentMap.unlock(courseId);
+        }
+    }
+
+    /**
+     * Drop a course's accumulator bucket entirely, discarding any buffered exercise ids and the
+     * daily-run counter. Called when a course disables auto-orchestration so changes recorded while
+     * it was enabled do not surface later (e.g. if the course is re-enabled or a scheduler tick
+     * fires before the change propagates). Removing the whole entry — rather than draining it — is
+     * correct here because a disabled course must never feed the orchestrator.
+     *
+     * @param courseId the course whose bucket should be removed
+     */
+    public void flush(long courseId) {
+        DistributedMap<Long, ContentChangeAccumulator> currentMap = map();
+        // Cheap unlocked presence check first: nearly every course is auto-orchestration-disabled and
+        // record() is gated, so a disabled course almost never has a bucket. Only take the per-key
+        // distributed lock + remove when one actually exists — disabling a course that never buffered
+        // anything (the common path) costs a single map read and no lock. A bucket that appears between
+        // this check and the lock is still flushed on the next disable event; the kill switch already
+        // blocks it from firing in the meantime.
+        if (currentMap.get(courseId) == null) {
+            return;
+        }
+        currentMap.lock(courseId);
+        try {
+            currentMap.remove(courseId);
         }
         finally {
             currentMap.unlock(courseId);

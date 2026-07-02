@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Per-course Atlas auto-orchestration configuration, stored in its own table (Atlas-owned)
+         rather than as columns on `course`. A row exists only for courses that customized the
+         configuration; the foreign key on `course` owns the OneToOne relation.
+         - enabled: hard per-course kill switch (default false), gating the debounce/scheduler
+           pipeline in addition to the global Feature.AtlasAgent toggle.
+         - debounce_window_seconds_override / max_daily_orchestration_override: nullable per-course
+           overrides; when NULL the global AtlasOrchestratorProperties defaults apply. -->
+    <changeSet id="20260629120000-1" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="course_auto_orchestration_configuration"/></not>
+        </preConditions>
+        <createTable tableName="course_auto_orchestration_configuration">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="debounce_window_seconds_override" type="integer"/>
+            <column name="max_daily_orchestration_override" type="integer"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260629120000-2" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="course" columnName="auto_orchestration_configuration_id"/></not>
+        </preConditions>
+        <addColumn tableName="course">
+            <column name="auto_orchestration_configuration_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260629120000-3" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyName="fk_course_auto_orchestration_configuration"/></not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="course" baseColumnNames="auto_orchestration_configuration_id"
+                                 constraintName="fk_course_auto_orchestration_configuration"
+                                 referencedTableName="course_auto_orchestration_configuration" referencedColumnNames="id"/>
+    </changeSet>
+</databaseChangeLog>

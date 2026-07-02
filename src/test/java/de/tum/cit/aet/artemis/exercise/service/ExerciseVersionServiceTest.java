@@ -9,8 +9,11 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.lang.reflect.RecordComponent;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -550,6 +553,81 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         Set<String> accountedFor = new java.util.HashSet<>(coveredFields);
         accountedFor.addAll(excludedFields);
         assertThat(accountedFor).as("Every ProgrammingExerciseSnapshotDTO field must be either covered or explicitly excluded in collectProgrammingChanges").isEqualTo(allFields);
+    }
+
+    /**
+     * Guard for the Atlas auto-orchestration trigger filter: every top-level {@link ExerciseSnapshotDTO}
+     * field must be explicitly classified as either competency-relevant (content-bearing, SHOULD
+     * trigger) or irrelevant (administrative, must NOT trigger). If a new field is added to the
+     * snapshot DTO without classifying it here the test fails, forcing a deliberate decision about
+     * whether it should re-arm the orchestrator.
+     * <p>
+     * The competency-relevant top-level fields must equal the non-{@code programmingData.*} entries of
+     * {@link ExerciseVersionService#COMPETENCY_RELEVANT_FIELDS}, so the allowlist stays the single
+     * source of truth.
+     */
+    @Test
+    void testCompetencyRelevantClassificationCoversAllExerciseSnapshotFields() {
+        Set<String> allFields = Arrays.stream(ExerciseSnapshotDTO.class.getRecordComponents()).map(RecordComponent::getName).collect(Collectors.toSet());
+
+        // Content-bearing fields that SHOULD trigger an orchestration run.
+        Set<String> competencyRelevant = Set.of("title", "shortName", "difficulty", "categories", "problemStatement");
+
+        // Administrative / structural fields that must NOT trigger. competencyLinks is intentionally
+        // here (not content-bearing): an orchestrator-driven link edit must not re-arm the pipeline.
+        Set<String> competencyIrrelevant = Set.of("id", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate", "dueDate",
+                "assessmentDueDate", "exampleSolutionPublicationDate", "mode", "allowComplaintsForAutomaticAssessments", "allowFeedbackRequests", "includedInOverallScore",
+                "gradingInstructions", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "feedbackSuggestionModule", "gradingCriteria",
+                "plagiarismDetectionConfig",
+                // type-specific data blocks: programmingData repo commits are classified per-field below;
+                // the other type blocks are not yet fed into the orchestrator.
+                "programmingData", "textData", "modelingData", "quizData", "fileUploadData");
+
+        Set<String> classified = new HashSet<>(competencyRelevant);
+        classified.addAll(competencyIrrelevant);
+        assertThat(classified).as("Every ExerciseSnapshotDTO field must be classified competency-relevant or irrelevant for the Atlas trigger filter").isEqualTo(allFields);
+
+        // The relevant top-level fields must match the allowlist (minus the programmingData.* repo-commit entries).
+        Set<String> allowlistTopLevel = ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS.stream().filter(field -> !field.startsWith("programmingData."))
+                .collect(Collectors.toSet());
+        assertThat(competencyRelevant).as("COMPETENCY_RELEVANT_FIELDS must be the single source of truth for content-bearing top-level fields").isEqualTo(allowlistTopLevel);
+
+        // competencyLinks must be excluded from the allowlist (documented non-triggering decision).
+        assertThat(ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS).doesNotContain("competencyLinks");
+    }
+
+    /**
+     * Ensures the changed-field set carried on {@link de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent}
+     * includes the content-bearing fields the Atlas filter needs (problemStatement, title) and the
+     * orchestrator-irrelevant administrative changes too (so consumers can filter), while a no-op
+     * change yields an empty set.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCollectChangedFieldsForEventIncludesContentFields() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        exercise.setProblemStatement("Original problem statement");
+        programmingExerciseRepository.saveAndFlush(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        ExerciseSnapshotDTO previousSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+
+        exercise.setProblemStatement("Rewritten problem statement covering new content");
+        exercise.setTitle("Updated Title");
+        exercise.setDueDate(ZonedDateTime.now().plusDays(3));
+        programmingExerciseRepository.saveAndFlush(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        ExerciseSnapshotDTO newSnapshot = ExerciseSnapshotDTO.of(exercise, gitService);
+
+        Set<String> changedFields = exerciseVersionService.collectChangedFieldsForEvent(newSnapshot, previousSnapshot);
+
+        // Content-bearing fields are present and intersect the allowlist (so the orchestrator triggers).
+        assertThat(changedFields).contains("problemStatement", "title", "dueDate");
+        assertThat(Collections.disjoint(changedFields, ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS)).isFalse();
+
+        // No-op: identical snapshots yield an empty changed-field set (and never trigger the orchestrator).
+        Set<String> noChange = exerciseVersionService.collectChangedFieldsForEvent(newSnapshot, newSnapshot);
+        assertThat(noChange).isEmpty();
+        assertThat(Collections.disjoint(noChange, ExerciseVersionService.COMPETENCY_RELEVANT_FIELDS)).isTrue();
     }
 
 }
