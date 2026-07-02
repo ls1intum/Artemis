@@ -25,6 +25,12 @@ public class AttachmentFileHashService {
 
     private static final int BUFFER_SIZE = 8192;
 
+    /**
+     * Calculates the SHA-256 hash of an uploaded attachment file.
+     *
+     * @param file the uploaded file to hash
+     * @return the calculated SHA-256 hash
+     */
     public FileHash sha256(MultipartFile file) {
         try (InputStream inputStream = file.getInputStream()) {
             return sha256(inputStream);
@@ -34,6 +40,12 @@ public class AttachmentFileHashService {
         }
     }
 
+    /**
+     * Calculates the SHA-256 hash of a stored attachment file.
+     *
+     * @param path the path of the stored file to hash
+     * @return the calculated SHA-256 hash
+     */
     public FileHash sha256(Path path) {
         try (InputStream inputStream = Files.newInputStream(path)) {
             return sha256(inputStream);

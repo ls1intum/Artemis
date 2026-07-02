@@ -16,6 +16,14 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 @Service
 public class LectureContentUpdateClassifier {
 
+    /**
+     * Classifies the cheapest safe Pyris update for a lecture unit snapshot change.
+     *
+     * @param before           the previous detached lecture unit snapshot
+     * @param after            the current detached lecture unit snapshot, or null if the unit was deleted
+     * @param fileUpdateResult the attachment file update result, if an attachment update was attempted
+     * @return the required Pyris update kind
+     */
     public LectureContentUpdateKind classify(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
         if (after == null) {
             return LectureContentUpdateKind.DELETE;
@@ -43,8 +51,7 @@ public class LectureContentUpdateClassifier {
     }
 
     private static boolean isVisibilityUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {
-        return !Objects.equals(before.releaseDate(), after.releaseDate())
-                || !Objects.equals(before.slideHiddenUntilBySlideNumber(), after.slideHiddenUntilBySlideNumber());
+        return !Objects.equals(before.releaseDate(), after.releaseDate()) || !Objects.equals(before.slideHiddenUntilBySlideNumber(), after.slideHiddenUntilBySlideNumber());
     }
 
     private static boolean isMetadataUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {

@@ -35,6 +35,11 @@ public class IrisLectureUnitSyncService {
         this.eventPublisher = eventPublisher;
     }
 
+    /**
+     * Stores the current metadata hash and publishes a dirty event after the surrounding transaction commits.
+     *
+     * @param snapshot the detached lecture unit snapshot containing the metadata to hash
+     */
     public void markMetadataDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
         IrisLectureUnitSyncState state = stateFor(snapshot.lectureUnitId());
         state.setMetadataHash(metadataHash(snapshot));
@@ -43,6 +48,11 @@ public class IrisLectureUnitSyncService {
         publishAfterCommit(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId()));
     }
 
+    /**
+     * Stores the current visibility hash and publishes a dirty event after the surrounding transaction commits.
+     *
+     * @param snapshot the detached lecture unit snapshot containing the visibility data to hash
+     */
     public void markVisibilityDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
         IrisLectureUnitSyncState state = stateFor(snapshot.lectureUnitId());
         state.setVisibilityHash(visibilityHash(snapshot));

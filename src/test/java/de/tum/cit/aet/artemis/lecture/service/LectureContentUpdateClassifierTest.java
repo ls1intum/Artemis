@@ -34,8 +34,8 @@ class LectureContentUpdateClassifierTest {
     @Test
     void classifiesReleaseDateChangeAsVisibilityUpdate() {
         var before = snapshot();
-        var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source",
-                RELEASE_DATE.plusDays(1), Map.of(1, HIDDEN_UNTIL));
+        var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE.plusDays(1),
+                Map.of(1, HIDDEN_UNTIL));
 
         var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
 
@@ -174,8 +174,7 @@ class LectureContentUpdateClassifierTest {
     }
 
     private static LectureContentUpdateSnapshot snapshot(Map<Integer, ZonedDateTime> hiddenUntilBySlideNumber) {
-        return snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
-                hiddenUntilBySlideNumber);
+        return snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE, hiddenUntilBySlideNumber);
     }
 
     private static LectureContentUpdateSnapshot snapshot(String lectureUnitName, String lectureName, String courseName, String courseDescription) {

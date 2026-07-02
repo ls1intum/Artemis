@@ -429,7 +429,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         ObjectNode attachmentVideoUnitJson = mapper.valueToTree(persistedAttachmentVideoUnit);
         attachmentVideoUnitJson.put("attachmentUpdateIntent", "NO_FILE_CHANGE");
-        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnitJson).getBytes());
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsString(attachmentVideoUnitJson).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
 
         var builder = MockMvcRequestBuilders
@@ -620,8 +621,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         Slide selectedSlide = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId()).stream().sorted(Comparator.comparing(Slide::getSlideNumber))
                 .findFirst().orElseThrow();
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
-        String hiddenPagesJson = "[{\"slideId\": \"" + selectedSlide.getId() + "\", \"date\": \""
-                + hiddenDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")) + "\"}]";
+        String hiddenPagesJson = "[{\"slideId\": \"" + selectedSlide.getId() + "\", \"date\": \"" + hiddenDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"))
+                + "\"}]";
 
         var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, AttachmentUpdateIntent.NO_FILE_CHANGE);
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());

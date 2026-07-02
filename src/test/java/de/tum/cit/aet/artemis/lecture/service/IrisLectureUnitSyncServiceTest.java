@@ -67,8 +67,7 @@ class IrisLectureUnitSyncServiceTest {
 
         var eventCaptor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent.class)
-                .extracting("lectureUnitId").isEqualTo(LECTURE_UNIT_ID);
+        assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent.class).extracting("lectureUnitId").isEqualTo(LECTURE_UNIT_ID);
     }
 
     @Test
@@ -89,8 +88,8 @@ class IrisLectureUnitSyncServiceTest {
 
         var eventCaptor = ArgumentCaptor.forClass(Object.class);
         verify(eventPublisher).publishEvent(eventCaptor.capture());
-        assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent.class)
-                .extracting("lectureUnitId").isEqualTo(LECTURE_UNIT_ID);
+        assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent.class).extracting("lectureUnitId")
+                .isEqualTo(LECTURE_UNIT_ID);
     }
 
     @Test
@@ -108,8 +107,8 @@ class IrisLectureUnitSyncServiceTest {
 
             var eventCaptor = ArgumentCaptor.forClass(Object.class);
             verify(eventPublisher).publishEvent(eventCaptor.capture());
-            assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent.class)
-                    .extracting("lectureUnitId").isEqualTo(LECTURE_UNIT_ID);
+            assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent.class).extracting("lectureUnitId")
+                    .isEqualTo(LECTURE_UNIT_ID);
         }
         finally {
             TransactionSynchronizationManager.clearSynchronization();

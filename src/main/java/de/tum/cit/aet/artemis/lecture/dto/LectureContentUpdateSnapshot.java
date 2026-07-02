@@ -15,8 +15,8 @@ public record LectureContentUpdateSnapshot(Long lectureUnitId, String lectureUni
         }
         else {
             var copiedSlideHiddenUntilBySlideNumber = new LinkedHashMap<Integer, ZonedDateTime>();
-            slideHiddenUntilBySlideNumber.forEach(
-                    (slideNumber, hiddenUntil) -> copiedSlideHiddenUntilBySlideNumber.put(Objects.requireNonNull(slideNumber, "slideNumber"), hiddenUntil));
+            slideHiddenUntilBySlideNumber
+                    .forEach((slideNumber, hiddenUntil) -> copiedSlideHiddenUntilBySlideNumber.put(Objects.requireNonNull(slideNumber, "slideNumber"), hiddenUntil));
             slideHiddenUntilBySlideNumber = Collections.unmodifiableMap(copiedSlideHiddenUntilBySlideNumber);
         }
     }

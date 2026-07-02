@@ -29,11 +29,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisSlideVisibilityDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisSlideVisibilityDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -167,11 +167,10 @@ public class PyrisWebhookService {
         Lecture lecture = attachmentVideoUnit.getLecture();
         Course course = attachmentVideoUnit.getLecture().getCourse();
         SlideApi api = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
-        List<PyrisSlideVisibilityDTO> slides = api.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).stream()
-                .sorted(Comparator.comparingInt(Slide::getSlideNumber)).map(slide -> new PyrisSlideVisibilityDTO(slide.getSlideNumber(), slide.getHidden())).toList();
+        List<PyrisSlideVisibilityDTO> slides = api.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).stream().sorted(Comparator.comparingInt(Slide::getSlideNumber))
+                .map(slide -> new PyrisSlideVisibilityDTO(slide.getSlideNumber(), slide.getHidden())).toList();
 
-        return new PyrisLectureUnitVisibilityWebhookDTO(attachmentVideoUnit.getId(), lecture.getId(), course.getId(), artemisBaseUrl, attachmentVideoUnit.getReleaseDate(),
-                slides);
+        return new PyrisLectureUnitVisibilityWebhookDTO(attachmentVideoUnit.getId(), lecture.getId(), course.getId(), artemisBaseUrl, attachmentVideoUnit.getReleaseDate(), slides);
     }
 
     /**

@@ -55,8 +55,8 @@ class LectureUnitVisibilitySyncServiceTest {
         var exercise = exercise();
         var unit = attachmentVideoUnit();
         when(slideRepository.findByExerciseId(EXERCISE_ID)).thenReturn(List.of(slide(2, HIDDEN_UNTIL, unit)));
-        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(3, null, unit), slide(1, HIDDEN_UNTIL.plusDays(1), unit),
-                slide(2, HIDDEN_UNTIL, unit)));
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID))
+                .thenReturn(List.of(slide(3, null, unit), slide(1, HIDDEN_UNTIL.plusDays(1), unit), slide(2, HIDDEN_UNTIL, unit)));
 
         service.markVisibilityDirtyForExercise(exercise);
 
@@ -82,7 +82,8 @@ class LectureUnitVisibilitySyncServiceTest {
         var firstUnitReference = attachmentVideoUnit();
         var secondUnitReference = attachmentVideoUnit();
         when(slideRepository.findByExerciseId(EXERCISE_ID)).thenReturn(List.of(slide(1, HIDDEN_UNTIL, firstUnitReference), slide(2, HIDDEN_UNTIL, secondUnitReference)));
-        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(1, HIDDEN_UNTIL, firstUnitReference), slide(2, HIDDEN_UNTIL, firstUnitReference)));
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID))
+                .thenReturn(List.of(slide(1, HIDDEN_UNTIL, firstUnitReference), slide(2, HIDDEN_UNTIL, firstUnitReference)));
 
         service.markVisibilityDirtyForExercise(exercise);
 

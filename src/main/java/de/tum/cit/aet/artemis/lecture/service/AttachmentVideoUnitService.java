@@ -210,8 +210,7 @@ public class AttachmentVideoUnitService {
                 unit.getVideoSource() != null && !unit.getVideoSource().isBlank() ? unit.getVideoSource() : null);
     }
 
-    private AttachmentFileUpdateResult updateAttachmentFileIfChanged(MultipartFile uploadedFile, Attachment existingAttachment, boolean keepFilename,
-            Long attachmentVideoUnitId) {
+    private AttachmentFileUpdateResult updateAttachmentFileIfChanged(MultipartFile uploadedFile, Attachment existingAttachment, boolean keepFilename, Long attachmentVideoUnitId) {
         Integer oldVersion = existingAttachment.getVersion();
         String uploadedHash = attachmentFileHashService.sha256(uploadedFile).value();
         Optional<String> storedHash = getOrBackfillStoredFileSha256Hash(existingAttachment);
@@ -272,10 +271,10 @@ public class AttachmentVideoUnitService {
     /**
      * Sets the required parameters for an attachment on update
      *
-     * @param existingAttachment  the existing attachment
-     * @param updateAttachment    the new attachment containing updated information
-     * @param attachmentVideoUnit the attachment video unit to update
-     * @param hiddenPages         the hidden pages in the attachment
+     * @param existingAttachment                   the existing attachment
+     * @param updateAttachment                     the new attachment containing updated information
+     * @param attachmentVideoUnit                  the attachment video unit to update
+     * @param hiddenPages                          the hidden pages in the attachment
      * @param clearStudentVersionWhenNoHiddenPages whether to clear the student version when hiddenPages is absent or empty
      */
     private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages,
