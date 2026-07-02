@@ -110,16 +110,23 @@ describe('FileUploadSubmissionService', () => {
             req.flush({});
         });
 
-        it('should call submission service convert', async () => {
+        it('should serialize only the submission input DTO', async () => {
             const submission = createSubmission();
+            submission.filePath = '/api/files/should-not-be-sent.pdf';
+            submission.participation = createParticipation();
             const file = createFile();
 
             service.update(submission, 123, file).subscribe();
 
             const req = httpMock.expectOne({ method: 'POST' });
+            const formData = req.request.body as FormData;
+            const submissionBlob = formData.get('submission') as Blob;
+            const requestBody = JSON.parse(await submissionBlob.text());
             req.flush({});
 
-            expect(submissionService.convert).toHaveBeenCalledWith(submission);
+            expect(requestBody).toEqual({ id: submission.id, submitted: true, exerciseId: 123 });
+            expect(requestBody.filePath).toBeUndefined();
+            expect(requestBody.participation).toBeUndefined();
         });
 
         it('should set filePathUrl from response', async () => {
