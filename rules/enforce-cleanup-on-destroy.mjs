@@ -43,7 +43,6 @@ const rule = createRule({
             return {};
         }
 
-        let hasNgOnDestroy = false;
         let ngOnDestroyBody = '';
 
         const observers = []; // { type, node }
@@ -55,7 +54,6 @@ const rule = createRule({
         return {
             // Collect ngOnDestroy method body text for checking cleanup calls
             "MethodDefinition[key.name='ngOnDestroy']"(node) {
-                hasNgOnDestroy = true;
                 if (node.value && node.value.body) {
                     ngOnDestroyBody = context.sourceCode.getText(node.value.body);
                 }
