@@ -22,6 +22,7 @@ import { getCurrentAndFutureSemesters } from 'app/foundation/util/semester-utils
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
+import dayjs from 'dayjs/esm';
 
 /**
  * Admin component for managing course creation requests.
@@ -92,8 +93,8 @@ export class CourseRequestsComponent implements OnInit {
         title: ['', [Validators.required, Validators.maxLength(255)]],
         shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
         semester: ['', [Validators.required]],
-        startDate: [undefined as any],
-        endDate: [undefined as any],
+        startDate: [undefined as dayjs.Dayjs | undefined],
+        endDate: [undefined as dayjs.Dayjs | undefined],
         testCourse: [false],
         reason: ['', [Validators.required]],
     });
@@ -254,8 +255,8 @@ export class CourseRequestsComponent implements OnInit {
             title: this.editForm.get('title')!.value!,
             shortName: this.editForm.get('shortName')!.value!,
             semester: this.editForm.get('semester')!.value ?? undefined,
-            startDate,
-            endDate,
+            startDate: startDate ?? undefined,
+            endDate: endDate ?? undefined,
             testCourse: this.editForm.get('testCourse')!.value ?? false,
             reason: this.editForm.get('reason')!.value!,
         };

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output } from '@angular/core';
-import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ApollonEdge, ApollonEditor, ApollonMode, ApollonNode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
@@ -25,6 +25,16 @@ export interface DropInfo {
     removeMessage: string;
     feedbackHint: string;
 }
+
+/**
+ * Shape of the {@link Assessment.dropInfo} payload emitted by Apollon. Apollon stores the
+ * {@link GradingInstruction} flat on dropInfo (its `id` present at the top level), but a nested
+ * `instruction` shape is also supported for backwards compatibility.
+ */
+type AssessmentDropInfo = GradingInstruction & { instruction?: GradingInstruction };
+
+/** Apollon host element augmented with the editor instance exposed for E2E test access. */
+type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -137,7 +147,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 this.apollonEditor.unsubscribe(this.assessmentSelectionSubscription);
             }
             this.apollonEditor.destroy();
-            (this.elementRef.nativeElement as any).__apollonEditor = undefined;
+            (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
         }
     }
 
@@ -168,7 +178,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         // Mirrors the pattern in ModelingEditorComponent so Playwright can interact with the
         // assessment editor without dblclick races on multi-node setups.
-        (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
+        (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
 
         this.modelChangeSubscription = this.apollonEditor.subscribeToModelChange((state) => {
             if (!this.readOnly()) {
@@ -199,7 +209,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         for (const assessment of assessments) {
             // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
             // Support both: dropInfo.instruction (expected shape) and dropInfo directly (actual Apollon shape)
-            const dropInfo = assessment.dropInfo as any;
+            const dropInfo = assessment.dropInfo as AssessmentDropInfo | undefined;
             const instruction = dropInfo?.instruction ?? (dropInfo?.id ? dropInfo : undefined);
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
@@ -306,14 +316,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const model: UMLModel = this.apollonEditor.model;
             for (const node of model.nodes) {
                 const highlight = newElements.get(node.id);
-                (node as any).highlight = highlight;
+                (node as ApollonNode & { highlight?: string }).highlight = highlight;
                 if (node.data) {
                     (node.data as Record<string, unknown>).highlight = highlight;
                 }
             }
             for (const edge of model.edges) {
                 const highlight = newElements.get(edge.id);
-                (edge as any).highlight = highlight;
+                (edge as ApollonEdge & { highlight?: string }).highlight = highlight;
                 if (edge.data) {
                     (edge.data as Record<string, unknown>).highlight = highlight;
                 }
@@ -373,7 +383,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 dropInfo: this.calculateDropInfo(feedback),
             };
             if (!umlModel.assessments) {
-                umlModel.assessments = {} as any;
+                umlModel.assessments = {};
             }
             umlModel.assessments[feedback.referenceId!] = newAssessment;
             if (this.apollonEditor) {
