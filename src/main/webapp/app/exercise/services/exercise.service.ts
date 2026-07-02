@@ -381,11 +381,16 @@ export class ExerciseService {
     }
 
     /**
-     * Converts an exercises' categories into a json string (to send them to the server). Does nothing if no categories exist
-     * @param exercise the exercise
+     * Serializes an exercise's categories into JSON strings in place (to send them to the server). Does nothing if no
+     * categories exist. The parameter is a structural view that also admits the serialized string form, so the in-place
+     * conversion needs no cast; the {@link Exercise} model field stays typed as {@link ExerciseCategory}[] for all readers.
+     * @param exercise the exercise whose categories are serialized in place
      */
-    static stringifyExerciseCategories(exercise: Exercise) {
-        return exercise.categories?.map((category) => JSON.stringify(category) as unknown as ExerciseCategory);
+    static stringifyExerciseCategories(exercise: { categories?: (ExerciseCategory | string)[] }): void {
+        if (exercise.categories) {
+            // Skip already-serialized entries so a second call (e.g. on a reused DTO) does not double-encode them.
+            exercise.categories = exercise.categories.map((category) => (typeof category === 'string' ? category : JSON.stringify(category)));
+        }
     }
 
     /**
@@ -435,7 +440,7 @@ export class ExerciseService {
     static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
         let copy = Object.assign(exercise, {});
         copy = ExerciseService.convertExerciseDatesFromClient(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         if (copy.course) {
             copy.course.exercises = [];
             copy.course.lectures = [];
