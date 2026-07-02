@@ -337,9 +337,6 @@ dependencies {
     implementation "ch.qos.logback:logback-classic"
     implementation "ch.qos.logback:logback-core"
 
-    // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "org.apache.santuario:xmlsec:4.0.4"
-
     implementation "org.jsoup:jsoup:1.22.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.22.0"
@@ -364,7 +361,9 @@ dependencies {
     // OpenTelemetry version managed by the micrometer-tracing BOM
     implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
-    // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
+    // Prometheus needs protobuf-java transitively; declare it directly to force the latest version (avoids CVEs).
+    // A constraint is insufficient here: a competing enforced platform pins protobuf-java to an older 4.34.x, and
+    // only a direct dependency reliably wins the version conflict.
     implementation "com.google.protobuf:protobuf-java:4.35.1"
 
     // Jackson 2 core modules — versions supplied by the jackson-bom 2.22.0 override (dependencyManagement block above)
@@ -477,6 +476,15 @@ dependencies {
         implementation("com.google.code.gson:gson:2.14.0") {
             because("Required by Weaviate client v6 for JSON serialization")
         }
+        // Security hardening for transitive-only dependencies. Artemis does not use these directly; each is
+        // pulled in transitively, and the constraint forces a known-good version wherever it appears without
+        // declaring a spurious direct dependency.
+        implementation("com.google.guava:guava:33.6.0-jre") {
+            because("Force the newest guava across its many transitive users to avoid outdated-dependency CVEs")
+        }
+        implementation("org.apache.santuario:xmlsec:4.0.4") {
+            because("Pulled transitively by OpenSAML (SAML2); force the newest version to avoid CVEs")
+        }
     }
 
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
@@ -518,9 +526,6 @@ dependencies {
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.6"
 
-    // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.6.0-jre"
-
     // explicitly only use this at runtime (required by liquibase, because developers should prefer org.apache.commons:csv
     runtimeOnly "com.opencsv:opencsv:5.12.0"
     // make sure to use the latest version to avoid security vulnerabilities
@@ -529,8 +534,6 @@ dependencies {
 
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
-
-    implementation "com.google.errorprone:error_prone_annotations:2.50.0"
     // needed for OpenAPI generation (v3 required for Spring Boot 4)
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3"
 
@@ -588,7 +591,6 @@ dependencies {
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
     testImplementation "com.icegreen:greenmail-junit5:2.1.9"
     testImplementation "com.tngtech.archunit:archunit:1.4.2"
-    testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
     // we only need the database present at runtime
     runtimeOnly "com.h2database:h2:2.4.240"
