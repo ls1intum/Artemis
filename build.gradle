@@ -160,10 +160,6 @@ repositories {
     }
     mavenCentral()
     mavenLocal()
-    // required for Spring AI milestone releases
-    maven {
-        url = "https://repo.spring.io/milestone"
-    }
     // required for org.gradle:gradle-tooling-api dependency
     maven {
         url = "https://repo.gradle.org/gradle/libs-releases"
@@ -252,7 +248,6 @@ dependencies {
     // reverted in PR #12652.
     implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
-    implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
     implementation "org.glassfish.jersey.core:jersey-common:4.0.2"
