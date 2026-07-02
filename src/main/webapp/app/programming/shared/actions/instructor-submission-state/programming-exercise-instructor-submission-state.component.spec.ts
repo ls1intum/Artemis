@@ -174,7 +174,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
-        // Wait for a second as the view is updated with a debounce.
+        // Wait for the 500ms debounce.
         await vi.advanceTimersByTimeAsync(500);
 
         fixture.detectChanges();
@@ -210,7 +210,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
         getExerciseSubmissionStateSubject.next(noPendingSubmissionState);
 
-        // Wait for a second as the view is updated with a debounce.
+        // Wait for the 500ms debounce.
         await vi.advanceTimersByTimeAsync(500);
 
         fixture.detectChanges();
@@ -229,15 +229,24 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(getBuildState()).not.toBeNull();
     });
 
-    it('should trigger the appropriate service method on trigger failed and set the isBuildingFailedSubmissionsState until the request returns a response', () => {
+    it('should trigger the appropriate service method on trigger failed and set the isBuildingFailedSubmissionsState until the request returns a response', async () => {
+        vi.useFakeTimers();
         const failedSubmissionParticipationIds = [333];
         const triggerInstructorBuildForParticipationsOfExerciseSubject = new Subject<void>();
         triggerAllStub.mockReturnValue(triggerInstructorBuildForParticipationsOfExerciseSubject);
         const getFailedSubmissionParticipationsForExerciseStub = vi.spyOn(submissionService, 'getSubmissionCountByType').mockReturnValue(failedSubmissionParticipationIds);
-        // Component must have at least one failed submission for the button to be enabled.
+        // Component must have at least one failed submission for the button to be enabled. buildingSummary/
+        // hasFailedSubmissions are derived from the submission-state stream now, so drive them through it.
+        const submissionStateWithFailure = {
+            1: { submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION, submission: undefined, participationId: 55 },
+            4: { submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: undefined, participationId: 333 },
+        } as ExerciseSubmissionState;
         fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
-        comp.buildingSummary.set({ [ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION]: 1, [ProgrammingSubmissionState.HAS_FAILED_SUBMISSION]: 1 });
-        comp.hasFailedSubmissions.set(true);
+
+        fixture.detectChanges();
+        getExerciseSubmissionStateSubject.next(submissionStateWithFailure);
+        // Wait for the 500ms debounce.
+        await vi.advanceTimersByTimeAsync(500);
 
         fixture.detectChanges();
 
@@ -274,7 +283,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges(false);
         getExerciseSubmissionStateSubject.next(isBuildingSubmissionState);
 
-        // Wait for a second as the view is updated with a debounce.
+        // Wait for the 500ms debounce.
         await vi.advanceTimersByTimeAsync(500);
 
         fixture.detectChanges();

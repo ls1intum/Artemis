@@ -288,6 +288,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     constructor() {
+        const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+        this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
+
         effect(
             function updateStatusBarSectionsWhenEditModeChanges() {
                 if (this.isSimpleMode()) {
@@ -296,18 +299,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             }.bind(this),
         );
         effect(() => this.updateFormSectionOnIsValidPlagiarismChange());
-
-        effect(
-            function initializeEditMode() {
-                const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-                if (editModeRetrievedFromLocalStorage !== undefined) {
-                    this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
-                } else {
-                    const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
-                    this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
-                }
-            }.bind(this),
-        );
     }
 
     showGenerateWithAi = computed(() => {

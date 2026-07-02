@@ -1,6 +1,6 @@
-import { Component, DestroyRef, OnInit, effect, inject, input, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime, finalize, map, tap } from 'rxjs/operators';
+import { Component, DestroyRef, OnInit, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime, filter, finalize, map, switchMap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
@@ -40,9 +40,25 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     readonly shouldToggle = input(false);
     readonly toggleBreakpoint = input<'md' | 'xl'>('xl');
 
-    readonly hasFailedSubmissions = signal(false);
-    readonly hasBuildingSubmissions = signal(false);
-    readonly buildingSummary = signal<{ [submissionState: string]: number } | undefined>(undefined);
+    // Replaces the former constructor effect that subscribed to the submission-state stream and imperatively set three
+    // signals. The building summary is now a toSignal of the exercise-id-keyed stream (switchMap re-subscribes when the
+    // exercise changes and cancels the previous stream; toSignal tears it down on destroy), and the two boolean flags
+    // are derived from it.
+    readonly buildingSummary = toSignal(
+        toObservable(computed(() => this.exercise().id)).pipe(
+            filter((exerciseId): exerciseId is number => exerciseId !== undefined),
+            switchMap((exerciseId) =>
+                this.programmingSubmissionService.getSubmissionStateOfExercise(exerciseId).pipe(
+                    map((buildState) => this.sumSubmissionStates(buildState)),
+                    // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 500ms.
+                    debounceTime(500),
+                ),
+            ),
+        ),
+        { initialValue: undefined },
+    );
+    readonly hasFailedSubmissions = computed(() => (this.buildingSummary()?.[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0);
+    readonly hasBuildingSubmissions = computed(() => (this.buildingSummary()?.[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0) > 0);
     readonly isBuildingFailedSubmissions = signal(false);
 
     readonly resultEtaInMs = signal<number | undefined>(undefined);
@@ -51,30 +67,6 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     faClock = faClock;
     faCircleNotch = faCircleNotch;
     faRedo = faRedo;
-
-    constructor() {
-        effect((onCleanup) => {
-            const exerciseId = this.exercise().id;
-            if (exerciseId === undefined) {
-                return;
-            }
-            const subscription = this.programmingSubmissionService
-                .getSubmissionStateOfExercise(exerciseId)
-                .pipe(
-                    map(this.sumSubmissionStates),
-                    // If we would update the UI with every small change, it would seem very hectic. So we always take the latest value after 1 second.
-                    debounceTime(500),
-                    tap((buildingSummary: { [submissionState: string]: number }) => {
-                        this.buildingSummary.set(buildingSummary);
-                        this.hasFailedSubmissions.set((buildingSummary[ProgrammingSubmissionState.HAS_FAILED_SUBMISSION] ?? 0) > 0);
-                        this.hasBuildingSubmissions.set((buildingSummary[ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION] ?? 0) > 0);
-                    }),
-                    takeUntilDestroyed(this.destroyRef),
-                )
-                .subscribe();
-            onCleanup(() => subscription.unsubscribe());
-        });
-    }
 
     ngOnInit(): void {
         this.programmingSubmissionService
