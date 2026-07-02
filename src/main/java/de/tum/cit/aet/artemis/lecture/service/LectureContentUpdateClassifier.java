@@ -17,6 +17,10 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 public class LectureContentUpdateClassifier {
 
     public LectureContentUpdateKind classify(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
+        if (after == null) {
+            return LectureContentUpdateKind.DELETE;
+        }
+        Objects.requireNonNull(before, "before");
         if (isContentUpdate(before, after, fileUpdateResult)) {
             return LectureContentUpdateKind.CONTENT;
         }

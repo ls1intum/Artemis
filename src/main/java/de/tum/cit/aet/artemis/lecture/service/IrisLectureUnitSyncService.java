@@ -11,6 +11,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
@@ -38,7 +40,7 @@ public class IrisLectureUnitSyncService {
         state.setMetadataHash(metadataHash(snapshot));
         markDirty(state);
         repository.save(state);
-        eventPublisher.publishEvent(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId()));
+        publishAfterCommit(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId()));
     }
 
     public void markVisibilityDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
@@ -46,7 +48,21 @@ public class IrisLectureUnitSyncService {
         state.setVisibilityHash(visibilityHash(snapshot));
         markDirty(state);
         repository.save(state);
-        eventPublisher.publishEvent(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId()));
+        publishAfterCommit(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId()));
+    }
+
+    private void publishAfterCommit(Object event) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            eventPublisher.publishEvent(event);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+
+            @Override
+            public void afterCommit() {
+                eventPublisher.publishEvent(event);
+            }
+        });
     }
 
     private IrisLectureUnitSyncState stateFor(Long lectureUnitId) {

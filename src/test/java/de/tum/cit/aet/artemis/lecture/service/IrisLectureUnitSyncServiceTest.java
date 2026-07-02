@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
@@ -89,6 +91,29 @@ class IrisLectureUnitSyncServiceTest {
         verify(eventPublisher).publishEvent(eventCaptor.capture());
         assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent.class)
                 .extracting("lectureUnitId").isEqualTo(LECTURE_UNIT_ID);
+    }
+
+    @Test
+    void markMetadataDirtyPublishesEventOnlyAfterActiveTransactionCommits() {
+        when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            service.markMetadataDirtyAfterCommit(snapshot());
+
+            verify(repository).save(any());
+            verify(eventPublisher, never()).publishEvent(any(Object.class));
+
+            TransactionSynchronizationManager.getSynchronizations().forEach(synchronization -> synchronization.afterCommit());
+
+            var eventCaptor = ArgumentCaptor.forClass(Object.class);
+            verify(eventPublisher).publishEvent(eventCaptor.capture());
+            assertThat(eventCaptor.getValue()).isInstanceOf(IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent.class)
+                    .extracting("lectureUnitId").isEqualTo(LECTURE_UNIT_ID);
+        }
+        finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test

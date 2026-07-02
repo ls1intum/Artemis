@@ -123,6 +123,13 @@ class LectureContentUpdateClassifierTest {
     }
 
     @Test
+    void classifiesMissingAfterSnapshotAsDeleteUpdate() {
+        var updateKind = classifier.classify(snapshot(), null, AttachmentFileUpdateResult.unchanged(7));
+
+        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.DELETE);
+    }
+
+    @Test
     void classifiesContentUpdateWhenContentMetadataAndVisibilityChanged() {
         var before = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/old", RELEASE_DATE,
                 Map.of(1, HIDDEN_UNTIL));
