@@ -18,8 +18,6 @@ import { ItemCountComponent } from 'app/foundation/pagination/item-count.compone
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { InputGroupModule } from 'primeng/inputgroup';
-import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { MessageModule } from 'primeng/message';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 
@@ -41,8 +39,6 @@ import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/d
         PaginatorModule,
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
-        InputGroupModule,
-        InputGroupAddonModule,
         MessageModule,
         FormDateTimePickerComponent,
     ],

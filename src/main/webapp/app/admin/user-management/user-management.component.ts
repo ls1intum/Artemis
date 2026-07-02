@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SORT } from 'app/foundation/constants/pagination.constants';
-import { faEye, faFileImport, faFilter, faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFileImport, faFilter, faPencil, faPlus, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { DialogModule } from 'primeng/dialog';
@@ -218,6 +218,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     protected readonly faEye = faEye;
     protected readonly faPencil = faPencil;
     protected readonly faFileImport = faFileImport;
+    protected readonly faSync = faSync;
 
     /** Button constants */
     protected readonly ButtonSize = ButtonSize;

@@ -2,12 +2,13 @@
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
     <div class="mb-4">
         <h4 jhiTranslate="audits.filter.title"></h4>
-        <div class="flex flex-wrap gap-2 items-center" data-testid="audits-date-filter">
-            <p-inputgroup class="w-auto">
-                <p-inputgroup-addon jhiTranslate="audits.filter.from" />
+        <div class="flex flex-wrap gap-2 items-start" data-testid="audits-date-filter">
+            <div class="flex flex-col gap-1">
+                <label for="audits-from-date" class="font-bold text-sm" jhiTranslate="audits.filter.from"></label>
                 <jhi-date-time-picker
                     #fromPicker
                     name="start"
+                    inputId="audits-from-date"
                     [hideLabelName]="true"
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
@@ -15,12 +16,13 @@
                     (valueChange)="updateFromDate(fromPicker.value()); transition()"
                     data-testid="audits-from-date"
                 />
-            </p-inputgroup>
-            <p-inputgroup class="w-auto">
-                <p-inputgroup-addon jhiTranslate="audits.filter.to" />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label for="audits-to-date" class="font-bold text-sm" jhiTranslate="audits.filter.to"></label>
                 <jhi-date-time-picker
                     #toPicker
                     name="end"
+                    inputId="audits-to-date"
                     [hideLabelName]="true"
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
@@ -28,7 +30,7 @@
                     (valueChange)="updateToDate(toPicker.value()); transition()"
                     data-testid="audits-to-date"
                 />
-            </p-inputgroup>
+            </div>
         </div>
     </div>
     @if (audits().length) {

@@ -190,7 +190,10 @@
                                 <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                             </a>
                             @if (isLdapEnabled() && !user.internal) {
-                                <p-button size="small" severity="success" (onClick)="ldapSync(user.id!)" [label]="'entity.action.ldap' | artemisTranslate" />
+                                <button pButton size="small" severity="success" type="button" (click)="ldapSync(user.id!)" data-testid="ldap-sync-button">
+                                    <fa-icon [icon]="faSync" />
+                                    <span class="hidden md:inline" jhiTranslate="entity.action.ldap"></span>
+                                </button>
                             }
                             <button
                                 pButton

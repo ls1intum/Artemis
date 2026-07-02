@@ -53,8 +53,8 @@
             </div>
         }
     </div>
-    <div class="flex flex-col" [formGroup]="form">
-        <div class="flex flex-col gap-1">
+    <div class="flex flex-col gap-3" [formGroup]="form">
+        <div class="flex flex-col gap-2">
             <label for="title-input" jhiTranslate="artemisApp.knowledgeArea.model.title"></label>
             <input type="text" pInputText id="title-input" formControlName="title" />
             @if (form.controls.title.invalid && (form.controls.title.dirty || form.controls.title.touched)) {
@@ -68,7 +68,7 @@
                 </p-message>
             }
         </div>
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-2">
             <label for="short-title-input" jhiTranslate="artemisApp.knowledgeArea.model.shortTitle"></label>
             <input type="text" pInputText id="short-title-input" formControlName="shortTitle" />
             @if (form.controls.shortTitle.invalid && (form.controls.shortTitle.dirty || form.controls.shortTitle.touched)) {
@@ -82,7 +82,7 @@
                 </p-message>
             }
         </div>
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-2">
             <label jhiTranslate="artemisApp.knowledgeArea.model.description"></label>
             @if (isEditing()) {
                 <jhi-markdown-editor-monaco
@@ -100,7 +100,7 @@
                 </p-message>
             }
         </div>
-        <div class="flex flex-col gap-1">
+        <div class="flex flex-col gap-2">
             <label for="knowledge-area-select" jhiTranslate="artemisApp.knowledgeArea.model.parent"></label>
             <p-select
                 inputId="knowledge-area-select"
@@ -119,7 +119,7 @@
         </div>
     </div>
     @if (isEditing()) {
-        <div class="flex items-center justify-end gap-2">
+        <div class="flex items-center justify-end gap-2 mt-3">
             <p-button severity="secondary" size="small" (onClick)="cancel()">
                 <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>

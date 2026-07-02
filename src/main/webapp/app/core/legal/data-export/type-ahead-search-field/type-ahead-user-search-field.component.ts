@@ -5,7 +5,6 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/account/user/user.model';
 import { FormsModule } from '@angular/forms';
 import { AutoCompleteCompleteEvent, AutoCompleteModule, AutoCompleteSelectEvent } from 'primeng/autocomplete';
-import { TagModule } from 'primeng/tag';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,8 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-type-ahead-user-search-field',
     templateUrl: './type-ahead-user-search-field.component.html',
-    styleUrls: ['./type-ahead-user-search-field.component.scss'],
-    imports: [TranslateDirective, FormsModule, AutoCompleteModule, TagModule, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, AutoCompleteModule, FaIconComponent, ArtemisTranslatePipe],
 })
 export class TypeAheadUserSearchFieldComponent {
     private readonly userService = inject(UserService);

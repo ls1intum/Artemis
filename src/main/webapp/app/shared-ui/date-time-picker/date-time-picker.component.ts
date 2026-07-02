@@ -36,6 +36,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
+    // Id of the inner input, so a consumer can pair its own <label for> and keep ids unique when several
+    // pickers share a page (e.g. the audits from/to filter).
+    inputId = input<string>('date-input-field');
     labelTooltip = input<string>();
     value = model<dayjs.Dayjs | Date | null>();
     disabled = input<boolean>(false);
