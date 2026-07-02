@@ -20,6 +20,31 @@ a:not(.btn):hover {
     padding: 0 10px 0 20px;
     flex: 1;
 
+    .perspective-switch {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        line-height: 1;
+        color: var(--bs-navbar-brand-color);
+
+        a {
+            color: var(--navbar-dark-color);
+
+            &.accented {
+                color: var(--bs-navbar-brand-color);
+            }
+        }
+
+        .disabled {
+            color: var(--bs-navbar-brand-color);
+        }
+
+        .perspective-switch-divider {
+            color: var(--navbar-dark-color);
+        }
+    }
+
     > *:hover {
         color: var(--bs-body-color);
     }

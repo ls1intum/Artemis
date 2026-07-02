@@ -132,6 +132,14 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('tracks the fullscreen state on fullscreen change', () => {
+        component['onFullscreenChange'](true);
+        expect(component.isFullscreen()).toBe(true);
+
+        component['onFullscreenChange'](false);
+        expect(component.isFullscreen()).toBe(false);
+    });
+
     it('should get file name', () => {
         fixture.detectChanges();
         expect(component.getFileName()).toBe('test.pdf');
@@ -711,6 +719,158 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     describe('Fullscreen behavior', () => {
+        it('navigates to the first PDF page when a display page number appears multiple times', () => {
+            // Display number 8 occurs on PDF pages 2 and 3; the first occurrence (page 2) is used as the sync target.
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 8];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 8', slideNumber: 8 }]);
+
+            expect(component.synchronizationAvailable()).toBe(true);
+
+            const goToPage = vi.fn();
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 1, goToPage });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onVideoSlideNumberChange'](8);
+
+            expect(goToPage).toHaveBeenCalledWith(2);
+        });
+
+        it('keeps synchronization available when a single slide has no detected display page number (-1)', () => {
+            // Slide 2 (index 1) was not detected → -1. It has no sync partner and is skipped,
+            // but still occupies PDF page 2, so slide with display number 9 stays on PDF page 3.
+            component.lectureUnit().attachment!.displayPageNumbers = [7, -1, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 10, endTime: 15, text: 'Slide 9', slideNumber: 9 },
+            ]);
+
+            expect(component.synchronizationAvailable()).toBe(true);
+
+            const goToPage = vi.fn();
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 1, goToPage });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onVideoSlideNumberChange'](9);
+
+            expect(goToPage).toHaveBeenCalledWith(3);
+        });
+
+        it('keeps synchronization available when multiple slides have no detected display page number (-1)', () => {
+            // Two undetected slides no longer disable sync; they are simply skipped as having no partner.
+            component.lectureUnit().attachment!.displayPageNumbers = [7, -1, -1, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 10, endTime: 15, text: 'Slide 9', slideNumber: 9 },
+            ]);
+
+            expect(component.synchronizationAvailable()).toBe(true);
+        });
+
+        it('disables synchronization when no slide has a detected display page number (all -1)', () => {
+            component.lectureUnit().attachment!.displayPageNumbers = [-1, -1];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 1', slideNumber: 1 }]);
+
+            expect(component.synchronizationAvailable()).toBe(false);
+        });
+
+        it('allows video slides without PDF correspondence and keeps PDF position', () => {
+            component.lectureUnit().attachment!.displayPageNumbers = [8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Intro', slideNumber: 7 },
+                { startTime: 10, endTime: 15, text: 'Slide 8', slideNumber: 8 },
+            ]);
+
+            // Sync should be available despite extra video slides
+            expect(component.synchronizationAvailable()).toBe(true);
+
+            // PDF should stay when video shows slide not in PDF, then move when slide is in PDF
+            const goToPage = vi.fn();
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 2, goToPage });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onVideoSlideNumberChange'](7);
+
+            expect(goToPage).not.toHaveBeenCalled();
+
+            component['onVideoSlideNumberChange'](8);
+
+            expect(goToPage).toHaveBeenCalledWith(1);
+        });
+
+        it('disables synchronization when video and PDF have no overlapping pages', () => {
+            component.lectureUnit().attachment!.displayPageNumbers = [25, 26, 28, 42, 100];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Slide 17', slideNumber: 17 },
+                { startTime: 10, endTime: 15, text: 'Slide 18', slideNumber: 18 },
+                { startTime: 20, endTime: 25, text: 'Slide 19', slideNumber: 19 },
+            ]);
+
+            expect(component.synchronizationAvailable()).toBe(false);
+        });
+
+        it('syncs the PDF viewer when the active video slide changes', () => {
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([{ startTime: 0, endTime: 5, text: 'Slide 8', slideNumber: 8 }]);
+
+            const goToPage = vi.fn();
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 1, goToPage });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onVideoSlideNumberChange'](8);
+
+            expect(goToPage).toHaveBeenCalledWith(2);
+        });
+
+        it('seeks the video when the PDF page changes', () => {
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 2, endTime: 5, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 9, endTime: 12, text: 'Slide 8', slideNumber: 8 },
+            ]);
+
+            const seekTo = vi.fn();
+            (component as any).videoPlayer = () => ({ seekTo, isPlaying: () => false, getCurrentSlideNumber: () => undefined });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onPdfCurrentPageChange'](2);
+
+            expect(seekTo).toHaveBeenCalledWith(9, false);
+        });
+
+        it('does not bounce the PDF when a sync-initiated seek synchronously re-emits a slide', () => {
+            // Scrolling to PDF page 2 (display number 8) seeks the video. The player re-emits the active
+            // slide synchronously from inside seekTo; if it resolves to the neighbouring slide 7 (a segment
+            // boundary), the echo must be suppressed so the PDF is NOT dragged back to page 1.
+            component.lectureUnit().attachment!.displayPageNumbers = [7, 8, 9];
+            component.playlistUrl.set('https://cdn.example.com/playlist.m3u8');
+            component.transcriptSegments.set([
+                { startTime: 0, endTime: 5, text: 'Slide 7', slideNumber: 7 },
+                { startTime: 5, endTime: 10, text: 'Slide 8', slideNumber: 8 },
+            ]);
+
+            const goToPage = vi.fn();
+            const seekTo = vi.fn().mockImplementation(() => {
+                // Simulate the synchronous echo of the previous slide at the shared boundary.
+                component['onVideoSlideNumberChange'](7);
+            });
+            (component as any).pdfViewer = () => ({ getCurrentPage: () => 2, goToPage });
+            (component as any).videoPlayer = () => ({ seekTo, isPlaying: () => false, getCurrentSlideNumber: () => undefined });
+
+            component['onSynchronizationToggleChange'](true);
+            component['onPdfCurrentPageChange'](2);
+
+            expect(seekTo).toHaveBeenCalledWith(5, false);
+            expect(goToPage).not.toHaveBeenCalled();
+        });
+
         it('openFullscreen: returns immediately when no fullscreen content is available', () => {
             component.lectureUnit().videoSource = undefined;
             component.lectureUnit().attachment = undefined;
@@ -775,6 +935,124 @@ describe('AttachmentVideoUnitComponent', () => {
             // Simulate the layout component emitting fullscreenChange(false)
             component['onFullscreenChange'](false);
             expect(component.isFullscreen()).toBe(false);
+        });
+    });
+
+    describe('Context Provider', () => {
+        it('contextProvider: returns object with getCurrentPdfPage function', () => {
+            const mockPdfViewer = {
+                currentPageSignal: vi.fn().mockReturnValue(5),
+            };
+            Object.defineProperty(component, 'pdfViewer', {
+                value: vi.fn().mockReturnValue(mockPdfViewer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider).toBeDefined();
+            expect(provider.getCurrentPdfPage).toBeDefined();
+            expect(provider.getCurrentPdfPage!()).toBe(5);
+        });
+
+        it('contextProvider: getCurrentPdfPage returns undefined when no PDF viewer', () => {
+            Object.defineProperty(component, 'pdfViewer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.getCurrentPdfPage!()).toBeUndefined();
+        });
+
+        it('contextProvider: getCurrentVideoTimestamp returns video player time', () => {
+            const mockVideoPlayer = {
+                getCurrentTime: vi.fn().mockReturnValue(42.5),
+            };
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(mockVideoPlayer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.getCurrentVideoTimestamp!()).toBe(42.5);
+        });
+
+        it('contextProvider: getCurrentVideoTimestamp returns YouTube player time when no video player', () => {
+            const mockYoutubePlayer = {
+                getCurrentTime: vi.fn().mockReturnValue(125.5),
+            };
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(component, 'youtubePlayer', {
+                value: vi.fn().mockReturnValue(mockYoutubePlayer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.getCurrentVideoTimestamp!()).toBe(125.5);
+        });
+
+        it('contextProvider: hasVideoBeenPlayed returns true from video player', () => {
+            const mockVideoPlayer = {
+                hasBeenPlayed: vi.fn().mockReturnValue(true),
+            };
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(mockVideoPlayer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.hasVideoBeenPlayed!()).toBe(true);
+        });
+
+        it('contextProvider: hasVideoBeenPlayed returns true from YouTube player', () => {
+            const mockYoutubePlayer = {
+                hasBeenPlayed: vi.fn().mockReturnValue(true),
+            };
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(component, 'youtubePlayer', {
+                value: vi.fn().mockReturnValue(mockYoutubePlayer),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.hasVideoBeenPlayed!()).toBe(true);
+        });
+
+        it('contextProvider: hasVideoBeenPlayed returns false when neither player has been played', () => {
+            Object.defineProperty(component, 'videoPlayer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+            Object.defineProperty(component, 'youtubePlayer', {
+                value: vi.fn().mockReturnValue(undefined),
+                writable: true,
+                configurable: true,
+            });
+
+            const provider = component.contextProvider();
+
+            expect(provider.hasVideoBeenPlayed!()).toBe(false);
         });
     });
 });

@@ -98,6 +98,15 @@
         > * {
             height: inherit;
         }
+
+        /* Pin the resize grip to the panel's visible bottom edge. As a normal flex child it inherited the panel
+           height and was pushed below the scrolled-out area, where overflow:auto clipped it - leaving no grabbable
+           handle, so the build output could not be resized. Sticky keeps it reachable at the bottom while scrolling. */
+        > .rg-bottom-bottom {
+            height: auto;
+            position: sticky;
+            bottom: 0;
+        }
     }
 
     /* In non-assessment mode, constrain the bottom section to fit in the viewport */
@@ -320,7 +329,7 @@
     margin-right: 0;
 
     /* easier to grab + avoid selecting editor text while dragging */
-    padding: 0 0;
+    padding: 0;
     -webkit-user-select: none;
     user-select: none;
     touch-action: none;

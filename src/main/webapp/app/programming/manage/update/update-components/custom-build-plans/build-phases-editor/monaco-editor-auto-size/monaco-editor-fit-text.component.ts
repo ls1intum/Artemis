@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, effect, model, signal, viewChild } from '@angular/core';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 
+const INITIAL_EDITOR_HEIGHT = 16;
+
 @Component({
     selector: 'jhi-monaco-editor-fit-text',
     templateUrl: './monaco-editor-fit-text.component.html',
@@ -12,7 +14,7 @@ import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.co
  */
 export class MonacoEditorFitTextComponent {
     readonly text = model<string>('');
-    protected readonly editorHeight = signal(0);
+    protected readonly editorHeight = signal(INITIAL_EDITOR_HEIGHT);
 
     private readonly editor = viewChild.required(MonacoEditorComponent);
     private initialized = false;
@@ -27,10 +29,17 @@ export class MonacoEditorFitTextComponent {
             const editor = this.editor();
             if (!this.initialized) {
                 editor.changeModel('', newText, 'shell');
+                this.updateEditorHeight(editor.getContentHeight());
                 this.initialized = true;
             } else if (editor.getText() !== newText) {
                 editor.setText(newText);
             }
         });
+    }
+
+    protected updateEditorHeight(contentHeight: number): void {
+        if (Number.isFinite(contentHeight)) {
+            this.editorHeight.set(contentHeight);
+        }
     }
 }
