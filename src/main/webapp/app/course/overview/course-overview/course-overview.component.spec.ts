@@ -45,6 +45,7 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/ser
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
@@ -680,6 +681,7 @@ describe('CourseOverviewComponent', () => {
     describe('sidebar toggle relocation', () => {
         type CourseOverviewInternals = {
             handleComponentActivation(componentRef: unknown): void;
+            showCourseTitleBar(): boolean;
         };
         const internals = (): CourseOverviewInternals => component as unknown as CourseOverviewInternals;
 
@@ -691,6 +693,17 @@ describe('CourseOverviewComponent', () => {
             internals().handleComponentActivation(fakeLectures);
 
             expect(setPageTitle).toHaveBeenCalledWith('overview.lectures');
+        });
+
+        it('should only show the title bar when a page projects title-bar content', () => {
+            const titleBarService = TestBed.inject(CourseTitleBarService);
+            expect(internals().showCourseTitleBar()).toBe(false);
+
+            titleBarService.setActionsTemplate({} as TemplateRef<unknown>);
+            expect(internals().showCourseTitleBar()).toBe(true);
+
+            titleBarService.setActionsTemplate(undefined);
+            expect(internals().showCourseTitleBar()).toBe(false);
         });
     });
 });

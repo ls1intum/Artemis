@@ -31,6 +31,10 @@
                 }"
             >
                 @if (course()) {
+                    @if (showCourseTitleBar()) {
+                        <jhi-course-title-bar [pageTitle]="pageTitle()" [isExamStarted]="isExamStarted()" />
+                    }
+
                     <div
                         class="course-body-container"
                         [ngClass]="{

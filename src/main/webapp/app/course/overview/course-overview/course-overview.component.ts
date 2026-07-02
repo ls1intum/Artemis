@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -27,6 +27,8 @@ import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
+import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
@@ -35,7 +37,7 @@ import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/c
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, TranslateDirective, CourseSidebarComponent, CourseUnenrollmentModalComponent],
+    imports: [NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, TranslateDirective, CourseSidebarComponent, CourseUnenrollmentModalComponent, CourseTitleBarComponent],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -47,6 +49,11 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
     private calendarService = inject(CalendarService);
+    private courseTitleBarService = inject(CourseTitleBarService);
+
+    // The title bar only hosts content that pages project via [titleBarActions]/[titleBarTitle] (e.g. the FAQ page);
+    // the sidebar tabs render their own header, and pages without projected content show no title bar.
+    protected readonly showCourseTitleBar = computed(() => !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
 
     private toggleSidebarEventSubscription: Subscription;
     private teamAssignmentUpdateListener: Subscription;
