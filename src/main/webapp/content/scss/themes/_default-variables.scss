@@ -114,7 +114,7 @@ $tab-bar-color-active: $primary;
 $darker-body-bg: darken($body-bg, 20);
 $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 20);
-$hover-slightly-darker-body-bg: #f3f3f3;
+$hover-slightly-darker-body-bg: #f1f5f9;
 
 // Borders
 $theme-switch-box-border-color: $border-color;
@@ -278,7 +278,7 @@ $edit-quiz-q-dnd-drop-location-hover-bg: rgba(255, 255, 255, 0.8);
 
 // Quiz Exercises
 $quiz-drag-items-background: white;
-$quiz-drag-item-background: #fafafa;
+$quiz-drag-item-background: #f8fafc;
 $quiz-drag-item-border: #696969;
 $quiz-drag-item-color: black;
 
@@ -309,7 +309,7 @@ $quiz-participation-question-score-incorrect-result: $warning;
 $quiz-scoring-info-student-modal-question-correct: $success;
 $quiz-scoring-info-student-modal-question-wrong: $warning;
 
-$quiz-question-background: #fefefe;
+$quiz-question-background: #fff;
 $quiz-question-border-color: lightgrey;
 
 $quiz-visual-question-border-color: $quiz-question-border-color;
@@ -330,7 +330,7 @@ $dnd-question-drop-location-results-sample-background: white;
 $dnd-question-drop-location-result-symbol-color: $warning;
 $dnd-question-drop-location-result-invalid-color: $danger;
 $dnd-question-drop-location-drag-item-background: white;
-$dnd-question-dnd-items-drag-items-background: #eee;
+$dnd-question-dnd-items-drag-items-background: #e2e8f0;
 $dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
 $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
@@ -355,14 +355,14 @@ $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 
 // SGI
 $edit-sqi-grading-instructions-update-border: lightgray;
-$edit-sqi-criterion-title-row-background: rgb(242 242 242);
+$edit-sqi-criterion-title-row-background: #f1f5f9;
 
 $sgi-assessment-layout-zero-background: #fff2cc;
 $sgi-assessment-layout-positive-background: #e3f0da;
 $sgi-assessment-layout-negative-background: #fbe5d6;
 
 // Code Editor
-$code-editor-file-browser-header-background: #f5f5f5;
+$code-editor-file-browser-header-background: #f1f5f9;
 $code-editor-file-browser-header-border: #ddd;
 $code-editor-file-browser-tree-hover: #f5f5f5;
 $code-editor-file-browser-input-background: white;
@@ -424,16 +424,16 @@ $notification-sb-hover-child-bg: rgba(62, 138, 204, 0.2);
 $notification-sb-icon-color: var(--bs-body-color);
 
 // Text Editor
-$text-editor-background: #f9f9f9;
-$text-editor-focus-background: #fbfbfb;
+$text-editor-background: #f8fafc;
+$text-editor-focus-background: #f8fafc;
 $text-editor-color: black;
-$text-editor-border-color: #d5d5d5;
+$text-editor-border-color: #cbd5e1;
 
 // Exam (Manage)
 $exam-checklist-exercise-group-table-background: white;
 
 $exercise-group-border-color: #ccc;
-$exercise-group-header-background: #e1e1e1;
+$exercise-group-header-background: #e2e8f0;
 $exercise-group-header-badge-color: $warning;
 
 // Grading system
@@ -464,7 +464,7 @@ $team-short-name-background: rgba(0, 0, 180, 0.05);
 $team-short-name-color: #053d97;
 
 // Exam
-$exam-navigation-bar-background-color: #ecebe7;
+$exam-navigation-bar-background-color: #e2e8f0;
 $exam-navigation-bar-synced-color: white;
 $exam-navigation-bar-synced-background-color: #3e8acc;
 $exam-navigation-bar-not-synced-color: #1a1a1a;
