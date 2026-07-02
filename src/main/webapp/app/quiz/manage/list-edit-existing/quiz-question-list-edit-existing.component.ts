@@ -21,6 +21,7 @@ import { KeyValuePipe, NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FileService } from 'app/foundation/service/file.service';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export enum State {
     COURSE = 'Course',
@@ -221,7 +222,7 @@ export class QuizQuestionListEditExistingComponent {
 
     async processJsonContent(jsonContent: string, images: Map<string, File> = new Map()) {
         try {
-            const questions = JSON.parse(jsonContent) as QuizQuestion[];
+            const questions = parseJson<QuizQuestion[]>(jsonContent);
             await this.addQuestions(questions, images);
             // Clearing html elements
             this.importFile.set(undefined);

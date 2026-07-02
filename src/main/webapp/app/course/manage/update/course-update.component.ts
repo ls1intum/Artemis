@@ -160,7 +160,7 @@ export class CourseUpdateComponent implements OnInit {
     readonly COURSE_TITLE_LIMIT = 255;
 
     ngOnInit() {
-        this.timeZones = (Intl as any).supportedValuesOf('timeZone');
+        this.timeZones = (Intl as typeof Intl & { supportedValuesOf(key: string): string[] }).supportedValuesOf('timeZone');
         this.isSaving.set(false);
         // create a new course, and only overwrite it if we fetch a course to edit
         this.course = new Course();

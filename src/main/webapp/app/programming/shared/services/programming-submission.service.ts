@@ -563,11 +563,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @return the expected rest time to wait for the build.
      */
     private getExpectedRemainingTimeForBuild(submission: ProgrammingSubmission): number {
-        return this.currentExpectedResultETA - (Date.now() - Date.parse(submission.submissionDate as any));
+        return this.currentExpectedResultETA - (Date.now() - dayjs(submission.submissionDate).valueOf());
     }
 
     private getExpectedRemainingTimeForQueue(submission: ProgrammingSubmission): number {
-        return this.currentExpectedQueueEstimate - (Date.now() - Date.parse(submission.submissionDate as any));
+        return this.currentExpectedQueueEstimate - (Date.now() - dayjs(submission.submissionDate).valueOf());
     }
 
     /**

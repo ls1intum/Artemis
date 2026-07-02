@@ -7,6 +7,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export class CourseCompetencyImportSettings {
     importRelations = false;
@@ -52,7 +53,7 @@ export class ImportCourseCompetenciesSettingsComponent {
         const target = event.target as HTMLInputElement;
         this.importSettings.update((settings) => ({
             ...settings,
-            isReleaseDate: JSON.parse(target.value),
+            isReleaseDate: parseJson<boolean>(target.value),
         }));
     }
 }

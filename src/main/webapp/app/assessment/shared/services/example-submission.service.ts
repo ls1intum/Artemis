@@ -9,6 +9,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
@@ -127,7 +128,7 @@ export class ExampleSubmissionService {
         if (submission && exercise && exercise.type === ExerciseType.TEXT) {
             return this.stringCountService.countWords((submission as TextSubmission).text);
         } else if (submission && exercise && exercise.type === ExerciseType.MODELING) {
-            const umlModel = JSON.parse((submission as ModelingSubmission).model!);
+            const umlModel = parseJson<{ elements: unknown[]; relationships: unknown[] }>((submission as ModelingSubmission).model!);
             return umlModel ? umlModel.elements?.length + umlModel.relationships?.length : 0;
         }
         return 0;
