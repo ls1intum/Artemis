@@ -12,7 +12,6 @@ import { ModelingExplanationEditorComponent } from '../modeling-explanation-edit
 import { captureException } from '@sentry/angular';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
-import { applyArtemisApollonThemeToDocument } from 'app/modeling/shared/apollon-theme.util';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
@@ -152,8 +151,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         const editorContainer = this.editorContainer();
         if (editorContainer) {
-            // Theme the editor via Artemis's PrimeNG tokens — see artemisApollonTheme JSDoc for why <html>.
-            applyArtemisApollonThemeToDocument();
             this.apollonEditor = new ApollonEditor(editorContainer.nativeElement, {
                 model: umlModel,
                 mode: ApollonMode.Modelling,

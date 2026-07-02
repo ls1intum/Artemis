@@ -19,7 +19,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { hasQuizRelevantElements } from 'app/modeling/shared/apollon-model.util';
-import { applyArtemisApollonThemeToDocument } from 'app/modeling/shared/apollon-theme.util';
 import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
@@ -142,8 +141,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             locale: this.translateService.getCurrentLang() as Locale,
             availableViews: [ApollonView.Modelling, ApollonView.Highlight],
         } as ConstructorParameters<typeof ApollonEditor>[1];
-        // Theme the editor via Artemis's PrimeNG tokens — see artemisApollonTheme JSDoc for why <html>.
-        applyArtemisApollonThemeToDocument();
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
