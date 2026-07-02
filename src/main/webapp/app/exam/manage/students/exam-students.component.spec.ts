@@ -277,6 +277,20 @@ describe('ExamStudentsComponent', () => {
             expect(component.totalExamStudents()).toBe(1);
             expect(component.hasRegisteredUsers()).toBe(true);
         });
+
+        it('should replay the skipped lazy load only once, not on every exam emission (issue #13063)', () => {
+            component.exam.set({ ...examWithCourse, id: undefined });
+            component.loadExamStudents(mockLazyEvent); // records the event and marks the load as pending
+            const findPagedSpy = vi.spyOn(examManagementService, 'findExamStudentsPaged').mockReturnValue(of({ content: [mockDto], totalElements: 1 }));
+
+            component['examData$'].next(examWithCourse); // exam resolves: the skipped load is replayed exactly once
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+
+            // A later exam re-emission (e.g. reloadStudentsView or a websocket-driven fetchExamData) must not replay
+            // the lazy load again; the table's own reset() handles reloading on those paths.
+            component['examData$'].next(examWithCourse);
+            expect(findPagedSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('onFilterChange', () => {
