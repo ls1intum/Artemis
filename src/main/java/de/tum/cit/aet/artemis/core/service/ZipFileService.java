@@ -10,7 +10,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -19,8 +23,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
-
-import net.lingala.zip4j.ZipFile;
 
 /**
  * A service class to create zip files
@@ -53,13 +55,16 @@ public class ZipFileService {
      */
     public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
         log.debug("Creating zip file at {} for paths: {}", zipFilePath, paths);
-        try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
             for (var path : paths) {
-                if (Files.isReadable(path) && !Files.isDirectory(path)) {
-                    zipFile.addFile(path.toFile());
+                if (!Files.isReadable(path)) {
+                    continue;
                 }
-                else if (Files.isReadable(path) && Files.isDirectory(path)) {
-                    zipFile.addFolder(path.toFile());
+                // A single file is stored at the zip root under its file name; a directory is stored recursively with
+                // the directory name as the top-level entry. Both are achieved by walking the path and relativizing
+                // each contained file against the path's parent.
+                try (Stream<Path> files = Files.walk(path)) {
+                    ZipStreamHelper.addPathsToZipStream(zipOutputStream, files, path.getParent(), null, Set.of());
                 }
             }
         }
@@ -136,9 +141,7 @@ public class ZipFileService {
      */
     public void extractZipFileRecursively(Path zipPath) throws IOException {
         var dirToUnzip = Files.createDirectory(zipPath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(zipPath.toString())));
-        try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
-            zipFile.extractAll(dirToUnzip.toString());
-        }
+        extractZipFile(zipPath, dirToUnzip);
         List<Path> zipFilesInDirList;
         try (var zipFilesInDir = Files.list(dirToUnzip).filter(path -> "zip".equalsIgnoreCase(FilenameUtils.getExtension(path.toString())))) {
             zipFilesInDirList = zipFilesInDir.toList();
@@ -146,6 +149,37 @@ public class ZipFileService {
         for (Path path : zipFilesInDirList) {
             extractZipFileRecursively(path);
         }
+    }
 
+    /**
+     * Extracts all entries of a zip file into the target directory, preserving the directory structure. Entries that
+     * would resolve outside the target directory (zip slip / path traversal) are rejected.
+     *
+     * @param zipPath   the zip file to extract
+     * @param targetDir the directory to extract into (must already exist)
+     * @throws IOException if an entry escapes the target directory or extraction fails
+     */
+    private static void extractZipFile(Path zipPath, Path targetDir) throws IOException {
+        Path normalizedTarget = targetDir.toAbsolutePath().normalize();
+        try (ZipFile zipFile = new ZipFile(zipPath.toFile())) {
+            var entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                Path resolved = normalizedTarget.resolve(entry.getName()).normalize();
+                if (!resolved.startsWith(normalizedTarget)) {
+                    throw new IOException("Blocked zip entry outside the target directory (zip slip): " + entry.getName());
+                }
+                if (entry.isDirectory()) {
+                    Files.createDirectories(resolved);
+                }
+                else {
+                    try (var inputStream = zipFile.getInputStream(entry)) {
+                        // FileUtils.copyInputStreamToFile creates missing parent directories; java.nio Files.copy is
+                        // forbidden by ArchitectureTest.testFileWriteUsage precisely because it does not.
+                        FileUtils.copyInputStreamToFile(inputStream, resolved.toFile());
+                    }
+                }
+            }
+        }
     }
 }

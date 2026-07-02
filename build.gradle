@@ -344,7 +344,7 @@ dependencies {
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.22.0"
 
-    implementation "com.vdurmont:semver4j:3.1.0"
+    implementation "org.semver4j:semver4j:6.0.0"
 
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
     // Note: we explicitly use docker-java-transport-zerodep, because docker-java-transport-httpclient5 uses an outdated http5 version which is not compatible with Spring Boot >= 3.4.0
@@ -404,7 +404,6 @@ dependencies {
 
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:${commons_text_version}"
-    implementation "org.apache.commons:commons-math3:3.6.1"
     implementation "org.apache.commons:commons-lang3:${commons_lang3_version}"
     implementation "org.apache.commons:commons-collections4:4.5.0"
     // Declared explicitly because production code imports org.apache.commons.io.* directly (FileUtil, FileService, FilenameUtils, …).
@@ -516,7 +515,6 @@ dependencies {
     implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.29.0"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
-    implementation "net.lingala.zip4j:zip4j:2.11.6"
 
     // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.6.0-jre"
