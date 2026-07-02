@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
@@ -29,6 +29,7 @@ import { AttachmentVideoUnitComponent } from '../attachment-video-unit/attachmen
 import { TextUnitComponent } from '../text-unit/text-unit.component';
 import { OnlineUnitComponent } from '../online-unit/online-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -55,6 +56,7 @@ export interface LectureUnitCompletionEvent {
         TextUnitComponent,
         OnlineUnitComponent,
         FaIconComponent,
+        CourseSidebarToggleButtonComponent,
         DiscussionSectionComponent,
         UpperCasePipe,
         ArtemisDatePipe,
@@ -70,7 +72,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly fileService = inject(FileService);
-    private readonly router = inject(Router);
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
@@ -96,6 +97,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     courseParamsSubscription: Subscription;
     irisEnabled = false;
     readonly informationBoxData = signal<InformationBox[]>([]);
+
+    readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    readonly toggleSidebar = (): void => this.sidebarToggle()?.();
 
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetVideoTimestamp = signal<number | undefined>(undefined);
@@ -200,9 +205,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    redirectToLectureManagement(): void {
-        const lecture = this.lecture();
-        this.router.navigate(['course-management', lecture?.course?.id, 'lectures', lecture?.id]);
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
     }
 
     attachmentNotReleased(attachment: Attachment): boolean {

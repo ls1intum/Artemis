@@ -18,12 +18,7 @@
 
         @if (lectureSelected()) {
             <div [class.content-sidebar-width]="!isCollapsed()" class="content-width module-bg rounded-3">
-                @if (isCollapsed()) {
-                    <div class="px-3 pt-2">
-                        <jhi-course-sidebar-toggle-button [isCollapsed]="true" (toggleSidebar)="toggleSidebar()" />
-                    </div>
-                }
-                <router-outlet (deactivate)="onSubRouteDeactivate()" />
+                <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
             <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">

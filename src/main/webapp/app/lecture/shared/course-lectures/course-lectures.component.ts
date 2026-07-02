@@ -1,11 +1,11 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
-import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
@@ -42,7 +42,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
     styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
-    imports: [SidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
     private courseStorageService = inject(CourseStorageService);
@@ -72,6 +72,13 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     multiLaunchLectureIDs: number[] = [];
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
+
+    private readonly activeLectureDetails = signal<CourseLectureDetailsComponent | undefined>(undefined);
+
+    constructor() {
+        // Push the collapse state and toggle into the active lecture detail so it can render the toggle in its header when collapsed.
+        effect(() => this.activeLectureDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
+    }
 
     ngOnInit() {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture'));
@@ -162,6 +169,12 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     getLastSelectedLecture(): string | undefined {
         return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId());
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof CourseLectureDetailsComponent) {
+            this.activeLectureDetails.set(componentRef);
+        }
     }
 
     onSubRouteDeactivate() {
