@@ -329,6 +329,8 @@ public class ExamUserService {
      * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
      */
     public Page<UserForRegistrationDTO> searchUsersForExamRegistration(long examId, String searchTerm, int page, int size) {
+        // The repository applies a deterministic order for the LIMIT/OFFSET pages, so the pages are stable across
+        // requests and no matching user shuffles between pages (see issue #13069).
         PageRequest pageable = PageRequest.of(page, size);
         Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm);
 
