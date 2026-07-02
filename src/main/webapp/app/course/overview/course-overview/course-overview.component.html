@@ -33,13 +33,8 @@
                 @if (course()) {
                     @if (showCourseTitleBar()) {
                         <jhi-course-title-bar
-                            [class.title-bar-over-content]="actionBarOverContent()"
-                            [class.title-bar-over-iris]="actionBarOverIris()"
-                            [class.collapsed]="activeSidebarCollapsed()"
                             [hasSidebar]="titleBarHasSidebar()"
                             [isSidebarCollapsed]="activeSidebarCollapsed()"
-                            [titleInSidebar]="titleInSidebar()"
-                            [toggleInSidebar]="toggleInSidebar()"
                             [pageTitle]="pageTitle()"
                             [isExamStarted]="isExamStarted()"
                             (toggleSidebar)="toggleSidebar()"
@@ -66,8 +61,6 @@
 
                     <div
                         class="course-body-container"
-                        [class.iris-title-bar-overlay]="actionBarOverIris()"
-                        [class.iris-sidebar-collapsed]="activeSidebarCollapsed()"
                         [ngClass]="{
                             'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar(),
                             'mx-2': !isExamStarted(),

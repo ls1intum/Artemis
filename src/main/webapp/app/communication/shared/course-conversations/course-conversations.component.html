@@ -15,7 +15,7 @@
             </div>
         }
         @if (isCodeOfConductAccepted() && isServiceSetUp() && currentCourse) {
-            <div class="d-flex justify-content-between sidebar-tab-content-row">
+            <div class="d-flex justify-content-between">
                 <div class="communication-content-sidebar" [class.sidebar-collapsed]="isCollapsed()" [class.is-not-in-active-conversation]="!activeConversation()">
                     <jhi-sidebar
                         (onSelectConversation)="onConversationSelected($event)"
@@ -40,13 +40,19 @@
                     />
                 </div>
                 <div class="communication-content-main">
-                    <jhi-conversation-global-search
-                        [conversations]="conversationsOfUser()"
-                        [courseId]="currentCourse.id"
-                        (onSearch)="onSearch($event)"
-                        (onSelectionChange)="onSelectionChange($event)"
-                        (onClearSearch)="onClearSearchAndRestorePrevious()"
-                    />
+                    <div class="d-flex align-items-center gap-2">
+                        @if (isCollapsed()) {
+                            <jhi-course-sidebar-toggle-button [isCollapsed]="true" (toggleSidebar)="toggleSidebar()" />
+                        }
+                        <jhi-conversation-global-search
+                            class="flex-grow-1"
+                            [conversations]="conversationsOfUser()"
+                            [courseId]="currentCourse.id"
+                            (onSearch)="onSearch($event)"
+                            (onSelectionChange)="onSelectionChange($event)"
+                            (onClearSearch)="onClearSearchAndRestorePrevious()"
+                        />
+                    </div>
                     <div class="d-flex justify-content-between">
                         @if (!activeConversation() && isCodeOfConductPresented()) {
                             <div class="col pe-0 flex-grow-1">

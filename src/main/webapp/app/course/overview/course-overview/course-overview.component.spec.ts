@@ -775,26 +775,12 @@ describe('CourseOverviewComponent', () => {
 
     describe('sidebar toggle relocation', () => {
         type CourseOverviewInternals = {
-            titleInSidebar(): boolean;
-            toggleInSidebar(): boolean;
             activeSidebarCollapsed(): boolean;
             titleBarHasSidebar(): boolean;
             showCourseTitleBar(): boolean;
             handleComponentActivation(componentRef: unknown): void;
         };
         const internals = (): CourseOverviewInternals => component as unknown as CourseOverviewInternals;
-
-        it('should mark titleInSidebar true for the relocated list tabs', () => {
-            for (const Ctor of [CourseLecturesComponent, CourseTutorialGroupsComponent, CourseExamsComponent, CourseConversationsComponent]) {
-                component.activatedComponentReference.set(Object.create(Ctor.prototype) as InstanceType<typeof Ctor>);
-                expect(internals().titleInSidebar()).toBe(true);
-            }
-        });
-
-        it('should mark titleInSidebar false for tabs that are not relocated', () => {
-            component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent);
-            expect(internals().titleInSidebar()).toBe(false);
-        });
 
         it('should derive the active sidebar collapsed state from the active child signal', () => {
             const isCollapsed = signal(false);
@@ -827,33 +813,6 @@ describe('CourseOverviewComponent', () => {
             expect(internals().activeSidebarCollapsed()).toBe(false);
         });
 
-        it('should keep titleInSidebar false but toggleInSidebar true for the Iris tab', () => {
-            component.activatedComponentReference.set(Object.create(CourseIrisComponent.prototype) as CourseIrisComponent);
-            expect(internals().titleInSidebar()).toBe(false);
-            expect(internals().toggleInSidebar()).toBe(true);
-        });
-
-        it('should mark toggleInSidebar true for the list tabs and Iris', () => {
-            for (const Ctor of [CourseLecturesComponent, CourseTutorialGroupsComponent, CourseExamsComponent, CourseConversationsComponent, CourseIrisComponent]) {
-                component.activatedComponentReference.set(Object.create(Ctor.prototype) as InstanceType<typeof Ctor>);
-                expect(internals().toggleInSidebar()).toBe(true);
-            }
-        });
-
-        it('should mark toggleInSidebar false for tabs that are not relocated', () => {
-            component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent);
-            expect(internals().toggleInSidebar()).toBe(false);
-        });
-
-        it('should keep the title bar toggle for non-dashboard tabs (titleBarHasSidebar follows hasSidebar)', () => {
-            component.hasSidebar.set(true);
-            component.activatedComponentReference.set(Object.create(CourseLecturesComponent.prototype) as CourseLecturesComponent);
-            expect(internals().titleBarHasSidebar()).toBe(true);
-
-            component.hasSidebar.set(false);
-            expect(internals().titleBarHasSidebar()).toBe(false);
-        });
-
         it('should hide the dashboard title bar toggle when Iris is not enabled', () => {
             component.hasSidebar.set(true);
             component.course.set({ id: 1, irisEnabledInCourse: false } as Course);
@@ -868,16 +827,22 @@ describe('CourseOverviewComponent', () => {
             expect(internals().titleBarHasSidebar()).toBe(true);
         });
 
-        it('should not show the shared title bar for the exercises tab', () => {
-            component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent);
-            expect(internals().showCourseTitleBar()).toBe(false);
+        it('should not show the shared title bar for any of the sidebar tabs', () => {
+            for (const Ctor of [
+                CourseExercisesComponent,
+                CourseLecturesComponent,
+                CourseTutorialGroupsComponent,
+                CourseExamsComponent,
+                CourseConversationsComponent,
+                CourseIrisComponent,
+            ]) {
+                component.activatedComponentReference.set(Object.create(Ctor.prototype) as InstanceType<typeof Ctor>);
+                expect(internals().showCourseTitleBar()).toBe(false);
+            }
         });
 
-        it('should show the shared title bar for a list tab and the Iris tab', () => {
-            component.activatedComponentReference.set(Object.create(CourseLecturesComponent.prototype) as CourseLecturesComponent);
-            expect(internals().showCourseTitleBar()).toBe(true);
-
-            component.activatedComponentReference.set(Object.create(CourseIrisComponent.prototype) as CourseIrisComponent);
+        it('should show the shared title bar for a non-sidebar tab (dashboard)', () => {
+            component.activatedComponentReference.set(Object.create(CourseDashboardComponent.prototype) as CourseDashboardComponent);
             expect(internals().showCourseTitleBar()).toBe(true);
         });
     });

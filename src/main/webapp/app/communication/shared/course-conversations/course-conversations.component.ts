@@ -60,6 +60,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indica
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, take, takeUntil } from 'rxjs/operators';
@@ -136,6 +137,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         CourseConversationsCodeOfConductComponent,
         TranslateDirective,
         SidebarComponent,
+        CourseSidebarToggleButtonComponent,
         ConversationHeaderComponent,
         ConversationMessagesComponent,
         CourseWideSearchComponent,

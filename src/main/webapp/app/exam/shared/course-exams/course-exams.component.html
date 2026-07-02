@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between" [class.sidebar-tab-content-row]="!isExamStarted()">
+<div class="d-flex justify-content-between">
     @if (course()) {
         @if (sidebarData(); as currentSidebarData) {
             <div id="exam-sidebar-test" [class.sidebar-collapsed]="isCollapsed()" [hidden]="isExamStarted()">
@@ -18,6 +18,11 @@
 
         @if (examSelected()) {
             <div class="vw-100 module-bg rounded-3" style="min-width: 200px">
+                @if (isCollapsed() && !isExamStarted()) {
+                    <div class="px-3 pt-2">
+                        <jhi-course-sidebar-toggle-button [isCollapsed]="true" (toggleSidebar)="toggleSidebar()" />
+                    </div>
+                }
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {

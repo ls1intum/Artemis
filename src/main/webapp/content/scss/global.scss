@@ -1276,20 +1276,6 @@ $transition-in-between-delay: 0.05s;
     width: $sidebar-width;
 }
 
-// List tabs overlay the action bar over the content; push the content (including its own background) below the bar with a margin so the bar reads as a distinct bar over the page background in both expanded and collapsed states.
-.sidebar-tab-content-row > *:not(:first-child) {
-    margin-top: 3.25rem;
-}
-
-// Iris course tab: the shared title bar overlays the chat like the list tabs. Push the chat container below it; the chat-history panel reaches the top when expanded and only clears the (now full-width) bar when collapsed.
-.iris-title-bar-overlay .chat-container {
-    margin-top: 3.25rem;
-}
-
-.iris-title-bar-overlay.iris-sidebar-collapsed .chat-history {
-    margin-top: 3.25rem;
-}
-
 .fs-xx-small {
     font-size: 0.625rem;
 }

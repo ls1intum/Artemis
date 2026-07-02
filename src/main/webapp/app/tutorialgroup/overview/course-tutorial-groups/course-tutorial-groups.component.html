@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between sidebar-tab-content-row">
+<div class="d-flex justify-content-between">
     @let currentCourseId = courseId();
     @let currentSidebarData = sidebarData();
     @if (currentCourseId && currentSidebarData) {
@@ -18,6 +18,11 @@
 
         @if (itemSelected()) {
             <div class="vw-100 module-bg rounded-3">
+                @if (isCollapsed()) {
+                    <div class="px-3 pt-2">
+                        <jhi-course-sidebar-toggle-button [isCollapsed]="true" (toggleSidebar)="toggleSidebar()" />
+                    </div>
+                }
                 <router-outlet />
             </div>
         } @else {

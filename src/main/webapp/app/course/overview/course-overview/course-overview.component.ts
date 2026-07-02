@@ -94,28 +94,19 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         | CourseDashboardComponent
         | undefined
     >(undefined);
-    // Exercises renders its own full-height content (no shared title bar), so its sidebar reaches the very top.
-    protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
-
-    // List tabs whose page title moves into the sidebar header (Iris excluded — it has no sidebar header).
-    protected readonly titleInSidebar = computed(() => {
+    // Sidebar tabs render their own full-height content with the collapse toggle in the sidebar/content header
+    // (like Exercises), so the shared title bar is only used by the dashboard and other non-sidebar pages.
+    protected readonly showCourseTitleBar = computed(() => {
         const componentRef = this.activatedComponentReference();
-        return (
+        return !(
+            componentRef instanceof CourseExercisesComponent ||
             componentRef instanceof CourseLecturesComponent ||
             componentRef instanceof CourseTutorialGroupsComponent ||
             componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent
+            componentRef instanceof CourseConversationsComponent ||
+            componentRef instanceof CourseIrisComponent
         );
     });
-
-    // Tabs whose collapse toggle moves into the sidebar/panel (includes Iris, whose toggle is in the chat panel).
-    protected readonly toggleInSidebar = computed(() => this.titleInSidebar() || this.activatedComponentReference() instanceof CourseIrisComponent);
-
-    // Overlay the action bar on the content column for list tabs; gated on hasSidebar so it never leaks onto sidebar-less tabs.
-    protected readonly actionBarOverContent = computed(() => this.hasSidebar() && this.titleInSidebar());
-
-    // Iris overlays like the list tabs, but its chat-history panel has a different width, so it uses its own offset.
-    protected readonly actionBarOverIris = computed(() => this.hasSidebar() && this.activatedComponentReference() instanceof CourseIrisComponent);
 
     // Drives the title bar toggle: hasSidebar, except the dashboard also requires Iris (its toggle only drives the chat panel).
     protected readonly titleBarHasSidebar = computed(() => {
