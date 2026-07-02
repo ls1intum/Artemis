@@ -778,7 +778,10 @@ describe('UserManagementUpdateComponent', () => {
         });
 
         it('does not throw when the group autocomplete is used before groups load', () => {
-            component.allGroups = []; // pre-load state (the field initializer guarantees this, never undefined)
+            // Do NOT reassign component.allGroups here: the point of this test is to exercise the as-constructed
+            // state, where allGroups is populated solely by the field initializer. Removing the initializer must
+            // make filterGroups() -> filter() deref undefined and fail this test.
+            expect(component.allGroups).toBeDefined();
 
             expect(() => component.filterGroups({ query: 'x' } as unknown as AutoCompleteCompleteEvent)).not.toThrow();
             expect(component.groupSuggestions()).toEqual([]);
