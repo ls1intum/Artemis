@@ -28,15 +28,18 @@ function authoritiesOf(route: Route): readonly Authority[] | undefined {
 /**
  * Derives the warming priority of a lazy route from the authorities it requires. The `IS_AT_LEAST_*` arrays are
  * nested (each higher role is also allowed), so the *least* privileged role still permitted is what distinguishes
- * a student route from a management or admin route. Routes without authorities (e.g. lazy route-config parents
- * whose authorities live on their children) default to the student tier so the strategy descends into them.
+ * a student route from a management or admin route. Routes without authorities are not assigned a tier (returns
+ * `undefined`) and must opt in explicitly via `data: { preload: 'eager' }` to be warmed.
  */
-export function preloadTierForRoute(route: Route): number {
+export function preloadTierForRoute(route: Route): number | undefined {
     if (route.data?.['preload'] === 'eager') {
         return TIER_EAGER;
     }
     const authorities = authoritiesOf(route);
-    if (!authorities || authorities.includes(Authority.STUDENT)) {
+    if (!authorities) {
+        return undefined;
+    }
+    if (authorities.includes(Authority.STUDENT)) {
         return TIER_STUDENT;
     }
     if (authorities.includes(Authority.TUTOR) || authorities.includes(Authority.EDITOR) || authorities.includes(Authority.INSTRUCTOR)) {
@@ -56,8 +59,9 @@ export function preloadTierForRoute(route: Route): number {
  * ({@link file://../auth/user-route-access-service.ts}) remain authoritative. The required authorities are read
  * off `route.data['authorities']` the same way the guard reads them; for a route the user lacks access to,
  * returning `of(null)` stops Angular recursing through its `loadChildren`, so that lazily-loaded subtree is not
- * warmed. (Pruning correctness therefore relies on child routes declaring their own `authorities`: a child with
- * none, under a loaded parent, defaults to the student tier and is warmed.)
+ * warmed. Routes without `authorities` are skipped entirely (not preloaded) unless they opt in via
+ * `data: { preload: 'eager' }`, so lazy parents like `course-management` are never warmed for users who
+ * lack the authorities declared on their children.
  *
  * Wired up via `withPreloading(RoleAwarePreloadingStrategy)` in {@link file://../../app.config.ts}.
  */
@@ -82,6 +86,13 @@ export class RoleAwarePreloadingStrategy implements PreloadingStrategy {
         if (authorities && authorities.length > 0 && !this.accountService.hasAnyAuthorityDirect(authorities)) {
             return of(null);
         }
+        const tier = preloadTierForRoute(route);
+        // Authority-less routes without an explicit preload hint are skipped: they are typically lazy route-config
+        // parents (e.g. course-management) whose real authorities live on their children. Warming them for every
+        // user would let a pure student download management or admin code they can never reach.
+        if (tier === undefined) {
+            return of(null);
+        }
         // Angular's RouterPreloader re-walks every not-yet-loaded route on each NavigationEnd, and a route only
         // counts as loaded once its (idle-delayed) load() has run. Without this guard, any navigation during the
         // warm-up window would enqueue the same routes again. Route identities are stable across walks, so a
@@ -90,7 +101,7 @@ export class RoleAwarePreloadingStrategy implements PreloadingStrategy {
             return of(null);
         }
         this.enqueuedRoutes.add(route);
-        this.scheduler.enqueue(load, preloadTierForRoute(route));
+        this.scheduler.enqueue(load, tier);
         return of(null);
     }
 }
