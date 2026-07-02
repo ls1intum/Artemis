@@ -395,16 +395,6 @@ describe('UserManagementUpdateComponent', () => {
         expect(component.user().groups).toEqual([group2]);
     });
 
-    it('should remove group from user', () => {
-        const group1 = 'nicegroup';
-        const group2 = 'badgroup';
-        component.user.set({ groups: [group1, group2] } as unknown as User);
-
-        component.removeGroup(component.user(), group1);
-
-        expect(component.user().groups).toEqual([group2]);
-    });
-
     describe('previousState', () => {
         it('should navigate to user detail page when editing existing user', () => {
             const routerMock = TestBed.inject(Router) as unknown as MockRouter;

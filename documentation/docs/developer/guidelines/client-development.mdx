@@ -400,19 +400,16 @@ If you use icons next to text (for example for a button or link), make sure that
 
 Do this:
 
+{/* prettier-ignore */}
 ```html
-<fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
+<fa-icon [icon]="'times'"></fa-icon>
+<span>Text</span>
 ```
 
 Don't do one of these or any other combination of whitespaces:
 
 ```html
-<fa-icon [icon]="'times'"></fa-icon><span>Text</span>
-
-<fa-icon [icon]="'times'"></fa-icon><span> Text</span> <fa-icon [icon]="'times'"></fa-icon> <span>Text</span>
-
-<fa-icon [icon]="'times'"></fa-icon>
-<span> Text</span>
+<fa-icon [icon]="'times'"></fa-icon><span> Text</span>
 ```
 
 Ignoring this will lead to inconsistent spacing between icons and text.

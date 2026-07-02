@@ -151,9 +151,9 @@ export default {
                     scanClasses(node.value, node, context);
                 }
             },
-            // [class.<palette>]="x": the palette token is the attribute name itself.
             // [class]/[ngClass]/[styleClass]="…": the palette lives in the bound expression source.
-            // Any binding: catch `var(--p-<palette>-NNN)` in the expression source ([style.color], [color], …).
+            // [class.<palette>]="x": the palette token is the attribute name itself.
+            // Any other binding ([style.color], [color], …): catch `var(--p-<palette>-NNN)` in the expression source.
             BoundAttribute(node) {
                 if (isClassListAttr(node.name) || node.name === 'ngClass') {
                     scanClasses(node.value?.source, node, context);
@@ -161,8 +161,9 @@ export default {
                     // [class.<palette>]="x" — the token is the attribute name. Gate on the `class.` key so a
                     // component INPUT that happens to share the name is not scanned as a class.
                     scanClasses(node.name, node, context);
+                } else {
+                    scanWith(PRIMITIVE_VAR, 'primitivePalette', node.value?.source, node, context);
                 }
-                scanWith(PRIMITIVE_VAR, 'primitivePalette', node.value?.source, node, context);
             },
         };
     },

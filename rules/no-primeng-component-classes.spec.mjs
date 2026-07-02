@@ -23,6 +23,11 @@ describe('no-primeng-component-classes', () => {
                 { code: '<p-message styleClass="flex gap-2 whitespace-nowrap"></p-message>' },
                 // Substring guard: a custom class that merely contains a root name as a fragment is not matched.
                 { code: '<div class="my-p-button-wrapper"></div>' },
+                // Component INPUTS whose bound value happens to be a root token are not class bindings — the
+                // `class.` key gate (rule) must leave them alone (mirrors the [close]/[card] case in the
+                // no-bootstrap-classes spec).
+                { code: `<my-widget [variant]="'p-button'"></my-widget>` },
+                { code: `<div [attr.role]="'p-tag'"></div>` },
             ],
             invalid: [
                 // Bare root class on a non-component element — the lazy-CSS footgun.

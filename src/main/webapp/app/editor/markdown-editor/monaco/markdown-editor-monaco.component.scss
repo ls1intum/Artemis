@@ -67,9 +67,9 @@
 }
 
 /*
- * Popover dropdown item (headers, domain options, AI assistance). Extracted from an identical utility
- * string that was duplicated across the four popover menus; kept as a shared class for the same reason as
- * `.md-toolbar-btn` above — it carries `:hover`/`:disabled` pseudo-states a per-element utility cannot express cleanly.
+ * Popover dropdown item (headers, domain options, AI assistance). Kept as a shared class for the same
+ * reason as `.md-toolbar-btn` above — it carries `:hover`/`:disabled` pseudo-states that a per-element
+ * utility string cannot express cleanly.
  */
 .md-dropdown-item {
     display: block;
@@ -94,9 +94,8 @@
 }
 
 /*
- * Action dropdowns (headers, domain options, AI assistance) migrated from ng-bootstrap NgbDropdown
- * to a PrimeNG Popover. The popover is body-appended, so its content must be styled via ::ng-deep on the
- * styleClass target (pre-existing; not a Tailwind utility).
+ * The action-dropdown popover is body-appended by PrimeNG, so its content can only be reached with ::ng-deep
+ * on the styleClass target rather than a scoped selector.
  */
 :host ::ng-deep .md-action-popover {
     .p-popover-content {

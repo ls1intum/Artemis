@@ -217,7 +217,7 @@ Generic styles
 /*
  * Red invalid accent on form CONTROLS only, and only AFTER the user has interacted (dirty or touched):
  * - a pristine, never-touched field on a fresh form must not show red (best practice — don't flag errors
- *   before the user has done anything), which is what made an empty "Create …" form look like one solid bar;
+ *   before the user has done anything);
  * - a [formGroup]/container element also receives `.ng-invalid`, so `:not(:has(.ng-invalid))` keeps the
  *   accent on the innermost invalid element (the field), never a full-height bar down the wrapper.
  * Applies app-wide.
