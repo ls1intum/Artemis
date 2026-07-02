@@ -6,7 +6,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
-import { Subject, of } from 'rxjs';
+import { EMPTY, Subject, of } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute } from '@angular/router';
@@ -116,6 +116,12 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         accountService.userIdentity.set(accountMock);
 
+        // Prevent openChat's auto-triggered HTTP calls from interfering with individual tests.
+        vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(chatHttpServiceMock, 'createCourseSession').mockReturnValue(EMPTY);
+        vi.spyOn(chatHttpServiceMock, 'getChatSessionById').mockReturnValue(EMPTY);
+        vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValue(of());
+
         // Emit empty query params initially
         mockQueryParamsSubject.next({});
 
@@ -126,11 +132,11 @@ describe('ExerciseChatbotButtonComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should subscribe to route.params and call chatService.switchTo with exercise mode', async () => {
+    it('should subscribe to route.params and call chatService.openChat with exercise mode', async () => {
         vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
-        const spy = vi.spyOn(chatService, 'switchTo');
+        const spy = vi.spyOn(chatService, 'openChat');
 
         fixture.componentRef.setInput('mode', ChatServiceMode.PROGRAMMING_EXERCISE);
         fixture.changeDetectorRef.detectChanges();
@@ -146,11 +152,11 @@ describe('ExerciseChatbotButtonComponent', () => {
         expect(spy).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
     });
 
-    it('should subscribe to route.params and call chatService.switchTo with text exercise mode', async () => {
+    it('should subscribe to route.params and call chatService.openChat with text exercise mode', async () => {
         vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
-        const spy = vi.spyOn(chatService, 'switchTo');
+        const spy = vi.spyOn(chatService, 'openChat');
 
         fixture.componentRef.setInput('mode', ChatServiceMode.TEXT_EXERCISE);
         fixture.changeDetectorRef.detectChanges();
@@ -185,7 +191,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
-        chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
+        chatService.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
 
         // when
         await fixture.whenStable();
@@ -204,7 +210,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
         });
-        chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
+        chatService.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
         component.openChat();
 
         // when
@@ -311,12 +317,12 @@ describe('ExerciseChatbotButtonComponent', () => {
     });
 
     describe('lecture mode', () => {
-        it('should subscribe to route.params and call chatService.switchTo with lecture mode', async () => {
+        it('should subscribe to route.params and call chatService.openChat with lecture mode', async () => {
             const lectureId = 789;
             vi.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(lectureId)));
             vi.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
             vi.spyOn(wsServiceMock, 'subscribeToSession').mockReturnValueOnce(of());
-            const spy = vi.spyOn(chatService, 'switchTo');
+            const spy = vi.spyOn(chatService, 'openChat');
 
             fixture.componentRef.setInput('mode', ChatServiceMode.LECTURE);
             fixture.changeDetectorRef.detectChanges();

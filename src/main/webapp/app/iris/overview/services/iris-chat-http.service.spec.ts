@@ -80,14 +80,14 @@ describe('IrisChatHttpService', () => {
             req.flush(returnedFromService);
         });
 
-        it('should create a session', async () => {
+        it('should create a course session', async () => {
             const courseId = 1;
             const returnedFromService = { id: '1' };
             service
-                .createSession(ChatServiceMode.COURSE, courseId)
+                .createCourseSession(courseId)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
-            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/iris/chat/sessions`);
+            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/iris/chat/sessions` && r.params.get('courseId') === String(courseId));
             req.flush(returnedFromService, { status: 201, statusText: 'Created' });
         });
 

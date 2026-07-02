@@ -34,7 +34,7 @@ describe('ExerciseSplitPanelComponent', () => {
             imports: [ExerciseSplitPanelComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: IrisChatService, useValue: { switchTo: vi.fn() } },
+                { provide: IrisChatService, useValue: { openChat: vi.fn() } },
                 { provide: Router, useValue: { navigate: vi.fn() } },
                 { provide: ActivatedRoute, useValue: { parent: {}, firstChild: undefined } },
                 { provide: TranslateService, useClass: MockTranslateService },

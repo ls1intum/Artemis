@@ -247,7 +247,11 @@
                 "placeholder": "Select context...",
                 "courseGroup": "Course",
                 "lecturesGroup": "Lectures",
-                "exercisesGroup": "Exercises"
+                "exercisesGroup": "Exercises",
+                "chatTopicSet": "Chat topic set:",
+                "chatTopicCleared": "Chat topic cleared",
+                "chatTopicSwitched": "Chat topic switched:",
+                "addContextTooltip": "Select lecture or exercise"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",

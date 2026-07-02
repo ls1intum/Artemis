@@ -11,6 +11,7 @@ export enum IrisSender {
     LLM = 'LLM',
     USER = 'USER',
     ARTIFACT = 'ARTIFACT',
+    CTXSWAP = 'CTXSWAP',
 }
 
 export class IrisAssistantMessage implements BaseEntity {
@@ -42,4 +43,13 @@ export class IrisArtifactMessage implements BaseEntity {
     createdMemories?: MemirisMemory[];
 }
 
-export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage;
+export class IrisContextSwitchMessage implements BaseEntity {
+    id?: number;
+    content: IrisMessageContent[];
+    sentAt?: dayjs.Dayjs;
+    sender: IrisSender.CTXSWAP;
+    accessedMemories?: never;
+    createdMemories?: never;
+}
+
+export type IrisMessage = IrisAssistantMessage | IrisUserMessage | IrisArtifactMessage | IrisContextSwitchMessage;

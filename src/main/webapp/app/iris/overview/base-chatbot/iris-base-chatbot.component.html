@@ -257,6 +257,9 @@
                                         </div>
                                     </div>
                                 }
+                                @if (message.sender === IrisSender.CTXSWAP) {
+                                    <jhi-iris-context-switch-divider [message]="message" />
+                                }
                                 @if (message.sender === IrisSender.LLM) {
                                     <div class="llm-message-wrapper">
                                         @for (content of message.content; track content.id ?? $index) {

@@ -22,14 +22,14 @@ describe('AboutIrisModalComponent', () => {
     let component: AboutIrisModalComponent;
     let fixture: ComponentFixture<AboutIrisModalComponent>;
     let dialogRef: { close: ReturnType<typeof vi.fn> };
-    let chatService: { clearChat: ReturnType<typeof vi.fn> };
+    let chatService: { startFreshChat: ReturnType<typeof vi.fn> };
     const userIdentitySignal = signal<User | undefined>(undefined);
 
     beforeEach(async () => {
         vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         dialogRef = { close: vi.fn() };
-        chatService = { clearChat: vi.fn() };
+        chatService = { startFreshChat: vi.fn() };
 
         TestBed.configureTestingModule({
             imports: [AboutIrisModalComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
@@ -78,15 +78,15 @@ describe('AboutIrisModalComponent', () => {
         expectValidCards(cards);
     });
 
-    it('close() should call dialogRef.close() without clearing chat', () => {
+    it('close() should call dialogRef.close() without starting a fresh chat', () => {
         component.close();
         expect(dialogRef.close).toHaveBeenCalledOnce();
-        expect(chatService.clearChat).not.toHaveBeenCalled();
+        expect(chatService.startFreshChat).not.toHaveBeenCalled();
     });
 
-    it('tryIris() should clear chat and close dialog', () => {
+    it('tryIris() should start a fresh chat and close dialog', () => {
         component.tryIris();
-        expect(chatService.clearChat).toHaveBeenCalledOnce();
+        expect(chatService.startFreshChat).toHaveBeenCalledOnce();
         expect(dialogRef.close).toHaveBeenCalledOnce();
     });
 

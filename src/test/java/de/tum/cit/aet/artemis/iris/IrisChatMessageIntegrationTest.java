@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisPendingContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisSlidesContextDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisVideoContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -550,7 +551,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             IrisMessage source = new IrisMessage();
             source.addContent(new IrisJsonMessageContent(JsonNodeFactory.instance.objectNode().put("k1", "v1").put("k2", "v2").put("k3", "v3")));
             List<IrisMessageContentDTO> contentDtos = source.getContent().stream().map(content -> new IrisMessageContentDTO("json", null, content.getContentAsString())).toList();
-            IrisMessageRequestDTO requestDto = new IrisMessageRequestDTO(contentDtos, 42, Map.of(), null);
+            IrisMessageRequestDTO requestDto = new IrisMessageRequestDTO(contentDtos, 42, Map.of(), null, null);
 
             var response = request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.CREATED);
 
@@ -607,7 +608,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         private IrisMessageRequestDTO buildTextRequestDto(IrisChatSession session, Map<String, String> uncommittedFiles) {
             IrisMessage source = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
             List<IrisMessageContentDTO> contentDtos = source.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
-            return new IrisMessageRequestDTO(contentDtos, source.getMessageDifferentiator(), uncommittedFiles, null);
+            return new IrisMessageRequestDTO(contentDtos, source.getMessageDifferentiator(), uncommittedFiles, null, null);
         }
 
         private ProgrammingExerciseStudentParticipation provisionProgrammingRepositories(ProgrammingExercise exercise) throws GitAPIException, IOException, URISyntaxException {
@@ -1161,6 +1162,17 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             // Invalid context: lectureUnitId must be > 0
             var invalidContext = new IrisVideoContextDTO("video", 0L, 10.0);
             var requestDto = buildRequestWithContext(messageToSend, List.of(invalidContext));
+
+            request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void sendMessageWithPendingContextMissingMode_returns400() throws Exception {
+            IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+            IrisMessage messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+            List<IrisMessageContentDTO> contentDtos = messageToSend.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
+            var requestDto = new IrisMessageRequestDTO(contentDtos, messageToSend.getMessageDifferentiator(), Map.of(), new IrisPendingContextDTO(null, lecture.getId()), null);
 
             request.postWithResponseBody(messagesUrl(session), requestDto, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
         }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, untracked, viewChild } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.component';
 import { IrisMessageContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
@@ -49,11 +49,12 @@ export class LectureChatbotComponent {
     });
 
     constructor() {
-        // Keep chat service mode aligned with the currently displayed lecture.
+        // Reuse the existing chat session tagged with this lecture if one exists in the history;
+        // otherwise the COURSE chat is opened with the lecture pre-selected as pending context.
         effect(() => {
             const lectureId = this.lectureId();
             if (lectureId !== undefined) {
-                this.chatService.switchTo(ChatServiceMode.LECTURE, lectureId);
+                untracked(() => this.chatService.openChat(ChatServiceMode.LECTURE, lectureId));
             }
         });
     }

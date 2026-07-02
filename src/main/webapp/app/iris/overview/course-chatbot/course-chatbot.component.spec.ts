@@ -27,7 +27,7 @@ describe('CourseChatbotComponent', () => {
 
     const createChatServiceMock = () => ({
         setCourseId: vi.fn<(courseId: number | undefined) => void>(),
-        switchTo: vi.fn<(mode: ChatServiceMode, courseId: number) => void>(),
+        openChat: vi.fn<(mode: ChatServiceMode, entityId: number) => void>(),
     });
 
     beforeEach(async () => {
@@ -57,18 +57,18 @@ describe('CourseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should call switchTo when courseId changes', async () => {
+    it('should call openChat with course mode when courseId changes', async () => {
         fixture.componentRef.setInput('courseId', 2);
         await fixture.whenStable();
 
-        expect(chatService.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2);
+        expect(chatService.openChat).toHaveBeenCalledWith(ChatServiceMode.COURSE, 2);
     });
 
-    it('should not call switchTo when courseId is undefined', async () => {
+    it('should not call openChat when courseId is undefined', async () => {
         fixture.componentRef.setInput('courseId', undefined);
         await fixture.whenStable();
 
-        expect(chatService.switchTo).not.toHaveBeenCalled();
+        expect(chatService.openChat).not.toHaveBeenCalled();
     });
 
     it('should return early in toggleChatHistory when baseChatbot is not available', () => {

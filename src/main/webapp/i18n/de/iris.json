@@ -243,7 +243,11 @@
                 "placeholder": "Kontext auswählen...",
                 "courseGroup": "Kurs",
                 "lecturesGroup": "Vorlesungen",
-                "exercisesGroup": "Aufgaben"
+                "exercisesGroup": "Aufgaben",
+                "chatTopicSet": "Chat-Thema gesetzt:",
+                "chatTopicCleared": "Chat-Thema entfernt",
+                "chatTopicSwitched": "Chat-Thema gewechselt:",
+                "addContextTooltip": "Vorlesung oder Aufgabe wählen"
             },
             "citation": {
                 "unitLabel": "Einheit:",

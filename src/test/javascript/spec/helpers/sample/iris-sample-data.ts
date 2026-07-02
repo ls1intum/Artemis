@@ -41,7 +41,7 @@ export const mockServerMessageWithMemories = {
     content: [mockMessageContent],
     sentAt: dayjs(),
     accessedMemories: [new MemirisMemory('UUID', 'Memory Title', 'Memory content', [], [], false, false)],
-};
+} as IrisAssistantMessage;
 
 export const mockClientMessage = {
     id: 2,

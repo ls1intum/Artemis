@@ -1,0 +1,34 @@
+@let switchInfo = contextSwitch();
+<div class="context-switch-divider" role="separator">
+    <span class="divider-line"></span>
+    @if (switchInfo.transition === 'removed') {
+        <span class="divider-label">
+            <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicCleared"></span>
+        </span>
+    } @else if (switchInfo.entityRoute) {
+        <button type="button" class="divider-label divider-label-clickable" [routerLink]="switchInfo.entityRoute" [queryParamsHandling]="'preserve'">
+            @if (switchInfo.transition === 'changed') {
+                <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSwitched"></span>
+            } @else {
+                <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSet"></span>
+            }
+            @if (switchInfo.entityIcon) {
+                <fa-icon [icon]="switchInfo.entityIcon" />
+            }
+            <span>{{ switchInfo.name }}</span>
+        </button>
+    } @else {
+        <span class="divider-label">
+            @if (switchInfo.transition === 'changed') {
+                <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSwitched"></span>
+            } @else {
+                <span jhiTranslate="artemisApp.iris.contextSelection.chatTopicSet"></span>
+            }
+            @if (switchInfo.entityIcon) {
+                <fa-icon [icon]="switchInfo.entityIcon" />
+            }
+            <span>{{ switchInfo.name }}</span>
+        </span>
+    }
+    <span class="divider-line"></span>
+</div>
