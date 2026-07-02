@@ -210,9 +210,13 @@ public class GenerationPersistenceService {
      * @param exercise the exercise to persist into
      * @param user     the instructor performing the generation (commit author)
      * @param outcome  the accepted generation outcome holding the produced files
+     * @return the pre-persist commit HEAD captured per repository BEFORE it was written (a revertible baseline for an accepted adapt applied in place); repositories with nothing
+     *         to
+     *         commit are absent. Returned only after every repository committed successfully, so the caller records a revertible baseline exclusively for a persist that actually
+     *         applied changes.
      * @throws GenerationIncompleteException if a repository commit fails part-way through the sequence (the already-committed repositories are compensated first)
      */
-    public void persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome) {
+    public Map<RepositoryType, String> persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome) {
         // Capture each repository's pre-persist HEAD before writing it, so a later failure can revert the already-committed repositories to a consistent pre-generation state.
         Map<RepositoryType, String> prePersistHashes = new EnumMap<>(RepositoryType.class);
         List<RepositoryType> committed = new ArrayList<>();
@@ -272,6 +276,32 @@ public class GenerationPersistenceService {
             log.warn("Failed to create exercise version for exercise {}: {}", exercise.getId(), e.getMessage());
         }
         log.info("Persisted generated exercise {} (test-case synchronisation will complete asynchronously via CI)", exercise.getId());
+        return prePersistHashes;
+    }
+
+    /**
+     * Re-synchronises the exercise after its repositories were force-reset back to a captured commit (the {@code revert this adaptation} affordance). The git reset itself is done
+     * by the caller; this triggers the canonical tests build so test-case grading follows the reverted tests, re-applies the build-gate zero-weighting, and records a new exercise
+     * version so open editors and search see the reverted state — exactly the post-commit steps {@link #persist} runs. Best-effort: a failure here leaves the repositories reverted
+     * (the important part) and only logs.
+     *
+     * @param exercise        the exercise whose repositories were reset back to the baseline
+     * @param user            the instructor performing the revert (exercise-version author)
+     * @param testsCommitHash the tests repository's commit HEAD after the reset (drives the test-case-sync build); {@code null} skips the build
+     */
+    public void resyncAfterRevert(ProgrammingExercise exercise, User user, String testsCommitHash) {
+        if (testsCommitHash != null) {
+            int testCaseCountBeforeBuild = testCaseRepository.findByExerciseId(exercise.getId()).size();
+            triggerTestsBuild(exercise, testsCommitHash);
+            zeroWeightBuildGateTestCases(exercise.getId(), testCaseCountBeforeBuild);
+        }
+        try {
+            exerciseVersionService.createExerciseVersion(exercise, user);
+        }
+        catch (RuntimeException e) {
+            log.warn("Failed to create exercise version for reverted exercise {}: {}", exercise.getId(), e.getMessage());
+        }
+        log.info("Re-synchronised exercise {} after reverting an adaptation (test-case synchronisation completes asynchronously via CI)", exercise.getId());
     }
 
     /**

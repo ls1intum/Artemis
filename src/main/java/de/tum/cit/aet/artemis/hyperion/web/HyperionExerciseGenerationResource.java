@@ -26,8 +26,11 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.orchestration.ExerciseGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.ExerciseAdaptationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -57,12 +60,19 @@ public class HyperionExerciseGenerationResource {
 
     private final AgentSystemPromptService agentSystemPromptService;
 
+    private final HyperionReviewCommentContextRendererService reviewCommentContextRenderer;
+
+    private final ExerciseAdaptationRevertService adaptationRevertService;
+
     public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseGenerationJobService jobService,
-            AgentSystemPromptService agentSystemPromptService) {
+            AgentSystemPromptService agentSystemPromptService, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
+            ExerciseAdaptationRevertService adaptationRevertService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jobService = jobService;
         this.agentSystemPromptService = agentSystemPromptService;
+        this.reviewCommentContextRenderer = reviewCommentContextRenderer;
+        this.adaptationRevertService = adaptationRevertService;
     }
 
     /**
@@ -85,7 +95,7 @@ public class HyperionExerciseGenerationResource {
                     + "': only languages whose test reports the verifier can parse are supported.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        String prompt = agentSystemPromptService.resolvePrompt(request, exercise);
+        String prompt = withSelectedFeedback(agentSystemPromptService.resolvePrompt(request, exercise), exerciseId, request);
         String jobId = jobService.startJob(user, exercise, prompt, request.effectiveMode());
         log.info("Started agentic exercise generation job [{}] ({}) for exercise [{}]", jobId, request.effectiveMode(), exerciseId);
         return ResponseEntity.accepted().body(new ExerciseGenerationJobStartDTO(jobId));
@@ -137,6 +147,39 @@ public class HyperionExerciseGenerationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         boolean cancelled = jobService.requestCancellation(exerciseId, jobId, user);
         return cancelled ? ResponseEntity.ok().build() : ResponseEntity.notFound().build();
+    }
+
+    /**
+     * POST programming-exercises/{exerciseId}/generate-exercise/revert-adaptation : reverts the most recent in-place adaptation of the exercise, resetting its template/solution/tests
+     * repositories back to the commit state captured at the start of that adaptation run. The deliberately simple alternative to a staging workflow.
+     *
+     * @param exerciseId the programming exercise id
+     * @return 200 if an adaptation baseline was found and reverted; 404 if there is nothing to revert (no retained baseline)
+     */
+    @PostMapping("programming-exercises/{exerciseId}/generate-exercise/revert-adaptation")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<Void> revertAdaptation(@PathVariable long exerciseId) {
+        log.debug("REST request to revert the last agentic adaptation of exercise [{}]", exerciseId);
+        ProgrammingExercise exercise = loadExercise(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return adaptationRevertService.revert(exercise, user).map(result -> ResponseEntity.ok().<Void>build()).orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * For an {@link GenerationMode#ADAPT} run, folds the instructor's selected review-comment threads into the brief so the agent addresses exactly that feedback; a GENERATE run or
+     * an adapt with no selected/active threads returns the prompt unchanged.
+     *
+     * @param basePrompt the resolved brief
+     * @param exerciseId the exercise id
+     * @param request    the generation request (mode + selected feedback thread ids)
+     * @return the prompt with the rendered feedback appended when applicable
+     */
+    private String withSelectedFeedback(String basePrompt, long exerciseId, ExerciseGenerationRequestDTO request) {
+        if (request.effectiveMode() != GenerationMode.ADAPT || request.selectedFeedbackThreadIds() == null || request.selectedFeedbackThreadIds().isEmpty()) {
+            return basePrompt;
+        }
+        String feedback = reviewCommentContextRenderer.renderWholeExerciseSelectedFeedback(exerciseId, request.selectedFeedbackThreadIds());
+        return feedback == null || feedback.isBlank() ? basePrompt : basePrompt + "\n\n" + feedback;
     }
 
     private ProgrammingExercise loadExercise(long exerciseId) {

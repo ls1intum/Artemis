@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.exercisegeneration.orchestration;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -12,11 +14,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.GenerationRecoveryService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -53,15 +58,18 @@ public class ExerciseGenerationTaskService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ExerciseAdaptationRevertService adaptationRevertService;
+
     public ExerciseGenerationTaskService(ExerciseGenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService,
             GenerationRecoveryService recoveryService, HyperionWebsocketService websocket, ExerciseGenerationJobService jobService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExerciseAdaptationRevertService adaptationRevertService) {
         this.orchestrator = orchestrator;
         this.persistenceService = persistenceService;
         this.recoveryService = recoveryService;
         this.websocket = websocket;
         this.jobService = jobService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.adaptationRevertService = adaptationRevertService;
     }
 
     /**
@@ -92,7 +100,7 @@ public class ExerciseGenerationTaskService {
             return;
         }
         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
-        try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, () -> jobService.isCancelled(jobId), emitter::progress)) {
+        try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), () -> jobService.isCancelled(jobId), emitter::progress)) {
             switch (outcome.loopResult().status()) {
                 case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
                 case ERROR -> emitter.milestone(
@@ -102,7 +110,15 @@ public class ExerciseGenerationTaskService {
                     if (outcome.isAccepted()) {
                         emitter.progress("Checks passed. Saving the exercise.");
                         try {
-                            persistenceService.persist(exercise, user, outcome);
+                            // persist captures each repository's pre-persist HEAD (the pre-adaptation state, since the sandbox run never touched the live repos) and returns it
+                            // only
+                            // after every repository committed successfully. Record a revertible baseline ONLY for an accepted ADAPT applied in place — never for a
+                            // cancelled/rejected/
+                            // errored run — so a later run cannot overwrite this accepted adaptation's baseline and make it non-revertible. GENERATE has nothing to revert to.
+                            Map<RepositoryType, String> preAdaptationHeads = persistenceService.persist(exercise, user, outcome);
+                            if (event.mode() == GenerationMode.ADAPT) {
+                                adaptationRevertService.recordBaseline(exercise, user, jobId, preAdaptationHeads);
+                            }
                             // Advisory only: surface any spec-fidelity / coverage gaps as review comments WITHOUT changing the accepted status. The differential oracle accepted
                             // the
                             // exercise; these are non-blocking notes the instructor may act on. Best-effort — a failed attach never downgrades the SUCCESS.

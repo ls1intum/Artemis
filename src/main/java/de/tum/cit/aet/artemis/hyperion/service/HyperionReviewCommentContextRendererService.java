@@ -216,6 +216,50 @@ public class HyperionReviewCommentContextRendererService {
     }
 
     /**
+     * Renders the explicitly selected review threads for a whole-exercise ADAPT run into a prompt-ready instruction block, across ALL repositories (template/solution/tests), so the
+     * agent addresses exactly the feedback the instructor chose regardless of which repository each thread targets. Only active (not resolved, not outdated) threads among the
+     * selected ids are included, capped by {@link #MAX_SELECTED_FEEDBACK_THREADS} and the global comment budget.
+     *
+     * @param exerciseId the exercise id
+     * @param threadIds  the explicitly selected review-thread ids
+     * @return a feedback instruction block ending with the serialized JSON payload, or an empty string when no selected thread resolves to active feedback
+     */
+    public String renderWholeExerciseSelectedFeedback(long exerciseId, Collection<Long> threadIds) {
+        if (threadIds == null || threadIds.isEmpty()) {
+            return "";
+        }
+        List<Long> orderedThreadIds = threadIds.stream().filter(Objects::nonNull).distinct().limit(MAX_SELECTED_FEEDBACK_THREADS).toList();
+        if (orderedThreadIds.isEmpty()) {
+            return "";
+        }
+        Map<Long, Integer> threadOrder = new LinkedHashMap<>();
+        for (int index = 0; index < orderedThreadIds.size(); index++) {
+            threadOrder.put(orderedThreadIds.get(index), index);
+        }
+        RemainingSerializedComments remainingSerializedComments = new RemainingSerializedComments(MAX_SERIALIZED_COMMENTS);
+        List<Map<String, Object>> serializedThreads = new ArrayList<>();
+        List<CommentThread> selectedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream()
+                .filter(thread -> !thread.isResolved() && !thread.isOutdated())
+                .sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE))).toList();
+        for (CommentThread thread : selectedThreads) {
+            if (remainingSerializedComments.exhausted()) {
+                break;
+            }
+            Map<String, Object> serializedThread = serializeSelectedFeedbackThread(thread, remainingSerializedComments);
+            if (serializedThread != null) {
+                serializedThreads.add(serializedThread);
+            }
+        }
+        if (serializedThreads.isEmpty()) {
+            return "";
+        }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("threads", serializedThreads);
+        return "Address the following selected instructor review feedback (each thread points at a file/line in one of the repositories). Apply the requested change for every "
+                + "thread while keeping the rest of the exercise intact:\n" + serializePayload(payload, exerciseId);
+    }
+
+    /**
      * Extracts the prompt-relevant text from a polymorphic review comment content DTO.
      *
      * @param content review comment content

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.verification.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -36,9 +37,23 @@ public class AgentSystemPromptService {
 
     /**
      * @param exercise the exercise being generated or adapted
-     * @return the full system prompt, framed for spec mode or from-scratch depending on whether the exercise already carries a real instructor problem statement
+     * @return the full system prompt in the default {@link GenerationMode#GENERATE} framing
      */
     public String build(ProgrammingExercise exercise) {
+        return build(exercise, GenerationMode.GENERATE);
+    }
+
+    /**
+     * Builds the system prompt, branching only its top framing on the run intent: {@link GenerationMode#GENERATE} authors the exercise from the plan (problem statement + metadata),
+     * while {@link GenerationMode#ADAPT} tells the agent the sandbox is already seeded with the CURRENT working exercise and it must apply the requested feedback while preserving
+     * everything the feedback leaves untouched. The contract, quality, layout, and self-check sections are identical for both — the differential oracle enforces the same invariants
+     * either way.
+     *
+     * @param exercise the exercise being generated or adapted
+     * @param mode     the explicit run intent (generate a fresh exercise vs. adapt the existing one)
+     * @return the full system prompt for the given mode
+     */
+    public String build(ProgrammingExercise exercise, GenerationMode mode) {
         ProgrammingLanguage language = exercise.getProgrammingLanguage();
         String languageName = language != null ? language.toString() : "the exercise language";
         // Spec mode: when the exercise already carries a real problem statement, it is the starting point — the BRIEF (the user message) still governs and may refine it or change
@@ -50,7 +65,7 @@ public class AgentSystemPromptService {
                         + "and edge case, and bring it up to the PROBLEM STATEMENT QUALITY standard below; rewrite or drop only what the BRIEF changes. Implement the solution, template, "
                         + "and tests to MATCH the resulting statement, add the required [task] bindings, and DELETE any internal/meta notes a placeholder left behind."
                 : "- problem-statement.md : the task description shown to students (you write it; it may currently be empty or a placeholder)";
-        return """
+        String prompt = """
                 You are an expert author of programming exercises for the Artemis learning platform, working inside a sandbox in the /workspace directory.
 
                 The workspace contains the complete exercise, one directory per repository:
@@ -239,7 +254,22 @@ public class AgentSystemPromptService {
                 """
                 .formatted(problemStatementGuidance, languageName, buildContextSection(exercise), staticCodeAnalysisGuidance(exercise),
                         LanguageGenerationProfile.guidanceFor(exercise));
+        return mode == GenerationMode.ADAPT ? ADAPT_MODE_FRAMING + prompt : prompt;
     }
+
+    /**
+     * Prepended in {@link GenerationMode#ADAPT}: the sandbox is seeded with the CURRENT, working exercise, so the run is a targeted revision, not a from-scratch author. It tells the
+     * agent to apply exactly the requested feedback and preserve everything the feedback leaves untouched, so an adaptation never silently rewrites unrelated parts of a working
+     * exercise. The contract below still governs — the revised exercise must satisfy every invariant the verifier enforces.
+     */
+    private static final String ADAPT_MODE_FRAMING = """
+            ADAPT MODE — you are REVISING an existing, working exercise, not authoring a new one. The solution/, template/, and tests/ directories are ALREADY populated with the \
+            current, working exercise; the problem statement is the instructor's current one. Apply EXACTLY the requested feedback (in the user message below) and change nothing \
+            else: preserve the existing problem statement, tasks, tests, and code wherever the feedback is silent, and keep the exercise's topic and structure. Make the smallest \
+            coherent set of edits that satisfies the feedback while keeping the whole exercise correct and consistent (solution passes, template fails, tasks bind). Do NOT rewrite \
+            the exercise from scratch or drop unrelated requirements. After your edits, the SAME correctness contract below must still hold end to end.
+
+            """;
 
     /**
      * A tight, exercise-specific BUILD CONTEXT block: the resolved project type, package/module name, checkout layout, the EXACT build phase commands the grader runs, and the

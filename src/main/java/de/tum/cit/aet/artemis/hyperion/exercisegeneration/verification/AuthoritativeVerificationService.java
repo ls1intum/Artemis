@@ -195,6 +195,17 @@ public class AuthoritativeVerificationService {
     }
 
     /**
+     * The GENERATE-mode overload (the tests-repo harness-immutability gate is enforced). See
+     * {@link #verify(InteractiveSandbox, String, ProgrammingExercise, Map, Map, Map, Map, Set, Set, boolean)} for the ADAPT-aware form.
+     */
+    public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
+            Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
+            Set<String> seededStructuralTestNames) {
+        return verify(sandbox, sessionId, exercise, seedTestsFiles, producedTestsFiles, producedTemplateFiles, producedSolutionFiles, extractionFailedRepositories,
+                seededStructuralTestNames, false);
+    }
+
+    /**
      * Runs the differential verification AND the sandbox-free integrity gates (harness immutability and solution-leak); the exercise is accepted only when both pass.
      * <p>
      * Non-forgeable: the verifier re-seeds a pristine {@code verify.sh} to a verifier-owned path outside {@code /workspace} the agent cannot reach, and that copy deletes any
@@ -214,11 +225,14 @@ public class AuthoritativeVerificationService {
      * @param seededStructuralTestNames    the AUTHORITATIVE structural test names the seeder injected this run (never agent-supplied); a {@code [task]} bound to one is exempt from
      *                                         binding RESOLUTION but still participates in the differential. Empty for callers without it (the from-scratch path falls back to the
      *                                         name-shape exemption)
+     * @param relaxTestsRepoImmutability   whether to SKIP the tests-repo harness-immutability gate (ADAPT mode only): a feedback item may legitimately add or adjust a test, and for
+     *                                         some build systems the manifest that registers it. The differential oracle (rebuilding pristine from the produced tree) remains the
+     *                                         real backstop, and the solution-leak, self-comparison, and extraction gates stay in force
      * @return the verdict (accepted, solution-passed, template-failed, test count, and the rejection reasons)
      */
     public VerificationResult verify(InteractiveSandbox sandbox, String sessionId, ProgrammingExercise exercise, Map<String, String> seedTestsFiles,
             Map<String, String> producedTestsFiles, Map<String, String> producedTemplateFiles, Map<String, String> producedSolutionFiles, Set<String> extractionFailedRepositories,
-            Set<String> seededStructuralTestNames) {
+            Set<String> seededStructuralTestNames, boolean relaxTestsRepoImmutability) {
         // The sandbox-dependent differential is computed by the SAME method the in-loop self-check uses, so the agent's `verify` tool and this acceptance decision can never
         // diverge.
         // This call layers the sandbox-FREE integrity gates and the final verdict on top of that shared analysis.
@@ -228,11 +242,19 @@ public class AuthoritativeVerificationService {
         List<String> reasons = new ArrayList<>(analysis.actionableReasons());
 
         // Integrity gates the build cannot see. Post-loop only (the self-check skips them): they need the seed snapshot and read-back files the agent loop lacks mid-session.
-        // F2: Java always ships a build harness (pom.xml/build.gradle), so an EMPTY seed snapshot is a failed capture, not a harness-free exercise — fail closed there.
-        boolean harnessSnapshotRequired = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
-        List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(seedTestsFiles, producedTestsFiles, harnessSnapshotRequired);
-        boolean harnessIntact = harnessTamperingReasons.isEmpty();
-        reasons.addAll(harnessTamperingReasons);
+        // ADAPT relaxes ONLY the tests-repo harness-immutability gate (a feedback item may legitimately add or adjust a test, or the manifest registering it); the differential
+        // oracle, which rebuilds pristine from the produced tree, stays the real backstop and the solution-leak/self-comparison/extraction gates below remain enforced.
+        boolean harnessIntact;
+        if (relaxTestsRepoImmutability) {
+            harnessIntact = true;
+        }
+        else {
+            // F2: Java always ships a build harness (pom.xml/build.gradle), so an EMPTY seed snapshot is a failed capture, not a harness-free exercise — fail closed there.
+            boolean harnessSnapshotRequired = exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA;
+            List<String> harnessTamperingReasons = ExerciseIntegrityGate.harnessTamperingReasons(seedTestsFiles, producedTestsFiles, harnessSnapshotRequired);
+            harnessIntact = harnessTamperingReasons.isEmpty();
+            reasons.addAll(harnessTamperingReasons);
+        }
         List<String> solutionLeakReasons = ExerciseIntegrityGate.solutionLeakReasons(producedTemplateFiles, producedSolutionFiles);
         boolean noSolutionLeak = solutionLeakReasons.isEmpty();
         reasons.addAll(solutionLeakReasons);

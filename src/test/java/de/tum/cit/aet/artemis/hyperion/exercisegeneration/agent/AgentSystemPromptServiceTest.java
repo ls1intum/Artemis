@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.verification.SandboxBuildCommandService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -60,6 +61,21 @@ class AgentSystemPromptServiceTest {
         assertThat(prompt).doesNotContain("Static code analysis is ON");
         exercise.setStaticCodeAnalysisEnabled(true);
         assertThat(systemPromptService.build(exercise)).contains("Static code analysis is ON");
+    }
+
+    @Test
+    void build_adaptMode_prependsAdaptFraming_generateModeDoesNot() {
+        ProgrammingExercise exercise = exerciseWithStatement("Implement a stack with push, pop and peek operations for integers.");
+
+        String adaptPrompt = systemPromptService.build(exercise, GenerationMode.ADAPT);
+        String generatePrompt = systemPromptService.build(exercise, GenerationMode.GENERATE);
+
+        assertThat(adaptPrompt).startsWith("ADAPT MODE").contains("REVISING an existing, working exercise").contains("change nothing");
+        // The default single-arg build and the explicit GENERATE build agree, and neither carries the ADAPT framing.
+        assertThat(generatePrompt).doesNotContain("ADAPT MODE").isEqualTo(systemPromptService.build(exercise));
+        // The shared correctness contract is present in BOTH modes.
+        assertThat(adaptPrompt).contains("THE CONTRACT");
+        assertThat(generatePrompt).contains("THE CONTRACT");
     }
 
     @Test
@@ -343,10 +359,9 @@ class AgentSystemPromptServiceTest {
 
     @Test
     void supportedGenerationLanguages_pinsTheOracleVerifiableSet() {
-        // Pin the exact set so server drift (the source of truth the client consumes) is caught.
-        assertThat(systemPromptService.supportedGenerationLanguages()).containsExactlyInAnyOrder(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON,
-                ProgrammingLanguage.JAVASCRIPT, ProgrammingLanguage.TYPESCRIPT, ProgrammingLanguage.GO, ProgrammingLanguage.RUST, ProgrammingLanguage.C_PLUS_PLUS,
-                ProgrammingLanguage.C_SHARP, ProgrammingLanguage.DART, ProgrammingLanguage.RUBY, ProgrammingLanguage.R, ProgrammingLanguage.HASKELL, ProgrammingLanguage.SWIFT);
+        // The production-enabled offer is intentionally JUST Java for this rollout (only the Java differential oracle is validated end-to-end); pin the exact set so server drift
+        // (the source of truth the client consumes) is caught, consistent with the Java-only gate and the sibling HyperionExerciseGenerationResourceTest.
+        assertThat(systemPromptService.supportedGenerationLanguages()).containsExactly(ProgrammingLanguage.JAVA);
     }
 
     @Test

@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,7 +35,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.orchestration.ExerciseGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.profile.LanguageGenerationProfile;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -57,6 +61,12 @@ class HyperionExerciseGenerationResourceTest {
     @Mock
     private AgentSystemPromptService agentSystemPromptService;
 
+    @Mock
+    private HyperionReviewCommentContextRendererService reviewCommentContextRenderer;
+
+    @Mock
+    private ExerciseAdaptationRevertService adaptationRevertService;
+
     private HyperionExerciseGenerationResource resource;
 
     private User testUser;
@@ -66,7 +76,8 @@ class HyperionExerciseGenerationResourceTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, jobService, agentSystemPromptService);
+        resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, jobService, agentSystemPromptService, reviewCommentContextRenderer,
+                adaptationRevertService);
 
         testUser = new User();
         testUser.setLogin("testuser");
@@ -108,6 +119,46 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-adapt");
         verify(jobService).startJob(testUser, testExercise, "RESOLVED", GenerationMode.ADAPT);
+    }
+
+    @Test
+    void generateExercise_withAdaptModeAndSelectedFeedback_foldsRenderedFeedbackIntoPrompt() {
+        ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO(GenerationMode.ADAPT, "Fix the off-by-one.", List.of(5L, 9L));
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(agentSystemPromptService.isGenerationSupported(ProgrammingLanguage.JAVA)).thenReturn(true);
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(agentSystemPromptService.resolvePrompt(request, testExercise)).thenReturn("RESOLVED");
+        when(reviewCommentContextRenderer.renderWholeExerciseSelectedFeedback(1L, List.of(5L, 9L))).thenReturn("FEEDBACK_BLOCK");
+        when(jobService.startJob(eq(testUser), eq(testExercise), argThat(prompt -> prompt.contains("RESOLVED") && prompt.contains("FEEDBACK_BLOCK")), eq(GenerationMode.ADAPT)))
+                .thenReturn("job-adapt-feedback");
+
+        ResponseEntity<ExerciseGenerationJobStartDTO> response = resource.generateExercise(1L, request);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().jobId()).isEqualTo("job-adapt-feedback");
+        verify(jobService).startJob(eq(testUser), eq(testExercise), argThat(prompt -> prompt.contains("RESOLVED") && prompt.contains("FEEDBACK_BLOCK")), eq(GenerationMode.ADAPT));
+    }
+
+    @Test
+    void revertAdaptation_whenBaselineExists_returns200() {
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(adaptationRevertService.revert(testExercise, testUser)).thenReturn(Optional.of(new ExerciseAdaptationRevertService.RevertResult(true, List.of())));
+
+        ResponseEntity<Void> response = resource.revertAdaptation(1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    void revertAdaptation_whenNothingToRevert_returns404() {
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
+        when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
+        when(adaptationRevertService.revert(testExercise, testUser)).thenReturn(Optional.empty());
+
+        ResponseEntity<Void> response = resource.revertAdaptation(1L);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -231,11 +282,13 @@ class HyperionExerciseGenerationResourceTest {
         Method generate = HyperionExerciseGenerationResource.class.getMethod("generateExercise", long.class, ExerciseGenerationRequestDTO.class);
         Method status = HyperionExerciseGenerationResource.class.getMethod("getExerciseGenerationStatus", long.class);
         Method cancel = HyperionExerciseGenerationResource.class.getMethod("cancelExerciseGeneration", long.class, String.class);
+        Method revert = HyperionExerciseGenerationResource.class.getMethod("revertAdaptation", long.class);
         Method supported = HyperionExerciseGenerationResource.class.getMethod("getSupportedGenerationLanguages");
 
         assertThat(generate.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
         assertThat(status.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
         assertThat(cancel.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
+        assertThat(revert.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
         // The supported-languages endpoint is not exercise-scoped, so it is guarded by the global least-privilege editor role instead.
         assertThat(supported.getAnnotation(EnforceAtLeastEditor.class)).isNotNull();
     }

@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentSystemPromptService;
@@ -114,11 +115,16 @@ public class ExerciseGenerationOrchestrationService {
      * @param user       the instructor performing the generation, recorded with the LLM token-usage trace
      * @param userPrompt the instruction for this run (a generation brief, or the feedback to address)
      * @param jobId      the job id, used to register a node-local cancel hook
+     * @param mode       the explicit run intent (generate vs. adapt); branches only the prompt framing and, for {@link GenerationMode#ADAPT}, relaxes the tests-repo immutability gate
      * @param cancelled  polled cooperatively; if it returns {@code true} the session is aborted
      * @param progress   receives short human-readable progress lines for the live transcript; may be {@code null}
      * @return the outcome including the verification verdict and the produced files
      */
-    public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, BooleanSupplier cancelled, Consumer<String> progress) {
+    public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
+            Consumer<String> progress) {
+        // ADAPT re-runs against the seeded live repositories, so a feedback item may legitimately add or adjust a test; the tests-repo harness-immutability gate is relaxed for it
+        // (the differential oracle remains the backstop). GENERATE keeps every gate enforced.
+        boolean relaxTestsRepoImmutability = mode == GenerationMode.ADAPT;
         InteractiveSandbox sandbox = requireSandbox();
         String sessionId = null;
         Long courseId = courseIdOf(exercise);
@@ -135,7 +141,7 @@ public class ExerciseGenerationOrchestrationService {
             // Snapshot the seeded tests-repo harness so the verifier can reject later tampering against this exact baseline.
             Map<String, String> testsSeedSnapshot = workspace.seedWorkspace(sandbox, sessionId, exercise);
 
-            String systemPrompt = systemPromptFactory.build(exercise);
+            String systemPrompt = systemPromptFactory.build(exercise, mode);
             // The agent's `verify` tool runs the SAME differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); post-loop
             // verify(...)
             // below stays the sole acceptance truth.
@@ -192,7 +198,7 @@ public class ExerciseGenerationOrchestrationService {
                     extractionFailed.add(GenerationWorkspaceService.directoryFor(RepositoryType.SOLUTION));
                 }
                 verification = verifier.verify(sandbox, sessionId, exercise, testsSeedSnapshot, producedTests.files(), producedTemplate.files(), producedSolution.files(),
-                        extractionFailed, seededStructuralTestNames);
+                        extractionFailed, seededStructuralTestNames, relaxTestsRepoImmutability);
                 emit(progress, verification.report());
 
                 // Advisory critic against this attempt's artifacts; never touches `verification`.
