@@ -479,15 +479,17 @@ public class HyperionProgrammingExerciseContextRendererService {
             Path repositoryPath = testRepository.getLocalPath();
             StringBuilder testCode = new StringBuilder();
             try (var paths = Files.walk(repositoryPath)) {
-                // Include test sources (.java) and the structural spec (test.json for Ares exercises) so the exact expected API is visible.
-                paths.filter(path -> path.toString().endsWith(".java") || path.getFileName().toString().equals("test.json")).filter(Files::isRegularFile).sorted().forEach(path -> {
-                    try {
-                        testCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n").append(Files.readString(path)).append("\n\n");
-                    }
-                    catch (IOException e) {
-                        log.warn("Failed to read test file {}: {}", path, e.getMessage());
-                    }
-                });
+                // Include the structural spec (test.json for Ares exercises) and test sources (.java) so the exact expected API is visible.
+                // Emit test.json first so the definitive structural contract survives length capping in the caller.
+                paths.filter(path -> path.toString().endsWith(".java") || path.getFileName().toString().equals("test.json")).filter(Files::isRegularFile)
+                        .sorted(Comparator.comparing((Path path) -> isStructuralSpec(path) ? 0 : 1).thenComparing(Path::toString)).forEach(path -> {
+                            try {
+                                testCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n").append(Files.readString(path)).append("\n\n");
+                            }
+                            catch (IOException e) {
+                                log.warn("Failed to read test file {}: {}", path, e.getMessage());
+                            }
+                        });
             }
             return testCode.length() > 0 ? testCode.toString() : noTests;
         }
@@ -495,5 +497,9 @@ public class HyperionProgrammingExerciseContextRendererService {
             log.warn("Could not read test repository for exercise {}: {}. Generating from the problem statement only.", exercise.getId(), e.getMessage());
             return noTests;
         }
+    }
+
+    private static boolean isStructuralSpec(Path path) {
+        return "test.json".equals(path.getFileName().toString());
     }
 }
