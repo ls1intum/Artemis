@@ -45,22 +45,57 @@ class AttachmentFileHashServiceTest {
     }
 
     @Test
-    void wrapsMultipartFileInputStreamIOException() throws IOException {
-        MultipartFile file = new ThrowingMultipartFile();
+    void wrapsMultipartFileInputStreamOpenIOException() throws IOException {
+        MultipartFile file = new OpeningFailingMultipartFile();
 
         assertThatThrownBy(() -> service.sha256(file)).isInstanceOf(AttachmentFileHashException.class).hasMessageContaining("Could not hash uploaded attachment file")
                 .hasCauseInstanceOf(IOException.class);
     }
 
-    private static final class ThrowingMultipartFile extends MockMultipartFile {
+    @Test
+    void wrapsMultipartFileInputStreamReadIOException() throws IOException {
+        IOException readException = new IOException("Cannot read stream");
+        MultipartFile file = new ReadFailingMultipartFile(readException);
 
-        private ThrowingMultipartFile() {
+        assertThatThrownBy(() -> service.sha256(file)).isInstanceOf(AttachmentFileHashException.class).hasMessageContaining("Could not hash attachment file stream")
+                .hasCause(readException);
+    }
+
+    private static final class OpeningFailingMultipartFile extends MockMultipartFile {
+
+        private OpeningFailingMultipartFile() {
             super("file", new byte[0]);
         }
 
         @Override
         public InputStream getInputStream() throws IOException {
             throw new IOException("Cannot read file");
+        }
+    }
+
+    private static final class ReadFailingMultipartFile extends MockMultipartFile {
+
+        private final IOException readException;
+
+        private ReadFailingMultipartFile(IOException readException) {
+            super("file", new byte[0]);
+            this.readException = readException;
+        }
+
+        @Override
+        public InputStream getInputStream() {
+            return new InputStream() {
+
+                @Override
+                public int read() throws IOException {
+                    throw readException;
+                }
+
+                @Override
+                public int read(byte[] bytes, int offset, int length) throws IOException {
+                    throw readException;
+                }
+            };
         }
     }
 }
