@@ -43,6 +43,10 @@ export type WorkingTimeUpdateEvent = ExamLiveEvent & {
     oldWorkingTime: number;
     newWorkingTime: number;
     courseWide: boolean;
+    // The exam's current start and end date, sent with every working time update so a conducting student can refresh
+    // the pre-start countdown and the start-based content visibility when the schedule changes.
+    newStartDate: dayjs.Dayjs;
+    newEndDate: dayjs.Dayjs;
 };
 
 export type ProblemStatementUpdateEvent = ExamLiveEvent & {
@@ -272,7 +276,7 @@ export class ExamParticipationLiveEventsService {
             return;
         }
 
-        event.createdDate = convertDateFromServer(event.createdDate)!;
+        this.convertEventDatesFromServer(event);
         event.user = this.studentExam?.user;
 
         // Add to the front of the array (newest first) and notify all observers
@@ -280,6 +284,20 @@ export class ExamParticipationLiveEventsService {
         this.newSystemEventSubject.next(event);
         this.newUserEventSubject.next(event);
         this.allEventsSubject.next(this.events);
+    }
+
+    /**
+     * Converts the server date format on an incoming event. Besides {@link ExamLiveEvent.createdDate}, working time
+     * update events also carry the exam's new start and end date, which the pre-start countdown and content visibility
+     * depend on, so those are converted here too.
+     */
+    private convertEventDatesFromServer(event: ExamLiveEvent): void {
+        event.createdDate = convertDateFromServer(event.createdDate)!;
+        if (event.eventType === ExamLiveEventType.WORKING_TIME_UPDATE) {
+            const workingTimeEvent = event as WorkingTimeUpdateEvent;
+            workingTimeEvent.newStartDate = convertDateFromServer(workingTimeEvent.newStartDate)!;
+            workingTimeEvent.newEndDate = convertDateFromServer(workingTimeEvent.newEndDate)!;
+        }
     }
 
     /**
@@ -323,7 +341,7 @@ export class ExamParticipationLiveEventsService {
             }
 
             fetchedEvents.forEach((event) => {
-                event.createdDate = convertDateFromServer(event.createdDate)!;
+                this.convertEventDatesFromServer(event);
             });
 
             // Build a set of IDs already present in the in-memory array (from WebSocket delivery)
@@ -446,6 +464,15 @@ export class ExamParticipationLiveEventsService {
     }
 
     /**
+     * A working time update whose working time did not actually change only carries a schedule (start/end date)
+     * update for the system countdown handler. It must not be surfaced to the user as a "working time changed"
+     * notification, so it is filtered out of the user-facing observers below.
+     */
+    private isScheduleOnlyWorkingTimeUpdate(event: ExamLiveEvent): boolean {
+        return event.eventType === ExamLiveEventType.WORKING_TIME_UPDATE && (event as WorkingTimeUpdateEvent).oldWorkingTime === (event as WorkingTimeUpdateEvent).newWorkingTime;
+    }
+
+    /**
      * Returns an observable that emits events intended for user-facing notification
      * (e.g., the exam live events overlay that shows announcements and attendance checks).
      *
@@ -453,6 +480,7 @@ export class ExamParticipationLiveEventsService {
      *   - Problem statement updates created before the exam start date are suppressed,
      *     because instructors may update problem statements during the preparation phase
      *     and students should not see stale pre-exam notifications.
+     *   - Schedule-only working time updates (working time unchanged) are suppressed; they only drive the countdown.
      *
      * @param eventTypes    optional filter for specific event types
      * @param examStartDate the exam's official start date, used to suppress pre-exam events
@@ -465,7 +493,9 @@ export class ExamParticipationLiveEventsService {
                     (eventTypes.length === 0 || eventTypes.includes(event.eventType)) &&
                     // Suppress problem statement updates that were created before the exam started,
                     // as these reflect instructor preparation, not live exam changes
-                    !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(examStartDate)),
+                    !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(examStartDate)) &&
+                    // Suppress schedule-only working time updates (working time unchanged); they only drive the countdown
+                    !this.isScheduleOnlyWorkingTimeUpdate(event),
             ),
             tap((event: ExamLiveEvent) => this.setEventAcknowledgeTimestamps(event)),
             distinct((event) => event.id),
@@ -484,7 +514,10 @@ export class ExamParticipationLiveEventsService {
      */
     public observeAllEvents(eventTypes: ExamLiveEventType[] = []): Observable<ExamLiveEvent[]> {
         return this.allEventsSubject.asObservable().pipe(
-            map((events: ExamLiveEvent[]) => (eventTypes.length === 0 ? events : events.filter((event) => eventTypes.includes(event.eventType)))),
+            map((events: ExamLiveEvent[]) =>
+                // Also drop schedule-only working time updates so the history overlay does not show a no-op "working time changed" entry.
+                events.filter((event) => (eventTypes.length === 0 || eventTypes.includes(event.eventType)) && !this.isScheduleOnlyWorkingTimeUpdate(event)),
+            ),
             tap((events: ExamLiveEvent[]) => events.forEach((event) => this.setEventAcknowledgeTimestamps(event))),
         );
     }

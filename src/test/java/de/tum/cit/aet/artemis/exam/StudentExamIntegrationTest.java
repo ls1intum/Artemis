@@ -842,6 +842,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         assertThat(capturedEvent.newWorkingTime()).isEqualTo(newWorkingTime);
         assertThat(capturedEvent.oldWorkingTime()).isEqualTo(oldWorkingTime);
+        // The event also carries the exam's current schedule so a conducting student can refresh the countdown (#13071).
+        var examDb = examRepository.findById(exam1.getId()).orElseThrow();
+        assertThat(capturedEvent.newStartDate()).isEqualTo(examDb.getStartDate().toInstant());
+        assertThat(capturedEvent.newEndDate()).isEqualTo(examDb.getEndDate().toInstant());
     }
 
     private ExamLiveEventBaseDTO captureExamLiveEventForId(Long studentExamOrExamId, boolean examWide) {

@@ -119,6 +119,16 @@ public class ExamLiveEventsService {
         event.setOldWorkingTime(oldWorkingTime);
         event.setCourseWide(courseWide);
 
+        // Always include the current exam schedule so a conducting student can refresh the pre-start countdown and the
+        // start-based visibility (and recompute the end time from the correct start) whenever the schedule changes.
+        var exam = studentExam.getExam();
+        if (exam.getStartDate() != null) {
+            event.setNewStartDate(exam.getStartDate().toInstant());
+        }
+        if (exam.getEndDate() != null) {
+            event.setNewEndDate(exam.getEndDate().toInstant());
+        }
+
         this.storeAndDistributeLiveExamEvent(event);
     }
 
