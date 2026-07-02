@@ -180,8 +180,8 @@
                     <td>{{ user.lastModifiedBy }}</td>
                     <td>{{ user.lastModifiedDate | artemisDate }}</td>
                     <td class="text-end">
-                        <p-buttonGroup>
-                            <a [routerLink]="['./', user.login]" pButton size="small" severity="info" [pTooltip]="'entity.action.view' | artemisTranslate">
+                        <div class="flex items-center justify-end gap-1">
+                            <a [routerLink]="['./', user.login]" pButton size="small" severity="info" [outlined]="true" [pTooltip]="'entity.action.view' | artemisTranslate">
                                 <fa-icon [icon]="faEye" />
                             </a>
                             <a
@@ -190,6 +190,7 @@
                                 pButton
                                 size="small"
                                 severity="warn"
+                                [outlined]="true"
                                 [pTooltip]="'entity.action.edit' | artemisTranslate"
                             >
                                 <fa-icon [icon]="faPencil" />
@@ -200,6 +201,7 @@
                                     size="small"
                                     severity="success"
                                     type="button"
+                                    [outlined]="true"
                                     (click)="ldapSync(user.id!)"
                                     data-testid="ldap-sync-button"
                                     [pTooltip]="'entity.action.ldap' | artemisTranslate"
@@ -211,7 +213,9 @@
                                 pButton
                                 severity="danger"
                                 size="small"
+                                [outlined]="true"
                                 [renderButtonStyle]="false"
+                                [renderButtonText]="false"
                                 jhiDeleteButton
                                 [entityTitle]="user.login!"
                                 deleteQuestion="artemisApp.userManagement.delete.question"
@@ -222,7 +226,7 @@
                             >
                                 <fa-icon [icon]="faTrash" />
                             </button>
-                        </p-buttonGroup>
+                        </div>
                     </td>
                 </tr>
             </ng-template>
