@@ -4,8 +4,10 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,16 +24,21 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileUpdateResult;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Conditional(LectureEnabled.class)
 @Service
@@ -50,6 +57,10 @@ public class AttachmentVideoUnitService {
 
     private final AttachmentService attachmentService;
 
+    private final LectureContentUpdateClassifier lectureContentUpdateClassifier;
+
+    private final SlideRepository slideRepository;
+
     private final SlideSplitterService slideSplitterService;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
@@ -60,12 +71,15 @@ public class AttachmentVideoUnitService {
 
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
-            Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService) {
+            Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService,
+            LectureContentUpdateClassifier lectureContentUpdateClassifier, SlideRepository slideRepository) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.attachmentFileHashService = attachmentFileHashService;
         this.attachmentService = attachmentService;
+        this.lectureContentUpdateClassifier = lectureContentUpdateClassifier;
+        this.slideRepository = slideRepository;
         this.slideSplitterService = slideSplitterService;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
@@ -111,7 +125,7 @@ public class AttachmentVideoUnitService {
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
             MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
-        int payloadFingerprintBeforeUpdate = buildIngestionPayloadFingerprint(existingAttachmentVideoUnit);
+        LectureContentUpdateSnapshot beforeSnapshot = buildSnapshot(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
@@ -122,10 +136,12 @@ public class AttachmentVideoUnitService {
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
+        AttachmentFileUpdateResult fileUpdateResult = AttachmentFileUpdateResult.unchanged(existingAttachment != null ? existingAttachment.getVersion() : null);
         boolean createdNewAttachment = false;
 
         if (existingAttachment == null && updateAttachment != null) {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
+            fileUpdateResult = AttachmentFileUpdateResult.attachmentAdded(existingAttachmentVideoUnit.getAttachment().getVersion());
             createdNewAttachment = true;
         }
 
@@ -143,7 +159,10 @@ public class AttachmentVideoUnitService {
             }
             else if (existingAttachment != null) {
                 boolean isFileNeutralSlideMetadataUpdate = attachmentUpdateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && hasHiddenPagesRequestPart;
-                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages, hasUploadedFile);
+                if (hasUploadedFile) {
+                    fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
+                }
+                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages, hasUploadedFile && fileUpdateResult.fileBytesChanged());
 
                 if (isFileNeutralSlideMetadataUpdate) {
                     Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
@@ -152,24 +171,27 @@ public class AttachmentVideoUnitService {
                     attachmentService.regenerateStudentVersion(savedAttachment);
                 }
                 else if (hasUploadedFile) {
-                    AttachmentFileUpdateResult fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
+                    Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
+                    savedAttachmentVideoUnit.setAttachment(savedAttachment);
+
                     if (fileUpdateResult.fileBytesChanged()) {
                         log.debug("Updated attachment {} file bytes from version {} to {}", existingAttachment.getId(), fileUpdateResult.oldVersion(),
                                 fileUpdateResult.newVersion());
+                        evictCache(updateFile, savedAttachmentVideoUnit);
+
+                        // Split PDF into slides, respecting custom page order if provided
+                        if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                            if (pageOrder == null) {
+                                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+                            }
+                            else {
+                                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                            }
+                        }
                     }
-
-                    Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-                    savedAttachmentVideoUnit.setAttachment(savedAttachment);
-                    evictCache(updateFile, savedAttachmentVideoUnit);
-
-                    // Split PDF into slides, respecting custom page order if provided
-                    if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
-                        if (pageOrder == null) {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
-                        }
-                        else {
-                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
-                        }
+                    else if (hasHiddenPagesRequestPart) {
+                        slideSplitterService.updateSlideMetadata(savedAttachmentVideoUnit, hiddenPages);
+                        attachmentService.regenerateStudentVersion(savedAttachment);
                     }
                 }
                 else {
@@ -179,35 +201,36 @@ public class AttachmentVideoUnitService {
             }
         }
 
-        // Trigger content processing if the ingestion payload changed and prepare unit for client response
-        triggerContentProcessingBasedOnPayloadChange(payloadFingerprintBeforeUpdate, savedAttachmentVideoUnit);
+        LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit);
+        var updateKind = lectureContentUpdateClassifier.classify(beforeSnapshot, afterSnapshot, fileUpdateResult);
+        contentProcessingService.ifPresent(api -> api.triggerProcessingForUpdateKind(savedAttachmentVideoUnit, updateKind));
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
     }
 
-    private void triggerContentProcessingBasedOnPayloadChange(int payloadFingerprintBeforeUpdate, AttachmentVideoUnit savedAttachmentVideoUnit) {
-        int payloadFingerprintAfterUpdate = buildIngestionPayloadFingerprint(savedAttachmentVideoUnit);
-        boolean ingestionPayloadChanged = payloadFingerprintBeforeUpdate != payloadFingerprintAfterUpdate;
+    private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit) {
+        Lecture lecture = unit.getLecture();
+        Course course = lecture != null ? lecture.getCourse() : null;
+        Attachment attachment = unit.getAttachment();
 
-        if (!ingestionPayloadChanged) {
-            // No changes in the ingestion payload - skip processing entirely
-            return;
-        }
-
-        // Something changed in the payload (could be metadata or content)
-        // Use triggerProcessingForMetadataChange to force reprocessing even if only metadata changed
-        contentProcessingService.ifPresent(api -> api.triggerProcessingForMetadataChange(savedAttachmentVideoUnit));
+        return new LectureContentUpdateSnapshot(unit.getId(), unit.getName(), lecture != null ? lecture.getTitle() : null, course != null ? course.getTitle() : null,
+                course != null ? course.getDescription() : null, attachment != null ? attachment.getVersion() : null, attachment != null ? attachment.getLink() : null,
+                unit.getVideoSource(), resolveReleaseDate(unit, attachment), buildSlideHiddenUntilBySlideNumber(unit.getId()));
     }
 
-    private int buildIngestionPayloadFingerprint(AttachmentVideoUnit unit) {
-        var lecture = unit.getLecture();
-        var course = lecture != null ? lecture.getCourse() : null;
-        var attachment = unit.getAttachment();
-        return Objects.hash(unit.getId(), unit.getName(), lecture != null ? lecture.getId() : null, lecture != null ? lecture.getTitle() : null,
-                course != null ? course.getId() : null, course != null ? course.getTitle() : null, course != null && course.getDescription() != null ? course.getDescription() : "",
-                attachment != null ? attachment.getVersion() : -1, attachment != null && attachment.getLink() != null ? attachment.getLink() : "",
-                unit.getVideoSource() != null && !unit.getVideoSource().isBlank() ? unit.getVideoSource() : null);
+    private Map<Integer, ZonedDateTime> buildSlideHiddenUntilBySlideNumber(Long attachmentVideoUnitId) {
+        var slideHiddenUntilBySlideNumber = new LinkedHashMap<Integer, ZonedDateTime>();
+        slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId).stream().sorted(Comparator.comparingInt(Slide::getSlideNumber))
+                .forEach(slide -> slideHiddenUntilBySlideNumber.put(slide.getSlideNumber(), slide.getHidden()));
+        return slideHiddenUntilBySlideNumber;
+    }
+
+    private static ZonedDateTime resolveReleaseDate(AttachmentVideoUnit unit, Attachment attachment) {
+        if (unit.getReleaseDate() != null) {
+            return unit.getReleaseDate();
+        }
+        return attachment != null ? attachment.getReleaseDate() : null;
     }
 
     private AttachmentFileUpdateResult updateAttachmentFileIfChanged(MultipartFile uploadedFile, Attachment existingAttachment, boolean keepFilename, Long attachmentVideoUnitId) {

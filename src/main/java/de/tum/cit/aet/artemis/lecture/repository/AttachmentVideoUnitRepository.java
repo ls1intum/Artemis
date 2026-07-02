@@ -70,6 +70,16 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
         return getValueElseThrow(findWithSlidesAndCompetenciesById(attachmentVideoUnitId), attachmentVideoUnitId);
     }
 
+    @Query("""
+            SELECT attachmentVideoUnit
+            FROM AttachmentVideoUnit attachmentVideoUnit
+                LEFT JOIN FETCH attachmentVideoUnit.attachment
+                JOIN FETCH attachmentVideoUnit.lecture lecture
+                JOIN FETCH lecture.course
+            WHERE attachmentVideoUnit.id = :attachmentVideoUnitId
+            """)
+    Optional<AttachmentVideoUnit> findWithLectureAndCourseAndAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
+
     /**
      * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet.
      * Used by the backfill scheduler to process legacy units that existed before the processing pipeline was deployed.

@@ -170,7 +170,7 @@ public class AttachmentVideoUnitResource {
 
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
         AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
-        validateAttachmentUpdateIntent(updateIntent, file);
+        validateAttachmentUpdateIntent(updateIntent, file, existingAttachmentVideoUnit, attachment);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
@@ -198,10 +198,13 @@ public class AttachmentVideoUnitResource {
         return ResponseEntity.ok(savedAttachmentVideoUnit);
     }
 
-    private void validateAttachmentUpdateIntent(AttachmentUpdateIntent updateIntent, MultipartFile file) {
+    private void validateAttachmentUpdateIntent(AttachmentUpdateIntent updateIntent, MultipartFile file, AttachmentVideoUnit existingAttachmentVideoUnit, Attachment attachment) {
         boolean hasFile = file != null && !file.isEmpty();
         if (updateIntent == null) {
             throw new BadRequestAlertException("Attachment update intent is required", ENTITY_NAME, "attachmentUpdateIntentRequired");
+        }
+        if (isStaleAttachmentPartWithoutFile(updateIntent, file, existingAttachmentVideoUnit, attachment)) {
+            throw new BadRequestAlertException("Creating an attachment requires a file", ENTITY_NAME, "fileRequiredForNewAttachment");
         }
         if (updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && hasFile) {
             throw new BadRequestAlertException("NO_FILE_CHANGE requests must not include a file", ENTITY_NAME, "fileNotAllowedForNoFileChange");
@@ -209,6 +212,12 @@ public class AttachmentVideoUnitResource {
         if ((updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED) && !hasFile) {
             throw new BadRequestAlertException("File update requests must include a file", ENTITY_NAME, "fileRequiredForFileChange");
         }
+    }
+
+    private static boolean isStaleAttachmentPartWithoutFile(AttachmentUpdateIntent updateIntent, MultipartFile file, AttachmentVideoUnit existingAttachmentVideoUnit,
+            Attachment attachment) {
+        boolean hasFile = file != null && !file.isEmpty();
+        return existingAttachmentVideoUnit.getAttachment() == null && attachment != null && updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && !hasFile;
     }
 
     /**

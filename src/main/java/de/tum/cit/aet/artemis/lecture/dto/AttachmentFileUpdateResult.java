@@ -9,4 +9,8 @@ public record AttachmentFileUpdateResult(boolean fileBytesChanged, boolean attac
     public static AttachmentFileUpdateResult changed(Integer oldVersion, Integer newVersion) {
         return new AttachmentFileUpdateResult(true, false, false, oldVersion, newVersion);
     }
+
+    public static AttachmentFileUpdateResult attachmentAdded(Integer newVersion) {
+        return new AttachmentFileUpdateResult(false, true, false, null, newVersion);
+    }
 }
