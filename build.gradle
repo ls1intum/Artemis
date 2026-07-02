@@ -10,6 +10,14 @@ buildscript {
         }
     }
     dependencies {
+        // Force the entire Jackson 2.x family to 2.22.0 on the build-script / plugin classpath too.
+        // The org.openapi.generator and springdoc plugins otherwise drag in older jackson-databind
+        // (2.19.x requested, resolved to 2.21.3), which the GitHub dependency graph reports and
+        // Dependabot flags even though the shipped WAR only ever contains 2.22.0. enforcedPlatform
+        // applies the jackson-bom's authoritative per-module versions (e.g. jackson-annotations 2.22),
+        // so no version is invented. Build-time only, not shipped. Keep in sync with the project-level
+        // jackson-bom import below. (Jackson 3, group tools.jackson.*, is intentionally not touched.)
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.0")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
