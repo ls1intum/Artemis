@@ -422,6 +422,13 @@ describe('ExerciseReviewCommentService', () => {
         expect(threadIds).toEqual([1]);
     });
 
+    it('selectedFeedbackThreads resolves selected ids to existing threads in selection order, dropping missing ones', () => {
+        service.threads.set([{ id: 3, targetType: CommentThreadLocationType.SOLUTION_REPO } as any, { id: 1, targetType: CommentThreadLocationType.TEMPLATE_REPO } as any]);
+        service.selectedFeedbackThreadIds.set([1, 99, 3]);
+
+        expect(service.selectedFeedbackThreads().map((thread) => thread.id)).toEqual([1, 3]);
+    });
+
     it('toggleGroupResolvedInContext should replace all updated group threads', () => {
         service.setExercise(3);
         service.threads.set([

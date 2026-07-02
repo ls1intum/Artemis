@@ -17,7 +17,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
-import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { PlanSuggestions, ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -60,8 +60,16 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     programmingExercise = input<ProgrammingExercise>();
+    /** Whether a whole-exercise generation save is currently in flight, to disable the "Draft a plan to review" action while the footer's run is starting. */
+    isGeneratingWithAi = input<boolean>(false);
+    /** Whether the create form is in AI mode: the "Your Requirements" brief + the "Draft a plan to review" action are shown (the footer owns "Generate entire exercise"). */
+    isAiMode = input<boolean>(false);
     problemStatementChange = output<string>();
     programmingExerciseChange = output<ProgrammingExercise>();
+    /** Emits the instructor's "Your Requirements" brief on every keystroke so the parent can thread it into the footer's "Generate entire exercise" action. */
+    briefChange = output<string>();
+    /** Emits the metadata a draft proposes (title/difficulty/categories) so the parent can apply them as editable defaults on the lean AI page. */
+    planSuggestions = output<PlanSuggestions>();
 
     /** Tracks the authoritative competency links state, updated whenever links change from any source. */
     readonly activeCompetencyLinks = signal<CompetencyExerciseLink[]>([]);
@@ -111,6 +119,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 this.problemStatementChange.emit(content);
                 this.programmingExerciseChange.emit(exercise);
             },
+            onPlanSuggestions: (suggestions) => this.planSuggestions.emit(suggestions),
         });
     }
 
@@ -130,7 +139,20 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     }
 
     handleProblemStatementAction(): void {
+        if (this.isAiMode()) {
+            // In the lean AI create mode this button always (re)drafts the plan from the brief. It must NOT fall through to the editor's refine/diff flow: refine clears userPrompt while the
+            // parent's footer brief tracks briefChange, so the visible textarea and the "Generate entire exercise" brief would silently diverge. Re-drafting keeps the brief and overwrites
+            // the previewed plan, which is exactly what re-clicking "Re-draft plan" should do.
+            this.aiOps.generateProblemStatement(this.programmingExercise(), this.editableInstructions());
+            return;
+        }
         this.aiOps.handleProblemStatementAction(this.programmingExercise(), this.editableInstructions());
+    }
+
+    /** Updates the local brief signal and surfaces it to the parent so the footer's "Generate entire exercise" action always has the latest "Your Requirements" text. */
+    onBriefChange(value: string): void {
+        this.userPrompt.set(value);
+        this.briefChange.emit(value);
     }
 
     closeDiffView(): void {

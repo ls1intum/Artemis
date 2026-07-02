@@ -10,7 +10,17 @@
                 "switchToSimpleMode": "Zum einfachen Modus wechseln",
                 "simpleModeTooltip": "Der einfache Modus reduziert die Ansicht auf Konfigurationsoptionen die für eine grundlegende Programmieraufgabe benötigt werden. Änderungen aus dem erweiterten Modus werden beim Speichern übernommen.",
                 "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
-                "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
+                "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten.",
+                "aiModeTooltip": "Im KI-Modus beschreibst du die gewünschte Aufgabe in eigenen Worten. Wähle einfach die Programmiersprache und beschreibe, was du möchtest — Artemis Intelligence schreibt die Problemstellung, baut die Repositorys und verifiziert die Aufgabe für dich. Titel, Punkte und Bezeichner werden mit sinnvollen Standardwerten gefüllt, die du danach anpassen kannst. Du kannst vorab einen Plan entwerfen und prüfen."
+            },
+            "aiPlanSuggestions": {
+                "title": "Vorgeschlagene Einstellungen",
+                "hint": "Artemis Intelligence hat diese aus deinem Plan vorgeschlagen und automatisch übernommen. Du kannst sie beliebig anpassen oder entfernen — sie beeinflussen die Generierung nicht."
+            },
+            "editMode": {
+                "simple": "Einfach",
+                "advanced": "Erweitert",
+                "ai": "KI"
             },
             "problemStatementGlobalRefinementRequest": {
                 "userPrompt": "Eingabeaufforderung"
@@ -117,6 +127,7 @@
             "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekttyp wirklich geändert werden?",
+            "unsavedChangesModeSwitch": "Die Aufgabenstellung enthält Änderungen, die beim Moduswechsel verworfen werden. Möchtest du fortfahren?",
             "templateRepositoryUri": "Vorlagen-Repository-Url",
             "testRepositoryUri": "Test-Repository-Url",
             "solutionRepositoryUri": "Lösungs-Repository-Url",
@@ -296,12 +307,17 @@
                 "refinementAssistance": "Problemstellung verfeinern",
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",
+                "aiModeHint": "Beschreibe die gewünschte Aufgabe. Wenn du auf „Gesamte Aufgabe generieren“ klickst, schreibt Artemis Intelligence die Problemstellung, baut die Repositorys und verifiziert die Aufgabe — und bringt dich anschließend in den Editor. Optional kannst du zuerst einen Plan entwerfen, um ihn vor dem vollständigen Build zu prüfen und anzupassen.",
+                "aiDefaultsNote": "Nur die Sprache und deine Beschreibung werden benötigt. Artemis startet die Aufgabe mit sinnvollen Standardwerten — 10 Punkte, in die Kurswertung einbezogen und ein Titel aus der generierten Aufgabenstellung — die du anschließend im Editor ändern kannst. Veröffentlichungs- und Abgabetermine bleiben ungesetzt, bis du die Aufgabe veröffentlichst.",
+                "draftPlanToReview": "Plan zum Prüfen entwerfen",
+                "redraftPlan": "Plan neu entwerfen",
+                "planBecomesSpecHint": "Dieser geprüfte Plan wird zur Spezifikation, die die generierte Musterlösung, Vorlage und Tests erfüllen müssen. Bearbeite ihn unten, bis er genau das erfasst, was du möchtest, und generiere dann.",
                 "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
                 "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
                 "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
                 "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
                 "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
-                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte f\u00fcge zuerst Inhalt hinzu.",
+                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte füge zuerst Inhalt hinzu.",
                 "problemStatementTooLong": "Die Aufgabenstellung ist zu lang zum Verfeinern. Bitte kürze den Inhalt und versuche es erneut.",
                 "tooLong": "Die Aufgabenstellung darf {{max}} Zeichen nicht überschreiten.",
                 "reviewChanges": "KI-Vorschläge prüfen",
@@ -328,63 +344,8 @@
                     "close": "Schließen",
                     "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
                 },
-                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
-            },
-            "codeGeneration": {
-                "creationAssistance": "Erstellungsassistenz",
-                "generateCode": "Code generieren",
-                "generateWithAi": "Mit KI generieren",
-                "generating": "Generiere...",
-                "runningTitle": "Code-Generierung läuft",
-                "runningText": "Die Code-Generierung läuft aktuell für diese Übung durch einen anderen Benutzer. Bitte versuchen Sie es später erneut.",
-                "description": "Generiere Lösung, Template und Test-Code mit KI",
-                "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
-                "confirmTitle": "Code-Generierung bestätigen",
-                "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
-                "success": "{{repositoryType}} Code-Generierung abgeschlossen.",
-                "warning": "{{repositoryType}} Code-Generierung mit Problemen abgeschlossen.",
-                "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
-                "timeoutDetails": "Die Generierung hat nach zu langer Wartezeit das Zeitlimit erreicht.",
-                "queueReleaseTimeoutDetails": "Die vorherige Repository-Generierung hat die Bereinigung nicht rechtzeitig abgeschlossen, daher konnte das nächste Repository nicht gestartet werden.",
-                "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
-                "noRepositorySelected": "Wähle mindestens ein Repository aus, bevor du die Code-Generierung startest.",
-                "settingsTitle": "Generierungs-Einstellungen",
-                "settingsTooltip": "Repositories für die Generierung auswählen",
-                "statusTitle": "Generierungsstatus",
-                "statusTooltip": "Live-Status der Generierung anzeigen",
-                "executionOrder": "Ausgewählte Repositories werden nacheinander in dieser Reihenfolge generiert: Lösung, Template, Test.",
-                "selectedFeedback": {
-                    "title": "Ausgewählte Feedback-Threads",
-                    "description": "Diese ausgewählten Threads werden der Code-Generierung als Feedback-Kontext mitgegeben.",
-                    "count": "{{count}} ausgewählt",
-                    "empty": "Aktuell sind keine Threads als Feedback ausgewählt.",
-                    "showThreads": "Threads anzeigen",
-                    "hideThreads": "Threads ausblenden",
-                    "viewThread": "Thread anzeigen",
-                    "line": "Zeile {{line}}",
-                    "unknownLocation": "Unbekannte Position"
-                },
-                "repositories": {
-                    "template": "Template Repository",
-                    "solution": "Solution Repository",
-                    "tests": "Tests Repository"
-                },
-                "activityTitle": "Dateiaktivität",
-                "iteration": "Iteration {{iteration}}",
-                "noActivity": "Es wurden noch keine Dateien erstellt oder aktualisiert.",
-                "attempts": "Versuche: {{attempts}}",
-                "status": {
-                    "idle": "Nicht gestartet",
-                    "queued": "In Warteschlange",
-                    "running": "Läuft",
-                    "success": "Abgeschlossen",
-                    "warning": "Mit Problemen abgeschlossen",
-                    "error": "Fehlgeschlagen",
-                    "skipped": "Übersprungen",
-                    "skippedMessage": "Übersprungen, weil eine vorherige Repository-Generierung fehlgeschlagen ist.",
-                    "fileCreated": "erstellt",
-                    "fileUpdated": "aktualisiert"
-                }
+                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden.",
+                "draftStatementOnly": "Nur die Aufgabenstellung entwerfen"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
@@ -900,7 +861,6 @@
                 }
             },
             "artemisIntelligence": {
-                "title": "Artemis Intelligenz",
                 "consistencyCheckAlert": {
                     "title": "Resultat der Konsistenzprüfung",
                     "improvement": "Verbesserungsempfehlung",
@@ -981,6 +941,79 @@
                 },
                 "outdated": "Veraltet",
                 "reanalyze": "Erneut analysieren"
+            },
+            "generateExercise": {
+                "cardTitle": "Aufgabengenerierung",
+                "generateEntire": "Gesamte Aufgabe generieren",
+                "briefRequired": "Beschreibe zuerst die gewünschte Aufgabe unter „Deine Anforderungen“.",
+                "languageUnsupported": "Die Generierung der gesamten Aufgabe ist für die ausgewählte Sprache noch nicht verfügbar. Wähle eine unterstützte Sprache, um fortzufahren.",
+                "generate": "Aufgabe generieren",
+                "retry": "Erneut versuchen",
+                "retryHint": "Der vorherige Lauf wurde nicht gespeichert. Füge unten optional Hinweise hinzu und versuche es erneut.",
+                "guidanceLabel": "Hinweise für den nächsten Versuch (optional)",
+                "guidancePlaceholder": "z. B. auch den Leereingabe-Sonderfall abdecken; die Vorlage zu einem klareren Gerüst machen",
+                "openInEditor": "Im Code-Editor öffnen, um die Review-Kommentare zu lösen",
+                "cancel": "Abbrechen",
+                "cancelling": "Wird abgebrochen…",
+                "runningHint": "Das dauert in der Regel einige Minuten. Der Fortschritt wird hier angezeigt; die Aufgabe wird erst nach erfolgreicher Verifizierung gespeichert.",
+                "phase": {
+                    "preparing": "Wird vorbereitet",
+                    "authoring": "Aufgabe wird geschrieben",
+                    "verifying": "Build und Bewertung werden geprüft",
+                    "saving": "Wird gespeichert",
+                    "done": "Wird abgeschlossen"
+                },
+                "attempt": "Versuch {{ attempt }} von {{ total }}",
+                "elapsed": "Verstrichen {{ time }}",
+                "filesChanged": "Geänderte Dateien ({{ count }})",
+                "fileCreated": "neu",
+                "fileEdited": "geändert",
+                "repo": {
+                    "solution": "Musterlösung",
+                    "template": "Vorlage",
+                    "tests": "Tests",
+                    "other": "Sonstige"
+                },
+                "reviewChanges": "Änderungen überprüfen",
+                "success": "Die Aufgabe wurde generiert und gespeichert. Überprüfe die Änderungen.",
+                "needsReview": "Es wurde ein Aufgabenentwurf generiert, der die Verifizierung nicht vollständig bestanden hat. Er wurde zum Fertigstellen gespeichert, und die offenen Punkte wurden als Review-Kommentare hinzugefügt — behebe sie, bevor du die Aufgabe verwendest.",
+                "startError": "Die Aufgabengenerierung konnte nicht gestartet werden. Bitte versuche es später erneut.",
+                "alreadyRunning": "Für diese Aufgabe läuft bereits eine Generierung.",
+                "cancelError": "Die Generierung konnte nicht abgebrochen werden.",
+                "diffError": "Die Änderungen konnten nicht geladen werden.",
+                "streamError": "Die Verbindung zum Fortschritts-Stream der Generierung ist abgebrochen.",
+                "resultSuccess": "Generiert und gespeichert.",
+                "resultNeedsReview": "Ein Entwurf wurde zur Überprüfung gespeichert, hat die Verifizierung aber nicht vollständig bestanden. Behebe die Review-Kommentare, bevor du die Aufgabe verwendest.",
+                "resultPartial": "Die Generierung ist abgeschlossen, aber die Aufgabe konnte nicht automatisch verifiziert werden. Du kannst sie prüfen und bearbeiten oder auf der Aufgabenseite löschen.",
+                "resultCancelled": "Die Generierung wurde abgebrochen. Du kannst die Aufgabe weiter bearbeiten oder auf der Aufgabenseite löschen.",
+                "resultError": "Die Generierung ist fehlgeschlagen. Du kannst die Aufgabe weiter bearbeiten oder auf der Aufgabenseite löschen.",
+                "gateSolutionMet": "Musterlösung besteht",
+                "gateSolutionUnmet": "Musterlösung scheitert",
+                "gateTemplateMet": "Vorlage scheitert wie erwartet",
+                "gateTemplateUnmet": "Vorlage besteht unerwartet",
+                "gateTests": "Tests",
+                "reasonsHeading": "Warum es nicht akzeptiert wurde",
+                "languageUnsupportedTooltip": "KI-Generierung ist für diese Programmiersprache noch nicht verfügbar.",
+                "languageLoadingTooltip": "Sprachunterstützung wird geprüft…",
+                "dismiss": "Schließen",
+                "step": {
+                    "preparing": "Wird eingerichtet",
+                    "authoring": "Musterlösung und Tests werden geschrieben",
+                    "checking": "Build und Bewertung werden geprüft (Versuch {{attempt}} von {{total}})",
+                    "saving": "Aufgabe wird gespeichert"
+                },
+                "progressHeading": "Fortschritt",
+                "chipDone": "Aufgabe bereit",
+                "chipNeedsReview": "Überprüfung nötig",
+                "chipFailed": "Erzeugung fehlgeschlagen",
+                "chipCancelled": "Abgebrochen",
+                "chipPartial": "Unvollständig",
+                "chip": {
+                    "running": "Wird erzeugt… {{step}}/{{total}}"
+                }
+            },
+            "creationAssistance": {
+                "label": "Kreationsassistent"
             }
         },
         "checklistAnalysisRequest": {

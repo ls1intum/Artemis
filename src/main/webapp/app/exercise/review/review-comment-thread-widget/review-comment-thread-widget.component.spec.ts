@@ -9,6 +9,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { ConfirmationService } from 'primeng/api';
+import { DialogService } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
 import { signal } from '@angular/core';
 
 describe('ReviewCommentThreadWidgetComponent', () => {
@@ -321,7 +323,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
         } as any);
 
         expect(comp.isConsistencyIssueThread()).toBe(true);
-        expect(comp.firstConsistencyIssueContent()?.text).toBe('issue');
+        expect(comp.firstConsistencyContent()?.text).toBe('issue');
     });
 
     it('should set edit text when starting editing', () => {
@@ -515,5 +517,131 @@ describe('ReviewCommentThreadWidgetComponent', () => {
     it('should set outdated warning state for inline fixes', () => {
         comp.setInlineFixOutdatedWarning(true);
         expect(comp.showInlineFixOutdatedWarning()).toBe(true);
+    });
+
+    describe('adapt with Artemis Intelligence', () => {
+        const consistencyThread = {
+            id: 1,
+            resolved: false,
+            targetType: 'SOLUTION_REPO',
+            lineNumber: 7,
+            filePath: 'src/Foo.java',
+            comments: [
+                {
+                    id: 3,
+                    type: CommentType.CONSISTENCY_CHECK,
+                    createdDate: '2024-01-01T00:00:00Z',
+                    content: {
+                        contentType: CommentContentType.CONSISTENCY_CHECK,
+                        severity: ConsistencyIssue.SeverityEnum.High,
+                        category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+                        text: 'The solution signature does not match the template.',
+                    },
+                },
+            ],
+        } as any;
+
+        it('should hide the adapt action for non-consistency threads', () => {
+            fixture.componentRef.setInput('showAdaptAction', true);
+            fixture.componentRef.setInput('thread', { id: 1, resolved: false, comments: [] } as any);
+            fixture.detectChanges();
+
+            expect(comp.canAdaptExercise()).toBe(false);
+            expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.action');
+        });
+
+        it('should hide the adapt action when the host does not allow it', () => {
+            fixture.componentRef.setInput('showAdaptAction', false);
+            fixture.componentRef.setInput('thread', consistencyThread);
+            fixture.detectChanges();
+
+            expect(comp.canAdaptExercise()).toBe(false);
+            expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.adaptExercise.action');
+        });
+
+        it('should show the adapt action only for consistency threads when allowed', () => {
+            fixture.componentRef.setInput('showAdaptAction', true);
+            fixture.componentRef.setInput('thread', consistencyThread);
+            fixture.detectChanges();
+
+            expect(comp.canAdaptExercise()).toBe(true);
+            expect(fixture.nativeElement.textContent).toContain('artemisApp.review.adaptExercise.action');
+        });
+
+        it('should hide the adapt action for outdated consistency threads', () => {
+            fixture.componentRef.setInput('showAdaptAction', true);
+            fixture.componentRef.setInput('thread', { ...consistencyThread, outdated: true } as any);
+            fixture.detectChanges();
+
+            expect(comp.canAdaptExercise()).toBe(false);
+        });
+
+        it('should open the adapt dialog when the action is triggered', () => {
+            const dialogService = fixture.debugElement.injector.get(DialogService);
+            const open = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose: new Subject(), close: vi.fn() } as any);
+            fixture.componentRef.setInput('showAdaptAction', true);
+            fixture.componentRef.setInput('thread', consistencyThread);
+
+            comp.openAdaptDialog();
+
+            expect(open).toHaveBeenCalledOnce();
+            const config = open.mock.calls[0][1] as any;
+            expect(config.data.findings).toHaveLength(1);
+            expect(config.data.findings[0].description).toContain('The solution signature does not match the template.');
+        });
+
+        it('should emit assembled feedback with the optional instructions when confirmed', () => {
+            const onClose = new Subject<any>();
+            const dialogService = fixture.debugElement.injector.get(DialogService);
+            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
+            fixture.componentRef.setInput('showAdaptAction', true);
+            fixture.componentRef.setInput('thread', consistencyThread);
+
+            const adaptSpy = vi.fn();
+            comp.adaptExercise.subscribe(adaptSpy);
+
+            comp.openAdaptDialog();
+            onClose.next({ instructions: 'Please widen the accepted input range.' });
+
+            expect(adaptSpy).toHaveBeenCalledOnce();
+            const feedback: string = adaptSpy.mock.calls[0][0].feedback;
+            expect(feedback).toContain('The solution signature does not match the template.');
+            expect(feedback).toContain('Please widen the accepted input range.');
+        });
+
+        it('should emit feedback without instructions section when none are given', () => {
+            const onClose = new Subject<any>();
+            const dialogService = fixture.debugElement.injector.get(DialogService);
+            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
+            fixture.componentRef.setInput('showAdaptAction', true);
+            fixture.componentRef.setInput('thread', consistencyThread);
+
+            const adaptSpy = vi.fn();
+            comp.adaptExercise.subscribe(adaptSpy);
+
+            comp.openAdaptDialog();
+            onClose.next({ instructions: undefined });
+
+            expect(adaptSpy).toHaveBeenCalledOnce();
+            const feedback: string = adaptSpy.mock.calls[0][0].feedback;
+            expect(feedback).toContain('The solution signature does not match the template.');
+            expect(feedback).not.toContain('artemisApp.review.adaptExercise.instructionsLabel');
+        });
+
+        it('should not emit feedback when the dialog is cancelled', () => {
+            const onClose = new Subject<any>();
+            const dialogService = fixture.debugElement.injector.get(DialogService);
+            vi.spyOn(dialogService, 'open').mockReturnValue({ onClose, close: vi.fn() } as any);
+            fixture.componentRef.setInput('showAdaptAction', true);
+            fixture.componentRef.setInput('thread', consistencyThread);
+
+            const adaptSpy = vi.fn();
+            comp.adaptExercise.subscribe(adaptSpy);
+
+            comp.openAdaptDialog();
+            onClose.next(undefined);
+
+            expect(adaptSpy).not.toHaveBeenCalled();
+        });
     });
 });

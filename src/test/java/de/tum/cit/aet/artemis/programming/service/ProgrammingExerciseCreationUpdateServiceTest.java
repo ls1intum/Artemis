@@ -20,8 +20,10 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
+import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -49,8 +51,8 @@ class ProgrammingExerciseCreationUpdateServiceTest {
                 mock(ProgrammingExerciseRepository.class), mock(ChannelService.class), mock(ProgrammingExerciseTaskService.class), mock(ProgrammingExerciseBuildPlanService.class),
                 mock(ProgrammingExerciseCreationScheduleService.class), mock(ProgrammingExerciseAtlasIrisService.class), moduleFeatureService,
                 mock(TemplateProgrammingExerciseParticipationRepository.class), mock(SolutionProgrammingExerciseParticipationRepository.class),
-                mock(AuxiliaryRepositoryRepository.class), Optional.empty(), mock(GitService.class), mock(CompetencyExerciseLinkService.class), Optional.empty(),
-                mock(RepositoryVcsAccessTokenService.class));
+                mock(AuxiliaryRepositoryRepository.class), Optional.<VersionControlService>empty(), mock(GitService.class), mock(CompetencyExerciseLinkService.class),
+                Optional.<AutomaticAfterDueDateService>empty(), Optional.<ProgrammingLanguageFeatureService>empty(), mock(RepositoryVcsAccessTokenService.class));
     }
 
     @Test
@@ -67,10 +69,11 @@ class ProgrammingExerciseCreationUpdateServiceTest {
 
     @Test
     void createProgrammingExercise_emptyRepositoriesAndUnsupportedLanguage_throwsBadRequest() {
-        var exercise = createExercise(ProgrammingLanguage.PYTHON);
+        // The EMPTY programming language ships no buildable scaffold, so it cannot be used as an AI-generation starting point.
+        var exercise = createExercise(ProgrammingLanguage.EMPTY);
         when(moduleFeatureService.isHyperionEnabled()).thenReturn(true);
         assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, true)).isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
-            assertThat(ex.getMessage()).isEqualTo("AI generation is only supported for Java");
+            assertThat(ex.getMessage()).isEqualTo("AI generation is not supported for the EMPTY programming language");
             assertThat(ex.getErrorKey()).isEqualTo("aiGenerationUnsupportedLanguage");
         });
         verifyNoInteractions(userRepository);

@@ -1,0 +1,236 @@
+@if (hasActiveOrRecentRun()) {
+    @if (compact()) {
+        <!-- Compact (editor toolbar): a status chip that opens a popover with the full overview, anchored like the other AI popovers. -->
+        <button
+            #genChip
+            pButton
+            type="button"
+            class="generation-chip"
+            [severity]="chipSeverity()"
+            [outlined]="!running()"
+            (click)="genPopover.toggle($event)"
+            [attr.aria-label]="'artemisApp.programmingExercise.generateExercise.cardTitle' | artemisTranslate"
+        >
+            @if (running()) {
+                <fa-icon pButtonIcon [icon]="faSpinner" animation="spin" />
+                <span pButtonLabel>{{
+                    'artemisApp.programmingExercise.generateExercise.chip.running' | artemisTranslate: { step: chipStepParams().step, total: chipStepParams().total }
+                }}</span>
+            } @else {
+                <fa-icon pButtonIcon [icon]="chipIcon()" />
+                <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.generateExercise.{{ chipResultKey() }}"></span>
+            }
+        </button>
+        <p-popover
+            #genPopover
+            [dismissable]="true"
+            appendTo="body"
+            [style]="{ width: 'min(34rem, 90vw)', maxWidth: '90vw' }"
+            styleClass="generation-popover border-1 border-primary"
+        >
+            <div class="generation-popover-body">
+                <div class="hyperion-card-header d-flex align-items-center gap-2 mb-2">
+                    <fa-icon [icon]="facArtemisIntelligence" />
+                    <span class="fw-semibold" jhiTranslate="artemisApp.programmingExercise.generateExercise.cardTitle"></span>
+                </div>
+                <ng-container [ngTemplateOutlet]="runOverview" />
+            </div>
+        </p-popover>
+    } @else {
+        <!-- Inline (detail page): a full-width card; there is no toolbar to anchor a popover to. -->
+        <p-card styleClass="hyperion-exercise-generation border">
+            <ng-template #header>
+                <div class="hyperion-card-header d-flex align-items-center gap-2">
+                    <fa-icon [icon]="facArtemisIntelligence" />
+                    <span class="fw-semibold" jhiTranslate="artemisApp.programmingExercise.generateExercise.cardTitle"></span>
+                    @if (!running()) {
+                        <!-- Dismiss a finished run from view; only offered once the run is terminal so it never interrupts an in-flight generation. -->
+                        <button
+                            pButton
+                            type="button"
+                            class="hyperion-card-dismiss"
+                            severity="secondary"
+                            [text]="true"
+                            rounded
+                            size="small"
+                            (click)="dismiss()"
+                            [pTooltip]="'artemisApp.programmingExercise.generateExercise.dismiss' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.programmingExercise.generateExercise.dismiss' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faXmark" />
+                        </button>
+                    }
+                </div>
+            </ng-template>
+            <ng-container [ngTemplateOutlet]="runOverview" />
+        </p-card>
+    }
+}
+
+<!-- The run overview, shared between the compact popover and the inline card: a vertical phase list while running, then files changed, verdict, actions and the opt-in transcript. -->
+<ng-template #runOverview>
+    @if (running()) {
+        <div class="generation-status">
+            <!-- The phase list is not a live region; this visually-hidden status span announces the coarse phase transitions to screen readers, not the per-second timer tick. -->
+            <span class="visually-hidden" role="status" aria-live="polite" jhiTranslate="artemisApp.programmingExercise.generateExercise.phase.{{ phaseKey() }}"></span>
+            <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                <small class="text-color-secondary fw-semibold" jhiTranslate="artemisApp.programmingExercise.generateExercise.progressHeading"></small>
+                <small class="text-color-secondary text-nowrap" aria-hidden="true">
+                    @if (showAttempt()) {
+                        <span class="me-2">{{ 'artemisApp.programmingExercise.generateExercise.attempt' | artemisTranslate: { attempt: attempt(), total: attemptTotal() } }}</span>
+                    }
+                    {{ 'artemisApp.programmingExercise.generateExercise.elapsed' | artemisTranslate: { time: elapsedDisplay() } }}
+                </small>
+            </div>
+            <p-progressBar mode="indeterminate" [style]="{ height: '4px' }" aria-hidden="true" />
+            <ul class="generation-phase-list mt-2" aria-hidden="true">
+                @for (phase of phaseOrder; track phase; let i = $index) {
+                    <li class="generation-phase-row" [attr.data-state]="phaseState(i)">
+                        <fa-icon class="generation-phase-icon" [icon]="phaseIcon(i)" [animation]="phaseState(i) === 'active' ? 'spin' : undefined" [fixedWidth]="true" />
+                        <span jhiTranslate="artemisApp.programmingExercise.generateExercise.phase.{{ phase }}"></span>
+                        @if (phase === 'verifying' && phaseState(i) === 'active' && showAttempt()) {
+                            <small class="text-color-secondary ms-auto">{{
+                                'artemisApp.programmingExercise.generateExercise.attempt' | artemisTranslate: { attempt: attempt(), total: attemptTotal() }
+                            }}</small>
+                        }
+                    </li>
+                }
+            </ul>
+            @if (currentStepKey(); as stepKey) {
+                <small
+                    class="generation-current-step text-color-secondary d-block mt-2"
+                    aria-hidden="true"
+                    [jhiTranslate]="'artemisApp.programmingExercise.generateExercise.step.' + stepKey"
+                    [translateValues]="currentStepParams()"
+                ></small>
+            }
+            <div class="generation-running-actions d-flex justify-content-between align-items-center gap-2 mt-2">
+                <small class="text-color-secondary" jhiTranslate="artemisApp.programmingExercise.generateExercise.runningHint"></small>
+                @if (canCancel() || cancelling()) {
+                    <button pButton type="button" class="flex-shrink-0" severity="secondary" outlined size="small" [disabled]="cancelling()" (click)="cancel()">
+                        <fa-icon pButtonIcon [icon]="faBan" />
+                        <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.generateExercise.{{ cancelling() ? 'cancelling' : 'cancel' }}"></span>
+                    </button>
+                }
+            </div>
+        </div>
+    }
+
+    @if (filesByRepo().length > 0) {
+        <div class="generation-files mt-3">
+            <div class="fw-semibold mb-1">{{ 'artemisApp.programmingExercise.generateExercise.filesChanged' | artemisTranslate: { count: fileChangeCount() } }}</div>
+            @for (group of filesByRepo(); track group.repo) {
+                <div class="generation-file-group">
+                    <small class="text-color-secondary text-uppercase" jhiTranslate="artemisApp.programmingExercise.generateExercise.repo.{{ group.repo }}"></small>
+                    <ul class="generation-file-list">
+                        @for (file of group.files; track file.path) {
+                            <li class="d-flex align-items-center gap-2">
+                                <p-tag
+                                    [severity]="file.action === 'create' ? 'success' : 'info'"
+                                    [value]="
+                                        (file.action === 'create'
+                                            ? 'artemisApp.programmingExercise.generateExercise.fileCreated'
+                                            : 'artemisApp.programmingExercise.generateExercise.fileEdited'
+                                        ) | artemisTranslate
+                                    "
+                                />
+                                <span class="generation-file-path">{{ file.path }}</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    }
+
+    @if (finalEvent(); as event) {
+        <div class="generation-result mt-3" role="status" aria-live="polite" [class.text-success]="succeeded()" [class.text-danger]="event.type === 'ERROR'">
+            <strong>
+                @if (succeeded()) {
+                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.resultSuccess"></span>
+                } @else if (needsReview()) {
+                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.resultNeedsReview"></span>
+                } @else if (event.type === 'CANCELLED') {
+                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.resultCancelled"></span>
+                } @else if (event.type === 'ERROR') {
+                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.resultError"></span>
+                } @else {
+                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.resultPartial"></span>
+                }
+            </strong>
+            @if (event.message) {
+                <span> {{ event.message }}</span>
+            }
+        </div>
+
+        @if (verdict(); as v) {
+            <div class="generation-verdict mt-2 d-flex gap-2 flex-wrap">
+                <p-tag
+                    [severity]="v.solutionPassed ? 'success' : 'danger'"
+                    [value]="
+                        (v.solutionPassed ? 'artemisApp.programmingExercise.generateExercise.gateSolutionMet' : 'artemisApp.programmingExercise.generateExercise.gateSolutionUnmet')
+                            | artemisTranslate
+                    "
+                />
+                <p-tag
+                    [severity]="v.templateFailed ? 'success' : 'danger'"
+                    [value]="
+                        (v.templateFailed ? 'artemisApp.programmingExercise.generateExercise.gateTemplateMet' : 'artemisApp.programmingExercise.generateExercise.gateTemplateUnmet')
+                            | artemisTranslate
+                    "
+                />
+                <p-tag severity="info" [value]="(v.testCount ?? 0) + ' ' + ('artemisApp.programmingExercise.generateExercise.gateTests' | artemisTranslate)" />
+            </div>
+            @if (!v.accepted && (v.reasons?.length ?? 0) > 0) {
+                <div class="generation-verdict-reasons mt-2">
+                    <small class="fw-semibold d-block" jhiTranslate="artemisApp.programmingExercise.generateExercise.reasonsHeading"></small>
+                    <ul class="mb-0">
+                        @for (reason of v.reasons ?? []; track $index) {
+                            <li>{{ reason }}</li>
+                        }
+                    </ul>
+                </div>
+            }
+        }
+
+        @if (canRetry() && !succeeded()) {
+            <div class="generation-guidance mt-3">
+                <label class="fw-semibold d-block mb-1" for="generation-retry-guidance" jhiTranslate="artemisApp.programmingExercise.generateExercise.guidanceLabel"></label>
+                <textarea
+                    pTextarea
+                    id="generation-retry-guidance"
+                    class="w-100"
+                    rows="3"
+                    [ngModel]="retryGuidance()"
+                    (ngModelChange)="retryGuidance.set($event)"
+                    [placeholder]="'artemisApp.programmingExercise.generateExercise.guidancePlaceholder' | artemisTranslate"
+                ></textarea>
+            </div>
+        }
+
+        <div class="d-flex gap-2 mt-3 flex-wrap" #actionButtons>
+            @if (succeeded()) {
+                <span #reviewButton>
+                    <p-button severity="primary" size="small" [loading]="diffLoading()" (onClick)="reviewChanges()">
+                        <span jhiTranslate="artemisApp.programmingExercise.generateExercise.reviewChanges"></span>
+                    </p-button>
+                </span>
+            }
+            @if (needsReview() && reviewCommentsLink()) {
+                <!-- A real anchor (not a button) so it is a proper, right-click/keyboard-navigable link to the editor where the review comments live. -->
+                <a pButton severity="primary" size="small" [routerLink]="reviewCommentsLink()">
+                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.openInEditor"></span>
+                </a>
+            }
+            @if (canRetry() && !succeeded()) {
+                <p-button severity="secondary" outlined size="small" [disabled]="running()" (onClick)="generate(retryGuidance())">
+                    <span jhiTranslate="artemisApp.programmingExercise.generateExercise.retry"></span>
+                </p-button>
+            }
+        </div>
+
+        @if (canRetry() && !succeeded()) {
+            <small class="text-color-secondary d-block mt-2" jhiTranslate="artemisApp.programmingExercise.generateExercise.retryHint"></small>
+        }
+    }
+</ng-template>

@@ -1,0 +1,69 @@
+<div class="review-adapt-exercise-dialog">
+    <p class="review-adapt-exercise-dialog__summary">
+        <fa-icon [icon]="facArtemisIntelligence" class="review-adapt-exercise-dialog__brand-icon" />
+        @if (isFreeMode) {
+            <span jhiTranslate="artemisApp.review.adaptExercise.freeSummary"></span>
+        } @else {
+            <span jhiTranslate="artemisApp.review.adaptExercise.summary"></span>
+        }
+    </p>
+
+    @if (!isFreeMode) {
+        <label class="review-adapt-exercise-dialog__label" jhiTranslate="artemisApp.review.adaptExercise.findingsListLabel" [translateValues]="{ count: findings.length }"></label>
+        <div class="review-adapt-exercise-dialog__findings-list">
+            @for (finding of findings; track $index) {
+                <div class="review-adapt-exercise-dialog__finding-card">
+                    <div class="review-adapt-exercise-dialog__finding-header">
+                        <p-tag [severity]="severityTag(finding.severity)" [value]="'artemisApp.review.consistencySeverity.' + finding.severity | artemisTranslate" />
+                        <span class="review-adapt-exercise-dialog__finding-category" jhiTranslate="artemisApp.hyperion.consistencyCheck.category.{{ finding.category }}"></span>
+                        @if (finding.locationLabel) {
+                            <code class="review-adapt-exercise-dialog__finding-location">{{ finding.locationLabel }}</code>
+                        }
+                    </div>
+                    <div class="review-adapt-exercise-dialog__finding-description">{{ finding.description }}</div>
+                    @if (finding.suggestedFix; as fix) {
+                        @if (fix.replacementCode) {
+                            <!-- A replacement: show the current code → the suggested code as a compact before→after so the instructor can see what actually changes. -->
+                            <div class="review-adapt-exercise-dialog__finding-fix">
+                                <small class="fw-semibold d-block" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixLabel"></small>
+                                @if (fix.expectedCode) {
+                                    <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--removed">{{ fix.expectedCode }}</pre>
+                                }
+                                <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--added">{{ fix.replacementCode }}</pre>
+                            </div>
+                        } @else if (fix.expectedCode) {
+                            <!-- A pure deletion: render the code to remove under a "Remove" label (NOT "Suggested fix"), so we never show the deleted code as if it were the fix. -->
+                            <div class="review-adapt-exercise-dialog__finding-fix">
+                                <small class="fw-semibold d-block" jhiTranslate="artemisApp.review.adaptExercise.suggestedFixRemoveLabel"></small>
+                                <pre class="review-adapt-exercise-dialog__finding-fix-code review-adapt-exercise-dialog__finding-fix-code--removed">{{ fix.expectedCode }}</pre>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    } @else {
+        <small class="review-adapt-exercise-dialog__free-help text-color-secondary" id="adaptExerciseFreeHelp" jhiTranslate="artemisApp.review.adaptExercise.freeHelp"></small>
+    }
+
+    <label class="review-adapt-exercise-dialog__label" for="adaptExerciseInstructions" jhiTranslate="artemisApp.review.adaptExercise.instructionsLabel"></label>
+    <textarea
+        pTextarea
+        id="adaptExerciseInstructions"
+        class="review-adapt-exercise-dialog__instructions"
+        rows="3"
+        [placeholder]="(isFreeMode ? 'artemisApp.review.adaptExercise.freeInstructionsPlaceholder' : 'artemisApp.review.adaptExercise.instructionsPlaceholder') | artemisTranslate"
+        [ngModel]="instructions()"
+        (ngModelChange)="instructions.set($event)"
+    ></textarea>
+
+    <div class="review-adapt-exercise-dialog__actions">
+        <button pButton type="button" severity="secondary" (click)="cancel()">
+            {{ 'artemisApp.review.adaptExercise.cancel' | artemisTranslate }}
+        </button>
+        <button pButton type="button" [disabled]="confirmDisabled()" (click)="confirm()">
+            <fa-icon [icon]="facArtemisIntelligence" class="me-1" />
+            {{ 'artemisApp.review.adaptExercise.confirm' | artemisTranslate }}
+        </button>
+    </div>
+</div>

@@ -99,6 +99,12 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly sessionId = input.required<number | string>();
     readonly buildAnnotations = input<Annotation[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
+    /**
+     * Whether the Hyperion exercise-generation feature is active. The "Adapt with Artemis Intelligence" thread action POSTs an adaptation run whose
+     * progress is only shown by the embedded Hyperion run card; without Hyperion there is no such card, so the action must be gated on this flag in
+     * lockstep with the run card. Fails closed (default {@code false}).
+     */
+    readonly hyperionEnabled = input<boolean>(false);
     readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
     readonly fileSyncService = input<CodeEditorFileSyncService | undefined>();
     readonly secondaryHeader = input<boolean>(false);
@@ -112,6 +118,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    /** Emits the assembled feedback prompt when the instructor adapts the exercise from a consistency/verification review thread. */
+    readonly onAdaptExercise = output<{ feedback: string }>();
     readonly onSavedFiles = output<{ [fileName: string]: string | undefined }>();
     readonly onInlineFixCommitted = output<void>();
     readonly onEditorLoaded = output<void>();
@@ -836,11 +844,14 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onApplyInlineFix: ({ thread }) => this.persistInlineFixApplication(thread),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
+                onAdaptExercise: (payload) => this.onAdaptExercise.emit(payload),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
                 showFeedbackAction: (thread) =>
                     thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
                     thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
                     thread.targetType === CommentThreadLocationType.TEST_REPO,
+                // Gate the adapt action on Hyperion too: it starts a run that only the Hyperion run card surfaces, so it must match the card's gating.
+                showAdaptAction: () => this.enableExerciseReviewComments() && this.hyperionEnabled(),
             });
         }
         return this.reviewCommentManager;

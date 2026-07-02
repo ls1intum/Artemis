@@ -1,9 +1,17 @@
 package de.tum.cit.aet.artemis.hyperion.resource;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -31,11 +39,16 @@ class HyperionFaqRewriteResourceIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testRewriteFaq_Success() throws Exception {
+    void testRewriteFaq_returnsTheModelsRewrittenText() throws Exception {
+        // Drive the rewrite with a known model output and assert the endpoint actually returns THAT text — a bare non-null check passes even on the blank-fallback path, so it
+        // cannot
+        // tell a working rewrite from a broken one. The course has no FAQs, so no consistency pass alters the rewritten text.
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("The exam is on Monday at 9:00."))))).when(azureOpenAiChatModel).call(any(Prompt.class));
         RewriteFaqRequestDTO faqRequest = new RewriteFaqRequestDTO("Old FAQ Text");
 
         RewriteFaqResponseDTO result = request.postWithResponseBody("/api/hyperion/courses/" + courseId + "/faq/rewrite", faqRequest, RewriteFaqResponseDTO.class, HttpStatus.OK);
-        assertThat(result).isNotNull();
+
+        assertThat(result.rewrittenText()).isEqualTo("The exam is on Monday at 9:00.");
     }
 
     @Test

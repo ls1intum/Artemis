@@ -411,10 +411,10 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-  /api/hyperion/programming-exercises/{exerciseId}/generate-code:
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise:
     post:
-      tags: [hyperion-code-generation]
-      operationId: generateCode
+      tags: [hyperion-exercise-generation]
+      operationId: generateExercise
       parameters:
       - name: exerciseId
         in: path
@@ -423,14 +423,44 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/CodeGenerationRequest'}
+            schema: {$ref: '#/components/schemas/ExerciseGenerationRequest'}
         required: true
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/CodeGenerationJobStart'}
+              schema: {$ref: '#/components/schemas/ExerciseGenerationJobStart'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/status:
+    get:
+      tags: [hyperion-exercise-generation]
+      operationId: getExerciseGenerationStatus
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationStatus'}
+  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
+    delete:
+      tags: [hyperion-exercise-generation]
+      operationId: cancelExerciseGeneration
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: jobId
+        in: path
+        required: true
+        schema: {type: string}
+      responses:
+        '200': {description: OK}
   /api/quiz/courses/{courseId}/training-questions:
     post:
       tags: [quiz-training]
@@ -1374,13 +1404,40 @@ components:
         spotNr: {type: integer, format: int32}
         width: {type: integer, format: int32}
         invalid: {type: boolean}
-    CodeGenerationJobStart:
+    ExerciseGenerationJobStart:
       type: object
       properties:
         jobId: {type: string}
-        repositoryType:
+    ExerciseGenerationEvent:
+      type: object
+      properties:
+        type:
           type: string
-          enum: [exercise, solution, tests, auxiliary, user]
+          enum: [STARTED, PROGRESS, DONE, CANCELLED, ERROR]
+        message: {type: string}
+        completionStatus:
+          type: string
+          enum: [SUCCESS, NEEDS_REVIEW, PARTIAL]
+        verdict: {$ref: '#/components/schemas/ExerciseGenerationVerdict'}
+        timestamp: {type: string, format: date-time}
+    ExerciseGenerationStatus:
+      type: object
+      properties:
+        jobId: {type: string}
+        running: {type: boolean}
+        events:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGenerationEvent'}
+    ExerciseGenerationVerdict:
+      type: object
+      properties:
+        accepted: {type: boolean}
+        solutionPassed: {type: boolean}
+        templateFailed: {type: boolean}
+        testCount: {type: integer, format: int32}
+        reasons:
+          type: array
+          items: {type: string}
     QuizQuestionRefinementRequest:
       type: object
       description: Request to refine an existing quiz question using a user prompt
@@ -1735,10 +1792,19 @@ components:
           enum: [multiple-choice]
     ProblemStatementGenerationResponse:
       type: object
-      description: Response containing generated problem statement
+      description: Response containing the generated problem statement and the metadata
+        the draft proposes for instructor review
       properties:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
+        suggestedTitle: {type: string, description: Proposed exercise title}
+        suggestedDifficulty: {type: string, enum: [EASY, MEDIUM, HARD], description: Proposed
+            difficulty (EASY, MEDIUM or HARD)}
+        suggestedCategories:
+          type: array
+          description: Proposed topic categories (raw, to be snapped to the course
+            taxonomy on the client)
+          items: {type: string}
     ShortAnswerSubmittedText:
       type: object
       properties:
@@ -1804,17 +1870,10 @@ components:
           additionalProperties: {}
           description: Additional type-specific metadata such as courseId, dueDate,
             or points
-    CodeGenerationRequest:
+    ExerciseGenerationRequest:
       type: object
       properties:
-        repositoryType:
-          type: string
-          enum: [exercise, solution, tests, auxiliary, user]
-        checkOnly: {type: boolean}
-        initialAutoGeneration: {type: boolean}
-        selectedFeedbackThreadIds:
-          type: array
-          items: {type: integer, format: int64}
+        prompt: {type: string}
     QuizQuestionRefinementResponse:
       description: Discriminated response for a single quiz question refinement, either
         a success with the refined question or a failure with an error message

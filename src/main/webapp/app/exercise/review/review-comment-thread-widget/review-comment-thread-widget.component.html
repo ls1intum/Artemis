@@ -10,7 +10,7 @@
             <span class="monaco-review-comment-thread-title-text">
                 {{ 'artemisApp.review.threadTitle' | artemisTranslate }}
             </span>
-            @if (isConsistencyIssueThread() && firstConsistencyIssueContent(); as issueContent) {
+            @if (isConsistencyIssueThread() && firstConsistencyContent(); as issueContent) {
                 <span class="monaco-review-comment-thread-tag monaco-review-comment-thread-tag--consistency">
                     {{ 'artemisApp.review.threadConsistencyIssue' | artemisTranslate }}
                 </span>
@@ -219,6 +219,20 @@
                         } @else {
                             {{ 'artemisApp.review.selectThreadAsFeedback' | artemisTranslate }}
                         }
+                    </button>
+                }
+                @if (canAdaptExercise()) {
+                    <button
+                        pButton
+                        type="button"
+                        severity="secondary"
+                        size="small"
+                        class="monaco-review-comment-adapt-button"
+                        [title]="'artemisApp.review.adaptExercise.action' | artemisTranslate"
+                        (click)="openAdaptDialog()"
+                    >
+                        <fa-icon [icon]="facArtemisIntelligence" class="me-1" />
+                        {{ 'artemisApp.review.adaptExercise.action' | artemisTranslate }}
                     </button>
                 }
                 <div class="monaco-review-comment-resolve-controls">

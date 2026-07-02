@@ -59,6 +59,13 @@ public enum StaticCodeAnalysisTool {
     }
 
     /**
+     * @return the canonical report file name this tool writes (e.g. {@code spotbugsXml.xml}), or {@code null} for {@link #OTHER}.
+     */
+    public String getFileName() {
+        return fileName;
+    }
+
+    /**
      * Returns all static code analysis tools supporting the given programming language.
      *
      * @param language Programming language for which the static code analysis tools should be returned

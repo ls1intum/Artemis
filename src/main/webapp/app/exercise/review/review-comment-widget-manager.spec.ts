@@ -69,6 +69,7 @@ describe('ReviewCommentWidgetManager', () => {
             onToggleCollapse: { subscribe: vi.fn((cb) => (instance._onToggleCollapse = cb)) },
             onNavigateToLocation: { subscribe: vi.fn((cb) => (instance._onNavigateToLocation = cb)) },
             onApplyInlineFix: { subscribe: vi.fn((cb) => (instance._onApplyInlineFix = cb)) },
+            adaptExercise: { subscribe: vi.fn((cb) => (instance._adaptExercise = cb)) },
             setInlineFixOutdatedWarning: vi.fn(),
             hideAllCommentMenus: vi.fn(),
         };

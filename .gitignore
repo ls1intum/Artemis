@@ -266,6 +266,13 @@ deferredEagerBeanInstantiationViolations.dot
 # Local planning notes
 ######################
 /docs/superpowers/plans/
+.context/
+
+# AI agent working notes
+.ai/
+
+# Stray LocalCI server-integration-test artifacts written to the repo root with path-mangled names
+_root_*.test.exp
 
 # Playwright MCP browser snapshot dumps (local debugging artifacts)
 .playwright-mcp/

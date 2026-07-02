@@ -207,6 +207,23 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(config.shouldShowHoverButton()).toBe(false);
     });
 
+    it('gates the adapt action on BOTH review comments and the Hyperion flag', () => {
+        // The adapt action starts a Hyperion run that only the run card surfaces, so it must be hidden when Hyperion is off even if review comments are on.
+        fixture.detectChanges();
+        (comp.monacoEditor()! as any).getEditor = vi.fn().mockReturnValue({
+            onDidScrollChange: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+        });
+        fixture.componentRef.setInput('enableExerciseReviewComments', true);
+
+        fixture.componentRef.setInput('hyperionEnabled', false);
+        fixture.changeDetectorRef.detectChanges();
+        expect((comp as any).getReviewCommentManager().config.showAdaptAction()).toBe(false);
+
+        fixture.componentRef.setInput('hyperionEnabled', true);
+        fixture.changeDetectorRef.detectChanges();
+        expect((comp as any).getReviewCommentManager().config.showAdaptAction()).toBe(true);
+    });
+
     it('should still update review comment button when a manager already exists', () => {
         const updateHoverButton = vi.fn();
         (comp as any).reviewCommentManager = {

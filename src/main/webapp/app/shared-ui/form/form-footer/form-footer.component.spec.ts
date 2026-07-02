@@ -93,4 +93,70 @@ describe('FormFooterComponent', () => {
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
         expect(saveButton.disabled).toBeTruthy();
     });
+
+    it('should no longer expose the relocated generate-with-AI action', () => {
+        // The "Generate with AI" action was relocated into the problem component; the footer must not render it or expose its API.
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('#generate-with-ai'))).toBeNull();
+        expect((comp as unknown as Record<string, unknown>).showGenerateWithAi).toBeUndefined();
+        expect((comp as unknown as Record<string, unknown>).generateWithAi).toBeUndefined();
+    });
+
+    describe('AI mode', () => {
+        it('labels the primary action "Generate entire exercise" in AI mode', () => {
+            fixture.componentRef.setInput('isCreation', true);
+            fixture.componentRef.setInput('isAiMode', true);
+            expect(comp.saveTitle()).toBe('artemisApp.programmingExercise.generateExercise.generateEntire');
+        });
+
+        it('renders the 3-way mode selector instead of the simple/advanced switch when AI mode is available', () => {
+            fixture.componentRef.setInput('aiModeAvailable', true);
+            fixture.componentRef.setInput('editMode', 'ai');
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(By.css('p-selectButton'))).not.toBeNull();
+            expect(fixture.debugElement.query(By.css('jhi-switch-edit-mode-button'))).toBeNull();
+        });
+
+        it('emits setEditMode from the mode selector', () => {
+            const emitted: string[] = [];
+            comp.setEditMode.subscribe((mode) => emitted.push(mode));
+            comp.onModeChange('advanced');
+            expect(emitted).toEqual(['advanced']);
+        });
+
+        it('blocks the primary action until a brief is present and routes the click to aiGenerate', () => {
+            fixture.componentRef.setInput('invalidReasons', []);
+            fixture.componentRef.setInput('isDisabled', false);
+            fixture.componentRef.setInput('isAiMode', true);
+            fixture.componentRef.setInput('aiLanguageSupported', true);
+            fixture.componentRef.setInput('aiBriefPresent', false);
+            fixture.detectChanges();
+
+            const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(true);
+            expect(comp.aiActionTooltip()).toBe('artemisApp.programmingExercise.generateExercise.briefRequired');
+
+            fixture.componentRef.setInput('aiBriefPresent', true);
+            fixture.detectChanges();
+            expect(saveButton.disabled).toBe(false);
+
+            const generated: void[] = [];
+            comp.aiGenerate.subscribe(() => generated.push(undefined));
+            saveButton.click();
+            expect(generated).toHaveLength(1);
+        });
+
+        it('keeps the primary action disabled with an explanatory tooltip on an unsupported language', () => {
+            fixture.componentRef.setInput('invalidReasons', []);
+            fixture.componentRef.setInput('isDisabled', false);
+            fixture.componentRef.setInput('isAiMode', true);
+            fixture.componentRef.setInput('aiBriefPresent', true);
+            fixture.componentRef.setInput('aiLanguageSupported', false);
+            fixture.detectChanges();
+
+            const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(true);
+            expect(comp.aiActionTooltip()).toBe('artemisApp.programmingExercise.generateExercise.languageUnsupported');
+        });
+    });
 });

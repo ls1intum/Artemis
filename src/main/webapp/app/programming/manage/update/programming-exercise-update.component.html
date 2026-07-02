@@ -12,18 +12,22 @@
     <jhi-form-status-bar [formStatusSections]="formStatusSections()" />
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
         <div class="update-programming-exercise">
-            <jhi-programming-exercise-info
-                [programmingExercise]="programmingExercise"
-                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                [isExamMode]="isExamMode()"
-                [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
-                [importOptions]="importOptions"
-                [isSimpleMode]="isSimpleMode()"
-                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
-                [courseId]="courseId()"
-                [(isAuxiliaryRepositoryInputValid)]="isAuxiliaryRepositoryInputValid"
-            />
-            <hr class="mb-5" />
+            <!-- AI mode hides every field in the General Information section (title/short name auto-derived, categories deferred); render neither the section nor its divider so the lean
+            page opens straight on the language + requirements, with no empty header shell. -->
+            @if (!isAiMode()) {
+                <jhi-programming-exercise-info
+                    [programmingExercise]="programmingExercise"
+                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                    [isExamMode]="isExamMode()"
+                    [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
+                    [importOptions]="importOptions"
+                    [isSimpleMode]="isSimpleMode()"
+                    [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                    [courseId]="courseId()"
+                    [(isAuxiliaryRepositoryInputValid)]="isAuxiliaryRepositoryInputValid"
+                />
+                <hr class="mb-5" />
+            }
             @if (!isSimpleMode()) {
                 <!-- The mode section would only contain the difficulty in the simple mode,
                 in the simple mode the difficulty will be part of the general section -->
@@ -49,17 +53,46 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                [isGeneratingWithAi]="isGeneratingWithAi()"
+                [isAiMode]="isAiMode()"
                 (problemStatementChange)="calculateFormStatusSections()"
                 (programmingExerciseChange)="programmingExercise = $event"
+                (briefChange)="onAiBriefChange($event)"
+                (planSuggestions)="onPlanSuggestions($event)"
             />
-            <hr class="mb-5" />
-            <jhi-programming-exercise-grading
-                class="form-step"
-                [programmingExercise]="programmingExercise"
-                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                [importOptions]="importOptions"
-                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
-            />
+            <!-- AI mode: once a draft proposes metadata, reveal a compact, editable "Suggested settings" panel (difficulty + categories). These were applied automatically from the plan;
+            the instructor can adjust or clear them. Everything else (points, dates, …) stays defaulted/deferred. Hidden until a draft exists so the empty page stays language + brief. -->
+            @if (isAiMode() && aiPlanSuggestionsApplied()) {
+                <hr class="mb-5" />
+                <section>
+                    <h3 jhiTranslate="artemisApp.programmingExercise.aiPlanSuggestions.title"></h3>
+                    <p class="text-color-secondary" jhiTranslate="artemisApp.programmingExercise.aiPlanSuggestions.hint"></p>
+                    <div class="form-group">
+                        <label class="label-narrow d-block" jhiTranslate="artemisApp.exercise.difficulty"></label>
+                        <jhi-difficulty-picker [exercise]="programmingExercise" (ngModelChange)="calculateFormStatusSections()" />
+                    </div>
+                    <div class="form-group">
+                        <label class="label-narrow d-block" jhiTranslate="artemisApp.exercise.categories"></label>
+                        <jhi-category-selector-primeng
+                            [categories]="exerciseCategories"
+                            [existingCategories]="existingCategories"
+                            (selectedCategories)="updateCategories($event)"
+                        />
+                    </div>
+                </section>
+            }
+            <!-- AI mode defaults the whole Grading section (points/score inclusion seeded, timeline deferred until release); hide the section and the divider that would otherwise dangle
+            above the footer, keeping the brief the last thing before "Generate entire exercise". -->
+            @if (!isAiMode()) {
+                <hr class="mb-5" />
+                <jhi-programming-exercise-grading
+                    class="form-step"
+                    [programmingExercise]="programmingExercise"
+                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                    [importOptions]="importOptions"
+                    [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                />
+            }
             @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode()) {
                 <jhi-feature-overlay [enabled]="plagiarismEnabled()" placement="right">
                     <jhi-exercise-update-plagiarism [(exercise)]="programmingExercise" />
@@ -70,14 +103,19 @@
                 [isImport]="isImportFromExistingExercise || isImportFromFile || isImportFromSharing"
                 [isSaving]="isSaving()"
                 [isGeneratingWithAi]="isGeneratingWithAi()"
-                [showGenerateWithAi]="showGenerateWithAi()"
                 [(notificationText)]="notificationText"
                 [isSimpleMode]="isSimpleMode()"
                 [switchEditMode]="switchEditMode"
+                [aiModeAvailable]="showGenerateWithAi()"
+                [editMode]="editMode()"
+                [isAiMode]="isAiMode()"
+                [aiBriefPresent]="!!currentBrief().trim()"
+                [aiLanguageSupported]="generationLanguageSupported()"
                 [areAuxiliaryRepositoriesValid]="isAuxiliaryRepositoryInputValid()"
                 [invalidReasons]="getInvalidReasons()"
+                (setEditMode)="setEditMode($event)"
+                (aiGenerate)="saveWithAi(currentBrief())"
                 (save)="save()"
-                (generateWithAi)="saveWithAi()"
                 (onCancel)="previousState()"
             />
         </div>

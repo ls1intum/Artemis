@@ -1,6 +1,34 @@
 <div class="update-footer gap-4">
     <div class="text-start">
-        @if (isSimpleMode() !== undefined && switchEditMode() !== undefined && !isImport()) {
+        @if (aiModeAvailable() && editMode() !== undefined) {
+            <!-- On the AI-eligible create path, the simple/advanced toggle is replaced by a 3-way mode selector (Simple / Advanced / AI); AI is create-only. -->
+            <div class="d-flex align-items-center">
+                <div
+                    ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate }}"
+                    [disableTooltip]="areAuxiliaryRepositoriesValid()"
+                >
+                    <p-selectButton
+                        class="form-footer-mode-selector"
+                        [options]="modeOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        [allowEmpty]="false"
+                        [ngModel]="editMode()"
+                        (onChange)="onModeChange($event.value)"
+                        [disabled]="!areAuxiliaryRepositoriesValid()"
+                        size="small"
+                    >
+                        <ng-template #item let-option>
+                            @if (option.icon) {
+                                <fa-icon [icon]="option.icon" class="me-1" />
+                            }
+                            <span>{{ option.label }}</span>
+                        </ng-template>
+                    </p-selectButton>
+                </div>
+                <jhi-help-icon [text]="'artemisApp.programmingExercise.home.aiModeTooltip'" />
+            </div>
+        } @else if (isSimpleMode() !== undefined && switchEditMode() !== undefined && !isImport()) {
             <div class="d-flex align-items-center">
                 <div
                     ngbTooltip="{{ 'artemisApp.programmingExercise.auxiliaryRepository.invalidConfigurationPreventsSwitchingEditMode' | artemisTranslate }}"
@@ -44,37 +72,22 @@
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
         </button>
-        @if (showGenerateWithAi()) {
+        <div [ngbTooltip]="aiActionTooltip()" [disableTooltip]="!aiActionTooltip()" tooltip-placement="top-right auto">
             <button
                 pButton
                 type="button"
-                id="generate-with-ai"
+                id="save-entity"
                 class="footer-action-button d-flex align-items-center"
-                [disabled]="!!invalidReasons().length || isDisabled() || isSaving() || isGeneratingWithAi()"
-                [loading]="isGeneratingWithAi()"
+                [disabled]="!!invalidReasons().length || isDisabled() || isSaving() || isGeneratingWithAi() || aiActionBlocked()"
+                [loading]="isSaving()"
                 size="small"
-                (click)="generateWithAi.emit()"
+                (click)="isAiMode() ? aiGenerate.emit() : save.emit()"
             >
-                @if (!isGeneratingWithAi()) {
-                    <fa-icon [fixedWidth]="true" [icon]="facArtemisIntelligence" class="sm" />
+                @if (!isSaving()) {
+                    <fa-icon [fixedWidth]="true" [icon]="isAiMode() ? facArtemisIntelligence : faSave" class="sm" />
                 }
-                <span class="d-none d-sm-inline" jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateWithAi"></span>
+                <span class="d-none d-sm-inline">{{ saveTitle() | artemisTranslate }}</span>
             </button>
-        }
-        <button
-            pButton
-            type="button"
-            id="save-entity"
-            class="footer-action-button d-flex align-items-center"
-            [disabled]="!!invalidReasons().length || isDisabled() || isSaving() || isGeneratingWithAi()"
-            [loading]="isSaving()"
-            size="small"
-            (click)="save.emit()"
-        >
-            @if (!isSaving()) {
-                <fa-icon [fixedWidth]="true" [icon]="faSave" class="sm" />
-            }
-            <span class="d-none d-sm-inline">{{ saveTitle() | artemisTranslate }}</span>
-        </button>
+        </div>
     </div>
 </div>

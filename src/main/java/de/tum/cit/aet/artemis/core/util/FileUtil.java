@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -608,6 +609,21 @@ public class FileUtil {
      * @param filesToIgnore the name of files for which no replacement should be done
      */
     public static void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore) {
+        replaceVariablesInFileRecursive(startPath, replacements, filesToIgnore, Set.of());
+    }
+
+    /**
+     * This replaces all occurrences of the target Strings with the replacement Strings in the given file and saves the file.
+     * <p>
+     * {@link #replaceVariablesInFile(Path, Map) replaceVariablesInFile}
+     *
+     * @param startPath           the path where the start directory is located
+     * @param replacements        the replacements that should be applied
+     * @param filesToIgnore       the name of files for which no replacement should be done
+     * @param forceTextExtensions lower-case file extensions (e.g. {@code ".sh"}) to substitute even though {@link #isBinaryFile} classifies them as binary — needed for text
+     *                                harness files (such as a Haskell {@code run.sh}) that the binary filter would otherwise skip, leaving their placeholders unsubstituted
+     */
+    public static void replaceVariablesInFileRecursive(Path startPath, Map<String, String> replacements, List<String> filesToIgnore, Set<String> forceTextExtensions) {
         log.debug("Replace {} in files in directory {}", replacements, startPath);
         File directory = startPath.toFile();
         if (!directory.exists() || !directory.isDirectory()) {
@@ -620,7 +636,7 @@ public class FileUtil {
             // filter out files that should be ignored
             files = Arrays.stream(files).filter(Predicate.not(filesToIgnore::contains)).toArray(String[]::new);
             for (String file : files) {
-                replaceVariablesInFile(directory.toPath().toAbsolutePath().resolve(file), replacements);
+                replaceVariablesInFile(directory.toPath().toAbsolutePath().resolve(file), replacements, forceTextExtensions);
             }
         }
 
@@ -632,7 +648,7 @@ public class FileUtil {
                     // ignore files in the '.git' folder
                     continue;
                 }
-                replaceVariablesInFileRecursive(directory.toPath().toAbsolutePath().resolve(subDirectory), replacements, filesToIgnore);
+                replaceVariablesInFileRecursive(directory.toPath().toAbsolutePath().resolve(subDirectory), replacements, filesToIgnore, forceTextExtensions);
             }
         }
     }
@@ -645,8 +661,22 @@ public class FileUtil {
      * @param replacements the replacements that should be applied
      */
     public static void replaceVariablesInFile(Path filePath, Map<String, String> replacements) {
+        replaceVariablesInFile(filePath, replacements, Set.of());
+    }
+
+    /**
+     * Like {@link #replaceVariablesInFile(Path, Map)}, but a file whose extension is in {@code forceTextExtensions} is substituted even when {@link #isBinaryFile} classifies it as
+     * binary. This keeps the binary guard intact for genuine binaries while allowing text harness scripts (e.g. {@code .sh}) to have their placeholders substituted.
+     *
+     * @param filePath            the path where the file is located
+     * @param replacements        the replacements that should be applied
+     * @param forceTextExtensions lower-case extensions to treat as text despite the binary classification
+     */
+    public static void replaceVariablesInFile(Path filePath, Map<String, String> replacements, Set<String> forceTextExtensions) {
         log.debug("Replace {} in file {}", replacements, filePath);
-        if (isBinaryFile(filePath.toString())) {
+        String lowerCasePath = filePath.toString().toLowerCase(Locale.ROOT);
+        boolean forcedAsText = forceTextExtensions.stream().anyMatch(lowerCasePath::endsWith);
+        if (!forcedAsText && isBinaryFile(filePath.toString())) {
             // do not try to read binary files with 'readString'
             return;
         }

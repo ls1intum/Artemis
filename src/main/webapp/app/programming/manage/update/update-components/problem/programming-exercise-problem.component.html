@@ -1,8 +1,9 @@
 <section>
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
-    <!-- User Prompt Input -->
-    @if (hyperionEnabled) {
+    <!-- AI mode: the "Your Requirements" brief drives the from-scratch generation, triggered by the footer's single "Generate entire exercise" action. "Draft a plan to review"
+         optionally synthesises a problem statement into the editor below so the instructor can review and adapt the plan before the full build. -->
+    @if (isAiMode()) {
         <div class="mb-3">
             <div class="d-flex align-items-center mb-2">
                 <label for="userPrompt" class="form-label mb-0" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
@@ -12,7 +13,7 @@
                 <textarea
                     id="userPrompt"
                     [ngModel]="userPrompt()"
-                    (ngModelChange)="userPrompt.set($event)"
+                    (ngModelChange)="onBriefChange($event)"
                     pTextarea
                     fluid
                     rows="4"
@@ -24,24 +25,47 @@
                 <span class="textarea-char-count" [class.text-danger]="isPromptNearLimit()">{{ userPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-2 mb-3">
-            <button pButton type="button" severity="primary" outlined [disabled]="!userPrompt()?.trim() || isAiApplying()" (click)="handleProblemStatementAction()">
+        <small class="text-color-secondary d-block mb-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.aiModeHint"></small>
+        <!-- Make the auto-generated/defaulted configuration explicit so the lean page is never a black box: points, score inclusion, title and the deferred dates. -->
+        <p-message severity="secondary" styleClass="w-100 mb-3" [closable]="false">
+            <small jhiTranslate="artemisApp.programmingExercise.problemStatement.aiDefaultsNote"></small>
+        </p-message>
+        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <button
+                pButton
+                type="button"
+                id="generate-problem-statement"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                [disabled]="!userPrompt()?.trim() || isAiApplying() || isGeneratingWithAi()"
+                (click)="handleProblemStatementAction()"
+            >
                 @if (isAiApplying()) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
+                    <fa-icon pButtonIcon [icon]="faSpinner" animation="spin" />
                 } @else {
-                    <fa-icon [icon]="facArtemisIntelligence" />
+                    <fa-icon pButtonIcon [icon]="facArtemisIntelligence" />
                 }
-                @if (shouldShowGenerateButton()) {
-                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
-                } @else {
-                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
-                }
+                <span
+                    pButtonLabel
+                    [jhiTranslate]="
+                        shouldShowGenerateButton()
+                            ? 'artemisApp.programmingExercise.problemStatement.draftPlanToReview'
+                            : 'artemisApp.programmingExercise.problemStatement.redraftPlan'
+                    "
+                ></span>
             </button>
-            <button pButton type="button" id="cancel-generation" severity="secondary" outlined (click)="cancelAiOperation()" [disabled]="!isGeneratingOrRefining()">
-                <fa-icon [icon]="faBan" class="me-1" />
-                <span jhiTranslate="entity.action.cancel"></span>
+            <button pButton type="button" id="cancel-generation" severity="secondary" outlined size="small" (click)="cancelAiOperation()" [disabled]="!isGeneratingOrRefining()">
+                <fa-icon pButtonIcon [icon]="faBan" />
+                <span pButtonLabel jhiTranslate="entity.action.cancel"></span>
             </button>
         </div>
+        <!-- Once a plan has been drafted into the editor below, make the (otherwise invisible) coupling explicit: the reviewed plan becomes the spec the build must match. -->
+        @if (!shouldShowGenerateButton()) {
+            <p-message severity="info" styleClass="w-100 mb-3" [closable]="false">
+                <small jhiTranslate="artemisApp.programmingExercise.problemStatement.planBecomesSpecHint"></small>
+            </p-message>
+        }
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">

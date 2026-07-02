@@ -22,12 +22,15 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
 class HyperionProblemStatementGenerationServiceTest {
@@ -53,7 +56,20 @@ class HyperionProblemStatementGenerationServiceTest {
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService, llmTokenUsageService, userRepository);
+        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService, llmTokenUsageService, userRepository,
+                new ObjectMapper());
+    }
+
+    private void stubModelResponse(String text) {
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(text)))));
+    }
+
+    private static Course course() {
+        var course = new Course();
+        course.setId(123L);
+        course.setTitle("Test Course");
+        course.setDescription("Test Description");
+        return course;
     }
 
     @Test
@@ -165,7 +181,8 @@ class HyperionProblemStatementGenerationServiceTest {
 
     @Test
     void generateProblemStatement_throwsExceptionWhenChatClientIsNull() {
-        var serviceWithNullClient = new HyperionProblemStatementGenerationService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
+        var serviceWithNullClient = new HyperionProblemStatementGenerationService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository,
+                new ObjectMapper());
         var course = new Course();
         course.setTitle("Test Course");
         course.setDescription("Test Description");
@@ -210,5 +227,125 @@ class HyperionProblemStatementGenerationServiceTest {
 
         assertThatThrownBy(() -> hyperionProblemStatementGenerationService.generateProblemStatement(course, tooLongPrompt)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("exceeds maximum length");
+    }
+
+    @Test
+    void generateProblemStatement_parsesAndStripsTheProposedMetadataTrailer() {
+        stubModelResponse("""
+                # Ring Buffer
+
+                Implement a fixed-capacity ring buffer.
+
+                ```json
+                {"title": "Ring Buffer", "difficulty": "MEDIUM", "categories": ["data-structures", "collections"]}
+                ```
+                """);
+
+        var resp = hyperionProblemStatementGenerationService.generateProblemStatement(course(), "Prompt");
+
+        // The trailer is removed from the student-facing statement and surfaced as suggestions.
+        assertThat(resp.draftProblemStatement()).startsWith("# Ring Buffer").doesNotContain("```json").doesNotContain("difficulty");
+        assertThat(resp.suggestedTitle()).isEqualTo("Ring Buffer");
+        assertThat(resp.suggestedDifficulty()).isEqualTo(DifficultyLevel.MEDIUM);
+        assertThat(resp.suggestedCategories()).containsExactly("data-structures", "collections");
+    }
+
+    @Test
+    void generateProblemStatement_mapsDifficultyCaseInsensitively_andCapsCategoriesAtThree() {
+        stubModelResponse("""
+                # Cache
+
+                Body.
+
+                ```json
+                {"difficulty": "hard", "categories": ["a", "a", "b", "c", "d"]}
+                ```
+                """);
+
+        var resp = hyperionProblemStatementGenerationService.generateProblemStatement(course(), "Prompt");
+
+        assertThat(resp.suggestedDifficulty()).isEqualTo(DifficultyLevel.HARD);
+        // Deduped and capped to the first three distinct categories.
+        assertThat(resp.suggestedCategories()).containsExactly("a", "b", "c");
+        assertThat(resp.suggestedTitle()).isNull();
+    }
+
+    @Test
+    void generateProblemStatement_withNoTrailer_returnsStatementUnchangedWithNoSuggestions() {
+        stubModelResponse("# Plain\n\nNo metadata here.");
+
+        var resp = hyperionProblemStatementGenerationService.generateProblemStatement(course(), "Prompt");
+
+        assertThat(resp.draftProblemStatement()).isEqualTo("# Plain\n\nNo metadata here.");
+        assertThat(resp.suggestedTitle()).isNull();
+        assertThat(resp.suggestedDifficulty()).isNull();
+        assertThat(resp.suggestedCategories()).isNull();
+    }
+
+    @Test
+    void generateProblemStatement_ignoresJsonExampleInBody_andOnlyParsesTheMetadataTrailer() {
+        // A json example in the statement body must NOT be mistaken for the metadata block; only the trailing block carrying metadata keys is consumed.
+        stubModelResponse("""
+                # Config
+
+                Example input:
+
+                ```json
+                {"host": "localhost", "port": 8080}
+                ```
+
+                Implement the parser.
+
+                ```json
+                {"difficulty": "EASY", "categories": ["parsing"]}
+                ```
+                """);
+
+        var resp = hyperionProblemStatementGenerationService.generateProblemStatement(course(), "Prompt");
+
+        // The example block stays in the statement; only the metadata trailer is removed.
+        assertThat(resp.draftProblemStatement()).contains("\"host\": \"localhost\"").doesNotContain("difficulty");
+        assertThat(resp.suggestedDifficulty()).isEqualTo(DifficultyLevel.EASY);
+        assertThat(resp.suggestedCategories()).containsExactly("parsing");
+    }
+
+    @Test
+    void generateProblemStatement_failsOpenOnGarbageTrailer_keepingTheStatement() {
+        stubModelResponse("""
+                # Garbage
+
+                Body.
+
+                ```json
+                {"difficulty": not-valid-json,,,}
+                ```
+                """);
+
+        var resp = hyperionProblemStatementGenerationService.generateProblemStatement(course(), "Prompt");
+
+        // Unparseable trailer => no suggestions, and the statement is preserved (never rejected just because the rider was malformed).
+        assertThat(resp.draftProblemStatement()).contains("# Garbage");
+        assertThat(resp.suggestedDifficulty()).isNull();
+        assertThat(resp.suggestedTitle()).isNull();
+        assertThat(resp.suggestedCategories()).isNull();
+    }
+
+    @Test
+    void generateProblemStatement_invalidDifficultyValue_yieldsNullDifficultyButKeepsOtherSuggestions() {
+        stubModelResponse("""
+                # X
+
+                Body.
+
+                ```json
+                {"title": "X", "difficulty": "TRIVIAL", "categories": ["t"]}
+                ```
+                """);
+
+        var resp = hyperionProblemStatementGenerationService.generateProblemStatement(course(), "Prompt");
+
+        assertThat(resp.suggestedDifficulty()).isNull();
+        assertThat(resp.suggestedTitle()).isEqualTo("X");
+        assertThat(resp.suggestedCategories()).containsExactly("t");
     }
 }

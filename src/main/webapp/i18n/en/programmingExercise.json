@@ -10,7 +10,17 @@
                 "switchToSimpleMode": "Switch to simple mode",
                 "simpleModeTooltip": "The simple mode reduces the view to configuration options that are needed for a basic programming exercise. Changes made in the advanced mode will be saved.",
                 "switchToAdvancedMode": "Switch to advanced mode",
-                "advancedModeTooltip": "The advanced mode offers extended configuration options."
+                "advancedModeTooltip": "The advanced mode offers extended configuration options.",
+                "aiModeTooltip": "AI mode lets you describe the exercise you want in plain language. Just pick the programming language and describe what you want — Artemis Intelligence authors the problem statement, builds the repositories, and verifies the exercise for you. Title, points and identifiers are filled in with sensible defaults you can refine afterwards. You can draft and review a plan before the full build."
+            },
+            "aiPlanSuggestions": {
+                "title": "Suggested settings",
+                "hint": "Artemis Intelligence proposed these from your plan and applied them automatically. Adjust or clear them as you like — they do not affect generation."
+            },
+            "editMode": {
+                "simple": "Simple",
+                "advanced": "Advanced",
+                "ai": "AI"
             },
             "problemStatementGlobalRefinementRequest": {
                 "userPrompt": "User Prompt"
@@ -127,6 +137,7 @@
             "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students cam participate in the exercise.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
+            "unsavedChangesModeSwitch": "The problem statement contains changes that will be discarded when you switch mode. Do you want to continue?",
             "templateRepositoryUri": "Template Repository Uri",
             "testRepositoryUri": "Test Repository Uri",
             "solutionRepositoryUri": "Solution Repository Uri",
@@ -296,6 +307,11 @@
                 "refinementAssistance": "Refine Problem Statement",
                 "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
                 "yourRequirements": "Your Requirements",
+                "aiModeHint": "Describe the exercise you want. When you click \"Generate entire exercise\", Artemis Intelligence writes the problem statement, builds the repositories, and verifies the exercise — then drops you into the editor. Optionally draft a plan first to review and adapt it before the full build.",
+                "aiDefaultsNote": "Only the language and your description are needed. Artemis starts the exercise with sensible defaults — 10 points, included in the course score, and a title taken from the generated statement — all of which you can change in the editor afterwards. Release and due dates stay unset until you publish the exercise.",
+                "draftPlanToReview": "Draft a plan to review",
+                "redraftPlan": "Re-draft plan",
+                "planBecomesSpecHint": "This reviewed plan becomes the specification the generated solution, template and tests must match. Edit it below until it captures exactly what you want, then generate.",
                 "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
                 "generationSuccess": "Problem statement has been successfully generated.",
                 "generationError": "Failed to generate problem statement. Please try again.",
@@ -328,63 +344,8 @@
                     "close": "Close",
                     "instructionTooLong": "The refinement instruction is too long. Please shorten it and try again."
                 },
-                "diffLineStatTooltip": "Lines added and removed by the AI refinement."
-            },
-            "codeGeneration": {
-                "creationAssistance": "Creation Assistance",
-                "generateCode": "Generate Code",
-                "generateWithAi": "Generate with AI",
-                "generating": "Generating...",
-                "runningTitle": "Code generation in progress",
-                "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",
-                "description": "Generate solution, template, and test code using AI",
-                "tooltip": "AI Code Generation - Generate solution, template, and test code",
-                "confirmTitle": "Confirm Code Generation",
-                "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
-                "success": "{{repositoryType}} code generation completed.",
-                "warning": "{{repositoryType}} code generation completed with issues.",
-                "error": "{{repositoryType}} code generation failed. Please try again later.",
-                "timeoutDetails": "The generation timed out after waiting too long for a response.",
-                "queueReleaseTimeoutDetails": "The previous repository generation did not finish cleanup in time, so the next repository could not start.",
-                "unsupportedRepository": "Code generation is only supported for Template, Solution, and Test repositories.",
-                "noRepositorySelected": "Select at least one repository before starting code generation.",
-                "settingsTitle": "Generation Settings",
-                "settingsTooltip": "Select repositories to generate",
-                "statusTitle": "Generation Status",
-                "statusTooltip": "Show live generation status",
-                "executionOrder": "Selected repositories run consecutively in this order: Solution, Template, Test.",
-                "selectedFeedback": {
-                    "title": "Selected Feedback Threads",
-                    "description": "These selected threads will be forwarded as feedback context for code generation.",
-                    "count": "{{count}} selected",
-                    "empty": "No threads are currently selected as feedback.",
-                    "showThreads": "Show Threads",
-                    "hideThreads": "Hide Threads",
-                    "viewThread": "View Thread",
-                    "line": "Line {{line}}",
-                    "unknownLocation": "Unknown location"
-                },
-                "repositories": {
-                    "template": "Template Repository",
-                    "solution": "Solution Repository",
-                    "tests": "Tests Repository"
-                },
-                "activityTitle": "File Activity",
-                "iteration": "Iteration {{iteration}}",
-                "noActivity": "No files have been created or updated yet.",
-                "attempts": "Attempts made: {{attempts}}",
-                "status": {
-                    "idle": "Not started",
-                    "queued": "Queued",
-                    "running": "Running",
-                    "success": "Completed",
-                    "warning": "Completed with issues",
-                    "error": "Failed",
-                    "skipped": "Skipped",
-                    "skippedMessage": "Skipped because a previous repository generation failed.",
-                    "fileCreated": "created",
-                    "fileUpdated": "updated"
-                }
+                "diffLineStatTooltip": "Lines added and removed by the AI refinement.",
+                "draftStatementOnly": "Draft the problem statement only"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -900,7 +861,6 @@
                 }
             },
             "artemisIntelligence": {
-                "title": "Artemis Intelligence",
                 "consistencyCheckAlert": {
                     "title": "Consistency Check Result",
                     "improvement": "Suggestion for improvement",
@@ -981,6 +941,79 @@
                 },
                 "outdated": "Outdated",
                 "reanalyze": "Re-analyze"
+            },
+            "generateExercise": {
+                "cardTitle": "Exercise generation",
+                "generateEntire": "Generate entire exercise",
+                "briefRequired": "Describe the exercise you want under \"Your Requirements\" first.",
+                "languageUnsupported": "Whole-exercise generation is not available for the selected language yet. Pick a supported language to continue.",
+                "generate": "Generate exercise",
+                "retry": "Try again",
+                "retryHint": "The previous run was not saved. Optionally add guidance below, then try again.",
+                "guidanceLabel": "Guidance for the next attempt (optional)",
+                "guidancePlaceholder": "e.g. also cover the empty-input edge case; make the template a clearer stub",
+                "openInEditor": "Open in the code editor to resolve the review comments",
+                "cancel": "Cancel",
+                "cancelling": "Cancelling…",
+                "runningHint": "This usually takes a few minutes. Progress streams here; the exercise is only saved once it is verified.",
+                "phase": {
+                    "preparing": "Preparing",
+                    "authoring": "Writing the exercise",
+                    "verifying": "Checking it builds and grades",
+                    "saving": "Saving",
+                    "done": "Finishing up"
+                },
+                "attempt": "Attempt {{ attempt }} of {{ total }}",
+                "elapsed": "Elapsed {{ time }}",
+                "filesChanged": "Files changed ({{ count }})",
+                "fileCreated": "new",
+                "fileEdited": "edited",
+                "repo": {
+                    "solution": "Solution",
+                    "template": "Template",
+                    "tests": "Tests",
+                    "other": "Other"
+                },
+                "reviewChanges": "Review changes",
+                "success": "The exercise was generated and saved. Review the changes.",
+                "needsReview": "A draft exercise was generated but did not fully pass verification. It was saved for you to finish, and the open issues were added as review comments — resolve them before using the exercise.",
+                "startError": "Could not start exercise generation. Please try again later.",
+                "alreadyRunning": "Exercise generation is already running for this exercise.",
+                "cancelError": "Could not cancel the generation.",
+                "diffError": "Could not load the changes to review.",
+                "streamError": "Lost the connection to the generation progress stream.",
+                "resultSuccess": "Generated and saved.",
+                "resultNeedsReview": "A draft was saved for review, but it did not fully pass verification. Resolve the review comments before using the exercise.",
+                "resultPartial": "Generation finished, but the exercise could not be verified automatically. You can review and edit it, or delete it from the exercise page.",
+                "resultCancelled": "Generation was cancelled. You can keep editing the exercise, or delete it from the exercise page.",
+                "resultError": "Generation failed. You can keep editing the exercise, or delete it from the exercise page.",
+                "gateSolutionMet": "Solution passes",
+                "gateSolutionUnmet": "Solution fails",
+                "gateTemplateMet": "Template fails as required",
+                "gateTemplateUnmet": "Template unexpectedly passes",
+                "gateTests": "tests",
+                "reasonsHeading": "Why it was not accepted",
+                "languageUnsupportedTooltip": "AI generation is not available for this programming language yet.",
+                "languageLoadingTooltip": "Checking language support…",
+                "dismiss": "Dismiss",
+                "step": {
+                    "preparing": "Setting things up",
+                    "authoring": "Writing the solution and tests",
+                    "checking": "Checking it builds and grades (attempt {{attempt}} of {{total}})",
+                    "saving": "Saving the exercise"
+                },
+                "progressHeading": "Progress",
+                "chipDone": "Exercise ready",
+                "chipNeedsReview": "Needs review",
+                "chipFailed": "Generation failed",
+                "chipCancelled": "Cancelled",
+                "chipPartial": "Incomplete",
+                "chip": {
+                    "running": "Generating… {{step}}/{{total}}"
+                }
+            },
+            "creationAssistance": {
+                "label": "Creation Assistance"
             }
         },
         "checklistAnalysisRequest": {

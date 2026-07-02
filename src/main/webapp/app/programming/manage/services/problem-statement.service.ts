@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileService } from 'app/foundation/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -17,11 +18,20 @@ import {
     isValidRefinementResponse,
 } from 'app/programming/manage/shared/problem-statement.utils';
 
+/** The editable metadata the draft proposes alongside the problem statement (never drives generation). */
+export interface PlanSuggestions {
+    title?: string;
+    difficulty?: DifficultyLevel;
+    categories?: string[];
+}
+
 /** Result of a problem statement operation (generation or refinement). */
 export interface OperationResult {
     success: boolean;
     content?: string;
     errorHandled?: boolean;
+    /** Only populated by generation: the metadata the draft proposes for the instructor to review/edit. */
+    suggestions?: PlanSuggestions;
 }
 
 /**
@@ -52,17 +62,20 @@ export class ProblemStatementService {
             return of({ success: false, errorHandled: true });
         }
         setLoading(true);
-        return this.hyperionApiService
-            .generateProblemStatement(courseId, buildGenerationRequest(prompt))
-            .pipe(
-                this.handleApiResponse(
-                    setLoading,
-                    'artemisApp.programmingExercise.problemStatement.generationSuccess',
-                    'artemisApp.programmingExercise.problemStatement.generationError',
-                    isValidGenerationResponse,
-                    (response) => response?.draftProblemStatement,
-                ),
-            );
+        return this.hyperionApiService.generateProblemStatement(courseId, buildGenerationRequest(prompt)).pipe(
+            this.handleApiResponse(
+                setLoading,
+                'artemisApp.programmingExercise.problemStatement.generationSuccess',
+                'artemisApp.programmingExercise.problemStatement.generationError',
+                isValidGenerationResponse,
+                (response) => response?.draftProblemStatement,
+                (response) => ({
+                    title: response?.suggestedTitle,
+                    difficulty: response?.suggestedDifficulty as DifficultyLevel | undefined,
+                    categories: response?.suggestedCategories,
+                }),
+            ),
+        );
     }
 
     /** Refines a problem statement globally using the provided prompt. */
@@ -138,6 +151,7 @@ export class ProblemStatementService {
         errorKey: string,
         isValid: (response: T) => boolean,
         getContent: (response: T) => string | undefined,
+        getSuggestions?: (response: T) => PlanSuggestions | undefined,
     ): OperatorFunction<T, OperationResult> {
         return (source) =>
             source.pipe(
@@ -148,7 +162,7 @@ export class ProblemStatementService {
                     } else {
                         this.alertService.error(errorKey);
                     }
-                    return { success, content: getContent(response), errorHandled: !success };
+                    return { success, content: getContent(response), errorHandled: !success, suggestions: success ? getSuggestions?.(response) : undefined };
                 }),
                 catchError((error) => {
                     const handledByInterceptor = error instanceof HttpErrorResponse && !!(error.error?.errorKey || error.error?.title);

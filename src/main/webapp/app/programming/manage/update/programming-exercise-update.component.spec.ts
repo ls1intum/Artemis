@@ -9,7 +9,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
+import { AI_MODE_DEFAULT_POINTS, LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -24,13 +24,14 @@ import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
 import { APP_NAME_PATTERN_FOR_SWIFT, MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/foundation/constants/input.constants';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockProvider } from 'ng-mocks';
@@ -40,6 +41,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { FileService } from 'app/foundation/service/file.service';
+import { AUTO_START_EXERCISE_GENERATION_PROMPT } from 'app/hyperion/exercise-generation/exercise-generation.constants';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { Signal, signal } from '@angular/core';
@@ -60,7 +63,7 @@ vi.mock('y-monaco', () => ({
     }),
 }));
 
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 
 /**
  * Typed view onto the protected `viewChild` signals so the spec can override them
@@ -95,6 +98,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
     let profileService: ProfileService;
+    let fileService: FileService;
     let programmingExerciseSharingService: ProgrammingExerciseSharingService;
     let localStorageService: LocalStorageService;
 
@@ -135,6 +139,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
         alertService = TestBed.inject(AlertService);
         profileService = TestBed.inject(ProfileService);
+        fileService = TestBed.inject(FileService);
         programmingExerciseSharingService = TestBed.inject(ProgrammingExerciseSharingService);
         localStorageService = TestBed.inject(LocalStorageService);
 
@@ -155,7 +160,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         newProfileInfo.programmingLanguageFeatures = [programmingLanguageFeature];
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
 
-        comp.isSimpleMode.set(false);
+        comp.editMode.set('advanced');
 
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
@@ -168,6 +173,23 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    it('AI create flow: ngOnInit leaves the problem statement EMPTY when AI mode is active (the synchronous readme load must be skipped)', () => {
+        // In AI mode the language readme (a worked sample, e.g. the Java sorting exercise) must NOT load: ngOnInit sets selectedProgrammingLanguage synchronously, which runs
+        // loadProgrammingLanguageTemplate. On the AI path that has to leave the statement empty, otherwise a from-scratch run would treat the sample as an authoritative spec ("bubble sort").
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
+        const getTemplateFile = vi.spyOn(fileService, 'getTemplateFile').mockReturnValue(of('# A sorting sample readme long enough to be treated as a real instructor spec'));
+        const route = TestBed.inject(ActivatedRoute);
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.params = of({ courseId });
+        comp.editMode.set('ai'); // the user has opted into AI mode before the language template resolves
+
+        comp.ngOnInit();
+
+        expect(comp.showGenerateWithAi()).toBe(true);
+        expect(getTemplateFile).not.toHaveBeenCalled();
+        expect(comp.programmingExercise.problemStatement).toBe('');
     });
 
     describe('initializeEditMode', () => {
@@ -207,6 +229,188 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         expect(comp.isSimpleMode()).toBeFalsy();
         expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
+    });
+
+    describe('AI mode (create-only third mode)', () => {
+        beforeEach(() => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            comp.programmingExercise = exercise;
+            comp.backupExercise = {} as ProgrammingExercise;
+            // Create + Hyperion + not an import → showGenerateWithAi() is true, so AI mode is eligible.
+            comp.hyperionEnabled = true;
+        });
+
+        it('entering AI mode blanks the problem statement and uses the lean AI field set; AI mode is never persisted to localStorage', () => {
+            // An edited/leftover statement that differs from the loaded readme triggers the discard guard; accept it.
+            const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+            comp.programmingExercise.problemStatement = '# A leftover readme sample';
+
+            comp.setEditMode('ai');
+
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            expect(comp.isAiMode()).toBe(true);
+            expect(comp.isSimpleMode()).toBe(true); // AI reuses the simple layout machinery
+            expect(comp.programmingExercise.problemStatement).toBe('');
+            // The radically lean AI map shows ONLY the language and the problem-statement brief; everything else is auto-generated/defaulted and hidden.
+            expect(comp.isEditFieldDisplayedRecord().programmingLanguage).toBe(true);
+            expect(comp.isEditFieldDisplayedRecord().problemStatement).toBe(true);
+            expect(comp.isEditFieldDisplayedRecord().shortName).toBe(false);
+            expect(comp.isEditFieldDisplayedRecord().projectType).toBe(false);
+            expect(comp.isEditFieldDisplayedRecord().points).toBe(false);
+            expect(comp.isEditFieldDisplayedRecord().timeline).toBe(false);
+            // SCA is the one extra optional toggle (gated to SCA-capable languages by the language section); a real instructor decision that also steers generation.
+            expect(comp.isEditFieldDisplayedRecord().enableStaticCodeAnalysis).toBe(true);
+            // AI mode is ephemeral: only simple/advanced are written to localStorage.
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).not.toBe('ai');
+        });
+
+        it('guards against silently discarding an edited problem statement: on cancel it stays in the current mode', () => {
+            const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+            comp.programmingExercise.problemStatement = '# A hand-edited statement the instructor would lose';
+
+            comp.setEditMode('ai');
+
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            expect(comp.isAiMode()).toBe(false); // cancelled — mode unchanged
+            expect(comp.programmingExercise.problemStatement).toBe('# A hand-edited statement the instructor would lose'); // not wiped
+        });
+
+        it('persists the manual preference when leaving AI mode for a manual mode', () => {
+            comp.setEditMode('ai');
+            comp.setEditMode('advanced');
+            expect(comp.isAiMode()).toBe(false);
+            expect(localStorageService.retrieve<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(false);
+        });
+
+        it('falls back to simple mode if AI eligibility disappears while in AI mode', () => {
+            // Keep Hyperion on through ngOnInit so the constructor effects settle with AI mode eligible.
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
+            fixture.detectChanges();
+
+            comp.setEditMode('ai');
+            expect(comp.isAiMode()).toBe(true);
+
+            // Eligibility goes away (e.g. Hyperion disabled): the guard effect must drop AI mode so the footer never routes to a path that cannot run.
+            comp.hyperionEnabled = false;
+            fixture.detectChanges();
+            expect(comp.isAiMode()).toBe(false);
+            expect(comp.editMode()).toBe('simple');
+        });
+
+        it('seeds the hidden required fields with valid defaults when entering AI mode', () => {
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            comp.programmingExercise.maxPoints = undefined;
+            comp.programmingExercise.packageName = undefined;
+            comp.programmingExercise.shortName = undefined;
+
+            comp.setEditMode('ai');
+
+            // Points default so the persist gate is satisfied without asking the instructor to grade unseen content.
+            expect(comp.programmingExercise.maxPoints).toBe(AI_MODE_DEFAULT_POINTS);
+            // A Java/Kotlin package is required to persist; seed the house default.
+            expect(comp.programmingExercise.packageName).toBe('de.tum.in.ase');
+            // Short name is auto-derived and must satisfy the ^[a-zA-Z][a-zA-Z0-9]* pattern.
+            expect(comp.programmingExercise.shortName).toMatch(/^[a-zA-Z][a-zA-Z0-9]*$/);
+            expect(comp.programmingExercise.shortName!.length).toBeGreaterThanOrEqual(3);
+        });
+
+        it('derives the title and short name from the brief until the instructor edits the title', () => {
+            comp.setEditMode('ai');
+            comp.programmingExercise.title = undefined;
+
+            comp.onAiBriefChange('Implement a Roman numeral converter that handles 1..3999');
+
+            // The lead-in "Implement a " is stripped; the disallowed ".." collapses to a space so the placeholder satisfies the server title pattern.
+            expect(comp.programmingExercise.title).toBe('Roman numeral converter that handles 1 3999');
+            const autoShortName = comp.programmingExercise.shortName;
+            expect(autoShortName).toMatch(/^[a-zA-Z][a-zA-Z0-9]*$/);
+
+            // A second brief keystroke keeps re-deriving while the title is still the auto-seeded value.
+            comp.onAiBriefChange('Build a balanced binary search tree');
+            expect(comp.programmingExercise.title).toBe('Balanced binary search tree');
+
+            // Once the instructor hand-edits the title, the brief stops overwriting it.
+            comp.programmingExercise.title = 'My exact title';
+            comp.onAiBriefChange('Some completely different brief text');
+            expect(comp.programmingExercise.title).toBe('My exact title');
+        });
+
+        it('derives a title that always satisfies the server title pattern even from free-prose briefs (no colon, commas, slashes)', () => {
+            // Regression: a brief without an early colon used to yield a raw slice containing commas/periods, which the server rejects with titlePatternInvalid (400) — and because the
+            // lean page hides the title field, the persist failed silently. The derived placeholder must be valid by construction.
+            comp.setEditMode('ai');
+            const pattern = /^[a-zA-Z0-9 _-]+$/;
+
+            for (const brief of [
+                'For week 5 of our intro course, right after the recursion lecture, I would like a medium exercise on file-system sizes.',
+                'Build a parser for arithmetic expressions (with +, -, *, /) and report division-by-zero errors clearly.',
+                'студенты: пишут кэш', // non-Latin → must still fall back to a valid title
+            ]) {
+                comp.programmingExercise.title = undefined;
+                comp.onAiBriefChange(brief);
+                const title = comp.programmingExercise.title ?? '';
+                expect(title.length).toBeGreaterThanOrEqual(3);
+                expect(title).toMatch(pattern);
+            }
+        });
+
+        it('re-defaults the package name when the language changes in AI mode', () => {
+            vi.spyOn(window, 'confirm').mockReturnValue(true); // language change may prompt on unsaved changes
+            comp.setEditMode('ai');
+
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+            expect(comp.programmingExercise.packageName).toBe('de.tum.in.ase');
+
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.PYTHON);
+            // Python has no package concept — clear it so a stale Java package can never block the persist.
+            expect(comp.programmingExercise.packageName).toBeUndefined();
+
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.GO);
+            expect(comp.programmingExercise.packageName).toBe('exercise');
+        });
+
+        it('applies draft plan suggestions (title/difficulty/snapped categories) and reveals the suggestions panel', () => {
+            comp.setEditMode('ai');
+            comp.programmingExercise.title = undefined;
+            // One existing course category to snap against (keeps its colour); the other proposal is genuinely new.
+            comp.existingCategories = [new ExerciseCategory('Data Structures', '#111111')];
+            expect(comp.aiPlanSuggestionsApplied()).toBe(false);
+
+            comp.onPlanSuggestions({ title: 'Ring Buffer!', difficulty: DifficultyLevel.MEDIUM, categories: ['data structures', 'Generics', 'data structures'] });
+
+            // Title sanitised + applied; difficulty applied; panel revealed.
+            expect(comp.programmingExercise.title).toBe('Ring Buffer');
+            expect(comp.programmingExercise.difficulty).toBe(DifficultyLevel.MEDIUM);
+            expect(comp.aiPlanSuggestionsApplied()).toBe(true);
+            // Categories snapped: the existing one is reused verbatim (same colour), the new one is added once (deduped), and a colour is assigned.
+            const names = (comp.programmingExercise.categories ?? []).map((category) => category.category);
+            expect(names).toEqual(['Data Structures', 'Generics']);
+            const snapped = comp.programmingExercise.categories!.find((category) => category.category === 'Data Structures');
+            expect(snapped!.color).toBe('#111111');
+            expect(comp.programmingExercise.categories!.find((category) => category.category === 'Generics')!.color).toBeDefined();
+        });
+
+        it('does not overwrite an instructor-edited title when applying plan suggestions', () => {
+            comp.setEditMode('ai');
+            comp.programmingExercise.title = 'Hand picked title';
+
+            comp.onPlanSuggestions({ title: 'Model Title', difficulty: DifficultyLevel.HARD });
+
+            expect(comp.programmingExercise.title).toBe('Hand picked title');
+            // Difficulty still applies even when the title is left alone.
+            expect(comp.programmingExercise.difficulty).toBe(DifficultyLevel.HARD);
+        });
+
+        it('ignores plan suggestions outside AI mode', () => {
+            comp.setEditMode('advanced');
+            comp.programmingExercise.difficulty = undefined;
+
+            comp.onPlanSuggestions({ difficulty: DifficultyLevel.EASY, categories: ['x'] });
+
+            expect(comp.programmingExercise.difficulty).toBeUndefined();
+            expect(comp.aiPlanSuggestionsApplied()).toBe(false);
+        });
     });
 
     describe('save', () => {
@@ -350,7 +554,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
 
             it('should set valid project type in simple mode if default project type (gradle) is not supported', () => {
-                comp.isSimpleMode.set(true);
+                comp.editMode.set('simple');
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN];
                 fixture.changeDetectorRef.detectChanges();
 
@@ -361,7 +565,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
 
             it('should keep gradle if gradle is supported', () => {
-                comp.isSimpleMode.set(true);
+                comp.editMode.set('simple');
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE];
                 fixture.changeDetectorRef.detectChanges();
 
@@ -372,7 +576,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
 
             it('should keep gradle not in creation modal', () => {
-                comp.isSimpleMode.set(true);
+                comp.editMode.set('simple');
                 comp.isCreate = false;
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN];
                 fixture.changeDetectorRef.detectChanges();
@@ -386,7 +590,31 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('save with AI', () => {
-        it('should call automatic setup with empty repositories and navigate to template editor', () => {
+        beforeEach(() => {
+            // The happy-path tests below exercise a valid form; the new invalid-form guard is covered by its own test.
+            vi.spyOn(comp, 'getInvalidReasons').mockReturnValue([]);
+        });
+
+        it('bails on an invalid form, surfaces the invalid reasons and does not start generation', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.course = course;
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const reasons = [{ translateKey: 'artemisApp.exercise.form.title.undefined', translateValues: {} }];
+            (comp.getInvalidReasons as unknown as ReturnType<typeof vi.fn>).mockReturnValue(reasons);
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup');
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+            comp.saveExerciseWithAi();
+
+            expect(setupSpy).not.toHaveBeenCalled();
+            expect(comp.isGeneratingWithAi()).toBe(false);
+            expect(alertSpy).toHaveBeenCalledWith(expect.objectContaining({ message: 'artemisApp.exercise.form.title.undefined' }));
+        });
+
+        it('should call automatic setup with empty repositories and navigate to the instructor code editor with auto-start state', () => {
             const entity = new ProgrammingExercise(course, undefined);
             entity.releaseDate = dayjs();
             entity.course = course;
@@ -411,14 +639,39 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith(
-                ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
-            );
+            expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', 'ide', 'test'], {
+                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [AUTO_START_EXERCISE_GENERATION_PROMPT]: '' },
+            });
             expect(comp.isGeneratingWithAi()).toBe(false);
         });
 
-        it('should navigate to the exam template editor with auto-start state after AI exercise creation in exam mode', () => {
+        it('threads the instructor brief from "Generate entire exercise" into the auto-start navigation state', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.course = course;
+            const savedEntity = new ProgrammingExercise(course, undefined);
+            savedEntity.id = 7;
+            savedEntity.course = course;
+
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+
+            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
+            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
+            // saveWithAi goes straight through the pre-update modal check (no confirmation dialog); stub it to invoke its callback directly.
+            vi.spyOn(comp, 'saveWithModalCheck' as any).mockImplementation((fn: any) => fn());
+            const router = TestBed.inject(Router) as unknown as MockRouter;
+
+            // The child emits the "Your Requirements" brief via briefChange → currentBrief; the footer's "Generate entire exercise" action routes it through aiGenerate → saveWithAi(currentBrief()).
+            comp.saveWithAi('  Implement a bounded LRU cache  ');
+            response$.next(new HttpResponse({ body: savedEntity }));
+
+            expect(router.navigate).toHaveBeenCalledWith(expect.anything(), {
+                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [AUTO_START_EXERCISE_GENERATION_PROMPT]: 'Implement a bounded LRU cache' },
+            });
+        });
+
+        it('should navigate to the instructor code editor with auto-start state after AI exercise creation in exam mode', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs();
             const exerciseGroup = new ExerciseGroup();
@@ -442,10 +695,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             response$.next(new HttpResponse({ body: savedEntity }));
 
-            expect(router.navigate).toHaveBeenCalledWith(
-                ['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, 11],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
-            );
+            expect(router.navigate).toHaveBeenCalledWith(['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', 'ide', 'test'], {
+                state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [AUTO_START_EXERCISE_GENERATION_PROMPT]: '' },
+            });
         });
 
         it('should fall back to regular save when hyperion is disabled', () => {
@@ -503,8 +755,35 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
     });
 
+    describe('saveWithAi (no confirmation dialog)', () => {
+        it('starts the from-scratch generation directly — the explicit, self-describing footer action needs no extra confirmation', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            entity.course = course;
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.hyperionEnabled = true;
+            // Take the from-scratch generation branch (not the plain-save early return) in saveExerciseWithAi.
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+            vi.spyOn(comp, 'getInvalidReasons').mockReturnValue([]);
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
+
+            comp.saveWithAi('Implement a bounded stack');
+
+            // No confirmation step: the from-scratch generation runs immediately with empty repositories (emptyRepositories=true).
+            expect(setupSpy).toHaveBeenCalledWith(entity, true);
+        });
+    });
+
     describe('generate with AI visibility', () => {
-        it('should only show for java when hyperion is enabled', () => {
+        // The generation-supported set is now server-driven; it gates whether the entire-exercise action can run (generationLanguageSupported),
+        // NOT whether the action area is shown. showGenerateWithAi is purely STRUCTURAL (create + Hyperion + not an import), independent of language (R2).
+        const SERVER_SUPPORTED = [ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON];
+
+        it('should show structurally regardless of language, even before the supported set has loaded (R2)', () => {
+            // Supported set still at its empty default (server set has not arrived) — the action area must still be shown so the capability stays discoverable.
             const entity = new ProgrammingExercise(course, undefined);
             entity.programmingLanguage = ProgrammingLanguage.JAVA;
 
@@ -514,13 +793,59 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.isImportFromFile = false;
             comp.isImportFromSharing = false;
 
+            expect(comp.supportedGenerationLanguages()).toEqual([]);
             expect(comp.showGenerateWithAi()).toBe(true);
 
-            const kotlinExercise = new ProgrammingExercise(course, undefined);
-            kotlinExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
-            comp.programmingExercise = kotlinExercise;
+            // A language with no generation profile (e.g. OCaml) still shows the action area — it is rendered-but-disabled in the child, not removed.
+            const ocamlExercise = new ProgrammingExercise(course, undefined);
+            ocamlExercise.programmingLanguage = ProgrammingLanguage.OCAML;
+            comp.programmingExercise = ocamlExercise;
+            expect(comp.showGenerateWithAi()).toBe(true);
+        });
 
+        it('should hide for imports and edits (structural gate)', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+
+            comp.isImportFromExistingExercise = true;
             expect(comp.showGenerateWithAi()).toBe(false);
+            comp.isImportFromExistingExercise = false;
+
+            comp.isImportFromFile = true;
+            expect(comp.showGenerateWithAi()).toBe(false);
+            comp.isImportFromFile = false;
+
+            comp.isImportFromSharing = true;
+            expect(comp.showGenerateWithAi()).toBe(false);
+            comp.isImportFromSharing = false;
+
+            // Editing an existing exercise (id set) hides the create-only action.
+            const existing = new ProgrammingExercise(course, undefined);
+            existing.programmingLanguage = ProgrammingLanguage.JAVA;
+            existing.id = 5;
+            comp.programmingExercise = existing;
+            expect(comp.showGenerateWithAi()).toBe(false);
+        });
+
+        it('should report generationLanguageSupported only for languages in the server set (fail-closed before load)', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            comp.programmingExercise = entity;
+            comp.hyperionEnabled = true;
+
+            // Before the set loads, the language is treated as unsupported (action rendered-but-disabled).
+            expect(comp.generationLanguageSupported()).toBe(false);
+
+            comp.supportedGenerationLanguages.set(SERVER_SUPPORTED);
+            expect(comp.generationLanguageSupported()).toBe(true);
+
+            const ocamlExercise = new ProgrammingExercise(course, undefined);
+            ocamlExercise.programmingLanguage = ProgrammingLanguage.OCAML;
+            comp.programmingExercise = ocamlExercise;
+            // OCaml has only a best-effort server profile and is not in the supported set.
+            expect(comp.generationLanguageSupported()).toBe(false);
         });
 
         it('should still show when id is null', () => {
@@ -535,6 +860,37 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.isImportFromSharing = false;
 
             expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('should load the supported set from the server on init when hyperion is enabled (S1)', () => {
+            const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
+            const getSupported = vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(of(SERVER_SUPPORTED));
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
+
+            comp.ngOnInit();
+
+            expect(getSupported).toHaveBeenCalledOnce();
+            expect(comp.supportedGenerationLanguages()).toEqual(SERVER_SUPPORTED);
+        });
+
+        it('should keep the set empty (fail-closed) when the server call errors (S5)', () => {
+            const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
+            vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(throwError(() => new Error('boom')));
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_HYPERION);
+
+            comp.ngOnInit();
+
+            expect(comp.supportedGenerationLanguages()).toEqual([]);
+        });
+
+        it('should never call the server when hyperion is disabled', () => {
+            const hyperionService = TestBed.inject(HyperionExerciseGenerationService);
+            const getSupported = vi.spyOn(hyperionService, 'getSupportedLanguages').mockReturnValue(of(SERVER_SUPPORTED));
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
+            comp.ngOnInit();
+
+            expect(getSupported).not.toHaveBeenCalled();
         });
     });
 
@@ -721,6 +1077,42 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(comp.programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
+        });
+
+        // From-scratch by default for AI: the language readme is a worked sample (the Java sorting exercise). If it were pre-filled on the AI create path it would be persisted and
+        // read by the server as an authoritative spec ("spec mode"), making the agent rebuild the sample instead of authoring from the instructor's brief. So the AI path must start
+        // the statement EMPTY; the manual path keeps the readme starter.
+        it('should NOT load the readme template and leave the problem statement empty on the AI create path', () => {
+            const getTemplateFile = vi.spyOn(fileService, 'getTemplateFile').mockReturnValue(of('# A worked sorting sample readme that is long enough to look like a real spec'));
+            fixture.detectChanges(); // ngOnInit assigns programmingExercise from the route (create mode, id undefined)
+            comp.hyperionEnabled = true; // create + Hyperion + not import → showGenerateWithAi() is true
+            comp.isImportFromExistingExercise = false;
+            comp.isImportFromFile = false;
+            comp.isImportFromSharing = false;
+            expect(comp.showGenerateWithAi()).toBe(true);
+            comp.editMode.set('ai'); // the from-scratch (empty statement) behaviour is gated on AI mode, not merely eligibility
+
+            // Ignore any template load triggered by ngOnInit before AI mode was entered; assert only the language-change behaviour on the AI path.
+            getTemplateFile.mockClear();
+            comp.programmingExercise.problemStatement = '# stale readme that must be cleared';
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+
+            expect(getTemplateFile).not.toHaveBeenCalled();
+            expect(comp.programmingExercise.problemStatement).toBe('');
+            expect(comp.problemStatementLoaded).toBe(true);
+        });
+
+        it('should load the readme template on the manual (non-AI) create path', () => {
+            const getTemplateFile = vi.spyOn(fileService, 'getTemplateFile').mockReturnValue(of('# Default readme'));
+            fixture.detectChanges();
+            comp.hyperionEnabled = false; // not AI-eligible → keep today's readme starter
+            expect(comp.showGenerateWithAi()).toBe(false);
+
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+
+            expect(getTemplateFile).toHaveBeenCalled();
+            expect(comp.programmingExercise.problemStatement).toBe('# Default readme');
+            expect(comp.problemStatementLoaded).toBe(true);
         });
     });
 

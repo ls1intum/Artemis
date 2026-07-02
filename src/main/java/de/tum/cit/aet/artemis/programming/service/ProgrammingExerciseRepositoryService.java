@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -73,12 +74,15 @@ public class ProgrammingExerciseRepositoryService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final ProgrammingExerciseRepositorySourceCleanupService repositorySourceCleaner;
+
     public ProgrammingExerciseRepositoryService(GitService gitService, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
-            Optional<VersionControlService> versionControlService) {
+            Optional<VersionControlService> versionControlService, ProgrammingExerciseRepositorySourceCleanupService repositorySourceCleaner) {
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.resourceLoaderService = resourceLoaderService;
         this.versionControlService = versionControlService;
+        this.repositorySourceCleaner = repositorySourceCleaner;
     }
 
     /**
@@ -101,7 +105,9 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
-     * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
+     * @param emptyRepositories   if true, clear the sources in the template and solution repositories after setup (for AI generation); the test repository keeps its harness but,
+     *                                for
+     *                                the allowlisted languages, has its sample test sources stripped too
      * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
     void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws GitAPIException {
@@ -118,71 +124,13 @@ public class ProgrammingExerciseRepositoryService {
         setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
 
         if (emptyRepositories) {
-            clearRepositoriesForAiGeneration(exerciseResources.repository, solutionResources.repository, testResources.repository, exerciseCreator);
-        }
-    }
-
-    private void clearRepositoriesForAiGeneration(final Repository templateRepository, final Repository solutionRepository, final Repository testRepository,
-            final User exerciseCreator) {
-        clearRepositorySourcesSafely(templateRepository, RepositoryType.TEMPLATE, exerciseCreator);
-        clearRepositorySourcesSafely(solutionRepository, RepositoryType.SOLUTION, exerciseCreator);
-        clearRepositorySourcesSafely(testRepository, RepositoryType.TESTS, exerciseCreator);
-    }
-
-    private void clearRepositorySourcesSafely(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) {
-        try {
-            clearRepositorySources(repository, repositoryType, exerciseCreator);
-        }
-        catch (IOException | GitAPIException ex) {
-            log.warn("Failed to clear {} repository sources for AI generation in {}. Continuing without source cleanup.", repositoryType.name().toLowerCase(Locale.ROOT),
-                    repository.getRemoteRepositoryUri(), ex);
+            repositorySourceCleaner.clearRepositoriesForAiGeneration(programmingExercise.getProgrammingLanguage(), exerciseResources.repository, solutionResources.repository,
+                    testResources.repository, exerciseCreator);
         }
     }
 
     private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
             Resource[] staticCodeAnalysisResources, Path staticCodeAnalysisPrefix) {
-    }
-
-    /**
-     * Clears the repository sources while keeping build scaffolding in place.
-     *
-     * @param repository      the repository to clean
-     * @param repositoryType  the repository type for logging and commit message
-     * @param exerciseCreator the user performing the cleanup
-     * @throws IOException     If file cleanup in the repository fails.
-     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
-     */
-    void clearRepositorySources(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) throws IOException, GitAPIException {
-        final String repositoryLabel = repositoryType.name().toLowerCase(Locale.ROOT);
-        List<Path> sourcePaths = getAiGenerationSourcePaths(repository, repositoryType);
-        if (sourcePaths.isEmpty()) {
-            throw new IOException("Cannot clear sources for AI generation: no source directory found in " + repositoryLabel + " repository " + repository.getRemoteRepositoryUri());
-        }
-        try {
-            for (Path sourcePath : sourcePaths) {
-                FileUtils.cleanDirectory(sourcePath.toFile());
-                Path keepFile = sourcePath.resolve(".gitkeep");
-                if (!Files.exists(keepFile)) {
-                    Files.createFile(keepFile);
-                }
-            }
-            commitAndPushRepository(repository, "Cleared " + repositoryLabel + " sources for AI generation", true, exerciseCreator);
-        }
-        catch (IOException ex) {
-            log.error("Failed to clean {} sources for AI generation", repositoryLabel, ex);
-            throw ex;
-        }
-    }
-
-    private static List<Path> getAiGenerationSourcePaths(final Repository repository, final RepositoryType repositoryType) {
-        final Path repositoryPath = repository.getLocalPath();
-        final List<Path> possibleSourcePaths = switch (repositoryType) {
-            case TEMPLATE, SOLUTION -> List.of(repositoryPath.resolve("src"));
-            case TESTS -> List.of(repositoryPath.resolve("test"), repositoryPath.resolve("behavior").resolve("test"), repositoryPath.resolve("structural").resolve("test"),
-                    repositoryPath.resolve("testsuite"));
-            default -> List.of();
-        };
-        return possibleSourcePaths.stream().filter(Files::exists).filter(Files::isDirectory).toList();
     }
 
     /**
@@ -230,6 +178,15 @@ public class ProgrammingExerciseRepositoryService {
             else {
                 projectTypePrefix = projectTypeSpecificPrefix;
                 projectTypeResources = projectTypeSpecificResources;
+                // Languages whose templates live ONLY under project-type subdirectories (e.g. C: templates/c/{gcc,fact}, with no language-level templates/c/exercise) have an empty
+                // language-level resource set. Promote the project-type resources to the primary slot so scaffolding does not rely on an empty-primary + overlay-merge accident
+                // (and so a missing language-level path is not even probed). Languages with language-level templates (Java/Python/…) keep their non-empty primary set unchanged.
+                if (resources.length == 0 && projectTypeSpecificResources.length > 0) {
+                    resources = projectTypeSpecificResources;
+                    prefix = projectTypeSpecificPrefix;
+                    projectTypeResources = null;
+                    projectTypePrefix = null;
+                }
             }
         }
 
@@ -740,12 +697,14 @@ public class ProgrammingExerciseRepositoryService {
 
     /**
      * Replace placeholders in repository files (e.g. ${placeholder}).
+     * <p>
+     * Idempotent: an already-substituted file contains no placeholders and is left byte-identical, so callers (e.g. the Hyperion persist path) may safely re-run it.
      *
      * @param programmingExercise The related programming exercise
      * @param repository          The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
-    void replacePlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
+    public void replacePlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
         final Map<String, String> replacements = new HashMap<>();
         final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
@@ -790,7 +749,10 @@ public class ProgrammingExerciseRepositoryService {
         if ((programmingLanguage == ProgrammingLanguage.JAVA && projectType != null && projectType.isGradle()) || programmingLanguage == ProgrammingLanguage.RUST) {
             replacements.put(Constants.ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH, studentWorkingDirectory + "/src");
         }
-        FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
+        // forceTextExtensions includes ".sh": FileUtil otherwise classifies shell scripts as binary and skips them, but a test harness can drive its build through a committed
+        // shell script (Haskell's run.sh) whose checkout placeholders MUST be substituted — left raw they expand to empty strings under CI (`find /`, `rm -rf `) and the build
+        // fails.
+        FileUtil.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"), Set.of(".sh"));
     }
 
     /**

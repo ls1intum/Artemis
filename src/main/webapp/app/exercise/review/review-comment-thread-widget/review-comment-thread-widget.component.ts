@@ -6,8 +6,11 @@ import { ButtonDirective } from 'primeng/button';
 import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -15,7 +18,15 @@ import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntil } from 'rxjs/operators';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { sortCommentsByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import {
+    ADAPT_DIALOG_BREAKPOINTS,
+    adaptFinding,
+    adaptFindingText,
+    combineAdaptFeedback,
+    firstConsistencyIssueContent,
+    sortCommentsByCreatedDateThenId,
+    threadLocationLabel,
+} from 'app/exercise/review/review-comment-utils';
 import { MonacoDiffEditorComponent } from 'app/editor/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/editor/monaco-editor/model/languages/monaco-custom-markdown.language';
 
@@ -33,20 +44,25 @@ interface RelatedThreadLocation {
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [FormsModule, ButtonDirective, MenuModule, ConfirmDialogModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent, MonacoDiffEditorComponent],
-    providers: [ConfirmationService],
+    providers: [ConfirmationService, DialogService],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
     readonly initialCollapsed = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
     readonly showFeedbackAction = input<boolean>(false);
+    /** Whether the "Adapt with Artemis Intelligence" action may be offered (host-gated to at-least-editor review contexts). */
+    readonly showAdaptAction = input<boolean>(false);
 
     readonly onToggleCollapse = output<boolean>();
     readonly onNavigateToLocation = output<ReviewThreadLocation>();
     readonly onApplyInlineFix = output<InlineCodeChange>();
+    /** Emits the assembled feedback prompt when the instructor confirms adapting the exercise to address this thread. */
+    readonly adaptExercise = output<{ feedback: string }>();
 
     readonly replyText = signal('');
     protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
     protected readonly faEllipsisVertical = faEllipsisVertical;
     protected readonly faPen = faPen;
     protected readonly faTrash = faTrash;
@@ -68,6 +84,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
     private readonly confirmationService = inject(ConfirmationService);
+    private readonly dialogService = inject(DialogService);
+    private adaptDialogRef?: DynamicDialogRef;
     readonly deleteCommentDialogKey = computed(() => `review-comment-delete-${this.thread().id}`);
     readonly orderedComments = computed(() => sortCommentsByCreatedDateThenId(this.thread().comments));
     readonly renderedComments = computed(() => {
@@ -80,19 +98,11 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     });
     readonly isSelectedAsFeedback = computed(() => this.reviewCommentService.isThreadSelectedAsFeedback(this.thread().id));
     readonly firstComment = computed(() => this.orderedComments()[0]);
-    readonly firstConsistencyIssueContent = computed<ConsistencyIssueCommentContent | undefined>(() => {
-        const firstComment = this.firstComment();
-        if (!firstComment || !this.isConsistencyCheckComment(firstComment)) {
-            return undefined;
-        }
-        const content = firstComment.content as CommentContent | undefined;
-        if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
-            return undefined;
-        }
-        return content;
-    });
-    readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
-    readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyIssueContent()?.suggestedFix));
+    readonly firstConsistencyContent = computed<ConsistencyIssueCommentContent | undefined>(() => firstConsistencyIssueContent(this.thread()));
+    readonly isConsistencyIssueThread = computed(() => this.firstConsistencyContent() !== undefined);
+    /** Whether to offer "Adapt with Artemis Intelligence" on this thread: a consistency/verification finding, host-permitted, and not outdated. */
+    readonly canAdaptExercise = computed(() => this.showAdaptAction() && this.isConsistencyIssueThread() && !this.thread().outdated);
+    readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.getValidSuggestedInlineFix(this.firstConsistencyContent()?.suggestedFix));
     readonly showInlineFixOutdatedWarning = signal(false);
     readonly canResolveGroup = computed(() => {
         const groupId = this.thread().groupId;
@@ -248,6 +258,46 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Opens the Artemis Intelligence adapt dialog for this consistency/verification thread. On confirm, assembles the feedback prompt from the
+     * thread's finding (plus any optional instructions the instructor added) and emits it so the host can trigger the adaptation run.
+     */
+    openAdaptDialog(): void {
+        if (!this.canAdaptExercise()) {
+            return;
+        }
+        const issueContent = this.firstConsistencyContent();
+        if (!issueContent) {
+            return;
+        }
+        this.adaptDialogRef =
+            this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
+                header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
+                modal: true,
+                closable: true,
+                closeOnEscape: true,
+                width: '40vw',
+                breakpoints: ADAPT_DIALOG_BREAKPOINTS,
+                data: { findings: [adaptFinding(issueContent, this.getThreadLocationLabel(this.thread()))] },
+            }) ?? undefined;
+        this.adaptDialogRef?.onClose.pipe(takeUntil(this.destroyed$)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
+            if (!result) {
+                return;
+            }
+            this.adaptExercise.emit({ feedback: this.assembleAdaptFeedback(issueContent, result.instructions) });
+        });
+    }
+
+    /** Builds the human-readable description of the finding (category, severity, location, text) shown in the dialog and embedded in the feedback prompt. */
+    private assembleFindingText(issueContent: ConsistencyIssueCommentContent): string {
+        return adaptFindingText(issueContent, this.getThreadLocationLabel(this.thread()), this.translateService);
+    }
+
+    /** Assembles the feedback prompt sent to Artemis Intelligence: the finding to address followed by any optional instructor instructions. */
+    private assembleAdaptFeedback(issueContent: ConsistencyIssueCommentContent, instructions?: string): string {
+        return combineAdaptFeedback(this.assembleFindingText(issueContent), instructions, this.translateService);
+    }
+
+    /**
      * Resolves all threads in the current thread group.
      */
     resolveGroup(): void {
@@ -311,6 +361,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         document.removeEventListener('scroll', this.hideOpenMenus, true);
+        this.adaptDialogRef?.close();
         this.destroyed$.next();
         this.destroyed$.complete();
     }
@@ -459,39 +510,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     };
 
     private getThreadLocationLabel(thread: CommentThread): string | undefined {
-        const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
-        if (!lineNumber || lineNumber < 1) {
-            return undefined;
-        }
-
-        const repositoryLabel = this.getRepositoryLabel(thread.targetType);
-        if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
-            return `${repositoryLabel}:${lineNumber}`;
-        }
-
-        const filePath = thread.filePath ?? thread.initialFilePath;
-        if (!filePath) {
-            return undefined;
-        }
-
-        return `${repositoryLabel}: ${filePath}:${lineNumber}`;
-    }
-
-    private getRepositoryLabel(targetType: CommentThreadLocationType): string {
-        switch (targetType) {
-            case CommentThreadLocationType.PROBLEM_STATEMENT:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.problemStatement');
-            case CommentThreadLocationType.TEMPLATE_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.template');
-            case CommentThreadLocationType.SOLUTION_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.solution');
-            case CommentThreadLocationType.TEST_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.tests');
-            case CommentThreadLocationType.AUXILIARY_REPO:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.auxiliary');
-            default:
-                return this.translateService.instant('artemisApp.review.relatedLocationRepository.repository');
-        }
+        return threadLocationLabel(thread, this.translateService);
     }
 
     private getInlineFixDiffFileName(thread: CommentThread): string {

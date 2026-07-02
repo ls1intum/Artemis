@@ -13,6 +13,7 @@ vi.mock('y-monaco', () => ({
 }));
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Subscription } from 'rxjs';
@@ -627,5 +628,46 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         expect(applyChecklistSpy).toHaveBeenCalledOnce();
         expect(applyChecklistSpy).toHaveBeenCalledWith('Proposed content', comp.editableInstructions());
+    });
+
+    describe('AI mode (lean create brief)', () => {
+        it('shows the "Your Requirements" brief and "Draft a plan to review" action only in AI mode', () => {
+            fixture.componentRef.setInput('isAiMode', false);
+            fixture.detectChanges();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#userPrompt')).toBeNull();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-problem-statement')).toBeNull();
+
+            fixture.componentRef.setInput('isAiMode', true);
+            fixture.detectChanges();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#userPrompt')).not.toBeNull();
+            expect((fixture.nativeElement as HTMLElement).querySelector('#generate-problem-statement')).not.toBeNull();
+        });
+
+        it('updates the brief and emits briefChange so the footer action sees the latest requirements', () => {
+            const emitted: string[] = [];
+            comp.briefChange.subscribe((value) => emitted.push(value));
+
+            comp.onBriefChange('A bounded integer stack with push, pop, peek and a fixed capacity.');
+
+            expect(comp.userPrompt()).toBe('A bounded integer stack with push, pop, peek and a fixed capacity.');
+            expect(emitted).toEqual(['A bounded integer stack with push, pop, peek and a fixed capacity.']);
+        });
+
+        it('keeps "Draft a plan to review" disabled until a brief is entered, then delegates to handleProblemStatementAction', () => {
+            fixture.componentRef.setInput('isAiMode', true);
+            comp.userPrompt.set('');
+            fixture.detectChanges();
+
+            const button = fixture.debugElement.query(By.css('#generate-problem-statement')).nativeElement as HTMLButtonElement;
+            expect(button.disabled).toBe(true);
+
+            comp.userPrompt.set('Implement a bank account.');
+            fixture.detectChanges();
+            expect(button.disabled).toBe(false);
+
+            const actionSpy = vi.spyOn(comp, 'handleProblemStatementAction').mockImplementation(() => {});
+            button.click();
+            expect(actionSpy).toHaveBeenCalledOnce();
+        });
     });
 });

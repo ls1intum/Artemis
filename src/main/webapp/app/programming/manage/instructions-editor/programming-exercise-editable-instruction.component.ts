@@ -160,6 +160,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly instructionChange = output<string>();
     readonly onProblemStatementSaved = output<void>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    /** Relays the assembled feedback prompt when the instructor adapts the exercise from a problem-statement review thread. */
+    readonly onAdaptExercise = output<{ feedback: string }>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     inlineRefinementPosition = signal<{ top: number; left: number } | undefined>(undefined);

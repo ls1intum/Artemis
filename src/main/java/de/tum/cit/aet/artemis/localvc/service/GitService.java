@@ -58,6 +58,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.jspecify.annotations.NonNull;
@@ -442,6 +443,46 @@ public class GitService extends AbstractGitService {
             log.debug("commitAndPush -> Push {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pushCommand(git).call();
+        }
+    }
+
+    /**
+     * Commits the staged changes of the currently checked-out working tree onto an <em>isolated</em> branch and pushes ONLY that branch to the remote, leaving the branch the
+     * working
+     * copy was checked out on (and therefore the default branch on the remote) completely untouched.
+     * <p>
+     * The commit is built directly on top of the current {@code HEAD} commit and written to {@code refs/heads/<isolatedBranch>} via an explicit push refspec
+     * ({@code HEAD:refs/heads/<isolatedBranch>}). Because the refspec names a single, distinct branch, the remote's default branch is never moved: a reader checking out the
+     * default
+     * branch still sees the exact pre-call state. This is used to land a best-effort generation draft for review on an adapt target without regressing the working exercise that is
+     * already live on the default branch.
+     * <p>
+     * Note: JGit's commit DOES advance the LOCAL checked-out branch ref to the new commit; only the REMOTE default branch is protected (by the single-branch refspec). A caller
+     * that
+     * reuses this working copy on the default branch afterwards MUST reset it (e.g. via {@link #resetToOriginHead(Repository)}) — the generation draft persistence relies on
+     * exactly
+     * that. The caller is responsible for having staged the desired tree (e.g. via {@link #stageAllChanges(Repository)}).
+     *
+     * @param repo           the local repository whose staged working tree is committed
+     * @param isolatedBranch the short name of the isolated remote branch to create/update (e.g. {@code hyperion-draft/<jobId>}); must not be the default branch
+     * @param message        the commit message
+     * @param user           the commit author/committer; the Artemis service identity is used when {@code null}
+     * @return the full commit hash of the created isolated-branch commit
+     * @throws GitAPIException if committing or pushing fails
+     */
+    public String commitToIsolatedBranchAndPush(Repository repo, String isolatedBranch, String message, @Nullable User user) throws GitAPIException {
+        String name = user != null ? user.getName() : artemisGitName;
+        String email = user != null ? user.getEmail() : artemisGitEmail;
+        try (Git git = new Git(repo)) {
+            // Commit on top of the current HEAD. We do NOT move the checked-out branch ref on the remote; we push the resulting commit to a distinct branch via an explicit
+            // refspec,
+            // so the default branch the working copy is on is never advanced on the remote.
+            RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(false).setCommitter(name, email).call();
+            log.debug("commitToIsolatedBranchAndPush -> Push {} to {}", repo.getLocalPath(), isolatedBranch);
+            setRemoteUrl(repo);
+            // HEAD now points at the new commit; push it to refs/heads/<isolatedBranch> only. The default branch is left exactly where it was.
+            pushCommand(git).setRefSpecs(new RefSpec(commit.getName() + ":refs/heads/" + isolatedBranch)).call();
+            return commit.getName();
         }
     }
 

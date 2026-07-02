@@ -1,4 +1,4 @@
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
@@ -31,6 +31,9 @@ import {
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
 } from 'app/foundation/constants/input.constants';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { PlanSuggestions } from 'app/programming/manage/services/problem-statement.service';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -40,13 +43,14 @@ import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import { HyperionExerciseGenerationService } from 'app/hyperion/services/hyperion-exercise-generation.service';
 import { SharingInfo } from 'app/sharing/sharing.model';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
-import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { IS_DISPLAYED_IN_AI_MODE, IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
@@ -59,13 +63,15 @@ import { FileService } from 'app/foundation/service/file.service';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
+import { AUTO_START_EXERCISE_GENERATION_PROMPT, AUTO_START_EXERCISE_GENERATION_STATE } from 'app/hyperion/exercise-generation/exercise-generation.constants';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+
+/** The points an AI-created exercise is seeded with (hidden on the lean AI page, disclosed in the "defaults applied" note, and editable on the exercise details afterwards). */
+export const AI_MODE_DEFAULT_POINTS = 10;
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -85,6 +91,8 @@ const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerati
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
         FeatureOverlayComponent,
+        DifficultyPickerComponent,
+        CategorySelectorPrimengComponent,
     ],
     providers: [BuildPhasesTemplateService],
 })
@@ -103,11 +111,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly exerciseGroupService = inject(ExerciseGroupService);
     private readonly programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
-    private readonly router = inject(Router);
     private readonly calendarService = inject(CalendarService);
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
+    private readonly hyperionExerciseGenerationService = inject(HyperionExerciseGenerationService);
     private readonly buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
@@ -129,16 +137,172 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exercisePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
 
     packageNamePattern = '';
-    isSimpleMode = signal<boolean>(true);
+    /**
+     * The create/edit form mode. {@code simple} and {@code advanced} are the existing manual modes (persisted to localStorage); {@code ai} is the create-only AI-assisted mode (never
+     * persisted). {@link isSimpleMode} stays a boolean computed (AI uses the simple layout) so the many existing {@code isSimpleMode()} readers and the field-visibility machinery keep
+     * working unchanged; AI-specific hiding is layered on top via {@link IS_DISPLAYED_IN_AI_MODE}.
+     */
+    editMode = signal<'simple' | 'advanced' | 'ai'>('simple');
+    isSimpleMode = computed(() => this.editMode() !== 'advanced');
+    isAiMode = computed(() => this.editMode() === 'ai');
     isAuxiliaryRepositoryInputValid = signal<boolean>(true);
+    /** The instructor's "Your Requirements" brief, surfaced from the problem child so the footer's "Generate entire exercise" action can thread it into the run. */
+    currentBrief = signal<string>('');
+    /** The last title this component auto-derived from the brief; lets {@link onAiBriefChange} keep the (hidden) title in sync with the brief without clobbering anything else. */
+    private lastAutoSeededTitle = '';
+    /** True once a draft proposed metadata in AI mode; reveals the compact, editable "Suggested settings" panel (difficulty + categories) on the otherwise-lean page. */
+    readonly aiPlanSuggestionsApplied = signal<boolean>(false);
+
+    /**
+     * Threads the "Your Requirements" brief from the problem child to the footer action AND keeps the hidden title/short name seeded from it, so the lean AI page needs no title field:
+     * the persisted exercise carries a readable brief-derived placeholder during the ~3-minute run, and the server replaces it with the generated problem statement's H1 on acceptance.
+     */
+    onAiBriefChange(brief: string): void {
+        this.currentBrief.set(brief);
+        if (!this.isAiMode()) {
+            return;
+        }
+        const derivedTitle = this.deriveTitleFromBrief(brief);
+        // Only re-seed while the title is still our own placeholder (or empty) — never overwrite a title set elsewhere (e.g. switched in from Advanced).
+        const currentTitle = this.programmingExercise.title ?? '';
+        if (currentTitle === '' || currentTitle === this.lastAutoSeededTitle) {
+            this.lastAutoSeededTitle = derivedTitle;
+            this.programmingExercise.title = derivedTitle;
+            this.programmingExercise.shortName = this.deriveShortName(derivedTitle);
+        }
+        // Always recompute: the AI status bar's Problem section tracks brief presence, so it must update on every keystroke, not only when the title re-seeds.
+        this.calculateFormStatusSections();
+    }
+
+    /**
+     * A readable placeholder title from the brief, used only during the ~3-minute run before the server reconciles the real title from the generated H1.
+     * Best-effort — it never has to be perfect, only sensible.
+     */
+    private deriveTitleFromBrief(brief: string): string {
+        const firstLine =
+            (brief ?? '')
+                .split('\n')
+                .find((line) => line.trim().length > 0)
+                ?.trim() ?? '';
+        const beforeColon = firstLine.includes(':') ? firstLine.slice(0, firstLine.indexOf(':')).trim() : firstLine;
+        const withoutLeadIn = beforeColon.replace(/^(create|implement|build|write|design|make|develop)\s+(an?|the)\s+/i, '').trim();
+        const candidate = withoutLeadIn.length >= 3 ? withoutLeadIn : beforeColon;
+        return this.sanitizeExerciseTitle(candidate);
+    }
+
+    /**
+     * Coerces an arbitrary candidate string into a valid exercise title. The exercise title column only allows {@code [a-zA-Z0-9 _-]} (EXERCISE_TITLE_NAME_PATTERN); a free-prose
+     * candidate would otherwise 400 the persist on the lean page where the title field is hidden and cannot be corrected. Falls back to a safe default when nothing usable remains.
+     */
+    private sanitizeExerciseTitle(candidate: string): string {
+        const sanitized = (candidate ?? '')
+            .replace(/[^a-zA-Z0-9 _-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        const capped =
+            sanitized.length > 80
+                ? sanitized
+                      .slice(0, 80)
+                      .replace(/\s+\S*$/, '')
+                      .trim()
+                : sanitized;
+        const titled = capped.length >= 3 ? capped : 'AI exercise';
+        return titled.charAt(0).toUpperCase() + titled.slice(1);
+    }
+
+    /**
+     * Applies the metadata a draft proposed (title, difficulty, categories) as EDITABLE defaults on the lean AI page, then reveals the compact suggestions panel so the instructor can
+     * review and adjust them. Advisory only — none of this drives generation (the agent's context is the brief + language). The title only replaces our own placeholder, never an
+     * instructor-edited title; categories are snapped to the course's existing taxonomy so near-duplicates do not fragment it.
+     */
+    onPlanSuggestions(suggestions: PlanSuggestions): void {
+        if (!this.isAiMode()) {
+            return;
+        }
+        const proposedTitle = suggestions.title ? this.sanitizeExerciseTitle(suggestions.title) : '';
+        const currentTitle = this.programmingExercise.title ?? '';
+        if (proposedTitle && (currentTitle === '' || currentTitle === this.lastAutoSeededTitle)) {
+            this.lastAutoSeededTitle = proposedTitle;
+            this.programmingExercise.title = proposedTitle;
+            this.programmingExercise.shortName = this.deriveShortName(proposedTitle);
+        }
+        if (suggestions.difficulty) {
+            this.programmingExercise.difficulty = suggestions.difficulty;
+        }
+        if (suggestions.categories?.length) {
+            this.updateCategories(this.snapSuggestedCategories(suggestions.categories));
+        }
+        this.aiPlanSuggestionsApplied.set(true);
+        this.calculateFormStatusSections();
+    }
+
+    /**
+     * Maps proposed category names to {@link ExerciseCategory} chips, snapping each to an existing course category (case-insensitive, reusing its colour) so the model's free-text
+     * proposals never mint near-duplicates that fragment the course taxonomy. Genuinely new categories get a stable colour from the shared palette. De-duplicated, order preserved.
+     */
+    private snapSuggestedCategories(names: string[]): ExerciseCategory[] {
+        const existing = this.existingCategories ?? [];
+        const palette = ['#6ae8ac', '#9dca53', '#94a11c', '#1b97ca', '#0d3cc2', '#0ab84f'];
+        const result: ExerciseCategory[] = [];
+        const seen = new Set<string>();
+        names.forEach((raw) => {
+            const name = (raw ?? '').trim();
+            if (!name) {
+                return;
+            }
+            const key = name.toLowerCase();
+            if (seen.has(key)) {
+                return;
+            }
+            seen.add(key);
+            const match = existing.find((category) => (category.category ?? '').toLowerCase() === key);
+            result.push(match ?? new ExerciseCategory(name, palette[result.length % palette.length]));
+        });
+        return result;
+    }
+
+    setEditMode = (mode: 'simple' | 'advanced' | 'ai') => {
+        const previous = this.editMode();
+        if (previous === mode) {
+            return;
+        }
+        // Switching into/out of AI mode wipes (on enter) or reloads (on leave) the problem statement. If that statement is something the instructor would not want to lose silently — a
+        // hand-edited statement, or a reviewed "Draft a plan" output that differs from the language readme — confirm first. Only guards AI transitions on the create path (no persisted
+        // data); the legacy simple↔advanced toggle is unaffected. We compare content (not hasUnsavedChanges, which the creation-config getter re-clobbers each change-detection cycle).
+        const crossesAiOnCreate = (mode === 'ai' || previous === 'ai') && this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing);
+        if (crossesAiOnCreate && this.statementHasUnsavedManualEdits() && !window.confirm(this.translateService.instant(this.translationBasePath + 'unsavedChangesModeSwitch'))) {
+            return; // keep the current mode; nothing is discarded
+        }
+        this.editMode.set(mode);
+        if (mode === 'ai') {
+            // Entering AI mode: the agent authors the problem statement from the brief, so clear any readme/sample left over from manual mode — otherwise a from-scratch run would treat
+            // it as the spec. The statement editor is hidden in AI mode anyway; "Draft a plan to review" re-populates it when the instructor wants a reviewable plan first.
+            this.programmingExercise.problemStatement = '';
+            this.problemStatementLoaded = true;
+            // The lean AI page hides short name, package name and points; seed valid defaults for them so the form is valid and "Generate entire exercise" enables with no extra input.
+            this.seedAiModeDefaults();
+            // The "Suggested settings" panel only appears after a draft proposes metadata; entering AI mode fresh starts hidden.
+            this.aiPlanSuggestionsApplied.set(false);
+            this.rerenderSubject.next();
+        } else {
+            // Only the durable manual preference is persisted; AI mode is a one-shot create intent and is never written to localStorage.
+            this.localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, mode === 'simple');
+            // Leaving AI mode back to a manual mode: reload the language readme so the manual editor is not left empty.
+            if (previous === 'ai' && this.programmingExercise.id === undefined && !(this.isImportFromFile || this.isImportFromSharing)) {
+                this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!);
+                this.rerenderSubject.next();
+            }
+        }
+    };
 
     isEditFieldDisplayedRecord = computed(() => {
-        const inputFieldEditModeMapping = IS_DISPLAYED_IN_SIMPLE_MODE;
+        // AI mode uses its own lean field set; simple mode uses the simple set; advanced (and imports) show everything.
+        const inputFieldEditModeMapping = this.isAiMode() ? IS_DISPLAYED_IN_AI_MODE : IS_DISPLAYED_IN_SIMPLE_MODE;
 
         const isEditFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
         Object.keys(inputFieldEditModeMapping).forEach((key) => {
             let isDisplayed = true;
-            if (this.isSimpleMode() && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
+            if ((this.isSimpleMode() || this.isAiMode()) && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
                 isDisplayed = inputFieldEditModeMapping[key as ProgrammingExerciseInputField];
             }
 
@@ -209,6 +373,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly _programmingExercise = signal<ProgrammingExercise>(undefined!);
     programmingExerciseIdForAi = signal<number | undefined>(undefined);
     programmingExerciseLanguageForAi = signal<ProgrammingLanguage | undefined>(undefined);
+    // Fetched once on init; empty until it loads, so the "Generate entire exercise" action fails closed (stays hidden) before the set arrives or if the call errors.
+    supportedGenerationLanguages = signal<ProgrammingLanguage[]>([]);
 
     get programmingExercise(): ProgrammingExercise {
         return this._programmingExercise();
@@ -236,7 +402,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
 
+    // Kept as plain fields (not signals): they alias programmingExercise.categories (a plain model object a signal cannot back) and are only ever reassigned from synchronous template
+    // event handlers — updateCategories() via (selectedCategories) and the plan-application flow via (planSuggestions) — so change detection always runs. Read directly only by the AI
+    // "Suggested settings" panel; develop keeps them plain and passes them to child components via the creation-config object.
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- see comment above
     exerciseCategories: ExerciseCategory[];
+    // eslint-disable-next-line localRules/prefer-signal-template-state -- plain field; see exerciseCategories comment above
     existingCategories: ExerciseCategory[];
 
     formStatusSections = signal<FormSectionStatus[]>([]);
@@ -256,6 +427,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public customBuildPlansSupported = '';
     public theiaEnabled = false;
     readonly plagiarismEnabled = signal(false);
+    // Single Hyperion source of truth: set once from profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION) (see initialize()), mirrored into
+    // the hyperionEnabledForAi signal that gates the create "Generate entire exercise" action. The editor menu/card (ProblemStatementAiOperationsHelper)
+    // and the detail card (hyperionModuleActive) resolve from the SAME profile check, so the create button and the run card can never disagree.
     private _hyperionEnabled = false;
     hyperionEnabledForAi = signal<boolean>(false);
 
@@ -268,6 +442,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.hyperionEnabledForAi.set(value);
     }
     public isGeneratingWithAi = signal<boolean>(false);
+    /** The instructor's "Your Requirements" brief captured when "Generate entire exercise" is clicked, threaded to the editor's auto-started run as the agent's prompt. */
+    private aiGenerationBrief = '';
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -299,27 +475,45 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
         effect(
             function initializeEditMode() {
-                const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-                if (editModeRetrievedFromLocalStorage !== undefined) {
-                    this.isSimpleMode.set(editModeRetrievedFromLocalStorage);
-                } else {
-                    const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
-                    this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
-                }
+                // Restore the durable manual preference only (simple/advanced). AI mode is create-only and ephemeral — it is never persisted, so it is never restored here.
+                const simpleModeStored: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+                this.editMode.set(simpleModeStored === false ? 'advanced' : 'simple');
             }.bind(this),
         );
+
+        // AI mode is only valid on the AI-eligible create path. If that eligibility goes away (e.g. switching to an unsupported context, edit or import), fall back to simple so the
+        // footer never stays labelled "Generate entire exercise" while routing to a path that cannot run.
+        effect(() => {
+            if (this.isAiMode() && !this.showGenerateWithAi()) {
+                this.editMode.set('simple');
+            }
+        });
     }
 
+    // STRUCTURAL eligibility only: the "Generate entire exercise" action area is shown in any supported create flow (create mode + Hyperion + not an import),
+    // INDEPENDENT of the selected language. This keeps the capability discoverable (R2) — on an unsupported language the action is rendered but disabled with an
+    // explanatory tooltip (see generationLanguageSupported), rather than silently vanishing. Whether the action can actually run is gated separately by
+    // generationLanguageSupported (and the form-validity guard in saveExerciseWithAi).
+    // NOTE: this deliberately does NOT exclude exam mode. Whole-exercise generation in an exam exercise group is intentional and exercised end-to-end (the auto-start navigation
+    // handles the exam route, see onSaveSuccessWithAi); the generated exercise is a normal, verified programming exercise that happens to live in an exercise group. It is gated by
+    // create-mode + Hyperion just like the course case, so there is nothing exam-specific to block.
     showGenerateWithAi = computed(() => {
         return (
             this.hyperionEnabledForAi() &&
             this.programmingExerciseIdForAi() === undefined &&
             !this.isImportFromExistingExerciseForAi() &&
             !this.isImportFromFileForAi() &&
-            !this.isImportFromSharingForAi() &&
-            this.programmingExerciseLanguageForAi() === ProgrammingLanguage.JAVA
+            !this.isImportFromSharingForAi()
         );
     });
+
+    // Server-driven: whether the selected language is one whose generated exercise the differential oracle can verify. Fails closed (false) while the supported set
+    // has not loaded or if the call errored, so the action stays disabled until we positively know the language is supported.
+    generationLanguageSupported = computed(() => this.isGenerationSupportedLanguage(this.programmingExerciseLanguageForAi()));
+
+    private isGenerationSupportedLanguage(language: ProgrammingLanguage | undefined): boolean {
+        return language !== undefined && this.supportedGenerationLanguages().includes(language);
+    }
 
     /**
      * Updates the name of the editedAuxiliaryRepository.
@@ -618,7 +812,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 .subscribe(() => this.setupMetadataSync());
         }
 
-        // If an exercise is created, load our readme template so the problemStatement is not empty
+        // Determine the module feature flags BEFORE the initial language template loads below. Setting selectedProgrammingLanguage synchronously runs loadProgrammingLanguageTemplate,
+        // which on the AI-eligible create path must leave the problem statement EMPTY (showGenerateWithAi() reads hyperionEnabled). If hyperionEnabled were still false here, the sample
+        // readme would load and the from-scratch run would treat it as an authoritative spec.
+        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
+        this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
+        this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
+        // Load the language readme into the problem statement (so a manual exercise does not start empty); on the AI-eligible create path loadProgrammingLanguageTemplate leaves it
+        // empty instead, so the agent authors it from the instructor's brief.
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         if (this.programmingExercise.id || this.isImportFromFile || this.isImportFromSharing) {
             this.problemStatementLoaded = true;
@@ -633,9 +835,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.customBuildPlansSupported = PROFILE_LOCALCI;
         }
 
-        this.theiaEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA);
-        this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
-        this.hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+        if (this.hyperionEnabled) {
+            // Load the server's generation-supported language set once; on error the set stays empty so the entire-exercise action fails closed (the footer's language gate stays disabled
+            // with its explanatory tooltip until the set positively confirms the selected language).
+            this.hyperionExerciseGenerationService.getSupportedLanguages().subscribe({
+                next: (languages) => this.supportedGenerationLanguages.set(languages),
+                error: () => this.supportedGenerationLanguages.set([]),
+            });
+        }
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -670,6 +877,26 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     calculateFormStatusSections() {
+        if (this.isAiMode()) {
+            // The lean AI page shows only the Language and Problem sections; General/Mode/Grading are auto-generated or defaulted and are not rendered, so the status bar must not list
+            // them (a red ✗ on a section the instructor cannot see is confusing). Problem readiness tracks the "Your Requirements" brief — the actual input the instructor provides — not
+            // the (intentionally blank-until-generated) problem statement.
+            const briefPresent = !!this.currentBrief().trim();
+            this.formStatusSections.set([
+                {
+                    // In AI mode the only language concern is whether the chosen language can be generated — package name/IDE are auto-handled. Mirror the footer's gate (a red ✗ here means
+                    // the Generate action is blocked for the same reason) rather than the rendered-form-control validity, which would red-✗ a perfectly generation-ready language.
+                    title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+                    valid: this.generationLanguageSupported(),
+                },
+                {
+                    title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+                    valid: briefPresent,
+                    empty: !briefPresent,
+                },
+            ]);
+            return;
+        }
         const updatedFormStatusSections = [
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
@@ -835,8 +1062,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     /**
      * Saves the programming exercise with AI preparation.
+     *
+     * From-scratch generation is consequential (it persists the exercise with empty repositories, leaves the wizard, runs for several minutes), but the action is explicit and
+     * self-describing: the footer button reads "Generate entire exercise", the run streams its progress, and it can be cancelled — so we do not interrupt with an extra confirmation
+     * dialog. We still run the usual pre-update modal check (which only surfaces when there is something genuinely worth confirming) before kicking off the generation.
      */
-    saveWithAi() {
+    saveWithAi(brief = '') {
+        this.aiGenerationBrief = brief.trim();
         this.saveWithModalCheck(() => this.saveExerciseWithAi());
     }
 
@@ -873,6 +1105,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     saveExerciseWithAi() {
         if (this.isSaving() || this.isGeneratingWithAi()) {
+            return;
+        }
+        // Belt-and-suspenders: the entire-exercise button is disabled on an invalid form, but a stale view or a programmatic call must not
+        // persist an invalid exercise (the server would 400). Bail with the same invalid-reasons alert the form footer's contract relies on.
+        const invalidReasons = this.getInvalidReasons();
+        if (invalidReasons.length) {
+            for (const reason of invalidReasons) {
+                this.alertService.addAlert({ type: AlertType.DANGER, message: reason.translateKey, translationParams: reason.translateValues });
+            }
+            window.scrollTo(0, 0);
             return;
         }
         if (this.isImportFromFile || this.isImportFromSharing || this.isImportFromExistingExercise || this.programmingExercise.id !== undefined || !this.hyperionEnabled) {
@@ -1009,11 +1251,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.calendarService.reloadEvents();
     }
 
-    /**
-     * Handles successful save and navigates to the template repository in the code editor.
-     *
-     * @param exercise the created exercise
-     */
+    /** Handles a successful save of an AI-generated exercise: navigate to the editor (see {@link ArtemisNavigationUtilService#navigateToExerciseCodeEditor}) and request auto-start. */
     private onSaveSuccessWithAi(exercise: ProgrammingExercise) {
         this.isSaving.set(false);
         this.isGeneratingWithAi.set(false);
@@ -1023,48 +1261,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return;
         }
 
-        this.openCodeEditorForTemplate(exercise);
-    }
-
-    /**
-     * Navigates to the code editor for the template repository of the exercise.
-     *
-     * @param exercise the created exercise
-     */
-    private openCodeEditorForTemplate(exercise: ProgrammingExercise) {
-        if (!exercise?.id || !exercise.templateParticipation?.id) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-        const courseId = exercise.course?.id ?? exercise.exerciseGroup?.exam?.course?.id;
-        if (!courseId) {
-            this.onSaveSuccess(exercise);
-            return;
-        }
-        const navigationExtras = { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } };
-        if (exercise.exerciseGroup?.exam?.id && exercise.exerciseGroup?.id) {
-            this.router.navigate(
-                [
-                    'course-management',
-                    courseId,
-                    'exams',
-                    exercise.exerciseGroup.exam.id,
-                    'exercise-groups',
-                    exercise.exerciseGroup.id,
-                    'programming-exercises',
-                    exercise.id,
-                    'code-editor',
-                    RepositoryType.TEMPLATE,
-                    exercise.templateParticipation.id,
-                ],
-                navigationExtras,
-            );
-        } else {
-            this.router.navigate(
-                ['course-management', courseId, 'programming-exercises', exercise.id, 'code-editor', RepositoryType.TEMPLATE, exercise.templateParticipation.id],
-                navigationExtras,
-            );
-        }
+        this.navigationUtilService.navigateToExerciseCodeEditor(exercise, {
+            state: { [AUTO_START_EXERCISE_GENERATION_STATE]: true, [AUTO_START_EXERCISE_GENERATION_PROMPT]: this.aiGenerationBrief },
+        });
+        this.calendarService.reloadEvents();
     }
 
     private onSaveError(error: HttpErrorResponse) {
@@ -1107,6 +1307,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
         this.programmingExerciseLanguageForAi.set(language);
+        // In AI mode the package name is hidden and seeded; the valid pattern differs per language, so re-seed the new language's default (overwriting the old one, which would now
+        // fail validation) — otherwise the hidden field silently blocks the one "Generate entire exercise" button on a language switch.
+        if (this.isAiMode()) {
+            this.programmingExercise.packageName = this.defaultPackageNameFor(language);
+            this.seedAiModeDefaults();
+        }
         return language;
     }
 
@@ -1184,8 +1390,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     switchEditMode = () => {
-        this.isSimpleMode.update((isSimpleMode) => !isSimpleMode);
-        this.localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, this.isSimpleMode());
+        // The legacy 2-way toggle: simple ↔ advanced (AI mode is entered via the 3-way mode selector, not this toggle).
+        this.setEditMode(this.editMode() === 'advanced' ? 'simple' : 'advanced');
     };
 
     /**
@@ -1200,16 +1406,76 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
         this.programmingExerciseLanguageForAi.set(language);
+        // In AI mode the problem statement must start EMPTY. The language readme is a worked sample (e.g. the Java sorting exercise); if it were pre-filled it would be persisted and the
+        // server's length heuristic (isNonTrivialProblemStatement) would read it as an authoritative spec, putting the agent into "spec mode" — it would rebuild the sample instead of
+        // authoring from the instructor's brief. The intent comes solely from "Your Requirements". Manual (simple/advanced) and import create keep the readme starter.
+        if (this.isAiMode()) {
+            this.programmingExercise.problemStatement = '';
+            this.problemStatementLoaded = true;
+            return;
+        }
         this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
+                this.lastLoadedTemplate = file;
                 this.problemStatementLoaded = true;
             },
             error: () => {
                 this.programmingExercise.problemStatement = '';
+                this.lastLoadedTemplate = '';
                 this.problemStatementLoaded = true;
             },
         });
+    }
+
+    /** The most recently loaded language readme, kept so {@link statementHasUnsavedManualEdits} can tell an instructor-authored/AI-drafted statement apart from the untouched starter. */
+    private lastLoadedTemplate = '';
+
+    /** True when the current problem statement holds content the instructor would not want silently discarded on an AI-mode switch: non-empty and not byte-equal to the loaded readme. */
+    private statementHasUnsavedManualEdits(): boolean {
+        const statement = this.programmingExercise.problemStatement ?? '';
+        return statement.trim().length > 0 && statement !== this.lastLoadedTemplate;
+    }
+
+    /**
+     * Seeds the hidden-but-required fields so the lean AI create form is valid without the instructor touching them. Only fills a field that is still empty/unset, so a value the
+     * instructor set in Advanced before switching, or a re-seed on a language change, is never clobbered.
+     */
+    private seedAiModeDefaults(): void {
+        if (this.programmingExercise.maxPoints === undefined) {
+            this.programmingExercise.maxPoints = AI_MODE_DEFAULT_POINTS;
+        }
+        const packageDefault = this.defaultPackageNameFor(this.programmingExercise.programmingLanguage);
+        if (packageDefault && !this.programmingExercise.packageName?.trim()) {
+            this.programmingExercise.packageName = packageDefault;
+        }
+        if (!this.programmingExercise.shortName?.trim()) {
+            this.programmingExercise.shortName = this.deriveShortName(this.programmingExercise.title);
+        }
+    }
+
+    /** A language-valid default package name for the languages whose build harness requires one; {@code undefined} for languages that need none (Python, JS/TS, C++, C#, R, Rust, …). */
+    private defaultPackageNameFor(language: ProgrammingLanguage | undefined): string | undefined {
+        switch (language) {
+            case ProgrammingLanguage.JAVA:
+            case ProgrammingLanguage.KOTLIN:
+                return 'de.tum.in.ase';
+            case ProgrammingLanguage.SWIFT:
+                return 'Exercise';
+            case ProgrammingLanguage.GO:
+            case ProgrammingLanguage.DART:
+                return 'exercise';
+            default:
+                return undefined;
+        }
+    }
+
+    /** A valid, unique-ish short name (starts with a letter, alphanumeric, ≥3 chars): slugged from the title for readability when present, else a neutral prefix, plus a short suffix. */
+    private deriveShortName(title: string | undefined): string {
+        const slug = (title ?? '').replace(/[^a-zA-Z0-9]/g, '');
+        const base = /^[a-zA-Z]/.test(slug) ? slug.slice(0, 12) : 'ai' + slug.slice(0, 10);
+        const suffix = (Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/[^a-z0-9]/g, '').slice(-4);
+        return (base.length >= 1 ? base : 'ai') + suffix;
     }
 
     /**

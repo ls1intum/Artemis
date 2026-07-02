@@ -245,6 +245,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly metaActions = input<TextEditorAction[]>([new FullscreenAction()]);
 
     readonly enableExerciseReviewComments = input<boolean>(false);
+    /**
+     * Whether the Hyperion exercise-generation feature is active. The "Adapt with Artemis Intelligence" thread action POSTs an adaptation run whose
+     * progress is only shown by the embedded Hyperion run card; without Hyperion there is no such card, so the action must be gated on this flag in
+     * lockstep with the run card. Fails closed (default {@code false}).
+     */
+    readonly hyperionEnabled = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
 
     readonly isButtonLoading = input<boolean>(false);
@@ -281,6 +287,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     readonly onApplyInlineFix = output<{ threadId: number }>();
+    /** Emits the assembled feedback prompt when the instructor adapts the exercise from a problem-statement consistency/verification thread. */
+    readonly onAdaptExercise = output<{ feedback: string }>();
 
     /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
     readonly onSelectionChange = output<EditorSelectionWithPosition | undefined>();
@@ -1092,8 +1100,11 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onApplyInlineFix: ({ thread }) => this.onApplyInlineFix.emit({ threadId: thread.id }),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
+                onAdaptExercise: (payload) => this.onAdaptExercise.emit(payload),
                 showLocationWarning: () => this.showLocationWarning(),
                 showFeedbackAction: () => false,
+                // Gate the adapt action on Hyperion too: it starts a run that only the Hyperion run card surfaces, so it must match the card's gating.
+                showAdaptAction: () => this.enableExerciseReviewComments() && this.hyperionEnabled(),
             });
         }
         return this.reviewCommentManager;

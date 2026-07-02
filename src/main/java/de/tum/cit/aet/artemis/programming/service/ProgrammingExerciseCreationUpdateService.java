@@ -105,6 +105,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
+
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
     private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
@@ -119,7 +121,8 @@ public class ProgrammingExerciseCreationUpdateService {
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
+            RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -139,6 +142,7 @@ public class ProgrammingExerciseCreationUpdateService {
         this.gitService = gitService;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
+        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
     }
 
@@ -186,6 +190,8 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
+
+        forceSolutionCheckoutWhereTheHarnessRequiresIt(programmingExercise);
 
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
@@ -253,6 +259,25 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
+     * Enables the solution-repository checkout for languages whose test harness needs it (Haskell, OCaml: the cabal/dune {@code library solution} reads a sibling
+     * {@code solution/}).
+     * Without it even the solution build cannot resolve its sources. The authoritative predicate is the same {@link ProgrammingLanguageFeature#checkoutSolutionRepositoryAllowed()}
+     * flag the CI trigger and validation gate on, so creation, validation and build stay in agreement. Only forces it when not already set, logging when it flips the flag on.
+     */
+    private void forceSolutionCheckoutWhereTheHarnessRequiresIt(ProgrammingExercise programmingExercise) {
+        ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
+        if (language == null || programmingLanguageFeatureService.isEmpty()) {
+            return;
+        }
+        if (programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(language).checkoutSolutionRepositoryAllowed()
+                && !programmingExercise.getBuildConfig().getCheckoutSolutionRepository()) {
+            programmingExercise.getBuildConfig().setCheckoutSolutionRepository(true);
+            log.info("Enabled solution-repository checkout for {} exercise '{}': its test harness requires a sibling solution/ checkout to build.", language,
+                    programmingExercise.getTitle());
+        }
+    }
+
+    /**
      * Creates initial submissions and build plans for an exercise whose repositories were initialized outside the regular creation flow.
      *
      * @param programmingExercise the programming exercise with initialized repositories
@@ -268,8 +293,10 @@ public class ProgrammingExerciseCreationUpdateService {
         if (!moduleFeatureService.isHyperionEnabled()) {
             throw new BadRequestAlertException("Hyperion is disabled on this server", "ProgrammingExercise", "hyperionDisabled");
         }
-        if (programmingExercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
-            throw new BadRequestAlertException("AI generation is only supported for Java", "ProgrammingExercise", "aiGenerationUnsupportedLanguage");
+        // AI generation works on any language for which Artemis ships a buildable scaffold. The EMPTY language has no template skeleton to start from,
+        // so it cannot be cleared into a clean-but-buildable repository for agentic generation.
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.EMPTY) {
+            throw new BadRequestAlertException("AI generation is not supported for the EMPTY programming language", "ProgrammingExercise", "aiGenerationUnsupportedLanguage");
         }
     }
 
