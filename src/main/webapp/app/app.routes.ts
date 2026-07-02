@@ -297,6 +297,8 @@ const routes: Routes = [
             authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.attachmentVideoUnit.pdfViewer.title',
             hidePageRibbon: true,
+            // ~860 KB chunk used by a niche route — keep it strictly on-demand rather than warming it in the background.
+            preload: 'never',
         },
         canActivate: [UserRouteAccessService],
     },
