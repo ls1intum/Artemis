@@ -148,6 +148,24 @@
                     }
                 }
                 @if (
+                    exercise().type === ExerciseType.PROGRAMMING &&
+                    athenaEnabled &&
+                    !examMode() &&
+                    hasUserAcceptedLLM() &&
+                    exercise().allowFeedbackRequests &&
+                    exercise().feedbackSuggestionModule &&
+                    !programmingExercise()?.allowOnlineEditor &&
+                    hasSubmittedProgrammingSubmission()
+                ) {
+                    <jhi-request-feedback-button
+                        [exercise]="exercise()"
+                        [smallButtons]="smallButtons()"
+                        [isGeneratingFeedback]="isGeneratingFeedback()"
+                        [isSubmitted]="hasSubmittedProgrammingSubmission()"
+                        (generatingFeedback)="generatingFeedback.emit()"
+                    />
+                }
+                @if (
                     (gradedParticipation()?.initializationState === InitializationState.INACTIVE || gradedParticipation()?.initializationState === InitializationState.FINISHED) &&
                     isResumeExerciseAvailable(gradedParticipation())
                 ) {
