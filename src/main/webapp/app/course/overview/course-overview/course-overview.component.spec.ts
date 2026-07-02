@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '@angular/core';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
-import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/overview/course-tutorial-groups/course-tutorial-groups.component';
-import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
@@ -68,8 +65,6 @@ import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/
 import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
-import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
@@ -374,7 +369,7 @@ describe('CourseOverviewComponent', () => {
         expect(metisConversationServiceStub).toHaveBeenCalledOnce();
     });
 
-    it('should pass the page title to the exercises component and hide the top title bar', () => {
+    it('should pass the page title to the exercises component', () => {
         const exercisesComponent = Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent;
         exercisesComponent.setPageTitle = vi.fn();
         Object.defineProperty(exercisesComponent, 'isCollapsed', { value: true });
@@ -384,7 +379,6 @@ describe('CourseOverviewComponent', () => {
 
         expect(exercisesComponent.setPageTitle).toHaveBeenCalledWith('overview.exercises');
         expect(component.isSidebarCollapsed()).toBe(true);
-        expect((component as any).showCourseTitleBar()).toBe(false);
     });
 
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
@@ -775,23 +769,9 @@ describe('CourseOverviewComponent', () => {
 
     describe('sidebar toggle relocation', () => {
         type CourseOverviewInternals = {
-            activeSidebarCollapsed(): boolean;
-            titleBarHasSidebar(): boolean;
-            showCourseTitleBar(): boolean;
             handleComponentActivation(componentRef: unknown): void;
         };
         const internals = (): CourseOverviewInternals => component as unknown as CourseOverviewInternals;
-
-        it('should derive the active sidebar collapsed state from the active child signal', () => {
-            const isCollapsed = signal(false);
-            const fakeLectures: CourseLecturesComponent = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed });
-            component.activatedComponentReference.set(fakeLectures);
-
-            expect(internals().activeSidebarCollapsed()).toBe(false);
-
-            isCollapsed.set(true);
-            expect(internals().activeSidebarCollapsed()).toBe(true);
-        });
 
         it('should push the page title into the activated list tab', () => {
             const setPageTitle = vi.fn();
@@ -801,44 +781,6 @@ describe('CourseOverviewComponent', () => {
             internals().handleComponentActivation(fakeLectures);
 
             expect(setPageTitle).toHaveBeenCalledWith('overview.lectures');
-        });
-
-        it('should return false for activeSidebarCollapsed when there is no active component', () => {
-            component.activatedComponentReference.set(undefined);
-            expect(internals().activeSidebarCollapsed()).toBe(false);
-        });
-
-        it('should return false for activeSidebarCollapsed when the active component has no isCollapsed', () => {
-            component.activatedComponentReference.set({} as unknown as CourseLecturesComponent);
-            expect(internals().activeSidebarCollapsed()).toBe(false);
-        });
-
-        it('should drive the title bar toggle from hasSidebar', () => {
-            component.hasSidebar.set(true);
-            expect(internals().titleBarHasSidebar()).toBe(true);
-
-            component.hasSidebar.set(false);
-            expect(internals().titleBarHasSidebar()).toBe(false);
-        });
-
-        it('should not show the shared title bar for any of the sidebar tabs or the dashboard', () => {
-            for (const Ctor of [
-                CourseExercisesComponent,
-                CourseLecturesComponent,
-                CourseTutorialGroupsComponent,
-                CourseExamsComponent,
-                CourseConversationsComponent,
-                CourseIrisComponent,
-                CourseDashboardComponent,
-            ]) {
-                component.activatedComponentReference.set(Object.create(Ctor.prototype) as InstanceType<typeof Ctor>);
-                expect(internals().showCourseTitleBar()).toBe(false);
-            }
-        });
-
-        it('should show the shared title bar for non-sidebar pages', () => {
-            component.activatedComponentReference.set(undefined);
-            expect(internals().showCourseTitleBar()).toBe(true);
         });
     });
 });

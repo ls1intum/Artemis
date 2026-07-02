@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -6,17 +6,15 @@ import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
-import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
 import { BaseCourseContainerComponent } from 'app/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
@@ -34,7 +32,6 @@ import { CourseNotificationInfo } from 'app/notification/shared/entities/course-
 import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
-import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
@@ -43,18 +40,7 @@ import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/c
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
-    imports: [
-        NgClass,
-        RouterOutlet,
-        NgTemplateOutlet,
-        FaIconComponent,
-        TranslateDirective,
-        CourseNotificationOverviewComponent,
-        CourseTitleBarComponent,
-        CourseSidebarComponent,
-        CourseNotificationPresetPickerComponent,
-        CourseUnenrollmentModalComponent,
-    ],
+    imports: [NgClass, RouterOutlet, NgTemplateOutlet, FaIconComponent, TranslateDirective, CourseSidebarComponent, CourseUnenrollmentModalComponent],
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent extends BaseCourseContainerComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -83,7 +69,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     showUnenrollModal = signal<boolean>(false);
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
-    showRefreshButton = signal<boolean>(false);
     activatedComponentReference = signal<
         | CourseExercisesComponent
         | CourseLecturesComponent
@@ -94,31 +79,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         | CourseDashboardComponent
         | undefined
     >(undefined);
-    // Sidebar tabs and the dashboard render their own full-height content with the collapse toggle in the sidebar/content
-    // header (like Exercises), so the shared title bar is only used by the remaining non-sidebar pages.
-    protected readonly showCourseTitleBar = computed(() => {
-        const componentRef = this.activatedComponentReference();
-        return !(
-            componentRef instanceof CourseExercisesComponent ||
-            componentRef instanceof CourseLecturesComponent ||
-            componentRef instanceof CourseTutorialGroupsComponent ||
-            componentRef instanceof CourseExamsComponent ||
-            componentRef instanceof CourseConversationsComponent ||
-            componentRef instanceof CourseIrisComponent ||
-            componentRef instanceof CourseDashboardComponent
-        );
-    });
-
-    protected readonly titleBarHasSidebar = computed(() => this.hasSidebar());
-
-    protected readonly activeSidebarCollapsed = computed<boolean>(() => {
-        const componentRef = this.activatedComponentReference();
-        if (!componentRef) {
-            return false;
-        }
-        const collapsed = componentRef.isCollapsed;
-        return (typeof collapsed === 'function' ? collapsed() : collapsed) ?? false;
-    });
 
     // Icons
     faTimes = faTimes;
@@ -127,7 +87,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faTable = faTable;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
-    faSync = faSync;
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
@@ -286,7 +245,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
-        this.getShowRefreshButton();
     }
 
     handleToggleSidebar(): void {
@@ -297,10 +255,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         childRouteComponent?.toggleSidebar();
         const componentCollapsed = typeof childRouteComponent!.isCollapsed === 'function' ? childRouteComponent!.isCollapsed() : (childRouteComponent!.isCollapsed as boolean);
         this.isSidebarCollapsed.set(componentCollapsed);
-    }
-
-    getShowRefreshButton(): void {
-        this.showRefreshButton.set(this.route.snapshot.firstChild?.data?.showRefreshButton ?? false);
     }
 
     getSidebarItems(): SidebarItem[] {
