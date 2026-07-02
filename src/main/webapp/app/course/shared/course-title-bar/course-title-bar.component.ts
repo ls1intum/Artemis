@@ -27,7 +27,6 @@ export class CourseTitleBarComponent {
     private courseTitleBarService = inject(CourseTitleBarService);
     readonly customTitleTemplate: Signal<TemplateRef<any> | undefined> = computed(() => this.courseTitleBarService.titleTemplate());
     readonly customActionsTemplate: Signal<TemplateRef<any> | undefined> = computed(() => this.courseTitleBarService.actionsTemplate());
-    // When a tab relocates its title into the sidebar, the top bar never shows the default title
-    // (the title lives in the sidebar header while expanded, and nowhere once collapsed — matching the exercises tab).
+    // Relocated tabs never show the default title in the top bar (it lives in the sidebar header).
     readonly hideDefaultTitle = computed(() => this.titleInSidebar() && this.hasSidebar());
 }

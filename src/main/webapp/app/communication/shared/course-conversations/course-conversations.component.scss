@@ -14,9 +14,7 @@
     border-color: var(--bs-border-color);
 }
 
-// Right-hand column that holds the course-wide search on top of the message/thread row,
-// so the sidebar sits at the very top (like the exercises tab) and the search only spans
-// the content width. It grows to fill the space freed when the sidebar collapses.
+// Content column beside the sidebar; holds the search above the message/thread row.
 .communication-content-main {
     flex: 1 1 0;
     min-width: 0;

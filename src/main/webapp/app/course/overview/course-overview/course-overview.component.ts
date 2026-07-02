@@ -96,8 +96,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     >(undefined);
     protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
-    // Tabs whose page title moves into the sidebar header (so the title bar hides its default title when expanded).
-    // Iris is intentionally excluded: it has no sidebar header to host the title, so its title bar keeps the title.
+    // List tabs whose page title moves into the sidebar header (Iris excluded — it has no sidebar header).
     protected readonly titleInSidebar = computed(() => {
         const componentRef = this.activatedComponentReference();
         return (
@@ -108,20 +107,13 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         );
     });
 
-    // Tabs whose collapse toggle moves into the sidebar/panel (so the title bar hides its toggle when expanded).
-    // Includes Iris, whose toggle lives in the chat-history panel header.
+    // Tabs whose collapse toggle moves into the sidebar/panel (includes Iris, whose toggle is in the chat panel).
     protected readonly toggleInSidebar = computed(() => this.titleInSidebar() || this.activatedComponentReference() instanceof CourseIrisComponent);
 
-    // When active, the shared action bar is overlaid on top of the content column (offset past the sidebar)
-    // instead of spanning full width, so the tab's sidebar can rise to the very top (like the exercises tab).
-    // Applies to every list tab that relocates its title into the sidebar (Lectures, Exams, Tutorials, Communication).
-    // Gated on the current route's hasSidebar so a stale activatedComponentReference cannot leak the overlay onto
-    // sidebar-less tabs (Statistics, Calendar, FAQ), where hasSidebar is false for the active route.
+    // Overlay the action bar on the content column for list tabs; gated on hasSidebar so it never leaks onto sidebar-less tabs.
     protected readonly actionBarOverContent = computed(() => this.hasSidebar() && this.titleInSidebar());
 
-    // Whether the title bar should show the collapse toggle. Same as hasSidebar for every tab except the dashboard:
-    // the dashboard has no list sidebar and its toggle only drives the Iris chat panel, which exists only when Iris
-    // is enabled for the course, so the toggle is hidden otherwise to avoid a dead button.
+    // Drives the title bar toggle: hasSidebar, except the dashboard also requires Iris (its toggle only drives the chat panel).
     protected readonly titleBarHasSidebar = computed(() => {
         if (this.activatedComponentReference() instanceof CourseDashboardComponent) {
             return this.hasSidebar() && !!this.course()?.irisEnabledInCourse;

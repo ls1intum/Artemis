@@ -5,9 +5,7 @@
     position: relative;
 }
 
-// For tabs that opt in, the shared action bar floats over the top of the content column, offset past
-// the secondary sidebar, so the sidebar itself reaches the very top. It slides to full width when the
-// sidebar collapses, reusing the same 0.1s timing as the sidebar-width transition (no vertical jump).
+// Floats the action bar over the content column (offset past the sidebar) so the sidebar reaches the top.
 jhi-course-title-bar.title-bar-over-content {
     position: absolute;
     top: 0;

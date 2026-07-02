@@ -1277,9 +1277,7 @@ $transition-in-between-delay: 0.05s;
     width: $sidebar-width;
 }
 
-// On the list tabs (Lectures/Exams/Tutorials/Communication) the shared course action bar is overlaid on top of
-// the content column (see course-overview .title-bar-over-content), so the sidebar itself reaches the very top
-// like the exercises tab. Every content child beside the sidebar needs top clearance so it starts below that bar.
+// List tabs overlay the action bar on the content column, so each content child needs top clearance below it.
 .sidebar-tab-content-row > *:not(:first-child) {
     padding-top: 3.25rem;
 }
