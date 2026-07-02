@@ -21,7 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
@@ -139,8 +139,9 @@ public class HadesService implements StatelessCIService {
         ConnectorHealth health;
         try {
             HttpEntity<Void> request = new HttpEntity<>(createAuthHeaders());
-            final var response = restTemplate.exchange(hadesServerUrl + "/ping", HttpMethod.GET, request, JsonNode.class);
-            final var hadesStatus = response.getBody() != null ? response.getBody().get("message").asText() : null;
+            final var response = restTemplate.exchange(hadesServerUrl + "/ping", HttpMethod.GET, request, String.class);
+            final var body = response.getBody();
+            final var hadesStatus = body != null ? new ObjectMapper().readTree(body).get("message").asText() : null;
             health = new ConnectorHealth("pong".equals(hadesStatus), additionalInfo);
         }
         catch (Exception ex) {
