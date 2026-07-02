@@ -569,6 +569,25 @@ describe('ExamParticipationComponent', () => {
             expect(ackSpy).toHaveBeenCalledExactlyOnceWith(event, false);
         });
 
+        it('should update the exam schedule and end date when the start date changes (issue #13071)', () => {
+            const newStartDate = startDate.add(30, 'minutes');
+            const newEndDate = newStartDate.add(comp.studentExam().workingTime!, 'seconds');
+            const event = {
+                newWorkingTime: comp.studentExam().workingTime,
+                newStartDate,
+                newEndDate,
+            } as any as ExamLiveEvent;
+            vi.spyOn(examParticipationLiveEventsService, 'observeNewEventsAsSystem').mockReturnValue(of(event));
+
+            comp.initIndividualEndDates(startDate);
+
+            // The exam start/end must reflect the pushed schedule so the pre-start countdown and start-based visibility recompute.
+            expect(comp.exam().startDate!.isSame(newStartDate)).toBe(true);
+            expect(comp.exam().endDate!.isSame(newEndDate)).toBe(true);
+            // The individual end date must be derived from the NEW start, not the stale one captured on subscription.
+            expect(comp.individualStudentEndDate()).toEqual(newStartDate.add(comp.studentExam().workingTime!, 'seconds'));
+        });
+
         it('should correctly increase working time to next day', () => {
             const event = {
                 newWorkingTime: 9001,

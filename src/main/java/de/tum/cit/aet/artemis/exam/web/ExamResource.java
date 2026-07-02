@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -320,6 +321,21 @@ public class ExamResource {
         if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
+        }
+        // If the schedule (start/end date) changed but the working time did not, the block above did not run, so
+        // conducting students are never told about the new schedule. Push a schedule update carrying the new dates so
+        // their pre-start countdown and start-based content visibility recompute. Only relevant while students may be in
+        // the pre-start conduction window (from the original start minus EXAM_START_WAIT_TIME_MINUTES until the exam
+        // ends); a routine edit of a far-future exam reaches no conducting student and is skipped.
+        else {
+            boolean startDateChanged = comparator.compare(originalStartDate, savedExam.getStartDate()) != 0;
+            ZonedDateTime now = now();
+            boolean withinConductionWindow = originalStartDate != null && savedExam.getEndDate() != null
+                    && now.isAfter(originalStartDate.minusMinutes(EXAM_START_WAIT_TIME_MINUTES)) && now.isBefore(savedExam.getEndDate());
+            if ((startDateChanged || endDateChanged) && withinConductionWindow) {
+                Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
+                examService.sendScheduleUpdateToStudentExams(examWithStudentExams);
+            }
         }
 
         boolean scheduleRelevantExamSettingsChanged = visibleOrStartDateChanged || endDateChanged || workingTimeChange != 0 || gracePeriodChanged;

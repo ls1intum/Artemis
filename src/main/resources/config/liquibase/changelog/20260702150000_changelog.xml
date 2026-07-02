@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20260702150000-1-add-schedule-to-working-time-event" author="krusche">
+        <!-- WorkingTimeUpdateEvent now carries the exam's start and end date so a conducting student can refresh the
+             pre-start countdown and the start-based content visibility when the exam schedule changes (see #13071). -->
+        <addColumn tableName="exam_live_event">
+            <column name="new_start_date" type="datetime(3)"/>
+            <column name="new_end_date" type="datetime(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260702150000-2-backfill-schedule-on-working-time-event" author="krusche">
+        <!-- Backfill existing working time events (discriminator 'W') with their exam's current start/end date so the
+             client can rely on both fields always being present on a WorkingTimeUpdateEvent (including replayed ones). -->
+        <sql>
+            UPDATE exam_live_event
+            SET new_start_date = (SELECT start_date FROM exam WHERE exam.id = exam_live_event.exam_id),
+                new_end_date = (SELECT end_date FROM exam WHERE exam.id = exam_live_event.exam_id)
+            WHERE discriminator = 'W' AND new_start_date IS NULL;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

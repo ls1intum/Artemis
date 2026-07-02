@@ -742,7 +742,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 // Create new object to make change detection work, otherwise the date will not update
                 this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime! });
                 this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
-                this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
+                // The event also carries the exam's (possibly changed) start/end date. Update the exam so the pre-start
+                // countdown and the start-based content visibility (isActive/isVisible) recompute, and derive the end
+                // date from the new start instead of the stale value captured when the subscription was created.
+                const newStartDate = event.newStartDate ?? startDate;
+                this.exam.set({ ...this.exam(), startDate: newStartDate, endDate: event.newEndDate ?? this.exam().endDate });
+                this.individualStudentEndDate.set(dayjs(newStartDate).add(this.studentExam().workingTime!, 'seconds'));
                 this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
                 this.liveEventsService.acknowledgeEvent(event, false);
             });

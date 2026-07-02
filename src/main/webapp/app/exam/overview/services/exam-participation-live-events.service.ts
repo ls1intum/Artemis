@@ -43,6 +43,10 @@ export type WorkingTimeUpdateEvent = ExamLiveEvent & {
     oldWorkingTime: number;
     newWorkingTime: number;
     courseWide: boolean;
+    // The exam's current start and end date, sent with every working time update so a conducting student can refresh
+    // the pre-start countdown and the start-based content visibility when the schedule changes.
+    newStartDate: dayjs.Dayjs;
+    newEndDate: dayjs.Dayjs;
 };
 
 export type ProblemStatementUpdateEvent = ExamLiveEvent & {
@@ -272,7 +276,7 @@ export class ExamParticipationLiveEventsService {
             return;
         }
 
-        event.createdDate = convertDateFromServer(event.createdDate)!;
+        this.convertEventDatesFromServer(event);
         event.user = this.studentExam?.user;
 
         // Add to the front of the array (newest first) and notify all observers
@@ -280,6 +284,20 @@ export class ExamParticipationLiveEventsService {
         this.newSystemEventSubject.next(event);
         this.newUserEventSubject.next(event);
         this.allEventsSubject.next(this.events);
+    }
+
+    /**
+     * Converts the server date format on an incoming event. Besides {@link ExamLiveEvent.createdDate}, working time
+     * update events also carry the exam's new start and end date, which the pre-start countdown and content visibility
+     * depend on, so those are converted here too.
+     */
+    private convertEventDatesFromServer(event: ExamLiveEvent): void {
+        event.createdDate = convertDateFromServer(event.createdDate)!;
+        if (event.eventType === ExamLiveEventType.WORKING_TIME_UPDATE) {
+            const workingTimeEvent = event as WorkingTimeUpdateEvent;
+            workingTimeEvent.newStartDate = convertDateFromServer(workingTimeEvent.newStartDate)!;
+            workingTimeEvent.newEndDate = convertDateFromServer(workingTimeEvent.newEndDate)!;
+        }
     }
 
     /**
@@ -323,7 +341,7 @@ export class ExamParticipationLiveEventsService {
             }
 
             fetchedEvents.forEach((event) => {
-                event.createdDate = convertDateFromServer(event.createdDate)!;
+                this.convertEventDatesFromServer(event);
             });
 
             // Build a set of IDs already present in the in-memory array (from WebSocket delivery)
