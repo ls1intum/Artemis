@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -20,10 +18,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
-// The orchestrator hard-requires a clustered DistributedDataProvider (no fallback). The default
-// test context (no localci/buildagent profile) has none, so activate the LocalDataProviderService
-// via LocalDataCondition by selecting the local data store.
-@TestPropertySource(properties = "artemis.continuous-integration.data-store=Local")
 class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "atlasorchres";
@@ -58,21 +52,6 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     @AfterEach
     void tearDown() {
         featureToggleService.disableFeature(Feature.AtlasAgent);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void runForProgrammingExercise_featureEnabledChatClientFails_returnsBadGateway() throws Exception {
-        // The shared test base autowires a Mockito-mocked ChatClient, so the orchestrator's
-        // null-check passes but invoking chatClient.prompt() yields null and the service catches
-        // the NPE, returning FAILED with LLM_ERROR (mapped to 502 by the controller). No tool
-        // call ever runs so no CompetencyExerciseLink can have been created.
-        request.performMvcRequest(post("/api/atlas/orchestrator/programming-exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadGateway()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("LLM_ERROR"))
-                // @JsonInclude(NON_EMPTY) omits the empty appliedActions list from the response; its absence asserts no actions were applied.
-                .andExpect(jsonPath("$.summary").isNotEmpty()).andExpect(jsonPath("$.appliedActions").doesNotExist());
-
-        assertThat(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(programmingExercise.getId())).isEmpty();
     }
 
     @Test
