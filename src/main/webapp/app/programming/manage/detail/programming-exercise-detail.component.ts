@@ -19,7 +19,6 @@ import {
     faUndo,
     faUserCheck,
     faUsers,
-    faWandMagicSparkles,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -60,7 +59,6 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { onError } from 'app/foundation/util/global.utils';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
@@ -71,9 +69,7 @@ import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../sha
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
-import { AppliedActionDTO, CompetencyOrchestrationResultDTO, CompetencyOrchestrationStatus } from 'app/atlas/shared/dto/competency-orchestration-dto';
-import { OrchestrationResultDialogComponent } from 'app/atlas/shared/orchestration-result-dialog/orchestration-result-dialog.component';
+import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 @Component({
@@ -98,7 +94,7 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
         ProgrammingExerciseInstructorExerciseSharingComponent,
-        OrchestrationResultDialogComponent,
+        AtlasOrchestrationTriggerComponent,
         TooltipModule,
         HyperionExerciseGenerationComponent,
     ],
@@ -120,12 +116,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
     private sharingService = inject(ProgrammingExerciseSharingService);
-    private competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
 
-    protected readonly orchestrationDialogVisible = signal(false);
-    protected readonly orchestrationDialogMessage = signal('');
-    protected readonly orchestrationDialogActions = signal<AppliedActionDTO[]>([]);
-    protected readonly orchestrationRunning = signal(false);
     protected readonly atlasModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
     protected readonly hyperionModuleActive = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     private destroyRef = inject(DestroyRef);
@@ -155,7 +146,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faEye = faEye;
     protected readonly faHistory = faHistory;
     protected readonly faUserCheck = faUserCheck;
-    protected readonly faWandMagicSparkles = faWandMagicSparkles;
 
     readonly programmingExercise = signal<ProgrammingExercise>(undefined!);
     programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
@@ -832,49 +822,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 header: this.translateService.instant('artemisApp.consistencyCheck.title'),
                 data: { exercisesToCheck: Array.of(exercise) },
             }) ?? undefined;
-    }
-
-    async triggerAtlasOrchestrator() {
-        const exerciseId = this.programmingExercise()?.id;
-        if (!exerciseId || this.orchestrationRunning()) {
-            return;
-        }
-        this.orchestrationRunning.set(true);
-        try {
-            // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/502/503)
-            // surface as HttpErrorResponse and are handled in the catch block below.
-            const result = await this.competencyOrchestrationApiService.runForProgrammingExercise(exerciseId);
-            // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
-            // summary/appliedActions may be omitted from the response when empty (@JsonInclude(NON_EMPTY)).
-            const summary = result.summary?.trim() ?? '';
-            this.orchestrationDialogMessage.set(summary);
-            this.orchestrationDialogActions.set(result.appliedActions ?? []);
-            this.orchestrationDialogVisible.set(true);
-            if (result.status === CompetencyOrchestrationStatus.Partial) {
-                this.alertService.addAlert({
-                    type: AlertType.WARNING,
-                    message: summary || 'artemisApp.atlasOrchestrator.partial',
-                    disableTranslation: summary.length > 0,
-                });
-            }
-        } catch (err) {
-            const httpErr = err as HttpErrorResponse;
-            const body = httpErr?.error as CompetencyOrchestrationResultDTO | undefined;
-            const summary = body?.summary?.trim() || '';
-            if (httpErr?.status === 409) {
-                this.alertService.warning('artemisApp.atlasOrchestrator.inProgress');
-            } else if (httpErr?.status === 422 || httpErr?.status === 502 || httpErr?.status === 503) {
-                this.alertService.addAlert({
-                    type: AlertType.DANGER,
-                    message: summary || 'artemisApp.atlasOrchestrator.error',
-                    disableTranslation: summary.length > 0,
-                });
-            } else {
-                onError(this.alertService, httpErr);
-            }
-        } finally {
-            this.orchestrationRunning.set(false);
-        }
     }
 
     /**

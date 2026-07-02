@@ -5,11 +5,9 @@
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
 @import 'node_modules/bootstrap/scss/bootstrap';
-@import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 
 // Needed for mathematical formulas in markdown editor
 @import 'node_modules/katex/dist/katex.min.css';
-@import 'node_modules/@siemens/ngx-datatable/themes/bootstrap';
 
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
@@ -222,36 +220,6 @@ Generic styles
 
 /* other generic styles */
 
-// This class refers to the gutter inserted by split.js for its split view
-.gutter {
-    background-color: $gutter-background;
-    cursor: col-resize;
-    position: relative;
-    transition: background-color 0.2s;
-
-    &::before {
-        background-color: $slightly-darker-body-bg;
-        border-radius: 1px;
-        content: '';
-        height: 24px;
-        left: 50%;
-        position: absolute;
-        top: 50%;
-        transition: background-color 0.2s;
-        transform: translate(-50%, -50%);
-        width: 2px;
-    }
-
-    &:active,
-    &:hover {
-        background-color: $body-bg;
-
-        &::before {
-            background-color: $darker-body-bg;
-        }
-    }
-}
-
 .error {
     color: $error-color;
     background-color: $error-background;
@@ -259,6 +227,38 @@ Generic styles
 
 .invalid-feedback {
     display: block;
+}
+
+// PrimeNG date picker (jhi-date-time-picker and the tutorial period range picker):
+// Render the invalid border from a wrapper class instead of relying solely on the inner
+// `<p-datepicker [invalid]>` input. Under zoneless change detection the OnPush picker view can stay
+// stale when validity flips from the picker's own input event, leaving the border out of sync with the
+// "missing/invalid" message (PR #13009 review). A class on the wrapper is updated reliably and cascades
+// onto the existing input via plain CSS. `:not(:focus)` lets the focus ring win while editing.
+.invalid-date-input .p-datepicker-input:not(:focus) {
+    border-color: var(--p-inputtext-invalid-border-color) !important;
+}
+
+// PrimeNG date picker: keep the overlay calendar at its natural width. With `appendTo="body"` PrimeNG
+// sets an inline `min-width` equal to the (full-width) input, which stretches the calendar far too wide.
+.jhi-date-time-picker-panel {
+    min-width: auto !important;
+}
+
+// PrimeNG date pickers render their own (rounded) invalid border via `[invalid]` / `.invalid-date-input`
+// above. Suppress the global JHipster 5px red `border-left` "stick" that otherwise lands on the
+// p-datepicker host (when bound via formControlName + a validator) — it doesn't follow the input's
+// rounded corners and looks detached (PR #13009 review).
+p-datepicker.ng-invalid {
+    border-left-width: 0;
+}
+
+// jhi-date-time-picker: keep the field width identical whether or not the clear (×) icon is shown by
+// always reserving room for BOTH the calendar and clear icons. PrimeNG only pads for the clear icon
+// when a value is present, so otherwise a filled field is ~1 icon wider than an empty one, which
+// misaligns pickers that sit side by side (e.g. the exercise "Grading" dates) — PR #13009 review.
+jhi-date-time-picker .p-datepicker-input {
+    padding-inline-end: calc((var(--p-form-field-padding-x) * 3) + (var(--p-icon-size) * 2)) !important;
 }
 
 .pad {
@@ -736,7 +736,8 @@ code.password:hover {
     background: $displaycolor-background;
 }
 
-// This positions the owl-datetime-picker above the ngbootstrap modal, accounting for a 10px margin which reduces width and height by 20px.
+// Positions Angular CDK overlays (e.g. the mat-select panel below) above the ng-bootstrap modal,
+// accounting for a 10px margin which reduces width and height by 20px.
 .cdk-overlay-container {
     z-index: 1060;
     margin: 10px;
@@ -1499,7 +1500,7 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     transition: transform 0.3s ease;
 }
 
-// About Iris modal — PrimeNG variant (sidebar chat)
+// About Iris modal — PrimeNG DynamicDialog (used by every Iris host)
 .p-dialog-mask.about-iris-dialog {
     background-color: rgba(0, 0, 0, 0.3);
 }
@@ -1514,16 +1515,46 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
-// About Iris modal — CDK MatDialog variant (exercise/lecture chat widget)
-.about-iris-backdrop {
-    background-color: rgba(0, 0, 0, 0.3);
-}
+// Floating Iris chat widget — PrimeNG DynamicDialog (exercise/lecture chat button).
+// The widget is a non-modal, no-backdrop, bottom-right floating panel. The embedded
+// `.chat-widget` is `position: fixed` and manages its own placement, drag and resize, so the
+// PrimeNG dialog shell must be a transparent, full-viewport, pointer-events-passthrough container
+// that does not impose its own chrome or positioning (mirrors the `.iris-onboarding-dialog` pattern).
+// !important is required because PrimeNG applies inline styles on the `.p-dialog` root.
+.iris-chat-widget-dialog {
+    pointer-events: none !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
 
-.about-iris-dialog .mat-mdc-dialog-surface {
-    border-radius: 1rem;
-    overflow: hidden;
-    background-color: var(--iris-secondary-background);
-    padding: 0;
+    // Neutralize any PrimeNG enter/leave transform on the dialog root: a transformed ancestor would
+    // make the embedded `position: fixed` `.chat-widget` resolve against the dialog instead of the
+    // viewport, breaking its bottom-right placement and drag/resize math.
+    transform: none !important;
+    animation: none !important;
+
+    .p-dialog-content {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        overflow: visible;
+    }
+
+    // Re-enable interaction on the actual widget; the shell above stays click-through.
+    .chat-widget {
+        pointer-events: auto;
+    }
 }
 
 // Communication dialogs (PrimeNG DynamicDialog styling)

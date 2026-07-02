@@ -73,7 +73,11 @@
                     </div>
                     <div class="form-group">
                         <label class="label-narrow d-block" jhiTranslate="artemisApp.exercise.categories"></label>
-                        <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
+                        <jhi-category-selector-primeng
+                            [categories]="exerciseCategories"
+                            [existingCategories]="existingCategories"
+                            (selectedCategories)="updateCategories($event)"
+                        />
                     </div>
                 </section>
             }
