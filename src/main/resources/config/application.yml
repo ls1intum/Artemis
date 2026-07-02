@@ -196,7 +196,10 @@ management:
         java:
             enabled: true
         env:
-            enabled: true
+            # Disabled on purpose: Spring's built-in EnvironmentInfoContributor exposed every info.* property twice (camelCase from YAML + all-lowercase from an INFO_*
+            # env-var override, e.g. testServer + testserver) on /management/info. The info.* namespace is instead exposed by DeduplicatedEnvironmentInfoContributor,
+            # which performs the same binding but collapses such case-variant duplicates to the camelCase key the client consumes. Do not re-enable without removing it.
+            enabled: false
     health:
         mail:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
@@ -373,7 +376,8 @@ sentry:
     # It is only provided to prevent the SDK from choosing the default value 'production', which might lead to confusion
     environment: test
 
-# Properties to be exposed on the /info management endpoint
+# Properties to be exposed on the /management/info endpoint via DeduplicatedEnvironmentInfoContributor.
+# Define keys in camelCase here; INFO_* environment-variable overrides (necessarily all-lowercase) are case-normalized back to these camelCase keys.
 info:
     sentry:
         dsn: ${sentry.dsn}
