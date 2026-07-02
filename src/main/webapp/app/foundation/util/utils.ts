@@ -94,11 +94,13 @@ export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: number
  * @param course The course which defines the accuracy to which the value should be rounded.
  * @returns The rounded value.
  */
-export const roundValueSpecifiedByCourseSettings = (value: number, course: Course | undefined) => {
+export const roundValueSpecifiedByCourseSettings = (value: number | undefined, course: Course | undefined) => {
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
-    return round(value, course?.accuracyOfScores ?? 1);
+    // `value` is undefined at some call sites (absent scores/points); pass it through unchanged so `round`
+    // yields NaN exactly as it did previously when these values were untyped (`any`).
+    return round(value as number, course?.accuracyOfScores ?? 1);
 };
 
 /**
