@@ -119,7 +119,6 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
-import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
@@ -740,8 +739,15 @@ public class ExamService {
     }
 
     /**
-     * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
-     * See {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionResult}
+     * Replaces the generic {@link Exercise} instances of a {@link StudentExam} with fully initialized {@link QuizExercise} instances.
+     * <p>
+     * Student exams are loaded through generic exercise queries because they can contain multiple exercise types. Those queries only fetch the exercise itself and common exam
+     * associations; they do not fetch quiz-specific data such as {@link QuizExercise#getQuizQuestions()}. The follow-up participation load in
+     * {@link StudentParticipationRepository#findByStudentExamWithEagerLatestSubmissionResult(StudentExam, boolean)} also expects the student exam to contain the same exercise
+     * instances that should later receive participations, submissions and results.
+     * <p>
+     * Student-facing solution filtering is intentionally not performed here. The REST layer maps the loaded graph to response DTOs so filtering does not mutate managed quiz
+     * entities, e.g. correct flags and explanations in multiple-choice answer options.
      *
      * @param studentExam the studentExam for which to load exercises
      */
@@ -751,10 +757,6 @@ public class ExamService {
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
                 var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
-                    quizExercise.filterForStudentsDuringQuiz();
-                }
                 studentExam.getExercises().set(i, quizExercise);
             }
         }
@@ -789,7 +791,7 @@ public class ExamService {
      * Finds the participation in participations that belongs to the given exercise and filters all unnecessary and sensitive information.
      * This ensures all relevant associations are available.
      * Handles setting the participation results using {@link #setResultIfNecessary(StudentExam, StudentParticipation, boolean)}.
-     * Filters sensitive information using {@link Exercise#filterSensitiveInformation()} and {@link QuizSubmission#filterForExam(boolean, boolean)} for quiz exercises.
+     * Student-facing quiz solution filtering is performed by the REST DTO layer to avoid mutating managed quiz entities while shaping the response.
      *
      * @param studentExam         the given student exam
      * @param exercise            the exercise for which the user participation should be filtered
@@ -801,7 +803,6 @@ public class ExamService {
         exercise.setCourse(null);
 
         if (!(exercise instanceof QuizExercise)) {
-            // Note: quiz exercises are filtered below
             exercise.filterSensitiveInformation();
         }
 
@@ -832,10 +833,6 @@ public class ExamService {
                 latestSubmission.setParticipation(null);
                 setResultIfNecessary(studentExam, participation, isAtLeastInstructor);
 
-                if (exercise instanceof QuizExercise && latestSubmission instanceof QuizSubmission quizSubmission) {
-                    // filter quiz solutions when the publishing result date is not set (or when set before the publish result date)
-                    quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
-                }
             }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));

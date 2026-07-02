@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseStatisticUpdateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropMappingReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
@@ -228,9 +229,8 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             sendQuizResultToUser(quizExerciseId, participation);
         });
         quizStatisticService.recalculateStatistics(quizExercise);
-        // notify users via websocket about new results for the statistics, filter out solution information
-        quizExercise.filterForStatisticWebsocket();
-        websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), quizExercise);
+        // notify users via websocket about new results for the statistics without mutating the persisted entity graph
+        websocketMessagingService.sendMessage("/topic/statistic/" + quizExercise.getId(), QuizExerciseStatisticUpdateDTO.of(quizExercise));
     }
 
     /**
@@ -311,7 +311,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         var participation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, userLogin).orElseThrow();
         quizSubmission.setParticipation(participation);
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
-        quizSubmission.filterForStudentsDuringQuiz();
         log.info("{} Saved quiz submission for user {} in quiz {} after {} ", logText, userLogin, exerciseId, TimeLogUtil.formatDurationFrom(start));
 
         return quizSubmission;
@@ -408,9 +407,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     @Override
     protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
-        var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
-        savedQuizSubmission.filterForStudentsDuringQuiz();
-        return savedQuizSubmission;
+        return quizSubmissionRepository.save(quizSubmission);
     }
 
     private MultipleChoiceSubmittedAnswer createMultipleChoiceSubmittedAnswerFromDTO(MultipleChoiceSubmittedAnswerFromStudentDTO submittedAnswer,
@@ -634,14 +631,15 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * already-loaded {@link QuizQuestion} the path identifies.
      * <p>
      * The answer's structural integrity is enforced strictly — a {@code null} payload or a runtime subtype that
-     * disagrees with the question's type results in a {@link BadRequestException}. The contents (selected
-     * options, mappings, submitted texts) are still resolved leniently against the question, dropping any
-     * sub-element whose id cannot be matched.
+     * disagrees with the question's type results in a {@link BadRequestException}. Multiple-choice option IDs are also
+     * resolved strictly because training evaluates one explicitly addressed question; live and exam submissions use
+     * lenient conversion instead and drop stale option references.
      *
      * @param dto          the parsed answer body; must not be {@code null}
      * @param quizQuestion the question identified by the path parameter
      * @return a transient {@link SubmittedAnswer} ready to be scored by the training service
-     * @throws BadRequestException if the dto is missing or its type does not match the question's type
+     * @throws BadRequestException if the dto is missing, its type does not match the question's type, or a
+     *                                 multiple-choice answer references an unknown option
      */
     public SubmittedAnswer convertSubmittedAnswerForTraining(SubmittedAnswerFromLiveClientDTO dto, QuizQuestion quizQuestion) {
         if (dto == null) {
@@ -649,7 +647,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         }
         return switch (dto) {
             case MultipleChoiceSubmittedAnswerFromLiveClientDTO mcDTO when quizQuestion instanceof MultipleChoiceQuestion mcQuestion ->
-                buildMultipleChoiceSubmittedAnswer(mcDTO, mcQuestion);
+                buildMultipleChoiceSubmittedAnswer(mcDTO, mcQuestion, true);
             case DragAndDropSubmittedAnswerFromLiveClientDTO dndDTO when quizQuestion instanceof DragAndDropQuestion dndQuestion ->
                 buildDragAndDropSubmittedAnswer(dndDTO, dndQuestion);
             case ShortAnswerSubmittedAnswerFromLiveClientDTO saDTO when quizQuestion instanceof ShortAnswerQuestion saQuestion ->
@@ -678,6 +676,21 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     }
 
     private MultipleChoiceSubmittedAnswer buildMultipleChoiceSubmittedAnswer(MultipleChoiceSubmittedAnswerFromLiveClientDTO dto, MultipleChoiceQuestion question) {
+        return buildMultipleChoiceSubmittedAnswer(dto, question, false);
+    }
+
+    /**
+     * Build a multiple-choice submitted answer and resolve selected option IDs against the server-side question.
+     *
+     * @param dto                 submitted answer payload
+     * @param question            multiple-choice question used to resolve selected option IDs
+     * @param failOnUnknownOption whether an unknown selected option ID should fail the request instead of being ignored
+     * @return transient multiple-choice submitted answer
+     * @throws BadRequestException if {@code failOnUnknownOption} is {@code true} and a selected option ID does not exist
+     *                                 in the question
+     */
+    private MultipleChoiceSubmittedAnswer buildMultipleChoiceSubmittedAnswer(MultipleChoiceSubmittedAnswerFromLiveClientDTO dto, MultipleChoiceQuestion question,
+            boolean failOnUnknownOption) {
         MultipleChoiceSubmittedAnswer answer = new MultipleChoiceSubmittedAnswer();
         answer.setQuizQuestion(question);
         Set<AnswerOption> selected = new HashSet<>();
@@ -691,6 +704,9 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
                 AnswerOption serverOption = optionsById.get(optionRef.id());
                 if (serverOption != null) {
                     selected.add(serverOption);
+                }
+                else if (failOnUnknownOption) {
+                    throw new BadRequestException("AnswerOption with id " + optionRef.id() + " not found in MultipleChoiceQuestion with id " + question.getId());
                 }
             }
         }

@@ -170,7 +170,6 @@ public class QuizExerciseImportService extends ExerciseImportService {
             newOption.setExplanation(originalOption.getExplanation());
             newOption.setIsCorrect(originalOption.isIsCorrect());
             newOption.setInvalid(originalOption.isInvalid());
-            newOption.setQuestion(copy);
             newAnswerOptions.add(newOption);
         }
         copy.setAnswerOptions(newAnswerOptions);

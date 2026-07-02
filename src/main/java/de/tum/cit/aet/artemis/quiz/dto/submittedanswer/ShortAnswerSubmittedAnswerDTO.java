@@ -15,4 +15,9 @@ public record ShortAnswerSubmittedAnswerDTO(Set<ShortAnswerSubmittedTextDTO> sub
                 "short-answer");
     }
 
+    public static ShortAnswerSubmittedAnswerDTO withoutSolution(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+        return new ShortAnswerSubmittedAnswerDTO(
+                shortAnswerSubmittedAnswer.getSubmittedTexts().stream().map(ShortAnswerSubmittedTextDTO::withoutSolution).collect(Collectors.toSet()), "short-answer");
+    }
+
 }

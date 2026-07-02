@@ -1,11 +1,10 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,15 +15,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @DiscriminatorValue(value = "AC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<MultipleChoiceQuestionStatistic, AnswerOption, MultipleChoiceQuestion> {
+public class AnswerCounter extends QuizStatisticCounter {
 
     @ManyToOne
     @JsonIgnore
     private MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic;
 
-    @OneToOne(cascade = { CascadeType.PERSIST })
-    @JoinColumn(unique = true)
-    private AnswerOption answer;
+    @Column(name = "answer_id")
+    private Long answerOptionId;
 
     public MultipleChoiceQuestionStatistic getMultipleChoiceQuestionStatistic() {
         return multipleChoiceQuestionStatistic;
@@ -34,30 +32,35 @@ public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionS
         this.multipleChoiceQuestionStatistic = multipleChoiceQuestionStatistic;
     }
 
+    /**
+     * Resolves the stored question-scoped answer option ID to the JSON-owned answer option.
+     *
+     * @return the referenced answer option, or null if the statistic is not connected to a multiple-choice question
+     */
+    @Transient
     public AnswerOption getAnswer() {
-        return answer;
+        if (multipleChoiceQuestionStatistic == null || !(multipleChoiceQuestionStatistic.getQuizQuestion() instanceof MultipleChoiceQuestion question)) {
+            return null;
+        }
+        AnswerOption answerOption = question.findAnswerOptionById(answerOptionId);
+        if (answerOption == null) {
+            throw new IllegalStateException("Answer counter " + getId() + " references missing answer option " + answerOptionId + " in question " + question.getId());
+        }
+        return answerOption;
     }
 
     public void setAnswer(AnswerOption answerOption) {
-        this.answer = answerOption;
+        this.answerOptionId = answerOption == null ? null : answerOption.getId();
     }
 
-    @Override
     @JsonIgnore
-    public void setQuizQuestionStatistic(MultipleChoiceQuestionStatistic quizQuestionStatistic) {
-        setMultipleChoiceQuestionStatistic(quizQuestionStatistic);
+    public Long getAnswerOptionId() {
+        return answerOptionId;
     }
 
-    @Override
     @JsonIgnore
-    public AnswerOption getQuizQuestionComponent() {
-        return getAnswer();
-    }
-
-    @Override
-    @JsonIgnore
-    public void setQuizQuestionComponent(AnswerOption answerOption) {
-        setAnswer(answerOption);
+    public void setAnswerOptionId(Long answerOptionId) {
+        this.answerOptionId = answerOptionId;
     }
 
     @Override

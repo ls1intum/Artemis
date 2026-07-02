@@ -8,8 +8,6 @@ import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -46,7 +44,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
 /**
@@ -72,17 +69,14 @@ public class QuizExerciseCreationUpdateResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
-    private final QuizExerciseRepository quizExerciseRepository;
-
     private final ExerciseVersionService exerciseVersionService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService,
-            AuthorizationCheckService authCheckService, CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService) {
+    public QuizExerciseCreationUpdateResource(QuizExerciseService quizExerciseService, CourseService courseService, AuthorizationCheckService authCheckService,
+            CourseRepository courseRepository, Optional<AtlasMLApi> atlasMLApi, ExerciseVersionService exerciseVersionService) {
         this.quizExerciseService = quizExerciseService;
-        this.quizExerciseRepository = quizExerciseRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
@@ -196,15 +190,7 @@ public class QuizExerciseCreationUpdateResource {
             @RequestPart("exercise") @Valid UpdateQuizExerciseDTO updateQuizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws IOException {
         log.info("REST request to update quiz exercise : {}", exerciseId);
-        QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
-
-        // Capture original competency IDs before mergeDTOIntoDomainObject() mutates the entity (L1 cache)
-        Set<Long> originalCompetencyIds = quizBase.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
-
-        QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
-
-        quizExerciseService.mergeDTOIntoDomainObject(quizBase, updateQuizExerciseDTO);
-        QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files != null ? files : List.of(), notificationText, originalCompetencyIds);
+        QuizExercise result = quizExerciseService.updateFromEditor(exerciseId, updateQuizExerciseDTO, files != null ? files : List.of(), notificationText);
 
         // Notify AtlasML about the quiz exercise update
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");

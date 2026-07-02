@@ -1,7 +1,12 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
-import jakarta.validation.constraints.NotEmpty;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH;
+
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -20,7 +25,8 @@ import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AnswerOptionFromEditorDTO(Long id, @NotEmpty String text, String hint, String explanation, @NotNull Boolean isCorrect) {
+public record AnswerOptionFromEditorDTO(Long id, @NotBlank @Size(max = MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH) String text, @Size(max = MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH) String hint,
+        @Size(max = MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH) String explanation, @NotNull Boolean isCorrect) {
 
     /**
      * Creates an AnswerOptionFromEditorDTO from the given AnswerOption domain object.
@@ -47,15 +53,4 @@ public record AnswerOptionFromEditorDTO(Long id, @NotEmpty String text, String h
         return answerOption;
     }
 
-    /**
-     * Applies the DTO values to an existing AnswerOption entity.
-     *
-     * @param answerOption the existing answer option to update
-     */
-    public void applyTo(AnswerOption answerOption) {
-        answerOption.setText(text);
-        answerOption.setHint(hint);
-        answerOption.setExplanation(explanation);
-        answerOption.setIsCorrect(isCorrect);
-    }
 }

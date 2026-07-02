@@ -336,83 +336,6 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     /**
-     * undo all dragItem- and dropLocation-changes which are not allowed ( adding them)
-     *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
-     */
-    @Override
-    public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
-            backgroundFilePath = dndOriginalQuestion.getBackgroundFilePath();
-            // undo unallowed dragItemChanges
-            undoUnallowedDragItemChanges(dndOriginalQuestion);
-            // undo unallowed dragItemChanges
-            undoUnallowedDropLocationChanges(dndOriginalQuestion);
-        }
-    }
-
-    /**
-     * undo all dragItem-changes which are not allowed ( adding them)
-     *
-     * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
-     */
-    private void undoUnallowedDragItemChanges(DragAndDropQuestion originalQuestion) {
-        // find added DragItems, which are not allowed to be added
-        Set<DragItem> notAllowedAddedDragItems = new HashSet<>();
-        // check every dragItem of the question
-        for (DragItem dragItem : this.getDragItems()) {
-            // check if the dragItem were already in the originalQuestion -> if not it's an added dragItem
-            if (originalQuestion.getDragItems().contains(dragItem)) {
-                // find original dragItem
-                DragItem originalDragItem = originalQuestion.findDragItemById(dragItem.getId());
-
-                // correct invalid = null to invalid = false
-                if (dragItem.isInvalid() == null) {
-                    dragItem.setInvalid(false);
-                }
-                // reset invalid dragItem if it already set to true (it's not possible to set a dragItem valid again)
-                dragItem.setInvalid(dragItem.isInvalid() || (originalDragItem.isInvalid() != null && originalDragItem.isInvalid()));
-            }
-            else {
-                // mark the added dragItem (adding dragItems is not allowed)
-                notAllowedAddedDragItems.add(dragItem);
-            }
-        }
-        // remove the added dragItems
-        this.getDragItems().removeAll(notAllowedAddedDragItems);
-    }
-
-    /**
-     * undo all dropLocation-changes which are not allowed ( adding them)
-     *
-     * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
-     */
-    private void undoUnallowedDropLocationChanges(DragAndDropQuestion originalQuestion) {
-        // find added DropLocations, which are not allowed to be added
-        Set<DropLocation> notAllowedAddedDropLocations = new HashSet<>();
-        // check every dropLocation of the question
-        for (DropLocation dropLocation : this.getDropLocations()) {
-            // check if the dropLocation were already in the originalQuestion -> if not it's an added dropLocation
-            if (originalQuestion.getDropLocations().contains(dropLocation)) {
-                // find original dropLocation
-                DropLocation originalDropLocation = originalQuestion.findDropLocationById(dropLocation.getId());
-                // correct invalid = null to invalid = false
-                if (dropLocation.isInvalid() == null) {
-                    dropLocation.setInvalid(false);
-                }
-                // reset invalid dropLocation if it already set to true (it's not possible to set a dropLocation valid again)
-                dropLocation.setInvalid(dropLocation.isInvalid() || (originalDropLocation.isInvalid() != null && originalDropLocation.isInvalid()));
-            }
-            else {
-                // mark the added dropLocation (adding dropLocations is not allowed)
-                notAllowedAddedDropLocations.add(dropLocation);
-            }
-        }
-        // remove the added dropLocations
-        this.getDropLocations().removeAll(notAllowedAddedDropLocations);
-    }
-
-    /**
      * check if an update of the Results and Statistics is necessary
      *
      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
@@ -532,6 +455,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     public QuizQuestion copyQuestionId() {
         var question = new DragAndDropQuestion();
         question.setId(getId());
+        question.setVersion(getVersion());
         return question;
     }
 

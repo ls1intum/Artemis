@@ -1,19 +1,28 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH;
 
-import jakarta.persistence.CascadeType;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,28 +40,30 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyMultipleChoiceP
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MultipleChoiceQuestion extends QuizQuestion {
 
-    // No @Cache here on purpose: the parent collection of AnswerOption references that get resolved during merge cascade.
-    // A stale cached collection here is the exact failure mode that caused #12574 / #12584 on the clustered L2 cache.
-    // Bidirectional mapping: AnswerOption.question owns the question_id FK, so a parent saveAndFlush issues targeted
-    // UPDATEs on the order column instead of the DELETE+INSERT cascade that produced the #12584 ID-regeneration class.
-    // See documentation/docs/developer/guidelines/database.mdx → "Ordered Collection with Duplicates (List)" for the
-    // mandatory rules — any new @OrderColumn relationship must follow them, or pick the Set + @OrderBy alternative.
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn(name = "answer_options_order")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "answer_options")
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")
     private boolean singleChoice = false;
 
-    public List<AnswerOption> getAnswerOptions() {
-        return answerOptions;
+    public MultipleChoiceQuestion() {
+        setNextComponentId(1L);
     }
 
+    public List<AnswerOption> getAnswerOptions() {
+        return Collections.unmodifiableList(answerOptions);
+    }
+
+    /**
+     * Replaces the JSON-owned answer options while preserving existing question-scoped IDs where possible.
+     *
+     * @param answerOptions the answer options to persist with this question
+     */
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
-        // Direct field assignment so callers like filterSensitiveInformation can replace a lazy-initialized PersistentList
-        // without triggering session-less initialization. Back-references are set defensively in
-        // ensureAnswerOptionBackReferences via @PrePersist / @PreUpdate.
-        this.answerOptions = answerOptions;
+        this.answerOptions = copyAnswerOptions(answerOptions);
+        advanceNextComponentIdPastExistingOptionIds();
+        assignIdsToNewOptions();
     }
 
     public boolean isSingleChoice() {
@@ -70,60 +81,101 @@ public class MultipleChoiceQuestion extends QuizQuestion {
      * @return the answerOption with the given ID, or null if the answerOption is not contained in this question
      */
     public AnswerOption findAnswerOptionById(Long answerOptionId) {
-
-        if (answerOptionId != null) {
-            // iterate through all answers of this quiz
-            for (AnswerOption answer : answerOptions) {
-                // return answer if the IDs are equal
-                if (answer.getId().equals(answerOptionId)) {
-                    return answer;
-                }
-            }
+        if (answerOptionId == null) {
+            return null;
         }
-        return null;
+        return answerOptions.stream().filter(answer -> Objects.equals(answer.getId(), answerOptionId)).findFirst().orElse(null);
     }
 
     /**
-     * undo all answer-changes which are not allowed (adding Answers)
+     * Replaces the complete ordered option list while preserving known IDs and allocating IDs for new options.
      *
-     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
+     * @param inputs immutable option inputs in their requested order
+     * @return semantic changes caused by the replacement
      */
-    @Override
-    public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
-        if (originalQuizQuestion instanceof MultipleChoiceQuestion mcOriginalQuestion) {
-            undoUnallowedAnswerChanges(mcOriginalQuestion);
-        }
+    public AnswerOptionChangeSet replaceAnswerOptions(List<AnswerOptionInput> inputs) {
+        return replaceAnswerOptions(inputs, Set.of());
     }
 
     /**
-     * undo all answer-changes which are not allowed ( adding Answers)
+     * Replaces the complete ordered option list while preserving known IDs and allocating IDs for new options.
+     * Omitted IDs contained in {@code invalidIds} are kept as invalid historical components instead of being removed.
      *
-     * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
+     * @param inputs     immutable option inputs in their requested order
+     * @param invalidIds IDs that must remain resolvable for submissions or statistics
+     * @return semantic changes caused by the replacement
      */
-    private void undoUnallowedAnswerChanges(MultipleChoiceQuestion originalQuestion) {
+    public AnswerOptionChangeSet replaceAnswerOptions(List<AnswerOptionInput> inputs, Set<Long> invalidIds) {
+        Objects.requireNonNull(inputs);
+        Objects.requireNonNull(invalidIds);
 
-        // find added Answers, which are not allowed to be added
-        Set<AnswerOption> notAllowedAddedAnswers = new HashSet<>();
-        // check every answer of the question
-        for (AnswerOption answer : this.getAnswerOptions()) {
-            // check if the answer were already in the originalQuizExercise -> if not it's an added answer
-            if (originalQuestion.getAnswerOptions().contains(answer)) {
-                // find original answer
-                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
-                // correct invalid = null to invalid = false
-                if (answer.isInvalid() == null) {
-                    answer.setInvalid(false);
-                }
-                // reset invalid answer if it already set to true (it's not possible to set an answer valid again)
-                answer.setInvalid(answer.isInvalid() || (originalAnswer.isInvalid() != null && originalAnswer.isInvalid()));
+        // Index the current JSON components by their stable question-scoped IDs for update/delete detection.
+        Map<Long, AnswerOption> existingById = answerOptions.stream().collect(Collectors.toMap(AnswerOption::getId, Function.identity()));
+        Set<Long> unknownInvalidIds = new HashSet<>(invalidIds);
+        unknownInvalidIds.removeAll(existingById.keySet());
+        if (!unknownInvalidIds.isEmpty()) {
+            throw new IllegalArgumentException("Unknown answer option ID " + unknownInvalidIds.iterator().next());
+        }
+
+        Set<Long> requestedIds = new HashSet<>();
+        Set<Long> addedIds = new LinkedHashSet<>();
+        Set<Long> updatedIds = new LinkedHashSet<>();
+        Set<Long> invalidatedIds = new LinkedHashSet<>();
+        boolean requiresRecalculation = false;
+        List<AnswerOption> replacements = new ArrayList<>();
+
+        for (AnswerOptionInput input : inputs) {
+            validateInput(input);
+            if (input.id() != null && input.id() <= 0) {
+                throw new IllegalArgumentException("Answer option ID must be positive");
             }
-            else {
-                // mark the added Answers (adding answers is not allowed)
-                notAllowedAddedAnswers.add(answer);
+
+            if (input.id() != null && !requestedIds.add(input.id())) {
+                throw new IllegalArgumentException("Duplicate answer option ID " + input.id());
+            }
+
+            AnswerOption existing = input.id() == null ? null : existingById.get(input.id());
+            if (input.id() != null && existing == null) {
+                throw new IllegalArgumentException("Unknown answer option ID " + input.id());
+            }
+
+            // New inputs have no ID yet; allocate a fresh one and never reuse deleted IDs.
+            if (existing == null) {
+                AnswerOption newOption = createNewAnswerOption(input);
+                replacements.add(newOption);
+                addedIds.add(newOption.getId());
+                continue;
+            }
+
+            // Existing inputs keep their IDs so submissions, counters, and editor payloads remain stable.
+            AnswerOption replacement = createAnswerOption(existing.getId(), input);
+            replacements.add(replacement);
+            if (!sameContent(existing, replacement)) {
+                updatedIds.add(replacement.getId());
+                requiresRecalculation |= isScoringRelevantChange(existing, replacement);
             }
         }
-        // remove the added Answers
-        this.getAnswerOptions().removeAll(notAllowedAddedAnswers);
+
+        // Any existing ID that was not requested disappeared from the ordered option list.
+        Set<Long> deletedIds = new LinkedHashSet<>(existingById.keySet());
+        deletedIds.removeAll(requestedIds);
+        for (Long deletedId : new ArrayList<>(deletedIds)) {
+            if (invalidIds.contains(deletedId)) {
+                AnswerOption tombstone = createTombstone(existingById.get(deletedId));
+                replacements.add(tombstone);
+                invalidatedIds.add(deletedId);
+                deletedIds.remove(deletedId);
+                if (!existingById.get(deletedId).isInvalid()) {
+                    updatedIds.add(deletedId);
+                    requiresRecalculation = true;
+                }
+            }
+        }
+        requiresRecalculation |= !deletedIds.isEmpty();
+
+        answerOptions = replacements;
+        validateAnswerOptions();
+        return new AnswerOptionChangeSet(Set.copyOf(addedIds), Set.copyOf(updatedIds), Set.copyOf(deletedIds), Set.copyOf(invalidatedIds), requiresRecalculation);
     }
 
     /**
@@ -159,14 +211,13 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         // check every answer of the question
         for (AnswerOption answer : this.getAnswerOptions()) {
             // check if the answer were already in the originalQuizExercise
-            if (originalQuestion.getAnswerOptions().contains(answer)) {
+            if (originalQuestion.findAnswerOptionById(answer.getId()) != null) {
                 // find original answer
                 AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
 
                 // check if an answer is set invalid or if the correctness has changed
                 // if true an update of the Statistics and Results is necessary
-                if ((answer.isInvalid() && !this.isInvalid() && originalAnswer.isInvalid() == null) || (answer.isInvalid() && !this.isInvalid() && !originalAnswer.isInvalid())
-                        || (!(answer.isIsCorrect().equals(originalAnswer.isIsCorrect())))) {
+                if ((answer.isInvalid() && !this.isInvalid() && !originalAnswer.isInvalid()) || (!(answer.isIsCorrect().equals(originalAnswer.isIsCorrect())))) {
                     updateNecessary = true;
                 }
             }
@@ -214,7 +265,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         // check answer options
         if (getAnswerOptions() != null) {
             for (AnswerOption answerOption : getAnswerOptions()) {
-                if (answerOption.isIsCorrect()) {
+                if (!answerOption.isInvalid() && Boolean.TRUE.equals(answerOption.isIsCorrect())) {
                     correctAnswerCount++;
                 }
             }
@@ -248,51 +299,110 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     public QuizQuestion copyQuestionId() {
         var question = new MultipleChoiceQuestion();
         question.setId(getId());
+        question.setVersion(getVersion());
         return question;
     }
 
     /**
-     * Adds a single answer option and maintains the bidirectional back-reference required by the {@code mappedBy} mapping.
+     * Adds a single answer option as a JSON-owned component and allocates a question-scoped ID.
      *
      * @param answerOption the answer option to add
-     * @return this question for fluent chaining
+     * @return the newly added answer option with its question-scoped ID
      */
-    public MultipleChoiceQuestion addAnswerOption(AnswerOption answerOption) {
-        if (answerOptions == null) {
-            answerOptions = new ArrayList<>();
-        }
-        answerOptions.add(answerOption);
-        answerOption.setQuestion(this);
-        return this;
+    public AnswerOption addAnswerOption(AnswerOption answerOption) {
+        AnswerOptionInput input = AnswerOptionInput.of(answerOption);
+        validateInput(input);
+        AnswerOption copy = new AnswerOption(allocateNextComponentId(), input.text(), input.hint(), input.explanation(), input.isCorrect(), input.invalid());
+        answerOptions.add(copy);
+        return copy;
     }
 
     /**
-     * Removes a single answer option and clears its back-reference. Mirrors the remove* helpers on the other quiz
-     * entities for symmetry; with {@code orphanRemoval = true} the option will also be deleted on the next flush.
+     * Removes a single answer option from the JSON-owned component list.
      *
      * @param answerOption the answer option to remove
      */
     public void removeAnswerOption(AnswerOption answerOption) {
         if (answerOptions != null) {
-            answerOptions.remove(answerOption);
+            answerOptions.removeIf(option -> Objects.equals(option.getId(), answerOption.getId()));
         }
-        answerOption.setQuestion(null);
     }
 
     /**
-     * Defensive back-reference fixup: with bidirectional mappedBy the child @ManyToOne owns the FK, so any AnswerOption
-     * added via {@code getAnswerOptions().add(...)} (bypassing {@link #addAnswerOption}) would otherwise INSERT with
-     * {@code question_id = NULL}. Mirrors {@link de.tum.cit.aet.artemis.lecture.domain.Lecture#updateLectureUnitOrder}.
+     * Validates JSON-owned answer option invariants before persisting or updating the question.
      */
     @PrePersist
     @PreUpdate
-    private void ensureAnswerOptionBackReferences() {
-        if (answerOptions != null) {
-            for (AnswerOption option : answerOptions) {
-                if (option != null && option.getQuestion() != this) {
-                    option.setQuestion(this);
-                }
+    public void validateAnswerOptions() {
+        if (answerOptions == null) {
+            throw new IllegalStateException("Answer options must not be null");
+        }
+        Set<Long> ids = new HashSet<>();
+        for (AnswerOption answerOption : answerOptions) {
+            validateInput(AnswerOptionInput.of(answerOption));
+            if (answerOption.getId() == null || !ids.add(answerOption.getId())) {
+                throw new IllegalStateException("Answer option IDs must be non-null and unique");
             }
+            if (answerOption.getId() <= 0) {
+                throw new IllegalStateException("Answer option IDs must be positive");
+            }
+            if (getNextComponentId() == null || answerOption.getId() >= getNextComponentId()) {
+                throw new IllegalStateException("Answer option ID must be below nextComponentId");
+            }
+        }
+    }
+
+    private void assignIdsToNewOptions() {
+        answerOptions.stream().filter(option -> option.getId() == null).forEach(option -> option.setId(allocateNextComponentId()));
+    }
+
+    private static List<AnswerOption> copyAnswerOptions(List<AnswerOption> answerOptions) {
+        if (answerOptions == null) {
+            return new ArrayList<>();
+        }
+        return answerOptions.stream().map(AnswerOptionInput::of).map(MultipleChoiceQuestion::createAnswerOptionPreservingId).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    private void advanceNextComponentIdPastExistingOptionIds() {
+        long nextIdAfterExistingOptions = answerOptions.stream().map(AnswerOption::getId).filter(Objects::nonNull).mapToLong(Long::longValue).max().orElse(0L) + 1L;
+        setNextComponentId(Math.max(getNextComponentId() == null ? 1L : getNextComponentId(), nextIdAfterExistingOptions));
+    }
+
+    private AnswerOption createNewAnswerOption(AnswerOptionInput input) {
+        return createAnswerOption(allocateNextComponentId(), input);
+    }
+
+    private static AnswerOption createAnswerOptionPreservingId(AnswerOptionInput input) {
+        return createAnswerOption(input.id(), input);
+    }
+
+    private static AnswerOption createAnswerOption(Long id, AnswerOptionInput input) {
+        return new AnswerOption(id, input.text(), input.hint(), input.explanation(), input.isCorrect(), input.invalid());
+    }
+
+    private static AnswerOption createTombstone(AnswerOption existing) {
+        return new AnswerOption(existing.getId(), existing.getText(), existing.getHint(), existing.getExplanation(), existing.isIsCorrect(), true);
+    }
+
+    private static boolean sameContent(AnswerOption left, AnswerOption right) {
+        return Objects.equals(left.getText(), right.getText()) && Objects.equals(left.getHint(), right.getHint()) && Objects.equals(left.getExplanation(), right.getExplanation())
+                && Objects.equals(left.isIsCorrect(), right.isIsCorrect()) && Objects.equals(left.isInvalid(), right.isInvalid());
+    }
+
+    private static boolean isScoringRelevantChange(AnswerOption existing, AnswerOption replacement) {
+        return !Objects.equals(existing.isIsCorrect(), replacement.isIsCorrect()) || !Objects.equals(existing.isInvalid(), replacement.isInvalid());
+    }
+
+    private static void validateInput(AnswerOptionInput input) {
+        if (input == null || input.text() == null || input.text().isBlank()) {
+            throw new IllegalArgumentException("Answer option text must not be blank");
+        }
+        if (input.text().length() > MAX_QUIZ_ANSWER_OPTION_TEXT_LENGTH || input.hint() != null && input.hint().length() > MAX_QUIZ_ANSWER_OPTION_HINT_LENGTH
+                || input.explanation() != null && input.explanation().length() > MAX_QUIZ_ANSWER_OPTION_EXPLANATION_LENGTH) {
+            throw new IllegalArgumentException("Answer option text, hint, or explanation exceeds its maximum length");
+        }
+        if (input.isCorrect() == null) {
+            throw new IllegalArgumentException("Answer option correctness must not be null");
         }
     }
 }

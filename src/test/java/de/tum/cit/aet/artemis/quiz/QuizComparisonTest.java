@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.quiz;
 
-import static de.tum.cit.aet.artemis.exam.service.StudentExamService.isContentEqualTo;
+import static de.tum.cit.aet.artemis.exam.service.StudentExamSubmissionContentComparator.isContentEqualTo;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.time.ZonedDateTime;
@@ -295,6 +295,7 @@ class QuizComparisonTest {
 
             if (submittedAnswer2 instanceof MultipleChoiceSubmittedAnswer changedSubmittedAnswer && submittedAnswer1 instanceof MultipleChoiceSubmittedAnswer originalAnswer) {
                 Set<AnswerOption> answerOptions = changedSubmittedAnswer.getSelectedOptions();
+                Set<AnswerOption> originalSelectedOptions = Set.copyOf(originalAnswer.getSelectedOptions());
                 assertThat(answerOptions.size()).isEqualTo(1);
 
                 Set<AnswerOption> notSelectedOption = ((MultipleChoiceQuestion) question).getAnswerOptions().stream().filter(option -> !option.isIsCorrect())
@@ -308,7 +309,8 @@ class QuizComparisonTest {
                 assertThat(isContentEqualTo(originalAnswer, changedSubmittedAnswer)).isTrue();
 
                 // reset submitted answers, compare with the unchanged original
-                changedSubmittedAnswer.setSelectedOptions(answerOptions);
+                originalAnswer.setSelectedOptions(originalSelectedOptions);
+                changedSubmittedAnswer.setSelectedOptions(originalSelectedOptions);
                 assertThat(isContentEqualTo(submittedAnswer1, changedSubmittedAnswer)).isTrue();
 
             }

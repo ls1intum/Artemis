@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import org.hibernate.annotations.ConcreteProxy;
 
@@ -49,6 +50,13 @@ import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizQuestion extends DomainObject {
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    @Column(name = "next_component_id")
+    private Long nextComponentId;
+
     @Column(name = "title")
     private String title;
 
@@ -82,6 +90,32 @@ public abstract class QuizQuestion extends DomainObject {
     @JoinColumn(name = "exercise_id")
     @JsonIgnore
     private QuizExercise exercise;
+
+    @JsonIgnore
+    public Long getVersion() {
+        return version;
+    }
+
+    @JsonIgnore
+    public void setVersion(Long version) {
+        this.version = version;
+    }
+
+    @JsonIgnore
+    public Long getNextComponentId() {
+        return nextComponentId;
+    }
+
+    protected void setNextComponentId(Long nextComponentId) {
+        this.nextComponentId = nextComponentId;
+    }
+
+    protected long allocateNextComponentId() {
+        if (nextComponentId == null) {
+            nextComponentId = 1L;
+        }
+        return nextComponentId++;
+    }
 
     @JsonProperty("exerciseId")
     public Long getExerciseId() {
@@ -171,8 +205,28 @@ public abstract class QuizQuestion extends DomainObject {
         return quizQuestionStatistic;
     }
 
+    /**
+     * Sets the statistic and keeps the inverse quiz-question reference in sync.
+     *
+     * @param quizQuestionStatistic the statistic to attach to this question, or null to detach the current statistic
+     */
     public void setQuizQuestionStatistic(QuizQuestionStatistic quizQuestionStatistic) {
+        if (this.quizQuestionStatistic == quizQuestionStatistic) {
+            if (quizQuestionStatistic != null && quizQuestionStatistic.getQuizQuestion() != this) {
+                quizQuestionStatistic.setQuizQuestion(this);
+            }
+            return;
+        }
+
+        if (this.quizQuestionStatistic != null && this.quizQuestionStatistic.getQuizQuestion() == this) {
+            this.quizQuestionStatistic.setQuizQuestion(null);
+        }
+
         this.quizQuestionStatistic = quizQuestionStatistic;
+
+        if (quizQuestionStatistic != null && quizQuestionStatistic.getQuizQuestion() != this) {
+            quizQuestionStatistic.setQuizQuestion(this);
+        }
     }
 
     public QuizExercise getExercise() {
@@ -239,13 +293,6 @@ public abstract class QuizQuestion extends DomainObject {
      * @return an empty question just including the id of the object
      */
     public abstract QuizQuestion copyQuestionId();
-
-    /**
-     * undo all changes which are not allowed
-     *
-     * @param originalQuizQuestion the original not changed QuizQuestion, to detect the changes
-     */
-    public abstract void undoUnallowedChanges(QuizQuestion originalQuizQuestion);
 
     /**
      * check if an update of the Results and Statistics is necessary

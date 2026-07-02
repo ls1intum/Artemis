@@ -8,11 +8,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestionStatistic;
@@ -97,11 +99,10 @@ public abstract class QuizService<T extends QuizConfiguration> {
      */
     private void fixReferenceMultipleChoice(MultipleChoiceQuestion multipleChoiceQuestion) {
         MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = (MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic();
-        fixComponentReference(multipleChoiceQuestion, multipleChoiceQuestion.getAnswerOptions(), answerOption -> {
-            multipleChoiceQuestionStatistic.addAnswerOption(answerOption);
-            return null;
-        });
-        removeCounters(multipleChoiceQuestion.getAnswerOptions(), multipleChoiceQuestionStatistic.getAnswerCounters());
+        multipleChoiceQuestion.validateAnswerOptions();
+        multipleChoiceQuestion.getAnswerOptions().forEach(multipleChoiceQuestionStatistic::addAnswerOption);
+        Set<Long> answerOptionIds = multipleChoiceQuestion.getAnswerOptions().stream().map(AnswerOption::getId).collect(Collectors.toSet());
+        multipleChoiceQuestionStatistic.getAnswerCounters().removeIf(counter -> !answerOptionIds.contains(counter.getAnswerOptionId()));
     }
 
     /**

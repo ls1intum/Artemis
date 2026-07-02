@@ -1,47 +1,56 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import java.util.Objects;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * A AnswerOption.
+ * An answer option owned by a {@link MultipleChoiceQuestion}.
+ *
+ * The explicit JSON property names form the persistence contract of the answer_options column. Keep them stable when
+ * renaming Java accessors.
  */
-// No @Cache here on purpose: resolved via internalLoad during quiz-submission merge cascade. A stale L2 cache entry
-// (NONSTRICT_READ_WRITE on clustered Hazelcast) could return not-found for an existing row, producing the exact
-// ObjectNotFoundException seen in #12584. The answer_option table is small; always hitting the DB is fine.
-@Entity
-@Table(name = "answer_option")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerOption extends DomainObject implements QuizQuestionComponent<MultipleChoiceQuestion> {
+public class AnswerOption {
 
-    @Column(name = "text")
+    @JsonProperty("id")
+    private Long id;
+
+    @JsonProperty("text")
     private String text;
 
-    @Column(name = "hint")
+    @JsonProperty("hint")
     private String hint;
 
-    @Column(name = "explanation", length = 500)
+    @JsonProperty("explanation")
     private String explanation;
 
-    @Column(name = "is_correct")
+    @JsonProperty("isCorrect")
     private Boolean isCorrect;
 
-    @Column(name = "invalid")
-    private Boolean invalid = false;
+    @JsonProperty("invalid")
+    private boolean invalid;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id")
-    @JsonIgnore
-    private MultipleChoiceQuestion question;
+    public AnswerOption() {
+    }
+
+    public AnswerOption(Long id, String text, String hint, String explanation, Boolean isCorrect, boolean invalid) {
+        this.id = id;
+        this.text = text;
+        this.hint = hint;
+        this.explanation = explanation;
+        this.isCorrect = isCorrect;
+        this.invalid = invalid;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getText() {
         return text;
@@ -100,21 +109,12 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
         this.isCorrect = isCorrect;
     }
 
-    public Boolean isInvalid() {
-        return invalid != null && invalid;
+    public boolean isInvalid() {
+        return invalid;
     }
 
-    public void setInvalid(Boolean invalid) {
+    public void setInvalid(boolean invalid) {
         this.invalid = invalid;
-    }
-
-    public MultipleChoiceQuestion getQuestion() {
-        return question;
-    }
-
-    @Override
-    public void setQuestion(MultipleChoiceQuestion multipleChoiceQuestion) {
-        this.question = multipleChoiceQuestion;
     }
 
     @Override
@@ -123,4 +123,48 @@ public class AnswerOption extends DomainObject implements QuizQuestionComponent<
                 + isIsCorrect() + "'" + ", invalid='" + isInvalid() + "'" + "}";
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof AnswerOption answerOption)) {
+            return false;
+        }
+        if (id == null || answerOption.id == null) {
+            return false;
+        }
+        return Objects.equals(id, answerOption.id) && Objects.equals(text, answerOption.text) && Objects.equals(hint, answerOption.hint)
+                && Objects.equals(explanation, answerOption.explanation) && Objects.equals(isCorrect, answerOption.isCorrect) && Objects.equals(invalid, answerOption.invalid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, text, hint, explanation, isCorrect, invalid);
+    }
+
+    /**
+     * Compares answer options after student/exam projections hide solution fields.
+     *
+     * @param answerOption answer option to compare with this option
+     * @return true when both options represent the same visible student/exam option
+     */
+    public boolean isSameStudentView(AnswerOption answerOption) {
+        if (this == answerOption) {
+            return true;
+        }
+        if (answerOption == null || id == null || answerOption.id == null) {
+            return false;
+        }
+        if (!Objects.equals(id, answerOption.id) || !Objects.equals(text, answerOption.text) || !Objects.equals(hint, answerOption.hint)
+                || !Objects.equals(invalid, answerOption.invalid)) {
+            return false;
+        }
+        return hasHiddenSolutionFields() || answerOption.hasHiddenSolutionFields()
+                || Objects.equals(explanation, answerOption.explanation) && Objects.equals(isCorrect, answerOption.isCorrect);
+    }
+
+    private boolean hasHiddenSolutionFields() {
+        return isCorrect == null && explanation == null;
+    }
 }

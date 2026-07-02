@@ -641,8 +641,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(1), null, QuizMode.SYNCHRONIZED);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
-        mc.getAnswerOptions().removeFirst();
-        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
+        mc.removeAnswerOption(mc.getAnswerOptions().getFirst());
+        mc.addAnswerOption(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
 
         QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.FORBIDDEN);
         assertThat(updatedQuizExercise).isNull();
@@ -932,15 +932,14 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         // remove wrong answer option and reevaluate
         var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
-        multipleChoiceQuestion.getAnswerOptions().remove(1);
+        multipleChoiceQuestion.removeAnswerOption(multipleChoiceQuestion.getAnswerOptions().get(1));
 
         reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), OK);
 
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
 
-        var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().getFirst();
-        assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
+        assertRemovedMultipleChoiceOptionIsTombstoned(quizExerciseWithReevaluatedStatistics);
 
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
 
@@ -1033,10 +1032,12 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         // remove wrong answer option and reevaluate
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().getFirst();
-        mc.getAnswerOptions().remove(1);
+        mc.removeAnswerOption(mc.getAnswerOptions().get(1));
 
         reevalQuizExerciseWithFiles(quizExerciseWithReevaluatedStatistics, quizExercise.getId(), List.of(), OK);
         quizExerciseWithReevaluatedStatistics = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+
+        assertRemovedMultipleChoiceOptionIsTombstoned(quizExerciseWithReevaluatedStatistics);
 
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
@@ -2225,7 +2226,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         question.getAnswerOptions().getFirst().setExplanation("0".repeat(validityThreshold + 1));
 
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.INTERNAL_SERVER_ERROR, true);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
     }
 
     @Test
@@ -2484,9 +2485,11 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     private void updateMultipleChoice(QuizExercise quizExercise) {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
-        mc.getAnswerOptions().removeFirst();
-        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+        mc.removeAnswerOption(mc.getAnswerOptions().getFirst());
+        AnswerOption answerOptionC = mc.addAnswerOption(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
+        AnswerOption answerOptionD = mc.addAnswerOption(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+        answerOptionC.setId(null);
+        answerOptionD.setId(null);
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         DropLocation removedDropLocation = dnd.getDropLocations().removeFirst();
@@ -2508,8 +2511,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
 
         question.setScoringType(ScoringType.ALL_OR_NOTHING);
-        question.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
-        question.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        question.addAnswerOption(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        question.addAnswerOption(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
         question.setExplanation("Explanation");
         question.copyQuestionId();
 
@@ -2580,6 +2583,20 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
                 }
             }
         }
+    }
+
+    private static void assertRemovedMultipleChoiceOptionIsTombstoned(QuizExercise quizExercise) {
+        var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
+
+        assertThat(multipleChoiceQuestion.getAnswerOptions()).hasSize(2);
+        assertThat(multipleChoiceQuestion.getAnswerOptions()).filteredOn(AnswerOption::isInvalid).singleElement().satisfies(tombstone -> {
+            assertThat(tombstone.getText()).isEqualTo("B");
+            assertThat(tombstone.isIsCorrect()).isFalse();
+        });
+        assertThat(multipleChoiceQuestion.getAnswerOptions()).filteredOn(option -> !option.isInvalid()).singleElement().satisfies(activeOption -> {
+            assertThat(activeOption.getText()).isEqualTo("A");
+            assertThat(activeOption.isIsCorrect()).isTrue();
+        });
     }
 
     private void assertQuizPointStatisticsPointCounters(QuizExercise quizExercise, Map<Double, PointCounter> expectedPointCounters) {

@@ -365,52 +365,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     }
 
     /**
-     * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, 'question.points', adding Questions and Answers)
-     *
-     * @param originalQuizExercise the original QuizExercise object, which will be compared with this quizExercise
-     */
-    public void undoUnallowedChanges(QuizExercise originalQuizExercise) {
-
-        // reset unchangeable attributes: ( dueDate, releaseDate, question.points)
-        this.setDueDate(originalQuizExercise.getDueDate());
-        this.setReleaseDate(originalQuizExercise.getReleaseDate());
-        this.setStartDate(originalQuizExercise.getStartDate());
-
-        // cannot update batches
-        this.setQuizBatches(originalQuizExercise.getQuizBatches());
-
-        // remove added Questions, which are not allowed to be added
-        Set<QuizQuestion> addedQuizQuestions = new HashSet<>();
-
-        // check every question
-        for (QuizQuestion quizQuestion : quizQuestions) {
-            // check if the quizQuestion were already in the originalQuizExercise -> if not it's an added quizQuestion
-            if (originalQuizExercise.getQuizQuestions().contains(quizQuestion)) {
-                // find original unchanged quizQuestion
-                QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
-                // reset score (not allowed changing)
-                quizQuestion.setPoints(originalQuizQuestion.getPoints());
-                // correct invalid = null to invalid = false
-                if (quizQuestion.isInvalid() == null) {
-                    quizQuestion.setInvalid(false);
-                }
-                // reset invalid if the quizQuestion is already invalid
-                quizQuestion.setInvalid(quizQuestion.isInvalid() || (originalQuizQuestion.isInvalid() != null && originalQuizQuestion.isInvalid()));
-
-                // undo all not allowed changes in the answers of the QuizQuestion
-                quizQuestion.undoUnallowedChanges(originalQuizQuestion);
-
-            }
-            else {
-                // quizQuestion is added (not allowed), mark quizQuestion for remove
-                addedQuizQuestions.add(quizQuestion);
-            }
-        }
-        // remove all added quizQuestions
-        quizQuestions.removeAll(addedQuizQuestions);
-    }
-
-    /**
      * check if an update of the Results and Statistics is necessary after the re-evaluation of this quiz
      *
      * @param originalQuizExercise the original QuizExercise object, which will be compared with this quizExercise

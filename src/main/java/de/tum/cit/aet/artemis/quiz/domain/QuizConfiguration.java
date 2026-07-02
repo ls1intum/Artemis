@@ -50,10 +50,10 @@ public interface QuizConfiguration {
                 MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
                 // reconnect answerCounters (statistic is null on transient questions before initializeStatistic())
                 if (mcStatistic != null) {
-                    setQuizQuestionStatistics(mcStatistic.getAnswerCounters(), mcQuestion, mcStatistic);
+                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
+                        answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
+                    }
                 }
-                // reconnect answerOptions
-                setQuizQuestions(mcQuestion.getAnswerOptions(), mcQuestion);
             }
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();

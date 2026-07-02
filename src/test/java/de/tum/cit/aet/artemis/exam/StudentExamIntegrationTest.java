@@ -1573,7 +1573,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer answer) {
                 assertThat(answer.getSelectedOptions()).isNotNull().isNotEmpty();
                 assertThat(answer.getSelectedOptions().iterator().next()).isNotNull();
-                assertThat(answer.getSelectedOptions().iterator().next()).isEqualTo(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions().get(mcSelectedOptionIndex));
+                assertThat(answer.getSelectedOptions().iterator().next().isSameStudentView(((MultipleChoiceQuestion) quizQuestion).getAnswerOptions().get(mcSelectedOptionIndex)))
+                        .isTrue();
             }
             else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer answer) {
                 assertThat(answer.getSubmittedTexts()).isNotNull().isNotEmpty();

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
+import static de.tum.cit.aet.artemis.exam.service.StudentExamSubmissionContentComparator.isContentEqualTo;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -20,7 +21,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -66,14 +66,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
-import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
@@ -114,6 +112,8 @@ public class StudentExamService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final QuizExerciseRepository quizExerciseRepository;
+
     private final SubmittedAnswerRepository submittedAnswerRepository;
 
     private final Optional<TextSubmissionApi> textSubmissionApi;
@@ -147,11 +147,12 @@ public class StudentExamService {
             SubmissionVersionService submissionVersionService, SubmissionService submissionService, StudentParticipationRepository studentParticipationRepository,
             ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingTriggerService programmingTriggerService,
             ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ExamService examService) {
+            ExamService examService, QuizExerciseRepository quizExerciseRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionApi = modelingSubmissionApi;
@@ -190,6 +191,9 @@ public class StudentExamService {
         try {
             // in case there were last second changes, that have not been submitted yet.
             saveSubmissions(studentExamFromClient, currentUser);
+        }
+        catch (BadRequestAlertException e) {
+            throw e;
         }
         catch (Exception e) {
             log.error("saveSubmissions threw an exception", e);
@@ -310,6 +314,9 @@ public class StudentExamService {
             try {
                 saveSubmission(currentUser, existingRelevantParticipations, exercise);
             }
+            catch (BadRequestAlertException e) {
+                throw e;
+            }
             catch (Exception e) {
                 log.error("saveSubmission threw an exception", e);
             }
@@ -343,7 +350,7 @@ public class StudentExamService {
         }
 
         // check that the current user owns the participation
-        if (!studentParticipationFromClient.isOwnedBy(currentUser) || !existingParticipationInDatabase.isOwnedBy(currentUser)) {
+        if (!isParticipationFromClientOwnedByCurrentUser(studentParticipationFromClient, currentUser) || !existingParticipationInDatabase.isOwnedBy(currentUser)) {
             throw new AccessForbiddenException("User " + currentUser.getLogin() + " is not allowed to access the participation " + existingParticipationInDatabase.getId());
         }
         studentParticipationFromClient.setExercise(exercise);
@@ -370,6 +377,32 @@ public class StudentExamService {
             default -> {
             }
         }
+    }
+
+    /**
+     * Checks the participant identity contained in the client payload.
+     * <p>
+     * Quiz responses expose participants as ID-only DTOs, so the deserialized user usually has no login.
+     * {@link StudentParticipation#isOwnedBy(User)} compares logins and therefore cannot validate this reduced client representation.
+     */
+    private static boolean isParticipationFromClientOwnedByCurrentUser(StudentParticipation participationFromClient, User currentUser) {
+        var studentFromClient = participationFromClient.getStudent().orElse(null);
+        if (studentFromClient != null) {
+            return hasSameUserIdentity(studentFromClient, currentUser);
+        }
+
+        var teamFromClient = participationFromClient.getTeam().orElse(null);
+        if (teamFromClient != null) {
+            return teamFromClient.getStudents().stream().anyMatch(student -> hasSameUserIdentity(student, currentUser));
+        }
+        return false;
+    }
+
+    private static boolean hasSameUserIdentity(User userFromClient, User currentUser) {
+        if (userFromClient.getId() != null) {
+            return Objects.equals(userFromClient.getId(), currentUser.getId());
+        }
+        return Objects.equals(userFromClient.getLogin(), currentUser.getLogin());
     }
 
     private void saveSubmissionModelingExercise(User currentUser, StudentParticipation existingParticipationInDatabase, Submission submissionFromClient) {
@@ -412,155 +445,57 @@ public class StudentExamService {
         QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
         QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
 
+        // Replace detached client question shells before saving; QuizQuestion is versioned and Hibernate rejects null-version detached references.
+        Map<Long, QuizQuestion> questionsById = getQuizQuestionsById(existingSubmissionInDatabase);
+        if (!containsAllSubmittedAnswerQuestionReferences(quizSubmissionFromClient, questionsById)) {
+            QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(existingParticipationInDatabase.getExercise().getId());
+            questionsById = getQuizQuestionsById(quizExercise);
+        }
+        replaceDetachedQuizQuestionReferencesById(quizSubmissionFromClient, questionsById);
+
         if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
             quizSubmissionRepository.save(quizSubmissionFromClient);
             saveSubmissionVersion(currentUser, submissionFromClient);
         }
     }
 
-    /**
-     * Returns {@code true} if the drag and drop answer submitted answer of a quiz exercise are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a drag and drop submitted answer
-     * @param answer2 a drag and drop submitted answer to be compared with {@code answer1} for equality
-     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(DragAndDropSubmittedAnswer answer1, DragAndDropSubmittedAnswer answer2) {
-        // we use a record with dragItemId and dropLocationId and use streams to create those records for both submitted answers and compare them using sets
-        Set<DnDMapping> mappings1 = answer1.toDnDMapping();
-        Set<DnDMapping> mappings2 = answer2.toDnDMapping();
-        return Objects.equals(mappings1, mappings2);
+    private Map<Long, QuizQuestion> getQuizQuestionsById(QuizExercise quizExercise) {
+        return quizExercise.getQuizQuestions().stream().filter(question -> question.getId() != null)
+                .collect(Collectors.toMap(QuizQuestion::getId, question -> question, (first, ignored) -> first));
     }
 
-    /**
-     * Returns {@code true} if the multiple choice answer submitted answer of a quiz exercise are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a multiple choice submitted answer
-     * @param answer2 a multiple choice submitted answer to be compared with {@code answer1} for equality
-     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(MultipleChoiceSubmittedAnswer answer1, MultipleChoiceSubmittedAnswer answer2) {
-        // we compare if all selected options are the same by comparing the selection option id sets, e.g. (1,3,5) vs. (2,4,5)
-        Set<Long> selections1 = answer1.toSelectedIds();
-        Set<Long> selections2 = answer2.toSelectedIds();
-        return Objects.equals(selections1, selections2);
+    private Map<Long, QuizQuestion> getQuizQuestionsById(QuizSubmission quizSubmission) {
+        if (quizSubmission == null) {
+            return Map.of();
+        }
+        return quizSubmission.getSubmittedAnswers().stream().map(SubmittedAnswer::getQuizQuestion).filter(Objects::nonNull).filter(question -> question.getId() != null)
+                .collect(Collectors.toMap(QuizQuestion::getId, question -> question, (first, ignored) -> first));
     }
 
-    /**
-     * Returns {@code true} if the short answer submitted answer of a quiz exercise are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a short answer submitted answer
-     * @param answer2 a short answer submitted answer to be compared with {@code answer1} for equality
-     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(ShortAnswerSubmittedAnswer answer1, ShortAnswerSubmittedAnswer answer2) {
-        // we use a record with spotId and spotText and use streams to create those records for both submitted answers and compare them using sets
-        Set<SAMapping> mappings1 = answer1.toSAMappings();
-        Set<SAMapping> mappings2 = answer2.toSAMappings();
-        return Objects.equals(mappings1, mappings2);
-    }
-
-    /**
-     * Returns {@code true} if the quiz submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param submission1 a quiz submission
-     * @param submission2 a quiz submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
-        if (submission1 == null && submission2 == null) {
-            return true;
-        }
-        else if (submission1 == null || submission2 == null) {
-            return false;
-        }
-
-        var answers1 = submission1.getSubmittedAnswers();
-        var answers2 = submission2.getSubmittedAnswers();
-        if (answers1.size() != answers2.size()) {
-            return false;
-        }
-
-        for (var answer1 : answers1) {
-            for (var answer2 : answers2) {
-                QuizQuestion quizQuestion1 = answer1.getQuizQuestion();
-                QuizQuestion quizQuestion2 = answer2.getQuizQuestion();
-
-                // we should still be able to compare even if the quizQuestion or the quizQuestion id is null
-                if (quizQuestion1 == null || quizQuestion1.getId() == null || quizQuestion2 == null || quizQuestion2.getId() == null
-                        || quizQuestion1.getId().equals(quizQuestion2.getId())) {
-                    if (!isContentEqualTo(answer1, answer2)) {
-                        return false;
-                    }
-                }
+    private boolean containsAllSubmittedAnswerQuestionReferences(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
+        for (SubmittedAnswer submittedAnswer : submissionFromClient.getSubmittedAnswers()) {
+            QuizQuestion question = submittedAnswer.getQuizQuestion();
+            if (question == null || question.getId() == null || !questionsById.containsKey(question.getId())) {
+                return false;
             }
         }
-        // we did not find any differences
         return true;
     }
 
-    /**
-     * Returns {@code true} if the quiz submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param answer1 a quiz submission
-     * @param answer2 a quiz submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
-     * @throws RuntimeException if the answer types are not supported
-     */
-    public static boolean isContentEqualTo(SubmittedAnswer answer1, SubmittedAnswer answer2) {
-        return switch (answer1) {
-            case DragAndDropSubmittedAnswer dndSubmittedAnswer1 when answer2 instanceof DragAndDropSubmittedAnswer dndSubmittedAnswer2 ->
-                isContentEqualTo(dndSubmittedAnswer1, dndSubmittedAnswer2);
-            case MultipleChoiceSubmittedAnswer mcSubmittedAnswer1 when answer2 instanceof MultipleChoiceSubmittedAnswer mcSubmittedAnswer2 ->
-                isContentEqualTo(mcSubmittedAnswer1, mcSubmittedAnswer2);
-            case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer1 when answer2 instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer2 ->
-                isContentEqualTo(shortAnswerSubmittedAnswer1, shortAnswerSubmittedAnswer2);
-            default -> {
-                log.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
-                yield false;
+    private void replaceDetachedQuizQuestionReferencesById(QuizSubmission submissionFromClient, Map<Long, QuizQuestion> questionsById) {
+        for (SubmittedAnswer submittedAnswer : submissionFromClient.getSubmittedAnswers()) {
+            QuizQuestion question = submittedAnswer.getQuizQuestion();
+            if (question == null || question.getId() == null) {
+                throw new BadRequestAlertException("Submitted answer is missing a quiz question reference", "StudentExam", "invalidQuizQuestionReference");
             }
-        };
-    }
 
-    /**
-     * Returns {@code true} if the text submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param submission1 a text submission
-     * @param submission2 a text submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the text submissions are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
-        if (submission1 == null && submission2 == null) {
-            return true;
+            // Keep the submitted answer data from the client, but anchor its question reference in the server graph.
+            QuizQuestion managedQuestion = questionsById.get(question.getId());
+            if (managedQuestion == null) {
+                throw new BadRequestAlertException("Submitted answer references an unknown quiz question " + question.getId(), "StudentExam", "invalidQuizQuestionReference");
+            }
+            submittedAnswer.setQuizQuestion(managedQuestion);
         }
-        else if (submission1 == null || submission2 == null) {
-            return false;
-        }
-        return Objects.equals(submission1.getText(), submission2.getText());
-    }
-
-    /**
-     * Returns {@code true} if the modeling submissions are equal to each other
-     * and {@code false} otherwise.
-     *
-     * @param submission1 a modeling submission
-     * @param submission2 a modeling submission to be compared with {@code submission1} for equality
-     * @return {@code true} if the modeling submissions are equal to each other and {@code false} otherwise
-     */
-    public static boolean isContentEqualTo(@Nullable ModelingSubmission submission1, @Nullable ModelingSubmission submission2) {
-        if (submission1 == null && submission2 == null) {
-            return true;
-        }
-        else if (submission1 == null || submission2 == null) {
-            return false;
-        }
-        return Objects.equals(submission1.getModel(), submission2.getModel()) && Objects.equals(submission1.getExplanationText(), submission2.getExplanationText());
     }
 
     private void saveSubmissionVersion(User currentUser, Submission submissionFromClient) {

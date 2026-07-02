@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -24,12 +25,25 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamForResponseDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.dto.AnswerOptionWithoutSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForStudentExamDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithoutSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionBeforeEvaluationDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerBeforeEvaluationDTO;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -45,6 +59,9 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -114,6 +131,88 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         examResult = examRepository.findByIdWithExerciseGroupsElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
         assertThat(examResult.getExerciseGroups().getFirst()).isEqualTo(exerciseGroup1);
+    }
+
+    @Test
+    void studentExamResponseDTOFiltersQuizSolutionsWithoutMutatingLoadedQuestion() {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(5), QuizMode.SYNCHRONIZED, exam1.getCourse());
+        MultipleChoiceQuestion sourceQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
+        quizExercise.addQuestion(sourceQuestion);
+        List<Boolean> expectedCorrectness = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::isIsCorrect).toList();
+        List<String> expectedExplanations = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::getExplanation).toList();
+        quizExercise = quizExerciseRepository.saveAndFlush(quizExercise);
+
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam1);
+        studentExam.setExercises(new ArrayList<>(List.of(quizExercise)));
+
+        examService.loadQuizExercisesForStudentExam(studentExam);
+        quizExerciseRepository.flush();
+
+        QuizExercise loadedQuizExercise = (QuizExercise) studentExam.getExercises().getFirst();
+        MultipleChoiceQuestion loadedQuestion = (MultipleChoiceQuestion) loadedQuizExercise.getQuizQuestions().getFirst();
+        List<Long> expectedOptionIds = loadedQuestion.getAnswerOptions().stream().map(AnswerOption::getId).toList();
+        assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactlyElementsOf(expectedCorrectness);
+        assertThat(loadedQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactlyElementsOf(expectedExplanations);
+
+        StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.forSummary(studentExam, false);
+        QuizExerciseForStudentExamDTO quizExerciseDTO = (QuizExerciseForStudentExamDTO) responseDTO.exercises().getFirst();
+        QuizQuestionWithoutSolutionDTO questionDTO = (QuizQuestionWithoutSolutionDTO) quizExerciseDTO.quizQuestions().getFirst();
+        assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id)
+                .containsExactlyElementsOf(expectedOptionIds);
+
+        QuizExercise persistedQuizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
+        MultipleChoiceQuestion persistedQuestion = (MultipleChoiceQuestion) persistedQuizExercise.getQuizQuestions().getFirst();
+        assertThat(persistedQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactlyElementsOf(expectedCorrectness);
+        assertThat(persistedQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactlyElementsOf(expectedExplanations);
+    }
+
+    @Test
+    void filterParticipationForExerciseLeavesQuizSubmissionQuestionsForResponseDTOFiltering() {
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(5), QuizMode.SYNCHRONIZED, exam1.getCourse());
+        quizExercise.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
+        quizExercise.setExerciseGroup(new ExerciseGroup());
+        quizExercise.getExerciseGroup().setExam(exam1);
+        MultipleChoiceQuestion sourceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
+        List<Long> expectedOptionIds = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::getId).toList();
+        List<Boolean> expectedCorrectness = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::isIsCorrect).toList();
+        List<String> expectedExplanations = sourceQuestion.getAnswerOptions().stream().map(AnswerOption::getExplanation).toList();
+        Long expectedSelectedOptionId = sourceQuestion.getAnswerOptions().getFirst().getId();
+
+        MultipleChoiceSubmittedAnswer submittedAnswer = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(sourceQuestion);
+        submittedAnswer.addSelectedOptions(sourceQuestion.getAnswerOptions().getFirst());
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.addSubmittedAnswers(submittedAnswer);
+        quizSubmission.setScoreInPoints(1.0);
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(quizExercise);
+        participation.setSubmissions(Set.of(quizSubmission));
+        quizSubmission.setParticipation(participation);
+
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam1);
+        studentExam.setExercises(List.of(quizExercise));
+
+        examService.filterParticipationForExercise(studentExam, quizExercise, List.of(participation), false);
+
+        assertThat(submittedAnswer.getQuizQuestion()).isSameAs(sourceQuestion);
+        assertThat(quizSubmission.getScoreInPoints()).isEqualTo(1.0);
+        assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::isIsCorrect).containsExactlyElementsOf(expectedCorrectness);
+        assertThat(sourceQuestion.getAnswerOptions()).extracting(AnswerOption::getExplanation).containsExactlyElementsOf(expectedExplanations);
+
+        StudentExamForResponseDTO responseDTO = StudentExamForResponseDTO.forSummary(studentExam, false);
+        QuizExerciseForStudentExamDTO quizExerciseDTO = (QuizExerciseForStudentExamDTO) responseDTO.exercises().getFirst();
+        QuizQuestionWithoutSolutionDTO questionDTO = (QuizQuestionWithoutSolutionDTO) quizExerciseDTO.quizQuestions().getFirst();
+        assertThat(questionDTO.multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id)
+                .containsExactlyElementsOf(expectedOptionIds);
+
+        QuizSubmissionBeforeEvaluationDTO submissionDTO = (QuizSubmissionBeforeEvaluationDTO) quizExerciseDTO.studentParticipations().iterator().next().submissions().iterator()
+                .next();
+        SubmittedAnswerBeforeEvaluationDTO submittedAnswerDTO = submissionDTO.submittedAnswers().iterator().next();
+        assertThat(submittedAnswerDTO.quizQuestion().multipleChoiceQuestionWithoutSolutionDTO().answerOptions()).extracting(AnswerOptionWithoutSolutionDTO::id)
+                .containsExactlyElementsOf(expectedOptionIds);
+        assertThat(submittedAnswerDTO.multipleChoiceSubmittedAnswer().selectedOptions()).extracting(AnswerOptionWithoutSolutionDTO::id).containsExactly(expectedSelectedOptionId);
     }
 
     @Test

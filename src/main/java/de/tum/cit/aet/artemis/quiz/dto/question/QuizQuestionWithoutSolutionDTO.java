@@ -31,7 +31,7 @@ public record QuizQuestionWithoutSolutionDTO(@JsonUnwrapped QuizQuestionBaseDTO 
         switch (quizQuestion) {
             case MultipleChoiceQuestion multipleChoiceQuestion -> multipleChoiceQuestionDTO = MultipleChoiceQuestionWithoutSolutionDTO.of(multipleChoiceQuestion);
             case DragAndDropQuestion dragAndDropQuestion -> dragAndDropQuestionDTO = DragAndDropQuestionWithoutSolutionDTO.of(dragAndDropQuestion);
-            case ShortAnswerQuestion shortAnswerQuestion -> shortAnswerQuestionDTO = ShortAnswerQuestionWithoutMappingDTO.of(shortAnswerQuestion);
+            case ShortAnswerQuestion shortAnswerQuestion -> shortAnswerQuestionDTO = ShortAnswerQuestionWithoutMappingDTO.withoutSolution(shortAnswerQuestion);
             default -> {
                 // TODO: Potentially figure out what to do here
             }
