@@ -97,6 +97,8 @@ public abstract class HyperionCodeGenerationService {
 
     private static final int MAX_SELECTED_FEEDBACK_THREADS_LENGTH = 12000;
 
+    private static final int MAX_TEST_CONTEXT_LENGTH = 16000;
+
     /**
      * Regex that matches control characters except carriage return, line feed, and tab.
      * Used to sanitize consistency issue text before prompt rendering.
@@ -368,7 +370,25 @@ public abstract class HyperionCodeGenerationService {
             variables.put("targetBuildOutcome", targetBuildOutcome);
         }
         variables.put(SELECTED_FEEDBACK_THREADS_TEMPLATE_VARIABLE, selectedFeedbackThreads);
+        variables.put("testContext", capLength(testContext(exercise), MAX_TEST_CONTEXT_LENGTH));
         return variables;
+    }
+
+    /**
+     * The test sources the generated code must satisfy, used to match the exact tested API and behaviour. Defaults to a
+     * "no tests" marker; the SOLUTION strategy overrides it to read the test repository. TEMPLATE keeps the default so it
+     * stays an incomplete starting point rather than pre-satisfying the tests, and TESTS keeps it because it generates
+     * the tests themselves.
+     */
+    protected String testContext(ProgrammingExercise exercise) {
+        return "No tests available yet.";
+    }
+
+    private static String capLength(String value, int maxLength) {
+        if (value == null) {
+            return "";
+        }
+        return value.length() > maxLength ? value.substring(0, maxLength) + "\n... (truncated)" : value;
     }
 
     private String targetBuildOutcomeInstruction() {

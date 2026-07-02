@@ -12,7 +12,9 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -26,8 +28,20 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 @Conditional(HyperionEnabled.class)
 public class HyperionSolutionRepositoryService extends HyperionCodeGenerationService {
 
-    public HyperionSolutionRepositoryService(ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
+    private final GitService gitService;
+
+    private final HyperionProgrammingExerciseContextRendererService contextRenderer;
+
+    public HyperionSolutionRepositoryService(ChatClient chatClient, HyperionPromptTemplateService templates, GitService gitService,
+            HyperionProgrammingExerciseContextRendererService contextRenderer, LLMTokenUsageService llmTokenUsageService) {
         super(chatClient, templates, llmTokenUsageService);
+        this.gitService = gitService;
+        this.contextRenderer = contextRenderer;
+    }
+
+    @Override
+    protected String testContext(ProgrammingExercise exercise) {
+        return contextRenderer.getExistingTestCode(exercise, gitService);
     }
 
     @Override

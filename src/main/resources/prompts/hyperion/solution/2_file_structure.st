@@ -10,6 +10,9 @@ Based on the following solution plan and programming language, determine the nec
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Tests the solution must satisfy (the definitive API contract — reproduce every class, constructor, method, and field these tests reference with the exact name, parameter types, return type, and visibility; do not generate or modify these test files):**
+{{testContext}}
+
 Existing `/src/` files that are no longer needed after this regenerated solution structure should be marked as obsolete. Do not mark files outside `/src/` for deletion, except `.gitkeep` placeholder files may be marked obsolete when they are explicitly obsolete or selected feedback requests their removal. Removing a `.gitkeep` placeholder does not imply deleting sibling source files such as `src/Main.java`.
 
 **Build Environment Context:**

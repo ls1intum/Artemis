@@ -13,6 +13,9 @@ Your task is to implement the core logic for each method based on the solution p
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+**Tests the solution must pass (the definitive API and behaviour contract — implement exactly the classes, constructors, methods, fields, names, parameter/return types, and visibility these tests reference so every assertion passes; do not generate or modify these test files):**
+{{testContext}}
+
 If an existing source file under `/src/` is obsolete after this regenerated solution, include its path in `deletedFiles`. Do not include paths outside `/src/`, build files, configuration files, documentation, or hidden files, except `.gitkeep` placeholder files may be included when they are explicitly obsolete or selected feedback requests their removal. Removing a `.gitkeep` placeholder does not imply deleting sibling source files such as `src/Main.java`.
 
 **Build Environment Context:**

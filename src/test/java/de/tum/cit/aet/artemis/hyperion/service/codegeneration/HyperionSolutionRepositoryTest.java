@@ -30,7 +30,9 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -44,6 +46,12 @@ class HyperionSolutionRepositoryServiceTest {
 
     @Mock
     private HyperionPromptTemplateService templates;
+
+    @Mock
+    private GitService gitService;
+
+    @Mock
+    private HyperionProgrammingExerciseContextRendererService contextRenderer;
 
     @Mock
     private LLMTokenUsageService llmTokenUsageService;
@@ -61,7 +69,7 @@ class HyperionSolutionRepositoryServiceTest {
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
-        this.solutionRepository = new HyperionSolutionRepositoryService(chatClient, templates, llmTokenUsageService);
+        this.solutionRepository = new HyperionSolutionRepositoryService(chatClient, templates, gitService, contextRenderer, llmTokenUsageService);
 
         this.user = new User();
         user.setLogin("testuser");
