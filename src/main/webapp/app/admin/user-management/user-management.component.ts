@@ -581,10 +581,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.transition();
     }
 
-    /**
-     * Handles a PrimeNG table sort event by mapping the sort field/order onto the predicate/ascending state and navigating.
-     * Server-side sorting is triggered via the resulting route transition.
-     */
+    /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
     onTableSort(event: SortEvent): void {
         if (!event.field) {
             return;

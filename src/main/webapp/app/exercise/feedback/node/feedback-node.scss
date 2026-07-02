@@ -1,9 +1,8 @@
 /*
- * Background color of the collapsible feedback-group header. The variant class is built dynamically in the
- * template from runtime data (`feedback-group--{{ feedbackItemGroup().color }}`), so it cannot be a static
- * template utility. The colors are the Artemis brand severity tokens (`--success` / `--info` / `--warning`
- * / `--danger`), which the `tailwindcss-primeui` plugin does NOT expose as color utilities (it only binds
- * primary/surface), so there is no faithful Tailwind equivalent — these rules must stay in SCSS.
+ * Background color of the collapsible feedback-group header. The variant class is composed dynamically in
+ * the template from runtime data (`feedback-group--{{ feedbackItemGroup().color }}`), so the color cannot be
+ * expressed as a static Tailwind utility (e.g. `bg-state-success`) on the element — it must be resolved in
+ * SCSS from the runtime-selected variant. Values map to the state tokens (`--success`/`--info`/`--warning`/`--danger`).
  */
 .feedback-group {
     &--success {

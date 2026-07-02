@@ -68,12 +68,10 @@ export class TypeAheadUserSearchFieldComponent {
         );
     };
 
-    /** Called by p-autoComplete on each keystroke; forwards the query into the search pipeline. */
     onComplete(event: AutoCompleteCompleteEvent): void {
         this.query$.next(event.query);
     }
 
-    /** Called by p-autoComplete when a user is picked from the dropdown. */
     onSelectUser(event: AutoCompleteSelectEvent): void {
         this.loginOrName.set(event.value as User);
         this.onChange();
@@ -94,8 +92,4 @@ export class TypeAheadUserSearchFieldComponent {
     }
 
     resultFormatter = (result: User): string => (result.name ?? '<no name>') + ' (' + (result.login ?? '<no login>') + ')';
-
-    inputFormatter(input: User | string): string {
-        return typeof input === 'string' ? input : (input.login ?? '');
-    }
 }

@@ -25,10 +25,11 @@ function walk(dir, ext) {
         .map((p) => resolve(dir, p));
 }
 
-// Bootstrap class tokens in a template, matching what the no-bootstrap-classes ESLint rule checks: static
-// class="...", [class.token] (which naturally skips component inputs like [card]), and the bound [class]/[ngClass]
-// expression forms (`[class]="'btn ' + x"`, `[ngClass]="{ btn: cond }"`) via the rule's shared extractor — so a
-// `migrate:check` "ready to lock" can't disagree with the lint. Approximate by design — a burndown trend.
+// Bootstrap class tokens in a template. Token matching reuses the rule's curated `isBanned`, and the bound
+// [class]/[ngClass]/[*StyleClass] expression forms (`[class]="'btn ' + x"`, `[ngClass]="{ btn: cond }"`) reuse
+// the rule's `bannedClassesInBindingExpression`, so those agree with the lint exactly. The static `class="..."`
+// / `styleClass="..."` and `[class.token]` forms, however, are re-scanned here by our own regexes (not the
+// rule's AST walk), so this is an approximate burndown trend rather than an exact mirror of the lint gate.
 function bootstrapClassesInHtml(text) {
     const found = [];
     const scanList = (value) => {

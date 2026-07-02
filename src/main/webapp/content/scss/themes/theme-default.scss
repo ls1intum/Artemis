@@ -53,12 +53,8 @@ html {
     color: $white;
 }
 
-// Feature toggle cards & course overview cards
+// Course overview cards
 :root {
-    --feature-card-active-bg: #d1e7dd;
-    --feature-card-disabled-bg: #f8d7da;
-    --feature-card-inactive-bg: #e9ecef;
-    --feature-card-heading-color: #212529;
     --overview-card-bg: #ffffff;
     --overview-card-nested-bg: #f1f5f9;
     --overview-card-hover-bg: #e2e8f0;

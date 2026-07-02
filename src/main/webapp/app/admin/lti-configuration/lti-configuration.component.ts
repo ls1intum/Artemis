@@ -172,10 +172,7 @@ export class LtiConfigurationComponent implements OnInit {
         return LTI_URLS.LTI13_LOGIN_REDIRECT_PROXY_PATH; // Needs to match uri in CustomLti13Configurer
     }
 
-    /**
-     * Handles a PrimeNG table sort event by mapping the sort field/order onto the predicate/ascending state and navigating.
-     * Server-side sorting is triggered via the resulting route transition.
-     */
+    /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
     onTableSort(event: SortEvent): void {
         if (!event.field) {
             return;

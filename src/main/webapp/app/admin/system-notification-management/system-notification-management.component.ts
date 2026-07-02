@@ -230,10 +230,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
         this.loadPage((event.page ?? 0) + 1);
     }
 
-    /**
-     * Handles a PrimeNG table sort event by mapping the sort field/order onto the predicate/reverse state and navigating.
-     * Server-side sorting is triggered via the resulting route transition.
-     */
+    /** Applies the sort event; server-side sorting is triggered via the resulting route transition. */
     onTableSort(event: SortEvent): void {
         if (!event.field) {
             return;

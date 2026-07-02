@@ -188,9 +188,7 @@ export class FinishedBuildsFilterModalComponent implements OnInit {
     }
 
     /**
-     * Called by p-autoComplete on each keystroke / focus to populate the build agent address suggestions.
-     * case-insensitive substring match, capped at 10 results,
-     * and showing all addresses when the query is empty.
+     * Called by p-autoComplete on each keystroke/focus to populate the build agent address suggestions.
      * @param event the autocomplete complete event carrying the current query
      */
     searchBuildAgentAddresses(event: AutoCompleteCompleteEvent): void {

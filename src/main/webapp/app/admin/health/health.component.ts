@@ -61,7 +61,7 @@ export class HealthComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.refresh();
-        // listen to connect / disconnect events (mirrors JhiConnectionStatusComponent)
+        // Track websocket connectivity so the health view can surface a lost broker connection
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
             this.websocketConnected.set(status.connected);
         });
