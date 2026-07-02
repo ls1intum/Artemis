@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -16,8 +18,9 @@ public record AttachmentVideoUnitDTO(Long id, String name, ZonedDateTime release
         AttachmentUpdateIntent attachmentUpdateIntent) implements LectureUnitDTO {
 
     public static AttachmentVideoUnitDTO from(AttachmentVideoUnit unit, AttachmentUpdateIntent intent) {
-        Set<CompetencyLinkDTO> competencyLinks = unit.getCompetencyLinks() == null ? Set.of()
-                : unit.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
+        var links = unit.getCompetencyLinks();
+        Set<CompetencyLinkDTO> competencyLinks = links == null || !Hibernate.isInitialized(links) ? null
+                : links.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
         return new AttachmentVideoUnitDTO(unit.getId(), unit.getName(), unit.getReleaseDate(), unit.getDescription(), unit.getVideoSource(), competencyLinks, intent);
     }
 }
