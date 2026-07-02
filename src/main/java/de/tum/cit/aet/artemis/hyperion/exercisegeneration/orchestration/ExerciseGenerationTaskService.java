@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.exercisegeneration.orchestration;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.GenerationPersistenceService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.GenerationRecoveryService;
@@ -89,6 +91,12 @@ public class ExerciseGenerationTaskService {
         String topic = TOPIC_PREFIX + jobId;
         GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> jobService.recordEvent(exerciseId, jobId, progressEvent, terminal),
                 progressEvent -> websocket.send(login, topic, progressEvent));
+        // Whole-file snapshots are streamed to the owner on the SAME per-user topic as the progress events (told apart by their FILE_SNAPSHOT type) and retained latest-per-file for
+        // reconnect — kept out of the replay transcript so the write stream cannot bloat it.
+        Consumer<HyperionFileSnapshotDTO> fileSnapshotSink = snapshot -> {
+            jobService.recordSnapshot(exerciseId, jobId, snapshot);
+            websocket.send(login, topic, snapshot);
+        };
         // The event carries an exercise loaded on the request thread; on this async executor thread its lazy associations (buildConfig, template/solution participations) are
         // detached, so touching them (e.g. buildConfig.getBranch() during seeding) would throw LazyInitializationException. Re-load it with exactly those associations eagerly
         // initialized — and fail CLOSED with a clear terminal error if it has since been deleted, rather than falling back to the detached entity and re-triggering that exception.
@@ -100,7 +108,7 @@ public class ExerciseGenerationTaskService {
             return;
         }
         emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
-        try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), () -> jobService.isCancelled(jobId), emitter::progress)) {
+        try (GenerationOutcome outcome = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), () -> jobService.isCancelled(jobId), emitter::progress, fileSnapshotSink)) {
             switch (outcome.loopResult().status()) {
                 case CANCELLED -> emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation was cancelled. Nothing was changed."));
                 case ERROR -> emitter.milestone(

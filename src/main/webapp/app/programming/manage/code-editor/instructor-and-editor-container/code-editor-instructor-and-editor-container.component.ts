@@ -71,6 +71,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { HyperionGenerationActivityComponent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
 
 const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
     [ConsistencyIssue.SeverityEnum.High]: 0,
@@ -201,6 +202,7 @@ interface ConsistencyIssueNavigationIssue {
         CheckboxModule,
         MessageModule,
         PopoverModule,
+        HyperionGenerationActivityComponent,
     ],
 })
 export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
@@ -431,6 +433,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     protected canGenerateCode(): boolean {
         return this.exercise?.programmingLanguage === ProgrammingLanguage.JAVA;
+    }
+
+    /**
+     * Returns whether the owner-only live "Generation activity" drawer should be shown: Hyperion is enabled, the exercise is loaded, the user is at least an editor, and the
+     * language is supported by agentic generation (Java-only for now). The drawer self-hides further when no run is active/retained.
+     */
+    protected showGenerationActivity(): boolean {
+        return this.hyperionEnabled && !!this.exercise?.id && (this.exercise?.isAtLeastEditor ?? false) && this.canGenerateCode();
     }
 
     /**

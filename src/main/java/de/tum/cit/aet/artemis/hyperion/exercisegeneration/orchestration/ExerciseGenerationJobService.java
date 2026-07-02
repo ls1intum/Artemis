@@ -4,7 +4,10 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,6 +33,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionFileSnapshotDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -51,6 +55,9 @@ public class ExerciseGenerationJobService {
 
     private static final String TRANSCRIPT_MAP_NAME = "hyperion-exercise-generation-transcripts";
 
+    /** The latest whole-file snapshots per run, kept OUT of the replay transcript (latest-per-file only) so a reloading client can rehydrate the live editor preview. */
+    private static final String SNAPSHOT_MAP_NAME = "hyperion-exercise-generation-file-snapshots";
+
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
 
     private static final int JOB_TTL_SECONDS = 7200;
@@ -60,6 +67,9 @@ public class ExerciseGenerationJobService {
 
     /** Cap on retained events per run so a chatty agent cannot grow the distributed map without bound; the oldest events are dropped first. */
     private static final int MAX_RETAINED_EVENTS = 500;
+
+    /** Cap on retained file snapshots per run (latest-per-file), so many distinct files cannot grow the distributed map without bound; the eldest file is dropped first. */
+    private static final int MAX_RETAINED_SNAPSHOT_FILES = 300;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -71,6 +81,8 @@ public class ExerciseGenerationJobService {
     private IMap<String, Boolean> cancellationMap;
 
     private IMap<String, JobTranscript> transcriptMap;
+
+    private IMap<String, JobFileSnapshots> snapshotMap;
 
     // Node-local interrupts held in-process because the hook closes over a live sandbox reference that exists only on the node running the job; other nodes rely on the Hazelcast
     // flag.
@@ -96,6 +108,10 @@ public class ExerciseGenerationJobService {
         MapConfig transcriptMapConfig = hazelcastInstance.getConfig().getMapConfig(TRANSCRIPT_MAP_NAME);
         transcriptMapConfig.setTimeToLiveSeconds(TRANSCRIPT_TTL_SECONDS);
         transcriptMap = hazelcastInstance.getMap(TRANSCRIPT_MAP_NAME);
+        // The snapshots outlive the slot on the same TTL as the transcript so a client reloading as the run finishes can still rehydrate the final preview.
+        MapConfig snapshotMapConfig = hazelcastInstance.getConfig().getMapConfig(SNAPSHOT_MAP_NAME);
+        snapshotMapConfig.setTimeToLiveSeconds(TRANSCRIPT_TTL_SECONDS);
+        snapshotMap = hazelcastInstance.getMap(SNAPSHOT_MAP_NAME);
     }
 
     /**
@@ -126,8 +142,9 @@ public class ExerciseGenerationJobService {
         if (existing != null) {
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
         }
-        // Fresh transcript for this run (overwrites any previous run's retained transcript for this exercise).
+        // Fresh transcript and snapshot store for this run (overwrites any previous run's retained state for this exercise).
         transcriptMap.put(key(exercise.getId()), new JobTranscript(jobId, user.getLogin(), exercise.getId(), new ArrayList<>(), false));
+        snapshotMap.put(key(exercise.getId()), new JobFileSnapshots(jobId, user.getLogin(), new LinkedHashMap<>()));
         eventPublisher.publishEvent(new ExerciseGenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
         return jobId;
     }
@@ -156,6 +173,31 @@ public class ExerciseGenerationJobService {
     }
 
     /**
+     * Records the latest whole-file snapshot for a file written by the running job, keeping only the newest snapshot per path (latest-per-file) and bounding the number of retained
+     * files. Kept out of the replay transcript so a chatty write stream never bloats the transcript; a reloading client rehydrates the editor preview from here instead.
+     *
+     * @param exerciseId the exercise id (the snapshot key)
+     * @param jobId      the job id; the snapshot is dropped if it does not match the retained store (a stale/older run)
+     * @param snapshot   the whole-file snapshot to retain
+     */
+    public void recordSnapshot(long exerciseId, String jobId, HyperionFileSnapshotDTO snapshot) {
+        snapshotMap.computeIfPresent(key(exerciseId), (k, snapshots) -> {
+            if (!snapshots.jobId().equals(jobId)) {
+                return snapshots;
+            }
+            LinkedHashMap<String, HyperionFileSnapshotDTO> byPath = new LinkedHashMap<>(snapshots.snapshotsByPath());
+            // Replacing an existing path keeps its insertion position (latest-per-file); a new path beyond the cap evicts the eldest file so the map stays bounded.
+            if (!byPath.containsKey(snapshot.path()) && byPath.size() >= MAX_RETAINED_SNAPSHOT_FILES) {
+                Iterator<String> iterator = byPath.keySet().iterator();
+                iterator.next();
+                iterator.remove();
+            }
+            byPath.put(snapshot.path(), snapshot);
+            return new JobFileSnapshots(snapshots.jobId(), snapshots.userLogin(), byPath);
+        });
+    }
+
+    /**
      * Returns the current or most-recent run's transcript for the exercise, for reconnection/replay, if it belongs to the requesting user.
      *
      * @param user     the requesting user
@@ -169,7 +211,18 @@ public class ExerciseGenerationJobService {
         }
         JobInfo active = jobMap.get(key(exercise.getId()));
         boolean running = active != null && active.jobId().equals(transcript.jobId()) && !transcript.done();
-        return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), running, transcript.events()));
+        return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), running, transcript.events(), latestSnapshotsFor(exercise.getId(), transcript.jobId())));
+    }
+
+    /**
+     * Returns the latest snapshot per file for the given run, in write order, or an empty list if none are retained or they belong to a different run.
+     */
+    private List<HyperionFileSnapshotDTO> latestSnapshotsFor(long exerciseId, String jobId) {
+        JobFileSnapshots snapshots = snapshotMap.get(key(exerciseId));
+        if (snapshots == null || !snapshots.jobId().equals(jobId)) {
+            return List.of();
+        }
+        return List.copyOf(snapshots.snapshotsByPath().values());
     }
 
     /**
@@ -275,6 +328,20 @@ public class ExerciseGenerationJobService {
      * @param done       whether the run has finished (so a reconnecting client knows whether to keep listening)
      */
     public record JobTranscript(String jobId, String userLogin, long exerciseId, List<ExerciseGenerationEventDTO> events, boolean done) implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+    }
+
+    /**
+     * The retained latest-per-file snapshots of a generation run, for rehydrating the live editor preview on reconnect. Kept separate from {@link JobTranscript} so the write
+     * stream never bloats the replay transcript.
+     *
+     * @param jobId           the job id
+     * @param userLogin       the owner's login (snapshots are private to the instructor who started the run)
+     * @param snapshotsByPath the latest snapshot per path, in write (insertion) order; bounded in size
+     */
+    public record JobFileSnapshots(String jobId, String userLogin, Map<String, HyperionFileSnapshotDTO> snapshotsByPath) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;

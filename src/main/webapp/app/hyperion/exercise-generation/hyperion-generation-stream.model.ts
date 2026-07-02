@@ -1,0 +1,60 @@
+/**
+ * Client-side types for the live agentic exercise-generation stream. Progress events and whole-file snapshots share one per-user websocket topic and are told apart by their
+ * {@link HyperionFileSnapshot.type} discriminator ({@code 'FILE_SNAPSHOT'}), so both flow through a single subscription.
+ */
+
+export type HyperionGenerationEventType = 'STARTED' | 'PROGRESS' | 'DONE' | 'CANCELLED' | 'ERROR';
+
+export type HyperionGenerationCompletionStatus = 'SUCCESS' | 'NEEDS_REVIEW' | 'PARTIAL';
+
+export type HyperionSnapshotRepo = 'solution' | 'template' | 'tests' | 'other';
+
+export type HyperionSnapshotAction = 'create' | 'edit';
+
+/** The structured verification verdict carried on a terminal event, rendered as scannable chips. */
+export interface HyperionGenerationVerdict {
+    accepted: boolean;
+    solutionPassed: boolean;
+    templateFailed: boolean;
+    testCount: number;
+    reasons: string[];
+}
+
+/** A progress or terminal event of a generation run. */
+export interface HyperionGenerationEvent {
+    type: HyperionGenerationEventType;
+    message?: string;
+    completionStatus?: HyperionGenerationCompletionStatus;
+    verdict?: HyperionGenerationVerdict;
+    timestamp?: string;
+}
+
+/** A whole-file snapshot streamed while the agent writes the repositories, for the live editor preview. */
+export interface HyperionFileSnapshot {
+    type: 'FILE_SNAPSHOT';
+    path: string;
+    repo: HyperionSnapshotRepo;
+    action: HyperionSnapshotAction;
+    content: string;
+    sha256: string;
+    bytes: number;
+    truncated: boolean;
+    turn: number;
+    timestamp?: string;
+}
+
+/** Either kind of message delivered on the shared topic. */
+export type HyperionGenerationMessage = HyperionGenerationEvent | HyperionFileSnapshot;
+
+/** Narrows a stream message to a file snapshot. */
+export function isFileSnapshot(message: HyperionGenerationMessage): message is HyperionFileSnapshot {
+    return message.type === 'FILE_SNAPSHOT';
+}
+
+/** The reconnection view returned by the status endpoint so a reloading client can rehydrate and resume the stream. */
+export interface HyperionGenerationStatus {
+    jobId: string;
+    running: boolean;
+    events: HyperionGenerationEvent[];
+    fileSnapshots?: HyperionFileSnapshot[];
+}

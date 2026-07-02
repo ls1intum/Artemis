@@ -581,6 +581,10 @@
             </div>
             <!-- Editable instructions with diff support -->
             <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
+                @if (showGenerationActivity()) {
+                    <!-- Owner-only live "Generation activity" drawer: self-hides unless an agentic generation run is active/recent for this exercise. -->
+                    <jhi-hyperion-generation-activity [exerciseId]="exercise?.id" />
+                }
                 @if (showDiff()) {
                     <!-- Diff review banner -->
                     <p-message severity="info" styleClass="w-100 mb-1" [closable]="false">

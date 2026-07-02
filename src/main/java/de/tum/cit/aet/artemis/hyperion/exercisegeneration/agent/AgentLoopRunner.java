@@ -198,6 +198,10 @@ public class AgentLoopRunner {
                 emit(stepListener, "Cancelled before turn " + turn);
                 return new AgentLoopResult(AgentLoopResult.Status.CANCELLED, turn - 1, lastAssistantText);
             }
+            // Tag any out-of-band events the tools emit this turn (e.g. streamed file snapshots) with the current turn number.
+            if (tools instanceof TurnAware turnAware) {
+                turnAware.onTurn(turn);
+            }
 
             messagesAtLastCall = conversation.size();
             ChatResponse response = callModelWithRetries(prompt, turn, stepListener);

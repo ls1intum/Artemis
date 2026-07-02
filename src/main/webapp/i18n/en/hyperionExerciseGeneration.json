@@ -1,0 +1,32 @@
+{
+    "artemisApp": {
+        "hyperion": {
+            "generationActivity": {
+                "title": "Generation activity",
+                "running": "Generating…",
+                "cancel": "Cancel",
+                "followAgent": "Follow agent",
+                "noFiles": "No files written yet.",
+                "noPreview": "No file selected",
+                "truncated": "This file was truncated for the live preview.",
+                "repo": {
+                    "solution": "Solution",
+                    "template": "Template",
+                    "tests": "Tests",
+                    "other": "Other"
+                },
+                "action": {
+                    "create": "created",
+                    "edit": "edited"
+                },
+                "verdict": {
+                    "accepted": "Accepted",
+                    "rejected": "Rejected",
+                    "solution": "Solution passes",
+                    "template": "Template fails",
+                    "tests": "tests"
+                }
+            }
+        }
+    }
+}

@@ -27,9 +27,11 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionFileSnapshotDTO;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentSystemPromptService;
+import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.FileSnapshotEmittingAgentTools;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.critic.SpecFidelityReport;
@@ -122,6 +124,25 @@ public class ExerciseGenerationOrchestrationService {
      */
     public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
             Consumer<String> progress) {
+        return generate(exercise, user, userPrompt, jobId, mode, cancelled, progress, null);
+    }
+
+    /**
+     * Runs one generation/adaptation session, additionally streaming a whole-file snapshot to {@code fileSnapshotSink} on every successful {@code write_file}/{@code edit_file} so
+     * the triggering instructor's editor can render a live preview of what the agent produces.
+     *
+     * @param exercise         the exercise to generate or adapt (its repositories must already be scaffolded)
+     * @param user             the instructor performing the generation, recorded with the LLM token-usage trace
+     * @param userPrompt       the instruction for this run (a generation brief, or the feedback to address)
+     * @param jobId            the job id, used to register a node-local cancel hook
+     * @param mode             the explicit run intent (generate vs. adapt)
+     * @param cancelled        polled cooperatively; if it returns {@code true} the session is aborted
+     * @param progress         receives short human-readable progress lines for the live transcript; may be {@code null}
+     * @param fileSnapshotSink receives a whole-file snapshot on every successful write for live streaming; {@code null} disables snapshot streaming
+     * @return the outcome including the verification verdict and the produced files
+     */
+    public GenerationOutcome generate(ProgrammingExercise exercise, User user, String userPrompt, String jobId, GenerationMode mode, BooleanSupplier cancelled,
+            Consumer<String> progress, @Nullable Consumer<HyperionFileSnapshotDTO> fileSnapshotSink) {
         // ADAPT re-runs against the seeded live repositories, so a feedback item may legitimately add or adjust a test; the tests-repo harness-immutability gate is relaxed for it
         // (the differential oracle remains the backstop). GENERATE keeps every gate enforced.
         boolean relaxTestsRepoImmutability = mode == GenerationMode.ADAPT;
@@ -145,7 +166,10 @@ public class ExerciseGenerationOrchestrationService {
             // The agent's `verify` tool runs the SAME differential as the post-loop gate so it sees the verdict in-loop (pass/fail tests, exact [task] names); post-loop
             // verify(...)
             // below stays the sole acceptance truth.
-            SandboxAgentTools tools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise);
+            SandboxAgentTools baseTools = new SandboxAgentTools(sandbox, sessionId, verifier, exercise);
+            // Wrap the tools in the snapshot-emitting decorator when a sink is supplied, so each successful write streams the whole file to the instructor's editor. The decorator
+            // re-exposes the identical @Tool surface (the model sees the same tools) and only adds emission; without a sink the bare tools are used unchanged.
+            Object tools = fileSnapshotSink != null ? new FileSnapshotEmittingAgentTools(baseTools, fileSnapshotSink) : baseTools;
 
             // Free turn-0 observation of the seeded layout so the agent need not `ls -R`. Best-effort (empty probe leaves the prompt unchanged) and first-attempt only — retries
             // already operate on a workspace the agent has explored.
