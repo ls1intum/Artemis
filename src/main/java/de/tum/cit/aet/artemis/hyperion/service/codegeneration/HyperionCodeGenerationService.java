@@ -150,9 +150,7 @@ public abstract class HyperionCodeGenerationService {
         String normalizedSelectedFeedbackThreads = normalizeSelectedFeedbackThreads(selectedFeedbackThreads);
         CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedBuildEnvironmentContext,
                 normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
-        // On a retry, carry the previous build/test feedback into every downstream stage (not just the plan) so the
-        // file-structure, headers, and logic stages can fix the exact reported compile/structural errors. The feedback
-        // rides in the plan string because that is already an input to all three stages.
+        // Carry retry feedback into the file-structure, headers, and logic stages (not just the plan) via the plan string, which all three already consume.
         String planWithFeedback = augmentPlanWithBuildFeedback(solutionPlanResponse.getSolutionPlan(), previousBuildLogs);
         CodeGenerationResponseDTO fileStructureResponse = defineFileStructure(user, exercise, courseId, planWithFeedback, repositoryStructure, normalizedBuildEnvironmentContext,
                 normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
