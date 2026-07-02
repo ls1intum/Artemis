@@ -150,14 +150,29 @@ public abstract class HyperionCodeGenerationService {
         String normalizedSelectedFeedbackThreads = normalizeSelectedFeedbackThreads(selectedFeedbackThreads);
         CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedBuildEnvironmentContext,
                 normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
-        CodeGenerationResponseDTO fileStructureResponse = defineFileStructure(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
-                normalizedBuildEnvironmentContext, normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
-        CodeGenerationResponseDTO headersResponse = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
+        // On a retry, carry the previous build/test feedback into every downstream stage (not just the plan) so the
+        // file-structure, headers, and logic stages can fix the exact reported compile/structural errors. The feedback
+        // rides in the plan string because that is already an input to all three stages.
+        String planWithFeedback = augmentPlanWithBuildFeedback(solutionPlanResponse.getSolutionPlan(), previousBuildLogs);
+        CodeGenerationResponseDTO fileStructureResponse = defineFileStructure(user, exercise, courseId, planWithFeedback, repositoryStructure, normalizedBuildEnvironmentContext,
+                normalizedConsistencyIssues, normalizedSelectedFeedbackThreads);
+        CodeGenerationResponseDTO headersResponse = generateClassAndMethodHeaders(user, exercise, courseId, planWithFeedback, repositoryStructure,
                 normalizedBuildEnvironmentContext, normalizedConsistencyIssues, normalizedSelectedFeedbackThreads, fileStructureResponse);
-        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
-                normalizedBuildEnvironmentContext, normalizedConsistencyIssues, normalizedSelectedFeedbackThreads, headersResponse);
+        CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, planWithFeedback, repositoryStructure, normalizedBuildEnvironmentContext,
+                normalizedConsistencyIssues, normalizedSelectedFeedbackThreads, headersResponse);
 
         return mergeStageDeletedFiles(coreLogicResponse, solutionPlanResponse, fileStructureResponse, headersResponse);
+    }
+
+    /**
+     * Appends the previous attempt's build/test feedback to the plan so downstream stages regenerate against the exact
+     * reported errors. Returns the plan unchanged on the first attempt (no feedback yet).
+     */
+    private String augmentPlanWithBuildFeedback(String solutionPlan, String previousBuildLogs) {
+        if (previousBuildLogs == null || previousBuildLogs.isBlank()) {
+            return solutionPlan;
+        }
+        return solutionPlan + "\n\n**Previous build feedback (fix these exact compile/test errors, keeping every generated file mutually consistent):**\n" + previousBuildLogs;
     }
 
     private CodeGenerationResponseDTO mergeStageDeletedFiles(CodeGenerationResponseDTO finalResponse, CodeGenerationResponseDTO... stageResponses) {
