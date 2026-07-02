@@ -3,16 +3,21 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MonacoEditorFitTextComponent } from './monaco-editor-fit-text.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockInstance } from 'ng-mocks';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 
 describe('MonacoEditorFitTextComponent', () => {
     setupTestBed({ zoneless: true });
+    MockInstance.scope();
 
     let component: MonacoEditorFitTextComponent;
     let fixture: ComponentFixture<MonacoEditorFitTextComponent>;
+    let contentHeight: number;
 
     beforeEach(async () => {
+        contentHeight = 48;
+        MockInstance(MonacoEditorComponent, 'getContentHeight', () => contentHeight);
+
         await TestBed.configureTestingModule({
             imports: [MonacoEditorFitTextComponent],
         })
@@ -45,6 +50,13 @@ describe('MonacoEditorFitTextComponent', () => {
 
             expect(component.text()).toBe('initial script');
         });
+
+        it('should initialize the wrapper height from the editor content height', () => {
+            fixture.detectChanges();
+
+            const wrapper = fixture.debugElement.query(By.css('.border')).nativeElement as HTMLElement;
+            expect(wrapper.style.height).toBe(`${contentHeight}px`);
+        });
     });
 
     describe('text model', () => {
@@ -61,6 +73,18 @@ describe('MonacoEditorFitTextComponent', () => {
             component.text.set('new value from signal');
 
             expect(component.text()).toBe('new value from signal');
+        });
+    });
+
+    describe('editor height', () => {
+        it('should update the wrapper height when the editor content height changes', () => {
+            fixture.detectChanges();
+
+            fixture.debugElement.query(By.directive(MonacoEditorComponent)).triggerEventHandler('contentHeightChanged', 64);
+            fixture.detectChanges();
+
+            const wrapper = fixture.debugElement.query(By.css('.border')).nativeElement as HTMLElement;
+            expect(wrapper.style.height).toBe('64px');
         });
     });
 });
