@@ -149,6 +149,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     hasHiddenSelectedPages = computed(() => {
         return Array.from(this.selectedPages()).some((page) => this.hiddenPages()[page.slideId]);
     });
+    private readonly hasPdfContentChanges = computed(() => {
+        return this.operations().some((operation) => operation.type === 'MERGE' || operation.type === 'DELETE' || operation.type === 'REORDER') || this.isFileChanged();
+    });
 
     hasChanges = computed(() => {
         return this.operations().length > 0 || this.hiddenPagesChanged() || this.pageOrderChanged() || this.isFileChanged();
@@ -486,6 +489,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         this.isSaving.set(true);
 
+        if (this.attachmentVideoUnit() && !this.hasPdfContentChanges() && this.hiddenPagesChanged()) {
+            try {
+                await this.updateAttachmentVideoUnitWithoutFile(this.getHiddenPages());
+                this.finishSaving();
+            } catch {
+                // The helper already handles user-facing error state.
+            }
+            return;
+        }
+
         try {
             const pdfName = this.attachment()?.name ?? this.attachmentVideoUnit()?.name ?? '';
             const { instructorBytes, studentBytes } = await this.applyOperations(true);
@@ -532,6 +545,35 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     this.finishSaving();
                     resolve();
                 },
+                error: (error) => {
+                    this.isSaving.set(false);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                    reject(error);
+                },
+            });
+        });
+    }
+
+    /**
+     * Updates an attachment video unit without changing the stored PDF files.
+     */
+    private async updateAttachmentVideoUnitWithoutFile(hiddenPages: HiddenPage[]): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            const attachmentVideoUnit = this.attachmentVideoUnit()!;
+            const formData = new FormData();
+            const attachmentVideoUnitWithoutFile = Object.assign(new AttachmentVideoUnit(), attachmentVideoUnit, {
+                attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+            });
+
+            formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitWithoutFile));
+            formData.append('attachment', objectToJsonBlob(attachmentVideoUnit.attachment!));
+
+            if (hiddenPages.length > 0) {
+                formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
+            }
+
+            this.attachmentVideoUnitService.update(attachmentVideoUnit.lecture!.id!, attachmentVideoUnit.id!, formData).subscribe({
+                next: () => resolve(),
                 error: (error) => {
                     this.isSaving.set(false);
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });

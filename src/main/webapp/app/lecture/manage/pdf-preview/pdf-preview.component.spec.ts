@@ -220,16 +220,43 @@ describe('PdfPreviewComponent', () => {
         component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
         const hidden = component.pageOrder()[0];
         component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
+        component.isFileChanged.set(true);
 
         await component.updateAttachmentWithFile();
 
         expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
         const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+        expect(updateFormData.get('file')).toBeInstanceOf(File);
         await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
             attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
         });
         expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
         expect(attachmentVideoUnitService.updateStudentVersion).toHaveBeenCalledOnce();
+        expect(alertService.success).toHaveBeenCalled();
+    });
+
+    it('should save hidden-page-only attachment video unit changes without uploading PDF files', async () => {
+        await loadOriginal(2);
+        const attachmentVideoUnit = { id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any;
+        component.attachmentVideoUnit.set(attachmentVideoUnit);
+        const hidden = component.pageOrder()[0];
+        component.hidePages({ slideId: hidden.slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
+        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+        expect(updateFormData.get('file')).toBeNull();
+        expect(updateFormData.get('studentVersion')).toBeNull();
+        expect(updateFormData.get('hiddenPages')).toBeInstanceOf(Blob);
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+            attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+        });
+        expect(component.attachmentVideoUnit()).toBe(attachmentVideoUnit);
+        expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
         expect(alertService.success).toHaveBeenCalled();
     });
 
