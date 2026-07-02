@@ -72,7 +72,7 @@ export class EmojiAction extends TextEditorAction {
         pickerElement.style.transform = 'translate(-100%, -100%)';
 
         componentRef.instance.emojiSelect.subscribe((selection) => {
-            this.insertEmojiAtCursor(editor, selection.emoji.native);
+            this.insertEmojiAtCursor(editor, selection.emoji.native ?? '');
             this.destroyEmojiPicker();
         });
 

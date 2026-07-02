@@ -288,5 +288,5 @@ const getSingleValue = <T>(values: T[]): T | undefined => {
 };
 
 const sum = (values: (number | undefined)[]): number => {
-    return (values ?? []).reduce((a, b) => Number(a) + Number(b), 0);
+    return (values ?? []).reduce<number>((a, b) => Number(a) + Number(b), 0);
 };

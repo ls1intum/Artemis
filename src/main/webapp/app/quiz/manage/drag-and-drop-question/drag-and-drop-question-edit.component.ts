@@ -203,12 +203,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
         // check if question was generated with an ApollonDiagram
         if (question.importedFiles) {
-            this.setBackgroundFile({ target: { files: [new File([question.importedFiles.get('diagram-background.png')!], 'diagram-background.png')] } });
+            this.setBackgroundFileFromFile(new File([question.importedFiles.get('diagram-background.png')!], 'diagram-background.png'));
             for (const dragItem of question.dragItems ?? []) {
                 if (dragItem.pictureFilePath && question.importedFiles.has(dragItem.pictureFilePath)) {
-                    this.changeToPictureDragItem(dragItem, {
-                        target: { files: [new File([question.importedFiles.get(dragItem.pictureFilePath!)!], dragItem.pictureFilePath!)] },
-                    });
+                    this.changeToPictureDragItemFromFile(dragItem, new File([question.importedFiles.get(dragItem.pictureFilePath!)!], dragItem.pictureFilePath!));
                 }
             }
         }
@@ -804,7 +802,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         if (!dragItemFile) {
             return;
         }
+        this.changeToPictureDragItemFromFile(dragItem, dragItemFile);
+    }
 
+    changeToPictureDragItemFromFile(dragItem: DragItem, dragItemFile: File): void {
         const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool());
 
         this.addNewFile.emit({ fileName, file: dragItemFile });

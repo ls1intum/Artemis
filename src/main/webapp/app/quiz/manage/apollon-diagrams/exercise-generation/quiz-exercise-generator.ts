@@ -358,7 +358,7 @@ function forceSVGClip(renderedSVG: SVG, clip: SVG['clip']): SVG {
 function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
     const textualElementTypes = ['class', 'package', 'attribute', 'method', 'actionRow'];
     const mappings = new Map<string, DragAndDropMapping[]>();
-    const allElements = getModelElements(model);
+    const allElements = getModelElements(model) as MappingElement[];
     // Helper to get parent ID (v3 uses 'owner', v4 uses 'parentId')
     const getParentId = (element: MappingElement) => element.parentId ?? element.owner;
     // Helper to get element name (v3 uses 'name', v4 uses 'data.name')
@@ -386,8 +386,8 @@ function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: 
             if (dragElementSibling.id === dragItemElementId) {
                 continue;
             }
-            if (mappings.has(dragElementSibling.id)) {
-                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id)!);
+            if (mappings.has(dragElementSibling.id!)) {
+                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id!)!);
                 mappings.set(dragItemElementId, [...mappings.get(dragItemElementId)!, mapping]);
             }
         }

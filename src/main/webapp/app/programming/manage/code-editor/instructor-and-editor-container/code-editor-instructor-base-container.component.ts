@@ -250,9 +250,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.fileSyncService.reset();
         if (domainType === DomainType.AUXILIARY_REPOSITORY) {
             this.selectedRepository = RepositoryType.AUXILIARY;
-            this.selectedRepositoryId = domainValue.id;
+            this.selectedRepositoryId = domainValue.id!;
         } else if (domainType === DomainType.PARTICIPATION) {
-            this.setSelectedParticipation(domainValue.id);
+            this.setSelectedParticipation(domainValue.id!);
         } else {
             this.selectedParticipation = this.exercise.templateParticipation!;
             this.selectedRepository = RepositoryType.TESTS;
