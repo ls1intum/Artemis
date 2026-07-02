@@ -14,7 +14,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { applyArtemisApollonThemeToDocument, artemisApollonTheme } from 'app/modeling/shared/apollon-theme.util';
+import { applyArtemisApollonThemeToDocument } from 'app/modeling/shared/apollon-theme.util';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -116,13 +116,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             );
         }
         this.initializeApollonEditor();
-        this.updateHighlightedElements(this.highlightedElements());
         const elementCounts = this.elementCounts();
         if (elementCounts) {
             await this.updateElementCounts(elementCounts);
         }
         // Ensure assessments are added after editor initialization
         await this.updateApollonAssessments(this.referencedFeedbacks);
+        // Applies highlight overlays last (also clears any stale ones).
         this.applyStateConfiguration();
     }
 
@@ -155,8 +155,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private initializeApollonEditor() {
         this.handleFeedback();
 
-        // Stamp the Artemis theme on <html> so Apollon's :root-scoped chrome ramp
-        // follows Artemis (the mount inherits it); `theme` below themes the mount.
+        // Theme the editor via Artemis's PrimeNG tokens — see artemisApollonTheme JSDoc for why <html>.
         applyArtemisApollonThemeToDocument();
         this.apollonEditor = new ApollonEditor(this.editorContainer()!.nativeElement, {
             mode: ApollonMode.Assessment,
@@ -164,7 +163,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             model: this.umlModel(),
             type: this.diagramType() || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups(),
-            theme: artemisApollonTheme(),
         });
 
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
@@ -293,12 +291,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     /**
-     * Applies the host-driven highlight overlay (element id -> CSS color) to the editor. Highlights are an
-     * ephemeral view overlay, not persisted in the model; an empty map or `undefined` clears them.
-     *
-     * @param newElements a map of elementIds -> highlight color, or undefined to clear
+     * Applies the host-driven highlight overlay (element id -> CSS colour) to the editor. Highlights
+     * are an ephemeral view overlay, not persisted in the model; an empty map or `undefined` clears them.
      */
     private updateHighlightedElements(newElements: Map<string, string> | undefined): void {
+        // `?? null`: Apollon treats `undefined` as "no change", whereas `null`/empty clears overlays.
         this.apollonEditor?.setElementHighlights(newElements ?? null);
     }
 

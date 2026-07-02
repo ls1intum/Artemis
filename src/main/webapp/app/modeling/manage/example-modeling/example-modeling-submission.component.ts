@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,7 +26,6 @@ import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, fa
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -64,8 +63,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     readonly modelingEditor = viewChild(ModelingEditorComponent);
     readonly assessmentEditor = viewChild(ModelingAssessmentComponent);
-
-    private readonly themeService = inject(ThemeService);
 
     readonly isNewSubmission = signal(false);
     readonly assessmentMode = signal(false);
@@ -119,9 +116,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     highlightedElements = signal<Map<string, string>>(new Map<string, string>());
     referencedExampleFeedback: Feedback[] = [];
-    // Translucent so the overlay (setElementHighlights paints over the element) stays visible without
-    // obscuring its text: a light blue on the dark theme, a medium blue on the light theme.
-    highlightColor = computed(() => (this.themeService.userPreference() === Theme.DARK ? 'rgba(135, 206, 250, 0.4)' : 'rgba(0, 123, 255, 0.35)'));
+    // Apollon paints the highlight as an HTML overlay div (inline background/box-shadow), so a CSS token
+    // resolves: a translucent tint of Artemis's primary keeps element text readable and re-resolves on
+    // theme toggle for free (primary already lightens in dark).
+    readonly highlightColor = 'color-mix(in srgb, var(--p-primary-color) 35%, transparent)';
 
     // Icons
     faSave = faSave;
@@ -129,20 +127,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     faInfoCircle = faInfoCircle;
     faCodeBranch = faCodeBranch;
     faChalkboardTeacher = faChalkboardTeacher;
-
-    constructor() {
-        effect(() => {
-            // Update highlighted elements as soon as current theme changes
-            const highlightColor = this.highlightColor();
-            untracked(() => {
-                const updatedHighlights = new Map<string, string>();
-                this.highlightedElements().forEach((_, key) => {
-                    updatedHighlights.set(key, highlightColor);
-                });
-                this.highlightedElements.set(updatedHighlights);
-            });
-        });
-    }
 
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
@@ -504,7 +488,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         );
         const highlightedElements = new Map<string, string>();
         for (const feedback of missedReferencedExampleFeedbacks) {
-            highlightedElements.set(feedback.referenceId!, this.highlightColor());
+            highlightedElements.set(feedback.referenceId!, this.highlightColor);
         }
         this.highlightedElements.set(highlightedElements);
     }

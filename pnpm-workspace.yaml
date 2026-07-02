@@ -84,10 +84,10 @@ overrides:
     piscina: '5.2.0'
     postcss: '8.5.14'
     punycode: '2.3.1'
-    # @tumaet/apollon ships every dependency external and requires react/react-dom (and
-    # @xyflow/react) as peers. No Artemis code imports React, so we don't declare it; pnpm's
-    # auto-install-peers resolves it. These overrides force the whole React subtree to a single
-    # 19.x so nothing in the editor's dependency graph can pull a second (e.g. React 18) copy.
+    # @tumaet/apollon declares react/react-dom/@xyflow/react as (exact-version) peers; its other deps
+    # are bundled. No Artemis code imports React, so we don't declare it — pnpm's auto-install-peers
+    # resolves it. These overrides pin the whole React subtree to a single 19.2.7 so nothing in the
+    # editor's graph pulls a second copy; keep this in lockstep with Apollon's react peer version.
     react: '19.2.7'
     react-dom: '19.2.7'
     semver: '7.8.0'

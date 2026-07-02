@@ -395,28 +395,26 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
     });
 
-    it('forwards the highlight overlay map (including an empty map) to the editor', async () => {
+    it('applies highlight overlays to the editor when the highlightedElements input changes', async () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
-        fixture.componentRef.setInput('highlightedElements', new Map<string, string>());
         fixture.detectChanges();
         await waitForApollonInitialization();
 
         const setHighlights = comp.apollonEditor!.setElementHighlights as unknown as ReturnType<typeof vi.fn>;
+        setHighlights.mockClear();
 
         const highlights = new Map<string, string>([
             [ELEMENT_ID_1, 'red'],
             [RELATIONSHIP_ID, 'blue'],
         ]);
-        setHighlights.mockClear();
-        (comp as any).updateHighlightedElements(highlights);
-        expect(setHighlights).toHaveBeenCalledWith(highlights);
+        fixture.componentRef.setInput('highlightedElements', highlights);
+        fixture.detectChanges();
+        await waitForApollonInitialization();
 
-        setHighlights.mockClear();
-        (comp as any).updateHighlightedElements(new Map<string, string>());
-        expect(setHighlights).toHaveBeenCalledWith(new Map<string, string>());
+        expect(setHighlights).toHaveBeenCalledWith(highlights);
     });
 
-    it('clears stale highlight overlays when highlightedElements is reset to undefined', async () => {
+    it('clears stale overlays when highlightedElements is reset to undefined (no lingering highlights)', async () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.componentRef.setInput('highlightedElements', new Map<string, string>([[ELEMENT_ID_1, 'red']]));
         fixture.detectChanges();
@@ -425,9 +423,11 @@ describe('ModelingAssessmentComponent', () => {
         const setHighlights = comp.apollonEditor!.setElementHighlights as unknown as ReturnType<typeof vi.fn>;
         setHighlights.mockClear();
 
-        // Resetting the input to undefined must clear the overlay, not leave it stale.
         fixture.componentRef.setInput('highlightedElements', undefined);
-        (comp as any).applyStateConfiguration();
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+
+        // undefined must reach Apollon as null (clear), not be swallowed as a no-op.
         expect(setHighlights).toHaveBeenCalledWith(null);
     });
 
