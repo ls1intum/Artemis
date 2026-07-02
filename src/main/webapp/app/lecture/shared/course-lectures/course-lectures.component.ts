@@ -4,7 +4,6 @@ import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
@@ -42,7 +41,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
     styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
     private courseStorageService = inject(CourseStorageService);
@@ -62,7 +61,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number>(undefined!);
 
     readonly lectureSelected = signal(true);
-    readonly sidebarData = signal<SidebarData>(undefined!);
+    readonly sidebarData = signal<SidebarData | undefined>(undefined);
     accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];

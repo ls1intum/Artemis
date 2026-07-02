@@ -2,7 +2,7 @@
     @let currentCourseId = courseId();
     @let currentSidebarData = sidebarData();
     @if (currentCourseId && currentSidebarData) {
-        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed() }">
+        <div [class.sidebar-collapsed]="isCollapsed()">
             <jhi-sidebar
                 [itemSelected]="itemSelected()"
                 [courseId]="currentCourseId"

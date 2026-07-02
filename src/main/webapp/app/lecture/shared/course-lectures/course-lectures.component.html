@@ -1,21 +1,23 @@
 <div class="d-flex justify-content-between sidebar-tab-content-row">
     @if (course()) {
-        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed() }">
-            <jhi-sidebar
-                [itemSelected]="lectureSelected()"
-                [courseId]="courseId()"
-                [sidebarData]="sidebarData()"
-                [collapseState]="DEFAULT_COLLAPSE_STATE"
-                [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
-                [pageTitle]="pageTitle()"
-                [showSidebarToggle]="true"
-                [isSidebarCollapsed]="isCollapsed()"
-                (toggleSidebar)="toggleSidebar()"
-            />
-        </div>
+        @if (sidebarData(); as currentSidebarData) {
+            <div [class.sidebar-collapsed]="isCollapsed()">
+                <jhi-sidebar
+                    [itemSelected]="lectureSelected()"
+                    [courseId]="courseId()"
+                    [sidebarData]="currentSidebarData"
+                    [collapseState]="DEFAULT_COLLAPSE_STATE"
+                    [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                    [pageTitle]="pageTitle()"
+                    [showSidebarToggle]="true"
+                    [isSidebarCollapsed]="isCollapsed()"
+                    (toggleSidebar)="toggleSidebar()"
+                />
+            </div>
+        }
 
         @if (lectureSelected()) {
-            <div [ngClass]="{ 'content-sidebar-width': !isCollapsed() }" class="content-width module-bg rounded-3">
+            <div [class.content-sidebar-width]="!isCollapsed()" class="content-width module-bg rounded-3">
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {

@@ -1,18 +1,20 @@
 <div class="d-flex justify-content-between sidebar-tab-content-row">
     @if (course()) {
-        <div id="exam-sidebar-test" [ngClass]="{ 'sidebar-collapsed': isCollapsed() }" [hidden]="isExamStarted()">
-            <jhi-sidebar
-                [itemSelected]="examSelected()"
-                [courseId]="courseId()"
-                [sidebarData]="sidebarData()!"
-                [collapseState]="DEFAULT_COLLAPSE_STATE"
-                [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
-                [pageTitle]="pageTitle()"
-                [showSidebarToggle]="true"
-                [isSidebarCollapsed]="isCollapsed()"
-                (toggleSidebar)="toggleSidebar()"
-            />
-        </div>
+        @if (sidebarData(); as currentSidebarData) {
+            <div id="exam-sidebar-test" [class.sidebar-collapsed]="isCollapsed()" [hidden]="isExamStarted()">
+                <jhi-sidebar
+                    [itemSelected]="examSelected()"
+                    [courseId]="courseId()"
+                    [sidebarData]="currentSidebarData"
+                    [collapseState]="DEFAULT_COLLAPSE_STATE"
+                    [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                    [pageTitle]="pageTitle()"
+                    [showSidebarToggle]="true"
+                    [isSidebarCollapsed]="isCollapsed()"
+                    (toggleSidebar)="toggleSidebar()"
+                />
+            </div>
+        }
 
         @if (examSelected()) {
             <div class="vw-100 module-bg rounded-3" style="min-width: 200px">

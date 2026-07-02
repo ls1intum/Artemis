@@ -10,7 +10,6 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
@@ -39,7 +38,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
     styleUrls: ['./course-exams.component.scss'],
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);

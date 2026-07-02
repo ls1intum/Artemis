@@ -15,7 +15,7 @@
         }
         @if (isCodeOfConductAccepted() && isServiceSetUp() && course()) {
             <div class="d-flex justify-content-between sidebar-tab-content-row">
-                <div class="communication-content-sidebar" [ngClass]="{ 'sidebar-collapsed': isCollapsed(), 'is-not-in-active-conversation': !activeConversation() }">
+                <div class="communication-content-sidebar" [class.sidebar-collapsed]="isCollapsed()" [class.is-not-in-active-conversation]="!activeConversation()">
                     <jhi-sidebar
                         (onSelectConversation)="onConversationSelected($event)"
                         (onUpdateSidebar)="prepareSidebarData()"
@@ -54,7 +54,7 @@
                         }
                         <div
                             class="communication-message-wrap col flex-grow-1 module-bg rounded-3 scrollable-communication-content"
-                            [ngClass]="{ 'is-answer-thread-open': !!postInThread() }"
+                            [class.is-answer-thread-open]="!!postInThread()"
                         >
                             @if (activeConversation()) {
                                 <jhi-conversation-header
@@ -83,7 +83,7 @@
                                 }
                             }
                         </div>
-                        <div class="scrollable-communication-content" [ngClass]="{ 'is-answer-thread-open': !!postInThread() }">
+                        <div class="scrollable-communication-content" [class.is-answer-thread-open]="!!postInThread()">
                             @if (!!postInThread()) {
                                 <jhi-conversation-thread-sidebar
                                     [activeConversation]="activeConversation() ?? postInThread()!.conversation!"

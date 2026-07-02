@@ -1,5 +1,4 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { NgClass } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -136,7 +135,6 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         FormsModule,
         CourseConversationsCodeOfConductComponent,
         TranslateDirective,
-        NgClass,
         SidebarComponent,
         ConversationHeaderComponent,
         ConversationMessagesComponent,
