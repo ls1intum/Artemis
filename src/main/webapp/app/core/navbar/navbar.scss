@@ -29,14 +29,10 @@ a:not(.btn):hover {
         color: var(--bs-navbar-brand-color);
 
         a {
-            color: var(--bs-navbar-brand-color);
+            color: var(--navbar-dark-color);
 
-            &:hover {
-                color: var(--navbar-foreground) !important;
-            }
-
-            &.subtle {
-                color: var(--navbar-dark-color);
+            &.accented {
+                color: var(--bs-navbar-brand-color);
             }
         }
 

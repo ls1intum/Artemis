@@ -49,6 +49,7 @@ import { catchError, concatMap, map, pairwise, switchMap, tap, toArray } from 'r
 import { taskRegex } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { FormsModule } from '@angular/forms';
 import { Checkbox } from 'primeng/checkbox';
+import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
@@ -247,6 +248,10 @@ export class ChecklistPanelComponent {
             return;
         }
 
+        if (!this.validateProblemStatementLength()) {
+            return;
+        }
+
         const ex = this.exercise();
         this.isLoading.set(true);
         const request = {
@@ -411,6 +416,10 @@ export class ChecklistPanelComponent {
         const cId = this.courseId();
         if (cId == null || this.isApplyingAction() || this.sectionLoading().size > 0) return;
 
+        if (!this.validateProblemStatementLength(request.problemStatementMarkdown)) {
+            return;
+        }
+
         this.isApplyingAction.set(true);
         this.actionLoadingKey.set(loadingKey);
 
@@ -466,6 +475,10 @@ export class ChecklistPanelComponent {
         const cId = this.courseId();
         if (cId == null || this.isLoading() || this.sectionLoading().has(section) || this.isApplyingAction()) return;
 
+        if (!this.validateProblemStatementLength()) {
+            return;
+        }
+
         this.updateSet(this.sectionLoading, section, 'add');
         const ex = this.exercise();
         const request = {
@@ -505,6 +518,17 @@ export class ChecklistPanelComponent {
 
     private updateAnalysisOptimistically(updater: (current: ChecklistAnalysisResponse) => ChecklistAnalysisResponse) {
         this.analysisResult.update((current) => (current ? updater(current) : current));
+    }
+
+    /**
+     * Checks if problem statement does not exceed maximum length.
+     */
+    private validateProblemStatementLength(problemStatement: string = this.effectiveProblemStatement()): boolean {
+        if (problemStatement.length <= MAX_PROBLEM_STATEMENT_LENGTH) {
+            return true;
+        }
+        this.alertService.error('artemisApp.programmingExercise.instructorChecklist.problemStatementTooLong', { max: MAX_PROBLEM_STATEMENT_LENGTH });
+        return false;
     }
 
     fixQualityIssue(issue: QualityIssue, index: number) {
