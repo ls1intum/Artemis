@@ -35,6 +35,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { cloneDeep, isEmpty } from 'lodash-es';
@@ -172,7 +173,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
-                this.exampleSolution.set(importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel)));
+                this.exampleSolution.set(importDiagram(parseJson(this.modelingExercise.exampleSolutionModel)));
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);

@@ -8,6 +8,7 @@ import { SplitterModule } from 'primeng/splitter';
 import { TabsModule } from 'primeng/tabs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { parseJson } from 'app/foundation/util/json.util';
 
 @Directive({ selector: 'ng-template[jhiPanel]' })
 export class PanelDirective {
@@ -158,7 +159,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
                 return;
             }
             // Matches PrimeNG's Splitter stateStorage format: JSON.stringify(number[]).
-            const parsed: unknown = JSON.parse(raw);
+            const parsed = parseJson(raw);
             // Only seed a usable split: two finite numbers, a positive left, and a right above the collapse
             // threshold. A near-zero/degenerate stored value (external tampering, legacy data) is ignored so the
             // initial render never restores a jammed sliver (restoreUsableSplit only runs on expand, not on seed).

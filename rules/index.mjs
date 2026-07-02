@@ -5,6 +5,7 @@ import preferSignalReactivityOverNgOnChanges from './prefer-signal-reactivity-ov
 import preferSignalTemplateState from './prefer-signal-template-state.mjs';
 import noNavigationInEffect from './no-navigation-in-effect.mjs';
 import noAsUnknownCast from './no-as-unknown-cast.mjs';
+import noAsAnyCast from './no-as-any-cast.mjs';
 
 export default {
     rules: {
@@ -15,5 +16,6 @@ export default {
         'prefer-signal-template-state': preferSignalTemplateState,
         'no-navigation-in-effect': noNavigationInEffect,
         'no-as-unknown-cast': noAsUnknownCast,
+        'no-as-any-cast': noAsAnyCast,
     },
 };

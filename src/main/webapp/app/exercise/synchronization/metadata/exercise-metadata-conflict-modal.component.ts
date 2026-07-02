@@ -16,6 +16,7 @@ import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.mod
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { normalizeCategoryArray, normalizeCategoryEntry } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot-shared.mapper';
+import { parseJson } from 'app/foundation/util/json.util';
 
 /**
  * Single field conflict between current editor state and incoming snapshot.
@@ -174,8 +175,8 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
             return value.format('YYYY-MM-DD HH:mm');
         }
         // Fallback for dayjs-like objects that fail isDayjs() due to module duplication
-        if (typeof value === 'object' && value !== null && typeof (value as any).format === 'function') {
-            const formatted = (value as any).format('YYYY-MM-DD HH:mm');
+        if (typeof value === 'object' && value !== null && typeof (value as { format?: unknown }).format === 'function') {
+            const formatted = (value as { format: (template: string) => unknown }).format('YYYY-MM-DD HH:mm');
             if (typeof formatted === 'string') {
                 return formatted;
             }
@@ -273,7 +274,7 @@ export class ExerciseMetadataConflictModalComponent implements OnInit {
         }
         if (typeof value === 'string') {
             try {
-                const parsed = JSON.parse(value);
+                const parsed = parseJson(value);
                 if (parsed !== undefined) {
                     return this.toCategoryEntries(parsed);
                 }
