@@ -247,7 +247,7 @@ describe('ChecklistPanelComponent', () => {
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction');
             const errorSpy = vi.spyOn(alertService, 'error');
 
-            component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
+            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
 
             expect(actionSpy).not.toHaveBeenCalled();
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.instructorChecklist.problemStatementTooLong', { max: MAX_PROBLEM_STATEMENT_LENGTH });
