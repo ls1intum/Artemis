@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -68,6 +69,8 @@ public class PyrisWebhookService {
 
     private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
+    private final Optional<SlideApi> slideApi;
+
     private final VideoSourceResolverService videoSourceResolver;
 
     @Value("${server.url}")
@@ -75,13 +78,14 @@ public class PyrisWebhookService {
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, VideoSourceResolverService videoSourceResolver) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, Optional<SlideApi> slideApi, VideoSourceResolverService videoSourceResolver) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
+        this.slideApi = slideApi;
         this.videoSourceResolver = videoSourceResolver;
     }
 
@@ -162,9 +166,9 @@ public class PyrisWebhookService {
     private PyrisLectureUnitVisibilityWebhookDTO buildVisibilityDto(AttachmentVideoUnit attachmentVideoUnit) {
         Lecture lecture = attachmentVideoUnit.getLecture();
         Course course = attachmentVideoUnit.getLecture().getCourse();
-        List<PyrisSlideVisibilityDTO> slides = attachmentVideoUnit.getSlides() == null ? List.of()
-                : attachmentVideoUnit.getSlides().stream().sorted(Comparator.comparingInt(Slide::getSlideNumber))
-                        .map(slide -> new PyrisSlideVisibilityDTO(slide.getSlideNumber(), slide.getHidden())).toList();
+        SlideApi api = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
+        List<PyrisSlideVisibilityDTO> slides = api.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId()).stream()
+                .sorted(Comparator.comparingInt(Slide::getSlideNumber)).map(slide -> new PyrisSlideVisibilityDTO(slide.getSlideNumber(), slide.getHidden())).toList();
 
         return new PyrisLectureUnitVisibilityWebhookDTO(attachmentVideoUnit.getId(), lecture.getId(), course.getId(), artemisBaseUrl, attachmentVideoUnit.getReleaseDate(),
                 slides);

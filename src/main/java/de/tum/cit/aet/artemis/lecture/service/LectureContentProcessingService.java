@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -117,6 +118,7 @@ public class LectureContentProcessingService {
      * @param updateKind          the classified update kind
      */
     public void triggerProcessingForUpdateKind(AttachmentVideoUnit attachmentVideoUnit, LectureContentUpdateKind updateKind) {
+        Objects.requireNonNull(updateKind, "updateKind");
         switch (updateKind) {
             case NONE -> {
                 return;
@@ -124,7 +126,7 @@ public class LectureContentProcessingService {
             case METADATA -> irisLectureApi.ifPresent(api -> api.updateLectureUnitMetadataInPyris(attachmentVideoUnit));
             case VISIBILITY -> irisLectureApi.ifPresent(api -> api.updateLectureUnitVisibilityInPyris(attachmentVideoUnit));
             case CONTENT -> triggerProcessing(attachmentVideoUnit);
-            case DELETE -> handleUnitsDeletion(List.of(attachmentVideoUnit));
+            case DELETE -> deleteUnitsFromPyris(List.of(attachmentVideoUnit));
         }
     }
 
@@ -231,11 +233,15 @@ public class LectureContentProcessingService {
      */
     @Async
     public void handleUnitsDeletion(List<AttachmentVideoUnit> units) {
+        SecurityUtils.setAuthorizationObject();
+        deleteUnitsFromPyris(units);
+    }
+
+    private void deleteUnitsFromPyris(List<AttachmentVideoUnit> units) {
         if (units == null || units.isEmpty()) {
             return;
         }
 
-        SecurityUtils.setAuthorizationObject();
         log.info("Handling deletion cleanup for {} units", units.size());
 
         if (irisLectureApi.isPresent()) {

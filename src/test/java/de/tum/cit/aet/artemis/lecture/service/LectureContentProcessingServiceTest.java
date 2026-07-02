@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -158,6 +159,17 @@ class LectureContentProcessingServiceTest {
             verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any());
             verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
             verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void nullUpdateKindFailsFast() {
+            assertThatNullPointerException().isThrownBy(() -> service.triggerProcessingForUpdateKind(testUnit, null)).withMessage("updateKind");
+
+            verify(irisLectureApi, never()).updateLectureUnitMetadataInPyris(any());
+            verify(irisLectureApi, never()).updateLectureUnitVisibilityInPyris(any());
+            verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any());
+            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
             verify(processingStateRepository, never()).save(any());
         }
 

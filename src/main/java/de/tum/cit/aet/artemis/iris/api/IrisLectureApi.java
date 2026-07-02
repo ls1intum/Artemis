@@ -35,7 +35,7 @@ public class IrisLectureApi extends AbstractIrisApi {
     }
 
     /**
-     * Updates the lightweight metadata for the provided PDF attachment video unit in Pyris.
+     * Updates the lightweight metadata for the provided attachment video unit in Pyris.
      * <p>
      * This method calls {@link PyrisWebhookService#updateLectureUnitMetadataInPyris(AttachmentVideoUnit)}.
      * The lecture ingestion must be enabled for the course.
@@ -48,7 +48,7 @@ public class IrisLectureApi extends AbstractIrisApi {
     }
 
     /**
-     * Updates the lightweight visibility data for the provided PDF attachment video unit in Pyris.
+     * Updates the lightweight visibility data for the provided attachment video unit in Pyris.
      * <p>
      * This method calls {@link PyrisWebhookService#updateLectureUnitVisibilityInPyris(AttachmentVideoUnit)}.
      * The lecture ingestion must be enabled for the course.
