@@ -1,0 +1,446 @@
+---
+id: global-search-weaviate
+title: Global Search & Weaviate Setup
+sidebar_label: Global Search (Weaviate)
+---
+
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Callout from "../../src/components/Callout/Callout";
+
+# Global Search & Weaviate Setup
+
+## Overview & decision tree
+
+Artemis ships a cross-entity search feature — lectures, exercises, exams, FAQs, and communication channels — that is gated by the flag `artemis.weaviate.enabled` (default: **off**). Flipping that flag to `true` requires two prerequisites:
+
+1. **A running Weaviate instance** that Artemis can reach on REST port 8001 and gRPC port 50051.
+2. **An embedding strategy** — how vectors are produced for semantic matching (or an explicit decision to do keyword-only search with no vectors at all).
+
+Both are independent of Iris/Pyris. You can run global search without EduTelligence, and you can share a single Weaviate instance between Artemis and Pyris by using distinct `collection-prefix` values (the runtime default is empty, so set a non-empty prefix such as `Artemis_` when sharing an instance).
+
+### Choose your embedding strategy
+
+Pick the scenario that best matches your infrastructure:
+
+| Situation | Recommended embedder |
+|---|---|
+| On-premises GPU available | Self-hosted Qwen3-Embedding-8B via OpenAI-compatible API (e.g., your on-prem GPU server or a vLLM/Ollama endpoint) |
+| Cloud deployment / external API allowed | OpenAI text-embedding-3 or Azure OpenAI embedding |
+| Offline / air-gapped / no GPU | `embeddinggemma-300m` CPU sidecar (`weaviate-embeddings.yml`) |
+| Keyword-only search is sufficient | `vectorizer-module: none` — no embedder required |
+
+For full configuration details of each option, see [Choose and connect an embedder](#choose-and-connect-an-embedder).
+
+<Callout variant={CalloutVariant.info}>
+
+  You do not have to pick the most powerful embedder. Keyword-only search (`none`) is zero-cost to operate and covers most administrative search needs. Semantic re-ranking is additive — you can start with `none` and migrate later by dropping the collections and reindexing.
+
+</Callout>
+
+---
+
+## Provision Weaviate
+
+### Docker Compose (recommended)
+
+The Artemis repository ships two ready-to-use Compose files under `docker/`. Run all commands from the **repository root**.
+
+**Keyword-only search, or OpenAI-compatible external embedder:**
+
+```bash
+# From the Artemis repo root — keyword-only or OpenAI-compatible embedder:
+docker compose -f docker/weaviate.yml up -d
+```
+
+**Local CPU embeddings (embeddinggemma sidecar):**
+
+```bash
+# Local CPU embeddings (embeddinggemma sidecar):
+docker compose -f docker/weaviate-embeddings.yml up -d
+```
+
+The shipped image is pinned to **Weaviate 1.37.9** (`cr.weaviate.io/semitechnologies/weaviate:1.37.9`).
+
+**Ports exposed by both files:**
+
+| Protocol | Port  |
+|----------|-------|
+| REST     | 8001  |
+| gRPC     | 50051 |
+
+Data is persisted in the named Docker volume `artemis-weaviate`.
+
+#### Production: disable anonymous access
+
+Both Compose files source their Weaviate configuration from `docker/weaviate/*.env`. Anonymous access is **enabled by default** (fine for development). For any shared or internet-reachable deployment you must disable it and enable API-key authentication.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Do not expose Weaviate with anonymous access enabled in production. An unauthenticated Weaviate instance allows anyone on the network to read, write, or delete all collections.
+
+</Callout>
+
+Edit the applicable `.env` file under `docker/weaviate/` — `default.env` (keyword-only / no embedder), `embeddings.env` (local transformers sidecar), or `openai.env` (OpenAI-compatible external embedder) — and make the following changes:
+
+```bash
+# Disable anonymous access:
+AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false
+# Uncomment and fill in the API key lines:
+AUTHENTICATION_APIKEY_ENABLED=true
+AUTHENTICATION_APIKEY_ALLOWED_KEYS=your-secure-key
+AUTHENTICATION_APIKEY_USERS=admin@your-domain.com
+AUTHORIZATION_ADMINLIST_ENABLED=true
+AUTHORIZATION_ADMINLIST_USERS=admin@your-domain.com
+```
+
+For a full walkthrough of the env-file variables and how to configure the matching `api-key` in Artemis, see the [Authentication](../developer/weaviate-setup#authentication) section of the developer Weaviate setup guide.
+
+---
+
+### Ansible (production, TLS + backups)
+
+For production deployments managed with Ansible, the Artemis Ansible collection ships a dedicated Weaviate role that handles TLS termination, API-key configuration, and backup scheduling:
+
+[ls1intum/artemis-ansible-collection — roles/weaviate](https://github.com/ls1intum/artemis-ansible-collection/tree/main/roles/weaviate)
+
+---
+
+### Kubernetes / managed cloud
+
+No Helm chart ships with Artemis today. Bring your own Weaviate deployment (any standard Kubernetes installation or a managed Weaviate Cloud instance) and point Artemis at it via `artemis.weaviate.http-host`, `http-port`, `grpc-port`, and `api-key`. The same authentication requirements apply.
+
+---
+
+## Choose and connect an embedder
+
+Artemis supports three embedding strategies and one keyword-only mode. The subsections below show the exact Spring properties for each. After choosing a strategy, add (or merge) the relevant block into your `application-prod.yml` (or the profile you deploy).
+
+### Option 1 — OpenAI-compatible external embedder
+
+Use this when you have access to the OpenAI API, an Azure OpenAI deployment, or any OpenAI-compatible self-hosted endpoint (vLLM, Ollama, etc.).
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    http-host: your-weaviate-host
+    http-port: 443
+    grpc-port: 50051
+    scheme: https
+    collection-prefix: Artemis_          # required if sharing with Pyris
+    vectorizer-module: text2vec-openai
+    open-ai-embedding-model: text-embedding-3-small   # or your self-hosted model id
+    open-ai-base-url: https://your-openai-compatible-endpoint   # OpenAI: https://api.openai.com
+    gpu-api-key: your-embedding-api-key
+    api-key: your-weaviate-api-key
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  When `vectorizer-module` is set to `text2vec-openai`, both **`open-ai-base-url`** and **`gpu-api-key`** are mandatory. Artemis validates these at startup and will refuse to start if either is missing or blank.
+
+</Callout>
+
+**Compose file:** `docker/weaviate.yml` (no local embedder sidecar needed).
+
+**OpenAI-compatible base-URL (Ollama, vLLM, etc.):** When using a self-hosted OpenAI-compatible endpoint, set `open-ai-base-url` to the host **without** a `/v1` suffix — for example `http://your-ollama-host:11434`. Weaviate's `text2vec-openai` module appends `/v1` automatically; supplying it yourself produces a broken `/v1/v1` path. (This `open-ai-base-url` is the Artemis→Weaviate setting and is independent of how Pyris or other services configure their own embedding endpoints.)
+
+---
+
+<Callout variant={CalloutVariant.info}>
+
+  **TUM-internal deployment — not applicable to external deployments**
+
+  The Technical University of Munich (TUM) runs a GPU cluster at `gpu.aet.cit.tum.de` for research workloads. TUM-internal Artemis production deployments use a self-hosted Qwen3-Embedding-8B model served via a vLLM OpenAI-compatible endpoint on that cluster. Example values for TUM-internal use only:
+
+  ```yaml
+  artemis:
+    weaviate:
+      vectorizer-module: text2vec-openai
+      open-ai-embedding-model: Qwen/Qwen3-Embedding-8B
+      open-ai-base-url: https://gpu.aet.cit.tum.de
+      gpu-api-key: your-tum-gpu-api-key
+  ```
+
+  Do not use these hostnames or model identifiers in any other deployment. External institutions should choose their own OpenAI-compatible endpoint.
+
+</Callout>
+
+---
+
+### Option 2 — Local CPU embeddings (offline / air-gapped)
+
+Use this when you have no external API access, no GPU, and are willing to accept slower embedding throughput in exchange for data privacy and zero API cost.
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    vectorizer-module: text2vec-transformers
+    # provisioned via docker/weaviate-embeddings.yml (embeddinggemma-300m, 768d sidecar)
+```
+
+**Compose file:** `docker/weaviate-embeddings.yml`. This file adds a `text2vec-transformers` sidecar container (`embeddinggemma-300m`, 768-dimensional vectors) alongside Weaviate. No additional properties are required — the sidecar URL is pre-configured inside the Compose file.
+
+<Callout variant={CalloutVariant.info}>
+
+  `embeddinggemma-300m` runs entirely on CPU. Embedding throughput is lower than GPU-backed options, but it works on any machine without GPU drivers or external API keys.
+
+</Callout>
+
+---
+
+### Option 3 — Keyword-only (no embedder)
+
+Use this when semantic similarity is not a priority, you want the simplest possible setup, or you plan to migrate to an embedder later.
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+    vectorizer-module: none   # BM25 keyword-only; no semantic search
+```
+
+**Compose file:** `docker/weaviate.yml`.
+
+No embedder is provisioned. All search uses Weaviate's built-in BM25 index. You can migrate to a semantic embedder later by dropping the existing collections and reindexing — collection schema is created fresh on next startup.
+
+---
+
+### Embedder summary
+
+| Tier | Vectorizer module | Compose file | Hardware requirement | API cost | Data leaves your server? |
+|---|---|---|---|---|---|
+| GPU / self-hosted LLM | `text2vec-openai` (self-hosted endpoint) | `weaviate.yml` | GPU server required | None (self-hosted) | No |
+| Cloud OpenAI | `text2vec-openai` (api.openai.com) | `weaviate.yml` | None | Per-token billing | Yes (to OpenAI) |
+| Local CPU | `text2vec-transformers` | `weaviate-embeddings.yml` | CPU only (no GPU assumed) | None | No |
+| Keyword-only | `none` | `weaviate.yml` | None | None | No |
+
+GPU is **not** assumed. The keyword-only and local-CPU tiers are fully self-contained and suitable for privacy-sensitive or offline deployments.
+
+---
+
+## Enable and verify Artemis global search
+
+Once Weaviate is running and your embedder (or `none`) is chosen, flip the feature flag in your Spring profile (`application-prod.yml` or equivalent):
+
+```yaml
+artemis:
+  weaviate:
+    enabled: true
+```
+
+Artemis validates the connection at startup. If validation fails (wrong host, missing API key, unreachable gRPC port), the application will **log an error and refuse to start**.
+
+<Callout variant={CalloutVariant.info}>
+
+  Setting `vectorizer-module: none` (keyword-only mode) is a fully supported production choice. Artemis will store and search text using Weaviate's BM25 index with no embedding overhead. You can switch to a semantic embedder at any time by changing the property, dropping the existing collections, and reindexing — see [Reindex / migration runbook](#reindex--migration-runbook) below.
+
+</Callout>
+
+### Verify via the management health endpoint
+
+Artemis exposes a dedicated Weaviate indicator at the Spring Boot management endpoint:
+
+```bash
+curl -s https://your-artemis-host/management/health | jq '.components.weaviate'
+```
+
+A healthy response looks like:
+
+```json
+{
+  "status": "UP",
+  "details": { "version": "1.37.9" }
+}
+```
+
+If the indicator is `DOWN`, check the Artemis startup logs for the root cause before proceeding.
+
+### Verify the Weaviate instance directly
+
+You can also probe Weaviate's own readiness endpoint. This is useful when you want to confirm that the Weaviate container itself is reachable and authenticated independently of Artemis:
+
+```bash
+curl -H "Authorization: Bearer your-weaviate-api-key" \
+     https://your-weaviate-host/v1/.well-known/ready
+```
+
+A `200 OK` with body `{}` means Weaviate is ready and the API key is accepted. A `401` means the key is wrong or authentication is misconfigured in the Weaviate `.env` file. A connection error means the host or port is unreachable.
+
+<Callout variant={CalloutVariant.warning}>
+
+  If you are running Weaviate behind a reverse proxy (e.g., nginx via the Ansible role), ensure the proxy passes the `Authorization` header through unchanged. Some default proxy configs strip or rewrite bearer tokens.
+
+</Callout>
+
+---
+
+## Run Weaviate alongside Pyris
+
+A single Weaviate instance can serve both Artemis and Pyris (EduTelligence) simultaneously. The two services use independent collection namespaces, independent embedding pipelines, and do not interfere with each other at runtime. This section covers only the Artemis side of the shared deployment. For Pyris configuration, see the [Iris / EduTelligence admin documentation](https://ls1intum.github.io/edutelligence/iris/).
+
+### Namespace isolation — set a collection prefix
+
+<Callout variant={CalloutVariant.warning}>
+
+  **You must set a non-empty `collection-prefix` on the Artemis side.** The runtime default is an empty string, which means Artemis creates collections with bare names (e.g. `SearchableEntities`). Pyris uses its own fixed collection names (e.g. `Lectures`, `Faqs`). While Artemis's and Pyris's current collection names do not overlap, leaving the prefix empty is strongly discouraged: it provides no namespace separation and risks collisions as either service adds new collections in the future. Always set a non-empty prefix when sharing a Weaviate instance.
+
+</Callout>
+
+Set a distinct prefix that avoids clashing with Pyris's reserved names:
+
+```yaml
+artemis:
+  weaviate:
+    collection-prefix: Artemis_   # e.g. "Artemis_" — must be non-empty when sharing with Pyris
+```
+
+The prefix is prepended to every collection Artemis creates. Changing it later is a breaking change — all existing collections must be dropped and reindexed (see [Reindex / migration runbook](#reindex--migration-runbook)).
+
+### Vectorizer module — Artemis-only concern
+
+The `vectorizer-module` property in Artemis's config controls only how Artemis produces and stores vectors. **Pyris and Atlas self-provide their own vectors** and pass them directly to Weaviate at write time — they do not use the server-side vectorizer module at all. A mismatch between Artemis's `vectorizer-module` setting and the Weaviate server's loaded modules has no effect on Pyris or Atlas collections.
+
+Differing embedding dimensions across collections (e.g., Artemis using 768-d local embeddings while Pyris uses 1536-d OpenAI embeddings) are fully supported — each Weaviate collection stores its own schema independently.
+
+### API key and access control
+
+Both Artemis and Pyris typically use the **same API key** to authenticate against the shared Weaviate instance. A shared key grants broad admin-list access to all collections on the instance.
+
+If your security policy requires stricter isolation between the two services, Weaviate supports [Role-Based Access Control (RBAC)](https://weaviate.io/developers/weaviate/configuration/rbac) to restrict each service's key to its own collection prefix. RBAC configuration is done on the Weaviate side; refer to the Weaviate documentation for details.
+
+### gRPC port
+
+Artemis uses Weaviate's gRPC interface (default port **50051**) for efficient query execution. This port must be:
+
+- **Reachable** from the Artemis application server to the Weaviate host.
+- **Secured** in the same way as the REST port — either behind TLS (the Ansible role handles this) or restricted by firewall rules to trusted application servers only.
+
+<Callout variant={CalloutVariant.warning}>
+
+  Do not expose gRPC port 50051 to the public internet without TLS and API-key authentication. Unlike the REST port, gRPC traffic is harder to inspect at the proxy layer, and a misconfigured firewall rule can silently leave it open.
+
+</Callout>
+
+### Summary: shared-instance checklist
+
+| Item | Required action |
+|---|---|
+| Collection namespace | Set `artemis.weaviate.collection-prefix` to a non-empty value (e.g., `Artemis_`) |
+| Vectorizer module | Configure independently for Artemis; Pyris ignores it |
+| API key | Shared key is acceptable; RBAC available for stricter isolation |
+| gRPC port 50051 | Must be reachable from Artemis; secure with TLS or firewall |
+| Embedding dimensions | May differ between Artemis and Pyris collections — no conflict |
+| Pyris setup | See [Iris / EduTelligence admin docs](https://ls1intum.github.io/edutelligence/iris/) |
+
+---
+
+## Operate (backups, upgrades, reindex, troubleshooting)
+
+### Backups and restore
+
+The Artemis Ansible collection's Weaviate role includes scheduled backup support via Weaviate's built-in backup module:
+
+[ls1intum/artemis-ansible-collection — roles/weaviate](https://github.com/ls1intum/artemis-ansible-collection/tree/main/roles/weaviate)
+
+Weaviate backups capture the full data volume (all collections, vectors, and metadata). For manual backup/restore operations, refer to the [Weaviate backup documentation](https://weaviate.io/developers/weaviate/configuration/backups).
+
+<Callout variant={CalloutVariant.info}>
+
+  Weaviate collections can be fully rebuilt from Artemis's source data by dropping them and triggering a reindex. A backup is therefore most valuable for preserving large volumes of embedded data that would be expensive to re-embed (e.g., with a metered OpenAI key). For keyword-only (`none`) deployments, restoring from Artemis's database is often faster than restoring a Weaviate backup.
+
+</Callout>
+
+### Upgrades
+
+Weaviate follows semantic versioning. The shipped Compose files pin the image to **1.37.x**. When upgrading:
+
+1. **Upgrade one minor version at a time** — do not skip minor versions (e.g., 1.37 → 1.38 → 1.39, not 1.37 → 1.39). Each minor release may include schema or storage migrations that must run in order.
+2. Stop the Weaviate container, update the image tag in the Compose file or Ansible vars, then restart.
+3. Check the [Weaviate release notes](https://github.com/weaviate/weaviate/releases) for breaking changes before each step, especially changes to module APIs or authentication config.
+4. After upgrading, verify the instance with the readiness probe and the `/management/health` endpoint described in [Enable and verify Artemis global search](#enable-and-verify-artemis-global-search).
+
+<Callout variant={CalloutVariant.warning}>
+
+  Weaviate does **not** support downgrading. Take a backup before each minor version upgrade.
+
+</Callout>
+
+### Reindex / migration runbook
+
+Artemis checks at startup whether the stored collection schema matches the expected schema (vectorizer module, model, base URL, and vector dimensions). If a drift is detected, Artemis **logs a warning but does not auto-migrate**. There is no live migration path — you must manually drop and recreate the affected collections.
+
+**Trigger conditions for a full reindex:**
+
+- Changing `vectorizer-module` (e.g., `none` → `text2vec-openai`)
+- Changing `open-ai-embedding-model` (different model = different dimensions or embedding space)
+- Changing `open-ai-base-url` to a different model provider
+- Changing `collection-prefix` (collections under the old prefix are orphaned)
+- Upgrading to an embedder with different output dimensions
+
+**Runbook:**
+
+```bash
+# 1. Stop Artemis (to prevent writes during the reindex)
+#    (Your deployment-specific stop command — e.g., systemctl stop artemis)
+
+# 2. Drop all Artemis-owned collections via the Weaviate REST API.
+#    Replace <prefix> with your collection-prefix value (e.g., "Artemis_").
+#    Artemis's primary collection is <prefix>SearchableEntities; Artemis may also create
+#    schema-version helper collections — check your Weaviate instance for any <prefix>-prefixed
+#    collections and delete each one. Never delete bare Pyris collections (Lectures, Faqs, etc.).
+curl -X DELETE \
+     -H "Authorization: Bearer your-weaviate-api-key" \
+     https://your-weaviate-host/v1/schema/<prefix>SearchableEntities
+
+# 3. Update artemis.weaviate.* properties in application-prod.yml with the new settings.
+
+# 4. Start Artemis. It recreates all collections with the new schema on startup.
+
+# 5. Trigger a full reindex via the admin API or wait for the scheduled reindex job.
+#    (See the Artemis developer documentation for the reindex endpoint.)
+```
+
+<Callout variant={CalloutVariant.warning}>
+
+  All previously indexed data is lost when collections are dropped. Users will see no semantic search results until the reindex completes. Plan the migration during a maintenance window.
+
+</Callout>
+
+### Troubleshooting
+
+#### `401 Unauthorized` from Weaviate
+
+- Verify that `artemis.weaviate.api-key` in your Spring profile matches `AUTHENTICATION_APIKEY_ALLOWED_KEYS` in the Weaviate `.env` file.
+- Confirm that `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false` and `AUTHENTICATION_APIKEY_ENABLED=true` are both set consistently in the `.env` file.
+- Test the key directly with the readiness probe:
+  ```bash
+  curl -v -H "Authorization: Bearer your-weaviate-api-key" \
+       https://your-weaviate-host/v1/.well-known/ready
+  ```
+- If you recently rotated the key, restart Artemis to pick up the new value from the profile.
+
+#### gRPC port 50051 unreachable
+
+- Confirm the port is open in your firewall / security group rules between the Artemis host and the Weaviate host.
+- Verify that the Weaviate container is exposing the port: `docker compose ps` should show `0.0.0.0:50051->50051/tcp` (or the equivalent bind for your setup).
+- If Weaviate is behind an nginx reverse proxy, ensure the proxy is configured for HTTP/2 passthrough on this port — standard HTTP/1.1 proxies do not support gRPC.
+- Test direct connectivity: `nc -zv your-weaviate-host 50051` from the Artemis host.
+
+#### Validator failure at Artemis startup
+
+Artemis's `WeaviateValidator` runs at startup and fails fast on misconfiguration. Common causes:
+
+| Error message fragment | Cause | Fix |
+|---|---|---|
+| `open-ai-base-url` is blank | `vectorizer-module: text2vec-openai` set but `open-ai-base-url` missing | Add `open-ai-base-url` to your profile |
+| `gpu-api-key` is blank | `text2vec-openai` set but `gpu-api-key` missing | Add `gpu-api-key` (your embedding endpoint API key) |
+| `Cannot connect to Weaviate` | Host unreachable or wrong port | Check `http-host`, `http-port`, and firewall rules |
+| `Collection schema drift` | Stored schema does not match configured schema | Follow the [reindex runbook](#reindex--migration-runbook) |
+
+<Callout variant={CalloutVariant.info}>
+
+  All validator errors are logged at `ERROR` level with the property name and the expected vs. actual value. Check `artemis.log` (or your log aggregator) for the full message before changing config blindly.
+
+</Callout>

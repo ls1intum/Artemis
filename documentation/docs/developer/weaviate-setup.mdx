@@ -7,12 +7,18 @@ This guide explains how to set up a local Weaviate instance for development with
 Weaviate is a vector database used by Artemis in two independent ways:
 
 - **Global search (Artemis-native)** — Artemis connects to Weaviate directly to offer keyword and semantic search across entities (lectures, exercises, exams, FAQs, communication channels). This is gated by the `artemis.weaviate.enabled` flag and works without Pyris.
-- **Iris / Pyris (EduTelligence)** — When running Iris, Pyris uses Weaviate to store and retrieve embeddings. Pyris connects with its own configuration; both consumers can share a single Weaviate instance as long as their `collection-prefix` values differ (Artemis defaults to `Artemis_`).
+- **Iris / Pyris (EduTelligence)** — When running Iris, Pyris uses Weaviate to store and retrieve embeddings. Pyris connects with its own configuration; both consumers can share a single Weaviate instance as long as their `collection-prefix` values differ (the runtime default for Artemis is empty, so set a non-empty prefix such as `Artemis_` when sharing an instance).
 
 <Callout variant={CalloutVariant.info}>
 
   Setting up Weaviate is only required if you enable the global search in Artemis or if you run Pyris locally for Iris functionality.
 If you only need basic Artemis features without AI assistance and without global search, you can skip this setup.
+
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+
+  For production provisioning, embedder selection, and operator runbooks, see the [admin guide](../admin/global-search-weaviate).
 
 </Callout>
 
@@ -81,13 +87,13 @@ For semantic search using an OpenAI-compatible embedding API such as [Ollama](ht
    ```bash
    brew install ollama   # macOS
    ollama serve
-   ollama pull qwen3-embedding:8b
+   ollama pull <your-embedding-model>
    ```
 
 2. Verify Ollama is serving embeddings:
    ```bash
    curl http://localhost:11434/v1/embeddings -H 'Content-Type: application/json' \
-     -d '{"model":"qwen3-embedding:8b","input":"test"}'
+     -d '{"model":"<your-embedding-model>","input":"test"}'
    ```
 
 3. Start Weaviate with the OpenAI module:
@@ -105,10 +111,6 @@ For semantic search using an OpenAI-compatible embedding API such as [Ollama](ht
    DEFAULT_VECTORIZER_MODULE=text2vec-openai
    ENABLE_MODULES=text2vec-openai
    ```
-
-**GPU server setup (e.g. TUM GPU server):**
-
-If you have access to a remote GPU server running Ollama, you only need to start Weaviate with the OpenAI module (step 3 above) and point the Artemis configuration to the remote server (see [Integration with Artemis](#integration-with-artemis)).
 
 <Callout variant={CalloutVariant.info}>
   When using Ollama locally, Weaviate (running in Docker) needs to reach Ollama on your host machine.
@@ -230,20 +232,6 @@ By default, the embedding model runs on CPU. To enable GPU acceleration:
 
 <Callout variant={CalloutVariant.info}>
   GPU acceleration significantly improves embedding generation speed, especially for large batches of documents.
-</Callout>
-
-### Choosing Between Configurations
-
-| Use Case                                                            | Vectorizer Module        | Docker Setup                                        |
-|---------------------------------------------------------------------|--------------------------|-----------------------------------------------------|
-| Development without semantic search                                 | `none`                   | `docker compose -f weaviate.yml up -d`              |
-| Semantic search with local transformer model                        | `text2vec-transformers`  | `docker compose -f weaviate-embeddings.yml up -d`   |
-| Semantic search with Ollama or GPU server                           | `text2vec-openai`        | `weaviate.yml` with `openai.env` + Ollama running   |
-
-<Callout variant={CalloutVariant.info}>
-  Remember to run all commands from the `docker` directory.
-  For `weaviate-embeddings.yml`, ensure you have completed the prerequisites (accept model license, set `HF_TOKEN`) and built the image first.
-  For `text2vec-openai`, ensure Ollama (or a remote GPU server) is reachable from the Weaviate Docker container.
 </Callout>
 
 ---
@@ -433,15 +421,15 @@ artemis:
         scheme: http
         collection-prefix: Artemis_
         vectorizer-module: text2vec-openai
-        open-ai-embedding-model: qwen3-embedding:8b                # Embedding model name served by Ollama / OpenAI-compatible API
-        open-ai-base-url: http://host.docker.internal:11434        # Base URL for the API (no /v1 suffix); use host.docker.internal for local Ollama
-        gpu-api-key: dummy                                         # API key for GPU server (use any non-empty value for Ollama)
+        open-ai-embedding-model: <your-embedding-model>           # Embedding model name served by Ollama / OpenAI-compatible API
+        open-ai-base-url: http://host.docker.internal:11434       # Base URL for the API (no /v1 suffix); use host.docker.internal for local Ollama
+        gpu-api-key: dummy                                        # API key for GPU server (use any non-empty value for Ollama)
 ```
 
-For a remote GPU server (e.g. TUM GPU server), use:
+For a remote OpenAI-compatible GPU server, use:
 
 ```yaml
-        open-ai-base-url: https://gpu.aet.cit.tum.de/api/
+        open-ai-base-url: https://your-gpu-server/api/
         gpu-api-key: <your-api-key>
 ```
 
@@ -449,20 +437,11 @@ For a remote GPU server (e.g. TUM GPU server), use:
 
 The `vectorizer-module` setting determines how vectors (embeddings) are generated:
 
-- **`none` (default)**: Use self-provided vectors. Choose this when:
-  - Using `docker/weaviate.yml` (basic setup)
-  - Embeddings are generated externally (e.g., by Pyris)
-  - You're developing features that don't require semantic search
+- **`none` (default)**: No server-side vectorization. Artemis global search operates in **BM25 keyword-only mode** — no semantic (vector) search is performed. (Pyris, a separate Weaviate consumer, supplies its own vectors independently; that is unrelated to this Artemis setting.)
 
-- **`text2vec-transformers`**: Automatic embedding generation. Choose this when:
-  - Using `docker/weaviate-embeddings.yml` (embeddings setup)
-  - Developing or testing semantic search features
-  - You want Weaviate to automatically generate embeddings for text content
+- **`text2vec-transformers`**: Automatic embedding generation via the local `embeddinggemma-300m` sidecar (`weaviate-embeddings.yml`).
 
-- **`text2vec-openai`**: OpenAI-compatible API embedding generation. Choose this when:
-  - Using Ollama locally or a remote GPU server for embeddings
-  - You want to use a specific embedding model (e.g. `qwen3-embedding:8b`) not bundled with Weaviate
-  - You need GPU-accelerated embeddings without running a local transformer container
+- **`text2vec-openai`**: OpenAI-compatible API embedding generation via Ollama or a remote GPU server.
 
 <Callout variant={CalloutVariant.warning}>
   The `vectorizer-module` setting must match your Docker setup.
