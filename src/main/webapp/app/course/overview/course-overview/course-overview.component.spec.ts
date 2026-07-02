@@ -868,16 +868,16 @@ describe('CourseOverviewComponent', () => {
             expect(internals().titleBarHasSidebar()).toBe(true);
         });
 
-        it('should not show the shared title bar for the exercises or Iris tabs', () => {
+        it('should not show the shared title bar for the exercises tab', () => {
             component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent);
-            expect(internals().showCourseTitleBar()).toBe(false);
-
-            component.activatedComponentReference.set(Object.create(CourseIrisComponent.prototype) as CourseIrisComponent);
             expect(internals().showCourseTitleBar()).toBe(false);
         });
 
-        it('should show the shared title bar for a list tab', () => {
+        it('should show the shared title bar for a list tab and the Iris tab', () => {
             component.activatedComponentReference.set(Object.create(CourseLecturesComponent.prototype) as CourseLecturesComponent);
+            expect(internals().showCourseTitleBar()).toBe(true);
+
+            component.activatedComponentReference.set(Object.create(CourseIrisComponent.prototype) as CourseIrisComponent);
             expect(internals().showCourseTitleBar()).toBe(true);
         });
     });

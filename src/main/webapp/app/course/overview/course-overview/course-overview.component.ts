@@ -94,11 +94,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         | CourseDashboardComponent
         | undefined
     >(undefined);
-    // Exercises and Iris render their own full-height content (no shared title bar), so the sidebar / chat panel reaches the very top.
-    protected readonly showCourseTitleBar = computed(() => {
-        const componentRef = this.activatedComponentReference();
-        return !(componentRef instanceof CourseExercisesComponent) && !(componentRef instanceof CourseIrisComponent);
-    });
+    // Exercises renders its own full-height content (no shared title bar), so its sidebar reaches the very top.
+    protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
     // List tabs whose page title moves into the sidebar header (Iris excluded — it has no sidebar header).
     protected readonly titleInSidebar = computed(() => {
