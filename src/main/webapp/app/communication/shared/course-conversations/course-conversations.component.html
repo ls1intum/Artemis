@@ -34,14 +34,16 @@
                         [inCommunication]="true"
                         [reEmitNonDistinctSidebarEvents]="true"
                         [pageTitle]="pageTitle()"
-                        [showSidebarToggle]="false"
+                        [showSidebarToggle]="true"
                         [isSidebarCollapsed]="isCollapsed()"
                         (toggleSidebar)="toggleSidebar()"
                     />
                 </div>
                 <div class="communication-content-main">
                     <div class="d-flex align-items-center gap-2">
-                        <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" [isCommunicationModule]="true" (toggleSidebar)="toggleSidebar()" />
+                        @if (isCollapsed()) {
+                            <jhi-course-sidebar-toggle-button [isCollapsed]="true" [isCommunicationModule]="true" (toggleSidebar)="toggleSidebar()" />
+                        }
                         <jhi-conversation-global-search
                             class="flex-grow-1"
                             [conversations]="conversationsOfUser()"
