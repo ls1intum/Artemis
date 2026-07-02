@@ -1,5 +1,5 @@
 import { Component, ElementRef, OnChanges, Renderer2, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
-import * as PDFJS from 'pdfjs-dist';
+import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
 import { onError } from 'app/foundation/util/global.utils';
@@ -53,26 +53,11 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     // Injected services
     private readonly alertService = inject(AlertService);
     private readonly renderer = inject(Renderer2);
+    private readonly pdfEngineService = inject(PdfEngineService);
 
     protected readonly faEye = faEye;
     protected readonly faEyeSlash = faEyeSlash;
     protected readonly faGripLines = faGripLines;
-
-    /**
-     * pdfjs-dist requires a URL pointing to a worker script to process PDFs. See:
-     * - <a href="https://github.com/mozilla/pdfjs-dist">official package repo</a>
-     * - <a href="https://github.com/mozilla/pdf.js/issues/12917#">discussion about the topic</a>
-     *
-     * The worker script is included in the package but is required to be served separately as a static asset for Angular projects. See:
-     * - <a href="https://www.nutrient.io/blog/how-to-build-an-angular-pdf-viewer-with-pdfjs/#:~:text=Copy%20the%20,use%20the%20following%20bash%20command">this article</a>
-     * - <a href="https://stackoverflow.com/questions/49822219/how-to-give-pdf-js-worker-in-angular-cli-application#:~:text=Put%20your%20pdf,to%20%2Fsrc%2Fassets%2F%20And%20then%20use">this stackoverflow discussion
-     * - <a href="https://github.com/mozilla/pdf.js/discussions/18438#">this github issue</a>
-     *
-     * In Artemis the postinstall lifecycle hook (see package.json) copies the script from the package to the publicly served contents folder.
-     */
-    constructor() {
-        PDFJS.GlobalWorkerOptions.workerSrc = '/content/scripts/pdf.worker.min.mjs';
-    }
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['orderedPages']) {
@@ -93,6 +78,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     async renderPages(): Promise<void> {
         const pages = this.orderedPages();
         try {
+            const engine = await this.pdfEngineService.getEngine();
             const containerEl = this.pdfContainer().nativeElement;
             const canvases = containerEl.querySelectorAll('.pdf-canvas-container canvas');
             canvases.forEach((canvas: HTMLCanvasElement) => {
@@ -105,13 +91,12 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
             for (let i = 0; i < pages.length; i++) {
                 const page = pages[i];
-                const pageProxy = page.pageProxy;
-                if (pageProxy) {
-                    const viewport = pageProxy.getViewport({ scale: 1 });
-                    const canvas = this.createCanvas(viewport);
+                const sourcePage = page.sourceDoc.pages[page.sourceIndex];
+                if (sourcePage) {
+                    const imageData = await engine.renderPageRaw(page.sourceDoc, sourcePage, { scaleFactor: 1 }).toPromise();
+                    const canvas = this.createCanvas(imageData.width, imageData.height);
                     const context = canvas.getContext('2d')!;
-
-                    await pageProxy.render({ canvasContext: context, canvas, viewport }).promise;
+                    context.putImageData(new ImageData(imageData.data, imageData.width, imageData.height), 0, 0);
 
                     const container = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${page.slideId}`);
                     if (container) {
@@ -146,14 +131,15 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
-     * Creates a canvas for each page of the PDF to allow for individual page rendering.
-     * @param viewport The viewport settings used for rendering the page.
+     * Creates a canvas for an individual PDF page, sized to the rendered bitmap.
+     * @param width The rendered page width in pixels.
+     * @param height The rendered page height in pixels.
      * @returns A new HTMLCanvasElement configured for the PDF page.
      */
-    createCanvas(viewport: PDFJS.PageViewport): HTMLCanvasElement {
+    createCanvas(width: number, height: number): HTMLCanvasElement {
         const canvas = document.createElement('canvas');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+        canvas.width = width;
+        canvas.height = height;
         canvas.style.display = 'block';
         canvas.style.width = '100%';
         canvas.style.height = '100%';

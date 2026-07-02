@@ -106,7 +106,6 @@ export default tseslint.config(
             'src/test/vitest/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
-            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
             'src/test/javascript/spec/stub.js',
             // Root-level config files (not part of the Angular client)
             '*.js',

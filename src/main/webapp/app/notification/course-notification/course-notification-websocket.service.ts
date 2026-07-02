@@ -34,11 +34,6 @@ export class CourseNotificationWebsocketService implements OnDestroy {
     public websocketNotification$ = this.websocketNotificationSubject.asObservable();
 
     constructor() {
-        // The PDF viewer iframe route should stay lightweight and must not establish global websocket subscriptions.
-        if (window.location.pathname.includes('/pdf-viewer-iframe')) {
-            return;
-        }
-
         this.userSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
             if (user && (this.currentUser === undefined || this.currentUser.id !== user.id)) {
                 this.currentUser = user;

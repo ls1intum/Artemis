@@ -15,7 +15,8 @@ import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { PDFDocument } from 'pdf-lib';
+import { PdfEngineService } from 'app/core/pdf/pdf-engine.service';
+import type { PdfDocumentObject } from '@embedpdf/models';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbPopover, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -26,7 +27,6 @@ import { finalize } from 'rxjs/operators';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
-import * as PDFJS from 'pdfjs-dist';
 
 interface PdfOperation {
     type: 'MERGE' | 'DELETE' | 'HIDE' | 'SHOW' | 'REORDER';
@@ -36,8 +36,8 @@ interface PdfOperation {
 
 export interface PDFSource {
     id: string;
-    pdfDocument: PDFDocument;
-    blob: Blob;
+    /** The document handle opened in the shared PDFium engine (cached by {@link id}). */
+    doc: PdfDocumentObject;
     url: string;
 }
 
@@ -47,7 +47,8 @@ export interface OrderedPage {
     order: number;
     sourcePdfId: string;
     sourceIndex: number;
-    pageProxy: PDFJS.PDFPageProxy;
+    /** Handle of the source document this page belongs to, used by the thumbnail grid to render it. */
+    sourceDoc: PdfDocumentObject;
 }
 
 export interface HiddenPage {
@@ -140,6 +141,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly alertService = inject(AlertService);
     private readonly router = inject(Router);
+    private readonly pdfEngineService = inject(PdfEngineService);
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -248,20 +250,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     async loadPdf(fileUrl: string, arrayBuffer: ArrayBuffer, sourceId: string = 'original', existingSlides?: Slide[], append: boolean = false): Promise<void> {
         this.isPdfLoading.set(true);
         try {
-            const pdfDocument = await PDFDocument.load(arrayBuffer);
-            const pageCount = pdfDocument.getPageCount();
-
-            const loadingTask = PDFJS.getDocument({ url: fileUrl });
-            const pdfJsDocument = await loadingTask.promise;
+            const engine = await this.pdfEngineService.getEngine();
+            const doc = await engine.openDocumentBuffer({ id: sourceId, content: arrayBuffer }).toPromise();
+            const pageCount = doc.pageCount;
 
             this.sourcePDFs.update((sources) => {
                 const newSources = new Map(sources);
-                newSources.set(sourceId, {
-                    id: sourceId,
-                    pdfDocument,
-                    blob: new Blob([arrayBuffer], { type: 'application/pdf' }),
-                    url: fileUrl,
-                });
+                newSources.set(sourceId, { id: sourceId, doc, url: fileUrl });
                 return newSources;
             });
 
@@ -285,36 +280,27 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 const newPages: OrderedPage[] = [];
 
                 for (let i = 0; i < pageCount; i++) {
-                    const pageProxy = await pdfJsDocument.getPage(i + 1);
-
                     newPages.push({
                         slideId: `temp_${Date.now()}_${i}`,
                         initialIndex: currentPageCount + i + 1,
                         order: currentPageCount + i + 1,
                         sourcePdfId: sourceId,
                         sourceIndex: i,
-                        pageProxy,
+                        sourceDoc: doc,
                     });
                 }
 
                 this.pageOrder.update((pages) => [...pages, ...newPages]);
                 this.isFileChanged.set(true);
             } else if (existingSlides && existingSlides.length > 0) {
-                const orderedPages: OrderedPage[] = [];
-
-                for (const slide of existingSlides) {
-                    const sourceIndex = slide.slideNumber! - 1;
-                    const pageProxy = await pdfJsDocument.getPage(sourceIndex + 1);
-
-                    orderedPages.push({
-                        initialIndex: slide.slideNumber!,
-                        slideId: slide.id!.toString(),
-                        order: slide.slideNumber!,
-                        sourcePdfId: sourceId,
-                        sourceIndex,
-                        pageProxy,
-                    });
-                }
+                const orderedPages: OrderedPage[] = existingSlides.map((slide) => ({
+                    initialIndex: slide.slideNumber!,
+                    slideId: slide.id!.toString(),
+                    order: slide.slideNumber!,
+                    sourcePdfId: sourceId,
+                    sourceIndex: slide.slideNumber! - 1,
+                    sourceDoc: doc,
+                }));
 
                 orderedPages.sort((a, b) => a.order - b.order);
                 this.pageOrder.set(orderedPages);
@@ -322,15 +308,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 const orderedPages: OrderedPage[] = [];
 
                 for (let i = 0; i < pageCount; i++) {
-                    const pageProxy = await pdfJsDocument.getPage(i + 1);
-
                     orderedPages.push({
                         initialIndex: i + 1,
                         slideId: `temp_${Date.now()}_${i}`,
                         order: i + 1,
                         sourcePdfId: sourceId,
                         sourceIndex: i,
-                        pageProxy,
+                        sourceDoc: doc,
                     });
                 }
 
@@ -347,9 +331,25 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.attachmentSub?.unsubscribe();
         this.attachmentVideoUnitSub?.unsubscribe();
 
-        this.sourcePDFs().forEach((source) => {
+        const sources = this.sourcePDFs();
+        sources.forEach((source) => {
             URL.revokeObjectURL(source.url);
         });
+
+        // Close the documents opened in the shared PDFium engine so their ids are freed and memory is released.
+        if (sources.size > 0) {
+            this.pdfEngineService
+                .getEngine()
+                .then((engine) => {
+                    sources.forEach((source) => {
+                        engine
+                            .closeDocument(source.doc)
+                            .toPromise()
+                            .catch(() => {});
+                    });
+                })
+                .catch(() => {});
+        }
     }
 
     constructor() {
@@ -390,206 +390,63 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Creates a PDF document based on the source PDF and operations
+     * Builds the bytes of a PDF composed of the given pages, in order, by importing each page from its
+     * source document in the shared PDFium engine. This replaces the previous pdf-lib replay pipeline:
+     * because every {@link OrderedPage} already knows its source document and original page index, the final
+     * document is simply a merge of those pages in the desired order (PDFium preserves the requested order).
      *
-     * @param sourcePdfDoc The source PDF document
-     * @param operations The operations to apply
-     * @param pageOrder The current page order
-     * @param hiddenSlideIds Optional array of slide IDs to exclude from the PDF
-     * @returns Promise<PDFDocument> The created PDF document
+     * @param order the pages to include, in their final order
+     * @returns the serialized PDF as an ArrayBuffer
      */
-    private async createPdfDocument(sourcePdfDoc: PDFDocument, operations: PdfOperation[], pageOrder: OrderedPage[], hiddenSlideIds: string[] = []): Promise<PDFDocument> {
-        const pdfDoc = await PDFDocument.load(await sourcePdfDoc.save());
-
-        const slideToPageMap = new Map<string, number>();
-        pageOrder
-            .filter((page) => page.sourcePdfId === 'original')
-            .forEach((page) => {
-                slideToPageMap.set(page.slideId, page.sourceIndex);
-            });
-
-        const sortedOperations = [...operations].sort((a, b) => a.timestamp.valueOf() - b.timestamp.valueOf());
-
-        for (const operation of sortedOperations) {
-            await this.applyOperation(pdfDoc, operation, slideToPageMap);
-        }
-
-        if (hiddenSlideIds.length > 0) {
-            await this.removeHiddenPages(pdfDoc, hiddenSlideIds, pageOrder);
-        }
-
-        return pdfDoc;
+    private async buildPdfBytes(order: OrderedPage[]): Promise<ArrayBuffer> {
+        const engine = await this.pdfEngineService.getEngine();
+        const mergeConfigs = order.map((page) => ({ docId: page.sourcePdfId, pageIndices: [page.sourceIndex] }));
+        const merged = await engine.mergePages(mergeConfigs).toPromise();
+        return merged.content;
     }
 
     /**
-     * Applies a single operation to the PDF document
-     *
-     * @param pdfDoc The PDF document to modify
-     * @param operation The operation to apply
-     * @param slideToPageMap The mapping from slide ID to page index
+     * Wraps serialized PDF bytes in a {@link File} for upload.
      */
-    private async applyOperation(pdfDoc: PDFDocument, operation: PdfOperation, slideToPageMap: Map<string, number>): Promise<void> {
-        switch (operation.type) {
-            case 'DELETE': {
-                await this.applyDeleteOperation(pdfDoc, operation.data.slideIds, slideToPageMap);
-                break;
-            }
-            case 'MERGE': {
-                await this.applyMergeOperation(pdfDoc, operation.data.sourceId, slideToPageMap);
-                break;
-            }
-            case 'REORDER': {
-                await this.applyReorderOperation(pdfDoc, operation.data.pageOrder, slideToPageMap);
-                break;
-            }
-        }
-    }
-
-    /**
-     * Applies a DELETE operation to the PDF document
-     */
-    private async applyDeleteOperation(pdfDoc: PDFDocument, slideIds: string[], slideToPageMap: Map<string, number>): Promise<void> {
-        const pageIndicesToDelete = [];
-
-        for (const slideId of slideIds) {
-            const originalIndex = slideToPageMap.get(slideId);
-            if (originalIndex !== undefined) {
-                pageIndicesToDelete.push(originalIndex);
-            }
-        }
-
-        pageIndicesToDelete.sort((a, b) => b - a);
-
-        for (const pageIndex of pageIndicesToDelete) {
-            pdfDoc.removePage(pageIndex);
-        }
-
-        for (const slideId of slideIds) {
-            slideToPageMap.delete(slideId);
-        }
-
-        const remainingSlides = Array.from(slideToPageMap.entries());
-        for (const [slideId, pageIndex] of remainingSlides) {
-            const newIndex = pageIndex - pageIndicesToDelete.filter((delIndex) => delIndex < pageIndex).length;
-            slideToPageMap.set(slideId, newIndex);
-        }
-    }
-
-    /**
-     * Applies a MERGE operation to the PDF document
-     */
-    private async applyMergeOperation(pdfDoc: PDFDocument, sourceId: string, slideToPageMap: Map<string, number>): Promise<void> {
-        const sourcePdf = this.sourcePDFs().get(sourceId);
-        if (sourcePdf) {
-            const pageIndices = Array.from({ length: sourcePdf.pdfDocument.getPageCount() }, (_, i) => i);
-            const copiedPages = await pdfDoc.copyPages(sourcePdf.pdfDocument, pageIndices);
-            for (const page of copiedPages) {
-                pdfDoc.addPage(page);
-            }
-        }
-
-        const mergePages = this.pageOrder().filter((page) => page.sourcePdfId === sourceId);
-        const baseIndex = pdfDoc.getPageCount() - mergePages.length;
-
-        mergePages.forEach((page, index) => {
-            slideToPageMap.set(page.slideId, baseIndex + index);
-        });
-    }
-
-    /**
-     * Applies a REORDER operation to the PDF document
-     */
-    private async applyReorderOperation(pdfDoc: PDFDocument, pageOrder: { slideId: string; order: number }[], slideToPageMap: Map<string, number>): Promise<void> {
-        const totalPages = pdfDoc.getPageCount();
-        const pageObjects = Array.from({ length: totalPages }, (_, i) => pdfDoc.getPage(i));
-
-        for (let i = totalPages - 1; i >= 0; i--) {
-            pdfDoc.removePage(i);
-        }
-
-        const slideToOrderMap = new Map<string, number>();
-        pageOrder.forEach((item) => {
-            slideToOrderMap.set(item.slideId, item.order);
-        });
-
-        const reorderEntries = Array.from(slideToPageMap.entries()).map(([slideId, originalIndex]) => ({
-            slideId: slideId,
-            originalIndex: originalIndex,
-            targetOrder: slideToOrderMap.get(slideId) || Number.MAX_SAFE_INTEGER,
-        }));
-
-        reorderEntries.sort((a, b) => a.targetOrder - b.targetOrder);
-
-        const newSlideToPageMap = new Map<string, number>();
-
-        for (let i = 0; i < reorderEntries.length; i++) {
-            const { slideId, originalIndex } = reorderEntries[i];
-            if (originalIndex !== undefined && originalIndex < pageObjects.length) {
-                pdfDoc.addPage(pageObjects[originalIndex]);
-                newSlideToPageMap.set(slideId, i);
-            }
-        }
-
-        slideToPageMap.clear();
-        for (const [slideId, newIndex] of newSlideToPageMap.entries()) {
-            slideToPageMap.set(slideId, newIndex);
-        }
-    }
-
-    /**
-     * Removes hidden pages from the PDF document
-     */
-    private async removeHiddenPages(pdfDoc: PDFDocument, hiddenSlideIds: string[], pageOrder: OrderedPage[]): Promise<void> {
-        const slideToFinalPositionMap = new Map<string, number>();
-        pageOrder.forEach((page, index) => {
-            slideToFinalPositionMap.set(page.slideId, index);
-        });
-
-        const hiddenPageIndices = hiddenSlideIds
-            .map((slideId) => slideToFinalPositionMap.get(slideId))
-            .filter((index): index is number => index !== undefined)
-            .sort((a, b) => b - a);
-
-        for (const pageIndex of hiddenPageIndices) {
-            pdfDoc.removePage(pageIndex);
-        }
-    }
-
-    /**
-     * Creates a File object from a PDF document
-     */
-    private async createPdfFile(pdfDoc: PDFDocument, fileName: string, isStudentVersion: boolean = false): Promise<File> {
-        const pdfBytes = await pdfDoc.save();
-        const arrayBuffer = pdfBytes.slice(0, pdfBytes.byteLength).buffer;
+    private bytesToFile(bytes: ArrayBuffer, fileName: string, isStudentVersion: boolean = false): File {
         const suffix = isStudentVersion ? '_student' : '';
-        return new File([arrayBuffer], `${fileName}${suffix}.pdf`, { type: 'application/pdf' });
+        return new File([bytes], `${fileName}${suffix}.pdf`, { type: 'application/pdf' });
     }
 
     /**
-     * Applies operations to create instructor and student PDF documents
-     * Refactored version of the original applyOperations method
+     * Produces the instructor PDF (all pages in their final order) and, when requested, the student PDF
+     * (the same order with hidden pages removed). Both are built from the final page order, which already
+     * reflects every delete/reorder/merge operation.
      */
     async applyOperations(studentVersion: boolean = false): Promise<{
-        instructorPdf: PDFDocument;
-        studentPdf: PDFDocument | undefined;
+        instructorBytes: ArrayBuffer;
+        studentBytes: ArrayBuffer | undefined;
     }> {
-        const originalSource = this.sourcePDFs().get('original');
-        if (!originalSource) {
+        if (!this.sourcePDFs().get('original')) {
             throw new Error('Original PDF source not found');
         }
 
-        const instructorPdf = await this.createPdfDocument(originalSource.pdfDocument, this.operations(), this.pageOrder());
+        const finalOrder = await this.getFinalPageOrder();
+        if (finalOrder.length === 0) {
+            throw new Error('Cannot save a PDF without pages');
+        }
+        const instructorBytes = await this.buildPdfBytes(finalOrder);
 
-        let studentPdf = undefined;
+        let studentBytes: ArrayBuffer | undefined = undefined;
         if (studentVersion) {
-            const hiddenSlideIds = Object.keys(this.hiddenPages());
-            if (hiddenSlideIds.length > 0) {
-                studentPdf = await PDFDocument.load(await instructorPdf.save());
-                await this.removeHiddenPages(studentPdf, hiddenSlideIds, await this.getFinalPageOrder());
+            const hiddenSlideIds = new Set(Object.keys(this.hiddenPages()));
+            if (hiddenSlideIds.size > 0) {
+                const visibleOrder = finalOrder.filter((page) => !hiddenSlideIds.has(page.slideId));
+                if (visibleOrder.length === 0) {
+                    // Every page is hidden: a student PDF would be empty (a 0-page document), so reject the save
+                    // instead of uploading an invalid student version.
+                    throw new Error('Cannot create a student version with no visible pages');
+                }
+                studentBytes = await this.buildPdfBytes(visibleOrder);
             }
         }
 
-        return { instructorPdf, studentPdf };
+        return { instructorBytes, studentBytes };
     }
 
     /**
@@ -606,9 +463,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         try {
             const pdfName = this.attachment()?.name ?? this.attachmentVideoUnit()?.name ?? '';
-            const { instructorPdf, studentPdf } = await this.applyOperations(true);
+            const { instructorBytes, studentBytes } = await this.applyOperations(true);
 
-            const instructorPdfFile = await this.createPdfFile(instructorPdf, pdfName);
+            const instructorPdfFile = this.bytesToFile(instructorBytes, pdfName);
 
             if (instructorPdfFile.size > MAX_FILE_SIZE) {
                 this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
@@ -622,8 +479,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 const hiddenPages = this.getHiddenPages();
                 await this.updateAttachmentVideoUnit(instructorPdfFile, hiddenPages);
 
-                if (studentPdf && hiddenPages.length > 0) {
-                    const studentPdfFile = await this.createPdfFile(studentPdf, pdfName, true);
+                if (studentBytes && hiddenPages.length > 0) {
+                    const studentPdfFile = this.bytesToFile(studentBytes, pdfName, true);
                     await this.updateStudentVersion(studentPdfFile);
                 } else {
                     this.finishSaving();

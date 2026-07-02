@@ -129,6 +129,30 @@ describe('CourseNotificationWebsocketService', () => {
             expect(processedNotification.parameters).toEqual({ key: 'value' });
         });
 
+        it('should drop notifications whose category or status does not map to a known enum', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
+
+            const courses = [{ id: 1, title: 'Course 1' }] as Course[];
+            coursesSubject.next(courses);
+
+            const malformedNotification: CourseNotification = {
+                notificationId: 999,
+                courseId: 1,
+                notificationType: 'newPostNotification',
+                category: 'NOT_A_REAL_CATEGORY' as unknown as CourseNotificationCategory,
+                status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
+                // @ts-ignore
+                creationDate: new Date('2024-01-15T10:00:00'),
+                parameters: {},
+            };
+
+            websocketReceiveSubject.next(malformedNotification);
+
+            // The category cannot be mapped to a CourseNotificationCategory, so the payload is skipped entirely.
+            expect(courseNotificationServiceMock.addNotification).not.toHaveBeenCalled();
+        });
+
         it('should emit received notifications via websocketNotification$ observable', async () => {
             const user = { id: 'user1' } as unknown as User;
             userSubject.next(user);
@@ -204,6 +228,20 @@ describe('CourseNotificationWebsocketService', () => {
             coursesSubject.next(courses2);
 
             expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/notification/2');
+        });
+
+        it('should unsubscribe an existing courses subscription before opening a new one', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
+
+            const existingSubscription = service['coursesSubscription'];
+            expect(existingSubscription).toBeDefined();
+            const unsubscribeSpy = vi.spyOn(existingSubscription!, 'unsubscribe');
+
+            // Re-entering subscribeToUserCourses must release the previous courses subscription first (no leak).
+            service['subscribeToUserCourses']();
+
+            expect(unsubscribeSpy).toHaveBeenCalledOnce();
         });
 
         it('should not resubscribe when the same user is emitted twice', () => {
