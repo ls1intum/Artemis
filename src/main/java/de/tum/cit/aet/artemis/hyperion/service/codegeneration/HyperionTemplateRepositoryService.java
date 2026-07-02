@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -30,8 +28,6 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 @Conditional(HyperionEnabled.class)
 public class HyperionTemplateRepositoryService extends HyperionCodeGenerationService {
 
-    private static final Logger log = LoggerFactory.getLogger(HyperionTemplateRepositoryService.class);
-
     private final GitService gitService;
 
     private final HyperionProgrammingExerciseContextRendererService contextRenderer;
@@ -52,12 +48,6 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
         this.contextRenderer = contextRenderer;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
-     * @throws NetworkingException      if repository access fails or AI service communication fails
-     */
     @Override
     protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
@@ -69,12 +59,6 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/template/1_plan.st", templateVariables);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
-     * @throws NetworkingException      if AI service communication fails
-     */
     @Override
     protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
             String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
@@ -83,34 +67,18 @@ public class HyperionTemplateRepositoryService extends HyperionCodeGenerationSer
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/template/2_file_structure.st", templateVariables);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
-     * @throws NetworkingException      if AI service communication fails
-     */
     @Override
     protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
-        CodeGenerationResponseDTO fileStructure = defineFileStructure(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
-                selectedFeedbackThreads);
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO fileStructure) throws NetworkingException {
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("fileStructure", fileStructure.getFiles());
         return callChatClient(user, exercise, courseId, "/prompts/hyperion/template/3_headers.st", templateVariables);
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @throws IllegalArgumentException if {@code exercise}, {@code repositoryStructure}, or {@code consistencyIssues} is {@code null}
-     * @throws NetworkingException      if AI service communication fails
-     */
     @Override
     protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads) throws NetworkingException {
-        CodeGenerationResponseDTO headers = generateClassAndMethodHeaders(user, exercise, courseId, solutionPlan, repositoryStructure, buildEnvironmentContext, consistencyIssues,
-                selectedFeedbackThreads);
+            String buildEnvironmentContext, String consistencyIssues, String selectedFeedbackThreads, CodeGenerationResponseDTO headers) throws NetworkingException {
         Map<String, Object> templateVariables = baseTemplateVariables(exercise, repositoryStructure, buildEnvironmentContext, consistencyIssues, selectedFeedbackThreads);
         templateVariables.put("solutionPlan", solutionPlan);
         templateVariables.put("filesWithHeaders", headers.getFiles());
