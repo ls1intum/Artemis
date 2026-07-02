@@ -1,15 +1,5 @@
 @if (isCommunicationEnabled()) {
     <jhi-loading-indicator-container [isLoading]="isLoading()">
-        <div [hidden]="!isCodeOfConductAccepted()">
-            <jhi-conversation-global-search
-                [conversations]="conversationsOfUser()"
-                [courseId]="course()?.id"
-                (onSearch)="onSearch($event)"
-                (onSelectionChange)="onSelectionChange($event)"
-                (onClearSearch)="onClearSearchAndRestorePrevious()"
-            />
-        </div>
-
         <!-- only display after isCodeOfConductAccepted() is loaded and set to false -->
         @if (course() && isCodeOfConductAccepted() === false) {
             <div class="module-bg px-3 py-3 scrollable-content">
@@ -24,7 +14,7 @@
             </div>
         }
         @if (isCodeOfConductAccepted() && isServiceSetUp() && course()) {
-            <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between sidebar-tab-content-row">
                 <div class="communication-content-sidebar" [ngClass]="{ 'sidebar-collapsed': isCollapsed(), 'is-not-in-active-conversation': !activeConversation() }">
                     <jhi-sidebar
                         (onSelectConversation)="onConversationSelected($event)"
@@ -48,48 +38,63 @@
                         (toggleSidebar)="toggleSidebar()"
                     />
                 </div>
-                @if (course() && !activeConversation() && isCodeOfConductPresented()) {
-                    <div class="col pe-0 flex-grow-1">
-                        <jhi-course-conversations-code-of-conduct [course]="course()!" />
-                    </div>
-                }
-                <div
-                    class="communication-message-wrap col flex-grow-1 module-bg rounded-3 scrollable-communication-content"
-                    [ngClass]="{ 'is-answer-thread-open': !!postInThread() }"
-                >
-                    @if (activeConversation()) {
-                        <jhi-conversation-header (onSearchClick)="triggerSearchInConversation()" (togglePinnedMessage)="togglePinnedView()" [pinnedMessageCount]="pinnedCount()" />
-                        <jhi-conversation-messages
-                            (openThread)="openThread($event)"
-                            [course]="course()"
-                            (onNavigateToPost)="onTriggerNavigateToPost($event)"
-                            [focusPostId]="focusPostId()"
-                            [openThreadOnFocus]="openThreadOnFocus()"
-                            [showOnlyPinned]="showOnlyPinned()"
-                            (pinnedCount)="onPinnedCountChanged($event)"
-                        />
-                    } @else {
-                        @if (selectedSavedPostStatus() === undefined) {
-                            <jhi-course-wide-search
-                                (openThread)="postInThread.set($event)"
-                                [courseWideSearchConfig]="courseWideSearchConfig"
-                                (onNavigateToPost)="onTriggerNavigateToPost($event)"
-                            />
-                        } @else {
-                            <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus()!" [courseId]="course()!.id!" (onNavigateToPost)="onNavigateToPost($event)" />
+                <div class="communication-content-main">
+                    <jhi-conversation-global-search
+                        [conversations]="conversationsOfUser()"
+                        [courseId]="course()?.id"
+                        (onSearch)="onSearch($event)"
+                        (onSelectionChange)="onSelectionChange($event)"
+                        (onClearSearch)="onClearSearchAndRestorePrevious()"
+                    />
+                    <div class="d-flex justify-content-between">
+                        @if (course() && !activeConversation() && isCodeOfConductPresented()) {
+                            <div class="col pe-0 flex-grow-1">
+                                <jhi-course-conversations-code-of-conduct [course]="course()!" />
+                            </div>
                         }
-                    }
-                </div>
-                <div class="scrollable-communication-content" [ngClass]="{ 'is-answer-thread-open': !!postInThread() }">
-                    @if (!!postInThread()) {
-                        <jhi-conversation-thread-sidebar
-                            [activeConversation]="activeConversation() ?? postInThread()!.conversation!"
-                            [readOnlyMode]="!!getAsChannel(postInThread()!.conversation)?.isArchived"
-                            [activePost]="postInThread()"
-                            (closePostThread)="closeThread()"
-                            [course]="course()"
-                        />
-                    }
+                        <div
+                            class="communication-message-wrap col flex-grow-1 module-bg rounded-3 scrollable-communication-content"
+                            [ngClass]="{ 'is-answer-thread-open': !!postInThread() }"
+                        >
+                            @if (activeConversation()) {
+                                <jhi-conversation-header
+                                    (onSearchClick)="triggerSearchInConversation()"
+                                    (togglePinnedMessage)="togglePinnedView()"
+                                    [pinnedMessageCount]="pinnedCount()"
+                                />
+                                <jhi-conversation-messages
+                                    (openThread)="openThread($event)"
+                                    [course]="course()"
+                                    (onNavigateToPost)="onTriggerNavigateToPost($event)"
+                                    [focusPostId]="focusPostId()"
+                                    [openThreadOnFocus]="openThreadOnFocus()"
+                                    [showOnlyPinned]="showOnlyPinned()"
+                                    (pinnedCount)="onPinnedCountChanged($event)"
+                                />
+                            } @else {
+                                @if (selectedSavedPostStatus() === undefined) {
+                                    <jhi-course-wide-search
+                                        (openThread)="postInThread.set($event)"
+                                        [courseWideSearchConfig]="courseWideSearchConfig"
+                                        (onNavigateToPost)="onTriggerNavigateToPost($event)"
+                                    />
+                                } @else {
+                                    <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus()!" [courseId]="course()!.id!" (onNavigateToPost)="onNavigateToPost($event)" />
+                                }
+                            }
+                        </div>
+                        <div class="scrollable-communication-content" [ngClass]="{ 'is-answer-thread-open': !!postInThread() }">
+                            @if (!!postInThread()) {
+                                <jhi-conversation-thread-sidebar
+                                    [activeConversation]="activeConversation() ?? postInThread()!.conversation!"
+                                    [readOnlyMode]="!!getAsChannel(postInThread()!.conversation)?.isArchived"
+                                    [activePost]="postInThread()"
+                                    (closePostThread)="closeThread()"
+                                    [course]="course()"
+                                />
+                            }
+                        </div>
+                    </div>
                 </div>
             </div>
         }
