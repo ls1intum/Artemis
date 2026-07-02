@@ -19,13 +19,6 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
-# Supply-chain: exempt our own @tumaet/apollon from pnpm's minimum-release-age delay. It is
-# maintained in our org (ls1intum/Apollon) and Artemis tracks its releases closely, so the
-# freshness delay would otherwise block legitimate upgrades. Third-party deps stay under the
-# guard. Revisit if Artemis ever pins Apollon to already-aged versions.
-minimumReleaseAgeExclude:
-    - '@tumaet/apollon'
-
 # Tell pnpm that Angular 21 is an acceptable peer for packages whose published
 # peerDependencies range still lists only "18.x || 19.x || 20.x".
 # We already pin every relevant @angular/* dep under ng-mocks
