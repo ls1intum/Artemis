@@ -33,8 +33,6 @@ import { FormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -161,7 +159,6 @@ describe('Example Modeling Submission Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: ThemeService, useClass: MockThemeService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -594,7 +591,7 @@ describe('Example Modeling Submission Component', () => {
 
         comp.referencedFeedback.set([referencedExample1]);
 
-        (comp as any).highlightColor = vi.fn().mockReturnValue('testColor');
+        (comp as any).highlightColor = 'testColor';
 
         comp.highlightMissedFeedback();
 
