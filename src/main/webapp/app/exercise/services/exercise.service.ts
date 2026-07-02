@@ -433,10 +433,17 @@ export class ExerciseService {
      */
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
         // Build real ExerciseCategory instances (not plain parsed objects) so callers can use equals()/compare().
-        return categories.map((category) => {
-            const categoryObj = parseJson<SerializedExerciseCategory>(category);
-            return new ExerciseCategory(categoryObj.category, categoryObj.color);
-        });
+        // Skip malformed entries instead of throwing, mirroring parseExerciseCategories above.
+        return categories
+            .map((category) => {
+                try {
+                    const categoryObj = parseJson<SerializedExerciseCategory>(category);
+                    return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                } catch {
+                    return undefined;
+                }
+            })
+            .filter((category): category is ExerciseCategory => category !== undefined);
     }
 
     /**

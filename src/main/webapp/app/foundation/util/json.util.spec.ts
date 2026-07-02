@@ -13,7 +13,7 @@ describe('parseJson', () => {
         expect(parseJson<string>('"hello"')).toBe('hello');
         expect(parseJson<number>('42')).toBe(42);
         expect(parseJson<boolean>('true')).toBe(true);
-        expect(parseJson<undefined>('null')).toBeNull();
+        expect(parseJson<null>('null')).toBeNull();
     });
 
     it('throws on invalid JSON, exactly like JSON.parse', () => {
