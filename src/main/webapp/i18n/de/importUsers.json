@@ -26,7 +26,14 @@
             "registrationNumber": "Matrikelnummer",
             "room": "Raum",
             "seat": "Sitz",
-            "email": "E-Mail"
+            "email": "E-Mail",
+            "password": "Passwort",
+            "passwordProvided": "gesetzt",
+            "passwordRandom": "(zufällig)",
+            "createInternalUsers": {
+                "label": "Fehlende Nutzer als interne Nutzer anlegen",
+                "tooltip": "Wenn ein Nutzer aus der CSV-Datei weder in Artemis noch im verbundenen LDAP gefunden wird, wird er als interner Artemis-Nutzer angelegt. Die optionale Spalte 'password' (bzw. 'Passwort') in der CSV-Datei wird als initiales Passwort verwendet; ist sie leer, wird ein zufälliges Passwort generiert und der Admin muss für den betroffenen Nutzer einen Passwort-Reset auslösen."
+            }
         }
     }
 }

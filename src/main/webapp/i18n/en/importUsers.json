@@ -26,7 +26,14 @@
             "registrationNumber": "registration number",
             "room": "Room",
             "seat": "Seat",
-            "email": "Email"
+            "email": "Email",
+            "password": "Password",
+            "passwordProvided": "set",
+            "passwordRandom": "(random)",
+            "createInternalUsers": {
+                "label": "Create missing users as internal users",
+                "tooltip": "If a user from the CSV cannot be found in Artemis (or in the connected LDAP), they will be created as an internal Artemis user. The optional 'password' column from the CSV is used as the initial password; if empty, a random password is generated and the admin needs to trigger a password reset for the affected user."
+            }
         }
     }
 }

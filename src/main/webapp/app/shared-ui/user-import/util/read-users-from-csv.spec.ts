@@ -77,6 +77,40 @@ describe('read-users-from-csv', () => {
                 ],
             });
         });
+
+        it('should pick up an optional password column when present', async () => {
+            const csv = ['login,password', 'ada,secret123', 'grace, '].join('\n');
+            const result = await readStudentDTOsFromCSVFile(createCsvFile(csv));
+            expect(result).toEqual({
+                ok: true,
+                students: [
+                    {
+                        registrationNumber: '',
+                        firstName: '',
+                        lastName: '',
+                        login: 'ada',
+                        email: '',
+                        password: 'secret123',
+                    },
+                    {
+                        registrationNumber: '',
+                        firstName: '',
+                        lastName: '',
+                        login: 'grace',
+                        email: '',
+                    },
+                ],
+            });
+        });
+
+        it('should accept the german Passwort header alias', async () => {
+            const csv = ['login,Passwort', 'ada,init-pw'].join('\n');
+            const result = await readStudentDTOsFromCSVFile(createCsvFile(csv));
+            expect(result.ok).toBe(true);
+            if (result.ok) {
+                expect(result.students[0].password).toBe('init-pw');
+            }
+        });
     });
 
     describe('readExamUserDTOsFromCSVFile', () => {
