@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -98,7 +99,7 @@ public class ExerciseGenerationJobService {
     }
 
     /**
-     * Starts a new whole-exercise generation job, rejecting the request if one is already running for the exercise.
+     * Starts a new whole-exercise generation job in the default {@link GenerationMode#GENERATE} mode.
      *
      * @param user       the requesting instructor
      * @param exercise   the target exercise
@@ -106,6 +107,19 @@ public class ExerciseGenerationJobService {
      * @return the started job id
      */
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt) {
+        return startJob(user, exercise, userPrompt, GenerationMode.GENERATE);
+    }
+
+    /**
+     * Starts a new whole-exercise generation job in an explicit mode, rejecting the request if one is already running for the exercise.
+     *
+     * @param user       the requesting instructor
+     * @param exercise   the target exercise
+     * @param userPrompt the generation brief or the feedback to address
+     * @param mode       the explicit run intent (generate vs. adapt), carried on the job model so the engine can branch its seed and prompt
+     * @return the started job id
+     */
+    public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
         String jobId = UUID.randomUUID().toString();
         JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), Instant.now());
         JobInfo existing = jobMap.putIfAbsent(key(exercise.getId()), newJob);
@@ -114,7 +128,7 @@ public class ExerciseGenerationJobService {
         }
         // Fresh transcript for this run (overwrites any previous run's retained transcript for this exercise).
         transcriptMap.put(key(exercise.getId()), new JobTranscript(jobId, user.getLogin(), exercise.getId(), new ArrayList<>(), false));
-        eventPublisher.publishEvent(new ExerciseGenerationStartedEvent(jobId, user, exercise, userPrompt));
+        eventPublisher.publishEvent(new ExerciseGenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
         return jobId;
     }
 

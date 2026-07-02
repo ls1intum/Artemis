@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.exercisegeneration.orchestration;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -11,6 +12,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param user       the requesting instructor
  * @param exercise   the target exercise
  * @param userPrompt the generation brief or the feedback to address
+ * @param mode       the explicit run intent (generate vs. adapt); carried on the job model so the engine can branch its seed and prompt without re-deriving it
  */
-public record ExerciseGenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt) {
+public record ExerciseGenerationStartedEvent(String jobId, User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
 }

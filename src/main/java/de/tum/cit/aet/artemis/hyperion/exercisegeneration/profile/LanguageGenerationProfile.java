@@ -29,9 +29,9 @@ public final class LanguageGenerationProfile {
         return SUPPORTED_LANGUAGES;
     }
 
-    private static final Set<ProgrammingLanguage> SUPPORTED_LANGUAGES = Set.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN, ProgrammingLanguage.PYTHON,
-            ProgrammingLanguage.JAVASCRIPT, ProgrammingLanguage.TYPESCRIPT, ProgrammingLanguage.GO, ProgrammingLanguage.RUST, ProgrammingLanguage.C_PLUS_PLUS,
-            ProgrammingLanguage.C_SHARP, ProgrammingLanguage.DART, ProgrammingLanguage.RUBY, ProgrammingLanguage.R, ProgrammingLanguage.HASKELL, ProgrammingLanguage.SWIFT);
+    // The production-enabled set is intentionally JUST Java for this rollout: only the Java differential oracle is validated end-to-end. The per-language guidance arms below are
+    // retained in full so enabling another language is a one-line change here (add it once its oracle path is validated) rather than re-authoring the profile.
+    private static final Set<ProgrammingLanguage> SUPPORTED_LANGUAGES = Set.of(ProgrammingLanguage.JAVA);
 
     /**
      * @param language the language to test (may be {@code null} before one is chosen)
