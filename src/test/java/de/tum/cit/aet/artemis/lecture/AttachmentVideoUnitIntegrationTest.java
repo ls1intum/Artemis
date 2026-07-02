@@ -10,6 +10,9 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -27,6 +30,8 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -156,7 +161,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + attachmentVideoUnit.getId());
         if (fileContent != null) {
-            var filePart = createAttachmentVideoUnitPdf();
+            // Render the provided text into the PDF so that distinct fileContent values produce PDFs with genuinely different content (and identical values produce identical
+            // content)
+            var filePart = createAttachmentVideoUnitPdf(fileContent);
             builder.file(filePart);
         }
 
@@ -179,6 +186,17 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
      * @return MockMultipartFile attachment video unit pdf file
      */
     private MockMultipartFile createAttachmentVideoUnitPdf() throws IOException {
+        return createAttachmentVideoUnitPdf("This is the sample document");
+    }
+
+    /**
+     * Generates an attachment video unit pdf file using the given body text on its content pages. Two PDFs generated with the same body text have identical extractable text
+     * (even though their raw bytes differ), which is what the content-fingerprint comparison relies on.
+     *
+     * @param bodyText the text rendered on the content pages
+     * @return MockMultipartFile attachment video unit pdf file
+     */
+    private MockMultipartFile createAttachmentVideoUnitPdf(String bodyText) throws IOException {
 
         var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
 
@@ -203,8 +221,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
                 contentStream.beginText();
                 contentStream.setFont(font, 12);
                 contentStream.newLineAtOffset(25, 500);
-                String text = "This is the sample document";
-                contentStream.showText(text);
+                contentStream.showText(bodyText);
                 contentStream.endText();
                 contentStream.close();
             }
@@ -212,6 +229,79 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
             document.close();
             return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
         }
+    }
+
+    /**
+     * Generates a PDF with the default text on every page and a solid-color image of the given color embedded on the first page. The text and page count are independent of the
+     * color, so two PDFs that differ only in {@code imageColor} have the same extracted text and page count but different embedded images.
+     *
+     * @param imageColor the color of the embedded image
+     * @return MockMultipartFile attachment video unit pdf file containing an embedded image
+     */
+    private MockMultipartFile createAttachmentVideoUnitPdfWithImage(Color imageColor) throws IOException {
+        var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
+            BufferedImage bufferedImage = new BufferedImage(50, 50, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = bufferedImage.createGraphics();
+            graphics.setColor(imageColor);
+            graphics.fillRect(0, 0, 50, 50);
+            graphics.dispose();
+            PDImageXObject image = LosslessFactory.createFromImage(document, bufferedImage);
+
+            for (int i = 1; i <= SLIDE_COUNT; i++) {
+                document.addPage(new PDPage());
+                try (PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1))) {
+                    contentStream.beginText();
+                    contentStream.setFont(font, 12);
+                    contentStream.newLineAtOffset(25, 500);
+                    contentStream.showText("This is the sample document");
+                    contentStream.endText();
+                    if (i == 1) {
+                        contentStream.drawImage(image, 25, 25, 50, 50);
+                    }
+                }
+            }
+            document.save(outputStream);
+            return new MockMultipartFile("file", "lectureFile.pdf", "application/pdf", outputStream.toByteArray());
+        }
+    }
+
+    /**
+     * Generates a PDF with the default text on every page and a filled vector rectangle (not an embedded image) of the given width on the first page. Two PDFs that differ only in
+     * {@code rectangleWidth} have the same text, page count and no embedded images, but differ visually only in their vector graphics.
+     *
+     * @param rectangleWidth the width of the vector rectangle
+     * @return MockMultipartFile attachment video unit pdf file containing a vector graphic
+     */
+    private MockMultipartFile createAttachmentVideoUnitPdfWithVectorGraphic(float rectangleWidth) throws IOException {
+        var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
+            for (int i = 1; i <= SLIDE_COUNT; i++) {
+                document.addPage(new PDPage());
+                try (PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1))) {
+                    contentStream.beginText();
+                    contentStream.setFont(font, 12);
+                    contentStream.newLineAtOffset(25, 500);
+                    contentStream.showText("This is the sample document");
+                    contentStream.endText();
+                    if (i == 1) {
+                        contentStream.addRect(100, 100, rectangleWidth, 100);
+                        contentStream.fill();
+                    }
+                }
+            }
+            document.save(outputStream);
+            return new MockMultipartFile("file", "lectureFile.pdf", "application/pdf", outputStream.toByteArray());
+        }
+    }
+
+    private AttachmentVideoUnit updateAttachmentVideoUnitWithFile(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MockMultipartFile file) throws Exception {
+        var builder = buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment, null);
+        builder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+        var result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
+        return mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnit.class);
     }
 
     @Test
@@ -290,6 +380,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var attachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
         var attachment = attachmentVideoUnit.getAttachment();
         attachmentVideoUnit.setDescription("Changed");
+        int originalAttachmentVersion = attachment.getVersion();
 
         // Wait for async operation to complete (after attachment video unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
@@ -304,6 +395,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(attachmentVideoUnit1.getDescription()).isEqualTo("Changed");
         // Verify attachment file was updated (this should pass)
         assertThat(attachmentVideoUnit1.getAttachment().getLink()).isNotEqualTo(originalAttachmentLink);
+        assertThat(attachmentVideoUnit1.getAttachment().getVersion()).isEqualTo(originalAttachmentVersion + 1);
         // Create a query to find the latest slides for this attachment video unit
         // Since we know there will be duplicate slide numbers, we need to check for the latest ones (with highest ID)
         var groupedSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit1.getId()).stream().collect(Collectors.groupingBy(Slide::getSlideNumber));
@@ -331,22 +423,149 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_reUploadingSameContent_shouldNotBumpVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+        String originalLink = persistedAttachment.getLink();
+
+        // Wait for the initial slide splitting to finish before re-uploading
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Re-upload a freshly generated PDF with identical content. Its raw bytes differ (like the pdf-preview client re-serializing the PDF), but its extracted text is the same,
+        // so the version and stored file must stay unchanged.
+        var sameContentFile = createAttachmentVideoUnitPdf();
+        var sameBuilder = buildUpdateAttachmentVideoUnit(persistedAttachmentVideoUnit, persistedAttachment, null);
+        sameBuilder.file(sameContentFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+        var sameResult = request.performMvcRequest(sameBuilder).andExpect(status().isOk()).andReturn();
+        var afterSameUpload = mapper.readValue(sameResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        assertThat(afterSameUpload.getAttachment().getVersion()).isEqualTo(originalVersion);
+        assertThat(afterSameUpload.getAttachment().getLink()).isEqualTo(originalLink);
+
+        // Uploading a PDF with genuinely different content must bump the version
+        var changedFile = createAttachmentVideoUnitPdf("a completely different lecture body");
+        var changedBuilder = buildUpdateAttachmentVideoUnit(persistedAttachmentVideoUnit, afterSameUpload.getAttachment(), null);
+        changedBuilder.file(changedFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+        var changedResult = request.performMvcRequest(changedBuilder).andExpect(status().isOk()).andReturn();
+        var afterChangedUpload = mapper.readValue(changedResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        assertThat(afterChangedUpload.getAttachment().getVersion()).isEqualTo(originalVersion + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withSameTextButChangedImage_shouldBumpVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Upload a PDF with the same text and page count but an embedded image -> visual content changed -> version bumps
+        var afterImageA = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, createAttachmentVideoUnitPdfWithImage(Color.RED));
+        int versionAfterImageA = afterImageA.getAttachment().getVersion();
+        assertThat(versionAfterImageA).isEqualTo(originalVersion + 1);
+
+        // Re-upload the same text and the same image (freshly generated, different raw bytes) -> content unchanged -> no bump
+        var afterImageAagain = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, afterImageA.getAttachment(), createAttachmentVideoUnitPdfWithImage(Color.RED));
+        assertThat(afterImageAagain.getAttachment().getVersion()).isEqualTo(versionAfterImageA);
+
+        // Upload a PDF with the same text and page count but a different image -> visual content changed -> version bumps again
+        var afterImageB = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, afterImageAagain.getAttachment(), createAttachmentVideoUnitPdfWithImage(Color.BLUE));
+        assertThat(afterImageB.getAttachment().getVersion()).isEqualTo(versionAfterImageA + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withSameTextButChangedVectorGraphic_shouldBumpVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Upload a PDF with the same text and page count but a vector graphic (no embedded image) -> visual content changed -> version bumps
+        var afterShapeA = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, createAttachmentVideoUnitPdfWithVectorGraphic(200));
+        int versionAfterShapeA = afterShapeA.getAttachment().getVersion();
+        assertThat(versionAfterShapeA).isEqualTo(originalVersion + 1);
+
+        // Re-upload the same vector graphic (freshly generated, different raw bytes) -> content unchanged -> no bump
+        var afterShapeAagain = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, afterShapeA.getAttachment(), createAttachmentVideoUnitPdfWithVectorGraphic(200));
+        assertThat(afterShapeAagain.getAttachment().getVersion()).isEqualTo(versionAfterShapeA);
+
+        // Upload a PDF whose only difference is the vector graphic (different rectangle size, same text/page count) -> version bumps again
+        var afterShapeB = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, afterShapeAagain.getAttachment(), createAttachmentVideoUnitPdfWithVectorGraphic(100));
+        assertThat(afterShapeB.getAttachment().getVersion()).isEqualTo(versionAfterShapeA + 1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withSameContentButChangedHiddenPages_shouldApplyHiddenWithoutBumpingVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+        int originalVersion = persistedAttachment.getVersion();
+        String originalLink = persistedAttachment.getLink();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        // Initially no slide is hidden
+        List<Slide> slides = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId()).stream().sorted(Comparator.comparing(Slide::getSlideNumber))
+                .toList();
+        assertThat(slides).allMatch(slide -> slide.getHidden() == null);
+        Long hiddenSlideId = slides.getFirst().getId();
+
+        // Simulate the real hidden-slide edit: the client re-serializes the PDF (different bytes, same content) and changes only the hidden-slide metadata
+        var reSerializedFile = createAttachmentVideoUnitPdf();
+        String futureDate = ZonedDateTime.now().plusDays(1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"));
+        String hiddenPagesJson = "[{\"slideId\": \"" + hiddenSlideId + "\", \"date\": \"" + futureDate + "\"}]";
+        String pageOrderJson = slides.stream().map(slide -> "{\"slideId\": \"" + slide.getId() + "\", \"order\": " + slide.getSlideNumber() + "}")
+                .collect(Collectors.joining(",", "[", "]"));
+
+        var attachmentUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsString(persistedAttachmentVideoUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+        var pageOrderPart = new MockMultipartFile("pageOrder", "", MediaType.APPLICATION_JSON_VALUE, pageOrderJson.getBytes());
+
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
+                .file(attachmentPart).file(reSerializedFile).file(hiddenPagesPart).file(pageOrderPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE)
+                .param("keepFilename", "true");
+        request.performMvcRequest(builder).andExpect(status().isOk());
+
+        // The hidden-slide metadata must be applied even though the PDF content (and therefore the version) did not change
+        await().untilAsserted(() -> assertThat(slideRepository.findById(hiddenSlideId).orElseThrow().getHidden()).isNotNull());
+
+        // The version and stored file must stay unchanged because the PDF content did not change
+        Attachment reloadedAttachment = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow();
+        assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion);
+        assertThat(reloadedAttachment.getLink()).isEqualTo(originalLink);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistAttachmentVideoUnitWithLecture();
 
         // Add a second lecture unit
-        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, false);
+        AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
         lecture1.addLectureUnit(attachmentVideoUnit);
         lecture1 = lectureRepository.save(lecture1);
 
         List<LectureUnit> orderedUnits = lecture1.getLectureUnits();
+        int originalAttachmentVersion = attachmentVideoUnit.getAttachment().getVersion();
 
         // Updating the lecture unit should not influence order
-        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isOk());
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(attachmentVideoUnit, attachmentVideoUnit.getAttachment())).andExpect(status().isOk());
 
         SecurityUtils.setAuthorizationObject();
         List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow().getLectureUnits();
         assertThat(updatedOrderedUnits).containsExactlyElementsOf(orderedUnits);
+        AttachmentVideoUnit updatedAttachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentVideoUnit.getId());
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalAttachmentVersion);
     }
 
     private void persistAttachmentVideoUnitWithLecture() {
