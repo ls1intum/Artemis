@@ -1,0 +1,97 @@
+# Iris (real-Pyris) e2e stack.
+#
+# Brings up a REAL Pyris (the Iris LLM microservice from ls1intum/edutelligence)
+# wired against a real Weaviate and a MOCK OpenAI-compatible LLM, so the Artemis
+# Iris UI can be exercised end to end over the genuine Artemis<->Pyris wire
+# contract without ever hitting a real model.
+#
+#   mock-llm   - deterministic OpenAI-compatible server (this repo). Pyris's LLM
+#                clients point at http://mock-llm:8081/v1 (see llm_config.local.yml).
+#   weaviate   - vector DB. Pyris connects to it at weaviate:8001 (REST) + :50051
+#                (gRPC). Required for chat to run AND for Pyris's /health to be UP.
+#   pyris-app  - real Pyris. Reads /config/application.yml + /config/llm_config.yml
+#                (mounted from this dir). Exposes :8000. Calls back to Artemis on
+#                the host via http://host.docker.internal:8080 (the server.url
+#                Artemis hands to Pyris must be host-reachable from the container).
+#
+# Build the Pyris image first (its build context is the edutelligence repo root,
+# outside this Artemis repo) — see README.md in this directory. The image tag is
+# overridable via PYRIS_IMAGE (default pyris-e2e:local).
+#
+# Start:   docker compose -f src/test/playwright/support/iris-stack/docker-compose.yml up -d
+# Stop:    docker compose -f src/test/playwright/support/iris-stack/docker-compose.yml down -v
+
+name: iris-e2e-stack
+
+services:
+  mock-llm:
+    build:
+      context: ../iris-mock-llm
+      dockerfile: Dockerfile
+    image: iris-mock-llm:local
+    container_name: iris-e2e-mock-llm
+    environment:
+      MOCK_LLM_HOST: "0.0.0.0"
+      MOCK_LLM_PORT: "8081"
+    # Host port is only for debugging; Pyris reaches the mock over the docker
+    # network at mock-llm:8081 regardless. Overridable via MOCK_LLM_HOST_PORT to
+    # avoid clashes with other local processes (default 8091).
+    ports:
+      - "${MOCK_LLM_HOST_PORT:-8091}:8081"
+    networks:
+      - iris-e2e
+    restart: unless-stopped
+
+  weaviate:
+    image: cr.weaviate.io/semitechnologies/weaviate:1.34.10
+    container_name: iris-e2e-weaviate
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8001"
+      - --scheme
+      - http
+    environment:
+      QUERY_DEFAULTS_LIMIT: "25"
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      ENABLE_MODULES: ""
+      CLUSTER_HOSTNAME: pyris
+      LIMIT_RESOURCES: "true"
+      DISK_USE_WARNING_PERCENTAGE: "80"
+    ports:
+      - "8001:8001"
+      - "50051:50051"
+    networks:
+      - iris-e2e
+    restart: on-failure:3
+
+  pyris-app:
+    image: ${PYRIS_IMAGE:-pyris-e2e:local}
+    container_name: iris-e2e-pyris
+    depends_on:
+      - weaviate
+      - mock-llm
+    environment:
+      APPLICATION_YML_PATH: /config/application.yml
+      LLM_CONFIG_PATH: /config/llm_config.yml
+    volumes:
+      - ./application.local.yml:/config/application.yml:ro
+      - ./llm_config.local.yml:/config/llm_config.yml:ro
+    ports:
+      - "8000:8000"
+    # Pyris must reach Artemis (running on the host) for status callbacks. On
+    # Docker Desktop (macOS/Windows) host.docker.internal resolves to the host;
+    # this mapping makes it work on Linux engines too.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - iris-e2e
+    restart: "no"
+
+networks:
+  iris-e2e:
+    name: iris-e2e
+    driver: bridge

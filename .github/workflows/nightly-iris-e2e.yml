@@ -1,0 +1,105 @@
+name: Nightly Iris E2E
+
+# Runs nightly against the latest develop of Artemis and the latest main of edutelligence (the Iris
+# microservice). It brings up the REAL Pyris stack (real Pyris + Weaviate + a mock OpenAI-compatible
+# LLM) and exercises the genuine Artemis <-> Pyris wire contract end to end, with ONLY the LLM mocked.
+#
+# Purpose: catch contract drift between the two repos early. This is a non-blocking monitoring job,
+# NOT a PR gate. A failure means the Artemis <-> Pyris contract diverged (the cause may live in either
+# repo) and should be investigated; it never blocks a merge.
+#
+# Note: edutelligence has no `develop` branch; its default (and the branch carrying the unified chat
+# pipeline this Artemis branch targets) is `main`, so that is what we build Pyris from.
+#
+# The workflow runs on a fixed schedule against the default branch and on manual dispatch. It does not
+# consume untrusted GitHub event inputs, so command-injection vectors are not applicable here.
+
+on:
+  schedule:
+    - cron: '0 2 * * *'        # 02:00 UTC daily (offset from the LTI nightly at 03:00)
+  workflow_dispatch:           # manual ad-hoc runs (use this to validate/iterate the workflow)
+    inputs:
+      edutelligence_ref:
+        description: 'edutelligence git ref to build Pyris from'
+        default: 'main'
+        required: false
+
+concurrency:
+  group: nightly-iris-e2e
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  iris-e2e:
+    name: nightly-iris / real-pyris
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout Artemis
+        uses: actions/checkout@v6
+
+      - name: Checkout edutelligence (Pyris source)
+        uses: actions/checkout@v6
+        with:
+          repository: ls1intum/edutelligence
+          ref: ${{ github.event.inputs.edutelligence_ref || 'main' }}
+          path: edutelligence
+
+      - name: Build the Pyris image
+        # Build context is the edutelligence repo root; the Dockerfile lives in its iris/ subdir.
+        run: docker build -f edutelligence/iris/Dockerfile -t pyris-e2e:local edutelligence
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install client dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright dependencies
+        working-directory: src/test/playwright
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers (with system deps for CI)
+        working-directory: src/test/playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run the Iris e2e against real Pyris
+        # RUN_IRIS=true makes the runner bring up the Pyris stack (real Pyris + Weaviate + mock LLM),
+        # wait for Pyris health, enable Iris on the server, and run the Iris-filtered suite.
+        run: RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"
+
+      - name: Upload Playwright report + service logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: nightly-iris-playwright-report
+          path: |
+            src/test/playwright/playwright-report
+            src/test/playwright/test-results
+            .e2e-local/server.log
+            .e2e-local/client.log
+          if-no-files-found: ignore
+
+      - name: Notify on failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@e31e87e03dd19038e411e38ae27cbad084a90661  # v2.3.3
+        env:
+          SLACK_WEBHOOK: ${{ secrets.IRIS_NIGHTLY_SLACK_WEBHOOK }}
+          SLACK_TITLE: 'Nightly Iris e2e FAILED (Artemis develop x edutelligence main)'
+          SLACK_COLOR: danger
