@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
 import { StudentWithTeam, Team } from 'app/exercise/shared/entities/team/team.model';
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
+import { parseJson } from 'app/foundation/util/json.util';
 import { parse } from 'papaparse';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -67,7 +68,7 @@ export class TeamsImportFromFileFormComponent {
         try {
             // Read the file and get list of teams from the file
             if (this.importFile?.type === 'application/json') {
-                this.importedTeams = JSON.parse(fileReader.result as string) as StudentWithTeam[];
+                this.importedTeams = parseJson<StudentWithTeam[]>(fileReader.result as string);
             } else if (this.importFile?.type === 'text/csv') {
                 const csvEntries = await this.parseCSVFile(fileReader.result as string);
                 this.importedTeams = this.convertCsvEntries(csvEntries);

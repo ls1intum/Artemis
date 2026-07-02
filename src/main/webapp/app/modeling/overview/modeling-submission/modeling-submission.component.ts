@@ -38,6 +38,7 @@ import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { stringifyIgnoringFields } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
@@ -45,7 +46,7 @@ import { Subject, Subscription, TeardownLogic, of } from 'rxjs';
 import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
 import { ModelingAssessmentComponent } from '../../manage/assess/modeling-assessment.component';
 import { AssessmentNamesForModelId, getNamesForAssessments } from '../../manage/assess/modeling-assessment.util';
-import { countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
+import { ApollonModelData, countModelElements, hasModelElements, isModelEmpty as isApollonModelEmpty } from '../../shared/apollon-model.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
@@ -415,7 +416,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     private updateModelAndExplanation(): void {
         if (this.submission().model) {
-            this.umlModel.set(importDiagram(JSON.parse(this.submission().model!)));
+            this.umlModel.set(importDiagram(parseJson(this.submission().model!)));
             this.hasElements.set(hasModelElements(this.umlModel()));
         } else {
             this.umlModel.set(undefined!);
@@ -455,7 +456,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission.set(submission);
                     // Team mode: leave the live collaborative editor (Yjs) untouched — see submit().
                     if (!this.modelingExercise().teamMode && this.submission().model) {
-                        this.umlModel.set(importDiagram(JSON.parse(this.submission().model!)));
+                        this.umlModel.set(importDiagram(parseJson(this.submission().model!)));
                         this.hasElements.set(hasModelElements(this.umlModel()));
                     }
                     const latestResult = getLatestSubmissionResult(this.submission());
@@ -646,7 +647,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     // In team mode the live collaborative editor is the single source of truth (Yjs); re-importing
                     // the saved snapshot would reset the shared document and discard a teammate's concurrent edits.
                     if (!this.modelingExercise().teamMode && this.submission().model) {
-                        this.umlModel.set(importDiagram(JSON.parse(this.submission().model!)));
+                        this.umlModel.set(importDiagram(parseJson(this.submission().model!)));
                         this.hasElements.set(hasModelElements(this.umlModel()));
                     }
                     this.submissionChange.next(this.submission());
@@ -722,7 +723,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!model) {
             return true;
         }
-        const umlModel = JSON.parse(model);
+        const umlModel = parseJson<ApollonModelData>(model);
         return isApollonModelEmpty(umlModel);
     }
 
@@ -873,7 +874,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!submissionModel) {
             return model.nodes.length > 0 && JSON.stringify(model) !== '';
         } else {
-            const currentModel = JSON.parse(submissionModel);
+            const currentModel = parseJson<ApollonModelData>(submissionModel);
             const versionMatch = currentModel.version === model.version;
             const modelMatch = stringifyIgnoringFields(currentModel, 'size') === stringifyIgnoringFields(model, 'size');
             return versionMatch && !modelMatch;
@@ -887,7 +888,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     calculateNumberOfModelElements(): number {
         const submissionModel = this.submission()?.model;
         if (submissionModel) {
-            const umlModel = JSON.parse(submissionModel);
+            const umlModel = parseJson<ApollonModelData>(submissionModel);
             return countModelElements(umlModel);
         }
         return 0;

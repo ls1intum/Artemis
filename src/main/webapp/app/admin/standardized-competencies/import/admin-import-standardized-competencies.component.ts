@@ -30,6 +30,7 @@ import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from 'app/atl
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { MessageModule } from 'primeng/message';
 import { ButtonModule } from 'primeng/button';
+import { parseJson } from 'app/foundation/util/json.util';
 
 interface ImportCount {
     knowledgeAreas: number;
@@ -190,7 +191,7 @@ export class AdminImportStandardizedCompetenciesComponent {
 
         let parsedData: KnowledgeAreasForImportDTO | undefined;
         try {
-            parsedData = JSON.parse(this.fileReader.result as string);
+            parsedData = parseJson<KnowledgeAreasForImportDTO>(this.fileReader.result as string);
             this.importData.set(parsedData);
         } catch (e) {
             this.alertService.error('artemisApp.standardizedCompetency.manage.import.error.fileSyntax');
