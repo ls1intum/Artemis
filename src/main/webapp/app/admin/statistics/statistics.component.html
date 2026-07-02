@@ -1,15 +1,7 @@
 <div>
     <h5 *adminTitleBarTitle id="statistics-page-heading" class="mb-0" jhiTranslate="statistics.title"></h5>
     <div *adminTitleBarActions data-testid="span-selector">
-        <p-selectbutton
-            [options]="spanOptions"
-            [ngModel]="currentSpan()"
-            (ngModelChange)="onTabChanged($event)"
-            optionLabel="label"
-            optionValue="value"
-            size="small"
-            [unselectable]="false"
-        >
+        <p-selectbutton [options]="spanOptions" [ngModel]="currentSpan()" (ngModelChange)="onTabChanged($event)" optionLabel="label" optionValue="value" size="small">
             <ng-template let-option #item>
                 {{ option.label | artemisTranslate }}
             </ng-template>

@@ -165,12 +165,13 @@ describe('AdminDataExportsComponent', () => {
         expect(component.getStateIcon(DataExportState.DOWNLOADED_DELETED)).toBe(component['faTimes']);
     });
 
-    it('should return unique severity for each state', () => {
+    it('maps each data-export state to its severity token', () => {
         expect(component.getStateSeverity(DataExportState.REQUESTED)).toBe('contrast');
         expect(component.getStateSeverity(DataExportState.IN_CREATION)).toBe('info');
         expect(component.getStateSeverity(DataExportState.EMAIL_SENT)).toBe('success');
         expect(component.getStateSeverity(DataExportState.DOWNLOADED)).toBe('warn');
         expect(component.getStateSeverity(DataExportState.FAILED)).toBe('danger');
+        expect(component.getStateSeverity(DataExportState.EMAIL_FAILED)).toBe('warn');
         expect(component.getStateSeverity(DataExportState.DELETED)).toBe('secondary');
         expect(component.getStateSeverity(DataExportState.DOWNLOADED_DELETED)).toBe('secondary');
     });

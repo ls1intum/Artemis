@@ -776,6 +776,13 @@ describe('UserManagementUpdateComponent', () => {
 
             expect(component.groupSuggestions()).toEqual(['Group2']);
         });
+
+        it('does not throw when the group autocomplete is used before groups load', () => {
+            component.allGroups = []; // pre-load state (the field initializer guarantees this, never undefined)
+
+            expect(() => component.filterGroups({ query: 'x' } as unknown as AutoCompleteCompleteEvent)).not.toThrow();
+            expect(component.groupSuggestions()).toEqual([]);
+        });
     });
 });
 

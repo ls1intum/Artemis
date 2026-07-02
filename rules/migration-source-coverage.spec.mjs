@@ -37,13 +37,11 @@ const sorted = (xs) => [...xs].sort();
 
 describe('migration lock consistency', () => {
     const lockBlock = eslintConfig.find((c) => c.rules && c.rules['localRules/no-bootstrap-classes']);
-    expect(lockBlock, 'config block enabling localRules/no-bootstrap-classes').toBeTruthy();
-    const lockedBases = lockBlock.files.map(toAppBase);
+    const lockedBases = lockBlock?.files.map(toAppBase) ?? [];
 
     const stylelintConfig = JSON.parse(readFileSync(resolve(repoRoot, '.stylelintrc.json'), 'utf8'));
     const hexBsOverride = stylelintConfig.overrides.find((o) => JSON.stringify(o.rules ?? {}).includes('--bs-'));
-    expect(hexBsOverride, 'stylelint override banning hex / --bs-').toBeTruthy();
-    const stylelintBases = hexBsOverride.files.map(toAppBase);
+    const stylelintBases = hexBsOverride?.files.map(toAppBase) ?? [];
 
     const tailwindCss = readFileSync(resolve(repoRoot, 'src/main/webapp/tailwind.css'), 'utf8');
     // Positive `@source './app/...'` entries only — `@source not '...'` / `@source not inline("...")` are exclusions.
@@ -51,6 +49,8 @@ describe('migration lock consistency', () => {
 
     // Guard against a vacuous pass if any config shape changes and parsing yields nothing.
     it('parses all three lock lists non-vacuously', () => {
+        expect(lockBlock, 'config block enabling localRules/no-bootstrap-classes').toBeTruthy();
+        expect(hexBsOverride, 'stylelint override banning hex / --bs-').toBeTruthy();
         expect(lockedBases.length, 'eslint no-bootstrap locked paths').toBeGreaterThan(10);
         expect(stylelintBases.length, 'stylelint hex/--bs- override paths').toBeGreaterThan(10);
         expect(sourceBases.length, 'tailwind @source entries').toBeGreaterThan(10);

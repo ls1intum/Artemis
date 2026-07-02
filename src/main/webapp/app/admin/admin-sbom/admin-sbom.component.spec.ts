@@ -347,6 +347,10 @@ describe('AdminSbomComponent', () => {
             expect(component.getSeverityLevel('HIGH')).toBe('warn');
         });
 
+        it('should return warn for MEDIUM', () => {
+            expect(component.getSeverityLevel('MEDIUM')).toBe('warn');
+        });
+
         it('should return info for LOW', () => {
             expect(component.getSeverityLevel('LOW')).toBe('info');
         });
@@ -620,12 +624,6 @@ describe('AdminSbomComponent', () => {
         it('should return UNKNOWN for unrecognized severity', () => {
             const vulns: Vulnerability[] = [{ severity: 'OTHER' } as unknown as Vulnerability];
             expect(component.getHighestSeverity(vulns)).toBe('UNKNOWN');
-        });
-    });
-
-    describe('getSeverityLevel additional cases', () => {
-        it('should return warn for MEDIUM', () => {
-            expect(component.getSeverityLevel('MEDIUM')).toBe('warn');
         });
     });
 

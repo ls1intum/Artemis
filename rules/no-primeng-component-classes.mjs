@@ -18,6 +18,9 @@
  * See documentation/docs/developer/guidelines/client-development.mdx (### Styling).
  */
 
+// NOTE: this list is hand-curated and must be re-curated on every PrimeNG major upgrade (new/renamed/removed root
+// classes). Drift only ever UNDER-enforces (a missed root goes unflagged) — it never breaks the build — so a stale
+// list fails open, not closed. No CI cross-check is wired; keep this in the upgrade checklist.
 // PrimeNG component ROOT classes that the component itself applies and whose CSS is lazily injected. Hand-writing
 // any of these fakes a component. Curated to visually-fakeable, styled components; deliberately excludes shared
 // helper classes (p-component, p-disabled, p-error, p-fluid, p-highlight, p-ripple, p-link, …) which are not roots.
