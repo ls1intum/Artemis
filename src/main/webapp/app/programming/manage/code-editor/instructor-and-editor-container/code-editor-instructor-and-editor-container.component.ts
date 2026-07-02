@@ -93,6 +93,10 @@ type CodeGenerationFileEventType = 'FILE_UPDATED' | 'NEW_FILE';
 type CodeGenerationRepositoryTranslationKey = `artemisApp.programmingExercise.codeGeneration.repositories.${Lowercase<SupportedCodeGenerationRepositoryType>}`;
 type CodeGenerationStateTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${CodeGenerationExecutionState}`;
 type CodeGenerationFileActionTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${'fileCreated' | 'fileUpdated'}`;
+// The generated OpenAPI CodeGenerationRequest.repositoryType uses lowercase repository names (exercise, ...),
+// but the backend deserializes RepositoryType enum names (TEMPLATE, SOLUTION, TESTS). This payload type lets the
+// request be built type-safely with the client RepositoryType enum; only repositoryType differs from the generated type.
+type CodeGenerationRequestPayload = Omit<CodeGenerationRequest, 'repositoryType'> & { repositoryType?: RepositoryType };
 
 const CODE_GENERATION_STATE_CLASSES: Record<CodeGenerationExecutionState, string> = {
     idle: 'text-body-secondary',
@@ -621,8 +625,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns a request object matching the backend's runtime contract
      */
     private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false, initialAutoGeneration = false): CodeGenerationRequest {
-        // Runtime contract: backend expects RepositoryType enum names (e.g. TEMPLATE), while generated OpenAPI type currently exposes repository names (e.g. exercise).
-        const request: CodeGenerationRequest = { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
+        // Built with the client RepositoryType enum so the whole construction is type-checked; see CodeGenerationRequestPayload.
+        const request: CodeGenerationRequestPayload = { repositoryType, checkOnly };
         if (initialAutoGeneration) {
             request.initialAutoGeneration = true;
         }
@@ -635,7 +639,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 request.selectedFeedbackThreadIds = selectedFeedbackThreadIds;
             }
         }
-        return request;
+        // Single boundary assertion to the generated OpenAPI type: only repositoryType differs (enum names vs repository names).
+        return request as CodeGenerationRequest;
     }
 
     /**
@@ -643,7 +648,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns check-only request payload for the Hyperion endpoint
      */
     private createCheckOnlyCodeGenerationRequest(): CodeGenerationRequest {
-        return { checkOnly: true } as unknown as CodeGenerationRequest;
+        return { checkOnly: true };
     }
 
     /**
