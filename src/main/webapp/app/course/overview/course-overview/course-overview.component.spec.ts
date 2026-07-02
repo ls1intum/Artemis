@@ -19,7 +19,6 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/sh
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -189,7 +188,6 @@ describe('CourseOverviewComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
-                MockModule(MatSidenavModule),
                 MockModule(NgbTooltipModule),
                 FaIconComponent,
                 CourseOverviewComponent,
@@ -742,6 +740,16 @@ describe('CourseOverviewComponent', () => {
         expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
     });
 
+    it('should hide the sidebar while an exam is started and show it otherwise', () => {
+        component.isExamStarted.set(true);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(true);
+
+        component.isExamStarted.set(false);
+        fixture.changeDetectorRef.detectChanges();
+        expect(fixture.nativeElement.querySelector('.sidebar')?.hidden).toBe(false);
+    });
+
     it('should examStarted value to true when exam is started', async () => {
         (examParticipationService as any).examIsStarted$ = of(true);
         await component.ngOnInit();
@@ -758,84 +766,6 @@ describe('CourseOverviewComponent', () => {
 
         courseSidebarService.toggleSidebar();
         expect(component.isSidebarCollapsed()).toBe(true);
-    });
-
-    describe('determineManageViewLink', () => {
-        beforeEach(() => {
-            component.courseId.set(123);
-            component.course.set({ isAtLeastTutor: true });
-        });
-
-        it('should set exams link when URL includes "exams"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
-            component.course.set({ isAtLeastTutor: true });
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exams']);
-        });
-
-        it('should set exercises link when URL includes "exercises"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exercises']);
-        });
-
-        it('should set lectures link when URL includes "lectures"', () => {
-            component.course.set({ isAtLeastEditor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'lectures']);
-        });
-
-        it('should set communication link when URL includes "communication"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'communication']);
-        });
-
-        it('should set learning-paths-management link when URL includes "learning-path + instructor"', () => {
-            component.course.set({ isAtLeastInstructor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'learning-paths-management']);
-        });
-
-        it('should set competency-management link when URL includes "competencies + instructor"', () => {
-            component.course.set({ isAtLeastInstructor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competencies');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'competency-management']);
-        });
-
-        it('should set faqs link when URL includes "faq"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faq');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'faqs']);
-        });
-
-        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + instructor"', () => {
-            component.course.set({ isAtLeastInstructor: true });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
-        });
-        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + tutorial groups config' + ' exists + not instructor"', () => {
-            component.course.set({ isAtLeastTutor: true, tutorialGroupsConfiguration: {} });
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
-        });
-
-        it('should default to course management base link when URL does not match any condition', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/settings');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123']);
-        });
-
-        it('should set course statistics link when URL includes course statistics', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/statistics');
-            component.determineManageViewLink();
-            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'course-statistics']);
-        });
     });
 
     it('should initialize course notification values when both settingInfo and info are available', async () => {

@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.plagiarism.web;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,9 +32,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseDetailDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseOverviewDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseVerdictResponseDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
@@ -94,10 +96,10 @@ public class PlagiarismCaseResource {
      */
     @GetMapping("courses/{courseId}/plagiarism-cases/for-instructor")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForCourseForInstructor(@PathVariable long courseId) {
+    public ResponseEntity<List<PlagiarismCaseOverviewDTO>> getPlagiarismCasesForCourseForInstructor(@PathVariable long courseId) {
         log.debug("REST request to get all plagiarism cases for instructor in course with id: {}", courseId);
-        var plagiarismCases = plagiarismCaseRepository.findByCourseIdWithPlagiarismSubmissionsAndComparison(courseId);
-        return removeUnnecessaryData(plagiarismCases);
+        var plagiarismCases = plagiarismCaseRepository.findOverviewDtosByCourseId(courseId);
+        return getPlagiarismCaseOverviewResponseEntity(plagiarismCases);
     }
 
     /**
@@ -109,20 +111,19 @@ public class PlagiarismCaseResource {
      */
     @GetMapping("courses/{courseId}/exams/{examId}/plagiarism-cases/for-instructor")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForExamForInstructor(@PathVariable long courseId, @PathVariable long examId) {
+    public ResponseEntity<List<PlagiarismCaseOverviewDTO>> getPlagiarismCasesForExamForInstructor(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get all plagiarism cases for instructor in exam with id: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        var plagiarismCases = plagiarismCaseRepository.findByExamIdWithPlagiarismSubmissionsAndComparison(examId);
+        var plagiarismCases = plagiarismCaseRepository.findOverviewDtosByExamId(examId);
         if (!plagiarismCases.isEmpty()) {
-            var plagiarismCase = plagiarismCases.getFirst();
-            var exam = plagiarismCase.getExercise().getExerciseGroup().getExam();
-            if (!exam.getCourse().getId().equals(courseId)) {
-                throw new ConflictException("Exam with id " + exam.getId() + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
+            var plagiarismCaseExercise = plagiarismCases.getFirst().exercise();
+            if (plagiarismCaseExercise == null || !Long.valueOf(courseId).equals(plagiarismCaseExercise.courseId())) {
+                throw new ConflictException("Exam with id " + examId + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
             }
         }
-        return removeUnnecessaryData(plagiarismCases);
+        return getPlagiarismCaseOverviewResponseEntity(plagiarismCases);
     }
 
     /**
@@ -134,23 +135,15 @@ public class PlagiarismCaseResource {
      */
     @GetMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/for-instructor")
     @EnforceAtLeastInstructor
-    public ResponseEntity<PlagiarismCase> getPlagiarismCaseForInstructor(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
+    public ResponseEntity<PlagiarismCaseDetailDTO> getPlagiarismCaseForInstructor(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
         log.debug("REST request to get plagiarism case for instructor with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
-        return getPlagiarismCaseResponseEntity(plagiarismCase);
-    }
-
-    private ResponseEntity<PlagiarismCase> getPlagiarismCaseResponseEntity(PlagiarismCase plagiarismCase) {
-        for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
-            submission.getPlagiarismComparison().getPlagiarismResult().setExercise(null);
-            submission.getPlagiarismComparison().setSubmissionA(null);
-            submission.getPlagiarismComparison().setSubmissionB(null);
-        }
-        return ResponseEntity.ok(plagiarismCase);
+        validatePlagiarismCaseCourse(plagiarismCaseId, courseId);
+        var plagiarismCase = plagiarismCaseRepository.findDetailDtoByIdElseThrow(plagiarismCaseId);
+        return ResponseEntity.ok(getPlagiarismCaseDetailResponse(plagiarismCase));
     }
 
     /**
@@ -181,15 +174,16 @@ public class PlagiarismCaseResource {
      */
     @PutMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/verdict")
     @EnforceAtLeastInstructor
-    public ResponseEntity<PlagiarismCase> savePlagiarismCaseVerdict(@PathVariable long courseId, @PathVariable long plagiarismCaseId,
+    public ResponseEntity<PlagiarismCaseVerdictResponseDTO> savePlagiarismCaseVerdict(@PathVariable long courseId, @PathVariable long plagiarismCaseId,
             @RequestBody PlagiarismVerdictDTO plagiarismVerdictDTO) {
         log.debug("REST request to save plagiarism verdict for plagiarism case with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
+        validatePlagiarismCaseCourse(plagiarismCaseId, courseId);
         var plagiarismCase = plagiarismCaseService.updatePlagiarismCaseVerdict(plagiarismCaseId, plagiarismVerdictDTO);
-        return ResponseEntity.ok(plagiarismCase);
+        return ResponseEntity.ok(PlagiarismCaseVerdictResponseDTO.ofVerdict(plagiarismCase));
     }
 
     /**
@@ -244,18 +238,22 @@ public class PlagiarismCaseResource {
         return ResponseEntity.ok(plagiarismCaseInfoDTOs);
     }
 
-    private ResponseEntity<List<PlagiarismCase>> removeUnnecessaryData(List<PlagiarismCase> plagiarismCases) {
-        for (var plagiarismCase : plagiarismCases) {
-            if (plagiarismCase.getPost() != null) {
-                plagiarismCase.getPost().setPlagiarismCase(null);
-            }
-            for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
-                submission.getPlagiarismComparison().getPlagiarismResult().setExercise(null);
-                submission.getPlagiarismComparison().setSubmissionA(null);
-                submission.getPlagiarismComparison().setSubmissionB(null);
-            }
-        }
+    private ResponseEntity<List<PlagiarismCaseOverviewDTO>> getPlagiarismCaseOverviewResponseEntity(List<PlagiarismCaseOverviewDTO> plagiarismCases) {
         return ResponseEntity.ok(plagiarismCases);
+    }
+
+    private void validatePlagiarismCaseCourse(long plagiarismCaseId, long courseId) {
+        Long plagiarismCaseCourseId = plagiarismCaseRepository.findCourseIdByIdElseThrow(plagiarismCaseId);
+        if (!Objects.equals(plagiarismCaseCourseId, courseId)) {
+            throw new ConflictException("Plagiarism case with id " + plagiarismCaseId + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
+        }
+    }
+
+    private PlagiarismCaseDetailDTO getPlagiarismCaseDetailResponse(PlagiarismCaseDetailDTO plagiarismCase) {
+        var plagiarismSubmissions = plagiarismCaseRepository.findSubmissionDtosByPlagiarismCaseId(plagiarismCase.id());
+        return new PlagiarismCaseDetailDTO(plagiarismCase.id(), plagiarismCase.exercise(), plagiarismCase.student(), plagiarismCase.post(), plagiarismCase.verdict(),
+                plagiarismCase.verdictDate(), plagiarismCase.verdictBy(), plagiarismCase.plagiarismSubmissionCount(), plagiarismCase.createdByContinuousPlagiarismControl(),
+                plagiarismCase.verdictMessage(), plagiarismCase.verdictPointDeduction(), plagiarismSubmissions);
     }
 
     /**
@@ -267,21 +265,18 @@ public class PlagiarismCaseResource {
      */
     @GetMapping("courses/{courseId}/plagiarism-cases/{plagiarismCaseId}/for-student")
     @EnforceAtLeastStudent
-    public ResponseEntity<PlagiarismCase> getPlagiarismCaseForStudent(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
+    public ResponseEntity<PlagiarismCaseDetailDTO> getPlagiarismCaseForStudent(@PathVariable long courseId, @PathVariable long plagiarismCaseId) {
         log.debug("REST request to get plagiarism case for student with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsAndPlagiarismDetectionConfigElseThrow(plagiarismCaseId);
-        if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
+        var plagiarismCase = plagiarismCaseRepository.findDetailDtoByIdElseThrow(plagiarismCaseId);
+        validatePlagiarismCaseCourse(plagiarismCaseId, courseId);
+        if (plagiarismCase.student() == null || !Objects.equals(plagiarismCase.student().login(), user.getLogin())) {
             throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
         }
 
-        // hide potentially sensitive data
-        plagiarismCase.getExercise().filterSensitiveInformation();
-        Optional.ofNullable(plagiarismCase.getExercise().getPlagiarismDetectionConfig()).ifPresent(PlagiarismDetectionConfig::filterSensitiveInformation);
-
-        return getPlagiarismCaseResponseEntity(plagiarismCase);
+        return ResponseEntity.ok(getPlagiarismCaseDetailResponse(plagiarismCase));
     }
 }

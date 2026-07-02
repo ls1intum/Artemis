@@ -50,6 +50,7 @@ export class PdfViewerComponent {
     readonly loadError = output<{ pdfUrl: string }>();
     readonly downloadRequested = output<void>();
     readonly isFullscreenChange = output<boolean>();
+    readonly currentPageChange = output<number>();
 
     readonly pdfIframe = viewChild<ElementRef<HTMLIFrameElement>>('pdfIframe');
     readonly fullscreenWindow = viewChild<ElementRef<HTMLDivElement>>('fullscreenWindow');
@@ -66,6 +67,7 @@ export class PdfViewerComponent {
     private readonly hostElementRef = inject(ElementRef<HTMLElement>);
     private readonly languageChange = toSignal(this.translateService.onLangChange);
     private readonly currentPage = signal(1);
+    readonly currentPageSignal = this.currentPage.asReadonly();
     private drawerContentElement?: HTMLElement;
     private originalDrawerContentZIndex?: string;
 
@@ -182,6 +184,21 @@ export class PdfViewerComponent {
         this.closeFullscreen();
     }
 
+    getCurrentPage(): number {
+        return this.currentPage();
+    }
+
+    goToPage(page: number): void {
+        if (!Number.isInteger(page) || page < 1 || page === this.currentPage()) {
+            return;
+        }
+
+        this.currentPage.set(page);
+        if (this.iframeReady()) {
+            this.postMessageToIframe('setPage', { page });
+        }
+    }
+
     @HostListener('window:message', ['$event'])
     protected onWindowMessage(event: MessageEvent<IframeMessage>): void {
         this.handleIframeMessage(event);
@@ -216,6 +233,7 @@ export class PdfViewerComponent {
 
         if (type === 'pageChange' && typeof data?.page === 'number' && Number.isInteger(data.page) && data.page > 0) {
             this.currentPage.set(data.page);
+            this.currentPageChange.emit(data.page);
             return;
         }
 
@@ -283,7 +301,8 @@ export class PdfViewerComponent {
     }
 
     private applyFullscreenLayering(): void {
-        const drawerContent = this.hostElementRef.nativeElement.closest('.mat-drawer-content') as HTMLElement | null;
+        const drawerContent = (this.hostElementRef.nativeElement.closest('.layout-content') ??
+            this.hostElementRef.nativeElement.closest('.mat-drawer-content')) as HTMLElement | null;
         if (!drawerContent) {
             return;
         }

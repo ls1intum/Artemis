@@ -168,7 +168,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     abstract handleCourseIdChange(courseId: number): void;
 
-    protected abstract handleNavigationEndActions(): void;
+    protected handleNavigationEndActions(): void {}
 
     protected abstract getSidebarItems(): SidebarItem[];
 
