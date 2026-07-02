@@ -24,3 +24,11 @@
 .date-time-picker-warning-border {
     border-color: var(--color-state-warning) !important;
 }
+
+// Inside a p-inputgroup with a leading addon (e.g. the audits from/to filter), the input must square the edge
+// where it meets the addon; PrimeNG's own radius-collapse only reaches direct inputgroup children, not this
+// composite picker's nested input.
+:host-context(p-inputgroup) .p-datepicker-input {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}

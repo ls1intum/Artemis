@@ -3,14 +3,14 @@
     <div class="mb-4">
         <h4 jhiTranslate="audits.filter.title"></h4>
         <div class="flex flex-wrap gap-2 items-center" data-testid="audits-date-filter">
-            <!-- items-start: the picker's validation message must hang below the field, not stretch the addon. -->
-            <p-inputgroup class="w-auto items-start">
+            <p-inputgroup class="w-auto">
                 <p-inputgroup-addon jhiTranslate="audits.filter.from" />
                 <jhi-date-time-picker
                     #fromPicker
                     name="start"
                     inputId="audits-from-date"
                     [hideLabelName]="true"
+                    [hideValidationMessage]="true"
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
                     [value]="fromDateValue()"
@@ -18,13 +18,14 @@
                     data-testid="audits-from-date"
                 />
             </p-inputgroup>
-            <p-inputgroup class="w-auto items-start">
+            <p-inputgroup class="w-auto">
                 <p-inputgroup-addon jhiTranslate="audits.filter.to" />
                 <jhi-date-time-picker
                     #toPicker
                     name="end"
                     inputId="audits-to-date"
                     [hideLabelName]="true"
+                    [hideValidationMessage]="true"
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
                     [value]="toDateValue()"
