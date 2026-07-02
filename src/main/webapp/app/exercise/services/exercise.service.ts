@@ -9,8 +9,9 @@ import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseCategory, SerializedExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -413,8 +414,9 @@ export class ExerciseService {
             exercise.categories = exercise.categories
                 .map((category) => {
                     try {
-                        // Handle both JSON strings (from some endpoints) and objects (from DTOs)
-                        const categoryObj = typeof category === 'string' ? JSON.parse(category) : category;
+                        // Handle both JSON strings (from some endpoints) and objects (from DTOs). The explicit
+                        // type makes property access below compiler-checked (JSON.parse alone returns `any`).
+                        const categoryObj: SerializedExerciseCategory = typeof category === 'string' ? parseJson<SerializedExerciseCategory>(category) : category;
                         return new ExerciseCategory(categoryObj.category, categoryObj.color);
                     } catch {
                         // Skip malformed category entries
@@ -430,7 +432,18 @@ export class ExerciseService {
      * @param categories that are converted to categories
      */
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
-        return categories.map((category) => JSON.parse(category));
+        // Build real ExerciseCategory instances (not plain parsed objects) so callers can use equals()/compare().
+        // Skip malformed entries instead of throwing, mirroring parseExerciseCategories above.
+        return categories
+            .map((category) => {
+                try {
+                    const categoryObj = parseJson<SerializedExerciseCategory>(category);
+                    return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                } catch {
+                    return undefined;
+                }
+            })
+            .filter((category): category is ExerciseCategory => category !== undefined);
     }
 
     /**

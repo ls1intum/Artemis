@@ -229,6 +229,28 @@ export default tseslint.config(
             'localRules/no-as-unknown-cast': 'error',
         },
     },
+    // Force JSON.parse results to carry an explicit type. `JSON.parse` is declared to return `any`, which
+    // silently disables type checking on everything derived from it — a typo like `obj.colour` compiles and
+    // yields `undefined` at runtime. Route parsing through `parseJson<T>()` (app/foundation/util/json.util),
+    // whose generic defaults to `unknown`, so a caller cannot touch the result's properties without stating
+    // the expected shape. Warn-level for now: existing call sites are migrated incrementally before this is
+    // raised to `error`. The wrapper itself holds the single sanctioned `JSON.parse` (line-level disabled),
+    // and test code may parse fixtures freely (specs excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-restricted-properties': [
+                'warn',
+                {
+                    object: 'JSON',
+                    property: 'parse',
+                    message:
+                        'Avoid untyped JSON.parse(): its result is `any`, so property access is unchecked. Use parseJson<T>() from app/foundation/util/json.util and pass the expected type.',
+                },
+            ],
+        },
+    },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
     // state and effect() for genuine side effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs),
     // so this is a consistency preference, not a correctness rule. Existing migration-backlog files are excluded above
