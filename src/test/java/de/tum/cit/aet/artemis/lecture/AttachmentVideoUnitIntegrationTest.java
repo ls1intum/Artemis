@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -269,6 +270,17 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     private MockMultipartFile createAttachmentVideoUnitPdfFromStoredAttachment(Attachment attachment) throws IOException {
         Path storedFilePath = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachment.getLink()), FilePathType.ATTACHMENT_UNIT);
         return new MockMultipartFile("file", storedFilePath.getFileName().toString(), "application/pdf", Files.readAllBytes(storedFilePath));
+    }
+
+    private List<Path> listRootAttachmentFiles(Long attachmentVideoUnitId) throws IOException {
+        Path attachmentDirectory = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnitId.toString());
+        if (!Files.exists(attachmentDirectory)) {
+            return List.of();
+        }
+
+        try (var files = Files.list(attachmentDirectory)) {
+            return files.filter(Files::isRegularFile).sorted().toList();
+        }
     }
 
     @Test
@@ -559,6 +571,48 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         Attachment reloadedAttachment = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow();
         assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion + 1);
         assertThat(reloadedAttachment.getSha256Hash()).hasSize(64);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void hiddenPageOnlyUpdateDoesNotUploadOrBumpVersionAndRegeneratesStudentVersion() throws Exception {
+        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentVideoUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        var persistedAttachment = persistedAttachmentVideoUnit.getAttachment();
+
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
+
+        int originalVersion = persistedAttachment.getVersion();
+        String originalLink = persistedAttachment.getLink();
+        List<Path> originalRootAttachmentFiles = listRootAttachmentFiles(persistedAttachmentVideoUnit.getId());
+        Slide selectedSlide = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId()).stream().sorted(Comparator.comparing(Slide::getSlideNumber))
+                .findFirst().orElseThrow();
+        ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
+        String hiddenPagesJson = "[{\"slideId\": \"" + selectedSlide.getId() + "\", \"date\": \""
+                + hiddenDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")) + "\"}]";
+
+        var attachmentUnitPart = createAttachmentVideoUnitPart(persistedAttachmentVideoUnit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(persistedAttachment).getBytes());
+        var hiddenPagesPart = new MockMultipartFile("hiddenPages", "", MediaType.APPLICATION_JSON_VALUE, hiddenPagesJson.getBytes());
+
+        var builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + persistedAttachmentVideoUnit.getId()).file(attachmentUnitPart)
+                .file(attachmentPart).file(hiddenPagesPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        var updateResult = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
+        var updatedAttachmentVideoUnit = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
+        Attachment reloadedAttachment = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow();
+        Slide reloadedSelectedSlide = slideRepository.findById(selectedSlide.getId()).orElseThrow();
+
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion);
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getLink()).isEqualTo(originalLink);
+        assertThat(updatedAttachmentVideoUnit.getAttachment().getStudentVersion()).isNotBlank();
+        assertThat(reloadedAttachment.getVersion()).isEqualTo(originalVersion);
+        assertThat(reloadedAttachment.getLink()).isEqualTo(originalLink);
+        assertThat(reloadedAttachment.getStudentVersion()).isNotBlank();
+        assertThat(reloadedSelectedSlide.getHidden()).isNotNull();
+        assertThat(reloadedSelectedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(hiddenDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        assertThat(listRootAttachmentFiles(persistedAttachmentVideoUnit.getId())).containsExactlyElementsOf(originalRootAttachmentFiles);
     }
 
     @Test

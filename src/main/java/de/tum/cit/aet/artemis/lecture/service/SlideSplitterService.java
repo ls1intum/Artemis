@@ -184,6 +184,27 @@ public class SlideSplitterService {
     }
 
     /**
+     * Updates only slide metadata for an AttachmentVideoUnit without touching slide image files.
+     *
+     * @param attachmentVideoUnit The attachmentVideoUnit to which the slides belong.
+     * @param hiddenPages         The hidden pages information. {@code null} means no visibility metadata was provided; an empty list clears all hidden states.
+     */
+    public void updateSlideMetadata(AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages) {
+        if (hiddenPages == null) {
+            return;
+        }
+
+        Map<String, HiddenPageInfoDTO> hiddenPagesMap = hiddenPages.stream().collect(Collectors.toMap(HiddenPageInfoDTO::slideId, dto -> dto));
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId());
+
+        for (Slide slide : existingSlides) {
+            ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slide, hiddenPagesMap, String.valueOf(slide.getId()));
+            Slide savedSlide = slideRepository.save(slide);
+            scheduleUnhideIfNeeded(savedSlide, previousHiddenValue, savedSlide.getHidden());
+        }
+    }
+
+    /**
      * Process a single slide in the page order.
      */
     private void processSlide(SlideOrderDTO page, AttachmentVideoUnit attachmentVideoUnit, Map<String, Slide> existingSlidesMap, Map<String, HiddenPageInfoDTO> hiddenPagesMap,

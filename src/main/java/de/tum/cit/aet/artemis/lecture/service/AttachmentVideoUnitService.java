@@ -9,7 +9,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +24,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileUpdateResult;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
@@ -48,6 +48,8 @@ public class AttachmentVideoUnitService {
 
     private final AttachmentFileHashService attachmentFileHashService;
 
+    private final AttachmentService attachmentService;
+
     private final SlideSplitterService slideSplitterService;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
@@ -58,11 +60,12 @@ public class AttachmentVideoUnitService {
 
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
-            Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService) {
+            Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.attachmentFileHashService = attachmentFileHashService;
+        this.attachmentService = attachmentService;
         this.slideSplitterService = slideSplitterService;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
@@ -114,6 +117,8 @@ public class AttachmentVideoUnitService {
         existingAttachmentVideoUnit.setReleaseDate(updateUnitDTO.releaseDate());
         existingAttachmentVideoUnit.setVideoSource(updateUnitDTO.videoSource());
         boolean hasUploadedFile = updateFile != null && !updateFile.isEmpty();
+        boolean hasHiddenPagesRequestPart = hiddenPages != null;
+        AttachmentUpdateIntent attachmentUpdateIntent = updateUnitDTO.attachmentUpdateIntent();
         // Note: competency links are updated by the resource layer using lectureUnitService.updateCompetencyLinks
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
@@ -137,23 +142,26 @@ public class AttachmentVideoUnitService {
                 }
             }
             else if (existingAttachment != null) {
-                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
+                boolean isFileNeutralSlideMetadataUpdate = attachmentUpdateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && hasHiddenPagesRequestPart;
+                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages, !isFileNeutralSlideMetadataUpdate);
 
-                if (hasUploadedFile) {
+                if (isFileNeutralSlideMetadataUpdate) {
+                    Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
+                    savedAttachmentVideoUnit.setAttachment(savedAttachment);
+                    slideSplitterService.updateSlideMetadata(savedAttachmentVideoUnit, hiddenPages);
+                    attachmentService.regenerateStudentVersion(savedAttachment);
+                }
+                else if (hasUploadedFile) {
                     AttachmentFileUpdateResult fileUpdateResult = updateAttachmentFileIfChanged(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
                     if (fileUpdateResult.fileBytesChanged()) {
                         log.debug("Updated attachment {} file bytes from version {} to {}", existingAttachment.getId(), fileUpdateResult.oldVersion(),
                                 fileUpdateResult.newVersion());
                     }
-                }
 
-                Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-                savedAttachmentVideoUnit.setAttachment(savedAttachment);
-                evictCache(updateFile, savedAttachmentVideoUnit);
+                    Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
+                    savedAttachmentVideoUnit.setAttachment(savedAttachment);
+                    evictCache(updateFile, savedAttachmentVideoUnit);
 
-                // Slide splitting is intentionally identical to develop: it runs on every uploaded file. The SHA-256 comparison only gates the version bump (and therefore the
-                // Pyris re-ingestion) above; it deliberately does not change the existing slide-splitting behavior.
-                if (updateFile != null) {
                     // Split PDF into slides, respecting custom page order if provided
                     if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
                         if (pageOrder == null) {
@@ -163,6 +171,10 @@ public class AttachmentVideoUnitService {
                             slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
                         }
                     }
+                }
+                else {
+                    Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
+                    savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 }
             }
         }
@@ -264,14 +276,16 @@ public class AttachmentVideoUnitService {
      * @param updateAttachment    the new attachment containing updated information
      * @param attachmentVideoUnit the attachment video unit to update
      * @param hiddenPages         the hidden pages in the attachment
+     * @param clearStudentVersionWhenHiddenPagesEmpty whether to clear the student version when hiddenPages is explicitly empty
      */
-    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages) {
+    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages,
+            boolean clearStudentVersionWhenHiddenPagesEmpty) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
-        if (CollectionUtils.isEmpty(hiddenPages) && existingAttachment.getStudentVersion() != null) {
+        if (clearStudentVersionWhenHiddenPagesEmpty && hiddenPages != null && hiddenPages.isEmpty() && existingAttachment.getStudentVersion() != null) {
             existingAttachment.setStudentVersion(null);
         }
     }
