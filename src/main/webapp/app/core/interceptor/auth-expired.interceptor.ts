@@ -21,10 +21,10 @@ export class AuthExpiredInterceptor implements HttpInterceptor {
      * if no interceptors remain in the chain.
      * @returns An observable of the event stream.
      */
-    intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
         return next.handle(request).pipe(
             tap({
-                error: (err: any) => {
+                error: (err: unknown) => {
                     if (err instanceof HttpErrorResponse) {
                         if (err.status === 401 && this.accountService.isAuthenticated()) {
                             // save the url before the logout navigates to another page in a constant

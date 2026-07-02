@@ -42,7 +42,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         updateIntervalOnceAppIsStable$.subscribe(() => this.checkForUpdates(false));
     }
 
-    intercept(request: HttpRequest<any>, nextHandler: HttpHandler): Observable<HttpEvent<any>> {
+    intercept(request: HttpRequest<unknown>, nextHandler: HttpHandler): Observable<HttpEvent<unknown>> {
         return nextHandler.handle(request).pipe(
             tap((response) => {
                 if (response instanceof HttpResponse) {

@@ -32,7 +32,7 @@ export class ThemeSwitchComponent implements OnInit {
     isDarkTheme = computed(() => this.themeService.currentTheme() === Theme.DARK);
     isSyncedWithOS = computed(() => this.themeService.userPreference() === undefined);
 
-    closeTimeout: any;
+    closeTimeout: ReturnType<typeof setTimeout> | undefined;
 
     ngOnInit() {
         // Workaround as we can't dynamically change the "autoClose" property on popovers
