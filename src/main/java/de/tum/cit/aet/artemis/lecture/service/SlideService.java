@@ -25,9 +25,12 @@ public class SlideService {
 
     private final SlideUnhideService slideUnhideService;
 
-    public SlideService(SlideRepository slideRepository, SlideUnhideService slideUnhideService) {
+    private final LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService;
+
+    public SlideService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService) {
         this.slideRepository = slideRepository;
         this.slideUnhideService = slideUnhideService;
+        this.lectureUnitVisibilitySyncService = lectureUnitVisibilitySyncService;
     }
 
     /**
@@ -83,5 +86,6 @@ public class SlideService {
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);
         relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
+        lectureUnitVisibilitySyncService.markVisibilityDirtyForExercise(exercise);
     }
 }
