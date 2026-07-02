@@ -39,7 +39,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     secondaryHeader = input<boolean>(false);
 
     onAnnotations = output<Array<Annotation>>();
-    onToggleCollapse = output<{ event: any; horizontal: boolean }>();
+    onToggleCollapse = output<{ event: MouseEvent; horizontal: boolean }>();
     onError = output<string>();
 
     readonly isBuilding = signal(false);
@@ -223,7 +223,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
      * @desc Calls the parent (editorComponent) toggleCollapse method
      * @param event
      */
-    toggleEditorCollapse(event: any) {
+    toggleEditorCollapse(event: MouseEvent) {
         this.onToggleCollapse.emit({
             event,
             horizontal: false,

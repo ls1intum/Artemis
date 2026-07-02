@@ -36,7 +36,7 @@ export class SubmissionService {
      * @param submissionId - The id of the submission to be deleted
      * @param req - A request with additional options in it
      */
-    delete(submissionId: number, req?: any): Observable<HttpResponse<void>> {
+    delete(submissionId: number, req?: Record<string, string | number | boolean>): Observable<HttpResponse<void>> {
         const options = createRequestOption(req);
         return this.http.delete<void>(`${this.resourceUrl}/${submissionId}`, { params: options, observe: 'response' });
     }

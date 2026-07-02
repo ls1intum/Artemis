@@ -26,16 +26,18 @@ export function getInvertedPositionForKey(key: string): string {
     }
 }
 
-export function getEventForKey(key: string, stepSize: number): any {
+// Synthetic keyboard-driven move events only carry the client coordinates consumed by the cropper's move
+// handler; they are cast to MouseEvent to match how the component feeds them into `moveImg`/`getClientX`.
+export function getEventForKey(key: string, stepSize: number): MouseEvent {
     switch (key) {
         case 'ArrowUp':
-            return { clientX: 0, clientY: stepSize * -1 };
+            return { clientX: 0, clientY: stepSize * -1 } as MouseEvent;
         case 'ArrowRight':
-            return { clientX: stepSize, clientY: 0 };
+            return { clientX: stepSize, clientY: 0 } as MouseEvent;
         case 'ArrowDown':
-            return { clientX: 0, clientY: stepSize };
+            return { clientX: 0, clientY: stepSize } as MouseEvent;
         case 'ArrowLeft':
         default:
-            return { clientX: stepSize * -1, clientY: 0 };
+            return { clientX: stepSize * -1, clientY: 0 } as MouseEvent;
     }
 }

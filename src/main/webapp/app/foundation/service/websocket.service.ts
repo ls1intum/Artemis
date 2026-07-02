@@ -567,6 +567,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      *
      * See the examples in {@link IWebsocketService.subscribe}.
      */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- default kept as `any` (not `unknown`) so callers that omit the type argument and pass a callback with a concrete payload type (e.g. notification/course-notification-websocket) stay assignable under strictFunctionTypes; those call sites live outside this module and cannot be re-typed here
     subscribe<T = any>(channel: string): Observable<T> {
         if (!channel) {
             return EMPTY;

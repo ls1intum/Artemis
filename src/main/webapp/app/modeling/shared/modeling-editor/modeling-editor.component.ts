@@ -264,7 +264,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel the UML model to search in
      */
     elementWithClass(name: string, umlModel: UMLModel) {
-        return getModelNodes(umlModel).find((element: any) => element.name?.trim() === name && element.type === 'Class');
+        return getModelNodes(umlModel).find((element) => typeof element.name === 'string' && element.name.trim() === name && element.type === 'Class');
     }
 
     /**
@@ -273,7 +273,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel the UML model to search in
      */
     elementWithAttribute(attribute: string, umlModel: UMLModel) {
-        return getModelNodes(umlModel).find((element: any) => element.name?.includes(attribute) && element.type === 'ClassAttribute');
+        return getModelNodes(umlModel).find((element) => typeof element.name === 'string' && element.name.includes(attribute) && element.type === 'ClassAttribute');
     }
 
     /**
@@ -282,7 +282,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      * @param umlModel the UML model to search in
      */
     elementWithMethod(method: string, umlModel: UMLModel) {
-        return getModelNodes(umlModel).find((element: any) => element.name?.includes(method) && element.type === 'ClassMethod');
+        return getModelNodes(umlModel).find((element) => typeof element.name === 'string' && element.name.includes(method) && element.type === 'ClassMethod');
     }
 
     /**

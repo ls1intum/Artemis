@@ -96,9 +96,10 @@ export class TeamsImportFromFileFormComponent {
      * Assigns the uploaded import file
      * @param event object containing the uploaded file
      */
-    setImportFile(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setImportFile(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (input.files?.length) {
+            const fileList: FileList = input.files;
             this.importFile = fileList[0];
             this.importFileName = this.importFile.name;
             this.loading.set(true);
@@ -123,7 +124,7 @@ export class TeamsImportFromFileFormComponent {
                 transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvEntry[]),
-                error: (error: any) => reject(error),
+                error: (error: Error) => reject(error),
             });
         });
     }

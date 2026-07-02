@@ -238,7 +238,8 @@ export class ExerciseGroupsComponent implements OnInit {
         const headerKey = exerciseType === ExerciseType.FILE_UPLOAD ? 'artemisApp.fileUploadExercise.home.importLabel' : `artemisApp.${exerciseType}Exercise.home.importLabel`;
 
         // For programming exercises, use tabs component (allows import from file), otherwise use direct import
-        const componentToOpen: Type<any> = exerciseType === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
+        const componentToOpen: Type<ExerciseImportTabsComponent | ExerciseImportComponent> =
+            exerciseType === ExerciseType.PROGRAMMING ? ExerciseImportTabsComponent : ExerciseImportComponent;
 
         const dialogRef = this.dialogService.open(componentToOpen, {
             header: this.translateService.instant(headerKey),

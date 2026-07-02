@@ -28,7 +28,7 @@ export class FullscreenComponent {
         if (this.isFullScreen()) {
             exitFullscreen();
         } else {
-            const element: any = this.fullScreenWrapper.nativeElement;
+            const element: HTMLElement = this.fullScreenWrapper.nativeElement;
             enterFullscreen(element);
         }
     }

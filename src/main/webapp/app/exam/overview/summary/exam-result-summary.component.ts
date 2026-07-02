@@ -218,7 +218,7 @@ export class ExamResultSummaryComponent implements OnInit {
         this.isAfterStudentReviewStart.set(this.getIsAfterStudentReviewStart());
     }
 
-    get resultsArePublished(): boolean | any {
+    get resultsArePublished(): boolean {
         if (this.isTestRun() || this.isTestExam) {
             return true;
         }

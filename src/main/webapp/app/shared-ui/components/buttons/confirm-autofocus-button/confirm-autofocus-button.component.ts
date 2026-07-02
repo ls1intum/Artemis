@@ -32,7 +32,7 @@ export class ConfirmAutofocusButtonComponent {
     onConfirm = output<void>();
     onCancel = output<void>();
 
-    content = viewChild<TemplateRef<any>>('content');
+    content = viewChild<TemplateRef<unknown>>('content');
 
     /**
      * open confirmation modal with text and title

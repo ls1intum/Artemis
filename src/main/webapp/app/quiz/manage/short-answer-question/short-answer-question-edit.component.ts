@@ -47,7 +47,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { MatchPercentageInfoModalComponent } from '../match-percentage-info-modal/match-percentage-info-modal.component';
-import { CdkDrag, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SelectModule } from 'primeng/select';
@@ -520,11 +520,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      * @param spot {object} the spot involved
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
-    onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
-        let dragItem = dragEvent.item.data;
+    onDragDrop(spot: ShortAnswerSpot, dragEvent: CdkDragDrop<ShortAnswerSolution>): void {
+        let dragItem: ShortAnswerSolution | undefined = dragEvent.item.data;
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.shortAnswerQuestion.solutions?.find((originalDragItem) =>
-            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID,
+            dragItem!.id ? originalDragItem.id === dragItem!.id : originalDragItem.tempID === dragItem!.tempID,
         );
 
         if (!dragItem) {

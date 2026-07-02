@@ -9,7 +9,7 @@ export class SafeResourceUrlPipe implements PipeTransform {
      * Pipe that can be used to bypass security for a resource url, e.g. for `<script src>`, or `<iframe src>`.
      * @param value The resource to bypass security check.
      */
-    transform(value: any) {
+    transform(value: string) {
         return this.sanitizer.bypassSecurityTrustResourceUrl(value);
     }
 }

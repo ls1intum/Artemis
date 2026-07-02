@@ -78,8 +78,8 @@ export class AlertService {
             this.addErrorAlert(errorResponse.message, errorResponse.translationKey, errorResponse.translationParams);
         });
 
-        this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
-            const httpErrorResponse: HttpErrorResponse = response.content;
+        this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: EventWithContent<unknown> | string) => {
+            const httpErrorResponse = (response as EventWithContent<HttpErrorResponse>).content;
             if (httpErrorResponse.error?.skipAlert) {
                 return;
             }
@@ -270,7 +270,9 @@ export class AlertService {
         });
     }
 
-    addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+    addErrorAlert(message?: string, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+        // Some callers forward a server error field that is typed `any`, so it may not actually be a string at
+        // runtime; coerce defensively before display.
         if (message && typeof message !== 'string') {
             message = '' + message;
         }

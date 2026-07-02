@@ -6,6 +6,6 @@ export class SubmissionSyncPayload {
     public sender: User;
 }
 
-export function isSubmissionSyncPayload(arg: any): arg is SubmissionSyncPayload {
-    return arg.submission !== undefined && arg.sender !== undefined;
+export function isSubmissionSyncPayload(arg: unknown): arg is SubmissionSyncPayload {
+    return typeof arg === 'object' && arg !== null && (arg as SubmissionSyncPayload).submission !== undefined && (arg as SubmissionSyncPayload).sender !== undefined;
 }

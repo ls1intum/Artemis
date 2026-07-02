@@ -184,7 +184,12 @@ export class ExamRoomsComponent implements OnInit {
         this.sortService.sortByProperty(this.examRoomData()!, this.sortAttribute(), this.ascending());
     }
 
-    private showErrorNotification(translationKey: string, interpolationValues?: any, trailingText?: string, translatePath: string = this.baseTranslationPath): void {
+    private showErrorNotification(
+        translationKey: string,
+        interpolationValues?: Record<string, unknown>,
+        trailingText?: string,
+        translatePath: string = this.baseTranslationPath,
+    ): void {
         const errorMessage = this.translateService.instant(`${translatePath}.${translationKey}`, interpolationValues);
         this.alertService.error(trailingText ? `${errorMessage}: "${trailingText}"` : errorMessage);
     }

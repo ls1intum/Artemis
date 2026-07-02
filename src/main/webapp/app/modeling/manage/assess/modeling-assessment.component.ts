@@ -406,7 +406,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.isUpdatingFromServer = false;
     }
 
-    private calculateLabel(feedback: any) {
+    private calculateLabel(feedback: Feedback) {
         const firstCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffFirst');
         const secondCorrectionRoundText = this.artemisTranslatePipe.transform('artemisApp.assessment.diffView.correctionRoundDiffSecond');
         if (this.highlightDifferences()) {
@@ -415,7 +415,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         return undefined;
     }
 
-    private calculateLabelColor(feedback: any) {
+    private calculateLabelColor(feedback: Feedback) {
         if (this.highlightDifferences()) {
             return feedback.copiedFeedbackId ? this.firstCorrectionRoundColor : this.secondCorrectionRoundColor;
         }

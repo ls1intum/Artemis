@@ -126,11 +126,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return !!(ex?.course && ex?.isAtLeastTutor && (this.gradeStepsDTO()?.presentationsNumber ?? 0) > 0 && ex?.presentationScoreEnabled === true);
     });
 
-    readonly scoresRoute = computed<any[]>(() => {
+    readonly scoresRoute = computed<(string | number | undefined)[]>(() => {
         const ex = this.exercise();
         if (!ex) return [];
         const exam = ex.exerciseGroup?.exam;
-        const base: any[] = ['/course-management'];
+        const base: (string | number | undefined)[] = ['/course-management'];
         if (exam) {
             base.push(exam.course!.id, 'exams', exam.id, 'exercise-groups', ex.exerciseGroup!.id);
         } else {

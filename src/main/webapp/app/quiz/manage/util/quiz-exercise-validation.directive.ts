@@ -200,7 +200,7 @@ export abstract class QuizExerciseValidationDirective {
      * check if Dictionary is empty
      * @param obj the dictionary to be checked
      */
-    protected isEmpty(obj: any) {
+    protected isEmpty(obj: object) {
         return Object.keys(obj).length === 0;
     }
 }

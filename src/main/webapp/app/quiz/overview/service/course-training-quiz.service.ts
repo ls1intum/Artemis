@@ -18,7 +18,7 @@ export class CourseTrainingQuizService {
      * @param req Pagination options
      * @param questionIds
      */
-    getQuizQuestions(courseId: number, req?: any, questionIds?: number[]): Observable<HttpResponse<QuizQuestionTraining[]>> {
+    getQuizQuestions(courseId: number, req?: { page: number; size: number; isNewSession: boolean }, questionIds?: number[]): Observable<HttpResponse<QuizQuestionTraining[]>> {
         const params: HttpParams = createRequestOption(req);
         return this.http.post<QuizQuestionTraining[]>(`api/quiz/courses/${courseId}/training-questions`, questionIds, {
             params,

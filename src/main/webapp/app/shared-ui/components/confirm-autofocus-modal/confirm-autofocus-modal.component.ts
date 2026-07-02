@@ -10,7 +10,7 @@ export interface ConfirmAutofocusModalData {
     text: string;
     translateText?: boolean;
     textIsMarkdown?: boolean;
-    contentRef?: TemplateRef<any>;
+    contentRef?: TemplateRef<unknown>;
     confirmDisabled?: boolean;
 }
 

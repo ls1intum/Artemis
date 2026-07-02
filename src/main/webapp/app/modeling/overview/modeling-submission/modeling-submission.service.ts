@@ -53,7 +53,7 @@ export class ModelingSubmissionService {
      * @param req - Request option
      * @param correctionRound correctionRound for which to get the Submissions
      */
-    getSubmissions(exerciseId: number, req?: any, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
+    getSubmissions(exerciseId: number, req?: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<ModelingSubmission[]>> {
         const url = `${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`;
         let params = createRequestOption(req);
         if (correctionRound !== 0) {

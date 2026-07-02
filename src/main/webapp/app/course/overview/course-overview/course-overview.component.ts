@@ -39,6 +39,18 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
 import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
 
+/**
+ * Reads the collapsed state from a route-activated component that may expose `isCollapsed` either as a
+ * method or as a boolean property. Returns undefined if the component does not provide the information.
+ */
+function readComponentCollapsed(componentRef: unknown): boolean | undefined {
+    if (typeof componentRef !== 'object' || !componentRef) {
+        return undefined;
+    }
+    const isCollapsed = (componentRef as { isCollapsed?: (() => boolean) | boolean }).isCollapsed;
+    return typeof isCollapsed === 'function' ? isCollapsed.call(componentRef) : isCollapsed;
+}
+
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
@@ -237,7 +249,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         return !!this.route.snapshot.firstChild?.data?.hasSidebar;
     }
 
-    protected handleComponentActivation(componentRef: any): void {
+    protected handleComponentActivation(componentRef: unknown): void {
         if (
             componentRef instanceof CourseExercisesComponent ||
             componentRef instanceof CourseLecturesComponent ||
@@ -254,7 +266,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             componentRef.setPageTitle(this.pageTitle());
         }
 
-        const componentCollapsed = typeof componentRef?.isCollapsed === 'function' ? componentRef.isCollapsed() : (componentRef?.isCollapsed as boolean | undefined);
+        const componentCollapsed = readComponentCollapsed(componentRef);
         this.isSidebarCollapsed.set(componentCollapsed ?? false);
         this.getShowRefreshButton();
     }

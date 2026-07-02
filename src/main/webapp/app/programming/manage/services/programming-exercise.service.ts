@@ -170,7 +170,7 @@ export class ProgrammingExerciseService {
      * @param programmingExercise which should be updated
      * @param req optional request options
      */
-    update(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+    update(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
@@ -183,7 +183,7 @@ export class ProgrammingExerciseService {
      * @param programmingExercise to update
      * @param req optional request options
      */
-    updateTimeline(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+    updateTimeline(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toProgrammingExerciseTimelineUpdateDTO(programmingExercise);
         return this.http
@@ -203,7 +203,7 @@ export class ProgrammingExerciseService {
      * @param problemStatement the new problem statement
      * @param req optional request options
      */
-    updateProblemStatement(programmingExerciseId: number, problemStatement: string | undefined, req?: any) {
+    updateProblemStatement(programmingExerciseId: number, problemStatement: string | undefined, req?: Parameters<typeof createRequestOption>[0]) {
         const options = createRequestOption(req);
         // Send a single space for empty problem statements to avoid Spring Boot empty body rejection
         // The server will trim it and convert to null
@@ -364,7 +364,7 @@ export class ProgrammingExerciseService {
      * Receives all programming exercises for the particular query
      * @param req optional request options
      */
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(req?: Parameters<typeof createRequestOption>[0]): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<ProgrammingExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
@@ -487,7 +487,7 @@ export class ProgrammingExerciseService {
      * @param programmingExercise that should be updated of type {ProgrammingExercise}
      * @param req optional request options
      */
-    reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: any): Observable<EntityResponseType> {
+    reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
@@ -517,8 +517,8 @@ export class ProgrammingExerciseService {
      * Gets all files from the last solution participation repository
      */
     getSolutionRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/solution-files-content?omitBinaries=true`).pipe(
-            map((res: HttpResponse<any>) => {
+        return this.http.get<Record<string, string>>(`${this.resourceUrl}/${exerciseId}/solution-files-content?omitBinaries=true`).pipe(
+            map((res: Record<string, string>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
                 return res && new Map(Object.entries(res));
@@ -530,8 +530,8 @@ export class ProgrammingExerciseService {
      * Gets all files from the last commit in the template participation repository
      */
     getTemplateRepositoryTestFilesWithContent(exerciseId: number): Observable<Map<string, string> | undefined> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/template-files-content?omitBinaries=true`).pipe(
-            map((res: HttpResponse<any>) => {
+        return this.http.get<Record<string, string>>(`${this.resourceUrl}/${exerciseId}/template-files-content?omitBinaries=true`).pipe(
+            map((res: Record<string, string>) => {
                 // this mapping is required because otherwise the HttpResponse object would be parsed
                 // to an arbitrary object (and not a map)
                 return res && new Map(Object.entries(res));

@@ -2,6 +2,8 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Directive, OnDestroy, OnInit, inject, input, model, signal } from '@angular/core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
+import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
+import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
@@ -18,7 +20,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     readonly hasChannelModerationRights = input(false);
     readonly isThreadSidebar = input<boolean | undefined>();
-    abstract get reactionsBar(): any;
+    abstract get reactionsBar(): PostingReactionsBarComponent<T> | undefined;
     readonly showDropdown = signal(false);
     readonly dropdownPosition = signal<{ x: number; y: number }>({ x: 0, y: 0 });
     showReactionSelector = false;
@@ -93,7 +95,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * Closes the dropdown afterward.
      */
     editPosting() {
-        this.reactionsBar.editPosting();
+        this.reactionsBar!.editPosting();
         this.showDropdown.set(false);
     }
 
@@ -102,7 +104,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * Closes dropdown and updates the view.
      */
     togglePin() {
-        this.reactionsBar.togglePin();
+        this.reactionsBar!.togglePin();
         this.showDropdown.set(false);
     }
 
@@ -110,7 +112,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * Deletes the post by invoking the delete method from the reaction bar.
      */
     deletePost() {
-        this.reactionsBar.deletePosting();
+        this.reactionsBar!.deletePosting();
         this.showDropdown.set(false);
     }
 
@@ -118,18 +120,18 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * Initiates the forward message logic from the reaction bar.
      */
     forwardMessage() {
-        this.reactionsBar.forwardMessage();
+        this.reactionsBar!.forwardMessage();
     }
 
     /**
      * Delegates pin status retrieval to the reaction bar (used for dropdown display).
      */
     checkIfPinned(): DisplayPriority {
-        return this.reactionsBar.checkIfPinned();
+        return this.reactionsBar!.checkIfPinned();
     }
 
-    selectReaction(event: any) {
-        this.reactionsBar.selectReaction(event);
+    selectReaction(event: EmojiEvent) {
+        this.reactionsBar!.selectReaction(event);
         this.showReactionSelector = false;
     }
 

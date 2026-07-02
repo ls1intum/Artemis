@@ -327,7 +327,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param editedAuxiliaryRepository
      */
     updateRepositoryName(editedAuxiliaryRepository: AuxiliaryRepository) {
-        return (newValue: any) => {
+        return (newValue: string) => {
             editedAuxiliaryRepository.name = newValue;
             this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.name;
@@ -340,7 +340,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * @param editedAuxiliaryRepository
      */
     updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository) {
-        return (newValue: any) => {
+        return (newValue: string) => {
             editedAuxiliaryRepository.checkoutDirectory = newValue;
             this.refreshAuxiliaryRepositoryChecks();
             return editedAuxiliaryRepository.checkoutDirectory;

@@ -15,7 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 export class ArtemisTranslatePipe implements PipeTransform {
     private translateService = inject(TranslateService);
 
-    transform(query: string | undefined | null, args?: any): string {
+    transform(query: string | undefined | null, args?: object): string {
         if (!query || query.length === 0) {
             return query ?? '';
         }

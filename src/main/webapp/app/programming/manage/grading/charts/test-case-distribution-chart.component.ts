@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ChartModule } from 'primeng/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
-type TestCaseColors = {
+export type TestCaseColors = {
     [label: string]: string;
 };
 
@@ -34,7 +34,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     readonly totalParticipations = input<number>();
     readonly exercise = input.required<ProgrammingExercise>();
 
-    readonly testCaseColorsChange = output<any>();
+    readonly testCaseColorsChange = output<TestCaseColors>();
     readonly testCaseRowFilter = output<number>();
 
     // visible test cases (filtered out the ones that are never visible), exposed for templates and tests
@@ -228,7 +228,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
      * Filters the table left to the charts in order to display only the test case that is clicked
      * @param event event that is delegated by p-chart and identifies the clicked segment
      */
-    onSelectWeight(event: any): void {
+    onSelectWeight(event: Parameters<typeof toChartSelectEvent>[0]): void {
         const selected = toChartSelectEvent(event, this.weightChartData());
         const testCaseId = selected?.meta?.['id'];
         if (testCaseId === undefined) {

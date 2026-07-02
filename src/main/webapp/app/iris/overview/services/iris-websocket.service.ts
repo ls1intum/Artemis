@@ -34,8 +34,8 @@ export class IrisWebsocketService implements OnDestroy {
 
         const subscribedChannel = this.subscribedChannels.computeIfAbsent(sessionId, () => {
             const channel = this.getChannelFromSessionId(sessionId);
-            const subject = new Subject<any>();
-            const wsSubscription = this.websocketService.subscribe(channel).subscribe((response: any) => {
+            const subject = new Subject<IrisChatWebsocketDTO>();
+            const wsSubscription = this.websocketService.subscribe<IrisChatWebsocketDTO>(channel).subscribe((response: IrisChatWebsocketDTO) => {
                 subject.next(response);
             });
             return { wsSubscription, subject };

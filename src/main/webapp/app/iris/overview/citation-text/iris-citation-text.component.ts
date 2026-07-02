@@ -305,7 +305,7 @@ export class IrisCitationTextComponent {
             return;
         }
 
-        const queryParams: any = { unit: unitId };
+        const queryParams: Record<string, string> = { unit: unitId };
         if (timestamp) {
             queryParams.timestamp = timestamp;
         }

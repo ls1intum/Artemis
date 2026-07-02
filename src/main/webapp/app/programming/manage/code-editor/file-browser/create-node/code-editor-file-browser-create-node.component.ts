@@ -24,12 +24,13 @@ export class CodeEditorFileBrowserCreateNodeComponent implements AfterViewInit {
     onCreateFile = output<string>();
     onClearCreatingFile = output<Event>();
 
-    createFile(event: any) {
-        if (!event.target.value) {
+    createFile(event: Event) {
+        const value = (event.target as HTMLInputElement).value;
+        if (!value) {
             this.onClearCreatingFile.emit(event);
             return;
         }
-        this.onCreateFile.emit(event.target.value);
+        this.onCreateFile.emit(value);
     }
 
     ngAfterViewInit(): void {

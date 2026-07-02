@@ -26,7 +26,7 @@ export function cleanString(str?: string): string {
  *
  * @param val The object you want to stringify
  */
-export const stringifyCircular = (val: any): string => {
+export const stringifyCircular = (val: unknown): string => {
     const seen = new WeakSet();
     return JSON.stringify(val, (key, value) => {
         if (typeof value === 'object' && value !== null) {
@@ -54,25 +54,25 @@ export const stringifyIgnoringFields = <T extends object>(val: T, ...ignoredFiel
  * @param value
  * @param exp
  */
-export const round = (value: any, exp?: number) => {
+export const round = (value: number, exp?: number) => {
     if (exp == undefined || +exp === 0) {
         return Math.round(value);
     }
 
-    value = +value;
-    exp = +exp;
+    const numericValue = +value;
+    const numericExp = +exp;
 
-    if (isNaN(value) || !(exp % 1 === 0)) {
+    if (isNaN(numericValue) || !(numericExp % 1 === 0)) {
         return NaN;
     }
 
     // Shift
-    value = value.toString().split('e');
-    value = Math.round(+(value[0] + 'e' + (value[1] ? +value[1] + exp : exp)));
+    let shifted = numericValue.toString().split('e');
+    const rounded = Math.round(+(shifted[0] + 'e' + (shifted[1] ? +shifted[1] + numericExp : numericExp)));
 
     // Shift back
-    value = value.toString().split('e');
-    return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
+    shifted = rounded.toString().split('e');
+    return +(shifted[0] + 'e' + (shifted[1] ? +shifted[1] - numericExp : -numericExp));
 };
 
 /**
@@ -81,7 +81,7 @@ export const round = (value: any, exp?: number) => {
  * @param course The course in which the score is displayed. The attribute accuracyOfScores determines the accuracy
  * @returns The rounded percent of the score in the range [0;100]
  */
-export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, course: Course | undefined) => {
+export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: number, course: Course | undefined) => {
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
@@ -94,7 +94,7 @@ export const roundScorePercentSpecifiedByCourseSettings = (relativeScore: any, c
  * @param course The course which defines the accuracy to which the value should be rounded.
  * @returns The rounded value.
  */
-export const roundValueSpecifiedByCourseSettings = (value: any, course: Course | undefined) => {
+export const roundValueSpecifiedByCourseSettings = (value: number, course: Course | undefined) => {
     if (!course) {
         captureException(new Error('The course object used for determining the rounding of scores was undefined'));
     }
@@ -124,7 +124,7 @@ export const findLatestResult = (results?: (Result | null | undefined)[]): Resul
     return clean.length ? clean.reduce((a, b) => (a.id! > b.id! ? a : b)) : undefined;
 };
 
-export const isDate = (input: any) => {
+export const isDate = (input: unknown) => {
     return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
 };
 
@@ -142,7 +142,7 @@ export class Range {
     }
 }
 
-export function getAsMutableObject(object: any) {
+export function getAsMutableObject<T extends object>(object: T): { -readonly [K in keyof T]: T[K] } {
     return { ...object };
 }
 

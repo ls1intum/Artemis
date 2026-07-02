@@ -275,7 +275,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return this.communicationRouteLoaded();
     }
 
-    protected handleComponentActivation(componentRef: any): void {
+    protected handleComponentActivation(componentRef: unknown): void {
         if (
             componentRef instanceof CourseDetailComponent ||
             componentRef instanceof CourseManagementExercisesComponent ||

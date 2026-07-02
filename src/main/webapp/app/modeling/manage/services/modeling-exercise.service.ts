@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseServicable, ExerciseService, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { downloadStream } from 'app/foundation/util/download.util';
 import { toUpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 
@@ -28,7 +28,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
+    update(modelingExercise: ModelingExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http
@@ -74,7 +74,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * @param modelingExercise that should be updated of type {ModelingExercise}
      * @param req optional request options
      */
-    reevaluateAndUpdate(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
+    reevaluateAndUpdate(modelingExercise: ModelingExercise, req?: ExerciseUpdateRequestOptions): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const dto = toUpdateModelingExerciseDTO(modelingExercise);
         return this.http

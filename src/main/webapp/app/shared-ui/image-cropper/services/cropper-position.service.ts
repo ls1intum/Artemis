@@ -40,7 +40,7 @@ export class CropperPositionService {
         }
     }
 
-    move(event: Event, moveStart: MoveStart, cropperPosition: CropperPosition) {
+    move(event: MouseEvent | TouchEvent, moveStart: MoveStart, cropperPosition: CropperPosition) {
         const diffX = this.getClientX(event) - moveStart.clientX;
         const diffY = this.getClientY(event) - moveStart.clientY;
 
@@ -50,9 +50,12 @@ export class CropperPositionService {
         cropperPosition.y2 = moveStart.y2 + diffY;
     }
 
-    resize(event: any, moveStart: MoveStart, cropperPosition: CropperPosition, maxSize: Dimensions, settings: CropperSettings): void {
+    resize(event: MouseEvent | TouchEvent, moveStart: MoveStart, cropperPosition: CropperPosition, maxSize: Dimensions, settings: CropperSettings): void {
         const moveX = this.getClientX(event) - moveStart.clientX;
         const moveY = this.getClientY(event) - moveStart.clientY;
+        // `scale` is a non-standard pinch-gesture property that is not part of MouseEvent/TouchEvent.
+        // It is only present when a synthetic pinch event drives the 'center' resize; otherwise it is undefined.
+        const scale = (event as { scale?: number }).scale;
         switch (moveStart.position) {
             case 'left':
                 cropperPosition.x1 = Math.min(
@@ -119,8 +122,8 @@ export class CropperPositionService {
                 );
                 break;
             case 'center':
-                const newWidth = Math.min(Math.max(settings.cropperScaledMinWidth, Math.abs(moveStart.x2 - moveStart.x1) * event.scale), settings.cropperScaledMaxWidth);
-                const newHeight = Math.min(Math.max(settings.cropperScaledMinHeight, Math.abs(moveStart.y2 - moveStart.y1) * event.scale), settings.cropperScaledMaxHeight);
+                const newWidth = Math.min(Math.max(settings.cropperScaledMinWidth, Math.abs(moveStart.x2 - moveStart.x1) * scale!), settings.cropperScaledMaxWidth);
+                const newHeight = Math.min(Math.max(settings.cropperScaledMinHeight, Math.abs(moveStart.y2 - moveStart.y1) * scale!), settings.cropperScaledMaxHeight);
                 cropperPosition.x1 = moveStart.clientX - newWidth / 2;
                 cropperPosition.x2 = moveStart.clientX + newWidth / 2;
                 cropperPosition.y1 = moveStart.clientY - newHeight / 2;
@@ -225,11 +228,11 @@ export class CropperPositionService {
         }
     }
 
-    getClientX(event: any): number {
-        return event.touches?.[0].clientX || event.clientX || 0;
+    getClientX(event: MouseEvent | TouchEvent): number {
+        return ('touches' in event ? event.touches[0]?.clientX : event.clientX) || 0;
     }
 
-    getClientY(event: any): number {
-        return event.touches?.[0].clientY || event.clientY || 0;
+    getClientY(event: MouseEvent | TouchEvent): number {
+        return ('touches' in event ? event.touches[0]?.clientY : event.clientY) || 0;
     }
 }

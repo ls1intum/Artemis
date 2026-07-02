@@ -168,7 +168,7 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
      * If the user clicks a category within one of the other two bars, the corresponding table is filtered in order to show this category
      * @param event the event delegated by ngx-charts after the user clicked a part of the chart
      */
-    onSelect(event: any): void {
+    onSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
         const selected = toChartSelectEvent(event, this.chartData());
         if (!selected?.meta?.['isPenalty']) {
             const exercise = this.exercise();

@@ -18,7 +18,7 @@ import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 
-import { BarControlConfiguration } from 'app/shared-ui/tab-bar/tab-bar';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared-ui/tab-bar/tab-bar';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
@@ -33,6 +33,14 @@ import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/course/s
 import { toSignal } from '@angular/core/rxjs-interop';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
+
+/**
+ * Type guard that checks whether a route-activated component provides a bar control configuration
+ * (i.e. implements {@link BarControlConfigurationProvider}) so its controls can be rendered in the top bar.
+ */
+function providesBarControlConfiguration(componentRef: unknown): componentRef is BarControlConfigurationProvider {
+    return typeof componentRef === 'object' && !!componentRef && 'controlConfiguration' in componentRef && !!(componentRef as BarControlConfigurationProvider).controlConfiguration;
+}
 
 /**
  * Base class that contains common functionality for course container components.
@@ -92,8 +100,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     conversationServiceInstantiated = signal<boolean>(false);
     checkedForUnreadMessages = signal<boolean>(false);
 
-    protected controlsEmbeddedView?: EmbeddedViewRef<any>;
-    controls = signal<TemplateRef<any> | undefined>(undefined);
+    protected controlsEmbeddedView?: EmbeddedViewRef<unknown>;
+    controls = signal<TemplateRef<unknown> | undefined>(undefined);
     public controlConfiguration = signal<BarControlConfiguration | undefined>(undefined);
     protected controlsSubscription?: Subscription;
     protected vcSubscription?: Subscription;
@@ -174,7 +182,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     protected abstract getHasSidebar(): boolean;
 
-    protected abstract handleComponentActivation(componentRef: any): void;
+    protected abstract handleComponentActivation(componentRef: unknown): void;
 
     abstract handleToggleSidebar(): void;
 
@@ -210,17 +218,17 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
      * Accepts a component reference of the subcomponent rendered based on the current route.
      * If it provides a controlsConfiguration, we try to render the controls component
      */
-    onSubRouteActivate(componentRef: any) {
+    onSubRouteActivate(componentRef: unknown) {
         this.getPageTitle();
         const urlSegments = this.router.url.split('?')[0].split('/');
         this.communicationRouteLoaded.set(urlSegments.length > 3 && urlSegments[3] === 'communication');
 
         this.hasSidebar.set(this.getHasSidebar());
-        if (componentRef.controlConfiguration) {
+        if (providesBarControlConfiguration(componentRef)) {
             const provider = componentRef;
             this.controlConfiguration.set(provider.controlConfiguration);
 
-            this.controlsSubscription = provider.controlConfiguration?.subject?.subscribe(async (controls: TemplateRef<any>) => {
+            this.controlsSubscription = provider.controlConfiguration?.subject?.subscribe(async (controls: TemplateRef<unknown>) => {
                 this.controls.set(controls);
                 this.tryRenderControls();
                 await firstValueFrom(provider.controlsRendered);

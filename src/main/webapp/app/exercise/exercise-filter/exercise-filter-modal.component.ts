@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, output, signal, viewChild } from '@angular/core';
-import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -134,11 +134,15 @@ export class ExerciseFilterModalComponent implements OnInit {
     };
     resultFormatter = (exerciseCategory: ExerciseCategoryFilterOption) => exerciseCategory.category.category ?? '';
 
-    onSelectItem(event: any) {
-        const isEnterPressedForNotExistingItem = !event.item;
+    // Bound to both the typeahead's (selectItem) output and (keydown.enter): the former emits an
+    // NgbTypeaheadSelectItemEvent (carrying the selected item), the latter a KeyboardEvent (no item).
+    onSelectItem(event: NgbTypeaheadSelectItemEvent<ExerciseCategoryFilterOption> | KeyboardEvent) {
+        const isEnterPressedForNotExistingItem = !('item' in event) || !event.item;
         if (isEnterPressedForNotExistingItem) {
             event.preventDefault();
-            event.stopPropagation();
+            if (event instanceof KeyboardEvent) {
+                event.stopPropagation();
+            }
             return;
         }
 

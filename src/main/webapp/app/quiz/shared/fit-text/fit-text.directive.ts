@@ -12,7 +12,7 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnDestroy {
     minFontSize = input<number | 'inherit'>(0);
     maxFontSize = input<number | 'inherit'>(Number.POSITIVE_INFINITY);
     delay = input(100);
-    innerHTML = input<any>();
+    innerHTML = input<string>();
     fontUnit = input<'px' | 'em' | string>('px');
 
     private readonly fitTextElement: HTMLElement;

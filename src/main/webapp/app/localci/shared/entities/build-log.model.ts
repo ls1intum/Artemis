@@ -9,7 +9,7 @@ export enum BuildLogType {
 }
 
 export type BuildLogEntry = {
-    time: any;
+    time: string;
     log: string;
     type?: BuildLogType;
 };

@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({ name: 'searchFilter' })
 export class SearchFilterPipe implements PipeTransform {
-    transform(array: any[] | undefined, fields: string[], value: string): any[] {
+    transform<T extends Record<string, unknown>>(array: T[] | undefined, fields: string[], value: string): T[] {
         if (!Array.isArray(array)) {
             return [];
         }

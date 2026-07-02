@@ -242,7 +242,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             .subscribe();
     }
 
-    protected applyDomainChange(domainType: any, domainValue: any) {
+    protected applyDomainChange(domainType: DomainChange[0], domainValue: DomainChange[1]) {
         if (this.codeEditorContainer() != undefined) {
             this.codeEditorContainer()!.initializeProperties();
         }

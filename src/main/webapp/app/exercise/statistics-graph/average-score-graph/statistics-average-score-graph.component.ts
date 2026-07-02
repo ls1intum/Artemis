@@ -150,7 +150,7 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
      * Handles the click event on one of the bars and navigates to the corresponding exercise statistics page
      * @param event the event that is passed by p-chart
      */
-    onSelect(event: any): void {
+    onSelect(event: Parameters<typeof toChartSelectEvent>[0]): void {
         const selected = toChartSelectEvent(event, this.chartData());
         const dataEntry = selected?.meta as ExerciseStatisticsEntry | undefined;
 

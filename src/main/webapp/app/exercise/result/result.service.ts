@@ -40,8 +40,15 @@ export interface Badge {
     tooltip: string;
 }
 
+/**
+ * Request options that are appended as query parameters when fetching results with points per grading criterion.
+ */
+export interface ResultsWithPointsRequestOptions {
+    withSubmissions?: boolean;
+}
+
 export interface IResultService {
-    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
+    getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: ResultsWithPointsRequestOptions) => Observable<ResultsWithPointsArrayResponseType>;
     getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
     getResultsWithPointsPerGradingCriterion: (exercise: Exercise) => Observable<ResultsWithPointsArrayResponseType>;
     triggerDownloadCSV: (rows: string[], csvFileName: string) => void;
@@ -225,7 +232,7 @@ export class ResultService implements IResultService {
         }
     }
 
-    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: any): Observable<ResultsWithPointsArrayResponseType> {
+    getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: ResultsWithPointsRequestOptions): Observable<ResultsWithPointsArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<ResultWithPointsPerGradingCriterion[]>(`${this.exerciseResourceUrl}/${exerciseId}/results-with-points-per-criterion`, {

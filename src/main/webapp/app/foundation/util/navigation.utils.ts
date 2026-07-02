@@ -111,7 +111,7 @@ export class ArtemisNavigationUtilService {
      * @param route the target route
      * @param params the query params of the target route
      */
-    routeInNewTab(route: any[], params?: Params): void {
+    routeInNewTab(route: unknown[], params?: Params): void {
         const url = this.router.serializeUrl(this.router.createUrlTree(route, params));
         window.open(url, '_blank');
     }

@@ -252,11 +252,10 @@ export default tseslint.config(
             ],
         },
     },
-    // Ratchet toward banning `any` in production code, enabled module-by-module. First tranche: the `core` layer
-    // (auth, guards, interceptors, config) — imported across the whole app, so typing it well benefits every
-    // consumer. Remaining modules are tracked in CLIENT_TYPE_SAFETY_TODO.md and will be enabled in follow-ups.
+    // Forbid `any` in all production client code. `any` opts a value out of type checking entirely, so it is
+    // banned across `src/main/webapp` (production). Specs may still use `any` for mocks/fixtures (excluded below).
     {
-        files: ['src/main/webapp/app/core/**/*.ts'],
+        files: ['src/main/webapp/**/*.ts'],
         ignores: ['**/*.spec.ts'],
         rules: {
             '@typescript-eslint/no-explicit-any': 'error',

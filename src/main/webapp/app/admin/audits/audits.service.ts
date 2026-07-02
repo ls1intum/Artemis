@@ -4,11 +4,22 @@ import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { Audit } from 'app/admin/audits/audit.model';
 
+/**
+ * Query parameters for retrieving audit entries.
+ */
+export interface AuditsQuery {
+    page?: number;
+    size?: number;
+    sort?: string[];
+    fromDate?: string;
+    toDate?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuditsService {
     private http = inject(HttpClient);
 
-    query(req: any): Observable<HttpResponse<Audit[]>> {
+    query(req: AuditsQuery): Observable<HttpResponse<Audit[]>> {
         const params: HttpParams = createRequestOption(req);
 
         const requestURL = 'api/admin/audits';

@@ -83,7 +83,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
 
     protected readonly FeatureToggle = FeatureToggle;
 
-    _onChange = (_value: any) => {};
+    _onChange = (_value: CompetencyLearningObjectLink[] | undefined) => {};
 
     protected readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
@@ -258,11 +258,11 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         );
     }
 
-    registerOnChange(fn: any): void {
+    registerOnChange(fn: (value: CompetencyLearningObjectLink[] | undefined) => void): void {
         this._onChange = fn;
     }
 
-    registerOnTouched(_fn: any): void {}
+    registerOnTouched(_fn: () => void): void {}
 
     suggestCompetencies(): void {
         if (!this.exerciseDescription()?.trim()) {
@@ -276,7 +276,7 @@ export class CompetencySelectionPrimengComponent implements OnInit, ControlValue
         const requestBody = { description: this.exerciseDescription(), course_id: courseId?.toString() };
 
         this.http
-            .post<{ competencies: any[] }>('/api/atlas/competencies/suggest', requestBody)
+            .post<{ competencies: { id: number | string }[] }>('/api/atlas/competencies/suggest', requestBody)
             .pipe(
                 finalize(() => {
                     this.isSuggesting.set(false);

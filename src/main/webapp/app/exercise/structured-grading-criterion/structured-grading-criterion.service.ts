@@ -12,10 +12,10 @@ export class StructuredGradingCriterionService {
      * the SGI element sent on drag in processed in this method
      * the corresponding drag method is in StructuredGradingInstructionsAssessmentLayoutComponent
      */
-    updateFeedbackWithStructuredGradingInstructionEvent(feedback: Feedback, event: any) {
+    updateFeedbackWithStructuredGradingInstructionEvent(feedback: Feedback, event: Event) {
         event.preventDefault();
         try {
-            const data = event.dataTransfer.getData('text/plain');
+            const data = (event as DragEvent).dataTransfer!.getData('text/plain');
             const instruction = parseJson<GradingInstruction>(data);
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;

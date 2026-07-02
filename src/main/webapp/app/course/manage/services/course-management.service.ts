@@ -393,7 +393,7 @@ export class CourseManagementService implements OnDestroy {
      * finds all courses together with user stats using a GET request
      * @param req
      */
-    getWithUserStats(req?: any): Observable<EntityArrayResponseType> {
+    getWithUserStats(req?: Record<string, string | number | boolean>): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         this.fetchingCoursesForNotifications = true;
         const generation = this.stateGeneration;
@@ -407,7 +407,7 @@ export class CourseManagementService implements OnDestroy {
      * finds all courses for the overview using a GET request
      * @param req a dictionary which is sent as request option along the REST call
      */
-    getCourseOverview(req?: any): Observable<HttpResponse<Course[]>> {
+    getCourseOverview(req?: Record<string, string | number | boolean>): Observable<HttpResponse<Course[]>> {
         const options = createRequestOption(req);
         this.fetchingCoursesForNotifications = true;
         return this.http.get<Course[]>(`${this.resourceUrl}/course-management-overview`, { params: options, observe: 'response' }).pipe(

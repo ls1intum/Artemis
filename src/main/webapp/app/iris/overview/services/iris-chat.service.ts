@@ -352,7 +352,7 @@ export class IrisChatService implements OnDestroy {
         if (error.status === 403) {
             this.error.next(IrisErrorMessageKey.IRIS_DISABLED);
         } else if (error.status === 429) {
-            const map = new Map<string, any>();
+            const map = new Map<string, number | undefined>();
             map.set('hours', this.rateLimitInfo?.rateLimitTimeframeHours);
             this.error.next(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED);
         } else {

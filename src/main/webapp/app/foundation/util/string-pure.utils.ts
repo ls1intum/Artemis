@@ -38,4 +38,4 @@ export const matchRegexWithLineNumbers = (multiLineText: string, regex: RegExp):
  * @param anyValue
  * @return boolean
  */
-export const notUndefined = (anyValue: any): boolean => anyValue !== undefined;
+export const notUndefined = <T>(anyValue: T | undefined): anyValue is T => anyValue !== undefined;

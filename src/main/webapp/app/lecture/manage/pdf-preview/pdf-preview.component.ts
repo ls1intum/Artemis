@@ -28,11 +28,36 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import * as PDFJS from 'pdfjs-dist';
 
-interface PdfOperation {
-    type: 'MERGE' | 'DELETE' | 'HIDE' | 'SHOW' | 'REORDER';
+interface PdfOperationBase {
     timestamp: dayjs.Dayjs;
-    data: any;
 }
+
+interface MergePdfOperation extends PdfOperationBase {
+    type: 'MERGE';
+    data: { sourceId: string; pageCount: number };
+}
+
+interface DeletePdfOperation extends PdfOperationBase {
+    type: 'DELETE';
+    data: { slideIds: string[] };
+}
+
+interface HidePdfOperation extends PdfOperationBase {
+    type: 'HIDE';
+    data: { pages: HiddenPage[] };
+}
+
+interface ShowPdfOperation extends PdfOperationBase {
+    type: 'SHOW';
+    data: { slideIds: string[] };
+}
+
+interface ReorderPdfOperation extends PdfOperationBase {
+    type: 'REORDER';
+    data: { pageOrder: { slideId: string; order: number }[] };
+}
+
+type PdfOperation = MergePdfOperation | DeletePdfOperation | HidePdfOperation | ShowPdfOperation | ReorderPdfOperation;
 
 export interface PDFSource {
     id: string;

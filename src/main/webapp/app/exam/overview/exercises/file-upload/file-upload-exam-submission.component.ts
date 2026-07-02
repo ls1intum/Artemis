@@ -91,9 +91,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * Here the file selected with the -browse- button is handled.
      * @param event {object} Event object which contains the uploaded file
      */
-    setFileSubmissionForExercise(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setFileSubmissionForExercise(event: Event): void {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (fileList && fileList.length) {
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.exercise().filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {

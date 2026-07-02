@@ -236,7 +236,7 @@ export class FeedbackAnalysisComponent {
             occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [this.minCount(), this.maxCount()],
             errorCategories: this.selectedFiltersCount() !== 0 ? savedErrorCategories : [],
         };
-        modalRef.componentInstance.filterApplied.subscribe((filters: any) => {
+        modalRef.componentInstance.filterApplied.subscribe((filters: FilterData) => {
             this.applyFilters(filters);
         });
     }

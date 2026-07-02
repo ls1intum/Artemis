@@ -42,7 +42,7 @@ export class ShortAnswerQuestionComponent {
     questionIndex = input<number>(0);
     score = input<number>(0);
     forceSampleSolution = input<boolean>(false);
-    fnOnSubmittedTextUpdate = input<any>();
+    fnOnSubmittedTextUpdate = input<() => void>();
 
     submittedTextsChange = output<ShortAnswerSubmittedText[]>();
 

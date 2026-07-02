@@ -220,7 +220,7 @@ export class UserManagementUpdateComponent implements OnInit {
         }
     }
 
-    shouldRandomizePassword(useRandomPassword: any) {
+    shouldRandomizePassword(useRandomPassword: Event | boolean) {
         this.user().password = useRandomPassword ? undefined : '';
     }
 

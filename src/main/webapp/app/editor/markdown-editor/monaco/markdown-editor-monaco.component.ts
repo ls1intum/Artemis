@@ -928,11 +928,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Called when the user selects a file to upload.
-     * @param event The event that contains the files to upload (typed as any to avoid compilation errors).
+     * @param event The change event of the file input that contains the files to upload.
      */
-    onFileUpload(event: any): void {
-        if (event.target.files.length >= 1) {
-            this.embedFiles(Array.from(event.target.files), event.target);
+    onFileUpload(event: Event): void {
+        const inputElement = event.target as HTMLInputElement;
+        if (inputElement.files && inputElement.files.length >= 1) {
+            this.embedFiles(Array.from(inputElement.files), inputElement);
         }
     }
 

@@ -9,7 +9,7 @@ export class SafeHtmlPipe implements PipeTransform {
      * Bypasses the security checks for a specified HTML.
      * @param value The HTML that is considered safe.
      */
-    transform(value: any) {
+    transform(value: string) {
         return this.sanitizer.bypassSecurityTrustHtml(value);
     }
 }

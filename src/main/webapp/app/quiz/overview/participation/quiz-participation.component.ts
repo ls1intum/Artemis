@@ -106,7 +106,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     private routeAndDataSubscription: Subscription;
 
-    runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
+    runningTimeouts = new Array<ReturnType<typeof setTimeout>>(); // handles returned by setTimeout(), cleared via clearTimeout()
 
     readonly isSubmitting = signal(false);
     // isSaving = false;

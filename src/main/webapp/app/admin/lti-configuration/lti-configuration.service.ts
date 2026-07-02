@@ -18,6 +18,15 @@ export interface LtiPlatformConfigurationUpdateDTO {
     tokenUri: string;
 }
 
+/**
+ * Pagination and sorting parameters for querying LTI platform configurations.
+ */
+export interface LtiPlatformConfigurationQuery {
+    page?: number;
+    size?: number;
+    sort?: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class LtiConfigurationService {
     private http = inject(HttpClient);
@@ -25,7 +34,7 @@ export class LtiConfigurationService {
     /**
      * Sends a GET request to retrieve all lti platform configurations
      */
-    query(req?: any): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
+    query(req?: LtiPlatformConfigurationQuery): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
         const params: HttpParams = createRequestOption(req);
         return this.http.get<LtiPlatformConfiguration[]>('api/lti/lti-platforms', {
             params,

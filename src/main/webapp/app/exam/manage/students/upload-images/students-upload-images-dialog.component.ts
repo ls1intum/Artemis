@@ -2,11 +2,12 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from 
 import { FormsModule } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamUsersNotFoundDTO } from 'app/exam/shared/entities/exam-users-not-found-dto.model';
 import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -14,11 +15,6 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-
-class NotFoundExamUserType {
-    numberOfUsersNotFound: number;
-    numberOfImagesSaved: number;
-}
 
 @Component({
     selector: 'jhi-student-upload-images-dialog',
@@ -34,7 +30,7 @@ export class StudentsUploadImagesDialogComponent implements OnInit, OnDestroy {
 
     readonly ActionType = ActionType;
 
-    notFoundUsers = signal<NotFoundExamUserType | undefined>(undefined);
+    notFoundUsers = signal<ExamUsersNotFoundDTO | undefined>(undefined);
     file = signal<File | undefined>(undefined);
 
     courseId = signal<number | undefined>(undefined);
@@ -83,10 +79,11 @@ export class StudentsUploadImagesDialogComponent implements OnInit, OnDestroy {
         this.hasParsed.set(false);
     }
 
-    onPDFFileSelect(event: any) {
-        if (event.target.files.length > 0) {
+    onPDFFileSelect(event: Event) {
+        const files = (event.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
             this.resetDialog();
-            this.file.set(event.target.files[0]);
+            this.file.set(files[0]);
         }
     }
 
@@ -101,9 +98,9 @@ export class StudentsUploadImagesDialogComponent implements OnInit, OnDestroy {
             formData.append('file', this.file()!);
 
             this.examManagementService.saveImages(this.courseId()!, exam.id, formData).subscribe({
-                next: (res: any) => {
+                next: (res: HttpResponse<ExamUsersNotFoundDTO>) => {
                     if (res) {
-                        this.notFoundUsers.set(res.body);
+                        this.notFoundUsers.set(res.body ?? undefined);
                         this.isParsing.set(false);
                         this.hasParsed.set(true);
                     }

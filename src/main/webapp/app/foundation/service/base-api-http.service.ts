@@ -41,7 +41,7 @@ export abstract class BaseApiHttpService {
         method: HttpMethod,
         url: string,
         options?: {
-            body?: any;
+            body?: unknown;
             headers?:
                 | HttpHeaders
                 | {
@@ -129,7 +129,7 @@ export abstract class BaseApiHttpService {
      */
     protected async post<T>(
         url: string,
-        body?: any,
+        body?: unknown,
         options?: {
             headers?:
                 | HttpHeaders
@@ -190,7 +190,7 @@ export abstract class BaseApiHttpService {
      */
     protected async patch<T>(
         url: string,
-        body?: any,
+        body?: unknown,
         options?: {
             headers?:
                 | HttpHeaders
@@ -221,7 +221,7 @@ export abstract class BaseApiHttpService {
      */
     protected async put<T>(
         url: string,
-        body?: any,
+        body?: unknown,
         options?: {
             headers?:
                 | HttpHeaders

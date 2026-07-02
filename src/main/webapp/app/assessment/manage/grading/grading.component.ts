@@ -14,7 +14,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { downloadCsv } from 'app/foundation/util/csv-download.util';
+import { CsvRow, downloadCsv } from 'app/foundation/util/csv-download.util';
 import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { GradingPresentationsComponent, PresentationType, PresentationsConfig } from 'app/assessment/manage/grading/grading-presentations/grading-presentations.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -1034,9 +1034,10 @@ export class GradingComponent implements OnInit {
     // CSV Import/Export
     // =========================================================================
 
-    async onCSVFileSelect(event: any) {
-        if (event.target.files.length > 0) {
-            await this.readGradingStepsFromCSVFile(event.target.files[0]);
+    async onCSVFileSelect(event: Event) {
+        const files = (event.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+            await this.readGradingStepsFromCSVFile(files[0]);
             this.lowerBoundInclusivity = true;
             this.setInclusivity();
             this.maxPoints.set(100);
@@ -1100,7 +1101,7 @@ export class GradingComponent implements OnInit {
         this.exportAsCSV(rows, headers);
     }
 
-    convertToCsvRow(gradeStep: GradeStep): any {
+    convertToCsvRow(gradeStep: GradeStep): CsvRow {
         return {
             ...(this.gradingScale.gradeType === GradeType.GRADE && { gradeName: gradeStep.gradeName ?? '' }),
             ...(this.gradingScale.gradeType === GradeType.BONUS && { bonusPoints: gradeStep.gradeName ?? '' }),
@@ -1110,7 +1111,7 @@ export class GradingComponent implements OnInit {
         };
     }
 
-    exportAsCSV(rows: any[], headers: string[]): void {
+    exportAsCSV(rows: CsvRow[], headers: string[]): void {
         downloadCsv(rows, {
             columnHeaders: headers,
             fileName: 'grading_key' + (this.gradingScale.course?.shortName ? '_' + this.gradingScale.course?.shortName : ''),

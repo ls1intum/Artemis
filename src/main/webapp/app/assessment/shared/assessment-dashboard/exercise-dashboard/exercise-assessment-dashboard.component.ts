@@ -239,8 +239,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly isAutomaticAssessedProgrammingExercise = signal(false);
 
     // links (set in setupLinks alongside exercise.set() in the getForTutors subscribe)
-    readonly complaintsLink = signal<any[]>(undefined!);
-    readonly moreFeedbackRequestsLink = signal<any[]>(undefined!);
+    readonly complaintsLink = signal<(string | number)[]>(undefined!);
+    readonly moreFeedbackRequestsLink = signal<(string | number)[]>(undefined!);
 
     // Icons
     faSpinner = faSpinner;

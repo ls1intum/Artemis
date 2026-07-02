@@ -434,9 +434,9 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         }
     }
 
-    onCriterionTitleChange($event: any, criterion: GradingCriterion) {
+    onCriterionTitleChange($event: Event, criterion: GradingCriterion) {
         const criterionIndex = this.exercise().gradingCriteria!.indexOf(criterion);
-        this.exercise().gradingCriteria![criterionIndex].title = $event.target.value;
+        this.exercise().gradingCriteria![criterionIndex].title = ($event.target as HTMLInputElement).value;
     }
 
     resetCriterionTitle(criterion: GradingCriterion) {

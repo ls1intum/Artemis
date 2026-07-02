@@ -2,17 +2,17 @@ import { Injectable, Signal, TemplateRef, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class AdminTitleBarService {
-    private currentTitleTemplate = signal<TemplateRef<any> | undefined>(undefined);
-    private currentActionsTemplate = signal<TemplateRef<any> | undefined>(undefined);
+    private currentTitleTemplate = signal<TemplateRef<unknown> | undefined>(undefined);
+    private currentActionsTemplate = signal<TemplateRef<unknown> | undefined>(undefined);
 
-    readonly titleTemplate: Signal<TemplateRef<any> | undefined> = this.currentTitleTemplate;
-    readonly actionsTemplate: Signal<TemplateRef<any> | undefined> = this.currentActionsTemplate;
+    readonly titleTemplate: Signal<TemplateRef<unknown> | undefined> = this.currentTitleTemplate;
+    readonly actionsTemplate: Signal<TemplateRef<unknown> | undefined> = this.currentActionsTemplate;
 
-    setTitleTemplate(template: TemplateRef<any> | undefined) {
+    setTitleTemplate(template: TemplateRef<unknown> | undefined) {
         this.currentTitleTemplate.set(template);
     }
 
-    setActionsTemplate(template: TemplateRef<any> | undefined) {
+    setActionsTemplate(template: TemplateRef<unknown> | undefined) {
         this.currentActionsTemplate.set(template);
     }
 }

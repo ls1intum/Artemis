@@ -31,7 +31,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
     // Initialise with an empty Subscription so ngOnDestroy can unsubscribe safely even if the
     // constructor never assigned a real subscription (e.g. component torn down mid-construction).
     routerSubscription: Subscription = new Subscription();
-    openTimeout: any;
+    openTimeout: ReturnType<typeof setTimeout>;
 
     // Icons
     faExclamationCircle = faExclamationCircle;

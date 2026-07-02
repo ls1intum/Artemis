@@ -4,6 +4,7 @@ import { ScienceEventDTO, ScienceEventType } from 'app/foundation/science/scienc
 import { AccountService } from 'app/core/auth/account.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ScienceSettingsService } from 'app/account/user/settings/science-settings/science-settings.service';
+import { User } from 'app/account/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class ScienceService {
@@ -24,7 +25,7 @@ export class ScienceService {
         });
     }
 
-    private onUserIdentityChange(user: any): void {
+    private onUserIdentityChange(user: User | undefined): void {
         if (user) {
             this.scienceSettingsService.refreshScienceSettings();
         }

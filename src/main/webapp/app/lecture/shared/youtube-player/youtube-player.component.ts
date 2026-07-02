@@ -10,6 +10,14 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 const READINESS_TIMEOUT_MS = 10_000;
 const POLL_INTERVAL_MS = 250;
 
+/** Minimal shape of the YouTube player instance we interact with (subset of the YT.Player / Angular wrapper API). */
+type YoutubePlayerApi = Pick<YouTubePlayer, 'getCurrentTime' | 'seekTo'>;
+
+/** Minimal shape of the event emitted by the YouTube player's `ready` output. */
+interface YoutubePlayerReadyEvent {
+    target?: YoutubePlayerApi;
+}
+
 // YT.PlayerState values
 const YT_STATE_PLAYING = 1;
 const YT_STATE_PAUSED = 2;
@@ -57,7 +65,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
     videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
     resizerHandle = viewChild<ElementRef<HTMLButtonElement>>('resizerHandle');
 
-    private youtubePlayer: Pick<YouTubePlayer, 'getCurrentTime' | 'seekTo'> | null = null;
+    private youtubePlayer: YoutubePlayerApi | null = null;
     private pollHandle: ReturnType<typeof setInterval> | null = null;
     private readinessHandle: ReturnType<typeof setTimeout> | null = null;
     private destroyed = false;
@@ -214,7 +222,7 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    onPlayerReady(event: any): void {
+    onPlayerReady(event: YoutubePlayerReadyEvent): void {
         this.clearReadiness();
         this.hasEverPlayed.set(false); // Reset for new video
         // Use the Angular wrapper when available so seek calls can be queued reliably.

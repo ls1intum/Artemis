@@ -43,7 +43,7 @@ export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
 
 export interface ValidationReason {
     translateKey: string;
-    translateValues: any;
+    translateValues: { [key: string]: unknown };
 }
 
 export interface PlagiarismDetectionConfig {

@@ -23,7 +23,7 @@ export enum IrisErrorMessageKey {
 export interface IrisErrorType {
     key: IrisErrorMessageKey;
     fatal: boolean;
-    paramsMap?: Map<string, any>;
+    paramsMap?: Map<string, unknown>;
 }
 
 const IrisErrors: IrisErrorType[] = [

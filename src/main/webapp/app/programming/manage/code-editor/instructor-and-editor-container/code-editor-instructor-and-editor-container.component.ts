@@ -33,7 +33,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CodeGenerationJobStart } from 'app/openapi/model/codeGenerationJobStart';
 import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
@@ -510,7 +510,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *
      * Restores a running generation only when no local generation queue is currently active.
      */
-    protected override applyDomainChange(domainType: any, domainValue: any) {
+    protected override applyDomainChange(domainType: DomainChange[0], domainValue: DomainChange[1]) {
         super.applyDomainChange(domainType, domainValue);
         this.maybeAutoStartCodeGenerationFromNavigation();
         if (!this.hasCustomCodeGenerationSelection && !this.isGeneratingCode()) {

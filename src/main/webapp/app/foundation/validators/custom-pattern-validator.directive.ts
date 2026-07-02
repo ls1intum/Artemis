@@ -1,5 +1,5 @@
 import { Directive } from '@angular/core';
-import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
+import { AbstractControl, NG_VALIDATORS, ValidationErrors, Validator } from '@angular/forms';
 
 /**
  * Custom validator for patterns (RegEx)
@@ -9,7 +9,7 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomPatternValidatorDirective, multi: true }],
 })
 export class CustomPatternValidatorDirective implements Validator {
-    validate(control: AbstractControl): { [key: string]: any } | null {
+    validate(control: AbstractControl): ValidationErrors | null {
         if (control == undefined) {
             return null;
         }

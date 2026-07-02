@@ -91,7 +91,7 @@ export class QuizExerciseService {
      * @param files the files that should be uploaded
      * @param req Additional parameters that should be passed to the server when updating the exercise
      */
-    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, req?: any): Observable<EntityResponseType> {
+    update(id: number, quizExercise: QuizExercise, files: Map<string, Blob>, req?: { notificationText?: string }): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = ExerciseService.convertExerciseDatesFromClient(quizExercise);
         ExerciseService.stringifyExerciseCategories(copy);
