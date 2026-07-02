@@ -150,6 +150,18 @@ class LectureContentUpdateClassifierTest {
         assertThat(snapshotWithNullSlides.slideHiddenUntilBySlideNumber()).isEmpty();
     }
 
+    @Test
+    void snapshotSupportsVisibleSlidesWithNullHiddenUntil() {
+        var source = new HashMap<Integer, ZonedDateTime>();
+        source.put(1, null);
+
+        var snapshot = snapshot(source);
+        source.put(2, HIDDEN_UNTIL);
+
+        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsOnlyKeys(1).containsEntry(1, null);
+        assertThatThrownBy(() -> snapshot.slideHiddenUntilBySlideNumber().put(3, HIDDEN_UNTIL)).isInstanceOf(UnsupportedOperationException.class);
+    }
+
     private static LectureContentUpdateSnapshot snapshot() {
         return snapshot(Map.of(1, HIDDEN_UNTIL));
     }
