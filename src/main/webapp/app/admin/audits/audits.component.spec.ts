@@ -122,6 +122,18 @@ describe('AuditsComponent', () => {
             comp.updateToDate(new Date(2026, 5, 20, 0, 0, 0));
             expect(comp.toDate()).toBe('2026-06-20');
         });
+
+        it('clears the filter for an invalid picker value instead of keeping the previous date', () => {
+            comp.updateFromDate(new Date(2026, 5, 17, 0, 0, 0));
+
+            // The template passes undefined when fromPicker.isValid() is false (an invalid manual entry the picker
+            // keeps visible via keepInvalid); the previous valid date must not be written back, so the filter
+            // clears and canLoad() becomes false, pausing transition() rather than navigating with a stale value.
+            comp.updateFromDate(undefined);
+
+            expect(comp.fromDate()).toBe('');
+            expect(comp.canLoad()).toBe(false);
+        });
     });
 
     describe('By default, on init', () => {

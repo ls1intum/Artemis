@@ -14,7 +14,7 @@
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
                     [value]="fromDateValue()"
-                    (valueChange)="updateFromDate(fromPicker.value()); transition()"
+                    (valueChange)="updateFromDate(fromPicker.isValid() ? fromPicker.value() : undefined); transition()"
                     data-testid="audits-from-date"
                 />
             </p-inputgroup>
@@ -28,7 +28,7 @@
                     [shouldDisplayTimeZoneWarning]="false"
                     [pickerType]="DateTimePickerType.CALENDAR"
                     [value]="toDateValue()"
-                    (valueChange)="updateToDate(toPicker.value()); transition()"
+                    (valueChange)="updateToDate(toPicker.isValid() ? toPicker.value() : undefined); transition()"
                     data-testid="audits-to-date"
                 />
             </p-inputgroup>
