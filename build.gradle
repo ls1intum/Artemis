@@ -6,7 +6,7 @@ buildscript {
     // This is a build-time-only dependency (client code generation), not shipped in the WAR.
     configurations.classpath {
         resolutionStrategy {
-            force "com.github.jknack:handlebars:4.5.2"
+            force "com.github.jknack:handlebars:4.5.3"
         }
     }
     dependencies {
@@ -298,7 +298,7 @@ dependencies {
     }
 
     // Sentry depends on this
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.26.0"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.26.1"
 
     // Used for LTI (e.g. Moodle --> Artemis)
     implementation("uk.ac.ox.ctl:spring-security-lti13:0.3.5") {
@@ -455,7 +455,7 @@ dependencies {
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.31.7.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.31.8.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
