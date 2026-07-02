@@ -297,7 +297,7 @@ dependencies {
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.26.0"
 
     // Used for LTI (e.g. Moodle --> Artemis)
-    implementation("uk.ac.ox.ctl:spring-security-lti13:0.3.4") {
+    implementation("uk.ac.ox.ctl:spring-security-lti13:0.3.5") {
         // Exclude jakartaee-api:10 which contains old jakarta.persistence 3.1 classes that conflict with 3.2 required by Hibernate 7
         exclude group: "jakarta.platform", module: "jakarta.jakartaee-api"
     }
@@ -315,7 +315,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.5"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.6"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -396,7 +396,7 @@ dependencies {
     implementation "org.hibernate.orm:hibernate-envers"
 
     // Required for jdbc connection pooling to databases
-    implementation "com.zaxxer:HikariCP:7.0.2"
+    implementation "com.zaxxer:HikariCP:7.1.0"
 
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:${commons_text_version}"
@@ -495,7 +495,7 @@ dependencies {
 
     // required for database connections
     implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
-    implementation "org.postgresql:postgresql:42.7.11"
+    implementation "org.postgresql:postgresql:42.7.12"
 
     // Required by JPlag
     implementation "com.ibm.icu:icu4j-charset:78.3"
@@ -506,10 +506,10 @@ dependencies {
     implementation "org.apache.maven:maven-model:4.0.0-rc-5"
     implementation "org.apache.pdfbox:pdfbox:3.0.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
-    implementation "org.commonmark:commonmark:0.28.0"
+    implementation "org.commonmark:commonmark:0.29.0"
     implementation "org.webjars.npm:katex:0.16.47"
-    implementation "org.commonmark:commonmark-ext-gfm-tables:0.28.0"
-    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.28.0"
+    implementation "org.commonmark:commonmark-ext-gfm-tables:0.29.0"
+    implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.29.0"
 
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.6"
@@ -544,7 +544,7 @@ dependencies {
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
-    implementation "org.mnode.ical4j:ical4j:4.2.5"
+    implementation "org.mnode.ical4j:ical4j:4.3.0"
 
 
     // ---- CHECKSTYLE DEPENDENCIES ----
@@ -577,12 +577,12 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.184"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.5.0"
+    testImplementation "org.gradle:gradle-tooling-api:9.6.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.6"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
-    testImplementation "com.icegreen:greenmail-junit5:2.1.8"
+    testImplementation "com.icegreen:greenmail-junit5:2.1.9"
     testImplementation "com.tngtech.archunit:archunit:1.4.2"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
@@ -590,7 +590,7 @@ dependencies {
     runtimeOnly "com.h2database:h2:2.4.240"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
-    testImplementation "org.json:json:20251224"
+    testImplementation "org.json:json:20260522"
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
