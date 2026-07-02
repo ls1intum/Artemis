@@ -335,6 +335,13 @@ export class ExamStudentsComponent implements OnDestroy {
                     this.exam.set(exam);
                     this.hasExamStarted.set(exam.startDate?.isBefore(dayjs()) || false);
                     this.hasExamEnded.set(exam.endDate?.isBefore(dayjs()) || false);
+                    // The paginated table fires its initial lazy load before the exam id is available, so
+                    // loadExamStudents early-returns (leaving isLoading=true and totalExamStudents=0). Re-run that
+                    // recorded load now that the exam has resolved, otherwise the "Generate student exams" button
+                    // stays disabled even though students are registered (issue #13063).
+                    if (this.lastLazyEvent) {
+                        this.loadExamStudents(this.lastLazyEvent);
+                    }
                 }),
                 switchMap((exam: Exam) => {
                     const courseId = this.courseId();
