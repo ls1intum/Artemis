@@ -3,7 +3,8 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BehaviorSubject, of, throwError } from 'rxjs';
@@ -33,6 +34,7 @@ describe('IrisSettingsUpdateComponent', () => {
         enabled: true,
         customInstructions: 'Test instructions',
         variant: 'default',
+        supportLevel: 'moderate',
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
@@ -45,7 +47,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockJhiTranslateDirective, IrisSettingsUpdateComponent, FaIconComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockJhiTranslateDirective, IrisSettingsUpdateComponent, FaIconComponent, MockPipe(ArtemisTranslatePipe), MockComponent(IrisLogoComponent)],
             providers: [
                 {
                     provide: IrisSettingsService,
@@ -375,6 +377,52 @@ describe('IrisSettingsUpdateComponent', () => {
             component['originalSettings'].set(undefined);
             expect(() => component.setEnabled(true)).not.toThrow();
         });
+
+        it('should preserve unsaved support-level edits when toggling enabled', async () => {
+            await initComponent();
+
+            // Stage an unsaved support-level edit, then toggle the enable switch.
+            component.onSupportLevelSliderChange(100);
+            expect(component.settings()!.supportLevel).toBe('high');
+
+            const updateSpy = irisSettingsService.updateCourseSettings as ReturnType<typeof vi.fn>;
+            updateSpy.mockClear();
+            updateSpy.mockImplementation((_courseId: number, settings: IrisCourseSettingsDTO) => of(new HttpResponse({ body: { ...mockResponse, settings } })));
+
+            component.setEnabled(false);
+            await fixture.whenStable();
+
+            // The in-progress support-level edit must be carried into the auto-save payload,
+            // not silently discarded in favour of the original value.
+            const savedSettings = updateSpy.mock.calls[0][1] as IrisCourseSettingsDTO;
+            expect(savedSettings.supportLevel).toBe('high');
+            expect(savedSettings.enabled).toBe(false);
+            expect(component.settings()!.supportLevel).toBe('high');
+        });
+
+        it('should not auto-save a partial rateLimit when the form is invalid (admin)', async () => {
+            await initComponent();
+            component.isAdmin.set(true);
+
+            // Admin leaves the rate-limit form in an invalid, partial state:
+            // only requests is filled, timeframe is empty.
+            component.rateLimitRequests.set(200);
+            component.rateLimitTimeframeHours.set(undefined);
+            expect(component.isFormValid()).toBe(false);
+
+            const updateSpy = irisSettingsService.updateCourseSettings as ReturnType<typeof vi.fn>;
+            updateSpy.mockClear();
+            updateSpy.mockImplementation((_courseId: number, settings: IrisCourseSettingsDTO) => of(new HttpResponse({ body: { ...mockResponse, settings } })));
+
+            component.setEnabled(false);
+            await fixture.whenStable();
+
+            // The auto-save must keep the persisted rateLimit rather than sending the
+            // partial { requests: 200, timeframeHours: undefined } override.
+            const savedSettings = updateSpy.mock.calls[0][1] as IrisCourseSettingsDTO;
+            expect(savedSettings.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
+            expect(savedSettings.enabled).toBe(false);
+        });
     });
 
     describe('getCustomInstructionsLength', () => {
@@ -394,6 +442,220 @@ describe('IrisSettingsUpdateComponent', () => {
         it('should return 0 if settings are undefined', () => {
             component.settings.set(undefined);
             expect(component.getCustomInstructionsLength()).toBe(0);
+        });
+    });
+
+    describe('support level', () => {
+        const initComponent = async () => {
+            (irisSettingsService.getCourseSettingsWithRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(of(mockResponse));
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+        };
+
+        it('should map support level to slider value (low=0, moderate=50, high=100)', async () => {
+            await initComponent();
+
+            component.settings.set({ ...component.settings()!, supportLevel: 'low' });
+            expect(component.supportLevelSliderValue()).toBe(0);
+
+            component.settings.set({ ...component.settings()!, supportLevel: 'moderate' });
+            expect(component.supportLevelSliderValue()).toBe(50);
+
+            component.settings.set({ ...component.settings()!, supportLevel: 'high' });
+            expect(component.supportLevelSliderValue()).toBe(100);
+        });
+
+        it('should default slider value to 50 when supportLevel is undefined', async () => {
+            await initComponent();
+
+            component.settings.set({ ...component.settings()!, supportLevel: undefined });
+
+            expect(component.currentSupportLevel()).toBe('moderate');
+            expect(component.supportLevelSliderValue()).toBe(50);
+        });
+
+        it('should set supportLevel to low when slider moves to 0', async () => {
+            await initComponent();
+
+            component.onSupportLevelSliderChange(0);
+
+            expect(component.settings()!.supportLevel).toBe('low');
+        });
+
+        it('should set supportLevel to high when slider moves to 100', async () => {
+            await initComponent();
+
+            component.onSupportLevelSliderChange(100);
+
+            expect(component.settings()!.supportLevel).toBe('high');
+        });
+
+        it('should fall back to moderate for an unmapped slider value', async () => {
+            await initComponent();
+
+            component.onSupportLevelSliderChange(42);
+
+            expect(component.settings()!.supportLevel).toBe('moderate');
+        });
+
+        it('should not throw when settings are undefined', async () => {
+            await initComponent();
+            component.settings.set(undefined);
+
+            expect(() => component.onSupportLevelSliderChange(0)).not.toThrow();
+        });
+
+        it('should mark the form dirty after changing the support level and clean after reverting', async () => {
+            await initComponent();
+            expect(component.isDirty()).toBe(false);
+
+            // mockSettings starts at 'moderate'; switch to 'high'
+            component.onSupportLevelSliderChange(100);
+            expect(component.isDirty()).toBe(true);
+
+            // Revert to the original 'moderate'
+            component.onSupportLevelSliderChange(50);
+            expect(component.isDirty()).toBe(false);
+        });
+
+        it('should expose one tick per support level, in order', async () => {
+            await initComponent();
+
+            expect(component.supportLevelTicks).toEqual([
+                { level: 'low', value: 0 },
+                { level: 'moderate', value: 50 },
+                { level: 'high', value: 100 },
+            ]);
+        });
+    });
+
+    describe('reset to default', () => {
+        const initComponent = async () => {
+            (irisSettingsService.getCourseSettingsWithRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(of(mockResponse));
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+        };
+
+        it('should reset supportLevel and customInstructions to their defaults and persist', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            // Move both General-tab fields away from their defaults
+            component.settings.set({ ...component.settings()!, supportLevel: 'low', customInstructions: 'some custom text' });
+
+            component.resetToDefault();
+
+            const saved = updateSpy.mock.calls[0][1];
+            expect(saved.supportLevel).toBe('moderate');
+            // createDefaultCourseSettings() omits customInstructions; saveSettings() normalizes empty -> undefined
+            expect(saved.customInstructions).toBeUndefined();
+        });
+
+        it('should leave the admin-only variant and rateLimit untouched on reset', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+
+            component.resetToDefault();
+
+            const saved = updateSpy.mock.calls[0][1];
+            // mockSettings: variant 'default', rateLimit {100, 24} — must survive the reset
+            expect(saved.variant).toBe('default');
+            expect(saved.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
+        });
+
+        it('should keep the persisted rateLimit when resetting with an invalid admin rate-limit draft', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            component.rateLimitRequests.set(200);
+            component.rateLimitTimeframeHours.set(undefined);
+            expect(component.isFormValid()).toBe(false);
+
+            component.resetToDefault();
+
+            const saved = updateSpy.mock.calls[0][1];
+            expect(saved.supportLevel).toBe('moderate');
+            expect(saved.customInstructions).toBeUndefined();
+            expect(saved.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
+        });
+
+        it('should not throw or persist when settings are undefined', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            component.settings.set(undefined);
+
+            expect(() => component.resetToDefault()).not.toThrow();
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not persist when the General-tab fields are already at their defaults', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            // Both General-tab fields already hold their default values
+            component.settings.set({ ...component.settings()!, supportLevel: 'moderate', customInstructions: undefined });
+
+            component.resetToDefault();
+
+            // Idempotent click — no unnecessary network request
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should treat empty-string custom instructions as already default', async () => {
+            await initComponent();
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings');
+            // Empty string normalizes to undefined, matching the default
+            component.settings.set({ ...component.settings()!, supportLevel: 'moderate', customInstructions: '' });
+
+            component.resetToDefault();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('active tab', () => {
+        it('should default the active tab to general', () => {
+            expect(component.activeTab()).toBe('general');
+        });
+
+        it('should update the active tab from a string value', () => {
+            component['setActiveTab']('admin');
+            expect(component.activeTab()).toBe('admin');
+        });
+
+        it('should coerce a numeric tab value to a string', () => {
+            component['setActiveTab'](2);
+            expect(component.activeTab()).toBe('2');
+        });
+
+        it('should ignore an undefined tab value', () => {
+            component['setActiveTab']('admin');
+            component['setActiveTab'](undefined);
+            expect(component.activeTab()).toBe('admin');
+        });
+    });
+
+    describe('admin tab', () => {
+        it('should not render the admin tab when isAdmin() is false', async () => {
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            (irisSettingsService.getCourseSettingsWithRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(of(mockResponse));
+            routeParamsSubject.next({ courseId: '1' });
+            component.isAdmin.set(false);
+            component.ngOnInit();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('p-tabpanel[value="admin"]')).toBeNull();
+        });
+
+        it('should render the admin tab when isAdmin() is true', async () => {
+            (irisSettingsService.getCourseSettingsWithRateLimit as ReturnType<typeof vi.fn>).mockReturnValue(of(mockResponse));
+            routeParamsSubject.next({ courseId: '1' });
+            component.isAdmin.set(true);
+            component.ngOnInit();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('p-tabpanel[value="admin"]')).not.toBeNull();
         });
     });
 

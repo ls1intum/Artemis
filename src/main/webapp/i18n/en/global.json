@@ -100,6 +100,7 @@
             "home": "Home",
             "overview": "Overview",
             "courses": "Courses",
+            "student": "Student",
             "course": "Management",
             "courseRequests": "Request a new Course",
             "entities": {
@@ -253,7 +254,7 @@
                 "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
-            "settings": "Settings"
+            "settings": "User Settings"
         },
         "form": {
             "username": "Login or email",

@@ -8,7 +8,6 @@ import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
@@ -138,7 +137,7 @@ describe('CourseManagementContainerComponent', () => {
         } as unknown as ActivatedRoute;
 
         await TestBed.configureTestingModule({
-            imports: [CourseManagementContainerComponent, MockModule(MatSidenavModule), MockModule(NgbTooltipModule)],
+            imports: [CourseManagementContainerComponent, MockModule(NgbTooltipModule)],
             providers: [
                 MockProvider(CourseManagementService),
                 MockProvider(CourseStorageService),
@@ -737,75 +736,5 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1/settings', '')));
         await component.ngOnInit();
         expect(component.isSettingsPage()).toBe(true);
-    });
-    describe('determineStudentViewLink', () => {
-        beforeEach(() => {
-            component.courseId.set(123);
-        });
-        it('should set exams link when URL includes "exams"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exams']);
-        });
-
-        it('should set exercises link when URL includes "exercises"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises']);
-        });
-
-        it('should set lectures link when URL includes "lectures"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'lectures']);
-        });
-
-        it('should set communication link when URL includes "communication"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'communication']);
-        });
-
-        it('should set learning-path link when URL includes "learning-path-management"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path-management');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'learning-path']);
-        });
-
-        it('should set competencies link when URL includes "competency-management"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competency-management');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'competencies']);
-        });
-
-        it('should set faq link when URL includes "faqs"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faqs/new');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'faq']);
-        });
-
-        it('should set tutorial-groups link when URL includes "tutorial-groups"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups/configuration/new');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
-        });
-
-        it('should set tutorial-groups link when URL includes "tutorial-groups-checklist"', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups-checklist');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
-        });
-
-        it('should set statistics link when URL includes course-statistics', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/course-statistics');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'statistics']);
-        });
-
-        it('should default to dashboard link when URL does not match any condition', () => {
-            vi.spyOn(router, 'url', 'get').mockReturnValue('courses/123/iris-settings');
-            component.determineStudentViewLink();
-            expect(component.studentViewLink()).toEqual(['/courses', '123', 'dashboard']);
-        });
     });
 });

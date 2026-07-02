@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseBuildConfigDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -336,8 +335,13 @@ public class ProgrammingExerciseUpdateResource {
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
 
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
+        // The problem statement is owned by the collaborative (Yjs) editor and its dedicated PATCH endpoint, not by this metadata
+        // update. A blank or absent value here means the editor has not finished its initial sync yet (e.g. the user saved a
+        // category change on a slow connection before the statement loaded), so we keep the persisted statement instead of wiping
+        // it. See issue #13046.
+        if (dto.problemStatement() != null && !dto.problemStatement().isBlank()) {
+            exercise.setProblemStatement(dto.problemStatement());
+        }
 
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());
@@ -428,18 +432,10 @@ public class ProgrammingExerciseUpdateResource {
             buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
         }
         // Note: branch is preserved from original (immutable during update)
-        if (dto.buildPlanConfiguration() != null && BuildPlanPhasesDTO.isInPhasesFormatOrNull(dto.buildPlanConfiguration())) {
+        if (dto.buildPlanConfiguration() != null) {
             buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-            buildConfig.setBuildScript(null);
         }
-        else {
-            if (dto.buildPlanConfiguration() != null) {
-                buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-            }
-            if (dto.buildScript() != null) {
-                buildConfig.setBuildScript(dto.buildScript());
-            }
-        }
+        buildConfig.setBuildScript(null);
         buildConfig.setCheckoutSolutionRepository(dto.checkoutSolutionRepository());
         buildConfig.setTestCheckoutPath(dto.testCheckoutPath());
         buildConfig.setAssignmentCheckoutPath(dto.assignmentCheckoutPath());

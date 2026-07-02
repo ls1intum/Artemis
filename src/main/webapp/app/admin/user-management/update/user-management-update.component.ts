@@ -286,6 +286,18 @@ export class UserManagementUpdateComponent implements OnInit {
         this.addGroup(this.user(), groupString);
     }
 
+    /**
+     * Adds the group typed into the autocomplete when the user presses Enter. Cancels the key first so it does not
+     * ALSO submit the surrounding `(ngSubmit)="save()"` edit form (which would save and navigate away mid-edit).
+     */
+    onGroupAdd(user: User, event: Event): void {
+        event.preventDefault();
+        event.stopPropagation();
+        const input = event.target as HTMLInputElement;
+        this.addGroup(user, (input.value || '').trim());
+        input.value = '';
+    }
+
     /** Removes the unselected group from the user. */
     onGroupUnselect(event: AutoCompleteUnselectEvent): void {
         const group = (event.value ?? '').toString();

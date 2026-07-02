@@ -138,6 +138,7 @@
                         (completeMethod)="filterGroups($event)"
                         (onSelect)="onGroupSelect($event)"
                         (onUnselect)="onGroupUnselect($event)"
+                        (keydown.enter)="onGroupAdd(user(), $event)"
                         [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
                         data-testid="group-autocomplete"
                     />

@@ -45,9 +45,9 @@
                     />
                     @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
                         @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                            <div class="alert alert-danger">
+                            <p-message severity="error">
                                 <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
-                            </div>
+                            </p-message>
                         }
                     }
                 </div>
@@ -58,7 +58,7 @@
                         <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
                         <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                     </div>
-                    <jhi-category-selector
+                    <jhi-category-selector-primeng
                         [categories]="programmingExerciseCreationConfig().exerciseCategories"
                         [existingCategories]="programmingExerciseCreationConfig().existingCategories"
                         (selectedCategories)="programmingExerciseCreationConfig().updateCategories($event)"
@@ -114,19 +114,19 @@
                         />
                     }
                     @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames || programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
-                        <ngb-alert [dismissible]="false" [type]="'danger'">
+                        <p-message severity="error">
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames"></span>
                             }
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames"></span>
                             }
-                        </ngb-alert>
+                        </p-message>
                     }
                     @if (programmingExerciseCreationConfig() && !isLocalCIEnabled()) {
-                        <ngb-alert [dismissible]="false" [type]="'info'">
+                        <p-message severity="info">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
-                        </ngb-alert>
+                        </p-message>
                     }
                     @if (isLocalCIEnabled() && !isImport() && !programmingExerciseCreationConfig().isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                         <jhi-button

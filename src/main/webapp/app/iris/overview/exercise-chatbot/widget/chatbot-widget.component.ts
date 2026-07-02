@@ -2,13 +2,18 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { AfterViewInit, ChangeDetectionStrategy, Component, HostListener, OnDestroy, Renderer2, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DOCUMENT } from '@angular/common';
-import { MatDialog } from '@angular/material/dialog';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { NavigationStart, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { getIsMobileSignal } from 'app/foundation/util/global.utils';
+
+export interface ChatbotWidgetData {
+    contextProvider?: (() => IrisMessageContextDTO[]) | undefined;
+}
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -21,8 +26,10 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private breakpointObserver = inject(BreakpointObserver);
     private document = inject<Document>(DOCUMENT);
     private router = inject(Router);
-    private dialog = inject(MatDialog);
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
     private chatService = inject(IrisChatService);
+    protected readonly data = this.dialogConfig?.data as ChatbotWidgetData | undefined;
     private renderer = inject(Renderer2);
 
     readonly isMobile = getIsMobileSignal(this.breakpointObserver);
@@ -67,7 +74,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
                 filter((event) => event instanceof NavigationStart),
                 takeUntilDestroyed(),
             )
-            .subscribe(() => this.dialog.closeAll());
+            .subscribe(() => this.dialogRef.close());
     }
 
     @HostListener('window:resize')
@@ -78,7 +85,8 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     ngAfterViewInit() {
         // In-house Pointer-Events drag + resize (replaces interact.js). Drag from `.chat-header`,
         // resize from the left/right/bottom borders and the `.chat-widget-top-resize-area`; the
-        // widget is kept inside the `.cdk-overlay-container` and never shrinks below its initial size.
+        // widget is kept inside its container rect (see getContainerRect) and never shrinks below
+        // its initial size.
         const widget = this.document.querySelector<HTMLElement>('.chat-widget') ?? undefined;
         this.widgetEl = widget;
         if (widget) {
@@ -215,7 +223,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         if (!this.gesture || !widget || event.pointerId !== this.activePointerId) {
             return;
         }
-        const containerRect = this.document.querySelector<HTMLElement>('.cdk-overlay-container')?.getBoundingClientRect();
+        const containerRect = this.getContainerRect();
         const dx = event.clientX - this.startPointerX;
         const dy = event.clientY - this.startPointerY;
 
@@ -286,6 +294,26 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         widget.setAttribute('data-y', String(y));
     }
 
+    /**
+     * Bounding rect the widget is positioned and clamped against. The widget now lives in a PrimeNG
+     * DynamicDialog, so the container is the dialog mask wrapper (`.p-dialog-mask`) that PrimeNG
+     * renders. It covers the viewport, matching the rect the old CDK overlay container provided.
+     * The viewport is the fallback when the mask is not (yet) in the DOM; since `.chat-widget` is
+     * `position: fixed`, the viewport rect yields identical coordinates.
+     */
+    private getContainerRect(): DOMRect | undefined {
+        const container = this.document.querySelector<HTMLElement>('.p-dialog-mask');
+        if (container) {
+            return container.getBoundingClientRect();
+        }
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        if (!width || !height) {
+            return undefined;
+        }
+        return new DOMRect(0, 0, width, height);
+    }
+
     private endGesture(): void {
         this.gesture = undefined;
         this.activePointerId = undefined;
@@ -313,7 +341,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
 
     setPositionAndScale() {
         const nE = this.widgetEl ?? (this.document.querySelector('.chat-widget') as HTMLElement | null);
-        const cntRect = (this.document.querySelector('.cdk-overlay-container') as HTMLElement)?.getBoundingClientRect();
+        const cntRect = this.getContainerRect();
         if (!cntRect || !nE) {
             return;
         }
@@ -359,7 +387,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
      * Closes the chat widget.
      */
     closeChat() {
-        this.dialog.closeAll();
+        this.dialogRef.close();
     }
 
     toggleFullSize() {
@@ -380,6 +408,6 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
      */
     reopenDialog() {
         this.chatService.setShouldReopenChat(true);
-        this.dialog.closeAll();
+        this.dialogRef.close();
     }
 }

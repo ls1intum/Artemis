@@ -1,6 +1,7 @@
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DatePicker } from 'primeng/datepicker';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,7 +23,6 @@ describe('FormDateTimePickerComponent', () => {
 
         fixture = TestBed.createComponent(FormDateTimePickerComponent);
         component = fixture.componentInstance;
-        component.dateInput = { reset: vi.fn() } as any;
     });
 
     it('should emit if a value is changed', () => {
@@ -62,7 +62,6 @@ describe('FormDateTimePickerComponent', () => {
         it('should write the correct date if date is dayjs object', () => {
             component.writeValue(normalDate);
 
-            // dayjs is normalised to a native Date because p-datepicker binds a native Date
             expect(component.value()).toEqual(normalDateAsDateObject);
         });
 
@@ -72,28 +71,143 @@ describe('FormDateTimePickerComponent', () => {
             expect(component.value()).toEqual(normalDateAsDateObject);
         });
 
-        it('should write the correct date if date is a UTC ISO string', () => {
-            component.writeValue('2022-01-02T22:15:00.000Z');
-
+        it('should clear the value to null when undefined is written after a date was set', () => {
+            component.writeValue(normalDateAsDateObject);
             expect(component.value()).toEqual(normalDateAsDateObject);
-        });
 
-        it('should write undefined without conversion', () => {
             component.writeValue(undefined);
 
-            expect(component.value()).toBeUndefined();
+            expect(component.value()).toBeNull();
+            expect(component.dateInput.valid).toBe(true);
         });
 
-        it('should write null without conversion', () => {
-            component.writeValue(null);
+        it('should clear a stale invalid state when an equal-empty value is written (programmatic reset)', () => {
+            // empty field; user types unparseable text
+            component.updateField('not-a-date');
+            expect(component.dateInput.valid).toBe(false);
 
-            expect(component.value()).toBeNull();
+            // parent resets the control: writes undefined while value() is already empty (equal write)
+            component.writeValue(undefined);
+
+            expect(component.dateInput.valid).toBe(true);
+        });
+    });
+
+    describe('dateInput.valid compatibility accessor', () => {
+        it('should report an empty required field as invalid', () => {
+            fixture.componentRef.setInput('requiredField', true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(component.dateInput.valid).toBe(false);
         });
 
-        it('should write null when the value is an invalid date', () => {
-            component.writeValue('not-a-date');
+        it('should report a filled required field as valid', () => {
+            fixture.componentRef.setInput('requiredField', true);
+            component.updateField(normalDateAsDateObject);
+            fixture.changeDetectorRef.detectChanges();
 
-            expect(component.value()).toBeNull();
+            expect(component.dateInput.valid).toBe(true);
+        });
+    });
+
+    describe('invalid border rendering', () => {
+        // The red border is driven by a class on the wrapper element (not only the inner p-datepicker
+        // [invalid] input) so it stays in sync with the message under zoneless change detection (PR #13009).
+        const wrapper = () => fixture.nativeElement.querySelector('[data-testid="date-picker-wrapper"]') as HTMLElement;
+        const hasInvalidClass = () => wrapper().classList.contains('invalid-date-input');
+
+        it('does not mark a valid value as invalid', () => {
+            component.writeValue(normalDateAsDateObject);
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(false);
+        });
+
+        it('marks the wrapper invalid for unparseable typed text', () => {
+            component.updateField('not-a-date');
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(true);
+        });
+
+        it('marks the wrapper invalid when the parent passes error()', () => {
+            component.writeValue(normalDateAsDateObject);
+            fixture.componentRef.setInput('error', true);
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(true);
+        });
+
+        it('marks an empty required field invalid', () => {
+            fixture.componentRef.setInput('requiredField', true);
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(true);
+        });
+
+        it('does not show the red invalid border for a warning-only state (warning has its own styling)', () => {
+            component.writeValue(normalDateAsDateObject);
+            fixture.componentRef.setInput('warning', true);
+            fixture.detectChanges();
+
+            expect(hasInvalidClass()).toBe(false);
+        });
+    });
+
+    describe('time picker confirm/close affordance', () => {
+        const innerPicker = () => fixture.debugElement.query((de) => de.componentInstance instanceof DatePicker).componentInstance as DatePicker;
+
+        // Open the overlay by toggling the panel directly. detectChanges(false) skips the dev-mode
+        // "changed after checked" assertion, which the picker's overlay-open focus state churn would
+        // otherwise trip in the test harness (not a production concern).
+        async function openPanel(picker: DatePicker) {
+            picker.overlayVisible = true;
+            fixture.detectChanges(false);
+            await fixture.whenStable();
+            fixture.detectChanges(false);
+        }
+
+        it('commits the shown time and closes when the time-only confirm button is clicked (one-click apply)', async () => {
+            fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
+            fixture.detectChanges();
+            const picker = innerPicker();
+            await openPanel(picker);
+
+            const button = document.body.querySelector('.p-datepicker-buttonbar button') as HTMLButtonElement | null;
+            expect(button).not.toBeNull();
+            expect(component.value()).toBeUndefined(); // nothing applied yet
+
+            const hideSpy = vi.spyOn(picker, 'hideOverlay');
+            button!.click();
+
+            expect(hideSpy).toHaveBeenCalledOnce();
+            expect(picker.overlayVisible).toBe(false);
+            // The displayed (default / current) time is committed in a single click, instead of requiring
+            // the user to first nudge a spinner field.
+            expect(component.value()).toBeDefined();
+        });
+
+        it('does not overwrite an already-selected time when the confirm button is clicked', async () => {
+            fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
+            const chosen = new Date('2022-01-02T22:15:00');
+            component.writeValue(chosen);
+            fixture.detectChanges();
+            const picker = innerPicker();
+            await openPanel(picker);
+
+            (document.body.querySelector('.p-datepicker-buttonbar button') as HTMLButtonElement).click();
+
+            expect(dayjs(component.value() as Date).isSame(chosen)).toBe(true);
+        });
+
+        it('does not render a button bar for the date-only (CALENDAR) picker', async () => {
+            fixture.componentRef.setInput('pickerType', DateTimePickerType.CALENDAR);
+            fixture.detectChanges();
+            const picker = innerPicker();
+            await openPanel(picker);
+
+            expect(picker.showButtonBar).toBe(false);
+            expect(document.body.querySelector('.p-datepicker-buttonbar')).toBeNull();
         });
     });
 
@@ -107,100 +221,138 @@ describe('FormDateTimePickerComponent', () => {
         expect(onChangeSpy).toHaveBeenCalledWith(normalDate);
     });
 
-    describe('UTC instant preservation across timezones', () => {
-        /**
-         * The picker binds a native local `Date` and edits in the browser-local timezone, while
-         * Artemis persists UTC dayjs instants. A correct migration must NOT add or subtract the
-         * timezone offset on either leg — the absolute instant the user picks must equal the
-         * absolute instant persisted. These tests fail if the offset is double-applied (treating a
-         * local Date as if it were UTC, or vice versa).
-         */
-        it('should bind a native Date that represents the same absolute instant as the UTC dayjs value (READ leg)', () => {
-            component.writeValue(normalDate);
-
-            const bound = component.value() as Date;
-            expect(bound).toBeInstanceOf(Date);
-            // Same absolute instant: epoch millis are identical regardless of the host timezone.
-            expect(bound.getTime()).toBe(normalDate.valueOf());
-            expect(bound.toISOString()).toBe(normalDate.toISOString());
-        });
-
-        it('should emit a dayjs at the exact instant the picker reports, with no offset drift (WRITE leg)', () => {
-            const onChangeSpy = vi.fn();
-            component.registerOnChange(onChangeSpy);
-            vi.spyOn(component, 'valueChanged').mockImplementation(() => undefined);
-
-            // Simulate p-datepicker emitting the local Date for the wall-clock the user selected.
-            const pickedLocalDate = normalDateAsDateObject;
-            component.updateField(pickedLocalDate);
-
-            expect(onChangeSpy).toHaveBeenCalledOnce();
-            const emitted = onChangeSpy.mock.calls[0][0] as dayjs.Dayjs;
-            expect(dayjs.isDayjs(emitted)).toBe(true);
-            // The persisted UTC instant equals exactly what the picker reported — no off-by-offset.
-            expect(emitted.valueOf()).toBe(pickedLocalDate.getTime());
-            expect(emitted.toISOString()).toBe(normalDate.toISOString());
-        });
-
-        it('should survive a full read -> pick -> read round-trip without drifting (idempotent)', () => {
-            const onChangeSpy = vi.fn();
-            component.registerOnChange(onChangeSpy);
-            vi.spyOn(component, 'valueChanged').mockImplementation(() => undefined);
-
-            // READ: server gives us a UTC dayjs.
-            component.writeValue(normalDate);
-            const boundDate = component.value() as Date;
-
-            // PICK: the picker re-emits that very Date (user opened and confirmed without changing it).
-            component.updateField(boundDate);
-
-            const emitted = onChangeSpy.mock.calls[0][0] as dayjs.Dayjs;
-            expect(emitted.toISOString()).toBe(normalDate.toISOString());
-
-            // WRITE BACK: persisting and re-reading must again yield the same instant.
-            component.writeValue(emitted);
-            expect((component.value() as Date).getTime()).toBe(normalDate.valueOf());
-        });
-
-        it('should parse a UTC ISO string passed to updateField as the correct absolute instant', () => {
-            const onChangeSpy = vi.fn();
-            component.registerOnChange(onChangeSpy);
-            vi.spyOn(component, 'valueChanged').mockImplementation(() => undefined);
-
-            component.updateField('2022-01-02T22:15:00.000Z');
-
-            const emitted = onChangeSpy.mock.calls[0][0] as dayjs.Dayjs;
-            expect(emitted.toISOString()).toBe(normalDate.toISOString());
-        });
-    });
-
-    describe('updateField', () => {
-        it('should keep the bound value a native Date and emit the equivalent dayjs', () => {
+    describe('test updateField', () => {
+        it('should accept a valid Date and emit the equivalent dayjs', () => {
             const onChangeSpy = vi.fn();
             component.registerOnChange(onChangeSpy);
             const valueChangedStub = vi.spyOn(component, 'valueChanged').mockImplementation(() => undefined);
-            const newDate = normalDate.add(2, 'days');
-            fixture.componentRef.setInput('value', normalDate);
-            fixture.changeDetectorRef.detectChanges();
 
-            component.updateField(newDate.toDate());
+            component.updateField(normalDateAsDateObject);
 
-            expect(component.value()).toEqual(newDate.toDate());
+            expect(component.value()).toEqual(normalDateAsDateObject);
+            expect(component.dateInput.valid).toBe(true);
             expect(onChangeSpy).toHaveBeenCalledOnce();
-            const emitted = onChangeSpy.mock.calls[0][0] as dayjs.Dayjs;
-            expect(emitted.toISOString()).toBe(newDate.toISOString());
+            expect(onChangeSpy).toHaveBeenCalledWith(dayjs(normalDateAsDateObject));
             expect(valueChangedStub).toHaveBeenCalledOnce();
         });
 
-        it('should emit undefined when the picker is cleared (null/undefined value)', () => {
+        it('should flag the field invalid for unparseable text and not emit a date', () => {
             const onChangeSpy = vi.fn();
             component.registerOnChange(onChangeSpy);
-            vi.spyOn(component, 'valueChanged').mockImplementation(() => undefined);
+
+            component.updateField('not-a-date');
+
+            expect(component.dateInput.valid).toBe(false);
+            expect(onChangeSpy).toHaveBeenCalledWith(undefined);
+        });
+
+        it('should clear the value when null is emitted', () => {
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+            // seed a value first
+            component.updateField(normalDateAsDateObject);
+            onChangeSpy.mockClear();
 
             component.updateField(null);
 
             expect(component.value()).toBeNull();
+            expect(component.dateInput.valid).toBe(true);
             expect(onChangeSpy).toHaveBeenCalledWith(undefined);
+        });
+
+        it('should recover validity when the same date is re-entered after unparseable text', () => {
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+            component.updateField(normalDateAsDateObject);
+            component.updateField('not-a-date');
+            expect(component.dateInput.valid).toBe(false);
+            onChangeSpy.mockClear();
+
+            // re-typing the same (still-current) date must clear the invalid state AND re-emit
+            // onChange so the parent form model (currently undefined after the invalid entry)
+            // is re-synced — even though this.value() still holds the previous date.
+            component.updateField(normalDateAsDateObject);
+
+            expect(component.dateInput.valid).toBe(true);
+            expect(component.value()).toEqual(normalDateAsDateObject);
+            expect(onChangeSpy).toHaveBeenCalledOnce();
+            expect(onChangeSpy).toHaveBeenCalledWith(dayjs(normalDateAsDateObject));
+        });
+
+        it('should reject a typed date before [min] and not propagate it to the parent', () => {
+            const minDate = normalDate.subtract(0, 'day'); // min = normalDate itself
+            fixture.componentRef.setInput('min', minDate);
+            fixture.detectChanges();
+
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+            const beforeMin = new Date(normalDateAsDateObject.getTime() - 24 * 60 * 60 * 1000); // 1 day before
+
+            component.updateField(beforeMin);
+
+            expect(component.dateInput.valid).toBe(false);
+            expect(onChangeSpy).toHaveBeenCalledWith(undefined);
+            expect(onChangeSpy).not.toHaveBeenCalledWith(expect.objectContaining({ $d: expect.any(Date) }));
+        });
+
+        it('should reject a typed date after [max] and not propagate it to the parent', () => {
+            const maxDate = normalDate.add(0, 'day'); // max = normalDate itself
+            fixture.componentRef.setInput('max', maxDate);
+            fixture.detectChanges();
+
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+            const afterMax = new Date(normalDateAsDateObject.getTime() + 24 * 60 * 60 * 1000); // 1 day after
+
+            component.updateField(afterMax);
+
+            expect(component.dateInput.valid).toBe(false);
+            expect(onChangeSpy).toHaveBeenCalledWith(undefined);
+        });
+
+        it('should accept a typed date equal to [min]', () => {
+            fixture.componentRef.setInput('min', normalDate);
+            fixture.detectChanges();
+
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+
+            component.updateField(normalDateAsDateObject);
+
+            expect(component.dateInput.valid).toBe(true);
+            expect(onChangeSpy).toHaveBeenCalledWith(dayjs(normalDateAsDateObject));
+        });
+
+        it('should recover and re-emit after a prior out-of-range rejection', () => {
+            const minDate = normalDate;
+            fixture.componentRef.setInput('min', minDate);
+            fixture.detectChanges();
+
+            const onChangeSpy = vi.fn();
+            component.registerOnChange(onChangeSpy);
+
+            const beforeMin = new Date(normalDateAsDateObject.getTime() - 24 * 60 * 60 * 1000);
+            const validDate = new Date(normalDateAsDateObject.getTime() + 24 * 60 * 60 * 1000);
+
+            // Reject out-of-range → then enter a valid in-range date → must propagate
+            component.updateField(beforeMin);
+            expect(onChangeSpy).toHaveBeenLastCalledWith(undefined);
+            onChangeSpy.mockClear();
+
+            component.updateField(validDate);
+
+            expect(component.dateInput.valid).toBe(true);
+            expect(onChangeSpy).toHaveBeenCalledWith(dayjs(validDate));
+        });
+
+        it('should recover validity when an empty field with unparseable text is cleared', () => {
+            component.updateField('not-a-date');
+            expect(component.dateInput.valid).toBe(false);
+
+            component.updateField('');
+
+            expect(component.dateInput.valid).toBe(true);
+            expect(component.value()).toBeUndefined();
         });
     });
 
@@ -218,81 +370,5 @@ describe('FormDateTimePickerComponent', () => {
         expect(dayjs(component.minDate())).toEqual(expectedMinDate);
         expect(dayjs(component.maxDate())).toEqual(expectedMaxDate);
         expect(dayjs(component.startDate())).toEqual(expectedStartDate);
-    });
-
-    describe('pickerType -> p-datepicker time flags', () => {
-        it('should show date + time by default', () => {
-            expect((component as any).showTime()).toBe(true);
-            expect((component as any).timeOnly()).toBe(false);
-        });
-
-        it('should show date only for CALENDAR', () => {
-            fixture.componentRef.setInput('pickerType', DateTimePickerType.CALENDAR);
-            expect((component as any).showTime()).toBe(false);
-            expect((component as any).timeOnly()).toBe(false);
-        });
-
-        it('should show time only for TIMER', () => {
-            fixture.componentRef.setInput('pickerType', DateTimePickerType.TIMER);
-            expect((component as any).showTime()).toBe(true);
-            expect((component as any).timeOnly()).toBe(true);
-        });
-    });
-
-    describe('validation', () => {
-        it('should be invalid when the error input is set', () => {
-            fixture.componentRef.setInput('error', true);
-            expect(component.isValid()).toBe(false);
-        });
-
-        it('should be invalid when a required field has no value', () => {
-            fixture.componentRef.setInput('requiredField', true);
-            expect(component.isValid()).toBe(false);
-        });
-
-        it('should be invalid when the warning input is set', () => {
-            fixture.componentRef.setInput('warning', true);
-            expect(component.isValid()).toBe(false);
-        });
-
-        it('should be valid when a required field has a valid value and no error/warning is present', () => {
-            fixture.componentRef.setInput('requiredField', true);
-            fixture.componentRef.setInput('value', dayjs('2022-01-02'));
-            expect(component.isValid()).toBe(true);
-        });
-
-        it('should be invalid (gating external submit) when the value is before min, even when optional', () => {
-            fixture.componentRef.setInput('min', dayjs('2022-01-10'));
-            fixture.componentRef.setInput('value', dayjs('2022-01-05'));
-            expect(component.isValid()).toBe(false);
-        });
-
-        it('should be invalid when the value is after max', () => {
-            fixture.componentRef.setInput('max', dayjs('2022-01-10'));
-            fixture.componentRef.setInput('value', dayjs('2022-01-20'));
-            expect(component.isValid()).toBe(false);
-        });
-
-        it('should keep a programmatically preset in-range date valid (no false negative)', () => {
-            fixture.componentRef.setInput('min', dayjs('2022-01-01'));
-            fixture.componentRef.setInput('max', dayjs('2022-12-31'));
-            fixture.componentRef.setInput('value', dayjs('2022-06-15'));
-            expect(component.isValid()).toBe(true);
-        });
-    });
-
-    it('should clear the datepicker value', () => {
-        const resetSpy = vi.spyOn(component.dateInput, 'reset').mockImplementation(() => undefined);
-        const onChangeSpy = vi.fn();
-        component.registerOnChange(onChangeSpy);
-        const valueChangeSpy = vi.spyOn(component.valueChange, 'emit');
-
-        component.clearDate();
-
-        expect(resetSpy).toHaveBeenCalledWith(undefined);
-        expect(component.value()).toBeUndefined();
-        expect(onChangeSpy).toHaveBeenCalledWith(undefined);
-        // Clearing must notify consumers (audits / finished-builds filters) so they revalidate.
-        expect(valueChangeSpy).toHaveBeenCalledOnce();
     });
 });

@@ -13,7 +13,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import '@angular/localize/init';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
