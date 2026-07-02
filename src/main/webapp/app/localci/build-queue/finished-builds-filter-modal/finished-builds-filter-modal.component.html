@@ -49,6 +49,7 @@
                         [placeholder]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         [(ngModel)]="finishedBuildJobFilter.buildAgentAddress"
                         [suggestions]="buildAgentAddressSuggestions()"
+                        [completeOnFocus]="true"
                         (completeMethod)="searchBuildAgentAddresses($event)"
                         (onSelect)="filterBuildAgentAddressChanged()"
                         (onClear)="filterBuildAgentAddressChanged()"
