@@ -13,11 +13,13 @@ import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-test-component',
-    template: '<button jhiDeleteButton [actionType]="actionType" entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
+    template:
+        '<button jhiDeleteButton [renderButtonStyle]="renderStyle" [actionType]="actionType" entityTitle="title" deleteQuestion="question" deleteConfirmationText="text"></button>',
     imports: [DeleteButtonDirective],
 })
 class TestComponent {
     actionType = ActionType.Delete;
+    renderStyle = true;
 }
 
 describe('DeleteDialogDirective', () => {
@@ -83,6 +85,14 @@ describe('DeleteDialogDirective', () => {
         expect(directiveInstance.entityTitle()).toBe('title');
         expect(directiveInstance.deleteQuestion()).toBe('question');
         expect(directiveInstance.deleteConfirmationText()).toBe('text');
+    });
+
+    it('should not inject the Bootstrap label span or button classes when PrimeNG-styled', () => {
+        comp.renderStyle = false;
+        fixture.detectChanges();
+
+        expect(debugElement.query(By.css('.d-none.d-xl-inline'))).toBeNull();
+        expect(debugElement.query(By.css('.btn'))).toBeNull();
     });
 
     it('on click should call delete dialog service', () => {

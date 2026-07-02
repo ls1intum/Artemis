@@ -35,8 +35,10 @@ export class DeleteButtonDirective implements OnInit {
     deleteTextSpan?: HTMLElement;
 
     /**
-     * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.
-     * We can't use component, as Angular would wrap it in its own tag and this will break button grouping that we are using for other buttons.
+     * Applies the legacy Bootstrap button styling + injected label span, and sets the submit type, on the host
+     * button. The Bootstrap style and the injected `d-none`/`d-xl-inline` label are gated behind
+     * `renderButtonStyle` so PrimeNG-styled callers (`[renderButtonStyle]="false"`) stay Bootstrap-free and
+     * provide their own content.
      */
     ngOnInit() {
         // set button classes and submit property
@@ -48,8 +50,9 @@ export class DeleteButtonDirective implements OnInit {
         }
         this.renderer.setProperty(this.elementRef.nativeElement, 'type', 'submit');
 
-        // create a span with delete text
-        if (this.renderButtonText()) {
+        // Inject the label span only for the Bootstrap-styled variant — its d-none/d-xl-inline classes are
+        // Bootstrap, so PrimeNG-styled buttons must provide their own content instead.
+        if (this.renderButtonStyle() && this.renderButtonText()) {
             this.deleteTextSpan = this.renderer.createElement('span');
             if (this.buttonType() === ButtonType.ERROR) {
                 this.renderer.addClass(this.deleteTextSpan, 'd-none');
