@@ -85,20 +85,24 @@ export class IrisChatbotWidget {
         await expect(fab).toBeVisible();
         await fab.click();
 
-        // First open may surface the AI-selection modal; choose Cloud and reopen.
-        if (
-            await this.getLlmSelectionModal()
-                .isVisible()
-                .catch(() => false)
-        ) {
+        // First open may surface the AI-selection modal (shown via setTimeout(..., 0)).
+        // Wait for either the modal or the message input to appear so we don't race the timer.
+        const modal = this.getLlmSelectionModal();
+        const messageInput = this.getMessageInput();
+        const firstVisible = await Promise.race([
+            modal.waitFor({ state: 'visible', timeout: 5000 }).then(() => 'modal' as const),
+            messageInput.waitFor({ state: 'visible', timeout: 5000 }).then(() => 'input' as const),
+        ]);
+
+        if (firstVisible === 'modal') {
             await this.getCloudAiOption().click();
-            await expect(this.getLlmSelectionModal()).toBeHidden();
+            await expect(modal).toBeHidden();
             await expect(fab).toBeVisible();
             await fab.click();
         }
 
         await expect(this.getWidget()).toBeVisible();
-        await expect(this.getMessageInput()).toBeVisible();
+        await expect(messageInput).toBeVisible();
     }
 
     /** Returns the width of the CDK overlay container (the widget's positioning context). */

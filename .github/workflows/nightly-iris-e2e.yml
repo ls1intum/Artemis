@@ -71,6 +71,10 @@ jobs:
       - name: Install client dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Playwright dependencies
+        working-directory: src/test/playwright
+        run: pnpm install --frozen-lockfile
+
       - name: Install Playwright browsers (with system deps for CI)
         working-directory: src/test/playwright
         run: pnpm exec playwright install --with-deps chromium
