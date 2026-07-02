@@ -7,14 +7,9 @@
                         @if (pageTitle()) {
                             <jhi-course-title-bar-title class="py-1" [title]="pageTitle()" />
                         }
-                        <div class="d-flex align-items-center gap-2 ms-auto">
-                            @if (showCourseActions() && courseActionsTemplate()) {
-                                <ng-container *ngTemplateOutlet="courseActionsTemplate()!" />
-                            }
-                            @if (showSidebarToggle() && !isSidebarCollapsed()) {
-                                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
-                            }
-                        </div>
+                        @if (showSidebarToggle() && !isSidebarCollapsed()) {
+                            <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+                        }
                     </div>
                     <hr class="mt-0" />
                 }
@@ -85,7 +80,8 @@
                         <div
                             class="scrollable-item-content my-2"
                             [class]="{
-                                'no-header-bar-height': sidebarDataInternal()?.sidebarType === 'exercise' || sidebarDataInternal()?.sidebarType === 'conversation',
+                                'no-header-bar-height': sidebarDataInternal()?.sidebarType === 'exercise',
+                                'channel-search-height': sidebarDataInternal()?.sidebarType === 'conversation',
                             }"
                         >
                             @let data = sidebarDataInternal();

@@ -17,7 +17,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/course-title-bar.component';
-import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { BaseCourseContainerComponent } from 'app/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/course/shared/services/sidebar-item.service';
 import { CourseExercisesComponent } from 'app/course/overview/course-exercises/course-exercises.component';
@@ -52,7 +51,6 @@ import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/c
         TranslateDirective,
         CourseNotificationOverviewComponent,
         CourseTitleBarComponent,
-        CourseTitleBarActionsDirective,
         CourseSidebarComponent,
         CourseNotificationPresetPickerComponent,
         CourseUnenrollmentModalComponent,
@@ -96,13 +94,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         | CourseDashboardComponent
         | undefined
     >(undefined);
-    // List tabs show the title bar only while collapsed; expanded, the title + actions live in the sidebar header.
-    protected readonly showCourseTitleBar = computed(() => {
-        if (this.activatedComponentReference() instanceof CourseExercisesComponent) {
-            return false;
-        }
-        return this.titleInSidebar() ? this.activeSidebarCollapsed() : true;
-    });
+    protected readonly showCourseTitleBar = computed(() => !(this.activatedComponentReference() instanceof CourseExercisesComponent));
 
     // List tabs whose page title moves into the sidebar header (Iris excluded — it has no sidebar header).
     protected readonly titleInSidebar = computed(() => {

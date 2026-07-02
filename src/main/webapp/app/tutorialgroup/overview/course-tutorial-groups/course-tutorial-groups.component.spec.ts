@@ -280,5 +280,4 @@ class MockSidebarComponent {
     pageTitle = input<any>();
     showSidebarToggle = input<any>();
     isSidebarCollapsed = input<any>();
-    showCourseActions = input<boolean>();
 }

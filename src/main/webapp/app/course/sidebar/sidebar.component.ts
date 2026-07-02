@@ -23,8 +23,6 @@ import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarI
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
-import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
-import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
     selector: 'jhi-sidebar',
@@ -44,7 +42,6 @@ import { NgTemplateOutlet } from '@angular/common';
         SearchFilterPipe,
         CourseTitleBarTitleComponent,
         CourseSidebarToggleButtonComponent,
-        NgTemplateOutlet,
     ],
 })
 export class SidebarComponent implements OnDestroy {
@@ -75,11 +72,7 @@ export class SidebarComponent implements OnDestroy {
     readonly pageTitle = input<string>('');
     readonly showSidebarToggle = input<boolean>(false);
     readonly isSidebarCollapsed = input<boolean>(false);
-    readonly showCourseActions = input<boolean>(false);
     readonly toggleSidebar = output<void>();
-
-    private courseTitleBarService = inject(CourseTitleBarService);
-    readonly courseActionsTemplate = this.courseTitleBarService.actionsTemplate;
 
     /** Working copy of the sidebar data, seeded from the {@link sidebarData} input. It is replaced locally when
      *  the user applies exercise filters, without mutating the parent-owned input. */
