@@ -122,7 +122,7 @@
                             <td>
                                 <a [routerLink]="[lecture.id]">{{ lecture.title }}</a>
                             </td>
-                            <td [innerHTML]="lecture.description | htmlForMarkdown"></td>
+                            <td [jhiMarkdown]="lecture.description"></td>
                             <td>{{ lecture.startDate | artemisDate }}</td>
                             <td>{{ lecture.endDate | artemisDate }}</td>
                             <td class="text-end">

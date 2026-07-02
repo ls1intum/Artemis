@@ -20,7 +20,7 @@
                     class="iris-answer-text markdown-preview"
                     [class.is-clamped]="shouldClamp()"
                     [class.is-expanded]="isOverflowing() && isExpanded()"
-                    [innerHTML]="irisResult()?.answer | htmlForMarkdown"
+                    [jhiMarkdown]="irisResult()?.answer"
                 ></div>
             </div>
 

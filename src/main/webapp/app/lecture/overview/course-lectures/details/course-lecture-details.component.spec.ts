@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DebugElement, ElementRef, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -26,7 +27,6 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared-ui/components/not-released-tag/not-released-tag.component';
@@ -113,7 +113,7 @@ describe('CourseLectureDetailsComponent', () => {
                 NotReleasedTagComponent,
                 DifficultyBadgeComponent,
                 IncludedInScoreBadgeComponent,
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),

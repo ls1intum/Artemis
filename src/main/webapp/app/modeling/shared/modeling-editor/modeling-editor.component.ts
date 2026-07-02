@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModelingExplanationEditorComponent } from '../modeling-explanation-editor/modeling-explanation-editor.component';
 import { captureException } from '@sentry/angular';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
@@ -19,7 +19,7 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, HtmlForMarkdownPipe, DialogModule, ResizableDirective],
+    imports: [TranslateDirective, FaIconComponent, ModelingExplanationEditorComponent, MarkdownDirective, DialogModule, ResizableDirective],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;

@@ -30,8 +30,8 @@
                         <tbody>
                             <tr>
                                 <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
-                                <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
-                                <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
+                                <td [jhiMarkdown]="instruction!.gradingScale!"></td>
+                                <td [jhiMarkdown]="instruction!.instructionDescription!" [ngbTooltip]="setTooltip(instruction)"></td>
                                 <td class="td-usage-count">
                                     @if (instruction!.usageCount && instruction!.usageCount !== 0) {
                                         <span>{{ instruction.usageCount }}</span>

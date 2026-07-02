@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -27,7 +28,6 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
@@ -72,7 +72,7 @@ describe('CourseCompetenciesDetails', () => {
                 MockComponent(HelpIconComponent),
                 MockComponent(FireworksComponent),
                 MockPipe(ArtemisTimeAgoPipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
             ],
             providers: [
                 provideHttpClient(),

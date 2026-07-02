@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
@@ -6,7 +7,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
@@ -23,7 +24,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
@@ -115,7 +115,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationGlobalSearchComponent),
                     MockComponent(SidebarAccordionComponent),
                     MockPipe(ArtemisTranslatePipe),
-                    MockPipe(HtmlForMarkdownPipe),
+                    MockDirective(MarkdownDirective),
                     FormsModule,
                     ReactiveFormsModule,
                     FontAwesomeModule,

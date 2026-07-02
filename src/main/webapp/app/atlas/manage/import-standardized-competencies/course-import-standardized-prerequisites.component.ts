@@ -4,7 +4,7 @@ import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/atlas/m
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -25,7 +25,7 @@ import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-compet
         FaIconComponent,
         FormsModule,
         NgbTooltipModule,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         ButtonComponent,
         DocumentationButtonComponent,
         TranslateDirective,

@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -32,7 +33,6 @@ import {
     mockWebsocketServerMessage,
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
@@ -96,7 +96,7 @@ describe('IrisBaseChatbotComponent', () => {
                 FontAwesomeModule,
                 RouterModule,
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockDirective(TranslateDirective),
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),

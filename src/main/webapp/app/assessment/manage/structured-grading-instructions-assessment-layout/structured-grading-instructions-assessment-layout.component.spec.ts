@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
@@ -6,7 +7,6 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -29,7 +29,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
                 MockComponent(HelpIconComponent),
                 ExpandableSectionComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })

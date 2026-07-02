@@ -25,7 +25,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
 import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeNode, convertToTreeNodes } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
@@ -47,7 +47,7 @@ interface ImportCount {
         TooltipModule,
         ArtemisTranslatePipe,
         TranslateDirective,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         StandardizedCompetencyDetailComponent,
         KnowledgeAreaTreeComponent,
         ButtonComponent,

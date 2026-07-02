@@ -1,10 +1,10 @@
 import { vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-competencies.component';
 import { StandardizedCompetencyFilterStubComponent } from 'test/helpers/stubs/atlas/standardized-competency-filter-stub.component';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { StandardizedCompetencyDetailStubComponent } from 'test/helpers/stubs/atlas/standardized-competency-detail-stub.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -42,7 +42,7 @@ describe('CourseImportStandardizedCompetenciesComponent', () => {
                 FaIconComponent,
                 MockComponent(ButtonComponent),
                 MockDirective(SortDirective),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockComponent(DocumentationButtonComponent),
             ],
             providers: [

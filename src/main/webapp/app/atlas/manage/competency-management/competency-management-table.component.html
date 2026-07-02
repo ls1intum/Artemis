@@ -81,7 +81,7 @@
                             <td>
                                 <a [routerLink]="['/courses', courseId(), 'competencies', competency.id]">{{ competency.title }}</a>
                             </td>
-                            <td class="markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></td>
+                            <td class="markdown-preview" [jhiMarkdown]="competency.description"></td>
                             <td>
                                 <div>
                                     <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body" />

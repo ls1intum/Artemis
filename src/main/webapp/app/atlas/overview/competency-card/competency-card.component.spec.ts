@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -8,7 +9,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
@@ -25,7 +25,7 @@ describe('CompetencyCardComponent', () => {
                 FaIconComponent,
                 CompetencyCardComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockComponent(CompetencyRingsComponent),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(TranslateDirective),
@@ -33,11 +33,11 @@ describe('CompetencyCardComponent', () => {
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(CompetencyCardComponent, {
-                remove: { imports: [ArtemisTranslatePipe, HtmlForMarkdownPipe, CompetencyRingsComponent, ArtemisTimeAgoPipe, TranslateDirective] },
+                remove: { imports: [ArtemisTranslatePipe, MarkdownDirective, CompetencyRingsComponent, ArtemisTimeAgoPipe, TranslateDirective] },
                 add: {
                     imports: [
                         MockPipe(ArtemisTranslatePipe),
-                        MockPipe(HtmlForMarkdownPipe),
+                        MockDirective(MarkdownDirective),
                         MockComponent(CompetencyRingsComponent),
                         MockPipe(ArtemisTimeAgoPipe),
                         MockDirective(TranslateDirective),

@@ -44,7 +44,7 @@
                             </div>
                         </div>
                         <div class="row mb-2 markdown-preview">
-                            <div class="col-12 col-md-12 markdown-preview" [innerHTML]="lecture.description | htmlForMarkdown"></div>
+                            <div class="col-12 col-md-12 markdown-preview" [jhiMarkdown]="lecture.description"></div>
                         </div>
                     }
                     <!-- LECTURE UNITS START-->

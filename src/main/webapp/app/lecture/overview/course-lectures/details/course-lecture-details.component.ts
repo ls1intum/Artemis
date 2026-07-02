@@ -32,7 +32,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
@@ -59,7 +59,7 @@ export interface LectureUnitCompletionEvent {
         UpperCasePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
         IrisExerciseChatbotButtonComponent,
         InformationBoxComponent,
     ],

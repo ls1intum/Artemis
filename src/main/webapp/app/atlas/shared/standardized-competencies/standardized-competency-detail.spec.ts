@@ -1,8 +1,8 @@
 import { vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
@@ -27,7 +27,7 @@ describe('StandardizedCompetencyDetailComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [StandardizedCompetencyDetailComponent, MockPipe(HtmlForMarkdownPipe), MockDirective(TranslateDirective)],
+            imports: [StandardizedCompetencyDetailComponent, MockDirective(MarkdownDirective), MockDirective(TranslateDirective)],
             declarations: [],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();

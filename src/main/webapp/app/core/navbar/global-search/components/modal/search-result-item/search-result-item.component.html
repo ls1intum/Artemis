@@ -80,7 +80,9 @@
             @if (cleanedDescription()) {
                 <div
                     class="result-description mb-0 text-secondary small"
-                    [innerHTML]="cleanedDescription() | htmlForMarkdown: [] : PREVIEW_ALLOWED_TAGS : PREVIEW_ALLOWED_ATTRS"
+                    [jhiMarkdown]="cleanedDescription()"
+                    [markdownAllowedTags]="PREVIEW_ALLOWED_TAGS"
+                    [markdownAllowedAttributes]="PREVIEW_ALLOWED_ATTRS"
                 ></div>
             }
         </div>

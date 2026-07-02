@@ -6,18 +6,18 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-privacy',
     template: `
-        <div [innerHTML]="privacyStatement() | htmlForMarkdown"></div>
+        <div [jhiMarkdown]="privacyStatement()"></div>
         @if (isAuthenticated()) {
             <a jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
         }
     `,
-    imports: [TranslateDirective, RouterLink, HtmlForMarkdownPipe],
+    imports: [TranslateDirective, RouterLink, MarkdownDirective],
 })
 export class PrivacyComponent implements AfterViewInit, OnInit {
     private readonly route = inject(ActivatedRoute);
@@ -48,14 +48,29 @@ export class PrivacyComponent implements AfterViewInit, OnInit {
      */
     ngAfterViewInit(): void {
         this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            try {
-                const fragment = document.querySelector('#' + params['fragment']);
-                if (fragment !== null) {
-                    fragment.scrollIntoView();
-                }
-            } catch (e) {
-                /* empty */
-            }
+            this.scrollToFragment(params?.['fragment']);
         });
+    }
+
+    /**
+     * Scrolls to the anchor with the given id. The privacy statement is rendered asynchronously (HTTP load +
+     * lazy markdown rendering), so the anchor may not exist yet; retry over a few animation frames until it does.
+     */
+    private scrollToFragment(fragmentId: string | undefined, attemptsLeft = 20): void {
+        if (!fragmentId) {
+            return;
+        }
+        try {
+            const fragment = document.querySelector('#' + fragmentId);
+            if (fragment !== null) {
+                fragment.scrollIntoView();
+                return;
+            }
+        } catch (e) {
+            return; // invalid selector — nothing to scroll to
+        }
+        if (attemptsLeft > 0) {
+            requestAnimationFrame(() => this.scrollToFragment(fragmentId, attemptsLeft - 1));
+        }
     }
 }

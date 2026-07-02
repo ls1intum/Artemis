@@ -73,12 +73,7 @@
                         [enableFileUpload]="false"
                     />
                 } @else {
-                    <div
-                        id="description-{{ index() }}"
-                        disabled="true"
-                        class="markdown-preview border rounded p-1"
-                        [innerHTML]="descriptionControl()?.value || '&nbsp;' | htmlForMarkdown"
-                    ></div>
+                    <div id="description-{{ index() }}" disabled="true" class="markdown-preview border rounded p-1" [jhiMarkdown]="descriptionControl()?.value || '&nbsp;'"></div>
                 }
                 @if (descriptionControl()?.invalid && descriptionControl()?.dirty) {
                     <div class="alert alert-danger">

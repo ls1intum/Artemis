@@ -69,7 +69,7 @@
                     [enableFileUpload]="false"
                 />
             } @else {
-                <div disabled="true" class="markdown-preview border rounded p-1" [innerHTML]="form.controls.description.value ?? '&nbsp;' | htmlForMarkdown"></div>
+                <div disabled="true" class="markdown-preview border rounded p-1" [jhiMarkdown]="form.controls.description.value ?? '&nbsp;'"></div>
             }
             @if (form.controls.description.invalid && form.controls.description.dirty) {
                 <div

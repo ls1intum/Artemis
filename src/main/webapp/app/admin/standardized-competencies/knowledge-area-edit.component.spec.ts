@@ -4,17 +4,17 @@
  * validation, save, cancel, and circular dependency prevention.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { KnowledgeAreaDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
@@ -58,7 +58,7 @@ describe('KnowledgeAreaEditComponent', () => {
                     ReactiveFormsModule,
                     FaIconComponent,
                     MockComponent(ButtonComponent),
-                    MockPipe(HtmlForMarkdownPipe),
+                    MockDirective(MarkdownDirective),
                     MockComponent(MarkdownEditorMonacoComponent),
                     MockDirective(TranslateDirective),
                     MockDirective(DeleteButtonDirective),

@@ -1,10 +1,10 @@
-import { HtmlForPostingMarkdownPipe } from 'app/foundation/pipes/html-for-posting-markdown.pipe';
 import { TestBed } from '@angular/core/testing';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/foundation/pipes/reacting-users-on-posting.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { metisTutor, metisUser1, metisUser2 } from 'test/helpers/sample/metis-sample-data';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -18,7 +18,7 @@ describe('ReactingUsersOnPostingsPipe', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockPipe(HtmlForPostingMarkdownPipe)],
+            imports: [MockDirective(MarkdownDirective)],
             providers: [ReactingUsersOnPostingPipe, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

@@ -11,7 +11,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 
 /**
  * Form structure for standardized competency editing.
@@ -40,7 +40,7 @@ interface StandardizedCompetencyForm {
         ReactiveFormsModule,
         MarkdownEditorMonacoComponent,
         TaxonomySelectComponent,
-        HtmlForMarkdownPipe,
+        MarkdownDirective,
     ],
 })
 export class StandardizedCompetencyEditComponent {

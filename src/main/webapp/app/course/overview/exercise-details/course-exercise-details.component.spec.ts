@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -33,7 +34,6 @@ import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
@@ -167,7 +167,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 FaIconComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockComponent(HeaderExercisePageWithDetailsComponent),
                 MockComponent(ExerciseDetailsStudentActionsComponent),
                 MockComponent(SubmissionResultStatusComponent),

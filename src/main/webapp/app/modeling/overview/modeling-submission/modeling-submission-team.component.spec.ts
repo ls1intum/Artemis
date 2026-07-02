@@ -1,4 +1,5 @@
 import { Component, EventEmitter, input, output } from '@angular/core';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -32,14 +33,13 @@ import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.c
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
@@ -153,7 +153,7 @@ describe('ModelingSubmissionComponent', () => {
                 RouterModule.forRoot([routes[0]]),
                 ModelingSubmissionComponent,
                 StubModelingEditorComponent,
-                MockPipe(HtmlForMarkdownPipe),
+                MockDirective(MarkdownDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockComponent(ResizeableContainerComponent),

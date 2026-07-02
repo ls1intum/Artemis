@@ -5,7 +5,7 @@ import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortaweso
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
@@ -34,7 +34,7 @@ const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
     selector: 'jhi-global-search-iris-answer',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, RouterLink, ArtemisTranslatePipe, IrisLogoComponent, HtmlForMarkdownPipe, IrisThinkingBubbleComponent],
+    imports: [FaIconComponent, RouterLink, ArtemisTranslatePipe, IrisLogoComponent, MarkdownDirective, IrisThinkingBubbleComponent],
     templateUrl: './global-search-iris-answer.component.html',
     styleUrls: ['./global-search-iris-answer.component.scss'],
 })

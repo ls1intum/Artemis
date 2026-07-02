@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MockLanguageHelper } from 'test/helpers/mocks/service/mock-translate.service';
@@ -25,7 +25,7 @@ describe('ImprintComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ImprintComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
+            imports: [ImprintComponent, MockDirective(TranslateDirective), MockDirective(MarkdownDirective)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 SessionStorageService,
