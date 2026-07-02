@@ -23,6 +23,7 @@ import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-con
 import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -537,7 +538,7 @@ export class IrisChatService implements OnDestroy {
             return;
         }
 
-        const suggestions = JSON.parse(str);
+        const suggestions = parseJson<string[]>(str);
         this.suggestions.next(suggestions);
     }
 
