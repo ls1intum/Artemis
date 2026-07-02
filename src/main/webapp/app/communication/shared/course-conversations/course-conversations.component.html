@@ -14,7 +14,7 @@
             </div>
         }
         @if (isCodeOfConductAccepted() && isServiceSetUp() && course()) {
-            <div class="d-flex justify-content-between sidebar-tab-content-row">
+            <div class="d-flex justify-content-between sidebar-tab-content-row" [class.tab-sidebar-collapsed]="isCollapsed()">
                 <div class="communication-content-sidebar" [ngClass]="{ 'sidebar-collapsed': isCollapsed(), 'is-not-in-active-conversation': !activeConversation() }">
                     <jhi-sidebar
                         (onSelectConversation)="onConversationSelected($event)"

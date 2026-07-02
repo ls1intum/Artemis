@@ -1282,6 +1282,12 @@ $transition-in-between-delay: 0.05s;
     padding-top: 3.25rem;
 }
 
+// Collapsed: no sidebar to offset past, so push the content (including its own background) fully below the bar with a margin, keeping the bar a distinct full-width bar over the page background.
+.sidebar-tab-content-row.tab-sidebar-collapsed > *:not(:first-child) {
+    padding-top: 0;
+    margin-top: 3.25rem;
+}
+
 .fs-xx-small {
     font-size: 0.625rem;
 }
