@@ -25,25 +25,25 @@ public class AttachmentFileHashService {
 
     private static final int BUFFER_SIZE = 8192;
 
-    public FileHash hash(MultipartFile file) {
+    public FileHash sha256(MultipartFile file) {
         try (InputStream inputStream = file.getInputStream()) {
-            return hash(inputStream);
+            return sha256(inputStream);
         }
         catch (IOException e) {
-            throw new AttachmentFileHashException("Could not calculate attachment file hash", e);
+            throw new AttachmentFileHashException("Could not hash uploaded attachment file", e);
         }
     }
 
-    public FileHash hash(Path path) {
+    public FileHash sha256(Path path) {
         try (InputStream inputStream = Files.newInputStream(path)) {
-            return hash(inputStream);
+            return sha256(inputStream);
         }
         catch (IOException e) {
-            throw new AttachmentFileHashException("Could not calculate attachment file hash", e);
+            throw new AttachmentFileHashException("Could not hash stored attachment file", e);
         }
     }
 
-    private FileHash hash(InputStream inputStream) {
+    private FileHash sha256(InputStream inputStream) {
         MessageDigest messageDigest = createMessageDigest();
         byte[] buffer = new byte[BUFFER_SIZE];
 
@@ -53,7 +53,7 @@ public class AttachmentFileHashService {
             }
         }
         catch (IOException e) {
-            throw new AttachmentFileHashException("Could not calculate attachment file hash", e);
+            throw new AttachmentFileHashException("Could not hash attachment file stream", e);
         }
 
         return new FileHash(SHA_256, HexFormat.of().formatHex(messageDigest.digest()));
@@ -64,7 +64,7 @@ public class AttachmentFileHashService {
             return MessageDigest.getInstance(SHA_256);
         }
         catch (NoSuchAlgorithmException e) {
-            throw new AttachmentFileHashException("SHA-256 message digest is not available", e);
+            throw new AttachmentFileHashException("Could not initialize SHA-256 digest", e);
         }
     }
 

@@ -27,7 +27,7 @@ class AttachmentFileHashServiceTest {
     void hashesMultipartFileWithSha256() {
         MultipartFile file = new MockMultipartFile("file", "abc.txt", "text/plain", "abc".getBytes(StandardCharsets.UTF_8));
 
-        AttachmentFileHashService.FileHash fileHash = service.hash(file);
+        AttachmentFileHashService.FileHash fileHash = service.sha256(file);
 
         assertThat(fileHash.algorithm()).isEqualTo("SHA-256");
         assertThat(fileHash.value()).isEqualTo(SHA_256_ABC);
@@ -38,7 +38,7 @@ class AttachmentFileHashServiceTest {
         Path file = tempDir.resolve("abc.txt");
         Files.writeString(file, "abc", StandardCharsets.UTF_8);
 
-        AttachmentFileHashService.FileHash fileHash = service.hash(file);
+        AttachmentFileHashService.FileHash fileHash = service.sha256(file);
 
         assertThat(fileHash.algorithm()).isEqualTo("SHA-256");
         assertThat(fileHash.value()).isEqualTo(SHA_256_ABC);
@@ -48,7 +48,8 @@ class AttachmentFileHashServiceTest {
     void wrapsMultipartFileInputStreamIOException() throws IOException {
         MultipartFile file = new ThrowingMultipartFile();
 
-        assertThatThrownBy(() -> service.hash(file)).isInstanceOf(AttachmentFileHashException.class).hasCauseInstanceOf(IOException.class);
+        assertThatThrownBy(() -> service.sha256(file)).isInstanceOf(AttachmentFileHashException.class).hasMessageContaining("Could not hash uploaded attachment file")
+                .hasCauseInstanceOf(IOException.class);
     }
 
     private static final class ThrowingMultipartFile extends MockMultipartFile {
