@@ -30,8 +30,12 @@ public class LectureContentUpdateClassifier {
     }
 
     private static boolean isContentUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after, AttachmentFileUpdateResult fileUpdateResult) {
-        return fileUpdateResult != null && fileUpdateResult.fileBytesChanged() || !Objects.equals(before.attachmentLink(), after.attachmentLink())
-                || !Objects.equals(before.videoSource(), after.videoSource());
+        return hasAttachmentFileContentUpdate(fileUpdateResult) || !Objects.equals(before.attachmentVersion(), after.attachmentVersion())
+                || !Objects.equals(before.attachmentLink(), after.attachmentLink()) || !Objects.equals(before.videoSource(), after.videoSource());
+    }
+
+    private static boolean hasAttachmentFileContentUpdate(AttachmentFileUpdateResult fileUpdateResult) {
+        return fileUpdateResult != null && (fileUpdateResult.fileBytesChanged() || fileUpdateResult.attachmentAdded() || fileUpdateResult.attachmentRemoved());
     }
 
     private static boolean isVisibilityUpdate(LectureContentUpdateSnapshot before, LectureContentUpdateSnapshot after) {

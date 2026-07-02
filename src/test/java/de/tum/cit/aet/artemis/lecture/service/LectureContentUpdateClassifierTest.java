@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -30,6 +32,17 @@ class LectureContentUpdateClassifierTest {
     }
 
     @Test
+    void classifiesReleaseDateChangeAsVisibilityUpdate() {
+        var before = snapshot();
+        var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source",
+                RELEASE_DATE.plusDays(1), Map.of(1, HIDDEN_UNTIL));
+
+        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+
+        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.VISIBILITY);
+    }
+
+    @Test
     void classifiesLectureUnitNameChangeAsMetadataUpdate() {
         var before = snapshot("Exercise slides", "Lecture 1", "Course", "Description");
         var after = snapshot("Updated exercise slides", "Lecture 1", "Course", "Description");
@@ -49,6 +62,58 @@ class LectureContentUpdateClassifierTest {
     }
 
     @Test
+    void classifiesAttachmentAddedAsContentUpdate() {
+        var snapshot = snapshot();
+
+        var updateKind = classifier.classify(snapshot, snapshot, new AttachmentFileUpdateResult(false, true, false, null, 1));
+
+        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+    }
+
+    @Test
+    void classifiesAttachmentRemovedAsContentUpdate() {
+        var snapshot = snapshot();
+
+        var updateKind = classifier.classify(snapshot, snapshot, new AttachmentFileUpdateResult(false, false, true, 7, null));
+
+        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+    }
+
+    @Test
+    void classifiesAttachmentVersionOnlyChangeAsContentUpdate() {
+        var before = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
+                Map.of(1, HIDDEN_UNTIL));
+        var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 8, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
+                Map.of(1, HIDDEN_UNTIL));
+
+        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+
+        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+    }
+
+    @Test
+    void classifiesAttachmentLinkChangeAsContentUpdate() {
+        var before = snapshot();
+        var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit-v2.pdf", "https://video.example/source", RELEASE_DATE,
+                Map.of(1, HIDDEN_UNTIL));
+
+        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+
+        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+    }
+
+    @Test
+    void classifiesVideoUrlChangeAsContentUpdate() {
+        var before = snapshot();
+        var after = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/updated", RELEASE_DATE,
+                Map.of(1, HIDDEN_UNTIL));
+
+        var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.unchanged(7));
+
+        assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
+    }
+
+    @Test
     void classifiesUnchangedSnapshotsAsNoUpdate() {
         var snapshot = snapshot();
 
@@ -59,9 +124,9 @@ class LectureContentUpdateClassifierTest {
 
     @Test
     void classifiesContentUpdateWhenContentMetadataAndVisibilityChanged() {
-        var before = snapshot("Exercise slides", "Lecture 1", "Course", "Description", "attachments/unit.pdf", "https://video.example/old", RELEASE_DATE,
+        var before = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/old", RELEASE_DATE,
                 Map.of(1, HIDDEN_UNTIL));
-        var after = snapshot("Updated exercise slides", "Lecture 2", "Updated Course", "Updated description", "attachments/unit-v2.pdf", "https://video.example/new",
+        var after = snapshot("Updated exercise slides", "Lecture 2", "Updated Course", "Updated description", 8, "attachments/unit-v2.pdf", "https://video.example/new",
                 RELEASE_DATE.plusDays(1), Map.of(1, HIDDEN_UNTIL.plusHours(2)));
 
         var updateKind = classifier.classify(before, after, AttachmentFileUpdateResult.changed(7, 8));
@@ -69,23 +134,39 @@ class LectureContentUpdateClassifierTest {
         assertThat(updateKind).isEqualTo(LectureContentUpdateKind.CONTENT);
     }
 
+    @Test
+    void snapshotDefensivelyCopiesSlideHiddenMapAndNormalizesNullToEmptyMap() {
+        var source = new HashMap<Integer, ZonedDateTime>();
+        source.put(1, HIDDEN_UNTIL);
+
+        var snapshot = snapshot(source);
+        source.put(2, HIDDEN_UNTIL.plusDays(1));
+
+        assertThat(snapshot.slideHiddenUntilBySlideNumber()).containsOnly(Map.entry(1, HIDDEN_UNTIL));
+        assertThatThrownBy(() -> snapshot.slideHiddenUntilBySlideNumber().put(3, HIDDEN_UNTIL.plusDays(2))).isInstanceOf(UnsupportedOperationException.class);
+
+        var snapshotWithNullSlides = new LectureContentUpdateSnapshot(42L, "Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf",
+                "https://video.example/source", RELEASE_DATE, null);
+        assertThat(snapshotWithNullSlides.slideHiddenUntilBySlideNumber()).isEmpty();
+    }
+
     private static LectureContentUpdateSnapshot snapshot() {
         return snapshot(Map.of(1, HIDDEN_UNTIL));
     }
 
     private static LectureContentUpdateSnapshot snapshot(Map<Integer, ZonedDateTime> hiddenUntilBySlideNumber) {
-        return snapshot("Exercise slides", "Lecture 1", "Course", "Description", "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
+        return snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
                 hiddenUntilBySlideNumber);
     }
 
     private static LectureContentUpdateSnapshot snapshot(String lectureUnitName, String lectureName, String courseName, String courseDescription) {
-        return snapshot(lectureUnitName, lectureName, courseName, courseDescription, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
+        return snapshot(lectureUnitName, lectureName, courseName, courseDescription, 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
                 Map.of(1, HIDDEN_UNTIL));
     }
 
-    private static LectureContentUpdateSnapshot snapshot(String lectureUnitName, String lectureName, String courseName, String courseDescription, String attachmentLink,
-            String videoSource, ZonedDateTime releaseDate, Map<Integer, ZonedDateTime> hiddenUntilBySlideNumber) {
-        return new LectureContentUpdateSnapshot(42L, lectureUnitName, lectureName, courseName, courseDescription, 7, attachmentLink, videoSource, releaseDate,
+    private static LectureContentUpdateSnapshot snapshot(String lectureUnitName, String lectureName, String courseName, String courseDescription, Integer attachmentVersion,
+            String attachmentLink, String videoSource, ZonedDateTime releaseDate, Map<Integer, ZonedDateTime> hiddenUntilBySlideNumber) {
+        return new LectureContentUpdateSnapshot(42L, lectureUnitName, lectureName, courseName, courseDescription, attachmentVersion, attachmentLink, videoSource, releaseDate,
                 hiddenUntilBySlideNumber);
     }
 }

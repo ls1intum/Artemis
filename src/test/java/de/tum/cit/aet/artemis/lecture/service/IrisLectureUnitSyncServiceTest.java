@@ -7,8 +7,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -20,11 +21,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
-import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,9 +51,9 @@ class IrisLectureUnitSyncServiceTest {
     void markMetadataDirtyCreatesStateAndPublishesEvent() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        var unit = attachmentVideoUnit(List.of(slide(1, 1L, HIDDEN_UNTIL)));
+        var snapshot = snapshot();
 
-        service.markMetadataDirtyAfterCommit(unit);
+        service.markMetadataDirtyAfterCommit(snapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository).save(stateCaptor.capture());
@@ -75,9 +73,9 @@ class IrisLectureUnitSyncServiceTest {
     void markVisibilityDirtyCreatesStateAndPublishesEvent() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        var unit = attachmentVideoUnit(List.of(slide(2, 22L, HIDDEN_UNTIL), slide(1, 11L, HIDDEN_UNTIL.plusDays(1))));
+        var snapshot = snapshot(slideHiddenMap(2, HIDDEN_UNTIL, 1, HIDDEN_UNTIL.plusDays(1)));
 
-        service.markVisibilityDirtyAfterCommit(unit);
+        service.markVisibilityDirtyAfterCommit(snapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository).save(stateCaptor.capture());
@@ -102,10 +100,10 @@ class IrisLectureUnitSyncServiceTest {
             persistedState.set(state);
             return state;
         });
-        var unit = attachmentVideoUnit(List.of(slide(1, 1L, HIDDEN_UNTIL)));
+        var snapshot = snapshot();
 
-        service.markMetadataDirtyAfterCommit(unit);
-        service.markMetadataDirtyAfterCommit(unit);
+        service.markMetadataDirtyAfterCommit(snapshot);
+        service.markMetadataDirtyAfterCommit(snapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository, times(2)).save(stateCaptor.capture());
@@ -116,11 +114,11 @@ class IrisLectureUnitSyncServiceTest {
     void metadataHashIsDeterministicForEquivalentInput() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        var firstUnit = attachmentVideoUnit(List.of(slide(1, 1L, HIDDEN_UNTIL)));
-        var secondUnit = attachmentVideoUnit(List.of(slide(1, 1L, HIDDEN_UNTIL)));
+        var firstSnapshot = snapshot();
+        var secondSnapshot = snapshot();
 
-        service.markMetadataDirtyAfterCommit(firstUnit);
-        service.markMetadataDirtyAfterCommit(secondUnit);
+        service.markMetadataDirtyAfterCommit(firstSnapshot);
+        service.markMetadataDirtyAfterCommit(secondSnapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository, times(2)).save(stateCaptor.capture());
@@ -131,13 +129,13 @@ class IrisLectureUnitSyncServiceTest {
     void visibilityHashIsDeterministicForEquivalentInputAndChangesWithHiddenState() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        var firstUnit = attachmentVideoUnit(List.of(slide(2, 22L, HIDDEN_UNTIL.plusDays(1)), slide(1, 11L, HIDDEN_UNTIL)));
-        var equivalentUnitWithDifferentSlideOrder = attachmentVideoUnit(List.of(slide(1, 11L, HIDDEN_UNTIL), slide(2, 22L, HIDDEN_UNTIL.plusDays(1))));
-        var changedUnit = attachmentVideoUnit(List.of(slide(1, 11L, HIDDEN_UNTIL.plusHours(1)), slide(2, 22L, HIDDEN_UNTIL.plusDays(1))));
+        var firstSnapshot = snapshot(slideHiddenMap(2, HIDDEN_UNTIL.plusDays(1), 1, HIDDEN_UNTIL));
+        var equivalentSnapshotWithDifferentInsertionOrder = snapshot(slideHiddenMap(1, HIDDEN_UNTIL, 2, HIDDEN_UNTIL.plusDays(1)));
+        var changedSnapshot = snapshot(slideHiddenMap(1, HIDDEN_UNTIL.plusHours(1), 2, HIDDEN_UNTIL.plusDays(1)));
 
-        service.markVisibilityDirtyAfterCommit(firstUnit);
-        service.markVisibilityDirtyAfterCommit(equivalentUnitWithDifferentSlideOrder);
-        service.markVisibilityDirtyAfterCommit(changedUnit);
+        service.markVisibilityDirtyAfterCommit(firstSnapshot);
+        service.markVisibilityDirtyAfterCommit(equivalentSnapshotWithDifferentInsertionOrder);
+        service.markVisibilityDirtyAfterCommit(changedSnapshot);
 
         var stateCaptor = ArgumentCaptor.forClass(IrisLectureUnitSyncState.class);
         verify(repository, times(3)).save(stateCaptor.capture());
@@ -146,31 +144,19 @@ class IrisLectureUnitSyncServiceTest {
         assertThat(states.get(2).getVisibilityHash()).isNotEqualTo(states.getFirst().getVisibilityHash());
     }
 
-    private static AttachmentVideoUnit attachmentVideoUnit(List<Slide> slides) {
-        var unit = new AttachmentVideoUnit();
-        unit.setId(LECTURE_UNIT_ID);
-        unit.setName("Exercise slides");
-        unit.setReleaseDate(RELEASE_DATE);
-        unit.setSlides(new ArrayList<>(slides));
-
-        var lecture = new Lecture();
-        lecture.setTitle("Lecture 1");
-        lecture.setDescription("Lecture description");
-
-        var course = new Course();
-        course.setTitle("Course");
-        course.setDescription("Course description");
-
-        lecture.setCourse(course);
-        unit.setLecture(lecture);
-        return unit;
+    private static LectureContentUpdateSnapshot snapshot() {
+        return snapshot(Map.of(1, HIDDEN_UNTIL));
     }
 
-    private static Slide slide(int slideNumber, Long id, ZonedDateTime hiddenUntil) {
-        var slide = new Slide();
-        slide.setId(id);
-        slide.setSlideNumber(slideNumber);
-        slide.setHidden(hiddenUntil);
-        return slide;
+    private static LectureContentUpdateSnapshot snapshot(Map<Integer, ZonedDateTime> slideHiddenUntilBySlideNumber) {
+        return new LectureContentUpdateSnapshot(LECTURE_UNIT_ID, "Exercise slides", "Lecture 1", "Course", "Course description", 7, "attachments/unit.pdf",
+                "https://video.example/source", RELEASE_DATE, slideHiddenUntilBySlideNumber);
+    }
+
+    private static Map<Integer, ZonedDateTime> slideHiddenMap(int firstSlideNumber, ZonedDateTime firstHiddenUntil, int secondSlideNumber, ZonedDateTime secondHiddenUntil) {
+        var slideHiddenMap = new LinkedHashMap<Integer, ZonedDateTime>();
+        slideHiddenMap.put(firstSlideNumber, firstHiddenUntil);
+        slideHiddenMap.put(secondSlideNumber, secondHiddenUntil);
+        return slideHiddenMap;
     }
 }

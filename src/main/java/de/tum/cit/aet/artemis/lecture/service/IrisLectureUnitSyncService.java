@@ -4,20 +4,17 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
 import java.util.HexFormat;
+import java.util.Map;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 
 @Conditional(LectureEnabled.class)
@@ -36,20 +33,20 @@ public class IrisLectureUnitSyncService {
         this.eventPublisher = eventPublisher;
     }
 
-    public void markMetadataDirtyAfterCommit(AttachmentVideoUnit unit) {
-        IrisLectureUnitSyncState state = stateFor(unit.getId());
-        state.setMetadataHash(metadataHash(unit));
+    public void markMetadataDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
+        IrisLectureUnitSyncState state = stateFor(snapshot.lectureUnitId());
+        state.setMetadataHash(metadataHash(snapshot));
         markDirty(state);
         repository.save(state);
-        eventPublisher.publishEvent(new IrisLectureUnitMetadataDirtyEvent(unit.getId()));
+        eventPublisher.publishEvent(new IrisLectureUnitMetadataDirtyEvent(snapshot.lectureUnitId()));
     }
 
-    public void markVisibilityDirtyAfterCommit(AttachmentVideoUnit unit) {
-        IrisLectureUnitSyncState state = stateFor(unit.getId());
-        state.setVisibilityHash(visibilityHash(unit));
+    public void markVisibilityDirtyAfterCommit(LectureContentUpdateSnapshot snapshot) {
+        IrisLectureUnitSyncState state = stateFor(snapshot.lectureUnitId());
+        state.setVisibilityHash(visibilityHash(snapshot));
         markDirty(state);
         repository.save(state);
-        eventPublisher.publishEvent(new IrisLectureUnitVisibilityDirtyEvent(unit.getId()));
+        eventPublisher.publishEvent(new IrisLectureUnitVisibilityDirtyEvent(snapshot.lectureUnitId()));
     }
 
     private IrisLectureUnitSyncState stateFor(Long lectureUnitId) {
@@ -66,37 +63,29 @@ public class IrisLectureUnitSyncService {
         state.setNextRetryAt(ZonedDateTime.now());
     }
 
-    private static String metadataHash(AttachmentVideoUnit unit) {
+    private static String metadataHash(LectureContentUpdateSnapshot snapshot) {
         MessageDigest digest = createMessageDigest();
-        Lecture lecture = unit.getLecture();
-        Course course = lecture != null ? lecture.getCourse() : null;
 
-        appendField(digest, "lectureUnitId", unit.getId());
-        appendField(digest, "lectureUnitName", unit.getName());
-        appendField(digest, "lectureTitle", lecture != null ? lecture.getTitle() : null);
-        appendField(digest, "courseTitle", course != null ? course.getTitle() : null);
-        appendField(digest, "courseDescription", course != null ? course.getDescription() : null);
+        appendField(digest, "lectureUnitId", snapshot.lectureUnitId());
+        appendField(digest, "lectureUnitName", snapshot.lectureUnitName());
+        appendField(digest, "lectureName", snapshot.lectureName());
+        appendField(digest, "courseName", snapshot.courseName());
+        appendField(digest, "courseDescription", snapshot.courseDescription());
         return HexFormat.of().formatHex(digest.digest());
     }
 
-    private static String visibilityHash(AttachmentVideoUnit unit) {
+    private static String visibilityHash(LectureContentUpdateSnapshot snapshot) {
         MessageDigest digest = createMessageDigest();
 
-        appendField(digest, "lectureUnitId", unit.getId());
-        appendField(digest, "releaseDate", instantString(unit.getReleaseDate()));
-        unit.getSlides().stream().sorted(slideComparator()).forEach(slide -> appendSlide(digest, slide));
+        appendField(digest, "lectureUnitId", snapshot.lectureUnitId());
+        appendField(digest, "releaseDate", instantString(snapshot.releaseDate()));
+        snapshot.slideHiddenUntilBySlideNumber().entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> appendSlideHiddenUntil(digest, entry));
         return HexFormat.of().formatHex(digest.digest());
     }
 
-    private static Comparator<Slide> slideComparator() {
-        return Comparator.comparingInt(Slide::getSlideNumber).thenComparing(slide -> nullSafeString(slide.getId())).thenComparing(slide -> instantString(slide.getHidden()))
-                .thenComparing(slide -> nullSafeString(slide.getExercise() != null ? slide.getExercise().getId() : null));
-    }
-
-    private static void appendSlide(MessageDigest digest, Slide slide) {
-        appendField(digest, "slideNumber", slide.getSlideNumber());
-        appendField(digest, "slideHidden", instantString(slide.getHidden()));
-        appendField(digest, "slideExerciseId", slide.getExercise() != null ? slide.getExercise().getId() : null);
+    private static void appendSlideHiddenUntil(MessageDigest digest, Map.Entry<Integer, ZonedDateTime> slideHiddenUntil) {
+        appendField(digest, "slideNumber", slideHiddenUntil.getKey());
+        appendField(digest, "slideHiddenUntil", instantString(slideHiddenUntil.getValue()));
     }
 
     private static MessageDigest createMessageDigest() {
@@ -126,10 +115,6 @@ public class IrisLectureUnitSyncService {
 
     private static String instantString(ZonedDateTime value) {
         return value != null ? value.toInstant().toString() : null;
-    }
-
-    private static String nullSafeString(Long value) {
-        return value != null ? value.toString() : "";
     }
 
     public record IrisLectureUnitMetadataDirtyEvent(Long lectureUnitId) {
