@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearc
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
@@ -168,6 +169,8 @@ public class AttachmentVideoUnitResource {
         }
 
         validateYouTubeVideoSource(attachmentVideoUnitDTO.videoSource());
+        AttachmentUpdateIntent updateIntent = attachmentVideoUnitDTO.attachmentUpdateIntent();
+        validateAttachmentUpdateIntent(updateIntent, file);
 
         // Capture original competency IDs BEFORE updating links (for progress tracking)
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
@@ -193,6 +196,19 @@ public class AttachmentVideoUnitResource {
         });
 
         return ResponseEntity.ok(savedAttachmentVideoUnit);
+    }
+
+    private void validateAttachmentUpdateIntent(AttachmentUpdateIntent updateIntent, MultipartFile file) {
+        boolean hasFile = file != null && !file.isEmpty();
+        if (updateIntent == null) {
+            throw new BadRequestAlertException("Attachment update intent is required", ENTITY_NAME, "attachmentUpdateIntentRequired");
+        }
+        if (updateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && hasFile) {
+            throw new BadRequestAlertException("NO_FILE_CHANGE requests must not include a file", ENTITY_NAME, "fileNotAllowedForNoFileChange");
+        }
+        if ((updateIntent == AttachmentUpdateIntent.FILE_UPLOAD || updateIntent == AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED) && !hasFile) {
+            throw new BadRequestAlertException("File update requests must include a file", ENTITY_NAME, "fileRequiredForFileChange");
+        }
     }
 
     /**
