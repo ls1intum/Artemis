@@ -9,7 +9,7 @@ import { Tag } from 'primeng/tag';
  */
 @Component({
     selector: 'jhi-student-exam-status',
-    templateUrl: `./student-exam-status.component.html`,
+    templateUrl: './student-exam-status.component.html',
     imports: [TranslateDirective, ArtemisTranslatePipe, Tag],
 })
 export class StudentExamStatusComponent {

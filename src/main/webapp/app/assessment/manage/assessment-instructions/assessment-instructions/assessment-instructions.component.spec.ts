@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
@@ -48,7 +47,6 @@ export class StubModelingEditorComponent {
 }
 
 describe('AssessmentInstructionsComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: AssessmentInstructionsComponent;
     let fixture: ComponentFixture<AssessmentInstructionsComponent>;
     let markdownService: ArtemisMarkdownService;

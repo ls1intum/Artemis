@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card/course-exercise-card.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -9,8 +8,6 @@ import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/course/shared/entities/course.model';
 
 describe('Course Exercise Card Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseExerciseCardComponent>;
 
     beforeEach(() => {

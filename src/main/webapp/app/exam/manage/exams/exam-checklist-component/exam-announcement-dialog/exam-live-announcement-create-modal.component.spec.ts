@@ -13,11 +13,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ExamLiveAnnouncementCreateModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamLiveAnnouncementCreateModalComponent;
     let fixture: ComponentFixture<ExamLiveAnnouncementCreateModalComponent>;
     let dialogRefCloseSpy: ReturnType<typeof vi.fn>;

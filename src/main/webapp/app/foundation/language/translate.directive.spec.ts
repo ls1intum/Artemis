@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -21,8 +20,6 @@ class TestDynamicKeyTranslateDirectiveComponent {
 }
 
 describe('TranslateDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let translateService: TranslateService;
     let spy: ReturnType<typeof vi.spyOn>;
 

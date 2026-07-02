@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
@@ -75,8 +74,6 @@ type InstructionInternals = Omit<
 const internals = (c: ProgrammingExerciseInstructionComponent): InstructionInternals => c as unknown as InstructionInternals;
 
 describe('ProgrammingExerciseInstructionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructionComponent>;
     let debugElement: DebugElement;
@@ -580,8 +577,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
  * per-exercise PlantUML container ID scoping fix.
  */
 describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation', () => {
-    setupTestBed({ zoneless: true });
-
     let plantUmlExtension: ProgrammingExercisePlantUmlExtensionWrapper;
 
     // Problem statements with multiple PlantUML diagrams, simulating real exam exercises

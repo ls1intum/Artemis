@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -14,8 +13,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Service', () => {
-    setupTestBed({ zoneless: true });
-
     let httpMock: HttpTestingController;
     let service: ExternalSubmissionService;
 

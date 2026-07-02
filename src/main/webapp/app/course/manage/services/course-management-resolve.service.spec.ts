@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -9,8 +8,6 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Course } from 'app/course/shared/entities/course.model';
 
 describe('CourseManagementResolve', () => {
-    setupTestBed({ zoneless: true });
-
     let resolver: CourseManagementResolve;
     let service: CourseManagementService;
     let route: ActivatedRouteSnapshot;

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -34,8 +33,6 @@ import { PdfUploadTarget } from 'app/lecture/manage/pdf-upload-target-dialog/pdf
 import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('Lecture', () => {
-    setupTestBed({ zoneless: true });
-
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;

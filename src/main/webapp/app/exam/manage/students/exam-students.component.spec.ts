@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
@@ -29,8 +28,6 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 
 describe('ExamStudentsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     const course = { id: 1 } as Course;
 
     const examWithCourse: Exam = {

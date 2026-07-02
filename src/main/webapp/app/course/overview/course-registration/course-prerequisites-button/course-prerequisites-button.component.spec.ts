@@ -1,15 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CoursePrerequisitesButtonComponent } from 'app/course/overview/course-registration/course-prerequisites-button/course-prerequisites-button.component';
 
 describe('CoursePrerequisitesButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CoursePrerequisitesButtonComponent>;
     let component: CoursePrerequisitesButtonComponent;
 
@@ -20,8 +17,8 @@ describe('CoursePrerequisitesButtonComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [CoursePrerequisitesButtonComponent, TranslateModule.forRoot()],
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            imports: [CoursePrerequisitesButtonComponent],
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService()],
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(CoursePrerequisitesButtonComponent);

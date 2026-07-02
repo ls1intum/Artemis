@@ -4,7 +4,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentRef, signal } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -28,8 +27,6 @@ function createOperation(name: OperationName): CleanupOperation {
 }
 
 describe('CleanupOperationModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CleanupOperationModalComponent;
     let componentRef: ComponentRef<CleanupOperationModalComponent>;
     let fixture: ComponentFixture<CleanupOperationModalComponent>;

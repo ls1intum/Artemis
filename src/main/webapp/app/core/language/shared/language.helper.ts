@@ -23,7 +23,7 @@ export class JhiLanguageHelper {
     constructor() {
         const rootRenderer = inject(RendererFactory2);
 
-        this._language = new BehaviorSubject<string>(this.translateService.getCurrentLang());
+        this._language = new BehaviorSubject<string>(this.translateService.getCurrentLang() ?? 'en');
         this.renderer = rootRenderer.createRenderer(document.querySelector('html'), null);
         this.init();
     }
@@ -61,11 +61,11 @@ export class JhiLanguageHelper {
 
     private init() {
         this.translateService.onLangChange.subscribe(() => {
-            const languageKey = this.translateService.getCurrentLang();
+            const languageKey = this.translateService.getCurrentLang() ?? 'en';
             this._language.next(languageKey);
             this.localeConversionService.locale = languageKey;
             this.sessionStorageService.store('locale', languageKey);
-            this.renderer.setAttribute(document.querySelector('html'), 'lang', this.translateService.getCurrentLang());
+            this.renderer.setAttribute(document.querySelector('html'), 'lang', this.translateService.getCurrentLang() ?? 'en');
             this.updateTitle();
         });
     }

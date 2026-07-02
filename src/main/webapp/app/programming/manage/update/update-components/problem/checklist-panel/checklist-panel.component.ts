@@ -1,7 +1,7 @@
 import { Component, DestroyRef, WritableSignal, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe, NgClass } from '@angular/common';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { Tag } from 'primeng/tag';
@@ -27,12 +27,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { Panel } from 'primeng/panel';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
-import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
-import { DifficultyAssessment } from 'app/openapi/model/difficultyAssessment';
-import { QualityIssue } from 'app/openapi/model/qualityIssue';
-import { InferredCompetency } from 'app/openapi/model/inferredCompetency';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
+import { ChecklistAnalysisResponse } from 'app/openapi/models/checklist-analysis-response';
+import { ChecklistActionRequest } from 'app/openapi/models/checklist-action-request';
+import { DifficultyAssessmentDeltaEnum, DifficultyAssessmentSuggestedEnum } from 'app/openapi/models/difficulty-assessment';
+import { QualityIssue } from 'app/openapi/models/quality-issue';
+import { InferredCompetency } from 'app/openapi/models/inferred-competency';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import {
@@ -92,10 +92,10 @@ const PENALTY_LOW = 0.1;
     templateUrl: './checklist-panel.component.html',
     styleUrls: ['./checklist-panel.component.scss'],
     standalone: true,
-    imports: [NgClass, DecimalPipe, TranslateModule, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, Panel],
+    imports: [NgClass, DecimalPipe, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, TranslateDirective, Tag, ButtonDirective, Badge, Checkbox, Panel],
 })
 export class ChecklistPanelComponent {
-    private hyperionApiService = inject(HyperionProblemStatementApiService);
+    private hyperionApiService = inject(HyperionProblemStatementApi);
     private alertService = inject(AlertService);
     private competencyService = inject(CompetencyService);
     private destroyRef = inject(DestroyRef);
@@ -201,15 +201,15 @@ export class ChecklistPanelComponent {
      * and the AI-suggested difficulty. Reacts immediately when the instructor adapts difficulty
      * via the checklist panel or when the exercise input changes reference.
      */
-    readonly effectiveDelta = computed((): DifficultyAssessment.DeltaEnum => {
+    readonly effectiveDelta = computed((): DifficultyAssessmentDeltaEnum => {
         const suggested = this.analysisResult()?.difficultyAssessment?.suggested;
         const declared = this.localDeclaredDifficulty();
         const RANKS: Record<string, number> = { EASY: 1, MEDIUM: 2, HARD: 3 };
         const s = suggested !== undefined ? RANKS[suggested] : undefined;
         const d = declared !== undefined ? RANKS[declared] : undefined;
-        if (s === undefined || d === undefined) return DifficultyAssessment.DeltaEnum.Unknown;
-        if (s === d) return DifficultyAssessment.DeltaEnum.Match;
-        return s < d ? DifficultyAssessment.DeltaEnum.Lower : DifficultyAssessment.DeltaEnum.Higher;
+        if (s === undefined || d === undefined) return 'UNKNOWN';
+        if (s === d) return 'MATCH';
+        return s < d ? 'LOWER' : 'HIGHER';
     });
 
     sectionExpanded: Record<ChecklistSectionType, ReturnType<typeof signal<boolean>>> = {
@@ -534,7 +534,7 @@ export class ChecklistPanelComponent {
     fixQualityIssue(issue: QualityIssue, index: number) {
         this.applyAction(
             {
-                actionType: ChecklistActionRequest.ActionTypeEnum.FixQualityIssue,
+                actionType: 'FIX_QUALITY_ISSUE',
                 problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: {
                     issueDescription: issue.description || '',
@@ -554,7 +554,7 @@ export class ChecklistPanelComponent {
 
         this.applyAction(
             {
-                actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                actionType: 'FIX_ALL_QUALITY_ISSUES',
                 problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: { allIssues },
             },
@@ -647,7 +647,7 @@ export class ChecklistPanelComponent {
 
         this.applyAction(
             {
-                actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                actionType: 'FIX_ALL_QUALITY_ISSUES',
                 problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: { allIssues },
             },
@@ -791,14 +791,14 @@ export class ChecklistPanelComponent {
         this.applyCompetenciesFromList(selectedInferred);
     }
 
-    adaptDifficulty(targetDifficulty: DifficultyAssessment.SuggestedEnum) {
+    adaptDifficulty(targetDifficulty: DifficultyAssessmentSuggestedEnum) {
         const current = this.exercise()?.difficulty || 'unknown';
         const assessment = this.analysisResult()?.difficultyAssessment;
         const reasoning = assessment?.reasoning || '';
 
         this.applyAction(
             {
-                actionType: ChecklistActionRequest.ActionTypeEnum.AdaptDifficulty,
+                actionType: 'ADAPT_DIFFICULTY',
                 problemStatementMarkdown: this.effectiveProblemStatement(),
                 context: {
                     targetDifficulty,
@@ -815,7 +815,7 @@ export class ChecklistPanelComponent {
                     Object.assign({}, r, {
                         difficultyAssessment: Object.assign({}, r.difficultyAssessment, {
                             suggested: targetDifficulty,
-                            delta: DifficultyAssessment.DeltaEnum.Match,
+                            delta: 'MATCH',
                             reasoning: this.translateService.instant('artemisApp.programmingExercise.instructorChecklist.actions.adaptedReasoning', {
                                 difficulty: targetDifficulty,
                             }),

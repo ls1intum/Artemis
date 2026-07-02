@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -28,8 +27,6 @@ let examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [ques
 const route = { params: of({ questionId: 1, exerciseId: 42 }) };
 
 describe('QuizStatisticsFooterComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: QuizStatisticsFooterComponent;
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;

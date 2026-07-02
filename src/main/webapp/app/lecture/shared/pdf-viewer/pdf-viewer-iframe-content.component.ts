@@ -331,7 +331,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
     protected onPageInputEnter(event: Event): void {
         event.preventDefault();
-        this.pageInputElement()?.input?.nativeElement?.blur();
+        this.pageInputElement()?.input()?.nativeElement?.blur();
     }
 
     protected confirmPageNavigation(): void {
@@ -357,7 +357,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
     protected onPageInputFocus(): void {
         window.setTimeout(() => {
-            this.pageInputElement()?.input?.nativeElement?.select();
+            this.pageInputElement()?.input()?.nativeElement?.select();
         }, 0);
     }
 

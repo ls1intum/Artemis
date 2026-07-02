@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock y-monaco to avoid needing the full Monaco API in tests. The component transitively imports the
 // editable-instruction editor, which pulls in y-monaco's deep `monaco-editor/esm/...` import; that subpath
@@ -29,11 +28,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemStatementGenerationResponse';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
+import { ProblemStatementGenerationResponse } from 'app/openapi/models/problem-statement-generation-response';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
-import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
+import { ProblemStatementGenerationRequest } from 'app/openapi/models/problem-statement-generation-request';
+import { ProblemStatementRefinementResponse } from 'app/openapi/models/problem-statement-refinement-response';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 
 /**
@@ -60,8 +59,6 @@ const setEditableInstructions = (c: ProgrammingExerciseProblemComponent, stub: P
 };
 
 describe('ProgrammingExerciseProblemComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
     let comp: ProgrammingExerciseProblemComponent;
 
@@ -89,7 +86,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
+                { provide: HyperionProblemStatementApi, useValue: mockHyperionApiService },
                 { provide: AlertService, useValue: mockAlertService },
                 provideHttpClient(),
                 provideHttpClientTesting(),

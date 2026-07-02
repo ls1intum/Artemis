@@ -1,20 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackNodeComponent } from 'app/exercise/feedback/node/feedback-node.component';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 
 describe('FeedbackNodeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<FeedbackNodeComponent>;
     let component: FeedbackNodeComponent;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FeedbackNodeComponent, TranslateModule.forRoot()],
+            imports: [FeedbackNodeComponent],
+            providers: [provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackNodeComponent);

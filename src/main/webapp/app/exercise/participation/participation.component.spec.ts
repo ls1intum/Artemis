@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -27,8 +26,6 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 
 describe('ParticipationComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ParticipationComponent;
     let componentFixture: ComponentFixture<ParticipationComponent>;
     let participationService: ParticipationService;

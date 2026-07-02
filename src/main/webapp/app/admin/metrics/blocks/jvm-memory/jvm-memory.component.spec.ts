@@ -4,15 +4,12 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentRef } from '@angular/core';
 
 import { JvmMemoryComponent } from 'app/admin/metrics/blocks/jvm-memory/jvm-memory.component';
 import { JvmMetrics } from 'app/admin/metrics/metrics.model';
 
 describe('JvmMemoryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: JvmMemoryComponent;
     let componentRef: ComponentRef<JvmMemoryComponent>;
     let fixture: ComponentFixture<JvmMemoryComponent>;

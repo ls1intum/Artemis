@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VirtualScrollComponent } from 'app/shared-ui/virtual-scroll/virtual-scroll.component';
 import { metisCoursePosts, metisGeneralCourseWidePosts } from 'test/helpers/sample/metis-sample-data';
@@ -15,7 +14,6 @@ class MockRouter {
 }
 
 describe('VirtualScrollComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: VirtualScrollComponent<Post>;
     let fixture: ComponentFixture<VirtualScrollComponent<Post>>;
 

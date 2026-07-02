@@ -3,7 +3,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PaginatorState } from 'primeng/paginator';
@@ -37,8 +36,6 @@ function getDate(isToday = true) {
 }
 
 describe('AuditsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: AuditsComponent;
     let fixture: ComponentFixture<AuditsComponent>;
     let service: AuditsService;

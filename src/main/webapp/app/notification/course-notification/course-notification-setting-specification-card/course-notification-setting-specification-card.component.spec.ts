@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationSettingSpecificationCardComponent } from 'app/notification/course-notification/course-notification-setting-specification-card/course-notification-setting-specification-card.component';
 import { CourseNotificationSettingSpecification } from 'app/notification/shared/entities/course-notification/course-notification-setting-specification';
@@ -14,8 +13,6 @@ import { CourseNotificationChannelSetting } from 'app/notification/shared/entiti
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseNotificationSettingSpecificationCardComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseNotificationSettingSpecificationCardComponent;
     let fixture: ComponentFixture<CourseNotificationSettingSpecificationCardComponent>;
 

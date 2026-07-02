@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -31,8 +30,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import dayjs from 'dayjs/esm';
 
 describe('ExerciseHeaderComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseHeaderComponent>;
 
     const submitCallback = vi.fn();

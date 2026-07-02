@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,8 +24,6 @@ import { TranslateService } from '@ngx-translate/core';
 class DummyComponent {}
 
 describe('CourseLectureRow', () => {
-    setupTestBed({ zoneless: true });
-
     let courseLectureRowComponentFixture: ComponentFixture<CourseLectureRowComponent>;
     let courseLectureRowComponent: CourseLectureRowComponent;
     let location: Location;

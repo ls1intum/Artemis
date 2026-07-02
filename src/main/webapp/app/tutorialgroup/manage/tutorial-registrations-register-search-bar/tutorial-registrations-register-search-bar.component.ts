@@ -12,8 +12,8 @@ import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
@@ -25,7 +25,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     private readonly PAGE_SIZE = 25;
 
     private translateService = inject(TranslateService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
     private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;

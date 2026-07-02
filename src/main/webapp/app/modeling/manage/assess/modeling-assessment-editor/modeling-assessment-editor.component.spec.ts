@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ParamMap, Router, RouterModule, convertToParamMap } from '@angular/router';
@@ -48,8 +47,6 @@ import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-a
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 describe('ModelingAssessmentEditorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ModelingAssessmentEditorComponent;
     let fixture: ComponentFixture<ModelingAssessmentEditorComponent>;
     let service: ModelingAssessmentService;

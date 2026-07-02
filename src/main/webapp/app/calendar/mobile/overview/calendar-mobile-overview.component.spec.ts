@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { CalendarMobileOverviewComponent } from './calendar-mobile-overview.component';
@@ -21,8 +20,6 @@ import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-uti
 import * as calendarUtils from 'app/foundation/util/global.utils';
 
 describe('CalendarMobileOverviewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CalendarMobileOverviewComponent>;
     let component: CalendarMobileOverviewComponent;
 

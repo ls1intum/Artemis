@@ -42,8 +42,8 @@
             <td jhiTranslate="artemisApp.gradingSystem.info.importExport.explanation"></td>
         </tr>
     </table>
-    <ng-template pTemplate="footer">
-        <button pButton severity="secondary" [label]="'entity.action.close' | artemisTranslate" (click)="close()"></button>
+    <ng-template #footer>
+        <button pButton severity="secondary" (click)="close()">{{ 'entity.action.close' | artemisTranslate }}</button>
     </ng-template>
 </p-dialog>
 <button class="btn btn-link" (click)="open()" type="button"><fa-icon [icon]="farQuestionCircle" /></button>

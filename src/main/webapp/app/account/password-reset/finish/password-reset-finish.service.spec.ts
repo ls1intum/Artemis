@@ -3,14 +3,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PasswordResetFinishService } from 'app/account/password-reset/finish/password-reset-finish.service';
 import { HttpClient } from '@angular/common/http';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 
 describe('PasswordResetFinishService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: PasswordResetFinishService;
     let httpClient: HttpClient;
     let postSpy: ReturnType<typeof vi.spyOn>;

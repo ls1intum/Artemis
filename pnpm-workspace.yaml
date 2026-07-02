@@ -19,42 +19,59 @@ preferFrozenLockfile: true
 # Allow our own pre/post lifecycle scripts (postinstall, prepare) to run.
 enablePrePostScripts: true
 
-# Tell pnpm that Angular 21 is an acceptable peer for packages whose published
-# peerDependencies range still lists only "18.x || 19.x || 20.x".
+# pnpm 11 enforces a default `minimumReleaseAge` (24h): a frozen install rejects
+# any lockfile entry published within the last day as a supply-chain safeguard.
+# The PrimeNG 22 ecosystem was adopted at RC while still fresh (deliberate, the
+# whole stack moves together), so it is explicitly excluded from the age gate.
+# Remove these entries once PrimeNG 22 reaches a stable release that is older
+# than the cutoff (by then the gate passes on its own).
+minimumReleaseAgeExclude:
+    - primeng
+    - '@primeuix/*'
+    - '@primeicons/*'
+    - '@primeui/*'
+    # AnalogJS 2.6.x is still pre-release (2.6.3-beta.1); the Angular-22-compatible
+    # vite-plugin-angular / vitest-angular were published recently. Remove once a
+    # stable AnalogJS 2.6.x is older than the cutoff.
+    - '@analogjs/*'
+
+# Tell pnpm that Angular 22 is an acceptable peer for packages whose published
+# peerDependencies range still lists only older majors ("18.x || 19.x || 20.x || 21.x").
 # We already pin every relevant @angular/* dep under ng-mocks
-# to ^21.2.0 via the `overrides:` block below; this block just suppresses
+# to ^22.0.0 via the `overrides:` block below; this block just suppresses
 # the cosmetic peer-range warning that overrides do not silence on their own.
-# When ng-mocks publishes a release that declares Angular 21 in its
-# peer range, this block (and the matching overrides) can be removed.
+# ng-mocks 14.15.3 already declares Angular 22 in its peer range, so this block
+# is largely redundant for ng-mocks; it is kept as a safety net for any other
+# transitive package whose range still trails the Angular release train.
 peerDependencyRules:
     allowedVersions:
-        '@angular/animations': '21'
-        '@angular/cdk': '21'
-        '@angular/common': '21'
-        '@angular/compiler': '21'
-        '@angular/core': '21'
-        '@angular/forms': '21'
-        '@angular/platform-browser': '21'
-        '@angular/platform-browser-dynamic': '21'
-        '@angular/router': '21'
+        '@angular/animations': '22'
+        '@angular/cdk': '22'
+        '@angular/common': '22'
+        '@angular/compiler': '22'
+        '@angular/core': '22'
+        '@angular/forms': '22'
+        '@angular/platform-browser': '22'
+        '@angular/platform-browser-dynamic': '22'
+        '@angular/router': '22'
 
 # Dependency overrides. pnpm 11 reads overrides from this file in preference to
 # the legacy `pnpm.overrides` block in package.json. We pin a handful of
 # transitive packages to CVE-patched versions and force Angular 21 across the
 # ng-mocks subtree (still on an older peer range).
 overrides:
-    'ng-mocks>@angular/common': '^21.2.0'
-    'ng-mocks>@angular/core': '^21.2.0'
-    'ng-mocks>@angular/forms': '^21.2.0'
-    'ng-mocks>@angular/platform-browser': '^21.2.0'
-    'ng-mocks>@angular/platform-browser-dynamic': '^21.2.0'
-    'ng-mocks>@angular/router': '^21.2.0'
+    'ng-mocks>@angular/common': '^22.0.0'
+    'ng-mocks>@angular/core': '^22.0.0'
+    'ng-mocks>@angular/forms': '^22.0.0'
+    'ng-mocks>@angular/platform-browser': '^22.0.0'
+    'ng-mocks>@angular/platform-browser-dynamic': '^22.0.0'
+    'ng-mocks>@angular/router': '^22.0.0'
     'ng-mocks>rxjs': '^7.8.2'
     'babel-plugin-istanbul>test-exclude': '8.0.0'
     '@babel/core': '7.29.7'
     '@babel/runtime': '7.29.2'
     '@babel/plugin-transform-modules-systemjs': '7.29.4'
-    '@primeuix/styled': '0.7.4'
+    '@primeuix/styled': '1.0.0-rc.1'
     '@sinonjs/fake-timers': '15.4.0'
     ajv: '8.20.0'
     braces: '3.0.3'

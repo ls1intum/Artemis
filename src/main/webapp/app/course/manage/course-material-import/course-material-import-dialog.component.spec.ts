@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseSummaryDTO } from 'app/course/shared/entities/course-summary.model';
 import { CourseMaterialImportDialogComponent } from './course-material-import-dialog.component';
@@ -23,8 +22,6 @@ import { PaginatorModule } from 'primeng/paginator';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 describe('CourseMaterialImportDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseMaterialImportDialogComponent;
     let fixture: ComponentFixture<CourseMaterialImportDialogComponent>;
     let importService: CourseMaterialImportService;

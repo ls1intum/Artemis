@@ -19,7 +19,7 @@ import { GeneratedQuestion, GeneratedQuestionType, GenerationLanguage } from 'ap
 import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { finalize } from 'rxjs/operators';
 import { Subscription, from } from 'rxjs';
-import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
+import { QuizQuestionGenerationRequest } from 'app/openapi/models/quiz-question-generation-request';
 import { CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 

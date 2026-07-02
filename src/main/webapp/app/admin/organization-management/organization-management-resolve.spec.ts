@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -12,8 +11,6 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { Organization } from 'app/admin/organization-management/organization.model';
 
 describe('OrganizationManagementResolve', () => {
-    setupTestBed({ zoneless: true });
-
     let organizationManagementService: OrganizationManagementService;
     let organizationManagementResolve: OrganizationManagementResolve;
 

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
@@ -24,9 +23,20 @@ import { ActivatedRoute } from '@angular/router';
  * text block display, feedback editor integration, and assessment event tracking.
  */
 describe('TextblockAssessmentCardComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: TextBlockAssessmentCardComponent;
     let fixture: ComponentFixture<TextBlockAssessmentCardComponent>;
+
+    /**
+     * Re-applies a (possibly mutated) TextBlockRef to the required signal input under a fresh object
+     * identity and runs change detection. Mutating the object held by a signal input in place does not
+     * notify the signal in Angular's zoneless reactivity model, so dependent template bindings would
+     * otherwise not re-render. Cloning preserves the mutated state while changing the reference.
+     */
+    function reapplyTextBlockRef(textBlockRef: TextBlockRef): void {
+        const clone: TextBlockRef = Object.assign(Object.create(Object.getPrototypeOf(textBlockRef)), textBlockRef);
+        fixture.componentRef.setInput('textBlockRef', clone);
+        fixture.changeDetectorRef.detectChanges();
+    }
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -78,8 +88,11 @@ describe('TextblockAssessmentCardComponent', () => {
 
     it('should show text block', () => {
         const loremIpsum = 'Lorem Ipsum';
-        component.textBlockRef().block!.text = loremIpsum;
-        fixture.changeDetectorRef.detectChanges();
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.block!.text = loremIpsum;
+        // Re-apply the mutated ref under a fresh identity: mutating the object held by the signal
+        // input in place no longer triggers change detection in Angular's zoneless reactivity model.
+        reapplyTextBlockRef(textBlockRef);
 
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('span').textContent).toEqual(loremIpsum);
@@ -89,18 +102,20 @@ describe('TextblockAssessmentCardComponent', () => {
         let element = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
         expect(element).toBeFalsy();
 
-        component.textBlockRef().initFeedback();
-        component.textBlockRef().feedback!.gradingInstruction = new GradingInstruction();
-        component.textBlockRef().feedback!.gradingInstruction!.usageCount = 0;
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.initFeedback();
+        textBlockRef.feedback!.gradingInstruction = new GradingInstruction();
+        textBlockRef.feedback!.gradingInstruction!.usageCount = 0;
+        reapplyTextBlockRef(textBlockRef);
 
-        fixture.changeDetectorRef.detectChanges();
         element = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
         expect(element).toBeTruthy();
     });
 
     it('should delete feedback', () => {
-        component.textBlockRef().initFeedback();
-        fixture.changeDetectorRef.detectChanges();
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.initFeedback();
+        reapplyTextBlockRef(textBlockRef);
 
         vi.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
@@ -113,9 +128,10 @@ describe('TextblockAssessmentCardComponent', () => {
     });
 
     it('should delete feedback but not emit delete event when textblock is undeletable', () => {
-        component.textBlockRef().initFeedback();
-        component.textBlockRef().deletable = false;
-        fixture.changeDetectorRef.detectChanges();
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.initFeedback();
+        textBlockRef.deletable = false;
+        reapplyTextBlockRef(textBlockRef);
 
         vi.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));

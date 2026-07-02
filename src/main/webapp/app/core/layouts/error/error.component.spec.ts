@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute } from '@angular/router';
 import { TestBed } from '@angular/core/testing';
 import { ErrorComponent } from 'app/core/layouts/error/error.component';
@@ -8,8 +7,6 @@ import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ErrorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let routeData$: ReplaySubject<{ error403?: boolean; error404?: boolean; errorMessage?: string }>;
 
     beforeEach(async () => {

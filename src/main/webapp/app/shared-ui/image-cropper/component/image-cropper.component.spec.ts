@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImageCropperComponent } from 'app/shared-ui/image-cropper/component/image-cropper.component';
 import { CropperPositionService } from 'app/shared-ui/image-cropper/services/cropper-position.service';
@@ -14,8 +13,6 @@ import { ElementRef } from '@angular/core';
 import { ImageCroppedEvent } from 'app/shared-ui/image-cropper/interfaces/image-cropped-event.interface';
 
 describe('ImageCropperComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ImageCropperComponent>;
     let comp: ImageCropperComponent;
     let cropperPositionService: CropperPositionService;

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -17,8 +16,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('QuizVisualEditorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<MultipleChoiceVisualQuestionComponent>;
     let comp: MultipleChoiceVisualQuestionComponent;
 

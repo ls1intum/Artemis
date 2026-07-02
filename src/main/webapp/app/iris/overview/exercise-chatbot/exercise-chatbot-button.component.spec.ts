@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -27,8 +26,6 @@ import { User } from 'app/account/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseChatbotButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisExerciseChatbotButtonComponent;
     let fixture: ComponentFixture<IrisExerciseChatbotButtonComponent>;
     let chatService: IrisChatService;

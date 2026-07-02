@@ -47,8 +47,9 @@ export class FormStatusBarComponent implements AfterViewInit {
         const navbarHeightPx = navbarElement?.getBoundingClientRect().height ?? 0;
         const statusBarHeightPx = this.statusBar()?.nativeElement?.getBoundingClientRect().height ?? 0;
 
-        // Total vertical offset so the headline is not hidden behind status bar.
-        const headerOverlapOffsetPx = navbarHeightPx + statusBarHeightPx;
+        // Total vertical offset so the headline is not hidden behind the status bar. A small extra margin keeps the
+        // headline fully clear of the sticky status bar despite sub-pixel rounding.
+        const headerOverlapOffsetPx = navbarHeightPx + statusBarHeightPx + 4;
 
         // Convert viewport coordinates into "scroll container content coordinates" to compute an exact scrollTop.
         const scrollContainerViewportTopPx = scrollContainerElement.getBoundingClientRect().top;

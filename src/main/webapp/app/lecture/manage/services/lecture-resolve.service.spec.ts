@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -12,8 +11,6 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 
 describe('Resolvers', () => {
     describe('LectureResolve', () => {
-        setupTestBed({ zoneless: true });
-
         let resolver: LectureResolve;
         let service: LectureService;
         let route: ActivatedRouteSnapshot;
@@ -52,8 +49,6 @@ describe('Resolvers', () => {
     });
 
     describe('AttachmentResolve', () => {
-        setupTestBed({ zoneless: true });
-
         let resolver: AttachmentResolve;
         let service: AttachmentService;
         let route: ActivatedRouteSnapshot;

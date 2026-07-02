@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, Subject, distinctUntilChanged, firstValueFrom, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -12,13 +11,11 @@ import { CalendarEventFilterOption } from 'app/calendar/shared/util/calendar-uti
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
-import { CalendarApiService } from 'app/openapi/api/calendarApi.service';
-import { CalendarEvent } from 'app/openapi/model/calendarEvent';
+import { CalendarApi } from 'app/openapi/api/calendar-api';
+import { CalendarEventTypeEnum } from 'app/openapi/models/calendar-event';
 import { HttpErrorResponse } from '@angular/common/http';
 
 describe('CalendarService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CalendarService;
 
     let calendarApiService: {
@@ -89,7 +86,7 @@ describe('CalendarService', () => {
         TestBed.configureTestingModule({
             providers: [
                 CalendarService,
-                { provide: CalendarApiService, useValue: calendarApiService },
+                { provide: CalendarApi, useValue: calendarApiService },
                 { provide: AlertService, useValue: MockService(AlertService) },
                 { provide: TranslateService, useValue: translateServiceMock },
                 { provide: AccountService, useClass: MockAccountService },
@@ -124,14 +121,14 @@ describe('CalendarService', () => {
         expect(eventsOnFirst).toHaveLength(2);
 
         expectCalendarEventToMatch(eventsOnFirst![0], {
-            type: CalendarEvent.TypeEnum.Lecture,
+            type: 'LECTURE',
             title: 'Object Design',
             startDate: '2025-10-01T08:00:00.000Z',
             endDate: '2025-10-01T10:00:00.000Z',
         });
 
         expectCalendarEventToMatch(eventsOnFirst![1], {
-            type: CalendarEvent.TypeEnum.TextExercise,
+            type: 'TEXT_EXERCISE',
             title: 'Start: Exercise Session',
             startDate: '2025-10-01T10:00:00.000Z',
         });
@@ -139,7 +136,7 @@ describe('CalendarService', () => {
         const eventsOnSecond = result.get('2025-10-02');
         expect(eventsOnSecond).toHaveLength(1);
         expectCalendarEventToMatch(eventsOnSecond![0], {
-            type: CalendarEvent.TypeEnum.Exam,
+            type: 'EXAM',
             title: 'Final Exam',
             startDate: '2025-10-02T09:00:00.000Z',
             endDate: '2025-10-02T11:00:00.000Z',
@@ -149,7 +146,7 @@ describe('CalendarService', () => {
         const eventsOnThird = result.get('2025-10-03');
         expect(eventsOnThird).toHaveLength(1);
         expectCalendarEventToMatch(eventsOnThird![0], {
-            type: CalendarEvent.TypeEnum.Tutorial,
+            type: 'TUTORIAL',
             title: 'Tutorial Session',
             startDate: '2025-10-03T13:00:00.000Z',
             endDate: '2025-10-03T14:00:00.000Z',
@@ -182,7 +179,7 @@ describe('CalendarService', () => {
         const eventsOnFirst = result.get('2025-10-01');
         expect(eventsOnFirst).toHaveLength(1);
         expectCalendarEventToMatch(eventsOnFirst![0], {
-            type: CalendarEvent.TypeEnum.Lecture,
+            type: 'LECTURE',
             title: 'Object Design',
             startDate: '2025-10-01T08:00:00.000Z',
             endDate: '2025-10-01T10:00:00.000Z',
@@ -191,7 +188,7 @@ describe('CalendarService', () => {
         const eventsOnSecond = result.get('2025-10-02');
         expect(eventsOnSecond).toHaveLength(1);
         expectCalendarEventToMatch(eventsOnSecond![0], {
-            type: CalendarEvent.TypeEnum.Exam,
+            type: 'EXAM',
             title: 'Final Exam',
             startDate: '2025-10-02T09:00:00.000Z',
             endDate: '2025-10-02T11:00:00.000Z',
@@ -231,7 +228,7 @@ describe('CalendarService', () => {
         expect(filteredEvents).toHaveLength(1);
 
         expectCalendarEventToMatch(filteredEvents![0], {
-            type: CalendarEvent.TypeEnum.Lecture,
+            type: 'LECTURE',
             title: 'Object Design',
             startDate: '2025-10-01T08:00:00.000Z',
             endDate: '2025-10-01T10:00:00.000Z',
@@ -263,8 +260,6 @@ describe('CalendarService', () => {
 });
 
 describe('CalendarService - authentication state changes', () => {
-    setupTestBed({ zoneless: true });
-
     const courseId = 42;
     const date = dayjs('2025-10-01');
     const testToken = 'testToken';
@@ -300,7 +295,7 @@ describe('CalendarService - authentication state changes', () => {
         TestBed.configureTestingModule({
             providers: [
                 CalendarService,
-                { provide: CalendarApiService, useValue: calendarApiService },
+                { provide: CalendarApi, useValue: calendarApiService },
                 { provide: AlertService, useValue: MockService(AlertService) },
                 { provide: TranslateService, useValue: translateServiceMock },
                 { provide: AccountService, useValue: customAccountService },
@@ -385,7 +380,7 @@ describe('CalendarService - authentication state changes', () => {
 function expectCalendarEventToMatch(
     event: IdentifiableCalendarEvent,
     expected: {
-        type: CalendarEvent.TypeEnum;
+        type: CalendarEventTypeEnum;
         title: string;
         startDate: string;
         endDate?: string;

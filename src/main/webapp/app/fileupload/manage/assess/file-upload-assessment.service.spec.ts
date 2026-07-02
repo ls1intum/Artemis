@@ -6,7 +6,6 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FileUploadAssessmentService } from './file-upload-assessment.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -14,8 +13,6 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 
 describe('FileUploadAssessmentService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: FileUploadAssessmentService;
     let httpMock: HttpTestingController;
 

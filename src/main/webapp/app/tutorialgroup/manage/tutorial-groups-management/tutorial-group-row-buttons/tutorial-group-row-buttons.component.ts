@@ -9,7 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',
@@ -18,7 +18,7 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
     imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective],
 })
 export class TutorialGroupRowButtonsComponent implements OnDestroy {
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
 
     ngUnsubscribe = new Subject<void>();
 

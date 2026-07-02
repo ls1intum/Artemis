@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/foundation/service/file.service';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import {
     InlineRefinementEvent,
@@ -31,7 +31,7 @@ export interface OperationResult {
 @Injectable({ providedIn: 'root' })
 export class ProblemStatementService {
     private readonly fileService = inject(FileService);
-    private readonly hyperionApiService = inject(HyperionProblemStatementApiService);
+    private readonly hyperionApiService = inject(HyperionProblemStatementApi);
     private readonly alertService = inject(AlertService);
 
     /** Loads the template problem statement for the given exercise. */

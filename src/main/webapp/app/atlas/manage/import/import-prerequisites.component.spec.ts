@@ -15,10 +15,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportPrerequisitesComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<ImportPrerequisitesComponent>;
     let component: ImportPrerequisitesComponent;
     let prerequisiteService: PrerequisiteService;

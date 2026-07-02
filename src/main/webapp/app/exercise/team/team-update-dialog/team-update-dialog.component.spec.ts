@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/team-update-dialog.component';
@@ -34,8 +33,6 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
  * (zone-based change detection), this whole class of NG0100 false positives does not occur.
  */
 describe('TeamUpdateDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TeamUpdateDialogComponent;
     let fixture: ComponentFixture<TeamUpdateDialogComponent>;
     let debugElement: DebugElement;

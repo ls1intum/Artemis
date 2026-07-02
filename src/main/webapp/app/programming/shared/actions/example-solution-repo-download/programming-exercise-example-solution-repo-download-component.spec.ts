@@ -1,25 +1,22 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 
 describe('ProgrammingExerciseExampleSolutionRepoDownloadComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ProgrammingExerciseExampleSolutionRepoDownloadComponent;
     let fixture: ComponentFixture<ProgrammingExerciseExampleSolutionRepoDownloadComponent>;
     let service: ProgrammingExerciseService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ProgrammingExerciseExampleSolutionRepoDownloadComponent, MockComponent(ButtonComponent)],
-            providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
+            imports: [ProgrammingExerciseExampleSolutionRepoDownloadComponent, MockComponent(ButtonComponent)],
+            providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }, provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent);

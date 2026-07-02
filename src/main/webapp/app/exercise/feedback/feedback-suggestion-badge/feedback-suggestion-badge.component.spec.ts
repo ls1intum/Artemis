@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback, FeedbackSuggestionType } from 'app/assessment/shared/entities/feedback.model';
@@ -10,8 +9,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('FeedbackSuggestionBadgeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FeedbackSuggestionBadgeComponent;
     let fixture: ComponentFixture<FeedbackSuggestionBadgeComponent>;
     let translateService: TranslateService;

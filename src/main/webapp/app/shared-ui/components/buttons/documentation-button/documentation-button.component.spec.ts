@@ -6,7 +6,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('DocumentationButtonComponent', () => {
     let fixture: ComponentFixture<DocumentationButtonComponent>;
@@ -14,7 +13,6 @@ describe('DocumentationButtonComponent', () => {
     let translateService: TranslateService;
 
     beforeEach(async () => {
-        setupTestBed({ zoneless: true });
         await TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), FaIconComponent, DocumentationButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(TranslateService)],

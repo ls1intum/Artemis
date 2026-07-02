@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
@@ -31,8 +30,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 class UserSettingsMockComponent extends UserSettingsDirective {}
 
 describe('User Settings Directive', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: UserSettingsMockComponent;
     let fixture: ComponentFixture<UserSettingsMockComponent>;
 

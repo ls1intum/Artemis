@@ -153,7 +153,7 @@ export class ResultComponent {
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
 
-    private readonly currentLang = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), { initialValue: this.translateService.getCurrentLang() });
+    private readonly currentLang = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), { initialValue: this.translateService.getCurrentLang() ?? 'en' });
 
     constructor() {
         // Build-duration countdown for the progress bar. It is second-granularity, so update once immediately and then

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -15,8 +14,6 @@ import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 describe('LoginService', () => {
-    setupTestBed({ zoneless: true });
-
     let accountService: AccountService;
     let authServerProvider: AuthServerProvider;
     let router: Router;

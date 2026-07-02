@@ -1,13 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { PlagiarismResultsService } from 'app/plagiarism/shared/services/plagiarism-results.service';
 
 describe('Plagiarism Results Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: PlagiarismResultsService;
     let httpMock: HttpTestingController;
     beforeEach(() => {

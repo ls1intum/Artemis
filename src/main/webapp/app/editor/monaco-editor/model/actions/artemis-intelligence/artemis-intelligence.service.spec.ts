@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -9,9 +8,9 @@ import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-int
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
-import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
+import { ProblemStatementRewriteResponse } from 'app/openapi/models/problem-statement-rewrite-response';
+import { ConsistencyCheckResponse } from 'app/openapi/models/consistency-check-response';
 import {
     InlineConsistencyIssue,
     addCommentBoxes,
@@ -22,16 +21,13 @@ import {
     issuesForSelectedFile,
     severityToString,
 } from './consistency-check';
-import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ConsistencyIssue } from 'app/openapi/models/consistency-issue';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
-import { RewriteFaqResponse } from 'app/openapi/model/rewriteFaqResponse';
-import { HyperionFaqApiService } from 'app/openapi/api/hyperionFaqApi.service';
+import { RewriteFaqResponse } from 'app/openapi/models/rewrite-faq-response';
+import { HyperionFaqApi } from 'app/openapi/api/hyperion-faq-api';
 
 describe('ArtemisIntelligenceService', () => {
-    setupTestBed({ zoneless: true });
-
     let httpMock: HttpTestingController;
     let service: ArtemisIntelligenceService;
     let alertService: AlertService;
@@ -56,19 +52,19 @@ describe('ArtemisIntelligenceService', () => {
 
     const mockIssues: ConsistencyIssue[] = [
         {
-            severity: ConsistencyIssue.SeverityEnum.High,
-            category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch,
+            severity: 'HIGH',
+            category: 'METHOD_RETURN_TYPE_MISMATCH',
             description: 'Description 1.',
             suggestedFix: 'Fix 1',
             relatedLocations: [
                 {
-                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    type: 'TEMPLATE_REPOSITORY',
                     filePath: 'template_repository/src/Class1.java',
                     startLine: 1,
                     endLine: 1,
                 },
                 {
-                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    type: 'SOLUTION_REPOSITORY',
                     filePath: 'solution_repository/src/Class1.java',
                     startLine: 1,
                     endLine: 1,
@@ -76,25 +72,25 @@ describe('ArtemisIntelligenceService', () => {
             ],
         },
         {
-            severity: ConsistencyIssue.SeverityEnum.Medium,
-            category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+            severity: 'MEDIUM',
+            category: 'ATTRIBUTE_TYPE_MISMATCH',
             description: 'Description 2',
             suggestedFix: 'Fix 2',
             relatedLocations: [
                 {
-                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    type: 'TEMPLATE_REPOSITORY',
                     filePath: 'template_repository/src/Class2.java',
                     startLine: 1,
                     endLine: 2,
                 },
                 {
-                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    type: 'SOLUTION_REPOSITORY',
                     filePath: 'solution_repository/src/Class2.java',
                     startLine: 1,
                     endLine: 2,
                 },
                 {
-                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    type: 'TESTS_REPOSITORY',
                     filePath: 'tests_repository/src/Class2.java',
                     startLine: 1,
                     endLine: 2,
@@ -102,19 +98,19 @@ describe('ArtemisIntelligenceService', () => {
             ],
         },
         {
-            severity: ConsistencyIssue.SeverityEnum.Low,
-            category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
+            severity: 'LOW',
+            category: 'VISIBILITY_MISMATCH',
             description: 'Description 2',
             suggestedFix: 'Fix 2',
             relatedLocations: [
                 {
-                    type: ArtifactLocation.TypeEnum.ProblemStatement,
+                    type: 'PROBLEM_STATEMENT',
                     filePath: 'problem_statement.md',
                     startLine: 1,
                     endLine: 3,
                 },
                 {
-                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    type: 'TESTS_REPOSITORY',
                     filePath: 'tests_repository/src/Class3.java',
                     startLine: 1,
                     endLine: 3,
@@ -130,8 +126,8 @@ describe('ArtemisIntelligenceService', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: mockAlertService },
-                { provide: HyperionFaqApiService, useValue: mockHyperionFaqApiService },
-                { provide: HyperionProblemStatementApiService, useValue: mockHyperionProblemStatementApiService },
+                { provide: HyperionFaqApi, useValue: mockHyperionFaqApiService },
+                { provide: HyperionProblemStatementApi, useValue: mockHyperionProblemStatementApiService },
             ],
         });
 
@@ -248,23 +244,23 @@ describe('ArtemisIntelligenceService', () => {
         });
 
         it('matches correct repositories', () => {
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.ProblemStatement, RepositoryType.TEMPLATE)).toBeFalsy();
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.ProblemStatement, RepositoryType.SOLUTION)).toBeFalsy();
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.SolutionRepository, RepositoryType.TEMPLATE)).toBeFalsy();
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.SolutionRepository, RepositoryType.TESTS)).toBeFalsy();
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.SOLUTION)).toBeFalsy();
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.TEMPLATE)).toBeFalsy();
+            expect(isMatchingRepository('PROBLEM_STATEMENT', RepositoryType.TEMPLATE)).toBeFalsy();
+            expect(isMatchingRepository('PROBLEM_STATEMENT', RepositoryType.SOLUTION)).toBeFalsy();
+            expect(isMatchingRepository('SOLUTION_REPOSITORY', RepositoryType.TEMPLATE)).toBeFalsy();
+            expect(isMatchingRepository('SOLUTION_REPOSITORY', RepositoryType.TESTS)).toBeFalsy();
+            expect(isMatchingRepository('TESTS_REPOSITORY', RepositoryType.SOLUTION)).toBeFalsy();
+            expect(isMatchingRepository('TESTS_REPOSITORY', RepositoryType.TEMPLATE)).toBeFalsy();
 
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.ProblemStatement, 'PROBLEM_STATEMENT')).toBeTruthy();
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.SolutionRepository, RepositoryType.SOLUTION)).toBeTruthy();
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TemplateRepository, RepositoryType.TEMPLATE)).toBeTruthy();
-            expect(isMatchingRepository(ArtifactLocation.TypeEnum.TestsRepository, RepositoryType.TESTS)).toBeTruthy();
+            expect(isMatchingRepository('PROBLEM_STATEMENT', 'PROBLEM_STATEMENT')).toBeTruthy();
+            expect(isMatchingRepository('SOLUTION_REPOSITORY', RepositoryType.SOLUTION)).toBeTruthy();
+            expect(isMatchingRepository('TEMPLATE_REPOSITORY', RepositoryType.TEMPLATE)).toBeTruthy();
+            expect(isMatchingRepository('TESTS_REPOSITORY', RepositoryType.TESTS)).toBeTruthy();
         });
 
         it('severity to string correct', () => {
-            expect(severityToString(ConsistencyIssue.SeverityEnum.Medium)).toBe('MEDIUM');
-            expect(severityToString(ConsistencyIssue.SeverityEnum.Low)).toBe('LOW');
-            expect(severityToString(ConsistencyIssue.SeverityEnum.High)).toBe('HIGH');
+            expect(severityToString('MEDIUM')).toBe('MEDIUM');
+            expect(severityToString('LOW')).toBe('LOW');
+            expect(severityToString('HIGH')).toBe('HIGH');
             expect(severityToString(undefined as any)).toBe('UNKNOWN');
         });
 
@@ -276,17 +272,17 @@ describe('ArtemisIntelligenceService', () => {
         });
 
         it('format artifact type correctly', () => {
-            expect(formatArtifactType(ArtifactLocation.TypeEnum.TestsRepository)).toBe('Tests');
-            expect(formatArtifactType(ArtifactLocation.TypeEnum.ProblemStatement)).toBe('Problem Statement');
-            expect(formatArtifactType(ArtifactLocation.TypeEnum.SolutionRepository)).toBe('Solution');
-            expect(formatArtifactType(ArtifactLocation.TypeEnum.TemplateRepository)).toBe('Template');
+            expect(formatArtifactType('TESTS_REPOSITORY')).toBe('Tests');
+            expect(formatArtifactType('PROBLEM_STATEMENT')).toBe('Problem Statement');
+            expect(formatArtifactType('SOLUTION_REPOSITORY')).toBe('Solution');
+            expect(formatArtifactType('TEMPLATE_REPOSITORY')).toBe('Template');
             expect(formatArtifactType(undefined as any)).toBe('Other');
         });
 
         it('correct issues for selected files: problem statement', () => {
             const res = issuesForSelectedFile('problem_statement.md', 'PROBLEM_STATEMENT', mockIssues);
             expect(res).toHaveLength(1);
-            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.ProblemStatement);
+            expect(res[0].type).toEqual('PROBLEM_STATEMENT');
             expect(res[0].startLine).toBe(1);
             expect(res[0].endLine).toBe(3);
             expect(res[0].category).toEqual(mockIssues[2].category);
@@ -298,7 +294,7 @@ describe('ArtemisIntelligenceService', () => {
         it('correct issues for selected files: template', () => {
             const res = issuesForSelectedFile('src/Class2.java', RepositoryType.TEMPLATE, mockIssues);
             expect(res).toHaveLength(1);
-            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.TemplateRepository);
+            expect(res[0].type).toEqual('TEMPLATE_REPOSITORY');
             expect(res[0].startLine).toBe(1);
             expect(res[0].endLine).toBe(2);
             expect(res[0].category).toEqual(mockIssues[1].category);
@@ -310,7 +306,7 @@ describe('ArtemisIntelligenceService', () => {
         it('correct issues for selected files: solution', () => {
             const res = issuesForSelectedFile('src/Class1.java', RepositoryType.SOLUTION, mockIssues);
             expect(res).toHaveLength(1);
-            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.SolutionRepository);
+            expect(res[0].type).toEqual('SOLUTION_REPOSITORY');
             expect(res[0].startLine).toBe(1);
             expect(res[0].endLine).toBe(1);
             expect(res[0].category).toEqual(mockIssues[0].category);
@@ -322,7 +318,7 @@ describe('ArtemisIntelligenceService', () => {
         it('correct issues for selected files: tests', () => {
             const res = issuesForSelectedFile('src/Class3.java', RepositoryType.TESTS, mockIssues);
             expect(res).toHaveLength(1);
-            expect(res[0].type).toEqual(ArtifactLocation.TypeEnum.TestsRepository);
+            expect(res[0].type).toEqual('TESTS_REPOSITORY');
             expect(res[0].startLine).toBe(1);
             expect(res[0].endLine).toBe(3);
             expect(res[0].description).toEqual(mockIssues[2].description);
@@ -342,13 +338,13 @@ describe('ArtemisIntelligenceService', () => {
         it('format contains necessary information', () => {
             const mockIssue: InlineConsistencyIssue = {
                 filePath: 'path',
-                type: ArtifactLocation.TypeEnum.TemplateRepository,
+                type: 'TEMPLATE_REPOSITORY',
                 startLine: 1,
                 endLine: 3,
                 description: 'Example description',
                 suggestedFix: 'Example fix',
-                category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
-                severity: ConsistencyIssue.SeverityEnum.Medium,
+                category: 'ATTRIBUTE_TYPE_MISMATCH',
+                severity: 'MEDIUM',
             };
 
             const res = formatConsistencyCheckResults(mockIssue);

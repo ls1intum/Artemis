@@ -5,14 +5,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TemplateRef } from '@angular/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject } from 'rxjs';
 import { ConfirmAutofocusModalResult } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 
 describe('ConfirmAutofocusButtonComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ConfirmAutofocusButtonComponent>;
     let comp: ConfirmAutofocusButtonComponent;
     let dialogService: DialogService;

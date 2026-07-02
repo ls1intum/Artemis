@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
@@ -22,8 +21,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('OrganizationManagementComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: OrganizationManagementComponent;
     let fixture: ComponentFixture<OrganizationManagementComponent>;
     let organizationService: OrganizationManagementService;

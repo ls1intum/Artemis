@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -26,8 +25,6 @@ const mockLearnerProfile: LearnerProfileDTO = new LearnerProfileDTO({
 });
 
 describe('LearnerProfileApiService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: LearnerProfileApiService;
     let httpMock: HttpTestingController;
 

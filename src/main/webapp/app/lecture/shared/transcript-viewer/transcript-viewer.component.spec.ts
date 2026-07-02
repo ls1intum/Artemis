@@ -1,13 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranscriptViewerComponent } from './transcript-viewer.component';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('TranscriptViewerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TranscriptViewerComponent;
     let fixture: ComponentFixture<TranscriptViewerComponent>;
 
@@ -22,7 +19,8 @@ describe('TranscriptViewerComponent', () => {
         Element.prototype.scrollTo = vi.fn();
 
         await TestBed.configureTestingModule({
-            imports: [TranscriptViewerComponent, TranslateModule.forRoot()],
+            imports: [TranscriptViewerComponent],
+            providers: [provideTranslateService()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TranscriptViewerComponent);

@@ -11,10 +11,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MonacoEditorService } from 'app/editor/monaco-editor/service/monaco-editor.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyRecommendationDetailComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<CompetencyRecommendationDetailComponent>;
     let component: CompetencyRecommendationDetailComponent;
 

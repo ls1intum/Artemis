@@ -8,10 +8,8 @@ import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeNode, convertToTreeNodes }
 import { KnowledgeAreaDTO, KnowledgeAreaForTree, convertToKnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('KnowledgeAreaTreeComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<KnowledgeAreaTreeComponent>;
     let component: KnowledgeAreaTreeComponent;
 
@@ -60,7 +58,6 @@ class KnowledgeAreaTreeHostComponent {
 }
 
 describe('KnowledgeAreaTreeComponent (rendering via host)', () => {
-    setupTestBed({ zoneless: true });
     let hostFixture: ComponentFixture<KnowledgeAreaTreeHostComponent>;
     let host: KnowledgeAreaTreeHostComponent;
 

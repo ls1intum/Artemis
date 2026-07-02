@@ -159,7 +159,10 @@ export default tseslint.config(
         rules: {
             ...prettierPlugin.configs.recommended.rules,
             ...tsPlugin.configs.recommended.rules,
-            ...angularPlugin.configs.recommended.rules,
+            // angular-eslint 22 removed `configs` from `@angular-eslint/eslint-plugin`; the recommended
+            // rules now live in the `angular-eslint` meta-package's flat `tsRecommended` config array
+            // (an array of flat-config objects, only one of which carries `rules`).
+            ...Object.assign({}, ...angular.configs.tsRecommended.map((c) => c.rules ?? {})),
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-unsafe-return': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',

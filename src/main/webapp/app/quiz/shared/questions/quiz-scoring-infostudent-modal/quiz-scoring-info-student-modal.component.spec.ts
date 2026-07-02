@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { Dialog } from 'primeng/dialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,8 +17,6 @@ import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 
 describe('Quiz Scoring Info Student Modal Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<QuizScoringInfoStudentModalComponent>;
     let comp: QuizScoringInfoStudentModalComponent;
     let translateService: TranslateService;
@@ -76,7 +73,7 @@ describe('Quiz Scoring Info Student Modal Component', () => {
         fixture.detectChanges();
 
         const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-        expect(dialog.breakpoints).toEqual({ '850px': '95vw' });
+        expect(dialog.breakpoints()).toEqual({ '850px': '95vw' });
     });
 
     it('check count for drag and drop exercise with singular values', () => {

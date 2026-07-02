@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Router } from '@angular/router';
@@ -15,8 +14,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('ExerciseCreateButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExerciseCreateButtonComponent;
     let fixture: ComponentFixture<ExerciseCreateButtonComponent>;
     let router: Router;

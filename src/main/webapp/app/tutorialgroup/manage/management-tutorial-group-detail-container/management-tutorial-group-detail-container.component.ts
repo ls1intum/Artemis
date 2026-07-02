@@ -1,5 +1,5 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
-import { catchError, of } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
@@ -12,8 +12,8 @@ import {
     TutorialGroupDetailComponent,
     UpdateTutorialGroupSessionEvent,
 } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
-import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupSessionApi } from 'app/openapi/api/tutorial-group-session-api';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getRouteData } from 'app/foundation/route/getRouteData';
@@ -22,7 +22,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { getNumericPathVariableSignal } from 'app/foundation/route/getPathVariable';
 import { isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/models/tutorial-group-session';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',
@@ -34,8 +34,8 @@ export class ManagementTutorialGroupDetailContainerComponent {
     private router = inject(Router);
     private route = inject(ActivatedRoute);
     private tutorialGroupCourseAndGroupService = inject(TutorialGroupCourseAndGroupService);
-    private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupSessionApiService = inject(TutorialGroupSessionApi);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
     private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
@@ -65,18 +65,19 @@ export class ManagementTutorialGroupDetailContainerComponent {
         const { courseId, tutorialGroupId, tutorialGroupSessionId } = deletionEvent;
         this.isActionLoading.set(true);
         this.tutorialGroupSessionApiService
-            .deleteSession(courseId, tutorialGroupId, tutorialGroupSessionId, 'response')
+            .deleteSession(courseId, tutorialGroupId, tutorialGroupSessionId)
             .pipe(
+                map(() => true),
                 catchError((_) => {
                     this.isActionLoading.set(false);
                     this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.deleteSession');
-                    return of(undefined);
+                    return of(false);
                 }),
             )
-            .subscribe((response) => {
+            .subscribe((success) => {
                 this.isActionLoading.set(false);
                 const tutorialGroup = this.tutorialGroup();
-                if (!response || !tutorialGroup) {
+                if (!success || !tutorialGroup) {
                     return;
                 }
                 this.tutorialGroup.set({
@@ -173,16 +174,17 @@ export class ManagementTutorialGroupDetailContainerComponent {
         const { courseId, tutorialGroupId } = deletionEvent;
         this.isActionLoading.set(true);
         this.tutorialGroupApiService
-            .deleteTutorialGroup(courseId, tutorialGroupId, 'response')
+            .deleteTutorialGroup(courseId, tutorialGroupId)
             .pipe(
+                map(() => true),
                 catchError((_) => {
                     this.isActionLoading.set(false);
                     this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.deleteGroup');
-                    return of(undefined);
+                    return of(false);
                 }),
             )
-            .subscribe((response) => {
-                if (!response) {
+            .subscribe((success) => {
+                if (!success) {
                     return;
                 }
                 this.router.navigate(['../'], { relativeTo: this.route });

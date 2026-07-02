@@ -26,7 +26,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -95,8 +94,6 @@ const result = {
 } as Result;
 
 describe('ProgrammingExamSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ProgrammingExamSummaryComponent;
     let fixture: ComponentFixture<ProgrammingExamSummaryComponent>;
 

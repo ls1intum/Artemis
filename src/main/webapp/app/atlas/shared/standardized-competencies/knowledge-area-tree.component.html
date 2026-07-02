@@ -1,20 +1,21 @@
 <p-tree [value]="nodes()" class="card w-100 knowledge-area-tree">
-    <!-- Knowledge-area node: PrimeNG resolves this template by the node's `type` (= 'knowledgeArea'). -->
-    <ng-template let-node pTemplate="knowledgeArea">
-        <div class="d-flex align-items-center knowledge-area-node">
-            <h5 class="mb-0 me-2">{{ node.data.title }}</h5>
-            <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate()" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
-            <!-- Base the "empty" label on the raw domain arrays, not the (filtered) tree-node children: a knowledge area whose
-                 competencies are merely hidden by an active title/area filter is not empty and must not show this label. -->
-            @if (!node.data.children?.length && !node.data.competencies?.length) {
-                <h6 class="mb-0 ms-2 text-muted" jhiTranslate="artemisApp.knowledgeArea.empty"></h6>
-            }
-        </div>
-    </ng-template>
-    <!-- Competency leaf node: resolved by the node's `type` (= 'competency'). -->
-    <ng-template let-node pTemplate="competency">
-        <div class="d-flex align-items-center competency-node">
-            <ng-container [ngTemplateOutlet]="competencyTemplate()" [ngTemplateOutletContext]="{ competency: node.data, knowledgeArea: node.parent?.data }" />
-        </div>
+    <!-- PrimeNG 22 resolves a single node template by the ref name `#node` (it no longer matches per `type`).
+         We disambiguate knowledge-area vs. competency nodes here via the node's `type`. -->
+    <ng-template let-node #node>
+        @if (node.type === TREE_NODE_TYPE_KNOWLEDGE_AREA) {
+            <div class="d-flex align-items-center knowledge-area-node">
+                <h5 class="mb-0 me-2">{{ node.data.title }}</h5>
+                <ng-container [ngTemplateOutlet]="knowledgeAreaTemplate()" [ngTemplateOutletContext]="{ knowledgeArea: node.data }" />
+                <!-- Base the "empty" label on the raw domain arrays, not the (filtered) tree-node children: a knowledge area whose
+                     competencies are merely hidden by an active title/area filter is not empty and must not show this label. -->
+                @if (!node.data.children?.length && !node.data.competencies?.length) {
+                    <h6 class="mb-0 ms-2 text-muted" jhiTranslate="artemisApp.knowledgeArea.empty"></h6>
+                }
+            </div>
+        } @else if (node.type === TREE_NODE_TYPE_COMPETENCY) {
+            <div class="d-flex align-items-center competency-node">
+                <ng-container [ngTemplateOutlet]="competencyTemplate()" [ngTemplateOutletContext]="{ competency: node.data, knowledgeArea: node.parent?.data }" />
+            </div>
+        }
     </ng-template>
 </p-tree>

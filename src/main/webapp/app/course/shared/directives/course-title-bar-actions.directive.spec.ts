@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, TemplateRef, viewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTitleBarActionsDirective } from './course-title-bar-actions.directive';
@@ -15,8 +14,6 @@ class TestHostComponent {
 }
 
 describe('CourseTitleBarActionsDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TestHostComponent>;
     let host: TestHostComponent;
     let mockService: {

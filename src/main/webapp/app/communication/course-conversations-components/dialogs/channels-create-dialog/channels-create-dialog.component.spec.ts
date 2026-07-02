@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -15,8 +14,6 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject } from 'rxjs';
 
 describe('ChannelsCreateDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ChannelsCreateDialogComponent;
     let fixture: ComponentFixture<ChannelsCreateDialogComponent>;
     const course = { id: 1 } as Course;
@@ -32,7 +29,6 @@ describe('ChannelsCreateDialogComponent', () => {
         });
         fixture = TestBed.createComponent(ChannelsCreateDialogComponent);
         component = fixture.componentInstance;
-        fixture.changeDetectorRef.detectChanges();
         initializeDialog(component, fixture, { course });
     });
 

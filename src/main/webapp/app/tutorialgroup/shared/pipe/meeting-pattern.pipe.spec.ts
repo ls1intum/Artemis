@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,8 +7,6 @@ import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('MeetingPatternPipe', () => {
-    setupTestBed({ zoneless: true });
-
     let pipe: MeetingPatternPipe;
     let translateService: TranslateService;
     let translateSpy: ReturnType<typeof vi.spyOn>;

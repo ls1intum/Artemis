@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -8,8 +7,6 @@ import { SubmissionVersionService } from 'app/exercise/submission-version/submis
 import { provideHttpClient } from '@angular/common/http';
 
 describe('SubmissionVersion Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: SubmissionVersionService;
     let httpMock: HttpTestingController;
     const submission = new TextSubmission();

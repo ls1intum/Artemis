@@ -1,5 +1,4 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -35,8 +34,6 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programm
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 describe('RepositoryViewComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: RepositoryViewComponent;
     let fixture: ComponentFixture<RepositoryViewComponent>;
     let mockDomainService: Partial<DomainService>;

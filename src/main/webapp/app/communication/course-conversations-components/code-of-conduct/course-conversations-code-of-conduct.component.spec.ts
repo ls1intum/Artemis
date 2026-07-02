@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
@@ -14,8 +13,6 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 
 describe('Course Conversations Code Of Conduct Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CourseConversationsCodeOfConductComponent>;
     let conversationService: ConversationService;
 

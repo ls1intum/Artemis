@@ -4,7 +4,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs';
@@ -14,8 +13,6 @@ import { KnowledgeAreaDTO, KnowledgeAreasForImportDTO, StandardizedCompetencyCat
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 
 describe('AdminStandardizedCompetencyService', () => {
-    setupTestBed({ zoneless: true });
-
     let adminStandardizedCompetencyService: AdminStandardizedCompetencyService;
     let httpTestingController: HttpTestingController;
 

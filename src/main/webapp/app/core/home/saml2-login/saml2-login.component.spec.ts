@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Saml2LoginComponent } from './saml2-login.component';
 import { LoginService } from 'app/core/login/login.service';
@@ -11,8 +10,6 @@ import { ComponentRef } from '@angular/core';
 import { Saml2Config } from './saml2.config';
 
 describe('Saml2LoginComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: Saml2LoginComponent;
     let componentRef: ComponentRef<Saml2LoginComponent>;
     let fixture: ComponentFixture<Saml2LoginComponent>;

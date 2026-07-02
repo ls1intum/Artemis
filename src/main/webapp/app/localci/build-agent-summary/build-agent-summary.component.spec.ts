@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BuildAgentSummaryComponent } from 'app/localci/build-agent-summary/build-agent-summary.component';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -22,8 +21,6 @@ import { Router } from '@angular/router';
 import { provideRouter } from '@angular/router';
 
 describe('BuildAgentSummaryComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: BuildAgentSummaryComponent;
     let fixture: ComponentFixture<BuildAgentSummaryComponent>;
 

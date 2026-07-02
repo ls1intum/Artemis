@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement, viewChild } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -12,7 +11,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/communication/course-users-selector/course-users-selector.component';
 import { UserPublicInfoDTO } from 'app/account/user/user.model';
 
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 
 @Component({
@@ -31,8 +30,6 @@ class WrapperComponent {
 }
 
 describe('CourseUsersSelectorComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let wrapperComponent: WrapperComponent;
     let fixture: ComponentFixture<WrapperComponent>;
     let userSelectorComponent: CourseUsersSelectorComponent;
@@ -47,8 +44,8 @@ describe('CourseUsersSelectorComponent', () => {
     beforeEach(async () => {
         vi.useFakeTimers();
         TestBed.configureTestingModule({
-            imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule, TranslateModule.forRoot()],
-            providers: [{ provide: CourseManagementService, useValue: courseManagementServiceMock }],
+            imports: [CommonModule, FormsModule, ReactiveFormsModule, NgbTypeaheadModule],
+            providers: [{ provide: CourseManagementService, useValue: courseManagementServiceMock }, provideTranslateService()],
         });
         fixture = TestBed.createComponent(WrapperComponent);
         wrapperComponent = fixture.componentInstance;

@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
-import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/models/create-or-update-tutorial-group-session-request';
 
 export interface UpdateTutorialGroupSessionData {
     tutorialGroupSessionId: number;

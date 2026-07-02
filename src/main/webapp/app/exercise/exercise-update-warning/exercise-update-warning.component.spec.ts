@@ -1,15 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { ExerciseUpdateWarningComponent } from 'app/exercise/exercise-update-warning/exercise-update-warning.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Exercise Update Warning Component Tests', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseUpdateWarningComponent>;
     let comp: ExerciseUpdateWarningComponent;
 

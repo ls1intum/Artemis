@@ -1,13 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TutorialGroupsExportButtonComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-export-button.component/tutorial-groups-export-button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupExportData } from 'app/openapi/model/tutorialGroupExportData';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupExportData } from 'app/openapi/models/tutorial-group-export-data';
 
 interface TutorialGroupApiServiceMock {
     exportTutorialGroupsToCSV: ReturnType<typeof vi.fn>;
@@ -19,8 +18,6 @@ interface AlertServiceMock {
 }
 
 describe('TutorialGroupsExportButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupsExportButtonComponent;
     let fixture: ComponentFixture<TutorialGroupsExportButtonComponent>;
     const exampleCourseId = 1;
@@ -46,7 +43,7 @@ describe('TutorialGroupsExportButtonComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorialGroupsExportButtonComponent],
             providers: [
-                { provide: TutorialGroupApiService, useValue: mockTutorialGroupApiService },
+                { provide: TutorialGroupApi, useValue: mockTutorialGroupApiService },
                 { provide: AlertService, useValue: mockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],

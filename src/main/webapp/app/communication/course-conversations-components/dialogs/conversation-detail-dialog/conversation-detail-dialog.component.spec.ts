@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -35,8 +34,6 @@ const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampl
 
 examples.forEach((activeConversation) => {
     describe('ConversationDetailDialogComponent with ' + activeConversation.type, () => {
-        setupTestBed({ zoneless: true });
-
         let component: ConversationDetailDialogComponent;
         let fixture: ComponentFixture<ConversationDetailDialogComponent>;
         const course = { id: 1 } as Course;

@@ -1,15 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TutorialRegistrationsStudentsTableComponent } from './tutorial-registrations-students-table.component';
 import { TutorialRegistrationsStudentsTableRemoveActionColumnInfo } from './tutorial-registrations-students-table.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
 
 describe('TutorialRegistrationsStudentsTable', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialRegistrationsStudentsTableComponent;
     let fixture: ComponentFixture<TutorialRegistrationsStudentsTableComponent>;
 

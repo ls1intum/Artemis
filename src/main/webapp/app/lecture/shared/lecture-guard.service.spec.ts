@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
@@ -7,8 +6,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_LECTURE } from 'app/app.constants';
 
 describe('LectureGuard', () => {
-    setupTestBed({ zoneless: true });
-
     let guard: LectureGuard;
     let profileService: ProfileService;
     let router: Router;

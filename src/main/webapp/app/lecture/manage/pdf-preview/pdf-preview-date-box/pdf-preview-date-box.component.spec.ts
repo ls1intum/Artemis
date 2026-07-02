@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { HttpResponse } from '@angular/common/http';
@@ -13,8 +12,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 
 describe('PdfPreviewDateBoxComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfPreviewDateBoxComponent;
     let fixture: ComponentFixture<PdfPreviewDateBoxComponent>;
     let courseExerciseServiceMock: any;

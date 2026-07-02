@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { FinishedBuildJobFilter, FinishedBuildsFilterModalComponent } from 'app/localci/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import dayjs from 'dayjs/esm';
@@ -12,8 +11,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('FinishedBuildsFilterModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FinishedBuildsFilterModalComponent;
     let fixture: ComponentFixture<FinishedBuildsFilterModalComponent>;
 

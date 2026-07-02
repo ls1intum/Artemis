@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SettingId } from 'app/foundation/constants/user-settings.constants';
@@ -34,8 +33,6 @@ const scienceSettingActive: ScienceSetting = {
 const scienceSettingsForTesting: ScienceSetting[] = [scienceSetting];
 
 describe('ScienceSettingsService', () => {
-    setupTestBed({ zoneless: true });
-
     let scienceSettingsService: ScienceSettingsService;
     let userSettingsService: UserSettingsService;
     let localStorageService: LocalStorageService;

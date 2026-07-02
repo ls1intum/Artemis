@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FeedbackItemServiceImpl } from 'app/exercise/feedback/item/feedback-item-service';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
@@ -10,8 +9,6 @@ import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('FeedbackItemService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: FeedbackItemServiceImpl;
 
     beforeEach(async () => {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -22,8 +21,6 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 describe('ForwardMessageDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ForwardMessageDialogComponent;
     let fixture: ComponentFixture<ForwardMessageDialogComponent>;
     let searchInput: any;

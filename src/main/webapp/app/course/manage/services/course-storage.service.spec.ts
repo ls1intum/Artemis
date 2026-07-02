@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 
@@ -10,8 +9,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 
 describe('CourseStorageService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseStorageService;
 
     beforeEach(() => {

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
@@ -30,8 +29,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
  * duplicate subscriptions / spy invocations.
  */
 describe('TeamComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: TeamComponent;
     let fixture: ComponentFixture<TeamComponent>;
     let router: Router;

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogModule } from 'primeng/dialog';
@@ -12,8 +11,6 @@ import { ValidationStatus } from 'app/foundation/util/validation';
 import { TutorialSessionCreateOrEditModalComponent } from './tutorial-session-create-or-edit-modal.component';
 
 describe('TutorialSessionCreateOrEditModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialSessionCreateOrEditModalComponent;
     let fixture: ComponentFixture<TutorialSessionCreateOrEditModalComponent>;
 

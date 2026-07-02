@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { MockComponent } from 'ng-mocks';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/programming/manage/update/add-auxiliary-repository-button.component';
@@ -9,15 +8,13 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { provideHttpClient } from '@angular/common/http';
 
 describe('AddAuxiliaryRepositoryButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: AddAuxiliaryRepositoryButtonComponent;
     let fixture: ComponentFixture<AddAuxiliaryRepositoryButtonComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), MockComponent(ButtonComponent)],
-            providers: [provideHttpClient()],
+            imports: [MockComponent(ButtonComponent)],
+            providers: [provideHttpClient(), provideTranslateService()],
         });
         fixture = TestBed.createComponent(AddAuxiliaryRepositoryButtonComponent);
         comp = fixture.componentInstance;

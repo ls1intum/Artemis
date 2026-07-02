@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -16,8 +15,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 
 describe('ExternalSubmissionDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;
     let component: ExternalSubmissionDialogComponent;
     let externalSubmissionService: ExternalSubmissionService;

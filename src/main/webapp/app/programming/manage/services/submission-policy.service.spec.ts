@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -9,8 +8,6 @@ import { take } from 'rxjs/operators';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Submission Policy Service', () => {
-    setupTestBed({ zoneless: true });
-
     let httpMock: HttpTestingController;
     let submissionPolicyService: SubmissionPolicyService;
     let lockRepositoryPolicy: LockRepositoryPolicy;

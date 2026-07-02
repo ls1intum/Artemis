@@ -6,7 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
@@ -21,8 +20,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
 describe('ExampleSubmissionImportComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExampleSubmissionImportComponent;
     let fixture: ComponentFixture<ExampleSubmissionImportComponent>;
     let pagingService: ExampleSubmissionImportPagingService;

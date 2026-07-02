@@ -1,5 +1,5 @@
 import { Component, computed, signal, viewChild } from '@angular/core';
-import { CalendarEvent } from 'app/openapi/model/calendarEvent';
+import { CalendarEventTypeEnum } from 'app/openapi/models/calendar-event';
 import { Popover, PopoverModule } from 'primeng/popover';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -24,15 +24,15 @@ interface EventData {
     styleUrl: './calendar-event-detail-popover.component.scss',
 })
 export class CalendarEventDetailPopoverComponent {
-    private static EVENT_TYPE_NAME_KEY_MAP: Record<CalendarEvent.TypeEnum, string> = {
-        [CalendarEvent.TypeEnum.Lecture]: 'artemisApp.calendar.eventTypeName.lecture',
-        [CalendarEvent.TypeEnum.Tutorial]: 'artemisApp.calendar.eventTypeName.tutorial',
-        [CalendarEvent.TypeEnum.Exam]: 'artemisApp.calendar.eventTypeName.exam',
-        [CalendarEvent.TypeEnum.QuizExercise]: 'artemisApp.calendar.eventTypeName.quiz',
-        [CalendarEvent.TypeEnum.TextExercise]: 'artemisApp.calendar.eventTypeName.text',
-        [CalendarEvent.TypeEnum.ModelingExercise]: 'artemisApp.calendar.eventTypeName.modeling',
-        [CalendarEvent.TypeEnum.ProgrammingExercise]: 'artemisApp.calendar.eventTypeName.programming',
-        [CalendarEvent.TypeEnum.FileUploadExercise]: 'artemisApp.calendar.eventTypeName.fileUpload',
+    private static EVENT_TYPE_NAME_KEY_MAP: Record<CalendarEventTypeEnum, string> = {
+        ['LECTURE']: 'artemisApp.calendar.eventTypeName.lecture',
+        ['TUTORIAL']: 'artemisApp.calendar.eventTypeName.tutorial',
+        ['EXAM']: 'artemisApp.calendar.eventTypeName.exam',
+        ['QUIZ_EXERCISE']: 'artemisApp.calendar.eventTypeName.quiz',
+        ['TEXT_EXERCISE']: 'artemisApp.calendar.eventTypeName.text',
+        ['MODELING_EXERCISE']: 'artemisApp.calendar.eventTypeName.modeling',
+        ['PROGRAMMING_EXERCISE']: 'artemisApp.calendar.eventTypeName.programming',
+        ['FILE_UPLOAD_EXERCISE']: 'artemisApp.calendar.eventTypeName.fileUpload',
     };
 
     readonly faXmark = faXmark;

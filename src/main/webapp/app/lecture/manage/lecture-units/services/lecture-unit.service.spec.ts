@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
@@ -18,8 +17,6 @@ import { TranslateService } from '@ngx-translate/core';
 import type { MockInstance } from 'vitest';
 
 describe('LectureUnitService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: LectureUnitService;
     let httpMock: HttpTestingController;
     let exerciseUnit: ExerciseUnit;

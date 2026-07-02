@@ -5,7 +5,6 @@ import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamImportProgress, ExamImportProgressState, ExerciseImportStatus } from 'app/exam/shared/entities/exam-import-progress.model';
@@ -13,8 +12,6 @@ import { ExamImportResultDTO } from 'app/exam/shared/entities/exam-import-result
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
 describe('ExamImportProgressDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamImportProgressDialogComponent;
     let fixture: ComponentFixture<ExamImportProgressDialogComponent>;
     let examManagementService: ExamManagementService;

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { DebugElement, signal } from '@angular/core';
@@ -35,8 +34,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('AnswerPostComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AnswerPostComponent;
     let fixture: ComponentFixture<AnswerPostComponent>;
     let debugElement: DebugElement;

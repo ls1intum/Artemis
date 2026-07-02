@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -103,8 +102,6 @@ function setupCanvasAndImageMocks() {
  * 9. Cleanup (ngOnDestroy)
  */
 describe('ApollonDiagramDetail Component', () => {
-    setupTestBed({ zoneless: true });
-
     let apollonDiagramService: ApollonDiagramService;
     let courseService: CourseManagementService;
     let fixture: ComponentFixture<ApollonDiagramDetailComponent>;

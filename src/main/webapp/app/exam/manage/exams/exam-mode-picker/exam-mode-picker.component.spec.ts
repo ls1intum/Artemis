@@ -5,14 +5,11 @@ import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 const exam = {
     id: 2,
 };
 describe('ExamModePickerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamModePickerComponent;
     let fixture: ComponentFixture<ExamModePickerComponent>;
 

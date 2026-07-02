@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -9,14 +8,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 
 describe('DataExportConfirmationDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: DataExportConfirmationDialogComponent;
     let fixture: ComponentFixture<DataExportConfirmationDialogComponent>;
     let debugElement: DebugElement;
@@ -24,7 +21,6 @@ describe('DataExportConfirmationDialogComponent', () => {
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [
-                TranslateModule.forRoot(),
                 ReactiveFormsModule,
                 FormsModule,
                 DataExportConfirmationDialogComponent,
@@ -32,7 +28,7 @@ describe('DataExportConfirmationDialogComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [JhiLanguageHelper, AlertService],
+            providers: [JhiLanguageHelper, AlertService, provideTranslateService()],
         });
         await TestBed.compileComponents();
         fixture = TestBed.createComponent(DataExportConfirmationDialogComponent);

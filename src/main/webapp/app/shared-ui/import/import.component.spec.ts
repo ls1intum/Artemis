@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
@@ -25,7 +24,6 @@ class DummyImportComponent extends ImportComponent<BaseEntity> {
     }
 }
 describe('ImportComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<DummyImportComponent>;
     let comp: DummyImportComponent;
     let pagingService: DummyPagingService;

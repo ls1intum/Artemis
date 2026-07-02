@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarCardSmallComponent } from 'app/course/sidebar/sidebar-card-small/sidebar-card-small.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
@@ -14,7 +13,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardSmallComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: SidebarCardSmallComponent;
     let fixture: ComponentFixture<SidebarCardSmallComponent>;
     let router: MockRouter;

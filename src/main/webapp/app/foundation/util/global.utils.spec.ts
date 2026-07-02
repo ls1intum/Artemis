@@ -3,13 +3,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { type Mocked, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { getCurrentLocaleSignal, isErrorAlert, onError } from 'app/foundation/util/global.utils';
 
 describe('GlobalUtils', () => {
-    setupTestBed({ zoneless: true });
-
     describe('onError', () => {
         let mockAlertService: Mocked<AlertService>;
 

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { PasskeyAuthenticationGuard } from './passkey-authentication.guard';
@@ -13,8 +12,6 @@ import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'ap
 import { User } from 'app/account/user/user.model';
 
 describe('PasskeyAuthenticationGuard', () => {
-    setupTestBed({ zoneless: true });
-
     let guard: PasskeyAuthenticationGuard;
     let accountService: AccountService;
     let router: Router;

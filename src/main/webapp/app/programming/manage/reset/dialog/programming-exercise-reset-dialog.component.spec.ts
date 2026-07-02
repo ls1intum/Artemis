@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
@@ -18,8 +17,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExerciseResetDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ProgrammingExerciseResetDialogComponent;
     let fixture: ComponentFixture<ProgrammingExerciseResetDialogComponent>;
     let programmingExerciseService: ProgrammingExerciseService;

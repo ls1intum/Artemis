@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -36,8 +35,6 @@ const course7 = { id: 7, semester: 'WS22/23' } as CourseForArchiveDTO;
 const courses: CourseForArchiveDTO[] = [course1, course2, course3, course4, course5, course6, course7];
 
 describe('CourseArchiveComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseArchiveComponent;
     let fixture: ComponentFixture<CourseArchiveComponent>;
     let courseService: CourseManagementService;

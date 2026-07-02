@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -50,7 +49,7 @@ import {
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -63,8 +62,6 @@ const examples: (ConversationDTO | undefined)[] = [
 
 examples.forEach((activeConversation) => {
     describe('CourseConversationComponent with ' + (activeConversation?.type || 'no active conversation'), () => {
-        setupTestBed({ zoneless: true });
-
         let component: CourseConversationsComponent;
         let fixture: ComponentFixture<CourseConversationsComponent>;
         const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as Course;
@@ -120,7 +117,6 @@ examples.forEach((activeConversation) => {
                     ReactiveFormsModule,
                     FontAwesomeModule,
                     NgbModule,
-                    TranslateModule.forRoot(),
                 ],
                 declarations: [LoadingIndicatorContainerStubComponent],
                 providers: [
@@ -161,6 +157,7 @@ examples.forEach((activeConversation) => {
                     }),
                     provideHttpClient(),
                     provideHttpClientTesting(),
+                    provideTranslateService(),
                 ],
             });
 
@@ -280,8 +277,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('Dialog Opening', () => {
-            setupTestBed({ zoneless: true });
-
             const mockOnClose = new Subject<any>();
             const mockDialogRef = { onClose: mockOnClose.asObservable(), close: vi.fn() } as unknown as DynamicDialogRef;
 
@@ -474,8 +469,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('performChannelAction', () => {
-            setupTestBed({ zoneless: true });
-
             let channelAction: ChannelAction;
             let channel: ChannelDTO;
 
@@ -547,8 +540,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('query parameter handling', () => {
-            setupTestBed({ zoneless: true });
-
             it('should handle SavedPostStatus in conversationId', () => {
                 const queryParams = {
                     conversationId: SavedPostStatus.ARCHIVED.toString().toLowerCase(),
@@ -635,8 +626,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('navigate to post functionality', () => {
-            setupTestBed({ zoneless: true });
-
             it('should handle answer post navigation correctly', () => {
                 const answerPost: Posting = {
                     referencePostId: 123,
@@ -706,8 +695,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('conversation selection', () => {
-            setupTestBed({ zoneless: true });
-
             it('should handle numeric conversationId', () => {
                 fixture.detectChanges();
                 component.onConversationSelected(123);
@@ -771,8 +758,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('CourseConversationsComponent onTriggerNavigateToPost Tests', () => {
-            setupTestBed({ zoneless: true });
-
             let component: CourseConversationsComponent;
 
             beforeEach(() => {
@@ -853,8 +838,6 @@ examples.forEach((activeConversation) => {
         });
 
         describe('Search Clear and Conversation Restoration', () => {
-            setupTestBed({ zoneless: true });
-
             beforeEach(() => {
                 fixture.detectChanges();
             });

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { ConfirmationService } from 'primeng/api';
@@ -17,7 +16,7 @@ import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/man
 import { TutorialRegistrationsRegisterModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-modal/tutorial-registrations-register-modal.component';
 import { TutorialRegistrationsStudentsTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
 import { TutorialRegistrationsComponent } from './tutorial-registrations.component';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
 
 interface ConfirmationServiceMock {
     confirm: ReturnType<typeof vi.fn>;
@@ -28,8 +27,6 @@ interface TutorialGroupRegisteredStudentsServiceMock {
 }
 
 describe('TutorialRegistrationsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialRegistrationsComponent;
     let fixture: ComponentFixture<TutorialRegistrationsComponent>;
 

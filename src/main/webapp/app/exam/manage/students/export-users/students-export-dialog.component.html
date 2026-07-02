@@ -8,7 +8,7 @@
     [draggable]="false"
     appendTo="body"
 >
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <h4>
             <span jhiTranslate="artemisApp.exam.examUsers.export.dialogTitle"></span>
         </h4>
@@ -21,7 +21,7 @@
             </div>
         }
     </form>
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel" class="m-1"></span>

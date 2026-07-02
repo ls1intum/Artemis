@@ -20,9 +20,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Validation, ValidationStatus } from 'app/foundation/util/validation';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/model/createOrUpdateTutorialGroupRequest';
-import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { CreateOrUpdateTutorialGroupRequest } from 'app/openapi/models/create-or-update-tutorial-group-request';
+import { TutorialGroupSchedule } from 'app/openapi/models/tutorial-group-schedule';
 
 enum Mode {
     ONLINE = 'Online',
@@ -67,7 +67,7 @@ export class TutorialCreateOrEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly ValidationStatus = ValidationStatus;
     private confirmationService = inject(ConfirmationService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
@@ -146,7 +146,7 @@ export class TutorialCreateOrEditComponent {
             }
         });
         effect(() => {
-            this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId(), 'body').subscribe({
+            this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId()).subscribe({
                 next: (languages) => {
                     this.alreadyUsedLanguages.set(languages);
                 },

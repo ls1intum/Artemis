@@ -27,11 +27,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { DialogService } from 'primeng/dynamicdialog';
 
 describe('GenerateCompetenciesComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GenerateCompetenciesComponent>;
     let comp: GenerateCompetenciesComponent;
     let mockWebSocketSubject: Subject<any>;

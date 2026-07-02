@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -19,8 +18,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('GlobalNotificationsSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: GlobalNotificationsSettingsComponent;
     let fixture: ComponentFixture<GlobalNotificationsSettingsComponent>;
     let alertService: AlertService;

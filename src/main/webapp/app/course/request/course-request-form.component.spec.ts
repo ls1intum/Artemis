@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
@@ -13,8 +12,6 @@ import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 
 describe('CourseRequestFormComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseRequestFormComponent;
     let fixture: ComponentFixture<CourseRequestFormComponent>;
     let form: FormGroup;
@@ -32,7 +29,8 @@ describe('CourseRequestFormComponent', () => {
         });
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestFormComponent, ReactiveFormsModule, TranslateModule.forRoot()],
+            imports: [CourseRequestFormComponent, ReactiveFormsModule],
+            providers: [provideTranslateService()],
         })
             .overrideComponent(CourseRequestFormComponent, {
                 set: {

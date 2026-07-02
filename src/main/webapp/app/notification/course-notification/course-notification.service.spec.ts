@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
@@ -18,8 +17,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('CourseNotificationService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: CourseNotificationService;
     let httpMock: HttpTestingController;
 

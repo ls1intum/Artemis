@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResolveMemoriesConflictsModalComponent } from './resolve-memories-conflicts-modal.component';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -11,8 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ResolveMemoriesConflictsModalComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ResolveMemoriesConflictsModalComponent>;
     let component: ResolveMemoriesConflictsModalComponent;
     let http: { deleteUserMemory: ReturnType<typeof vi.fn> };

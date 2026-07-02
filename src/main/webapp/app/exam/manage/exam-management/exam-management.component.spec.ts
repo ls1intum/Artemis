@@ -28,11 +28,8 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Exam Management Component', () => {
-    setupTestBed({ zoneless: true });
-
     const course = { id: 456 } as Course;
     const exam = new Exam();
     exam.course = course;

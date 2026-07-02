@@ -13,11 +13,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('Create Test Run Modal Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CreateTestRunModalComponent;
     let fixture: ComponentFixture<CreateTestRunModalComponent>;
     let dialogRefCloseSpy: ReturnType<typeof vi.fn>;

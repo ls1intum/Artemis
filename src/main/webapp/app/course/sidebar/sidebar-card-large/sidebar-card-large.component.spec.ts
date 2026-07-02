@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarCardLargeComponent } from 'app/course/sidebar/sidebar-card-large/sidebar-card-large.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { MockModule } from 'ng-mocks';
@@ -10,7 +9,6 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardLargeComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: SidebarCardLargeComponent;
     let fixture: ComponentFixture<SidebarCardLargeComponent>;
     let router: MockRouter;

@@ -5,12 +5,11 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PaginatorState } from 'primeng/paginator';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
 import { CourseRequestsComponent } from 'app/admin/course-requests/course-requests.component';
@@ -19,8 +18,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/course/request/course-request.model';
 
 describe('CourseRequestsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseRequestsComponent;
     let courseRequestService: CourseRequestService;
     let alertService: AlertService;
@@ -78,12 +75,13 @@ describe('CourseRequestsComponent', () => {
         vi.clearAllMocks();
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestsComponent, TranslateModule.forRoot()],
+            imports: [CourseRequestsComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: CourseRequestService, useValue: mockCourseRequestService },
                 { provide: AlertService, useValue: mockAlertService },
+                provideTranslateService(),
             ],
         }).compileComponents();
 

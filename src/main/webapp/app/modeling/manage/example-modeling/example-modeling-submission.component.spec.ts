@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -82,8 +81,6 @@ class StubModelingAssessmentComponent {
 }
 
 describe('Example Modeling Submission Component', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: ExampleModelingSubmissionComponent;
     let fixture: ComponentFixture<ExampleModelingSubmissionComponent>;
     let service: ExampleSubmissionService;

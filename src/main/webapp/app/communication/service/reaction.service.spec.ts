@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
@@ -9,8 +8,6 @@ import { metisReactionToCreate, metisReactionUser2 } from 'test/helpers/sample/m
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Reaction Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ReactionService;
     let httpMock: HttpTestingController;
 

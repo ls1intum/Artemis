@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -97,8 +96,6 @@ import { ResetRepoButtonComponent } from 'app/course/overview/exercise-details/r
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CourseExerciseDetailsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CourseExerciseDetailsComponent;
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let exerciseService: ExerciseService;

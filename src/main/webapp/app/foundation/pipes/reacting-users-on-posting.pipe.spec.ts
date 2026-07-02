@@ -5,12 +5,9 @@ import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/founda
 import { TranslateService } from '@ngx-translate/core';
 import { metisTutor, metisUser1, metisUser2 } from 'test/helpers/sample/metis-sample-data';
 import { MockPipe } from 'ng-mocks';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('ReactingUsersOnPostingsPipe', () => {
-    setupTestBed({ zoneless: true });
-
     let reactingUsersPipe: ReactingUsersOnPostingPipe;
     let translateService: TranslateService;
     let updateReactingUsersStringSpy: ReturnType<typeof vi.spyOn>;

@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -19,8 +18,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 describe('Organization Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: OrganizationManagementService;
     let httpMock: HttpTestingController;
     let elemDefault: Organization;

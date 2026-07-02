@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -14,7 +13,6 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('AthenaService file map behaviour', () => {
-    setupTestBed({ zoneless: true });
     let service: AthenaService;
     let httpMock: HttpTestingController;
     let profileService: ProfileService;

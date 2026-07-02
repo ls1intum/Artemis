@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisMcqQuestionComponent } from './iris-mcq-question.component';
@@ -19,8 +18,6 @@ const sampleMcq: McqData = {
 };
 
 describe('IrisMcqQuestionComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<IrisMcqQuestionComponent>;
     let component: IrisMcqQuestionComponent;
 

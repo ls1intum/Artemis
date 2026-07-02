@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -24,8 +23,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('AccountService', () => {
-    setupTestBed({ zoneless: true });
-
     let accountService: AccountService;
     let httpService: MockHttpService;
     let getStub: ReturnType<typeof vi.spyOn>;

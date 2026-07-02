@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -11,8 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 describe('LectureWizardPeriodComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<LectureUpdatePeriodComponent>;
     let component: LectureUpdatePeriodComponent;
 

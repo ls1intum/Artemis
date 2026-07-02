@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NotificationSettingsComponent } from 'app/course/overview/course-settings/notification-settings/notification-settings.component';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
@@ -24,8 +23,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('NotificationSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: NotificationSettingsComponent;
     let fixture: ComponentFixture<NotificationSettingsComponent>;
     let courseNotificationServiceMock: {

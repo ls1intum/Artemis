@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -10,7 +9,6 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 describe('QuizAiGenerationService', () => {
-    setupTestBed({ zoneless: true });
     let service: QuizAiGenerationService;
     let httpMock: HttpTestingController;
 

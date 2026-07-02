@@ -1,23 +1,21 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { UsersImportButtonComponent } from 'app/shared-ui/user-import/button/users-import-button.component';
 import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 
 describe('UsersImportButtonComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<UsersImportButtonComponent>;
     let comp: UsersImportButtonComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), UsersImportButtonComponent],
-            providers: [MockProvider(AlertService)],
+            imports: [UsersImportButtonComponent],
+            providers: [MockProvider(AlertService), provideTranslateService()],
         })
             .overrideComponent(UsersImportButtonComponent, {
                 set: {

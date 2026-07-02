@@ -17,10 +17,8 @@ import { LearningPathDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { MockProvider } from 'ng-mocks';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('LearningPathStudentPageComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: LearningPathStudentPageComponent;
     let fixture: ComponentFixture<LearningPathStudentPageComponent>;
     let learningPathApiService: LearningPathApiService;

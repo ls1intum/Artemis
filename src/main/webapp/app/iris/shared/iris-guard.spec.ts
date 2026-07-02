@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -10,8 +9,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('IrisGuard', () => {
-    setupTestBed({ zoneless: true });
-
     let guard: IrisGuard;
     let profileInfoSpy: ReturnType<typeof vi.spyOn>;
     let navigateSpy: ReturnType<typeof vi.spyOn>;

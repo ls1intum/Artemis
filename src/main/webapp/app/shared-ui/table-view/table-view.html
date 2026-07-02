@@ -59,18 +59,18 @@
                             <i [class]="col.headerIcon ?? 'pi pi-question-circle'"></i>
                         }
                         @if (col?.sort && col?.field) {
-                            <p-sortIcon [field]="col.field" />
+                            <p-sorticon [field]="col.field" />
                         }
                     </div>
                     @if (col?.filterType && col?.field) {
-                        <p-columnFilter [type]="col.filterType" [field]="col?.field" display="menu" class="ml-auto" />
+                        <p-columnfilter [type]="col.filterType" [field]="col?.field" display="menu" class="ml-auto" />
                     }
                 </div>
             </ng-template>
             <tr>
                 @if (resolvedOptions().selectionMode === 'multiple') {
                     <th style="width: 3rem">
-                        <p-tableHeaderCheckbox [disabled]="!hasSelectableRows()" />
+                        <p-tableheadercheckbox [disabled]="!hasSelectableRows()" />
                     </th>
                 }
                 @for (col of columns; track col) {
@@ -127,7 +127,7 @@
             >
                 @if (resolvedOptions().selectionMode === 'multiple') {
                     <td style="width: 3rem">
-                        <p-tableCheckbox [value]="rowData" [disabled]="isRowDisabled()?.(rowData)" />
+                        <p-tablecheckbox [value]="rowData" [disabled]="isRowDisabled()?.(rowData)" />
                     </td>
                 }
                 @for (col of columns; track col; let colIndex = $index) {

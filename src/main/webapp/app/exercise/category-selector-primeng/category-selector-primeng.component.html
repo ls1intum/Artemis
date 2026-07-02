@@ -1,4 +1,4 @@
-<p-autoComplete
+<p-autocomplete
     class="category-chip-list"
     inputId="field_categories"
     [ngModel]="selectedCategoryLabels()"
@@ -33,5 +33,5 @@
     <ng-template #item let-category>
         <span class="tag-option">{{ category }}</span>
     </ng-template>
-</p-autoComplete>
+</p-autocomplete>
 <jhi-color-selector [tagColors]="categoryColors" (selectedColor)="onSelectedColor($event)" />

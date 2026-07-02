@@ -8,7 +8,6 @@ import { RxStompState } from '@stomp/rx-stomp';
 import { BehaviorSubject, EMPTY, filter, firstValueFrom, of } from 'rxjs';
 import { IMessage } from '@stomp/stompjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // vi.mock is hoisted above imports, so any value its factory references must be created via vi.hoisted().
 const { constructedRxStompClients, watchMock, captureExceptionMock } = vi.hoisted(() => ({
@@ -61,8 +60,6 @@ const baseMessage: IMessage = {
 };
 
 describe('WebsocketService', () => {
-    setupTestBed({ zoneless: true });
-
     let websocketService: WebsocketService;
 
     beforeEach(() => {

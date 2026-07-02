@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { signal } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
@@ -8,10 +7,10 @@ import { MockComponent } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
-import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/model/createOrUpdateTutorialGroupSessionRequest';
-import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/model/tutorialGroupSession';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupSessionApi } from 'app/openapi/api/tutorial-group-session-api';
+import { CreateOrUpdateTutorialGroupSessionRequest } from 'app/openapi/models/create-or-update-tutorial-group-session-request';
+import { TutorialGroupSession as RawTutorialGroupSession } from 'app/openapi/models/tutorial-group-session';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import {
@@ -44,8 +43,6 @@ interface TestRoute {
 }
 
 describe('ManagementTutorialGroupDetailContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ManagementTutorialGroupDetailContainerComponent>;
     let component: ManagementTutorialGroupDetailContainerComponent;
 
@@ -129,8 +126,8 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: TutorialGroupCourseAndGroupService, useValue: tutorialGroupCourseAndGroupService },
-                { provide: TutorialGroupSessionApiService, useValue: tutorialGroupSessionApiService },
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiService },
+                { provide: TutorialGroupSessionApi, useValue: tutorialGroupSessionApiService },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiService },
                 { provide: AlertService, useValue: alertService },
                 { provide: AccountService, useValue: accountService },
             ],
@@ -290,13 +287,13 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
 
     it('should remove the deleted session on successful deleteSession', () => {
         tutorialGroupCourseAndGroupService.tutorialGroup.set(createTutorialGroup());
-        tutorialGroupSessionApiService.deleteSession.mockReturnValue(of({ status: 200 }));
+        tutorialGroupSessionApiService.deleteSession.mockReturnValue(of(undefined));
 
         createComponent();
 
         component.deleteSession(createModifyEvent(1));
 
-        expect(tutorialGroupSessionApiService.deleteSession).toHaveBeenCalledWith(2, 17, 1, 'response');
+        expect(tutorialGroupSessionApiService.deleteSession).toHaveBeenCalledWith(2, 17, 1);
         expect(component.isLoading()).toBe(false);
         expect(component.tutorialGroup()?.sessions.map((session) => session.id)).toEqual([2]);
     });
@@ -443,14 +440,14 @@ describe('ManagementTutorialGroupDetailContainerComponent', () => {
 
     it('should navigate back on successful deleteGroup', async () => {
         const router = TestBed.inject(Router);
-        tutorialGroupApiService.deleteTutorialGroup.mockReturnValue(of({ status: 200 }));
+        tutorialGroupApiService.deleteTutorialGroup.mockReturnValue(of(undefined));
 
         createComponent();
 
         component.deleteGroup(createDeleteGroupEvent());
         await fixture.whenStable();
 
-        expect(tutorialGroupApiService.deleteTutorialGroup).toHaveBeenCalledWith(2, 17, 'response');
+        expect(tutorialGroupApiService.deleteTutorialGroup).toHaveBeenCalledWith(2, 17);
         expect(router.navigate).toHaveBeenCalledWith(['../'], { relativeTo: route });
         expect(component.isLoading()).toBe(false);
     });

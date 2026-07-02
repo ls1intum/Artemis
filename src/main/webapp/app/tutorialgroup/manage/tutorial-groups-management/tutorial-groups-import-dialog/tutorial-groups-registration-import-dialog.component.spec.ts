@@ -1,6 +1,5 @@
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/tutorialgroup/manage/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -9,12 +8,11 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParseError, ParseResult, ParseWorkerConfig, parse } from 'papaparse';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupImportData } from 'app/openapi/model/tutorialGroupImportData';
-import { Student } from 'app/openapi/model/student';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import ErrorEnum = TutorialGroupImportData.ErrorEnum;
+import { TutorialGroupImportData, TutorialGroupImportDataErrorEnum } from 'app/openapi/models/tutorial-group-import-data';
+import { Student } from 'app/openapi/models/student';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+type ErrorEnum = TutorialGroupImportDataErrorEnum;
 
 vi.mock('papaparse', async () => {
     const original = await vi.importActual<typeof import('papaparse')>('papaparse');
@@ -30,8 +28,6 @@ interface TutorialGroupApiServiceMock {
 }
 
 describe('TutorialGroupsRegistrationImportDialog', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialGroupsRegistrationImportDialogComponent;
     let fixture: ComponentFixture<TutorialGroupsRegistrationImportDialogComponent>;
     let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
@@ -45,7 +41,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
             ],
         }).compileComponents();
 
@@ -285,12 +281,12 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         const returnedDTOOne = { ...exampleOne, importSuccessful: true };
         const returnedDTOTwo = { ...exampleTwo, importSuccessful: false, errorMessage: 'error' };
 
-        tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations.mockReturnValue(of(new HttpResponse({ body: [returnedDTOOne, returnedDTOTwo], status: 200 })));
+        tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations.mockReturnValue(of([returnedDTOOne, returnedDTOTwo]));
 
         component.import();
 
         expect(tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations).toHaveBeenCalledOnce();
-        expect(tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations).toHaveBeenCalledWith(1, [exampleOne, exampleTwo], 'response');
+        expect(tutorialGroupApiServiceMock.importTutorialGroupsWithRegistrations).toHaveBeenCalledWith(1, [exampleOne, exampleTwo]);
         expect(component.isImporting()).toBe(false);
         expect(component.isImportDone()).toBe(true);
         expect(component.importedRegistrations).toEqual([returnedDTOOne]);

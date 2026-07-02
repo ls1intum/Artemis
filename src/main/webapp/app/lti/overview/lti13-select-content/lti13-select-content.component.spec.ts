@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { Lti13SelectContentComponent } from 'app/lti/overview/lti13-select-content/lti13-select-content.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -16,7 +15,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 const routeParams = of<Record<string, string>>({});
 
 describe('Lti13SelectContentComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: Lti13SelectContentComponent;
     let fixture: ComponentFixture<Lti13SelectContentComponent>;
     let routeMock: {

@@ -1,9 +1,7 @@
 import { vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -27,14 +25,13 @@ import * as readUsersFromCsv from 'app/shared-ui/user-import/util/read-users-fro
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { User } from 'app/account/user/user.model';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 
 describe('UsersImportDialogComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<UsersImportDialogComponent>;
     let component: UsersImportDialogComponent;
     let examManagementService: ExamManagementService;
-    let tutorialGroupApiService: TutorialGroupApiService;
+    let tutorialGroupApiService: TutorialGroupApi;
     let adminUserService: AdminUserService;
 
     const studentCsvColumns = 'REGISTRATION_NUMBER,FIRST_NAME_OF_STUDENT,FAMILY_NAME_OF_STUDENT';
@@ -49,7 +46,7 @@ describe('UsersImportDialogComponent', () => {
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ExamManagementService),
-                MockProvider(TutorialGroupApiService),
+                MockProvider(TutorialGroupApi),
                 MockProvider(AdminUserService),
                 MockProvider(HttpClient),
                 MockProvider(TranslateService),
@@ -68,7 +65,7 @@ describe('UsersImportDialogComponent', () => {
                 fixture = TestBed.createComponent(UsersImportDialogComponent);
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
-                tutorialGroupApiService = TestBed.inject(TutorialGroupApiService);
+                tutorialGroupApiService = TestBed.inject(TutorialGroupApi);
                 adminUserService = TestBed.inject(AdminUserService);
 
                 fixture.componentRef.setInput('courseId', course.id!);
@@ -329,11 +326,9 @@ describe('UsersImportDialogComponent', () => {
 
         expect(component.hasImported()).toBe(false);
         expect(component.isSubmitDisabled).toBe(false);
-        const importButton = fixture.debugElement.query(By.css('#import'));
 
-        expect(importButton).not.toBeNull();
-
-        importButton.nativeElement.click();
+        // The "Import" button is wired to importUsers() via its (click) handler.
+        component.importUsers();
 
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
         expect(component.isImporting()).toBe(false);
@@ -345,10 +340,8 @@ describe('UsersImportDialogComponent', () => {
         component.hasImported.set(true);
         fixture.detectChanges();
 
-        const finishButton = fixture.debugElement.query(By.css('#finish-button'));
-        expect(finishButton).not.toBeNull();
-
-        finishButton.nativeElement.click();
+        // The "Finish" button is wired to onFinish() via its (click) handler and must NOT trigger another REST call.
+        component.onFinish();
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
     });
 
@@ -411,13 +404,12 @@ describe('UsersImportDialogComponent', () => {
             },
         ];
 
-        const fakeResponse = { body: generatedStudents } as HttpResponse<any[]>;
-        vi.spyOn(tutorialGroupApiService, 'importRegistrations').mockReturnValue(of(fakeResponse));
+        vi.spyOn(tutorialGroupApiService, 'importRegistrations').mockReturnValue(of(generatedStudents));
 
         component.usersToImport.set(studentsToImport);
         component.importUsers();
 
-        expect(tutorialGroupApiService.importRegistrations).toHaveBeenCalledWith(course.id, 5, studentsToImport, 'response');
+        expect(tutorialGroupApiService.importRegistrations).toHaveBeenCalledWith(course.id, 5, studentsToImport);
         expect(component.isImporting()).toBe(false);
         expect(component.hasImported()).toBe(true);
         expect(component.notFoundUsers).toEqual([

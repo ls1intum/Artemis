@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
@@ -11,8 +10,6 @@ const instructionsWindowName = 'Instructions';
 const buildOutputWindowName = 'BuildOutput';
 
 describe('CodeEditorGridComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CodeEditorGridComponent;
     let fixture: ComponentFixture<CodeEditorGridComponent>;
 

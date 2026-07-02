@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UserService } from 'app/account/user/shared/user.service';
 import { of, throwError } from 'rxjs';
@@ -15,8 +14,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('TypeAheadUserSearchFieldComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TypeAheadUserSearchFieldComponent;
     let fixture: ComponentFixture<TypeAheadUserSearchFieldComponent>;
     let userService: UserService;

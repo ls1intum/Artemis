@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ExerciseImportButtonComponent } from './exercise-import-button.component';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
@@ -18,8 +17,6 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { Subject } from 'rxjs';
 
 describe('ExerciseImportButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExerciseImportButtonComponent;
     let fixture: ComponentFixture<ExerciseImportButtonComponent>;
     let dialogService: DialogService;

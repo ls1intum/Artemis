@@ -39,7 +39,6 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { By } from '@angular/platform-browser';
 import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({
     template: '',
@@ -47,8 +46,6 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 class DummyComponent {}
 
 describe('ExamUpdateComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
@@ -687,6 +684,15 @@ describe('ExamUpdateComponent', () => {
             const invalidSpy = vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
             fixture.changeDetectorRef.detectChanges();
 
+            // The `[disabled]` binding reads the non-signal `isValidConfiguration` getter and the `editForm.form.invalid`
+            // template ref. Under Angular's zoneless change detection, mutating the (non-signal) exam object does not mark
+            // the view for refresh, so `detectChanges()` alone leaves the host binding stale. `markForCheck()` dirties the
+            // view and `whenStable()` flushes the zoneless scheduler so the binding is re-evaluated.
+            const refreshBinding = async () => {
+                fixture.changeDetectorRef.markForCheck();
+                await fixture.whenStable();
+            };
+
             //Step 1: Test case where the configuration and the form are valid
             expect(component.isValidConfiguration).toBe(true);
             let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
@@ -694,7 +700,7 @@ describe('ExamUpdateComponent', () => {
 
             // Step 2: Test case where the configuration is invalid
             examWithoutExercises.startDate = now.add(5, 'hours');
-            fixture.changeDetectorRef.detectChanges();
+            await refreshBinding();
 
             expect(component.isValidConfiguration).toBe(false);
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
@@ -704,7 +710,7 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.startDate = now.add(2, 'hours');
             examWithoutExercises.endDate = now.add(3, 'hours');
             invalidSpy.mockReturnValue(true);
-            fixture.changeDetectorRef.detectChanges();
+            await refreshBinding();
 
             expect(component.isValidConfiguration).toBe(true);
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfViewerIframeContentComponent } from './pdf-viewer-iframe-content.component';
 import { PDFNotificationService } from 'ngx-extended-pdf-viewer';
@@ -13,8 +12,6 @@ vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => ({
 }));
 
 describe('PdfViewerIframeContentComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: PdfViewerIframeContentComponent;
     let fixture: ComponentFixture<PdfViewerIframeContentComponent>;
     let mockEventBus: { dispatch: ReturnType<typeof vi.fn> };

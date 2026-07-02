@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -30,8 +29,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CourseExamsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseExamsComponent;
     let componentFixture: ComponentFixture<CourseExamsComponent>;
     let courseStorageService: CourseStorageService;

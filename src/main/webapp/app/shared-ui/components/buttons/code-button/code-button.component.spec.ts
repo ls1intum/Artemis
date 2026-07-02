@@ -26,12 +26,10 @@ import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 
 describe('CodeButtonComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CodeButtonComponent;
     let fixture: ComponentFixture<CodeButtonComponent>;
     let profileService: ProfileService;

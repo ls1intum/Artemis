@@ -27,7 +27,7 @@
                 </p-message>
             } @else {
                 <p-timeline [value]="timelineEntries()" align="left" styleClass="version-timeline">
-                    <ng-template pTemplate="marker" let-entry>
+                    <ng-template #marker let-entry>
                         <jhi-profile-picture
                             [authorName]="entry.displayName"
                             [authorId]="entry.authorId"
@@ -39,7 +39,7 @@
                         />
                     </ng-template>
 
-                    <ng-template pTemplate="content" let-entry>
+                    <ng-template #content let-entry>
                         <button
                             type="button"
                             class="timeline-card"

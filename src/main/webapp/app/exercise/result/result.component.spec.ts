@@ -1,6 +1,5 @@
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { ResultProgressBarComponent } from 'app/exercise/result/result-progress-bar/result-progress-bar.component';
@@ -79,7 +78,6 @@ const participationServiceMock = {
 };
 
 describe('ResultComponent', () => {
-    setupTestBed({ zoneless: true });
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
     let dialogService: DialogService;

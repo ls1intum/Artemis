@@ -1,4 +1,3 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings, ExportModalComponent } from 'app/shared-ui/export/modal/export-modal.component';
@@ -8,7 +7,6 @@ import { vi } from 'vitest';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExportModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: ExportModalComponent;
     let fixture: ComponentFixture<ExportModalComponent>;
     let dialogRef: DynamicDialogRef;

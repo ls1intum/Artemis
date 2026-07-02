@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FeedbackLearnerProfileComponent } from './feedback-learner-profile.component';
 import { LearnerProfileApiService } from '../learner-profile-api.service';
@@ -14,8 +13,6 @@ import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 
 describe('FeedbackLearnerProfileComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: FeedbackLearnerProfileComponent;
     let fixture: ComponentFixture<FeedbackLearnerProfileComponent>;
     let learnerProfileApiService: LearnerProfileApiService;

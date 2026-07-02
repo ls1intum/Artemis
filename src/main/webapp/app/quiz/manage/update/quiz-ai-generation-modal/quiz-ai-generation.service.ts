@@ -2,11 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { HyperionQuizQuestionGenerationApiService } from 'app/openapi/api/hyperionQuizQuestionGenerationApi.service';
-import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
-import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
-import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
-import { QuizQuestionRefinementResponse } from 'app/openapi/model/quizQuestionRefinementResponse';
+import { HyperionQuizQuestionGenerationApi } from 'app/openapi/api/hyperion-quiz-question-generation-api';
+import { QuizQuestionRefinementRequest } from 'app/openapi/models/quiz-question-refinement-request';
+import { QuizQuestionGenerationRequest } from 'app/openapi/models/quiz-question-generation-request';
+import { QuizQuestionBulkRefinementRequest } from 'app/openapi/models/quiz-question-bulk-refinement-request';
+import { QuizQuestionRefinementResponse } from 'app/openapi/models/quiz-question-refinement-response';
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -14,7 +14,7 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 @Injectable({ providedIn: 'root' })
 export class QuizAiGenerationService {
-    private hyperionQuizQuestionGenerationApiService = inject(HyperionQuizQuestionGenerationApiService);
+    private hyperionQuizQuestionGenerationApiService = inject(HyperionQuizQuestionGenerationApi);
     private translateService = inject(TranslateService);
     generateQuizQuestions(courseId: number, request: QuizQuestionGenerationRequest): Observable<GeneratedQuestion[]> {
         return this.hyperionQuizQuestionGenerationApiService

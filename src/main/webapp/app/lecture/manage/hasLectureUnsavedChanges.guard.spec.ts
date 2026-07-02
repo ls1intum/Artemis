@@ -3,7 +3,6 @@ import { LectureUnsavedChangesComponent, hasLectureUnsavedChangesGuard } from 'a
 import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Observable, Subject, firstValueFrom, of } from 'rxjs';
@@ -11,8 +10,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('hasLectureUnsavedChanges', () => {
-    setupTestBed({ zoneless: true });
-
     let component: LectureUnsavedChangesComponent;
     let currentRoute: ActivatedRouteSnapshot;
     let currentState: RouterStateSnapshot;

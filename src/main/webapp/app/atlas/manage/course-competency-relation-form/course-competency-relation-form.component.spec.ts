@@ -10,10 +10,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { of } from 'rxjs';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetencyRelationFormComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CourseCompetencyRelationFormComponent;
     let fixture: ComponentFixture<CourseCompetencyRelationFormComponent>;
     let courseCompetencyApiService: CourseCompetencyApiService;

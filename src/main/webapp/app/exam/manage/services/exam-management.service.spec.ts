@@ -28,10 +28,7 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Exam Management Service Tests', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamManagementService;
     let httpMock: HttpTestingController;
 

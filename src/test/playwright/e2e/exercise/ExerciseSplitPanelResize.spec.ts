@@ -50,7 +50,8 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
 
         const splitter = page.locator('jhi-resizable-panels p-splitter').first();
         const gutter = splitter.locator('.p-splitter-gutter').first();
-        const leftPanel = splitter.locator('.p-splitterpanel').first();
+        // PrimeNG 22 renamed the splitter panel class from `p-splitterpanel` to `p-splitter-panel`.
+        const leftPanel = splitter.locator('.p-splitter-panel').first();
 
         await expect(gutter).toBeVisible({ timeout: 30_000 });
         await expect(leftPanel).toBeVisible();

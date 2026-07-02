@@ -11,13 +11,11 @@ import {
     TREE_NODE_TYPE_KNOWLEDGE_AREA,
     convertToTreeNodes,
 } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 @Component({ template: '' })
 class DummyImportComponent extends StandardizedCompetencyFilterPageComponent {}
 
 describe('StandardizedCompetencyFilterPageComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<DummyImportComponent>;
     let component: DummyImportComponent;
     let filterTree: KnowledgeAreaForTree[];

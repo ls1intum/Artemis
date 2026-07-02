@@ -9,7 +9,7 @@
     appendTo="body"
     contentStyleClass="py-0"
 >
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <h4 class="m-0" jhiTranslate="artemisApp.examManagement.examStudents.addDialog.title"></h4>
     </ng-template>
 
@@ -66,7 +66,7 @@
                             </th>
                         </tr>
                     </ng-template>
-                    <ng-template pTemplate="body" let-student>
+                    <ng-template #body let-student>
                         <tr>
                             <td style="min-width: 12rem">
                                 <div class="d-flex flex-column gap-1">
@@ -110,7 +110,7 @@
         </div>
     </div>
 
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <div class="pt-3">
             <button pButton type="button" class="p-button-secondary" (click)="closeDialog()" jhiTranslate="artemisApp.examManagement.examStudents.addDialog.close"></button>
         </div>

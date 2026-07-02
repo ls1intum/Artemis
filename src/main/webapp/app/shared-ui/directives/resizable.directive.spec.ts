@@ -1,6 +1,5 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ResizableConstraints, ResizableDirective, ResizableEdges, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
@@ -78,8 +77,6 @@ function pointer(target: Element, type: string, clientX: number, clientY: number
 }
 
 describe('ResizableDirective', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ResizableTestHostComponent>;
     let host: HTMLElement;
     let panel: HTMLElement;

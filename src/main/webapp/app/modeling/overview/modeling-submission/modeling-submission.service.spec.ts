@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -10,8 +9,6 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ModelingSubmission Service', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ModelingSubmissionService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingSubmission;

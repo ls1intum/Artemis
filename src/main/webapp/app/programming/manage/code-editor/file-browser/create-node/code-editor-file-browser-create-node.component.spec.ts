@@ -1,13 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CodeEditorFileBrowserCreateNodeComponent } from 'app/programming/manage/code-editor/file-browser/create-node/code-editor-file-browser-create-node.component';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
 
 describe('CodeEditorFileBrowserCreateNodeComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<CodeEditorFileBrowserCreateNodeComponent>;
     let comp: CodeEditorFileBrowserCreateNodeComponent;
 

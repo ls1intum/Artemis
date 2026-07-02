@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -12,8 +11,6 @@ import { ConversationType } from 'app/communication/shared/entities/conversation
 import Dayjs from 'dayjs/esm';
 
 describe('SavedPostService', () => {
-    setupTestBed({ zoneless: true });
-
     let service: SavedPostService;
     let httpMock: HttpTestingController;
     const resourceUrl = 'api/communication/saved-posts/';

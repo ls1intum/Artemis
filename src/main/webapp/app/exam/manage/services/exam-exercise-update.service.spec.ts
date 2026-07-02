@@ -2,10 +2,7 @@ import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercis
 import { TestBed } from '@angular/core/testing';
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Exam Exercise Update Service Tests', () => {
-    setupTestBed({ zoneless: true });
-
     let service: ExamExerciseUpdateService;
 
     beforeEach(() => {

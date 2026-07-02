@@ -126,7 +126,7 @@
                 }
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.userManagement.groups"></label>
-                    <p-autoComplete
+                    <p-autocomplete
                         class="group-tag-list"
                         [ngModel]="user().groups ?? []"
                         [ngModelOptions]="{ standalone: true }"
@@ -144,7 +144,7 @@
                         <ng-template #removeicon let-removeCallback="removeCallback" let-index="index">
                             <fa-icon [icon]="faTimes" class="group-tag-remove" (click)="removeCallback($event, index)" />
                         </ng-template>
-                    </p-autoComplete>
+                    </p-autocomplete>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.userManagement.organizations"></label>

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { DifficultyLevel, Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -20,8 +19,6 @@ function createExercise(): Exercise {
 }
 
 describe('DifficultyPickerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: DifficultyPickerComponent;
     let fixture: ComponentFixture<DifficultyPickerComponent>;
     let exercise: Exercise;

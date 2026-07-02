@@ -8,10 +8,7 @@ import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 describe('Student Exam Service', () => {
-    setupTestBed({ zoneless: true });
-
     let httpClient: any;
     let httpClientPutSpy: any;
     let service: StudentExamService;

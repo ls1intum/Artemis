@@ -8,7 +8,7 @@
     [breakpoints]="{ '1200px': '96vw' }"
     appendTo="body"
 >
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <h5 class="mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.modalTitle"></h5>
     </ng-template>
 
@@ -187,7 +187,7 @@
         </section>
     </div>
 
-    <ng-template pTemplate="footer">
+    <ng-template #footer>
         <button pButton type="button" severity="secondary" outlined (click)="close()">
             <span jhiTranslate="entity.action.close"></span>
         </button>

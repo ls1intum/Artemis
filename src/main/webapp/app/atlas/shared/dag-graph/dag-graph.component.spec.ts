@@ -1,7 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { curveBundle, line } from 'd3-shape';
 import { layout as dagreLayout } from '@dagrejs/dagre';
 import { DagGraphComponent } from 'app/atlas/shared/dag-graph/dag-graph.component';
@@ -54,7 +53,6 @@ class MinimalTestHostComponent {
 }
 
 describe('DagGraphComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<TestHostComponent>;
     let host: TestHostComponent;
     let component: DagGraphComponent;

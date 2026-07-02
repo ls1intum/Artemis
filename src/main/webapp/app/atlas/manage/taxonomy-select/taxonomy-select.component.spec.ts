@@ -8,10 +8,8 @@ import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('TaxonomySelectComponent', () => {
-    setupTestBed({ zoneless: true });
     let componentFixture: ComponentFixture<TaxonomySelectComponent>;
     let component: TaxonomySelectComponent;
 

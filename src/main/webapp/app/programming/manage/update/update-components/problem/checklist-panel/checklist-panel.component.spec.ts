@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChecklistPanelComponent, ChecklistSectionType } from './checklist-panel.component';
-import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
+import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -11,11 +10,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of, throwError } from 'rxjs';
-import { ChecklistAnalysisResponse } from 'app/openapi/model/checklistAnalysisResponse';
-import { ChecklistActionResponse } from 'app/openapi/model/checklistActionResponse';
-import { ChecklistActionRequest } from 'app/openapi/model/checklistActionRequest';
-import { QualityIssue } from 'app/openapi/model/qualityIssue';
-import { DifficultyAssessment } from 'app/openapi/model/difficultyAssessment';
+import { ChecklistAnalysisResponse } from 'app/openapi/models/checklist-analysis-response';
+import { ChecklistActionResponse } from 'app/openapi/models/checklist-action-response';
+import { QualityIssue } from 'app/openapi/models/quality-issue';
 import { By } from '@angular/platform-browser';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -32,11 +29,9 @@ import {
 import { MAX_PROBLEM_STATEMENT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
 
 describe('ChecklistPanelComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ChecklistPanelComponent;
     let fixture: ComponentFixture<ChecklistPanelComponent>;
-    let apiService: HyperionProblemStatementApiService;
+    let apiService: HyperionProblemStatementApi;
     let alertService: AlertService;
     let competencyService: CompetencyService;
 
@@ -52,14 +47,14 @@ describe('ChecklistPanelComponent', () => {
                 relatedTaskNames: ['Implement loop'],
             },
         ],
-        difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
+        difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
         qualityIssues: [],
     };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FontAwesomeModule, ChecklistPanelComponent],
-            providers: [MockProvider(HyperionProblemStatementApiService), MockProvider(AlertService), MockProvider(TranslateService), MockProvider(CompetencyService)],
+            providers: [MockProvider(HyperionProblemStatementApi), MockProvider(AlertService), MockProvider(TranslateService), MockProvider(CompetencyService)],
         })
             .overrideComponent(ChecklistPanelComponent, {
                 remove: { imports: [ArtemisTranslatePipe, TranslateDirective] },
@@ -69,7 +64,7 @@ describe('ChecklistPanelComponent', () => {
 
         fixture = TestBed.createComponent(ChecklistPanelComponent);
         component = fixture.componentInstance;
-        apiService = TestBed.inject(HyperionProblemStatementApiService);
+        apiService = TestBed.inject(HyperionProblemStatementApi);
         alertService = TestBed.inject(AlertService);
         competencyService = TestBed.inject(CompetencyService);
 
@@ -167,10 +162,10 @@ describe('ChecklistPanelComponent', () => {
             const issueToFix: QualityIssue = {
                 description: 'Unclear wording',
                 suggestedFix: 'Reword it',
-                category: QualityIssue.CategoryEnum.Clarity,
-                severity: QualityIssue.SeverityEnum.Medium,
+                category: 'CLARITY',
+                severity: 'MEDIUM',
             };
-            const otherIssue: QualityIssue = { description: 'Missing info', category: QualityIssue.CategoryEnum.Completeness, severity: QualityIssue.SeverityEnum.High };
+            const otherIssue: QualityIssue = { description: 'Missing info', category: 'COMPLETENESS', severity: 'HIGH' };
             component.analysisResult.set(Object.assign({}, mockResponse, { qualityIssues: [issueToFix, otherIssue] }));
 
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
@@ -182,7 +177,7 @@ describe('ChecklistPanelComponent', () => {
             expect(actionSpy).toHaveBeenCalledWith(
                 courseId,
                 expect.objectContaining({
-                    actionType: ChecklistActionRequest.ActionTypeEnum.FixQualityIssue,
+                    actionType: 'FIX_QUALITY_ISSUE',
                     problemStatementMarkdown: 'Problem statement',
                 }),
             );
@@ -196,8 +191,8 @@ describe('ChecklistPanelComponent', () => {
             component.analysisResult.set(
                 Object.assign({}, mockResponse, {
                     qualityIssues: [
-                        { description: 'Issue 1', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Medium },
-                        { description: 'Issue 2', category: QualityIssue.CategoryEnum.Completeness, severity: QualityIssue.SeverityEnum.High },
+                        { description: 'Issue 1', category: 'CLARITY', severity: 'MEDIUM' },
+                        { description: 'Issue 2', category: 'COMPLETENESS', severity: 'HIGH' },
                     ],
                 }),
             );
@@ -209,7 +204,7 @@ describe('ChecklistPanelComponent', () => {
             expect(actionSpy).toHaveBeenCalledWith(
                 courseId,
                 expect.objectContaining({
-                    actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                    actionType: 'FIX_ALL_QUALITY_ISSUES',
                 }),
             );
             expect(component.analysisResult()?.qualityIssues).toEqual([]);
@@ -226,7 +221,7 @@ describe('ChecklistPanelComponent', () => {
             expect(actionSpy).toHaveBeenCalledWith(
                 courseId,
                 expect.objectContaining({
-                    actionType: ChecklistActionRequest.ActionTypeEnum.AdaptDifficulty,
+                    actionType: 'ADAPT_DIFFICULTY',
                     context: expect.objectContaining({ targetDifficulty: 'HARD' }),
                 }),
             );
@@ -239,7 +234,7 @@ describe('ChecklistPanelComponent', () => {
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(throwError(() => new Error('Failed')) as any);
             const errorSpy = vi.spyOn(alertService, 'error');
 
-            component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
+            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
 
             expect(errorSpy).toHaveBeenCalled();
             expect(component.isApplyingAction()).toBeFalsy();
@@ -252,7 +247,7 @@ describe('ChecklistPanelComponent', () => {
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction');
             const errorSpy = vi.spyOn(alertService, 'error');
 
-            component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
+            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
 
             expect(actionSpy).not.toHaveBeenCalled();
             expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.instructorChecklist.problemStatementTooLong', { max: MAX_PROBLEM_STATEMENT_LENGTH });
@@ -264,7 +259,7 @@ describe('ChecklistPanelComponent', () => {
             component.isApplyingAction.set(true);
             const actionSpy = vi.spyOn(apiService, 'applyChecklistAction');
 
-            component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
+            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
 
             expect(actionSpy).not.toHaveBeenCalled();
         });
@@ -277,7 +272,7 @@ describe('ChecklistPanelComponent', () => {
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(noChangeResponse) as any);
             const warningSpy = vi.spyOn(alertService, 'warning');
 
-            component.fixQualityIssue({ description: 'Test', category: QualityIssue.CategoryEnum.Clarity }, 0);
+            component.fixQualityIssue({ description: 'Test', category: 'CLARITY' }, 0);
 
             expect(warningSpy).toHaveBeenCalled();
         });
@@ -309,7 +304,7 @@ describe('ChecklistPanelComponent', () => {
                     rank: 2,
                 },
             ],
-            difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
+            difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
             qualityIssues: [],
         };
 
@@ -356,7 +351,7 @@ describe('ChecklistPanelComponent', () => {
                         rank: 1,
                     },
                 ],
-                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true },
+                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
                 qualityIssues: [],
             };
             component.analysisResult.set(responseNoMatches);
@@ -388,7 +383,7 @@ describe('ChecklistPanelComponent', () => {
                         isLikelyPrimary: false,
                     },
                 ],
-                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true },
+                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
                 qualityIssues: [],
             };
             component.analysisResult.set(lowConfidenceResponse);
@@ -419,7 +414,7 @@ describe('ChecklistPanelComponent', () => {
                         matchedCourseCompetencyId: 1,
                     },
                 ],
-                difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true },
+                difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true },
                 qualityIssues: [],
             };
             component.analysisResult.set(allMatchedResponse);
@@ -525,12 +520,12 @@ describe('ChecklistPanelComponent', () => {
         it('should mark competencies and difficulty as stale after fixing a quality issue', () => {
             component.analysisResult.set(
                 Object.assign({}, mockResponse, {
-                    qualityIssues: [{ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }],
+                    qualityIssues: [{ description: 'Issue', category: 'CLARITY', severity: 'LOW' }],
                 }),
             );
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
-            component.fixQualityIssue({ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }, 0);
+            component.fixQualityIssue({ description: 'Issue', category: 'CLARITY', severity: 'LOW' }, 0);
 
             expect(component.isSectionStale('competencies')).toBeTruthy();
             expect(component.isSectionStale('difficulty')).toBeTruthy();
@@ -583,13 +578,13 @@ describe('ChecklistPanelComponent', () => {
         it('should accumulate stale sections across multiple actions', () => {
             component.analysisResult.set(
                 Object.assign({}, mockResponse, {
-                    qualityIssues: [{ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }],
+                    qualityIssues: [{ description: 'Issue', category: 'CLARITY', severity: 'LOW' }],
                 }),
             );
             vi.spyOn(apiService, 'applyChecklistAction').mockReturnValue(of(mockActionResponse) as any);
 
             // First: fix quality → competencies + difficulty stale
-            component.fixQualityIssue({ description: 'Issue', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low }, 0);
+            component.fixQualityIssue({ description: 'Issue', category: 'CLARITY', severity: 'LOW' }, 0);
 
             expect(component.isSectionStale('competencies')).toBeTruthy();
             expect(component.isSectionStale('difficulty')).toBeTruthy();
@@ -609,9 +604,9 @@ describe('ChecklistPanelComponent', () => {
 
     describe('Per-Section Re-analyze', () => {
         const fullResponse: ChecklistAnalysisResponse = {
-            qualityIssues: [{ description: 'New issue', category: QualityIssue.CategoryEnum.Coherence, severity: QualityIssue.SeverityEnum.High }],
+            qualityIssues: [{ description: 'New issue', category: 'COHERENCE', severity: 'HIGH' }],
             inferredCompetencies: [{ competencyTitle: 'New Comp', taxonomyLevel: 'UNDERSTAND', rank: 1 }],
-            difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Hard, reasoning: 'Updated', matchesDeclared: false, taskCount: 3, testCount: 6 },
+            difficultyAssessment: { suggested: 'HARD', reasoning: 'Updated', matchesDeclared: false, taskCount: 3, testCount: 6 },
         };
 
         it('should update only the quality section when reanalyzing quality', () => {
@@ -733,9 +728,9 @@ describe('ChecklistPanelComponent', () => {
     });
 
     describe('Discard & Multi-Select', () => {
-        const issue1: QualityIssue = { description: 'Issue 1', category: QualityIssue.CategoryEnum.Clarity, severity: QualityIssue.SeverityEnum.Low };
-        const issue2: QualityIssue = { description: 'Issue 2', category: QualityIssue.CategoryEnum.Completeness, severity: QualityIssue.SeverityEnum.Medium };
-        const issue3: QualityIssue = { description: 'Issue 3', category: QualityIssue.CategoryEnum.Coherence, severity: QualityIssue.SeverityEnum.High };
+        const issue1: QualityIssue = { description: 'Issue 1', category: 'CLARITY', severity: 'LOW' };
+        const issue2: QualityIssue = { description: 'Issue 2', category: 'COMPLETENESS', severity: 'MEDIUM' };
+        const issue3: QualityIssue = { description: 'Issue 3', category: 'COHERENCE', severity: 'HIGH' };
 
         beforeEach(() => {
             component.analysisResult.set(Object.assign({}, mockResponse, { qualityIssues: [issue1, issue2, issue3] }));
@@ -836,7 +831,7 @@ describe('ChecklistPanelComponent', () => {
             expect(actionSpy).toHaveBeenCalledWith(
                 courseId,
                 expect.objectContaining({
-                    actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                    actionType: 'FIX_ALL_QUALITY_ISSUES',
                 }),
             );
             expect(emitSpy).toHaveBeenCalledWith('Updated');
@@ -867,15 +862,15 @@ describe('ChecklistPanelComponent', () => {
 
     describe('effectiveDelta', () => {
         it('should return MATCH when suggested equals declared difficulty', () => {
-            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy } }));
+            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: 'EASY' } }));
             // exercise.difficulty is EASY (set in beforeEach)
-            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Match);
+            expect(component.effectiveDelta()).toBe('MATCH');
         });
 
         it('should return HIGHER when suggested is above declared difficulty', () => {
-            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Hard } }));
+            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: 'HARD' } }));
             // exercise.difficulty is EASY
-            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Higher);
+            expect(component.effectiveDelta()).toBe('HIGHER');
         });
 
         it('should return LOWER when suggested is below declared difficulty', () => {
@@ -884,18 +879,18 @@ describe('ChecklistPanelComponent', () => {
             hardExercise.difficulty = DifficultyLevel.HARD;
             fixture.componentRef.setInput('exercise', hardExercise);
             fixture.detectChanges(); // flush the localDeclaredDifficulty effect
-            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy } }));
-            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Lower);
+            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: 'EASY' } }));
+            expect(component.effectiveDelta()).toBe('LOWER');
         });
 
         it('should return UNKNOWN when no analysis result exists', () => {
-            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Unknown);
+            expect(component.effectiveDelta()).toBe('UNKNOWN');
         });
 
         it('should update reactively when exercise difficulty changes', () => {
-            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Medium } }));
+            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: 'MEDIUM' } }));
             // exercise.difficulty is EASY → suggested MEDIUM is HIGHER
-            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Higher);
+            expect(component.effectiveDelta()).toBe('HIGHER');
 
             const mediumExercise = new ProgrammingExercise(undefined, undefined);
             mediumExercise.id = 123;
@@ -903,7 +898,7 @@ describe('ChecklistPanelComponent', () => {
             fixture.componentRef.setInput('exercise', mediumExercise);
             fixture.detectChanges(); // flush the localDeclaredDifficulty effect
             // Now declared = MEDIUM = suggested → MATCH
-            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Match);
+            expect(component.effectiveDelta()).toBe('MATCH');
         });
     });
 
@@ -948,7 +943,7 @@ describe('ChecklistPanelComponent', () => {
                 { competencyTitle: 'Recursion', taxonomyLevel: 'ANALYZE', confidence: 0.7, whyThisMatches: 'Recursive patterns', rank: 2 },
                 { competencyTitle: 'Sorting', taxonomyLevel: 'UNDERSTAND', confidence: 0.5, whyThisMatches: 'Sorting algorithms', rank: 3 },
             ],
-            difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy, reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
+            difficultyAssessment: { suggested: 'EASY', reasoning: 'Reason', matchesDeclared: true, taskCount: 5, testCount: 10 },
             qualityIssues: [],
         };
 

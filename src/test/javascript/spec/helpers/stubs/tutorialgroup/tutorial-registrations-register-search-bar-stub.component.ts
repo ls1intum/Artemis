@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',

@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { signal } from '@angular/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MockComponent } from 'ng-mocks';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialEditContainerComponent } from 'app/tutorialgroup/manage/tutorial-edit-container/tutorial-edit-container.component';
 import { TutorialCreateOrEditComponent, UpdateTutorialGroupEvent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
@@ -17,11 +16,9 @@ import { LoadingIndicatorOverlayStubComponent } from 'test/helpers/stubs/tutoria
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { TutorialGroupSchedule } from 'app/openapi/model/tutorialGroupSchedule';
+import { TutorialGroupSchedule } from 'app/openapi/models/tutorial-group-schedule';
 
 describe('TutorialEditContainerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<TutorialEditContainerComponent>;
     let component: TutorialEditContainerComponent;
 
@@ -65,7 +62,7 @@ describe('TutorialEditContainerComponent', () => {
             providers: [
                 mockedActivatedRoute({ tutorialGroupId: '17' }, {}, {}, { courseId: '2' }),
                 { provide: Router, useClass: MockRouter },
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiService },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiService },
                 { provide: TutorialGroupCourseAndGroupService, useValue: tutorialGroupCourseAndGroupService },
                 { provide: TutorialGroupTutorsService, useValue: tutorialGroupTutorsService },
                 { provide: AlertService, useValue: alertService },

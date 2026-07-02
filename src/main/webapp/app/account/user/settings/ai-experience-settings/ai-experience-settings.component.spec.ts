@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AiExperienceSettingsComponent } from './ai-experience-settings.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -24,8 +23,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 describe('AiExperienceSettingsComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: AiExperienceSettingsComponent;
     let fixture: ComponentFixture<AiExperienceSettingsComponent>;
     let irisChatHttpService: IrisChatHttpService;

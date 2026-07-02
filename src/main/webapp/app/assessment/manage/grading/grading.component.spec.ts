@@ -1,6 +1,5 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { GradeEditMode, GradingComponent, GradingViewMode } from 'app/assessment/manage/grading/grading.component';
 import { ActivatedRoute, Params } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -40,7 +39,6 @@ vi.mock('app/foundation/util/csv-download.util', () => {
 });
 
 describe('GradingComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<GradingComponent>;
     let comp: GradingComponent;
     let gradingService: GradingService;

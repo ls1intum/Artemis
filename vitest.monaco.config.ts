@@ -31,7 +31,7 @@ export default defineConfig({
             },
         },
     },
-    plugins: [angular({ jit: true }), tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json'] })],
+    plugins: [angular({ jit: true, fastCompile: true }), tsconfigPaths({ projects: ['tsconfig.app.json', 'tsconfig.spec.json'] })],
     test: {
         name: 'monaco-integration',
         globals: true,

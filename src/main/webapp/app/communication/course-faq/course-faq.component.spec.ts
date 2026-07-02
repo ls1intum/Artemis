@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -31,8 +30,6 @@ function createFaq(id: number, category: string, color: string): Faq {
 }
 
 describe('CourseFaqs', () => {
-    setupTestBed({ zoneless: true });
-
     let courseFaqComponentFixture: ComponentFixture<CourseFaqComponent>;
     let courseFaqComponent: CourseFaqComponent;
 

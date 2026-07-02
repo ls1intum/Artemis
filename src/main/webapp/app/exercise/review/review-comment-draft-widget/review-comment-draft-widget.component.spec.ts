@@ -6,10 +6,8 @@ import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-revie
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ReviewCommentDraftWidgetComponent', () => {
-    setupTestBed({ zoneless: true });
     let fixture: ComponentFixture<ReviewCommentDraftWidgetComponent>;
     let comp: ReviewCommentDraftWidgetComponent;
     let reviewCommentService: any;

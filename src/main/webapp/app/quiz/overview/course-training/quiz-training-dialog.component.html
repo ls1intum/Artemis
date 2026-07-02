@@ -1,5 +1,5 @@
 <p-dialog [(visible)]="visible" [modal]="true" [closable]="closable()" [style]="{ width: '600px', height: 'auto' }" appendTo="body" [draggable]="false">
-    <ng-template pTemplate="header">
+    <ng-template #header>
         <h5 jhiTranslate="artemisApp.quizTraining.theQuizTraining"></h5>
     </ng-template>
     <h6 jhiTranslate="artemisApp.quizTraining.howItWorks.title"></h6>
@@ -28,7 +28,7 @@
                 <fa-icon [icon]="faQuestionCircle" class="ms-2" />
             </span>
         </div>
-        <ng-template pTemplate="footer">
+        <ng-template #footer>
             <jhi-button [title]="'artemisApp.quizTraining.confirm'" [disabled]="saveDisabled()" (onClick)="save.emit()" />
         </ng-template>
     }

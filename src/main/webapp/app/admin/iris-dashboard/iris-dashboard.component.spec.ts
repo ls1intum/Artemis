@@ -1,16 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisDashboardComponent } from './iris-dashboard.component';
 import { IrisDashboardService } from './iris-dashboard.service';
 import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 
 describe('IrisDashboardComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: IrisDashboardComponent;
     let fixture: ComponentFixture<IrisDashboardComponent>;
     let dashboardService: IrisDashboardService;
@@ -40,8 +37,8 @@ describe('IrisDashboardComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [IrisDashboardComponent, TranslateModule.forRoot()],
-            providers: [provideHttpClient(), provideHttpClientTesting(), TranslateService],
+            imports: [IrisDashboardComponent],
+            providers: [provideHttpClient(), provideHttpClientTesting(), TranslateService, provideTranslateService()],
         });
 
         dashboardService = TestBed.inject(IrisDashboardService);

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -22,8 +21,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 
 describe('JhiStartPracticeModeButtonComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: StartPracticeModeButtonComponent;
     let fixture: ComponentFixture<StartPracticeModeButtonComponent>;
 

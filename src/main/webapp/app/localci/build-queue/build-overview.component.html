@@ -164,7 +164,7 @@
         [draggable]="false"
         [dismissableMask]="true"
     >
-        <ng-template pTemplate="header">
+        <ng-template #header>
             <span jhiTranslate="artemisApp.buildQueue.logs.title"></span>
             <span>&nbsp;{{ displayedBuildJobId() }}</span>
         </ng-template>
@@ -175,7 +175,7 @@
                 <span jhiTranslate="artemisApp.buildQueue.logs.noLogs"></span>
             }
         </div>
-        <ng-template pTemplate="footer">
+        <ng-template #footer>
             <button type="button" class="btn btn-secondary" (click)="buildLogsModalVisible.set(false)">
                 <span jhiTranslate="artemisApp.buildQueue.filter.close"></span>
             </button>

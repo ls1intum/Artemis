@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
 import { MockModule } from 'ng-mocks';
@@ -11,7 +10,6 @@ import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardMediumComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: SidebarCardMediumComponent;
     let fixture: ComponentFixture<SidebarCardMediumComponent>;
     let router: MockRouter;
@@ -44,7 +42,7 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should have success border class for easy difficulty', () => {
-        component.sidebarItem().difficulty = DifficultyLevel.EASY;
+        fixture.componentRef.setInput('sidebarItem', { ...component.sidebarItem(), difficulty: DifficultyLevel.EASY });
         fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
@@ -52,7 +50,7 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should have success border class for medium difficulty', () => {
-        component.sidebarItem().difficulty = DifficultyLevel.MEDIUM;
+        fixture.componentRef.setInput('sidebarItem', { ...component.sidebarItem(), difficulty: DifficultyLevel.MEDIUM });
         fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
@@ -60,7 +58,7 @@ describe('SidebarCardMediumComponent', () => {
     });
 
     it('should have success border class for hard difficulty', () => {
-        component.sidebarItem().difficulty = DifficultyLevel.HARD;
+        fixture.componentRef.setInput('sidebarItem', { ...component.sidebarItem(), difficulty: DifficultyLevel.HARD });
         fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;

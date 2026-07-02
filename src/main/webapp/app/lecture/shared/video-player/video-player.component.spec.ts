@@ -8,7 +8,6 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // ---- Mock hls.js BEFORE importing the component ----
 vi.mock('hls.js', () => {
@@ -67,8 +66,6 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
 describe('VideoPlayerComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<VideoPlayerComponent>;
     let component: VideoPlayerComponent;
     let videoElement: HTMLVideoElement;

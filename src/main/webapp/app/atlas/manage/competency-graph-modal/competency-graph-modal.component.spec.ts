@@ -15,10 +15,8 @@ import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { MockComponent } from 'ng-mocks';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CompetencyGraphModalComponent', () => {
-    setupTestBed({ zoneless: true });
     let component: CompetencyGraphModalComponent;
     let fixture: ComponentFixture<CompetencyGraphModalComponent>;
     let learningPathApiService: LearningPathApiService;

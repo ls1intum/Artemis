@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, input, model, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, input, model, signal, viewChild } from '@angular/core';
 import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
@@ -41,9 +41,6 @@ export class TitleChannelNamePrimengComponent implements AfterViewInit, OnDestro
     get field_channel_name(): NgModel {
         return this.fieldChannelName()!;
     }
-
-    titleChange = output<string>();
-    channelNameChange = output<string>();
 
     isValid = signal<boolean>(false);
 
@@ -104,7 +101,6 @@ export class TitleChannelNamePrimengComponent implements AfterViewInit, OnDestro
 
     updateTitle(newTitle: string) {
         this.title.set(newTitle);
-        this.titleChange.emit(this.title() ?? '');
         this.updateChannelName();
     }
 
@@ -130,6 +126,5 @@ export class TitleChannelNamePrimengComponent implements AfterViewInit, OnDestro
         const formattedName = removeTrailingHyphens ? nameWithoutSpecialCharacters.replace(TRAILING_HYPHENS, '') : nameWithoutSpecialCharacters;
 
         this.channelName.set(formattedName.slice(0, 30));
-        this.channelNameChange.emit(this.channelName() ?? '');
     }
 }

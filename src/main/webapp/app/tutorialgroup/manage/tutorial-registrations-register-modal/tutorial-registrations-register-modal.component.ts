@@ -10,11 +10,10 @@ import {
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ButtonDirective } from 'primeng/button';
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
-import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-modal',
@@ -32,7 +31,7 @@ import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
 export class TutorialRegistrationsRegisterModalComponent {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -77,7 +76,7 @@ export class TutorialRegistrationsRegisterModalComponent {
                 this.selectedStudents().map((student) => student.login),
             )
             .subscribe({
-                next: (_: HttpResponse<void>) => {
+                next: () => {
                     this.tutorialGroupRegisteredStudentsService.addStudentsToRegisteredStudentsState(this.selectedStudents());
                     this.isLoading.set(false);
                     this.selectedStudents.set([]);

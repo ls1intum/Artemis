@@ -1,6 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { CourseGroup } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
@@ -17,8 +16,6 @@ import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExamAddStudentsDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ExamAddStudentsDialogComponent;
     let fixture: ComponentFixture<ExamAddStudentsDialogComponent>;
     let courseManagementService: CourseManagementService;

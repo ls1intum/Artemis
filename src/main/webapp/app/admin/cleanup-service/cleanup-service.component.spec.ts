@@ -3,7 +3,6 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { signal } from '@angular/core';
@@ -14,8 +13,6 @@ import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.mo
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 
 describe('CleanupServiceComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let comp: CleanupServiceComponent;
     let fixture: ComponentFixture<CleanupServiceComponent>;
     let cleanupService: DataCleanupService;

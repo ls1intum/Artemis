@@ -1,13 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
 
 @Injectable({
     providedIn: 'root',
 })
 export class TutorialGroupRegisteredStudentsService {
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);
     private registeredStudentsInternal = signal<TutorialGroupStudent[]>([]);
 

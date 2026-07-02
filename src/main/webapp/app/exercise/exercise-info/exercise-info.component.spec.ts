@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { describe, expect, it } from 'vitest';
 import { MockProvider } from 'ng-mocks';
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
@@ -9,8 +8,6 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 
 describe('Exercise Info Component', () => {
-    setupTestBed({ zoneless: true });
-
     let fixture: ComponentFixture<ExerciseInfoComponent>;
     let comp: ExerciseInfoComponent;
 

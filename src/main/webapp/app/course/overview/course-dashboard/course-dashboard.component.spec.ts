@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
 import { By } from '@angular/platform-browser';
@@ -44,8 +43,6 @@ class MockCourseChatbotComponent {
 }
 
 describe('CourseDashboardComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: CourseDashboardComponent;
     let fixture: ComponentFixture<CourseDashboardComponent>;
     let debugElement: DebugElement;
@@ -871,8 +868,8 @@ describe('CourseDashboardComponent', () => {
 
         const progressBar = debugElement.query(By.directive(ProgressBar));
         expect(progressBar).not.toBeNull();
-        expect(progressBar.componentInstance.value).toBe(component.progressBarValue());
-        expect(progressBar.componentInstance.value).toBe(100);
+        expect(progressBar.componentInstance.value()).toBe(component.progressBarValue());
+        expect(progressBar.componentInstance.value()).toBe(100);
 
         const label = progressBar.query(By.css('span.fs-5'));
         expect(label).not.toBeNull();

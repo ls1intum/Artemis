@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,8 +6,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { TutorialRegistrationsRegisterSearchBarComponent } from './tutorial-registrations-register-search-bar.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupStudent } from 'app/openapi/model/tutorialGroupStudent';
+import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
+import { TutorialGroupStudent } from 'app/openapi/models/tutorial-group-student';
 
 interface TutorialGroupApiServiceMock {
     searchUnregisteredStudents: ReturnType<typeof vi.fn>;
@@ -46,8 +45,6 @@ function simulateViewportScrollNearBottom(viewport: HTMLElement) {
 }
 
 describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: TutorialRegistrationsRegisterSearchBarComponent;
     let fixture: ComponentFixture<TutorialRegistrationsRegisterSearchBarComponent>;
 
@@ -85,7 +82,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorialRegistrationsRegisterSearchBarComponent],
             providers: [
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+                { provide: TutorialGroupApi, useValue: tutorialGroupApiServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],

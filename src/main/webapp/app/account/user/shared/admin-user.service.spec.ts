@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { User } from 'app/account/user/user.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -8,8 +7,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { AuthorityFilter, OriginFilter, RegistrationNumberFilter, StatusFilter, UserFilter } from 'app/admin/user-management/user-management.component';
 
 describe('AdminUserService', () => {
-    setupTestBed({ zoneless: true });
-
     let adminService: AdminUserService;
     let httpMock: HttpTestingController;
     const resourceUrl = 'api/account/admin/users';
