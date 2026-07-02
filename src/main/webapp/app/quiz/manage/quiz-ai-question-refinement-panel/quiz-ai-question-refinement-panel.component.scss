@@ -49,6 +49,12 @@
     margin-bottom: 0.45rem;
 }
 
+.quiz-ai-refinement-panel .refinement-explanation-actions {
+    display: flex;
+    gap: 0.15rem;
+    margin-left: auto;
+}
+
 .quiz-ai-refinement-panel button.refinement-explanation-dismiss {
     align-items: center;
     background: transparent;
@@ -60,7 +66,6 @@
     font-size: 0.75rem;
     height: 1.5rem;
     justify-content: center;
-    margin-left: auto;
     outline: none;
     padding: 0;
     width: 1.5rem;

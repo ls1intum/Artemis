@@ -137,6 +137,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     isRefinementFabOpen = signal(false);
     isGlobalRefining = signal(false);
     globalRefinementPrompt = signal('');
+    courseCompetenciesCount = signal(0);
     private globalRefinementSubscription?: Subscription;
 
     course?: Course;
@@ -456,12 +457,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 finalize(() => this.isGlobalRefining.set(false)),
             )
             .subscribe({
-                next: (results) => {
+                next: ({ results, previousSnapshots }) => {
                     const failedCount = mcQuestions.length - results.size;
                     if (failedCount > 0) {
                         this.alertService.warning('artemisApp.quizExercise.aiGeneration.errors.partialRefinementFailed', { count: failedCount });
                     }
-                    this.quizQuestionListEditComponent().applyBulkRefinement(results);
+                    this.quizQuestionListEditComponent().applyBulkRefinement(results, previousSnapshots);
                     this.globalRefinementPrompt.set('');
                     this.isRefinementFabOpen.set(false);
                 },

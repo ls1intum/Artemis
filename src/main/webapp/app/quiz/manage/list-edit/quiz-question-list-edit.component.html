@@ -38,6 +38,7 @@
                                 [isOpen]="openRefinementQuestions().has(quizQuestion)"
                                 [isRefinementPanelCollapsed]="collapsedQuestions().has(quizQuestion)"
                                 [externalReasoning]="bulkRefinementReasonings().get(quizQuestion)"
+                                [externalPreviousQuestion]="bulkRefinementPreviousQuestions().get(quizQuestion)"
                                 (questionRefined)="handleQuestionRefined(quizQuestion, $event)"
                                 (reasoningDismissed)="clearReasoning(quizQuestion)"
                             />

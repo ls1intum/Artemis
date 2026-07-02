@@ -1,0 +1,15 @@
+{
+    "type": "success",
+    "reasoning": "The question was made harder by adding a distractor that closely resembles the correct answer and requiring the student to distinguish between average and worst-case complexity.",
+    "question": {
+        "type": "multiple-choice",
+        "title": "<Some title> (Harder)",
+        "questionText": "A **harder** version of the question with more detail",
+        "options": [
+            { "text": "Correct answer 1 (refined)", "correct": true },
+            { "text": "Correct answer 2 (refined)", "correct": true },
+            { "text": "Wrong Answer 1 (refined)", "correct": false },
+            { "text": "Wrong Answer 2 (refined)", "correct": false }
+        ]
+    }
+}

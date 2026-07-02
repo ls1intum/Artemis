@@ -3,15 +3,14 @@
     [modal]="true"
     [draggable]="false"
     [resizable]="false"
+    [showHeader]="false"
+    [closable]="false"
     [style]="{ width: '90vw', 'max-width': '84rem' }"
+    [contentStyle]="{ padding: '1.25rem' }"
     styleClass="quiz-ai-generation-modal"
     [breakpoints]="{ '1200px': '96vw' }"
     appendTo="body"
 >
-    <ng-template pTemplate="header">
-        <h5 class="mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.modalTitle"></h5>
-    </ng-template>
-
     <div class="quiz-ai-generation-layout">
         <section class="quiz-ai-generation-configuration">
             <h6 class="section-title" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.title"></h6>
@@ -167,9 +166,18 @@
         <section class="quiz-ai-generation-preview">
             <div class="preview-header">
                 <h6 class="section-title mb-0" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.title"></h6>
-                @if (hasGeneratedQuestions()) {
-                    <span class="preview-count" [jhiTranslate]="getResultCountTextKey()" [translateValues]="getResultCountTranslateValues()"></span>
-                }
+                <button
+                    pButton
+                    type="button"
+                    severity="secondary"
+                    [text]="true"
+                    [rounded]="true"
+                    icon="pi pi-times"
+                    [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                    [pTooltip]="'entity.action.close' | artemisTranslate"
+                    tooltipPosition="top"
+                    (click)="close()"
+                ></button>
             </div>
 
             @if (!hasGeneratedQuestions()) {
@@ -183,16 +191,10 @@
                         <jhi-quiz-ai-generated-question-card [question]="question" [questionIndex]="questionIndex" />
                     }
                 </div>
+                <button pButton type="button" severity="success" class="add-to-quiz-fab" (click)="addGeneratedQuestionsToQuiz()">
+                    <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.addToEditor"></span>
+                </button>
             }
         </section>
     </div>
-
-    <ng-template pTemplate="footer">
-        <button pButton type="button" severity="secondary" outlined (click)="close()">
-            <span jhiTranslate="entity.action.close"></span>
-        </button>
-        <button pButton type="button" severity="success" [disabled]="!hasGeneratedQuestions()" (click)="addGeneratedQuestionsToQuiz()">
-            <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.addToEditor"></span>
-        </button>
-    </ng-template>
 </p-dialog>
