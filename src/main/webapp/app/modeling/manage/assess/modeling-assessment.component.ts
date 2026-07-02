@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output } from '@angular/core';
-import { ApollonEdge, ApollonEditor, ApollonMode, ApollonNode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
+import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
@@ -125,17 +125,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             );
         }
         this.initializeApollonEditor();
-        const highlightedElements = this.highlightedElements();
-        if (highlightedElements) {
-            await this.updateHighlightedElements(highlightedElements);
-        }
         const elementCounts = this.elementCounts();
         if (elementCounts) {
             await this.updateElementCounts(elementCounts);
         }
         // Ensure assessments are added after editor initialization
         await this.updateApollonAssessments(this.referencedFeedbacks);
-        await this.applyStateConfiguration();
+        // Applies highlight overlays last (also clears any stale ones).
+        this.applyStateConfiguration();
     }
 
     ngOnDestroy() {
@@ -157,7 +154,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      */
     private async runHighlightUpdate() {
         await this.updateApollonAssessments(this.referencedFeedbacks);
-        await this.applyStateConfiguration();
+        this.applyStateConfiguration();
     }
 
     /**
@@ -193,11 +190,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
     }
 
-    private async applyStateConfiguration() {
-        const highlightedElements = this.highlightedElements();
-        if (highlightedElements) {
-            await this.updateHighlightedElements(highlightedElements);
-        }
+    private applyStateConfiguration() {
+        // Always forward: passing undefined/empty clears stale overlays when highlighting is turned off.
+        this.updateHighlightedElements(this.highlightedElements());
     }
 
     /**
@@ -303,33 +298,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     /**
-     * Sets the corresponding highlight color in the apollon model of all elements contained in the given element map.
-     *
-     * @param newElements a map of elementIds -> highlight color
+     * Applies the host-driven highlight overlay (element id -> CSS colour) to the editor. Highlights
+     * are an ephemeral view overlay, not persisted in the model; an empty map or `undefined` clears them.
      */
-    private async updateHighlightedElements(newElements: Map<string, string>) {
-        if (!newElements) {
-            newElements = new Map<string, string>();
-        }
-
-        if (this.apollonEditor != undefined) {
-            const model: UMLModel = this.apollonEditor.model;
-            for (const node of model.nodes) {
-                const highlight = newElements.get(node.id);
-                (node as ApollonNode & { highlight?: string }).highlight = highlight;
-                if (node.data) {
-                    (node.data as Record<string, unknown>).highlight = highlight;
-                }
-            }
-            for (const edge of model.edges) {
-                const highlight = newElements.get(edge.id);
-                (edge as ApollonEdge & { highlight?: string }).highlight = highlight;
-                if (edge.data) {
-                    (edge.data as Record<string, unknown>).highlight = highlight;
-                }
-            }
-            this.apollonEditor.model = model;
-        }
+    private updateHighlightedElements(newElements: Map<string, string> | undefined): void {
+        // `?? null`: Apollon treats `undefined` as "no change", whereas `null`/empty clears overlays.
+        this.apollonEditor?.setElementHighlights(newElements ?? null);
     }
 
     /**

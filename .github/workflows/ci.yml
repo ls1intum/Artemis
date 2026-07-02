@@ -466,25 +466,53 @@ jobs:
       - version-consistency
       - bean-instantiations
     runs-on: ubuntu-latest
-    permissions: {}
+    permissions: {}  # reads only the `needs` context; no checkout, no token scope
     timeout-minutes: 5
     steps:
+      # Renders an actionable report to the job summary on failure and fails closed on any
+      # non-`success`/non-`skipped` result. `cancelled` is never waved through, preserving the
+      # skipped==pass invariant above. Kept inline (like `ci-summary`) so the required gate needs no
+      # checkout and no token scope.
       - name: Evaluate gate
         env:
           NEEDS: ${{ toJSON(needs) }}
         run: |
-          # Fail closed: a jq error must not leave `failing` empty and pass the gate green.
           set -Eeuo pipefail
-          failing=$(jq -r '
-            to_entries[]
-            | select(.value.result != "success" and .value.result != "skipped")
-            | "\(.key): \(.value.result)"
-          ' <<< "$NEEDS")
-          if [ -n "$failing" ]; then
-            echo "::error::One or more required CI jobs did not pass:"
-            echo "$failing"
-            exit 1
+          # Fail closed: malformed/empty NEEDS must abort red, never pass green. `jq -e` on a
+          # non-object exits non-zero (aborting under set -e); command substitution (not `< <(jq)`)
+          # makes a parse error abort here too, instead of the loop reading nothing and passing.
+          jq -e 'type == "object" and length > 0' <<< "$NEEDS" > /dev/null
+          parsed=$(jq -r 'to_entries[] | "\(.key)\t\(.value.result)"' <<< "$NEEDS")
+
+          declare -a failed=() cancelled=()
+          while IFS=$'\t' read -r job result; do
+            case "$result" in
+              success | skipped) ;;
+              cancelled) cancelled+=("$job") ;;
+              *) failed+=("$job") ;;  # failure or any unrecognised result -> fail closed
+            esac
+          done <<< "$parsed"
+
+          if [ "$(( ${#failed[@]} + ${#cancelled[@]} ))" -eq 0 ]; then
+            echo "::notice::All required CI checks passed."
+            exit 0
           fi
+
+          code_list() { local out='' j; for j in "$@"; do out+="${out:+, }\`$j\`"; done; printf '%s' "$out"; }
+          {
+            echo "## ❌ Required CI did not pass"
+            [ "${#failed[@]}" -gt 0 ] && printf '\n### ❌ Failed — fix before merging\n\n%s — open each failed check from the **Checks** tab to see the error.\n' "$(code_list "${failed[@]}")"
+            [ "${#cancelled[@]}" -gt 0 ] && printf '\n### 🚫 Cancelled — not a test failure\n\n%s — a job hit its timeout, was preempted, or a newer push superseded this run. Re-run it if this run is still current.\n' "$(code_list "${cancelled[@]}")"
+            for j in "${failed[@]}" "${cancelled[@]}"; do
+              [ "$j" = test ] && { printf "\n> 💡 If \`test\` hung, a JVM thread dump is attached under **Artifacts → Server Test Thread Dumps**.\n"; break; }
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          annotation='Required CI did not pass —'
+          [ "${#failed[@]}" -gt 0 ] && annotation+=" failed: $(code_list "${failed[@]}");"
+          [ "${#cancelled[@]}" -gt 0 ] && annotation+=" cancelled: $(code_list "${cancelled[@]}");"
+          echo "::error::$annotation see the job summary for what to do."
+          exit 1
 
   # Informational Summary-page report (timeline + per-job table); never required, never in
   # another job's `needs:`, so it cannot block merging.
