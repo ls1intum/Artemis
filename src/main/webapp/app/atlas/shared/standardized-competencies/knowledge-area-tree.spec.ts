@@ -53,11 +53,6 @@ describe('KnowledgeAreaTreeComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        hostFixture.detectChanges();
-        expect(host.tree()).toBeDefined();
-    });
-
     it('should render the p-tree', () => {
         hostFixture.detectChanges();
         const tree = hostFixture.debugElement.query(By.css('[data-testid="knowledge-area-tree"]'));

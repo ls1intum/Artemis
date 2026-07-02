@@ -98,10 +98,6 @@ export class KnowledgeAreaTreeComponent {
         }
     }
 
-    /**
-     * Expands a single knowledge area (and forces a rebuild so the change is rendered).
-     * @param knowledgeArea the knowledge area to expand
-     */
     expand(knowledgeArea: KnowledgeAreaForTree): void {
         if (knowledgeArea.id === undefined) {
             return;
@@ -133,22 +129,16 @@ export class KnowledgeAreaTreeComponent {
         });
     }
 
-    /**
-     * Returns whether the given knowledge area is currently expanded.
-     * @param knowledgeArea the knowledge area to check
-     */
     isExpanded(knowledgeArea: KnowledgeAreaForTree): boolean {
         return knowledgeArea.id !== undefined && this.expandedIds().has(knowledgeArea.id);
     }
 
-    /** Expands every knowledge area in the tree. */
     expandAll(): void {
         const allIds = new Set<number>();
         this.collectKnowledgeAreaIds(this.dataSource().data ?? [], allIds);
         this.expandedIds.set(allIds);
     }
 
-    /** Collapses every knowledge area in the tree. */
     collapseAll(): void {
         this.expandedIds.set(new Set<number>());
     }

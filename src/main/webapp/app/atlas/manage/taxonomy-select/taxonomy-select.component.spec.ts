@@ -40,7 +40,6 @@ describe('TaxonomySelectComponent', () => {
     it('should set taxonomy correcty', () => {
         componentFixture.detectChanges();
 
-        // The PrimeNG p-select must be rendered and initially hold no selected option.
         const select = componentFixture.debugElement.query(By.directive(Select));
         expect(select).not.toBeNull();
         const selectInstance: Select = select.componentInstance;
@@ -48,11 +47,9 @@ describe('TaxonomySelectComponent', () => {
         expect((component.form() as FormControl).value).toBeFalsy();
         expect(selectInstance.selectedOption).toBeFalsy();
 
-        // Selecting a taxonomy via the bound form control sets the value...
         (component.form() as FormControl).setValue(CompetencyTaxonomy.ANALYZE);
         componentFixture.detectChanges();
 
-        // ...which is reflected both in the form control and in the p-select's selected option.
         expect((component.form() as FormControl).value).toBe(CompetencyTaxonomy.ANALYZE);
         expect(selectInstance.selectedOption?.value).toBe(CompetencyTaxonomy.ANALYZE);
     });
