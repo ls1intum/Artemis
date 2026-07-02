@@ -144,6 +144,7 @@ export class CourseUpdateComponent implements OnInit {
 
     communicationEnabled = true;
     messagingEnabled = true;
+    readonly athenaFeedbackEnabled = signal(false);
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
@@ -216,6 +217,7 @@ export class CourseUpdateComponent implements OnInit {
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);
+        this.athenaFeedbackEnabled.set(!!(this.course.athenaGradingFeedbackEnabled || this.course.athenaFormativeFeedbackEnabled));
 
         this.courseForm = new FormGroup(
             {
@@ -273,7 +275,8 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                restrictedAthenaModulesAccess: new FormControl(this.course.restrictedAthenaModulesAccess),
+                athenaGradingFeedbackEnabled: new FormControl(this.course.athenaGradingFeedbackEnabled),
+                athenaFormativeFeedbackEnabled: new FormControl(this.course.athenaFormativeFeedbackEnabled),
                 enrollmentEnabled: new FormControl(this.course.enrollmentEnabled),
                 enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
                 enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
@@ -637,9 +640,24 @@ export class CourseUpdateComponent implements OnInit {
         this.course.testCourse = !this.course.testCourse;
     }
 
-    changeRestrictedAthenaModulesEnabled() {
-        this.course.restrictedAthenaModulesAccess = !this.course.restrictedAthenaModulesAccess;
-        this.courseForm.controls['restrictedAthenaModulesAccess'].setValue(this.course.restrictedAthenaModulesAccess);
+    changeAthenaFeedbackEnabled() {
+        this.athenaFeedbackEnabled.update((v) => !v);
+        if (!this.athenaFeedbackEnabled()) {
+            this.course.athenaGradingFeedbackEnabled = false;
+            this.course.athenaFormativeFeedbackEnabled = false;
+            this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(false);
+            this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(false);
+        }
+    }
+
+    changeAthenaGradingFeedback() {
+        this.course.athenaGradingFeedbackEnabled = !this.course.athenaGradingFeedbackEnabled;
+        this.courseForm.controls['athenaGradingFeedbackEnabled'].setValue(this.course.athenaGradingFeedbackEnabled);
+    }
+
+    changeAthenaFormativeFeedback() {
+        this.course.athenaFormativeFeedbackEnabled = !this.course.athenaFormativeFeedbackEnabled;
+        this.courseForm.controls['athenaFormativeFeedbackEnabled'].setValue(this.course.athenaFormativeFeedbackEnabled);
     }
 
     /**

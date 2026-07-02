@@ -11,7 +11,7 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -109,8 +109,11 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                 headline: 'artemisApp.exercise.sections.grading',
                 details: [
                     ...defaultGradingDetails,
-                    { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: !!exercise.feedbackSuggestionModule } },
-                    { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowFeedbackRequests } },
+                    {
+                        type: DetailType.Boolean,
+                        title: 'artemisApp.exercise.feedbackSuggestionsEnabled',
+                        data: { boolean: !!getCourseFromExercise(exercise)?.athenaGradingFeedbackEnabled },
+                    },
                     ...gradingInstructionsCriteriaDetails,
                 ],
             },

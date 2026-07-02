@@ -27,7 +27,6 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
-import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -71,8 +70,6 @@ public class CourseUpdateResource {
 
     private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
-    private final Optional<AthenaApi> athenaApi;
-
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final Optional<LearningPathApi> learningPathApi;
@@ -85,15 +82,14 @@ public class CourseUpdateResource {
 
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
-            ConductAgreementService conductAgreementService, Optional<AthenaApi> athenaApi, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository,
-            UserRepository userRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
+            ConductAgreementService conductAgreementService, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository, UserRepository userRepository,
+            Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.learningPathApi = learningPathApi;
         this.conductAgreementService = conductAgreementService;
-        this.athenaApi = athenaApi;
         this.learnerProfileApi = learnerProfileApi;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -128,14 +124,15 @@ public class CourseUpdateResource {
         // Always use the path variable for lookups to prevent a DTO with a mismatched id
         // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
+        // athenaConfig is not included in the findForUpdateById EntityGraph; load it separately to avoid LazyInitializationException
+        // in the instructor permission check below and in courseUpdateDTO.applyTo()
+        existingCourse.setAthenaConfig(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId).getAthenaConfig());
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
         }
 
         var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() != null && !existingCourse.getTimeZone().equals(courseUpdateDTO.timeZone()));
-
-        var athenaModuleAccessChanged = existingCourse.getRestrictedAthenaModulesAccess() != courseUpdateDTO.restrictedAthenaModulesAccess();
 
         if (!Objects.equals(existingCourse.getShortName(), courseUpdateDTO.shortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
@@ -152,14 +149,15 @@ public class CourseUpdateResource {
             if (!changedGroupNames.isEmpty()) {
                 throw new BadRequestAlertException("You are not allowed to change the group names of a course", Course.ENTITY_NAME, "groupNamesCannotChange", true);
             }
-            // instructors are not allowed to change the access to restricted Athena modules
-            if (athenaModuleAccessChanged) {
-                throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
-                        "restrictedAthenaModulesAccessCannotChange", true);
-            }
             // instructors are not allowed to change the dashboard settings
             if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdateDTO.studentCourseAnalyticsDashboardEnabled()) {
                 throw new BadRequestAlertException("You are not allowed to change the dashboard settings of a course", Course.ENTITY_NAME, "dashboardSettingsCannotChange", true);
+            }
+            // instructors are not allowed to change the Athena AI feedback configuration
+            if (existingCourse.isAthenaGradingFeedbackEnabled() != courseUpdateDTO.athenaGradingFeedbackEnabled()
+                    || existingCourse.isAthenaFormativeFeedbackEnabled() != courseUpdateDTO.athenaFormativeFeedbackEnabled()) {
+                throw new BadRequestAlertException("You are not allowed to change the Athena AI feedback settings of a course", Course.ENTITY_NAME, "athenaConfigCannotChange",
+                        true);
             }
         }
 
@@ -223,11 +221,6 @@ public class CourseUpdateResource {
             Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfiles(courseWithCompetencies, students));
             learningPathApi.ifPresent(api -> api.generateLearningPaths(courseWithCompetencies));
-        }
-
-        // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
-        if (athenaModuleAccessChanged && !courseUpdateDTO.restrictedAthenaModulesAccess()) {
-            athenaApi.ifPresent(api -> api.revokeAccessToRestrictedFeedbackSuggestionModules(result));
         }
 
         if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {

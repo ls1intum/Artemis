@@ -19,7 +19,6 @@ export interface UpdateModelingExerciseDTO {
     bonusPoints?: number;
     includedInOverallScore?: IncludedInOverallScore;
     allowComplaintsForAutomaticAssessments?: boolean;
-    allowFeedbackRequests?: boolean;
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
 
@@ -37,7 +36,6 @@ export interface UpdateModelingExerciseDTO {
 
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
-    feedbackSuggestionModule?: string;
     competencyLinks?: CompetencyLinkDTO[];
 }
 
@@ -59,7 +57,6 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         bonusPoints: modelingExercise.bonusPoints,
         includedInOverallScore: modelingExercise.includedInOverallScore,
         allowComplaintsForAutomaticAssessments: modelingExercise.allowComplaintsForAutomaticAssessments ?? false,
-        allowFeedbackRequests: modelingExercise.allowFeedbackRequests ?? false,
         presentationScoreEnabled: modelingExercise.presentationScoreEnabled ?? false,
         secondCorrectionEnabled: modelingExercise.secondCorrectionEnabled ?? false,
         releaseDate: convertDateFromClient(modelingExercise.releaseDate),
@@ -73,7 +70,6 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         exerciseGroupId: modelingExercise.exerciseGroup?.id,
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
         gradingInstructions: modelingExercise.gradingInstructions,
-        feedbackSuggestionModule: modelingExercise.feedbackSuggestionModule,
         competencyLinks: (modelingExercise.competencyLinks ?? []).map((link) => ({
             competency: { id: link.competency!.id! },
             weight: link.weight ?? 1,

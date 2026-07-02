@@ -208,7 +208,9 @@ export class ExerciseHeaderActionsComponent {
         const selection = this.userLLMSelection();
         return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
     });
-    readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false) && this.hasUserAcceptedLLM());
+    readonly showFeedbackPopover = computed(
+        () => !this.examMode() && this.hasUserAcceptedLLM() && this.athenaEnabled && (this.exercise().course?.athenaFormativeFeedbackEnabled ?? false),
+    );
 
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();
@@ -507,7 +509,7 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
-        if (countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+        if (!this.hasUserAcceptedLLM() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
             return;
         }
         this.submitPopoverRef()?.open();

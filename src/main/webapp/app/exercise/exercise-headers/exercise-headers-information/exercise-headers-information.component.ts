@@ -391,7 +391,7 @@ export class ExerciseHeadersInformationComponent {
     }
 
     getAiFeedbackItemIfEnabled(): InformationBox | undefined {
-        return this.athenaEnabled() && this.exercise().allowFeedbackRequests ? this.getAiFeedbackItem() : undefined;
+        return this.athenaEnabled() && this.resolvedCourse()?.athenaFormativeFeedbackEnabled ? this.getAiFeedbackItem() : undefined;
     }
 
     getAiFeedbackItem(): InformationBox {

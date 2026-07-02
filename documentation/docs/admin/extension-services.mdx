@@ -397,7 +397,12 @@ If Iris does not respond, check:
 
 ## Athena Service
 
-The semi-automatic text assessment relies on the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena</a> service, which is part of the EduTelligence suite. To enable automatic text assessments, special configuration is required:
+The <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena</a> service, part of the EduTelligence suite, provides AI-based feedback generation for text, modeling, and programming exercises. It supports two modes:
+
+- **Formative Feedback Requests** — Students can request preliminary AI feedback before the due date.
+- **Grading Feedback Suggestions** — Athena suggests feedback to tutors while assessing student submissions.
+
+Both modes are toggled per course by an administrator. See [AI Assisted Feedback](/instructor/course-management/course-configuration#ai-assisted-feedback) in the Course Configuration documentation.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -424,10 +429,12 @@ artemis:
      url: http://localhost:5100
      secret: abcdef12345
      modules:
-        # See https://github.com/ls1intum/edutelligence/tree/main/athena for a list of available modules
-        text: module_text_cofee
-        programming: module_programming_themisml
+        text: module_text_llm
+        programming: module_programming_llm
+        modeling: module_modeling_llm
 ```
+
+The module names under `artemis.athena.modules` are configured at the application level and apply to all courses. They are not configurable per course or per exercise. For a list of available modules, refer to the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena documentation</a>.
 
 The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the <a href="https://github.com/ls1intum/edutelligence/tree/main/athena">Athena documentation</a>.
 

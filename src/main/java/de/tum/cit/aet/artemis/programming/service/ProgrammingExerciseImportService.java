@@ -168,11 +168,6 @@ public class ProgrammingExerciseImportService {
         newProgrammingExercise.generateAndSetProjectKey();
         programmingExerciseValidationService.checkIfProjectExists(newProgrammingExercise);
 
-        if (newProgrammingExercise.isExamExercise()) {
-            // Disable feedback suggestions on exam exercises (currently not supported)
-            newProgrammingExercise.setFeedbackSuggestionModule(null);
-        }
-
         newProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(newProgrammingExercise);
@@ -218,12 +213,7 @@ public class ProgrammingExerciseImportService {
 
     private boolean setBuildAndTestDateAndEnforceFeedbackRequestInvariant(ProgrammingExercise programmingExercise, ZonedDateTime computedBuildAndTestDate) {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
-        if (computedBuildAndTestDate == null || !programmingExercise.getAllowFeedbackRequests()) {
-            return false;
-        }
-
-        programmingExercise.setAllowFeedbackRequests(false);
-        return true;
+        return false;
     }
 
 }

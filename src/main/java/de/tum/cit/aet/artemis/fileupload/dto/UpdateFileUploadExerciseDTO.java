@@ -56,10 +56,8 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param bonusPoints                            additional bonus points
  * @param includedInOverallScore                 how this exercise counts toward the course grade
  * @param allowComplaintsForAutomaticAssessments whether complaints are allowed
- * @param allowFeedbackRequests                  whether feedback requests are enabled
  * @param presentationScoreEnabled               whether presentation scores are tracked
  * @param secondCorrectionEnabled                whether second correction round is enabled
- * @param feedbackSuggestionModule               the AI feedback suggestion module identifier
  * @param gradingInstructions                    free-text grading instructions for tutors
  * @param releaseDate                            when the exercise becomes visible to students
  * @param startDate                              when students can start working
@@ -75,10 +73,10 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateFileUploadExerciseDTO(long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
-        Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
-        Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
-        ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, String filePattern,
-        Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled,
+        Boolean secondCorrectionEnabled, String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+        ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, String filePattern, Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria,
+        Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a {@link FileUploadExercise} entity.
@@ -118,9 +116,9 @@ public record UpdateFileUploadExerciseDTO(long id, String title, String channelN
         }
         return new UpdateFileUploadExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
-                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
-                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(),
-                exercise.getFilePattern(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
+                exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(),
+                exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(), exercise.getFilePattern(), courseId, exerciseGroupId, gradingCriterionDTOs,
+                competencyLinkDTOs);
     }
 }

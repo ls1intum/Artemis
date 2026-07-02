@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Create course_athena_config table. Course owns the FK (athena_config_id) so that
+         Hibernate does not issue a secondary SELECT per row for the non-owning side. -->
+    <changeSet id="20260611120000-1" author="artemis">
+        <createTable tableName="course_athena_config">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="grading_feedback_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="formative_feedback_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Add FK from course to course_athena_config (owning side) -->
+    <changeSet id="20260611120000-2" author="artemis">
+        <addColumn tableName="course">
+            <column name="athena_config_id" type="bigint">
+                <constraints nullable="true" unique="true" uniqueConstraintName="uc_course_athena_config_id"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint
+            baseTableName="course" baseColumnNames="athena_config_id"
+            referencedTableName="course_athena_config" referencedColumnNames="id"
+            constraintName="fk_course_athena_config_id"/>
+    </changeSet>
+
+    <!-- Remove restricted_athena_modules_access from course -->
+    <changeSet id="20260611120000-3" author="artemis">
+        <dropColumn tableName="course" columnName="restricted_athena_modules_access"/>
+    </changeSet>
+
+    <!-- Remove feedback_suggestion_module from exercise -->
+    <changeSet id="20260611120000-4" author="artemis">
+        <dropColumn tableName="exercise" columnName="feedback_suggestion_module"/>
+    </changeSet>
+
+    <!-- Remove allow_feedback_requests from exercise -->
+    <changeSet id="20260611120000-5" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="allow_feedback_requests"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="allow_feedback_requests"/>
+    </changeSet>
+
+    <!-- Remove allow_manual_feedback_requests from exercise -->
+    <changeSet id="20260611120000-6" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="exercise" columnName="allow_manual_feedback_requests"/>
+        </preConditions>
+        <dropColumn tableName="exercise" columnName="allow_manual_feedback_requests"/>
+    </changeSet>
+
+</databaseChangeLog>

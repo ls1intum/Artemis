@@ -75,6 +75,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @Query("""
             SELECT DISTINCT c
             FROM Course c
+                LEFT JOIN FETCH c.athenaConfig
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
@@ -169,7 +170,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "athenaConfig" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration" })

@@ -34,7 +34,7 @@ export class AssessmentWarningComponent {
             if (exercise.dueDate) {
                 const now = dayjs();
                 this.isBeforeExerciseDueDate.set(now.isBefore(exercise.dueDate));
-                this.showWarning.set(now.isBefore(this.getLatestDueDate()) && !exercise.allowFeedbackRequests);
+                this.showWarning.set(now.isBefore(this.getLatestDueDate()) && !(exercise.course?.athenaFormativeFeedbackEnabled ?? false));
             } else {
                 this.isBeforeExerciseDueDate.set(false);
                 this.showWarning.set(false);

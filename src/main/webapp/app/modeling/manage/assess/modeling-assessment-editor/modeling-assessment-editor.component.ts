@@ -126,12 +126,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
-    /**
-     * Retrieve whether feedback suggestions are enabled based on whether a feedback suggestions module is set on the
-     * current modeling exercise.
-     */
     get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.modelingExercise()?.feedbackSuggestionModule);
+        return Boolean(getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled);
     }
 
     ngOnInit() {
@@ -271,7 +267,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         // The assessment is new if it only contains automatic feedback.
         // Load after isLoading=false so the page is interactive while AI suggestions fetch.
         const automaticFeedbackCount = this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
-        if (this.modelingExercise()!.feedbackSuggestionModule && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
+        if (getCourseFromExercise(this.modelingExercise())?.athenaGradingFeedbackEnabled && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();
         }
     }

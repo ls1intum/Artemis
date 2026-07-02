@@ -31,6 +31,7 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -172,8 +173,10 @@ public class Course extends DomainObject {
     @Column(name = "accuracy_of_scores", nullable = false)
     private Integer accuracyOfScores = 1; // default value
 
-    @Column(name = "restricted_athena_modules_access", nullable = false)
-    private boolean restrictedAthenaModulesAccess = false; // default is false
+    @JsonIgnore
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "athena_config_id")
+    private CourseAthenaConfig athenaConfig;
 
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
@@ -784,12 +787,22 @@ public class Course extends DomainObject {
         this.accuracyOfScores = accuracyOfScores;
     }
 
-    public boolean getRestrictedAthenaModulesAccess() {
-        return restrictedAthenaModulesAccess;
+    public CourseAthenaConfig getAthenaConfig() {
+        return athenaConfig;
     }
 
-    public void setRestrictedAthenaModulesAccess(boolean restrictedAthenaModulesAccess) {
-        this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
+    public void setAthenaConfig(CourseAthenaConfig athenaConfig) {
+        this.athenaConfig = athenaConfig;
+    }
+
+    @JsonProperty("athenaGradingFeedbackEnabled")
+    public boolean isAthenaGradingFeedbackEnabled() {
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isGradingFeedbackEnabled();
+    }
+
+    @JsonProperty("athenaFormativeFeedbackEnabled")
+    public boolean isAthenaFormativeFeedbackEnabled() {
+        return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isFormativeFeedbackEnabled();
     }
 
     public Set<TutorialGroup> getTutorialGroups() {

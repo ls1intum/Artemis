@@ -45,10 +45,13 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             SELECT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
-                LEFT JOIN FETCH e.exerciseGroup
-                LEFT JOIN FETCH e.course
+                LEFT JOIN FETCH e.exerciseGroup eg
+                LEFT JOIN FETCH eg.exam
+                LEFT JOIN FETCH e.course eCourse
+                LEFT JOIN FETCH eCourse.athenaConfig
                 LEFT JOIN FETCH se.exam ex
-                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.course exCourse
+                LEFT JOIN FETCH exCourse.athenaConfig
                 LEFT JOIN FETCH se.user
             WHERE se.id = :studentExamId
             """)

@@ -410,7 +410,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     ) {
                         if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === true) {
                             this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful', { title: this.exercise?.title ?? '' });
-                        } else {
+                        } else if (getAllResultsOfAllSubmissions(changedParticipation.submissions)?.last()?.successful === false) {
                             this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                         }
                     }

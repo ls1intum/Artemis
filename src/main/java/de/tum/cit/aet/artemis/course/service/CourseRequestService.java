@@ -310,7 +310,6 @@ public class CourseRequestService {
         course.setEnrollmentEnabled(Boolean.FALSE);
         course.setLearningPathsEnabled(false);
         course.setStudentCourseAnalyticsDashboardEnabled(false);
-        course.setRestrictedAthenaModulesAccess(false);
         course.setAccuracyOfScores(1);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 

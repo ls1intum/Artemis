@@ -601,10 +601,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         String suffix = UUID.randomUUID().toString().substring(0, 8);
         UpdateTextExerciseDTO malformedCreateDto = new UpdateTextExerciseDTO(null, "text-create-" + suffix, "channel-" + suffix, "short-" + suffix,
                 textExercise.getProblemStatement(), textExercise.getCategories(), textExercise.getDifficulty(), textExercise.getMaxPoints(), textExercise.getBonusPoints(),
-                textExercise.getIncludedInOverallScore(), textExercise.getAllowComplaintsForAutomaticAssessments(), textExercise.getAllowFeedbackRequests(),
-                textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(), textExercise.getFeedbackSuggestionModule(),
-                textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(), textExercise.getDueDate(), textExercise.getAssessmentDueDate(),
-                textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(), null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
+                textExercise.getIncludedInOverallScore(), textExercise.getAllowComplaintsForAutomaticAssessments(), textExercise.getPresentationScoreEnabled(),
+                textExercise.getSecondCorrectionEnabled(), textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(),
+                textExercise.getDueDate(), textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(),
+                null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
 
         request.putWithResponseBody("/api/text/text-exercises", malformedCreateDto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -615,10 +615,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         UpdateTextExerciseDTO malformedUpdateDto = new UpdateTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), textExercise.getChannelName(),
                 textExercise.getShortName(), textExercise.getProblemStatement(), textExercise.getCategories(), textExercise.getDifficulty(), textExercise.getMaxPoints(),
                 textExercise.getBonusPoints(), textExercise.getIncludedInOverallScore(), textExercise.getAllowComplaintsForAutomaticAssessments(),
-                textExercise.getAllowFeedbackRequests(), textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(),
-                textExercise.getFeedbackSuggestionModule(), textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(),
-                textExercise.getDueDate(), textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(),
-                null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
+                textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(), textExercise.getGradingInstructions(), textExercise.getReleaseDate(),
+                textExercise.getStartDate(), textExercise.getDueDate(), textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(),
+                textExercise.getExampleSolution(), course.getId(), null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
 
         request.putWithResponseBody("/api/text/text-exercises", malformedUpdateDto, TextExercise.class, HttpStatus.BAD_REQUEST);
     }

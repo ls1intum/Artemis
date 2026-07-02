@@ -238,9 +238,19 @@
                 "label": "Übersichtsseite zur Kursanalyse für Studierende aktiviert",
                 "tooltip": "Aktiviert die Übersichtsseite zur Kursanalyse für Studierende, Tutor:innen und Lehrende. Die Übersichtsseite ermöglicht es den Nutzern, ihren Fortschritt und ihre Leistung im Kurs zu verfolgen."
             },
-            "restrictedAthenaModulesAccess": {
-                "label": "Zugriff auf geschützte Athena-Module aktiviert",
-                "tooltip": "Wenn diese Option ausgewählt ist, können die Übungen des Kurses auch geschützte Athena-Module für die Feedbackerstellung verwenden."
+            "athenaConfig": {
+                "aiFeedbackEnabled": {
+                    "label": "KI-gestütztes Feedback für Aufgaben aktiviert",
+                    "tooltip": "Wenn aktiviert, können KI-Feedbackfunktionen von Athena für diesen Kurs genutzt werden."
+                },
+                "gradingFeedbackEnabled": {
+                    "label": "Bewertungsfeedback-Vorschläge aktiviert",
+                    "tooltip": "Wenn aktiviert, schlägt Athena Tutor:innen Feedback zu Einreichungen für alle Aufgabentypen vor."
+                },
+                "formativeFeedbackEnabled": {
+                    "label": "Formatives Feedback-Anfragen aktiviert",
+                    "tooltip": "Wenn aktiviert, können Studierende vor der Einreichungsfrist vorläufiges KI-Feedback von Athena anfordern."
+                }
             },
             "onlineCourse": {
                 "title": "Onlinekurs",

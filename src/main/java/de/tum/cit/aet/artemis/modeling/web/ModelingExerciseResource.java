@@ -631,16 +631,12 @@ public class ModelingExerciseResource {
         if (updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
         }
-        if (updateModelingExerciseDTO.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(updateModelingExerciseDTO.allowFeedbackRequests());
-        }
         if (updateModelingExerciseDTO.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(updateModelingExerciseDTO.presentationScoreEnabled());
         }
         if (updateModelingExerciseDTO.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(updateModelingExerciseDTO.secondCorrectionEnabled());
         }
-        exercise.setFeedbackSuggestionModule(updateModelingExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
 
         exercise.setExampleSolutionModel(updateModelingExerciseDTO.exampleSolutionModel());

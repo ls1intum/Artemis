@@ -19,7 +19,6 @@ export interface UpdateFileUploadExerciseDto {
     bonusPoints?: number;
     includedInOverallScore?: IncludedInOverallScore;
     allowComplaintsForAutomaticAssessments?: boolean;
-    allowFeedbackRequests?: boolean;
     presentationScoreEnabled?: boolean;
     secondCorrectionEnabled?: boolean;
 
@@ -37,7 +36,6 @@ export interface UpdateFileUploadExerciseDto {
 
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
-    feedbackSuggestionModule?: string;
     competencyLinks?: CompetencyLinkDTO[];
 }
 
@@ -59,7 +57,6 @@ export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExer
         bonusPoints: fileUploadExercise.bonusPoints,
         includedInOverallScore: fileUploadExercise.includedInOverallScore,
         allowComplaintsForAutomaticAssessments: fileUploadExercise.allowComplaintsForAutomaticAssessments ?? false,
-        allowFeedbackRequests: fileUploadExercise.allowFeedbackRequests ?? false,
         presentationScoreEnabled: fileUploadExercise.presentationScoreEnabled ?? false,
         secondCorrectionEnabled: fileUploadExercise.secondCorrectionEnabled ?? false,
         releaseDate: convertDateFromClient(fileUploadExercise.releaseDate),
@@ -73,7 +70,6 @@ export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExer
         exerciseGroupId: fileUploadExercise.exerciseGroup?.id,
         gradingCriteria: fileUploadExercise.gradingCriteria ?? [],
         gradingInstructions: fileUploadExercise.gradingInstructions,
-        feedbackSuggestionModule: fileUploadExercise.feedbackSuggestionModule,
         competencyLinks: (fileUploadExercise.competencyLinks ?? []).map((link) => ({
             competency: { id: link.competency!.id! },
             weight: link.weight ?? 1,

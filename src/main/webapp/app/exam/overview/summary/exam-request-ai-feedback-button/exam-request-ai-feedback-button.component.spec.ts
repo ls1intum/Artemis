@@ -44,7 +44,7 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
     let examParticipationService: ExamParticipationService;
 
     const user = { id: 1, name: 'Test User' } as User;
-    const course = { id: 1, accuracyOfScores: 2 } as Course;
+    const course = { id: 1, accuracyOfScores: 2, athenaFormativeFeedbackEnabled: true } as Course;
 
     const exam = { id: 1, title: 'ExamForTesting', testExam: false, course } as Exam;
     const testExam = { id: 2, title: 'TestExam for Testing', testExam: true, course } as Exam;
@@ -57,7 +57,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
         type: ExerciseType.TEXT,
         studentParticipations: [textParticipation],
         exerciseGroup,
-        feedbackSuggestionModule: 'module_text_test',
     } as TextExercise;
 
     const studentExam = { id: 1, exam, user, exercises: [textExercise] } as StudentExam;
@@ -133,17 +132,12 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             expect(button).toBeNull();
         });
 
-        it('should hide the button when no exercise has a feedback suggestion module configured', () => {
+        it('should hide the button when course-level Athena feedback is disabled', () => {
             enableAthena();
 
-            const exerciseWithoutModule = {
-                id: 1,
-                type: ExerciseType.TEXT,
-                studentParticipations: [textParticipation],
-                exerciseGroup,
-            } as TextExercise;
-
-            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [exerciseWithoutModule] }));
+            const courseWithoutAthena = { id: 1, accuracyOfScores: 2 } as Course;
+            const examWithoutAthena = { ...testExam, course: courseWithoutAthena };
+            setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exam: examWithoutAthena }));
             fixture.detectChanges();
 
             const button = fixture.debugElement.query(By.css('#requestAIFeedbackButton'));
@@ -318,7 +312,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 type: ExerciseType.TEXT,
                 studentParticipations: [athenaTextParticipation],
                 exerciseGroup,
-                feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [athenaTextExercise] }));
@@ -495,7 +488,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 type: ExerciseType.TEXT,
                 studentParticipations: [filledParticipation],
                 exerciseGroup,
-                feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
             setStudentExam(withOverrides(studentExamForTestExam, { submitted: true, exercises: [filledExercise] }));
@@ -551,7 +543,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             type: ExerciseType.TEXT,
             studentParticipations: [nonEmptyTextParticipation],
             exerciseGroup,
-            feedbackSuggestionModule: 'module_text_test',
         } as TextExercise;
         const modelingSubmission = { id: 5, submitted: true, model: '{"version":"3.0.0","type":"ClassDiagram","elements":{"a":{}}}' } as ModelingSubmission;
         const modelingExercise = {
@@ -559,7 +550,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
             type: ExerciseType.MODELING,
             studentParticipations: [{ id: 2, student: user, submissions: [modelingSubmission] } as StudentParticipation],
             exerciseGroup,
-            feedbackSuggestionModule: 'module_modeling_test',
         } as TextExercise;
 
         function configureMultiExercise(): BehaviorSubject<Result | undefined>[] {
@@ -633,7 +623,6 @@ describe('ExamRequestAiFeedbackButtonComponent', () => {
                 type: ExerciseType.TEXT,
                 studentParticipations: [seededParticipation],
                 exerciseGroup,
-                feedbackSuggestionModule: 'module_text_test',
             } as TextExercise;
 
             localStorage.setItem(feedbackRequestedKey, 'true');

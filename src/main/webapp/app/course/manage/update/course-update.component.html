@@ -387,18 +387,64 @@
                     </div>
                 }
                 @if (isAdmin() && isAthenaEnabled()) {
-                    <div class="form-group form-check">
+                    <div class="nested-form-group-head form-check">
                         <input
                             type="checkbox"
                             class="form-check-input"
-                            name="restrictedAthenaModulesEnabled"
-                            id="field_restrictedAthenaModulesEnabled"
-                            [checked]="course.restrictedAthenaModulesAccess"
-                            (change)="changeRestrictedAthenaModulesEnabled()"
+                            name="athenaFeedbackEnabled"
+                            id="field_athenaFeedbackEnabled"
+                            [checked]="athenaFeedbackEnabled()"
+                            (change)="changeAthenaFeedbackEnabled()"
                         />
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.restrictedAthenaModulesAccess.label" for="field_restrictedAthenaModulesEnabled"></label>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.restrictedAthenaModulesAccess.tooltip' | artemisTranslate }}" />
+                        <label class="form-check-label" jhiTranslate="artemisApp.course.athenaConfig.aiFeedbackEnabled.label" for="field_athenaFeedbackEnabled"></label>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-secondary"
+                            ngbTooltip="{{ 'artemisApp.course.athenaConfig.aiFeedbackEnabled.tooltip' | artemisTranslate }}"
+                        />
                     </div>
+                    @if (athenaFeedbackEnabled()) {
+                        <div class="nested-form-group form-check">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                name="athenaFormativeFeedbackEnabled"
+                                id="field_athenaFormativeFeedbackEnabled"
+                                [checked]="course.athenaFormativeFeedbackEnabled"
+                                (change)="changeAthenaFormativeFeedback()"
+                            />
+                            <label
+                                class="form-check-label"
+                                jhiTranslate="artemisApp.course.athenaConfig.formativeFeedbackEnabled.label"
+                                for="field_athenaFormativeFeedbackEnabled"
+                            ></label>
+                            <fa-icon
+                                [icon]="faQuestionCircle"
+                                class="text-secondary"
+                                ngbTooltip="{{ 'artemisApp.course.athenaConfig.formativeFeedbackEnabled.tooltip' | artemisTranslate }}"
+                            />
+                        </div>
+                        <div class="nested-form-group form-check">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                name="athenaGradingFeedbackEnabled"
+                                id="field_athenaGradingFeedbackEnabled"
+                                [checked]="course.athenaGradingFeedbackEnabled"
+                                (change)="changeAthenaGradingFeedback()"
+                            />
+                            <label
+                                class="form-check-label"
+                                jhiTranslate="artemisApp.course.athenaConfig.gradingFeedbackEnabled.label"
+                                for="field_athenaGradingFeedbackEnabled"
+                            ></label>
+                            <fa-icon
+                                [icon]="faQuestionCircle"
+                                class="text-secondary"
+                                ngbTooltip="{{ 'artemisApp.course.athenaConfig.gradingFeedbackEnabled.tooltip' | artemisTranslate }}"
+                            />
+                        </div>
+                    }
                 }
                 <!-- Not part of model -->
                 <div class="nested-form-group-head form-check">

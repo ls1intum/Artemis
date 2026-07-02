@@ -15,11 +15,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO;
@@ -449,6 +447,13 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     Optional<Exercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "course.athenaConfig" })
+    Optional<Exercise> findWithCourseAthenaConfigById(Long exerciseId);
+
+    default Exercise findWithCourseAthenaConfigByIdElseThrow(Long exerciseId) {
+        return getValueElseThrow(findWithCourseAthenaConfigById(exerciseId), exerciseId);
+    }
+
     /**
      * Returns the title of the exercise with the given id.
      *
@@ -634,38 +639,36 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(@Param("userId") long userId);
 
     /**
-     * Finds all exercises filtered by feedback suggestion modules not null and due date.
+     * Finds all exercises where grading feedback suggestions (Athena) are enabled via the course config and due date is after the given date.
      *
      * @param dueDate - filter by due date
      * @return Set of Exercises
      */
-    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime dueDate);
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            LEFT JOIN e.course c
+            LEFT JOIN c.athenaConfig ca
+            LEFT JOIN e.exerciseGroup eg
+            LEFT JOIN eg.exam exam
+            LEFT JOIN exam.course ec
+            LEFT JOIN ec.athenaConfig eca
+            WHERE e.dueDate > :dueDate
+                AND (
+                    (c IS NOT NULL AND ca IS NOT NULL AND ca.gradingFeedbackEnabled = true)
+                    OR (eg IS NOT NULL AND eca IS NOT NULL AND eca.gradingFeedbackEnabled = true)
+                )
+            """)
+    Set<Exercise> findAllWithGradingFeedbackEnabledAndDueDateIsAfter(@Param("dueDate") ZonedDateTime dueDate);
 
     /**
-     * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
+     * Find all exercises where Athena grading feedback is enabled and due date is in the future.
      *
      * @return Set of Exercises
      */
     default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
-        return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
+        return findAllWithGradingFeedbackEnabledAndDueDateIsAfter(ZonedDateTime.now());
     }
-
-    /**
-     * Revokes the access by setting all exercises that currently utilize a restricted module to null.
-     *
-     * @param courseId                           The course for which the access should be revoked
-     * @param restrictedFeedbackSuggestionModule Collection of restricted modules
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE Exercise e
-            SET e.feedbackSuggestionModule = NULL
-            WHERE e.course.id = :courseId
-                  AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
-            """)
-    void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
-            @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
     /**
      * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}

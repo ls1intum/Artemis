@@ -228,8 +228,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.isAthenaEnabled()) {
             athenaDetails.push({
                 type: DetailType.Boolean,
-                title: 'artemisApp.course.restrictedAthenaModulesAccess.label',
-                data: { boolean: currentCourse?.restrictedAthenaModulesAccess },
+                title: 'artemisApp.course.athenaConfig.gradingFeedbackEnabled.label',
+                data: { boolean: currentCourse?.athenaGradingFeedbackEnabled },
+            });
+            athenaDetails.push({
+                type: DetailType.Boolean,
+                title: 'artemisApp.course.athenaConfig.formativeFeedbackEnabled.label',
+                data: { boolean: currentCourse?.athenaFormativeFeedbackEnabled },
             });
         }
         return athenaDetails;

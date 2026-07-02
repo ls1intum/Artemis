@@ -131,8 +131,10 @@
             "programmingExercisesDisabled": "Feedback requests for programming exercises are disabled.",
             "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
             "athenaNotEnabled": "Feedback requests for text and modeling exercises are unavailable.",
-            "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true)."
+            "athenaNotEnabled_detail": "The Athena module feature is not enabled (set artemis.athena.enabled=true).",
+            "notEnabled": "AI feedback requests are not enabled for this course."
         },
+        "athenaGradingFeedbackNotEnabled": "Athena grading feedback is not enabled for this course.",
         "teamExercise": {
             "cannotStart": "Team exercise cannot be started without assigned team."
         },
@@ -187,7 +189,6 @@
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
-        "missingFeedbackSuggestionModule": "Exercise does not have a feedback suggestion module configured.",
         "examExerciseNoAccessToAthena": "Exam exercises do not have access to Athena.",
         "noAccessToAthenaModule": "The exercise has no access to the selected Athena module.",
         "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed.",
