@@ -555,16 +555,23 @@ public class SearchableEntityWeaviateService {
         try {
             var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
             String uuid = WeaviateUuidUtil.deterministicUuid(type, entityId);
-            if (collection.data.exists(uuid)) {
+            Object releaseDate = properties.get(SearchableEntitySchema.Properties.RELEASE_DATE);
+            log.debug("[upsert] type={} entityId={} uuid={} release_date={} propertyKeys={}", type, entityId, uuid, releaseDate, properties.keySet());
+            boolean exists = collection.data.exists(uuid);
+            log.debug("[upsert] exists={} for type={} entityId={}", exists, type, entityId);
+            if (exists) {
                 collection.data.replace(uuid, r -> r.properties(properties));
+                log.debug("[upsert] replace completed for type={} entityId={}", type, entityId);
             }
             else {
                 try {
                     collection.data.insert(properties, obj -> obj.uuid(uuid));
+                    log.debug("[upsert] insert completed for type={} entityId={}", type, entityId);
                 }
                 catch (WeaviateApiException e) {
                     if (e.getMessage() != null && e.getMessage().contains("already exists")) {
                         collection.data.replace(uuid, r -> r.properties(properties));
+                        log.warn("[upsert] insert race — replace fallback completed for type={} entityId={}", type, entityId);
                     }
                     else {
                         throw e;

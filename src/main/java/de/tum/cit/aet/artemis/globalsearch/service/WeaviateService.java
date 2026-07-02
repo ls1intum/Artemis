@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchem
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateReferenceDefinition;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
@@ -90,6 +91,17 @@ public class WeaviateService {
      */
     private String resolveCollectionName(String baseName) {
         return properties.collectionPrefix() + baseName;
+    }
+
+    /**
+     * Returns the fully-qualified Weaviate collection name for searchable entities,
+     * including any configured prefix. Used by Pyris so it can query the correct collection
+     * without having to mirror the prefix configuration.
+     *
+     * @return the resolved collection name (e.g. "Artemis_SearchableEntities")
+     */
+    public String getSearchableEntitiesCollectionName() {
+        return resolveCollectionName(SearchableEntitySchema.COLLECTION_NAME);
     }
 
     /**
@@ -320,10 +332,17 @@ public class WeaviateService {
             case INT -> Property.integer(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case TEXT -> Property.text(definition.name(), property -> {
                 var builder = property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable());
-                // Trigram tokenization indexes every 3-char sliding window of text values, enabling
-                // BM25 to match partial words and typos (e.g. "strateg" → "strategy").
                 if (definition.indexSearchable()) {
+                    // Trigram tokenization indexes every 3-char sliding window of text values, enabling
+                    // BM25 to match partial words and typos (e.g. "strateg" → "strategy").
                     builder.tokenization(Tokenization.TRIGRAM);
+                }
+                else if (definition.indexFilterable()) {
+                    // Field tokenization stores the whole value as a single token, so equality
+                    // filters are exact-match. Without this, Weaviate's default word tokenizer splits
+                    // on non-alphanumeric chars: "lecture_unit" → ["lecture", "unit"], causing
+                    // type="lecture" to match lecture_unit documents and bypass access checks.
+                    builder.tokenization(Tokenization.FIELD);
                 }
                 return builder;
             });

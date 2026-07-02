@@ -36,7 +36,6 @@ describe('IrisSearchAnswerService', () => {
 
     afterEach(() => {
         httpTesting.verify();
-        vi.restoreAllMocks();
     });
 
     it('should be created', () => {
@@ -84,7 +83,11 @@ describe('IrisSearchAnswerService', () => {
             answer: 'Signals are a reactive primitive in Angular...',
             sources: [
                 {
+                    sourceType: 'lecture_unit_slide',
+                    entityId: 1,
                     course: { id: 1, name: 'Advanced Web Development' },
+                    title: 'Introduction to Signals',
+                    snippet: 'Signals are a reactive primitive...',
                     lecture: { id: 1, name: 'Angular Basics' },
                     lectureUnit: {
                         id: 1,
@@ -94,7 +97,6 @@ describe('IrisSearchAnswerService', () => {
                         sourceType: 'lecture_unit_slide',
                         queryParams: { unit: 1, page: 3 },
                     },
-                    snippet: 'Signals are a reactive primitive...',
                 },
             ],
         };
@@ -114,18 +116,15 @@ describe('IrisSearchAnswerService', () => {
 
     it('should error if the WebSocket does not respond within the timeout', () => {
         vi.useFakeTimers();
-        try {
-            let errorReceived: unknown;
-            service.ask('timed out query').subscribe({ error: (e) => (errorReceived = e) });
+        let errorReceived: unknown;
+        service.ask('timed out query').subscribe({ error: (e) => (errorReceived = e) });
 
-            const req = httpTesting.expectOne('api/iris/search-answer');
-            req.flush(null, { status: 202, statusText: 'Accepted' });
+        const req = httpTesting.expectOne('api/iris/search-answer');
+        req.flush(null, { status: 202, statusText: 'Accepted' });
 
-            vi.advanceTimersByTime(IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS + 1);
+        vi.advanceTimersByTime(IRIS_SEARCH_ANSWER_WS_TIMEOUT_MS + 1);
 
-            expect(errorReceived).toBeDefined();
-        } finally {
-            vi.useRealTimers();
-        }
+        expect(errorReceived).toBeDefined();
+        vi.useRealTimers();
     });
 });
