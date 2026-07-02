@@ -603,7 +603,7 @@ export class ExerciseService {
             case ExerciseType.MODELING:
                 modelingExercise = exercise as ModelingExercise;
                 if (modelingExercise.exampleSolutionModel) {
-                    exampleSolutionUML = JSON.parse(modelingExercise.exampleSolutionModel);
+                    exampleSolutionUML = parseJson(modelingExercise.exampleSolutionModel);
                 }
                 break;
             case ExerciseType.TEXT:
