@@ -189,16 +189,18 @@ input:-webkit-autofill:active {
     box-shadow: inset 0 0 20px 20px $input-color;
 }
 
-// Feature toggle cards & course overview cards
+// Feature toggle cards & course overview cards. Backgrounds track the cool slate surface ramp (same lightness
+// steps as before, with the slate tint) so they sit consistently on the dark chrome instead of reading as
+// warmer neutral grays.
 :root {
     --feature-card-active-bg: #2e4a3a;
     --feature-card-disabled-bg: #4a2e2e;
-    --feature-card-inactive-bg: #3a3a3a;
+    --feature-card-inactive-bg: #343a42;
     --feature-card-heading-color: #fff;
-    --onboarding-page-bg: #1a1a1a;
-    --onboarding-content-bg: #1a1a1a;
-    --onboarding-input-bg: #000;
-    --overview-card-bg: #1a1a1a;
-    --overview-card-nested-bg: #3a3a3a;
-    --overview-card-hover-bg: #4a4a4a;
+    --onboarding-page-bg: #16191d;
+    --onboarding-content-bg: #16191d;
+    --onboarding-input-bg: #101214;
+    --overview-card-bg: #16191d;
+    --overview-card-nested-bg: #343a42;
+    --overview-card-hover-bg: #434c56;
 }
