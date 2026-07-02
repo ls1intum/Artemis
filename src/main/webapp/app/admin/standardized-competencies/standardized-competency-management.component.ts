@@ -46,6 +46,7 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
     },
     // No OnPush: the knowledge-area tree state lives in a non-signal dataSource (and knowledgeAreasForSelect)
     // mutated in subscribe callbacks; OnPush would skip those mutations and render stale until a signal write happens.
+    // (consistency gap: migrate the shared tree state to signals in a follow-up)
     imports: [
         NgTemplateOutlet,
         TranslateDirective,

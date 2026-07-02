@@ -61,11 +61,7 @@
                                 </button>
                                 <p-popover #headerPopover [dismissable]="true" styleClass="md-action-popover">
                                     @for (action of displayedActions().header; track action.id) {
-                                        <button
-                                            type="button"
-                                            class="block w-full px-4 py-1 text-start whitespace-nowrap cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-800 disabled:opacity-60 disabled:cursor-default"
-                                            (click)="action.executeInCurrentEditor(); headerPopover.hide()"
-                                        >
+                                        <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); headerPopover.hide()">
                                             <span [jhiTranslate]="action.translationKey"></span>
                                         </button>
                                     }
@@ -104,21 +100,12 @@
                                 <p-popover #domainPopover [dismissable]="true" styleClass="md-action-popover">
                                     @if (action.values.length) {
                                         @for (value of action.values; track value.id) {
-                                            <button
-                                                type="button"
-                                                class="block w-full px-4 py-1 text-start whitespace-nowrap cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-800 disabled:opacity-60 disabled:cursor-default"
-                                                (click)="action.executeInCurrentEditor({ selectedItem: value }); domainPopover.hide()"
-                                            >
+                                            <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value }); domainPopover.hide()">
                                                 <span>{{ value.value }}</span>
                                             </button>
                                         }
                                     } @else {
-                                        <button
-                                            type="button"
-                                            class="block w-full px-4 py-1 text-start whitespace-nowrap cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-800 disabled:opacity-60 disabled:cursor-default"
-                                            [disabled]="true"
-                                            jhiTranslate="global.generic.emptyList"
-                                        ></button>
+                                        <button type="button" class="md-dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
                                     }
                                 </p-popover>
                             </div>
@@ -148,11 +135,7 @@
                                 </button>
                                 <p-popover #aiPopover [dismissable]="true" styleClass="md-action-popover">
                                     @for (action of displayedActions().artemisIntelligence; track action.id) {
-                                        <button
-                                            type="button"
-                                            class="block w-full px-4 py-1 text-start whitespace-nowrap cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-800 disabled:opacity-60 disabled:cursor-default"
-                                            (click)="action.executeInCurrentEditor(); aiPopover.hide()"
-                                        >
+                                        <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); aiPopover.hide()">
                                             <span [jhiTranslate]="action.translationKey"></span>
                                         </button>
                                     }

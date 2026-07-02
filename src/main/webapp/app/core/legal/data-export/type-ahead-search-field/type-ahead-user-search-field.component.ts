@@ -26,7 +26,6 @@ export class TypeAheadUserSearchFieldComponent {
     readonly searchNoResults = signal(false);
     readonly searchQueryTooShort = signal(true);
 
-    /** Suggestions shown in the autocomplete dropdown. */
     readonly suggestions = signal<User[]>([]);
 
     protected readonly faCircleNotch = faCircleNotch;
@@ -36,7 +35,6 @@ export class TypeAheadUserSearchFieldComponent {
     private readonly query$ = new Subject<string>();
 
     constructor() {
-        // Wire the existing search pipeline into the suggestions signal.
         this.search(this.query$).subscribe((users) => this.suggestions.set(users));
     }
 

@@ -29,6 +29,8 @@ describe('no-primeng-component-classes', () => {
                 { code: '<button class="p-button">Delete</button>', errors: [{ messageId: 'handPaintedRoot', data: { cls: 'p-button' } }] },
                 // A root class hand-painted via PrimeNG styleClass hits the same lazy-CSS footgun.
                 { code: '<p-message styleClass="p-button"></p-message>', errors: [{ messageId: 'handPaintedRoot', data: { cls: 'p-button' } }] },
+                // Component-specific `*StyleClass` inputs pass classes through the same way — scan them too.
+                { code: '<p-tree contentStyleClass="p-button"></p-tree>', errors: [{ messageId: 'handPaintedRoot', data: { cls: 'p-button' } }] },
                 { code: '<div class="competency-selector p-inputtext p-2"></div>', errors: [{ messageId: 'handPaintedRoot', data: { cls: 'p-inputtext' } }] },
                 // Root via [class.<root>] binding (root is the attribute name).
                 { code: '<div [class.p-tag]="active"></div>', errors: [{ messageId: 'handPaintedRoot', data: { cls: 'p-tag' } }] },

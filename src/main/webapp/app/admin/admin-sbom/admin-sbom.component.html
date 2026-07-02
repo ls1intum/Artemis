@@ -261,7 +261,7 @@
             </tr>
         </ng-template>
         <ng-template #body let-component>
-            <tr [class]="component.componentVulnerabilities?.length ? 'bg-(--artemis-alert-danger-background) text-(--artemis-alert-danger-color)' : ''">
+            <tr>
                 <td>
                     <strong>{{ component.name }}</strong>
                     @if (component.description) {

@@ -61,6 +61,6 @@ $menu-width-open: 220px;
 
 @media print {
     :host {
-        display: none; // Hide the sidebar when printing
+        display: none;
     }
 }

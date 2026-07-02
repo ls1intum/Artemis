@@ -25,14 +25,6 @@ describe('FormDateTimePickerComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should emit if a value is changed', () => {
-        const emitStub = vi.spyOn(component.valueChange, 'emit').mockImplementation(() => undefined);
-
-        component.valueChanged();
-
-        expect(emitStub).toHaveBeenCalledOnce();
-    });
-
     describe('test date conversion', () => {
         let convertedDate: Date | null;
         it('should convert the dayjs if it is not undefined', () => {

@@ -31,7 +31,14 @@ describe('no-raw-tailwind-color-palette', () => {
                 // PrimeNG styleClass passes colour utilities through to the host — scan it too.
                 { code: '<p-message styleClass="text-green-500"></p-message>', errors: [{ messageId: 'rawPalette', data: { cls: 'text-green-500' } }] },
                 { code: '<p-message [styleClass]="\'text-(--p-red-500)\'"></p-message>', errors: [{ messageId: 'primitivePalette', data: { cls: 'text-(--p-red-500)' } }] },
+                // Component-specific `*StyleClass` inputs pass colour utilities through the same way — scan them too.
+                { code: '<p-tree contentStyleClass="text-green-500"></p-tree>', errors: [{ messageId: 'rawPalette', data: { cls: 'text-green-500' } }] },
                 { code: '<div class="bg-red-100"></div>', errors: [{ messageId: 'rawPalette', data: { cls: 'bg-red-100' } }] },
+                // Infixed color prefixes: directional borders, ring-offset, and divide all carry the color step after an infix.
+                { code: '<div class="border-t-red-500"></div>', errors: [{ messageId: 'rawPalette', data: { cls: 'border-t-red-500' } }] },
+                { code: '<div class="ring-offset-blue-200"></div>', errors: [{ messageId: 'rawPalette', data: { cls: 'ring-offset-blue-200' } }] },
+                { code: '<div class="divide-x-red-500"></div>', errors: [{ messageId: 'rawPalette', data: { cls: 'divide-x-red-500' } }] },
+                { code: '<div class="border-t-(--p-red-500)"></div>', errors: [{ messageId: 'primitivePalette', data: { cls: 'border-t-(--p-red-500)' } }] },
                 // Arbitrary hex color value.
                 { code: '<div class="bg-[#f00]"></div>', errors: [{ messageId: 'rawPalette', data: { cls: 'bg-[#f00]' } }] },
                 // The older arbitrary brand-state form is superseded by the named state-* utilities.

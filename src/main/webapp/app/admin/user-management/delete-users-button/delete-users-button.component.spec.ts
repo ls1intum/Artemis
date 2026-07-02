@@ -58,9 +58,9 @@ describe('DeleteUsersButtonComponent', () => {
     });
 
     describe('rendering', () => {
-        it('should render a PrimeNG delete button that triggers loadUserList on click', () => {
+        it('should render a PrimeNG delete button that triggers loadUserList on click', async () => {
             TestBed.resetTestingModule();
-            return TestBed.configureTestingModule({
+            await TestBed.configureTestingModule({
                 imports: [DeleteUsersButtonComponent],
                 providers: [
                     { provide: TranslateService, useClass: MockTranslateService },
@@ -68,21 +68,19 @@ describe('DeleteUsersButtonComponent', () => {
                     provideHttpClient(),
                     provideHttpClientTesting(),
                 ],
-            })
-                .compileComponents()
-                .then(() => {
-                    const renderFixture = TestBed.createComponent(DeleteUsersButtonComponent);
-                    const renderComponent = renderFixture.componentInstance;
-                    const loadUserListSpy = vi.spyOn(renderComponent, 'loadUserList').mockImplementation(() => {});
-                    renderFixture.detectChanges();
+            }).compileComponents();
 
-                    const button = renderFixture.nativeElement.querySelector('[data-testid="delete-users-button"]');
-                    expect(button).toBeTruthy();
+            const renderFixture = TestBed.createComponent(DeleteUsersButtonComponent);
+            const renderComponent = renderFixture.componentInstance;
+            const loadUserListSpy = vi.spyOn(renderComponent, 'loadUserList').mockImplementation(() => {});
+            renderFixture.detectChanges();
 
-                    const nativeButton: HTMLButtonElement = button.querySelector('button') ?? button;
-                    nativeButton.click();
-                    expect(loadUserListSpy).toHaveBeenCalledOnce();
-                });
+            const button = renderFixture.nativeElement.querySelector('[data-testid="delete-users-button"]');
+            expect(button).toBeTruthy();
+
+            const nativeButton: HTMLButtonElement = button.querySelector('button') ?? button;
+            nativeButton.click();
+            expect(loadUserListSpy).toHaveBeenCalledOnce();
         });
     });
 

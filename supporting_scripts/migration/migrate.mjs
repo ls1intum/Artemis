@@ -93,6 +93,12 @@ if (cmd === 'status') {
         process.exit(2);
     }
     const base = resolve(APP, arg.replace(/^.*\/app\//, ''));
+    // Guard against paths that escape the app tree (e.g. `../..`) or a typo-under-APP that resolves inside
+    // APP but does not exist. The startsWith check alone misses the latter, so pair it with existsSync.
+    if ((!base.startsWith(APP + '/') && base !== APP) || !existsSync(base)) {
+        console.error(`error: ${arg} does not resolve to an existing path under src/main/webapp/app`);
+        process.exit(2);
+    }
     const html = scan(walk(base, '.html'), bootstrapClassesInHtml);
     const scss = scan(walk(base, '.scss'), bootstrapInScss);
     for (const [f, found] of html.perFile) console.log(`  [html] ${relative(APP, f)} — ${[...new Set(found)].join(', ')}`);

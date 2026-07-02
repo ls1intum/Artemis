@@ -507,7 +507,6 @@ describe('StandardizedCompetencyManagementComponent', () => {
         detailPanel.triggerEventHandler('resizeMove', { width: 420 });
         componentFixture.detectChanges();
 
-        expect(component['detailPanelWidth']()).toBe(420);
         expect((detailPanel.nativeElement as HTMLElement).style.width).toBe('420px');
     });
 

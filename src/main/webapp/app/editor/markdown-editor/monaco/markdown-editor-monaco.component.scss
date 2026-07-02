@@ -60,6 +60,31 @@
     }
 }
 
+// Popover dropdown item (headers, domain options, AI assistance). Extracted from an identical utility
+// string that was duplicated across the four popover menus; kept as a shared class for the same reason as
+// `.md-toolbar-btn` above — it carries `:hover`/`:disabled` pseudo-states a per-element utility cannot express cleanly.
+.md-dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 0.25rem 1rem;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover {
+        background-color: var(--p-surface-100);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: default;
+    }
+}
+
+:host-context([prime-ng-use-dark-theme='true']) .md-dropdown-item:hover {
+    background-color: var(--p-surface-800);
+}
+
 // Action dropdowns (headers, domain options, AI assistance) migrated from ng-bootstrap NgbDropdown
 // to a PrimeNG Popover. The popover is body-appended, so its content must be styled via ::ng-deep on the
 // styleClass target (pre-existing; not a Tailwind utility).

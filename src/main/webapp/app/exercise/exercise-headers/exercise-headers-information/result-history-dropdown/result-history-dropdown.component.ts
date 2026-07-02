@@ -208,10 +208,6 @@ export class ResultHistoryDropdownComponent {
         return ResultService.evaluateBadge(participation, result);
     }
 
-    getBadgeSeverity(result: Result): 'success' | 'info' | 'secondary' {
-        return this.getBadge(result).severity;
-    }
-
     isRowClickable(): boolean {
         const type = this.exercise().type;
         return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.QUIZ;

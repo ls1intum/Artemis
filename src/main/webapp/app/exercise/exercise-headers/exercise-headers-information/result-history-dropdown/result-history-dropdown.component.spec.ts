@@ -226,13 +226,6 @@ describe('ResultHistoryDropdownComponent', () => {
         });
     });
 
-    describe('getBadgeSeverity', () => {
-        it('returns the severity of the evaluated badge', () => {
-            vi.spyOn(ResultService, 'evaluateBadge').mockReturnValue({ severity: 'success', text: 'graded', tooltip: '' });
-            expect(component.getBadgeSeverity(createResult(1, 100))).toBe('success');
-        });
-    });
-
     describe('isRowClickable', () => {
         it('should return true for TEXT exercises', () => {
             fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, course: { id: 1 } } as Exercise);

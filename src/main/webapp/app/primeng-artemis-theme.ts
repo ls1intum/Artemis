@@ -56,6 +56,9 @@ export const AuraArtemis = definePreset(Aura, {
             950: 'color-mix(in srgb, var(--primary) 10%, black)',
         },
     },
+    // definePreset's semantic tree only rebrands primary/surface, so the primitive ramps that severity
+    // components read (green/red/yellow/orange/cyan) can't be reached through it — they must be remapped
+    // to Artemis' state colors via this raw-CSS escape hatch.
     // Use CSS to override primitive colors used by severity components
     css: `
         :root {

@@ -4,14 +4,14 @@
     </label>
 }
 @if (labelTooltip()) {
-    <fa-stack class="text-secondary icon-full-size" [pTooltip]="labelTooltip()">
+    <fa-stack class="text-muted-color icon-full-size" [pTooltip]="labelTooltip()">
         <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
     </fa-stack>
 }
 @if (shouldDisplayTimeZoneWarning()) {
     <fa-stack pTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate: { timeZone: currentTimeZone } }}" class="icon-full-size">
-        <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey" />
-        <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary" />
+        <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-muted-color" />
+        <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-muted-color" />
     </fa-stack>
 }
 <div class="flex relative" data-testid="date-picker-wrapper" [class.invalid-date-input]="showErrorBorder()">
