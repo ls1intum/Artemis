@@ -40,6 +40,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
@@ -286,6 +288,46 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
             throw new PyrisConnectorException("Could not fetch response from Pyris");
+        }
+    }
+
+    /**
+     * Executes a lightweight lecture metadata webhook in Pyris.
+     *
+     * @param dto The DTO sent as a body for the execution
+     */
+    public void executeLectureMetadataWebhook(PyrisLectureUnitMetadataWebhookDTO dto) {
+        var endpoint = "/api/v1/webhooks/lectures/metadata";
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
+        }
+        catch (HttpStatusCodeException e) {
+            log.error("Failed to send lecture unit metadata {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send lecture unit metadata {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
+            throw new PyrisConnectorException("Could not send lecture metadata to Pyris");
+        }
+    }
+
+    /**
+     * Executes a lightweight lecture visibility webhook in Pyris.
+     *
+     * @param dto The DTO sent as a body for the execution
+     */
+    public void executeLectureVisibilityWebhook(PyrisLectureUnitVisibilityWebhookDTO dto) {
+        var endpoint = "/api/v1/webhooks/lectures/visibility";
+        try {
+            restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
+        }
+        catch (HttpStatusCodeException e) {
+            log.error("Failed to send lecture unit visibility {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to send lecture unit visibility {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
+            throw new PyrisConnectorException("Could not send lecture visibility to Pyris");
         }
     }
 

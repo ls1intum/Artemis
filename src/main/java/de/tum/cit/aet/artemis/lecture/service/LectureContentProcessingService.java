@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -107,6 +108,24 @@ public class LectureContentProcessingService {
     public void triggerProcessingForMetadataChange(AttachmentVideoUnit unit) {
         SecurityUtils.setAuthorizationObject();
         doTriggerProcessing(unit, Optional.empty(), true);
+    }
+
+    /**
+     * Routes an attachment video unit update to the cheapest Pyris synchronization path that matches the classified change.
+     *
+     * @param attachmentVideoUnit the attachment video unit to synchronize
+     * @param updateKind          the classified update kind
+     */
+    public void triggerProcessingForUpdateKind(AttachmentVideoUnit attachmentVideoUnit, LectureContentUpdateKind updateKind) {
+        switch (updateKind) {
+            case NONE -> {
+                return;
+            }
+            case METADATA -> irisLectureApi.ifPresent(api -> api.updateLectureUnitMetadataInPyris(attachmentVideoUnit));
+            case VISIBILITY -> irisLectureApi.ifPresent(api -> api.updateLectureUnitVisibilityInPyris(attachmentVideoUnit));
+            case CONTENT -> triggerProcessing(attachmentVideoUnit);
+            case DELETE -> handleUnitsDeletion(List.of(attachmentVideoUnit));
+        }
     }
 
     /**

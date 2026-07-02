@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,6 +29,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisSlideVisibilityDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
@@ -41,6 +45,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.videosource.service.ResolvedVideo;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
@@ -138,6 +143,33 @@ public class PyrisWebhookService {
                 lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, videoUrl, resolved.type());
     }
 
+    private PyrisLectureUnitMetadataWebhookDTO buildMetadataDto(AttachmentVideoUnit attachmentVideoUnit) {
+        Lecture lecture = attachmentVideoUnit.getLecture();
+        Course course = attachmentVideoUnit.getLecture().getCourse();
+
+        String lectureUnitLink = "";
+        if (attachmentVideoUnit.getAttachment() != null) {
+            lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
+        }
+
+        ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
+        String videoUrl = resolved.type() != null ? resolved.url() : null;
+
+        return new PyrisLectureUnitMetadataWebhookDTO(attachmentVideoUnit.getId(), attachmentVideoUnit.getName(), lectureUnitLink, lecture.getId(), lecture.getTitle(),
+                course.getId(), course.getTitle(), course.getDescription() == null ? "" : course.getDescription(), videoUrl, artemisBaseUrl);
+    }
+
+    private PyrisLectureUnitVisibilityWebhookDTO buildVisibilityDto(AttachmentVideoUnit attachmentVideoUnit) {
+        Lecture lecture = attachmentVideoUnit.getLecture();
+        Course course = attachmentVideoUnit.getLecture().getCourse();
+        List<PyrisSlideVisibilityDTO> slides = attachmentVideoUnit.getSlides() == null ? List.of()
+                : attachmentVideoUnit.getSlides().stream().sorted(Comparator.comparingInt(Slide::getSlideNumber))
+                        .map(slide -> new PyrisSlideVisibilityDTO(slide.getSlideNumber(), slide.getHidden())).toList();
+
+        return new PyrisLectureUnitVisibilityWebhookDTO(attachmentVideoUnit.getId(), lecture.getId(), course.getId(), artemisBaseUrl, attachmentVideoUnit.getReleaseDate(),
+                slides);
+    }
+
     /**
      * Resolve a video URL, converting TUM Live watch page URLs to HLS playlist URLs if TumLiveApi is available.
      * Falls back to the original URL if resolution fails or TumLiveApi is not present.
@@ -188,14 +220,53 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created else null
      */
     public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
-        if (irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && !attachmentVideoUnit.getLecture().isTutorialLecture()) {
-            String videoSource = attachmentVideoUnit.getVideoSource();
-            if ((videoSource != null && !videoSource.isBlank()) || (attachmentVideoUnit.getAttachment() != null
-                    && (attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf")))) {
-                return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
-            }
+        if (isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
+            return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
         }
         return null;
+    }
+
+    /**
+     * Updates lightweight lecture unit metadata in Pyris without sending PDF or transcription payloads.
+     *
+     * @param attachmentVideoUnit The attachment video unit whose metadata changed
+     * @return a simple dispatch token if the update was sent, otherwise null
+     */
+    public String updateLectureUnitMetadataInPyris(AttachmentVideoUnit attachmentVideoUnit) {
+        if (!isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
+            return null;
+        }
+        pyrisConnectorService.executeLectureMetadataWebhook(buildMetadataDto(attachmentVideoUnit));
+        return "metadata-" + attachmentVideoUnit.getId();
+    }
+
+    /**
+     * Updates lightweight lecture unit visibility in Pyris without sending PDF or transcription payloads.
+     *
+     * @param attachmentVideoUnit The attachment video unit whose visibility changed
+     * @return a simple dispatch token if the update was sent, otherwise null
+     */
+    public String updateLectureUnitVisibilityInPyris(AttachmentVideoUnit attachmentVideoUnit) {
+        if (!isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
+            return null;
+        }
+        pyrisConnectorService.executeLectureVisibilityWebhook(buildVisibilityDto(attachmentVideoUnit));
+        return "visibility-" + attachmentVideoUnit.getId();
+    }
+
+    private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
+        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && !attachmentVideoUnit.getLecture().isTutorialLecture()
+                && hasProcessableContent(attachmentVideoUnit);
+    }
+
+    private boolean hasProcessableContent(AttachmentVideoUnit attachmentVideoUnit) {
+        String videoSource = attachmentVideoUnit.getVideoSource();
+        return videoSource != null && !videoSource.isBlank() || hasProcessablePdf(attachmentVideoUnit);
+    }
+
+    private boolean hasProcessablePdf(AttachmentVideoUnit attachmentVideoUnit) {
+        return attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE
+                && attachmentVideoUnit.getAttachment().getLink() != null && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf");
     }
 
     /**

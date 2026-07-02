@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -107,6 +108,70 @@ class LectureContentProcessingServiceTest {
     }
 
     // ==================== FLOW 1: Enqueue New Unit ====================
+
+    @Nested
+    class TriggerProcessingForUpdateKind {
+
+        @Test
+        void metadataUpdateCallsMetadataWebhookOnly() {
+            service.triggerProcessingForUpdateKind(testUnit, LectureContentUpdateKind.METADATA);
+
+            verify(irisLectureApi).updateLectureUnitMetadataInPyris(testUnit);
+            verify(irisLectureApi, never()).updateLectureUnitVisibilityInPyris(any());
+            verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any());
+            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void visibilityUpdateCallsVisibilityWebhookOnly() {
+            service.triggerProcessingForUpdateKind(testUnit, LectureContentUpdateKind.VISIBILITY);
+
+            verify(irisLectureApi).updateLectureUnitVisibilityInPyris(testUnit);
+            verify(irisLectureApi, never()).updateLectureUnitMetadataInPyris(any());
+            verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any());
+            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void contentUpdateUsesFullProcessingPath() {
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(processingStateRepository.countByPhaseIn(any())).thenReturn(10L);
+
+            service.triggerProcessingForUpdateKind(testUnit, LectureContentUpdateKind.CONTENT);
+
+            verify(processingStateRepository).save(any(LectureUnitProcessingState.class));
+            verify(irisLectureApi, never()).updateLectureUnitMetadataInPyris(any());
+            verify(irisLectureApi, never()).updateLectureUnitVisibilityInPyris(any());
+            verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any());
+            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+        }
+
+        @Test
+        void noneUpdateDoesNothing() {
+            service.triggerProcessingForUpdateKind(testUnit, LectureContentUpdateKind.NONE);
+
+            verify(irisLectureApi, never()).updateLectureUnitMetadataInPyris(any());
+            verify(irisLectureApi, never()).updateLectureUnitVisibilityInPyris(any());
+            verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any());
+            verify(irisLectureApi, never()).deleteLectureFromPyrisDB(any());
+            verify(processingStateRepository, never()).findByLectureUnit_Id(anyLong());
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void deleteUpdateCallsDeletionPath() {
+            service.triggerProcessingForUpdateKind(testUnit, LectureContentUpdateKind.DELETE);
+
+            verify(irisLectureApi).deleteLectureFromPyrisDB(List.of(testUnit));
+            verify(irisLectureApi, never()).updateLectureUnitMetadataInPyris(any());
+            verify(irisLectureApi, never()).updateLectureUnitVisibilityInPyris(any());
+            verify(irisLectureApi, never()).addLectureUnitToPyrisDB(any());
+            verify(processingStateRepository, never()).save(any());
+        }
+    }
 
     @Nested
     class TriggerProcessingNewUnit {
