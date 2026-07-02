@@ -31,10 +31,28 @@
                 }"
             >
                 @if (course()) {
+                    <!-- Course actions are registered once and rendered by whichever host is visible: the title bar (non-list tabs, or list tabs while collapsed) or the sidebar header (list tabs while expanded). -->
+                    <ng-template titleBarActions>
+                        @if (showRefreshButton()) {
+                            <button class="btn btn-sm btn-outline-primary" (click)="loadCourse(true)" [disabled]="refreshingCourse()">
+                                <fa-icon [icon]="faSync" [animation]="refreshingCourse() ? 'spin' : undefined" />
+                                <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+                            </button>
+                        }
+                        @if (selectableSettingPresets()) {
+                            <jhi-course-notification-preset-picker
+                                [availableCourseSettingPresets]="selectableSettingPresets()!"
+                                [selectedCourseSettingPreset]="selectedSettingPreset()"
+                                [isSmallButton]="true"
+                                (onPresetSelected)="presetSelected($event)"
+                            />
+                        }
+                        @if (course()!.id) {
+                            <jhi-course-notification-overview [courseId]="course()!.id!" />
+                        }
+                    </ng-template>
                     @if (showCourseTitleBar()) {
                         <jhi-course-title-bar
-                            [class.title-bar-over-content]="actionBarOverContent()"
-                            [class.collapsed]="activeSidebarCollapsed()"
                             [hasSidebar]="titleBarHasSidebar()"
                             [isSidebarCollapsed]="activeSidebarCollapsed()"
                             [titleInSidebar]="titleInSidebar()"
@@ -42,25 +60,7 @@
                             [pageTitle]="pageTitle()"
                             [isExamStarted]="isExamStarted()"
                             (toggleSidebar)="toggleSidebar()"
-                        >
-                            @if (showRefreshButton()) {
-                                <button class="btn btn-sm btn-outline-primary" (click)="loadCourse(true)" [disabled]="refreshingCourse()">
-                                    <fa-icon [icon]="faSync" [animation]="refreshingCourse() ? 'spin' : undefined" />
-                                    <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-                                </button>
-                            }
-                            @if (selectableSettingPresets()) {
-                                <jhi-course-notification-preset-picker
-                                    [availableCourseSettingPresets]="selectableSettingPresets()!"
-                                    [selectedCourseSettingPreset]="selectedSettingPreset()"
-                                    [isSmallButton]="true"
-                                    (onPresetSelected)="presetSelected($event)"
-                                />
-                            }
-                            @if (course()!.id) {
-                                <jhi-course-notification-overview [courseId]="course()!.id!" />
-                            }
-                        </jhi-course-title-bar>
+                        />
                     }
 
                     <div

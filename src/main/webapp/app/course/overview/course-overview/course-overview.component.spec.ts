@@ -780,6 +780,7 @@ describe('CourseOverviewComponent', () => {
             toggleInSidebar(): boolean;
             activeSidebarCollapsed(): boolean;
             titleBarHasSidebar(): boolean;
+            showCourseTitleBar(): boolean;
             handleComponentActivation(componentRef: unknown): void;
         };
         const internals = (): CourseOverviewInternals => component as unknown as CourseOverviewInternals;
@@ -866,6 +867,27 @@ describe('CourseOverviewComponent', () => {
             component.course.set({ id: 1, irisEnabledInCourse: true } as Course);
             component.activatedComponentReference.set(Object.create(CourseDashboardComponent.prototype) as CourseDashboardComponent);
             expect(internals().titleBarHasSidebar()).toBe(true);
+        });
+
+        it('should hide the shared title bar for a list tab while expanded and show it when collapsed', () => {
+            const isCollapsed = signal(false);
+            const fakeLectures = Object.assign(Object.create(CourseLecturesComponent.prototype), { isCollapsed }) as CourseLecturesComponent;
+            component.activatedComponentReference.set(fakeLectures);
+
+            expect(internals().showCourseTitleBar()).toBe(false);
+
+            isCollapsed.set(true);
+            expect(internals().showCourseTitleBar()).toBe(true);
+        });
+
+        it('should always show the shared title bar for non-list tabs', () => {
+            component.activatedComponentReference.set(Object.create(CourseIrisComponent.prototype) as CourseIrisComponent);
+            expect(internals().showCourseTitleBar()).toBe(true);
+        });
+
+        it('should never show the shared title bar for the exercises tab', () => {
+            component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent);
+            expect(internals().showCourseTitleBar()).toBe(false);
         });
     });
 });

@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between sidebar-tab-content-row">
+<div class="d-flex justify-content-between">
     @if (course()) {
         <div id="exam-sidebar-test" [ngClass]="{ 'sidebar-collapsed': isCollapsed() }" [hidden]="isExamStarted()">
             <jhi-sidebar
@@ -9,6 +9,7 @@
                 [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                 [pageTitle]="pageTitle()"
                 [showSidebarToggle]="true"
+                [showCourseActions]="true"
                 [isSidebarCollapsed]="isCollapsed()"
                 (toggleSidebar)="toggleSidebar()"
             />

@@ -1277,11 +1277,6 @@ $transition-in-between-delay: 0.05s;
     width: $sidebar-width;
 }
 
-// List tabs overlay the action bar on the content column, so each content child needs top clearance below it.
-.sidebar-tab-content-row > *:not(:first-child) {
-    padding-top: 3.25rem;
-}
-
 .fs-xx-small {
     font-size: 0.625rem;
 }

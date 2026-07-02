@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between sidebar-tab-content-row">
+<div class="d-flex justify-content-between">
     @let currentCourseId = courseId();
     @let currentSidebarData = sidebarData();
     @if (currentCourseId && currentSidebarData) {
@@ -11,6 +11,7 @@
                 [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
                 [pageTitle]="pageTitle()"
                 [showSidebarToggle]="true"
+                [showCourseActions]="true"
                 [isSidebarCollapsed]="isCollapsed()"
                 (toggleSidebar)="toggleSidebar()"
             />

@@ -7,9 +7,14 @@
                         @if (pageTitle()) {
                             <jhi-course-title-bar-title class="py-1" [title]="pageTitle()" />
                         }
-                        @if (showSidebarToggle() && !isSidebarCollapsed()) {
-                            <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
-                        }
+                        <div class="d-flex align-items-center gap-2 ms-auto">
+                            @if (showCourseActions() && courseActionsTemplate()) {
+                                <ng-container *ngTemplateOutlet="courseActionsTemplate()!" />
+                            }
+                            @if (showSidebarToggle() && !isSidebarCollapsed()) {
+                                <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+                            }
+                        </div>
                     </div>
                     <hr class="mt-0" />
                 }
