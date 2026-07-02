@@ -66,7 +66,7 @@ export class LectureUnitService {
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             if ((<ExerciseUnit>lectureUnit).exercise) {
                 (<ExerciseUnit>lectureUnit).exercise = ExerciseService.convertExerciseDatesFromClient((<ExerciseUnit>lectureUnit).exercise!);
-                (<ExerciseUnit>lectureUnit).exercise!.categories = ExerciseService.stringifyExerciseCategories((<ExerciseUnit>lectureUnit).exercise!);
+                ExerciseService.stringifyExerciseCategories((<ExerciseUnit>lectureUnit).exercise!);
                 return lectureUnit;
             }
         }

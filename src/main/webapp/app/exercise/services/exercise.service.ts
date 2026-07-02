@@ -9,8 +9,9 @@ import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { ExerciseCategory, SerializedExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -381,11 +382,16 @@ export class ExerciseService {
     }
 
     /**
-     * Converts an exercises' categories into a json string (to send them to the server). Does nothing if no categories exist
-     * @param exercise the exercise
+     * Serializes an exercise's categories into JSON strings in place (to send them to the server). Does nothing if no
+     * categories exist. The parameter is a structural view that also admits the serialized string form, so the in-place
+     * conversion needs no cast; the {@link Exercise} model field stays typed as {@link ExerciseCategory}[] for all readers.
+     * @param exercise the exercise whose categories are serialized in place
      */
-    static stringifyExerciseCategories(exercise: Exercise) {
-        return exercise.categories?.map((category) => JSON.stringify(category) as unknown as ExerciseCategory);
+    static stringifyExerciseCategories(exercise: { categories?: (ExerciseCategory | string)[] }): void {
+        if (exercise.categories) {
+            // Skip already-serialized entries so a second call (e.g. on a reused DTO) does not double-encode them.
+            exercise.categories = exercise.categories.map((category) => (typeof category === 'string' ? category : JSON.stringify(category)));
+        }
     }
 
     /**
@@ -408,8 +414,9 @@ export class ExerciseService {
             exercise.categories = exercise.categories
                 .map((category) => {
                     try {
-                        // Handle both JSON strings (from some endpoints) and objects (from DTOs)
-                        const categoryObj = typeof category === 'string' ? JSON.parse(category) : category;
+                        // Handle both JSON strings (from some endpoints) and objects (from DTOs). The explicit
+                        // type makes property access below compiler-checked (JSON.parse alone returns `any`).
+                        const categoryObj: SerializedExerciseCategory = typeof category === 'string' ? parseJson<SerializedExerciseCategory>(category) : category;
                         return new ExerciseCategory(categoryObj.category, categoryObj.color);
                     } catch {
                         // Skip malformed category entries
@@ -425,7 +432,18 @@ export class ExerciseService {
      * @param categories that are converted to categories
      */
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
-        return categories.map((category) => JSON.parse(category));
+        // Build real ExerciseCategory instances (not plain parsed objects) so callers can use equals()/compare().
+        // Skip malformed entries instead of throwing, mirroring parseExerciseCategories above.
+        return categories
+            .map((category) => {
+                try {
+                    const categoryObj = parseJson<SerializedExerciseCategory>(category);
+                    return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                } catch {
+                    return undefined;
+                }
+            })
+            .filter((category): category is ExerciseCategory => category !== undefined);
     }
 
     /**
@@ -435,7 +453,7 @@ export class ExerciseService {
     static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
         let copy = Object.assign(exercise, {});
         copy = ExerciseService.convertExerciseDatesFromClient(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         if (copy.course) {
             copy.course.exercises = [];
             copy.course.lectures = [];
