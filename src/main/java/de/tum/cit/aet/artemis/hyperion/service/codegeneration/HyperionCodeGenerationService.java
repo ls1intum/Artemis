@@ -349,7 +349,11 @@ public abstract class HyperionCodeGenerationService {
         variables.put("repositoryStructure", repositoryStructure);
         variables.put(BUILD_ENVIRONMENT_CONTEXT_TEMPLATE_VARIABLE, buildEnvironmentContext);
         variables.put("consistencyIssues", consistencyIssues);
-        variables.put("targetBuildOutcome", targetBuildOutcomeInstruction());
+        // TESTS has no score target and no {{targetBuildOutcome}} slot in its prompts, so only SOLUTION/TEMPLATE populate it.
+        String targetBuildOutcome = targetBuildOutcomeInstruction();
+        if (targetBuildOutcome != null) {
+            variables.put("targetBuildOutcome", targetBuildOutcome);
+        }
         variables.put(SELECTED_FEEDBACK_THREADS_TEMPLATE_VARIABLE, selectedFeedbackThreads);
         return variables;
     }
@@ -358,8 +362,8 @@ public abstract class HyperionCodeGenerationService {
         return switch (getRepositoryType()) {
             case TEMPLATE -> "The generated template repository must compile but achieve exactly 0% in the generated tests. "
                     + "Keep all core exercise logic incomplete so no functional tests pass before students solve the task.";
-            case SOLUTION -> "The generated solution repository must compile and achieve exactly 100% in the generated tests. " + "Implement all required behavior completely.";
-            default -> "The generated repository must compile and satisfy the expected build outcome for this repository type.";
+            case SOLUTION -> "The generated solution repository must compile and achieve exactly 100% in the generated tests. Implement all required behavior completely.";
+            default -> null;
         };
     }
 

@@ -174,10 +174,6 @@ public class HyperionCodeGenerationResource {
      * @throws BadRequestAlertException if exercise is not suitable
      */
     private void validateExerciseForGeneration(ProgrammingExercise exercise) {
-        if (exercise.isExamExercise()) {
-            log.debug("Generating code for exam exercise [{}]", exercise.getId());
-        }
-
         if (exercise.getProgrammingLanguage() != ProgrammingLanguage.JAVA) {
             throw new BadRequestAlertException("Code generation is only supported for Java exercises", ENTITY_NAME, "unsupportedProgrammingLanguage");
         }

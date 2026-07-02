@@ -414,7 +414,7 @@ public class HyperionCodeGenerationExecutionService {
             publisher.error("Repository setup failed");
             return null;
         }
-        log.info("Setup Repo success");
+        log.debug("Repository setup succeeded for exercise {} ({})", exercise.getId(), repositoryType);
 
         LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
         GenerationExecutionProgress executionProgress = new GenerationExecutionProgress();
@@ -426,10 +426,12 @@ public class HyperionCodeGenerationExecutionService {
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            log.warn("Code generation interrupted for exercise {}", exercise.getId(), e);
             publisher.error(e.getMessage());
             executionResult = executionProgress.snapshot();
         }
         catch (Exception e) {
+            log.error("Code generation failed for exercise {}", exercise.getId(), e);
             publisher.error(e.getMessage());
             executionResult = executionProgress.snapshot();
         }

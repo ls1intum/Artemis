@@ -47,7 +47,7 @@ First, think step-by-step.
 3.  **Reject unnecessary helpers:** Exclude any file whose main purpose would be to pre-implement student work or hide logic behind abstractions.
 4.  **List the files:** Create a minimal list of all the template files that need to be created, including their full paths from the repository root.
 
-After your analysis, provide the file structure as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" key.
+After your analysis, provide the file structure as a JSON object. The JSON object must contain a "files" key which is an array of objects, where each object has a "path" key.
 You may also include a "deletedFiles" array with obsolete file paths under `/src/` and explicitly obsolete `.gitkeep` placeholder paths. Do not include source files only because a `.gitkeep` placeholder is being removed.
 
 **Example Output:**

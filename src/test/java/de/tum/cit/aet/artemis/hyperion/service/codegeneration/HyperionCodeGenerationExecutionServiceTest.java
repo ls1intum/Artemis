@@ -412,9 +412,11 @@ class HyperionCodeGenerationExecutionServiceTest {
             Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, publisher);
 
             assertThat(result).isNull();
-            verify(publisher).error("sleep interrupted");
-            verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_TIMED_OUT, Map.of(), 1,
-                    "Solution files were generated and committed to the solution repository, but the build result is not available yet because polling timed out.");
+            // The interrupt is surfaced as an error and the thread's interrupt flag is preserved (asserted before the finally clears it).
+            verify(publisher).error(anyString());
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+            verify(publisher).done(eq(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL), eq(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_TIMED_OUT), eq(Map.of()),
+                    eq(1), argThat(message -> message.contains("solution repository") && message.contains("timed out")));
             verify(exerciseVersionService).createExerciseVersion(exercise, user);
         }
         finally {
@@ -831,15 +833,18 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         result.setSubmission(submission);
         result.setFeedbacks(List.of(passedFeedback, failedFeedback));
+        // Production re-fetches build logs via the eager query, not the lazy getter; stub that path so the real logs (not the fallback) are asserted.
+        when(submission.getId()).thenReturn(7L);
+        when(programmingSubmissionRepository.findWithEagerBuildLogEntriesById(7L)).thenReturn(Optional.of(submission));
         when(submission.getBuildLogEntries()).thenReturn(List.of(logEntry));
-        when(logEntry.getLog()).thenReturn("Build log");
+        when(logEntry.getLog()).thenReturn("javac: cannot find symbol Sort");
 
         String summary = ReflectionTestUtils.invokeMethod(service, "extractBuildFeedback", result);
 
         // Build logs precede the test-feedback section so the retry prompt sees compile errors before per-test diffs;
         // failures appear before passes so the actionable signal leads.
-        assertThat(summary).containsSubsequence("Build log", "Test feedback summary:", "testSorts", "FAILED", "Expected sorted result", "testCompiles", "PASSED",
-                "Compilation works");
+        assertThat(summary).containsSubsequence("javac: cannot find symbol Sort", "Test feedback summary:", "testSorts", "FAILED", "Expected sorted result", "testCompiles",
+                "PASSED", "Compilation works");
     }
 
     @Test

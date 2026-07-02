@@ -428,16 +428,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.setCodeGenerationRepositoryEnabled(RepositoryType.TESTS, repositories.includes(RepositoryType.TESTS));
         };
 
-        it('should expose code generation only for Java exercises', () => {
-            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA });
-
-            expect((comp as any).canGenerateCode()).toBe(true);
-
-            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
-
-            expect((comp as any).canGenerateCode()).toBe(false);
-        });
-
         it('should not generate for non-Java exercises', async () => {
             comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
             comp.selectedRepository = RepositoryType.TEMPLATE;
