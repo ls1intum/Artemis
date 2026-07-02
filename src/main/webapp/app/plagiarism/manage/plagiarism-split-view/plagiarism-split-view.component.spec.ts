@@ -88,18 +88,14 @@ describe('Plagiarism Split View Component', () => {
         expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     });
 
-    it('should not fetch comparison until course id and comparison id are available', () => {
+    it('should not fetch comparison until the course id can be resolved', () => {
         const getComparisonSpy = vi
             .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
             .mockReturnValue(of({ body: comparison } as HttpResponse<PlagiarismComparison>));
 
-        comp.ngOnChanges({
-            comparison: { currentValue: { id: 1 } } as SimpleChange,
-        });
-        comp.ngOnChanges({
-            exercise: { currentValue: textExercise } as SimpleChange,
-            comparison: { currentValue: {} } as SimpleChange,
-        });
+        // With a comparison set but no exercise, getCourseIdForExercise() is undefined, so the effect must not fetch.
+        fixture.componentRef.setInput('comparison', { id: 1 } as PlagiarismComparison);
+        fixture.detectChanges();
 
         expect(getComparisonSpy).not.toHaveBeenCalled();
     });
