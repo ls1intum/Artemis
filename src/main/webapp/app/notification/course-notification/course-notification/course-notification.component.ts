@@ -79,7 +79,7 @@ export class CourseNotificationComponent {
 
                             return acc;
                         },
-                        {} as Record<string, any>,
+                        {} as Record<string, unknown>,
                     ),
                     courseName: notification.courseName,
                     courseId: notification.courseId,

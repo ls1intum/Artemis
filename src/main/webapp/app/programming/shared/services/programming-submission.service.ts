@@ -59,7 +59,7 @@ export interface IProgrammingSubmissionService {
     getLatestPendingSubmissionByParticipationId: (participationId: number, exerciseId: number, personal: boolean) => Observable<ProgrammingSubmissionStateObj>;
     getSubmissionStateOfExercise: (exerciseId: number) => Observable<ExerciseSubmissionState>;
     getResultEtaInMs: () => Observable<number>;
-    triggerBuild: (participationId: number) => Observable<any>;
+    triggerBuild: (participationId: number) => Observable<object>;
     triggerInstructorBuildForAllParticipationsOfExercise: (exerciseId: number) => Observable<void>;
     triggerInstructorBuildForParticipationsOfExercise: (exerciseId: number, participationIds: number[]) => Observable<void>;
     unsubscribeAllWebsocketTopics: (exercise: Exercise) => void;
@@ -744,8 +744,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return this.resultEtaSubject.asObservable().pipe(distinctUntilChanged());
     }
 
-    public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL) {
-        return this.http.post(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
+    public triggerBuild(participationId: number, submissionType = SubmissionType.MANUAL): Observable<object> {
+        return this.http.post<object>(`api/programming/participations/${participationId}/trigger-build?submissionType=${submissionType}`, {});
     }
 
     public triggerFailedBuild(participationId: number, lastGraded: boolean) {

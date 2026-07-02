@@ -62,7 +62,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
         this.updateSelectedFields();
     }
 
-    onFieldSelectionChange(field: any) {
+    onFieldSelectionChange(field: { value: string; selected: boolean }) {
         field.selected = !field.selected;
         this.selectAll.set(this.areAllFieldsSelected());
         this.updateSelectedFields();

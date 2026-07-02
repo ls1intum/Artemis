@@ -287,10 +287,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     faClipboard = faClipboard;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
-    private readonly controls = viewChild.required<TemplateRef<any>>('controls');
+    private readonly controls = viewChild.required<TemplateRef<unknown>>('controls');
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
-        subject: new Subject<TemplateRef<any>>(),
+        subject: new Subject<TemplateRef<unknown>>(),
     };
 
     ngOnInit() {
@@ -757,7 +757,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param event the event that is fired by p-chart
      * @param exerciseType the exercise group whose chart was clicked
      */
-    onSelect(event: any, exerciseType: ExerciseType) {
+    onSelect(event: Parameters<typeof toChartSelectEvent>[0], exerciseType: ExerciseType) {
         const chartData = this.groupChartData().get(exerciseType);
         if (!chartData) {
             return;

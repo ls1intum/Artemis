@@ -173,14 +173,14 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
         return summary.map((s) => this.replacePlaceholders(s, replacements)).join(' ');
     }
 
-    replacePlaceholders(stringWithPlaceholders: string, replacements: any) {
+    replacePlaceholders(stringWithPlaceholders: string, replacements: Record<string, string | number | undefined>) {
         return stringWithPlaceholders.replace(/{(\w+)}/g, (placeholderWithDelimiters, placeholderWithoutDelimiters) =>
             this.replacePlaceholder(placeholderWithDelimiters, placeholderWithoutDelimiters, replacements),
         );
     }
 
-    replacePlaceholder(placeholderWithDelimiters: string, placeholderWithoutDelimiters: any, replacements: any) {
-        return Object.prototype.hasOwnProperty.call(replacements, placeholderWithoutDelimiters) ? replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters;
+    replacePlaceholder(placeholderWithDelimiters: string, placeholderWithoutDelimiters: string, replacements: Record<string, string | number | undefined>) {
+        return Object.prototype.hasOwnProperty.call(replacements, placeholderWithoutDelimiters) ? String(replacements[placeholderWithoutDelimiters]) : placeholderWithDelimiters;
     }
 
     private setEditPolicyPageLink(): void {

@@ -89,6 +89,6 @@ function isBuildPhaseCondition(value: unknown): value is BuildPhaseCondition {
     return typeof value === 'string' && value in BUILD_PHASE_CONDITION;
 }
 
-function isResultPaths(resultPaths: any) {
+function isResultPaths(resultPaths: unknown): resultPaths is string[] {
     return Array.isArray(resultPaths) && resultPaths.every((p: unknown) => typeof p === 'string');
 }
