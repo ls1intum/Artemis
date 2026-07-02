@@ -208,7 +208,7 @@ export class ProgrammingExerciseUpdateTimelineComponent implements OnInit {
         }
         if (this.isDatePickerForRunningTestsAfterDueDateVisible()) {
             timelineItems.push({
-                kind: this.isLocalCIEnabled ? 'required' : 'optional',
+                kind: 'required',
                 labelStringKey: 'artemisApp.exercise.dateForRunningTestsAfterDueDate',
                 date: this.buildAndTestStudentSubmissionsAfterDueDate,
             });

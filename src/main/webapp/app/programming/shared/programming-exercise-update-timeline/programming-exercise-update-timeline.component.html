@@ -16,10 +16,10 @@
                     [ngStyle]="!isEnablingToRunTestsAfterDueDateToggleEnabled() ? { color: 'grey' } : {}"
                     class="form-control-label"
                     for="defineDateForRunningTestsAfterDueDate"
-                    jhiTranslate="artemisApp.programmingExercise.timeline.configureDateForRunningTestsAfterDueDate"
+                    jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate"
                 ></label>
                 @if (!isExamMode()) {
-                    <jhi-help-icon placement="right auto" text="artemisApp.programmingExercise.timeline.defineDateForRunningTestsAfterDueDateTooltip" />
+                    <jhi-help-icon placement="right auto" text="artemisApp.programmingExercise.timeline.afterDueDateTooltip" />
                 }
             </div>
         }
