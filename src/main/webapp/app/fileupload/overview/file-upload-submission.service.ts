@@ -3,13 +3,12 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadSubmission, FileUploadSubmissionDTO, FileUploadSubmissionInputDTO } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { stringifyCircular } from 'app/foundation/util/utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { addPublicFilePrefix } from 'app/app.constants';
 
-export type EntityResponseType = HttpResponse<FileUploadSubmission>;
+export type EntityResponseType = HttpResponse<FileUploadSubmissionDTO>;
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadSubmissionService {
@@ -23,13 +22,17 @@ export class FileUploadSubmissionService {
      * @param submissionFile the file submitted that will for the exercise
      */
     update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: File): Observable<HttpResponse<FileUploadSubmission>> {
-        const copy = this.submissionService.convert(fileUploadSubmission);
+        const submissionInput: FileUploadSubmissionInputDTO = {
+            id: fileUploadSubmission.id,
+            submitted: fileUploadSubmission.submitted ?? false,
+            exerciseId,
+        };
         const formData = new FormData();
-        const submissionBlob = new Blob([stringifyCircular(copy)], { type: 'application/json' });
+        const submissionBlob = new Blob([JSON.stringify(submissionInput)], { type: 'application/json' });
         formData.append('file', submissionFile);
         formData.append('submission', submissionBlob);
         return this.http
-            .post<FileUploadSubmission>(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, formData, {
+            .post<FileUploadSubmissionDTO>(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, formData, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertFileSubmissionResponseFromServer(res)));
@@ -51,8 +54,8 @@ export class FileUploadSubmissionService {
             params = params.set('correction-round', correctionRound.toString());
         }
         return this.http
-            .get<FileUploadSubmission>(url, { params, observe: 'response' })
-            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.convertFileSubmissionResponseFromServer(res)));
+            .get<FileUploadSubmissionDTO>(url, { params, observe: 'response' })
+            .pipe(map((res: HttpResponse<FileUploadSubmissionDTO>) => this.convertFileSubmissionResponseFromServer(res)));
     }
 
     /**
@@ -68,11 +71,13 @@ export class FileUploadSubmissionService {
             params = params.set('correction-round', correctionRound.toString());
         }
         return this.http
-            .get<FileUploadSubmission[]>(url, {
+            .get<FileUploadSubmissionDTO[]>(url, {
                 params,
                 observe: 'response',
             })
-            .pipe(map((res: HttpResponse<FileUploadSubmission[]>) => this.submissionService.convertArrayResponse(res)));
+            .pipe(
+                map((res: HttpResponse<FileUploadSubmissionDTO[]>) => res.clone({ body: res.body?.map((submission) => this.convertFileSubmissionFromServer(submission)) ?? null })),
+            );
     }
 
     /**
@@ -91,8 +96,8 @@ export class FileUploadSubmissionService {
             params = params.set('lock', 'true');
         }
 
-        return this.http.get<FileUploadSubmission | undefined>(url, { params }).pipe(
-            map((res?: FileUploadSubmission) => {
+        return this.http.get<FileUploadSubmissionDTO | undefined>(url, { params }).pipe(
+            map((res?: FileUploadSubmissionDTO) => {
                 if (!res) {
                     return undefined;
                 }
@@ -107,16 +112,16 @@ export class FileUploadSubmissionService {
      */
     getDataForFileUploadEditor(participationId: number): Observable<FileUploadSubmission> {
         return this.http
-            .get<FileUploadSubmission>(`api/fileupload/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
-            .pipe(map((res: FileUploadSubmission) => this.convertFileSubmissionFromServer(res)));
+            .get<FileUploadSubmissionDTO>(`api/fileupload/participations/${participationId}/file-upload-editor`, { responseType: 'json' })
+            .pipe(map((res: FileUploadSubmissionDTO) => this.convertFileSubmissionFromServer(res)));
     }
 
     /**
      * In {@link submissionService.convertSubmissionFromServer} {@link object.assign} is used, which means that we never actually call the
      * constructor of the {@link FileUploadSubmission} class, which would set {@link FileUploadSubmission.filePathUrl}, therefore we need to set it manually here.
      */
-    private convertFileSubmissionFromServer(res: FileUploadSubmission) {
-        const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(res);
+    private convertFileSubmissionFromServer(res: FileUploadSubmissionDTO): FileUploadSubmission {
+        const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(res as FileUploadSubmission);
         convertedBaseSubmission.filePathUrl = addPublicFilePrefix(res.filePath);
         return convertedBaseSubmission;
     }
@@ -124,8 +129,8 @@ export class FileUploadSubmissionService {
     /**
      * See {@link convertFileSubmissionFromServer}
      */
-    private convertFileSubmissionResponseFromServer(res: HttpResponse<FileUploadSubmission>): HttpResponse<FileUploadSubmission> {
-        const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer(res);
+    private convertFileSubmissionResponseFromServer(res: HttpResponse<FileUploadSubmissionDTO>): HttpResponse<FileUploadSubmission> {
+        const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer(res as HttpResponse<FileUploadSubmission>);
         if (convertedBaseSubmission.body) {
             convertedBaseSubmission.body.filePathUrl = addPublicFilePrefix(convertedBaseSubmission.body.filePath);
         }

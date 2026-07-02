@@ -7,6 +7,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Participation, ParticipationType, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
@@ -14,7 +15,7 @@ import { omit } from 'lodash-es';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
-import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadParticipationDTO, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,7 +23,7 @@ import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exer
 import { getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/foundation/util/global.utils';
-import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
@@ -173,15 +174,22 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     }
 
     private handleDataLoad(submission: FileUploadSubmission) {
+        const participation = submission.participation;
+        if (!this.isFileUploadParticipation(participation)) {
+            return;
+        }
+        const exercise = getExercise(participation);
+        if (!this.isFileUploadExercise(exercise)) {
+            return;
+        }
+
         const tmpResult = getLatestSubmissionResult(submission);
-        const participation = submission.participation as StudentParticipation;
 
         // reconnect participation <--> submission
         participation.submissions = [omit(submission, 'participation') as FileUploadSubmission];
 
         this.submission.set(submission);
         this.result.set(tmpResult);
-        const exercise = participation.exercise as FileUploadExercise;
         this.fileUploadExercise.set(exercise);
         exercise.studentParticipations = [participation];
         this.participation.set(participation);
@@ -197,7 +205,25 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
                 });
             }
         }
-        this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(participation));
+        this.isOwnerOfParticipation.set(this.isOwnerOfFileUploadParticipation(participation));
+    }
+
+    private isFileUploadParticipation(participation: Participation | undefined): participation is FileUploadParticipationDTO {
+        return participation?.type === ParticipationType.STUDENT;
+    }
+
+    private isFileUploadExercise(exercise: Exercise | undefined): exercise is FileUploadExercise {
+        return exercise?.type === ExerciseType.FILE_UPLOAD;
+    }
+
+    private isOwnerOfFileUploadParticipation(participation: FileUploadParticipationDTO): boolean {
+        if (typeof participation.isOwner === 'boolean') {
+            return participation.isOwner;
+        }
+        if (participation.student || participation.team?.students) {
+            return this.accountService.isOwnerOfParticipation(participation);
+        }
+        return false;
     }
 
     private inputValuesArePresent(): boolean {
@@ -247,8 +273,8 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
 
             if (newSubmission) {
                 this.submission.set(newSubmission);
-                const participation = newSubmission.participation as StudentParticipation;
-                if (participation) {
+                const participation = newSubmission.participation;
+                if (this.isFileUploadParticipation(participation)) {
                     participation.submissions = [newSubmission];
                     this.participationWebsocketService.addParticipation(participation, currentExercise);
                     this.participation.set(participation);

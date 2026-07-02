@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -48,6 +47,8 @@ import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadSubmissionDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadSubmissionInputDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionService;
@@ -98,34 +99,34 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     /**
      * POST exercises/:exerciseId/file-upload-submissions : Create a new fileUploadSubmission
      *
-     * @param exerciseId           of the file upload exercise a submission should be created for
-     * @param fileUploadSubmission the fileUploadSubmission to create
-     * @param file                 The uploaded file belonging to the submission
-     * @return the ResponseEntity with status 200 and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an ID
+     * @param exerciseId                of the file upload exercise a submission should be created for
+     * @param fileUploadSubmissionInput the fileUploadSubmission input DTO to create
+     * @param file                      The uploaded file belonging to the submission
+     * @return the ResponseEntity with status 200 and with body the new {@link FileUploadSubmissionDTO}, or with status 400 (Bad Request) if the fileUploadSubmission has already an
+     *         ID
      */
     @PostMapping("exercises/{exerciseId}/file-upload-submissions")
     @EnforceAtLeastStudent
-    public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable long exerciseId, @RequestPart("submission") FileUploadSubmission fileUploadSubmission,
-            @RequestPart("file") MultipartFile file) {
-        log.debug("REST request to submit new file upload submission : {}", fileUploadSubmission);
-        return handleFileUploadSubmission(exerciseId, fileUploadSubmission, file);
+    public ResponseEntity<FileUploadSubmissionDTO> createFileUploadSubmission(@PathVariable long exerciseId,
+            @RequestPart("submission") FileUploadSubmissionInputDTO fileUploadSubmissionInput, @RequestPart("file") MultipartFile file) {
+        log.debug("REST request to submit new file upload submission : {}", fileUploadSubmissionInput);
+        return handleFileUploadSubmission(exerciseId, fileUploadSubmissionInput, file);
     }
 
     @NonNull
-    private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(long exerciseId, FileUploadSubmission fileUploadSubmission, MultipartFile file) {
+    private ResponseEntity<FileUploadSubmissionDTO> handleFileUploadSubmission(long exerciseId, FileUploadSubmissionInputDTO fileUploadSubmissionInput, MultipartFile file) {
         long start = System.currentTimeMillis();
         checkFileLength(file);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
+        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionInput.toEntity();
 
         checkFilePattern(file, exercise);
 
-        // if there is a participation that has an exercise linked to it,
-        // the exercise needs to be the same as the one referenced in the path via exerciseId
-        if (fileUploadSubmission.getParticipation() != null && fileUploadSubmission.getParticipation().getExercise() != null
-                && !fileUploadSubmission.getParticipation().getExercise().getId().equals(exerciseId)) {
+        if (fileUploadSubmissionInput.exerciseId() != null && fileUploadSubmissionInput.exerciseId() != exerciseId) {
             throw new BadRequestAlertException("ExerciseId in Body doesn't match ExerciseId in path!", "exerciseId", "400");
         }
+        validateSubmissionIdBelongsToExercise(fileUploadSubmissionInput.id(), exerciseId);
 
         // Apply further checks if it is an exam submission
         if (exercise.isExamExercise()) {
@@ -153,7 +154,24 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         fileUploadSubmissionService.hideDetails(submission, user);
         long end = System.currentTimeMillis();
         log.info("handleFileUploadSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
-        return ResponseEntity.ok(submission);
+        return ResponseEntity.ok(FileUploadSubmissionDTO.ofAfterSubmit(submission));
+    }
+
+    private void validateSubmissionIdBelongsToExercise(Long submissionId, long exerciseId) {
+        if (submissionId == null) {
+            return;
+        }
+        if (fileUploadSubmissionRepository.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseId(submissionId, exerciseId).isEmpty()) {
+            throw new BadRequestAlertException("SubmissionId does not belong to ExerciseId in path!", ENTITY_NAME, "submissionExerciseMismatch");
+        }
+    }
+
+    private FileUploadExerciseAccessRights getAccessRights(FileUploadExercise exercise, User user) {
+        return new FileUploadExerciseAccessRights(authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user),
+                authCheckService.isAtLeastEditorForExercise(exercise, user), authCheckService.isAtLeastInstructorForExercise(exercise, user));
+    }
+
+    private record FileUploadExerciseAccessRights(boolean isAtLeastTutor, boolean isAtLeastEditor, boolean isAtLeastInstructor) {
     }
 
     private static void checkFilePattern(MultipartFile file, FileUploadExercise exercise) {
@@ -174,11 +192,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param submissionId    of the fileUploadSubmission to retrieve
      * @param correctionRound of the result we want to receive
      * @param resultId        for which we want to get the submission
-     * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the {@link FileUploadSubmissionDTO}, or with status 404 (Not Found)
      */
     @GetMapping("file-upload-submissions/{submissionId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
+    public ResponseEntity<FileUploadSubmissionDTO> getFileUploadSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound, @RequestParam(value = "resultId", required = false) Long resultId) {
         log.debug("REST request to get FileUploadSubmission with id: {}", submissionId);
         var fileUploadSubmission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
@@ -214,7 +232,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // prepare fileUploadSubmission for response
         fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
         fileUploadSubmission.removeNotNeededResults(correctionRound, resultId);
-        return ResponseEntity.ok(fileUploadSubmission);
+        var accessRights = getAccessRights(fileUploadExercise, user);
+        return ResponseEntity.ok(
+                FileUploadSubmissionDTO.ofForAssessment(fileUploadSubmission, accessRights.isAtLeastTutor(), accessRights.isAtLeastEditor(), accessRights.isAtLeastInstructor()));
     }
 
     /**
@@ -226,14 +246,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param correctionRound get submission with results for the given correction round
      * @param submittedOnly   if only submitted submissions should be returned
      * @param assessedByTutor if the submission was assessed by calling tutor
-     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
+     * @return the ResponseEntity with status 200 (OK) and the list of {@link FileUploadSubmissionDTO} in body
      */
     @GetMapping("exercises/{exerciseId}/file-upload-submissions")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Submission>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
+    public ResponseEntity<List<FileUploadSubmissionDTO>> getAllFileUploadSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get all file upload submissions");
-        return super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
+        var response = super.getAllSubmissions(exerciseId, submittedOnly, assessedByTutor, correctionRound);
+        List<FileUploadSubmissionDTO> body = response.getBody() == null ? null
+                : response.getBody().stream().map(FileUploadSubmission.class::cast).map(FileUploadSubmissionDTO::ofForList).toList();
+        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders()).body(body);
     }
 
     /**
@@ -242,11 +265,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * @param exerciseId      of the exercise
      * @param correctionRound for which we want to find the submission
      * @param lockSubmission  specifies if the submission should be locked for assessor
-     * @return the ResponseEntity with status 200 (OK) and the list of File Upload Submissions in body
+     * @return the ResponseEntity with status 200 (OK) and the {@link FileUploadSubmissionDTO} in body
      */
     @GetMapping("exercises/{exerciseId}/file-upload-submission-without-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<FileUploadSubmission> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<FileUploadSubmissionDTO> getFileUploadSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a file upload submission without assessment");
         final Exercise fileUploadExercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -284,7 +307,9 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             fileUploadSubmissionService.hideDetails(submission, user);
         }
 
-        return ResponseEntity.ok(submission);
+        var accessRights = getAccessRights((FileUploadExercise) fileUploadExercise, user);
+        return ResponseEntity
+                .ok(FileUploadSubmissionDTO.ofForAssessment(submission, accessRights.isAtLeastTutor(), accessRights.isAtLeastEditor(), accessRights.isAtLeastInstructor()));
     }
 
     /**
@@ -292,11 +317,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * answer if existing and the assessments if the submission was already submitted.
      *
      * @param participationId for which to find the data for the file upload editor
-     * @return the ResponseEntity with the File Upload Submission as body
+     * @return the ResponseEntity with the {@link FileUploadSubmissionDTO} as body
      */
     @GetMapping("participations/{participationId}/file-upload-editor")
     @EnforceAtLeastStudent
-    public ResponseEntity<FileUploadSubmission> getDataForFileUpload(@PathVariable Long participationId) {
+    public ResponseEntity<FileUploadSubmissionDTO> getDataForFileUpload(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdWithLatestSubmissionsResultsFeedbackElseThrow(participationId);
         FileUploadExercise fileUploadExercise;
         if (participation.getExercise() instanceof FileUploadExercise) {
@@ -309,8 +334,12 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
                     "The exercise of the participation is not a file upload exercise.")).body(null);
         }
 
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        boolean isOwner = authCheckService.isOwnerOfParticipation(participation, user);
+        var accessRights = getAccessRights(fileUploadExercise, user);
+
         // Students can only see their own file uploads (to prevent cheating). TAs, instructors and admins can see all file uploads.
-        if (!(authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise))) {
+        if (!(isOwner || accessRights.isAtLeastTutor())) {
             throw new AccessForbiddenException("participation", participationId);
         }
 
@@ -337,11 +366,12 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // do not send the assessor information to students
-        if (fileUploadSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+        if (fileUploadSubmission.getLatestResult() != null && !accessRights.isAtLeastTutor()) {
             fileUploadSubmission.getLatestResult().filterSensitiveInformation();
         }
 
-        return ResponseEntity.ok(fileUploadSubmission);
+        return ResponseEntity.ok(FileUploadSubmissionDTO.ofForEditor(fileUploadSubmission, isOwner, accessRights.isAtLeastTutor(), accessRights.isAtLeastEditor(),
+                accessRights.isAtLeastInstructor()));
     }
 
     /**
