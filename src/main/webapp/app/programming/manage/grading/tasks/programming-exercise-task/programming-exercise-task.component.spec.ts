@@ -124,4 +124,42 @@ describe('ProgrammingExerciseTaskComponent', () => {
         expect(comp.onlyViewTestCases()).toBeFalsy();
         expect(comp.open()).toBeFalsy();
     });
+
+    it('should render task name inside a task__field element', () => {
+        taskService.currentTasks = [
+            { taskName: 'testBubbleSort()', testCases: [], stats: undefined },
+            { taskName: 'Task1', testCases: [], stats: undefined },
+        ] as ProgrammingExerciseTask[];
+        fixture.componentRef.setInput('task', { taskName: 'testBubbleSort()', testCases: [], stats: undefined } as ProgrammingExerciseTask);
+        fixture.componentRef.setInput('index', 0);
+
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const taskFieldEl = fixture.nativeElement.querySelector('.task__field');
+        expect(taskFieldEl).not.toBeNull();
+        expect(taskFieldEl.textContent.trim()).toContain('testBubbleSort()');
+    });
+
+    it('should render test case names inside task__field elements when task is expanded', () => {
+        const testCases = [
+            { testName: 'testBubbleSort()', weight: 1 },
+            { testName: 'testSelectionSort()', weight: 1 },
+        ];
+        taskService.currentTasks = [
+            { taskName: 'Task1', testCases, stats: undefined },
+            { taskName: 'Task2', testCases: [], stats: undefined },
+        ] as ProgrammingExerciseTask[];
+        fixture.componentRef.setInput('task', { taskName: 'Task1', testCases, stats: undefined } as ProgrammingExerciseTask);
+        fixture.componentRef.setInput('index', 0);
+
+        comp.ngOnInit();
+        comp.open = true;
+        fixture.detectChanges();
+
+        const taskFieldEls = fixture.nativeElement.querySelectorAll('.task__field');
+        const fieldTexts = Array.from(taskFieldEls).map((el: any) => el.textContent.trim());
+        expect(fieldTexts).toContain('testBubbleSort()');
+        expect(fieldTexts).toContain('testSelectionSort()');
+    });
 });
