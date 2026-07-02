@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TutorialGroupDetailAccessLevel, TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { getNumericPathVariableSignal } from 'app/foundation/route/getPathVariable';
@@ -22,6 +22,15 @@ export class CourseTutorialGroupDetailContainerComponent {
     tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
     isMessagingEnabled = computed(() => isMessagingEnabled(this.course()));
     isLoading = computed(() => this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading() || this.tutorialGroupCourseAndGroupService.isCourseLoading());
+
+    readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    readonly toggleSidebar = (): void => this.sidebarToggle()?.();
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
+    }
 
     constructor() {
         effect(() => {

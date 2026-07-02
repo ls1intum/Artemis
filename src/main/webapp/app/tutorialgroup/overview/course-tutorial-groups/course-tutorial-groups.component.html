@@ -18,12 +18,7 @@
 
         @if (itemSelected()) {
             <div class="vw-100 module-bg rounded-3">
-                @if (isCollapsed()) {
-                    <div class="px-3 pt-2">
-                        <jhi-course-sidebar-toggle-button [isCollapsed]="true" (toggleSidebar)="toggleSidebar()" />
-                    </div>
-                }
-                <router-outlet />
+                <router-outlet (activate)="onSubRouteActivate($event)" />
             </div>
         } @else {
             <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">
