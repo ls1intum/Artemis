@@ -17,8 +17,10 @@
     color: var(--p-text-color) !important;
 }
 
-// Yellow "warning" border on the input (distinct from the red invalid border handled globally).
-// Applied via the picker's [inputStyleClass] when warning() is set. Uses the semantic warning token.
+/*
+ * Yellow "warning" border on the input (distinct from the red invalid border handled globally).
+ * Applied via the picker's [inputStyleClass] when warning() is set. Uses the semantic warning token.
+ */
 .date-time-picker-warning-border {
     border-color: var(--color-state-warning) !important;
 }

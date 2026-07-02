@@ -1,30 +1,34 @@
-// Theme-bound custom colors for the editor surface. These map to per-theme SCSS variables
-// (--md-wrapper-color / --md-editor-background, light + dark) that have no PrimeNG semantic-token
-// equivalent, so they stay as a scoped class rather than a Tailwind color utility.
+/*
+ * Theme-bound custom colors for the editor surface. These map to per-theme SCSS variables
+ * (--md-wrapper-color / --md-editor-background, light + dark) that have no PrimeNG semantic-token
+ * equivalent, so they stay as a scoped class rather than a Tailwind color utility.
+ */
 .markdown-editor-wrapper {
     color: var(--md-wrapper-color);
     background-color: var(--md-editor-background);
 
-    // Fullscreen mode fix for Safari (cannot be expressed as a Tailwind utility — pseudo-class selector).
+    /* Fullscreen mode fix for Safari (cannot be expressed as a Tailwind utility — pseudo-class selector). */
     &:-webkit-full-screen {
         width: 100%;
         height: 100%;
     }
 }
 
-// Theme-bound resize handle color (--md-resize-icon-color, light + dark); no semantic-token equivalent.
+/* Theme-bound resize handle color (--md-resize-icon-color, light + dark); no semantic-token equivalent. */
 .md-resize-icon {
     color: var(--md-resize-icon-color);
 }
 
-// Theme-bound toolbar background (--md-tab-list-bg, light + dark); no semantic-token equivalent.
+/* Theme-bound toolbar background (--md-tab-list-bg, light + dark); no semantic-token equivalent. */
 .md-action-palette {
     background: var(--md-tab-list-bg);
 }
 
-// Compact the PrimeNG tabs so they fit the dense editor toolbar. Targets PrimeNG's internal pass-through
-// classes (.p-tablist-tab-list / .p-tab), which are not Tailwind utilities; the p-tabs DOM is rendered
-// inside this component so emulated encapsulation applies and no ::ng-deep is needed.
+/*
+ * Compact the PrimeNG tabs so they fit the dense editor toolbar. Targets PrimeNG's internal pass-through
+ * classes (.p-tablist-tab-list / .p-tab), which are not Tailwind utilities; the p-tabs DOM is rendered
+ * inside this component so emulated encapsulation applies and no ::ng-deep is needed.
+ */
 .md-tabs {
     .p-tablist-tab-list {
         border-bottom: 0;
@@ -36,9 +40,11 @@
     }
 }
 
-// Dense toolbar buttons (small font, horizontal-only padding, transparent border/background, no hover).
-// Kept as a shared class because it is applied to ~15 toolbar buttons and carries a `:disabled` pseudo-state
-// that a per-element utility string cannot express cleanly.
+/*
+ * Dense toolbar buttons (small font, horizontal-only padding, transparent border/background, no hover).
+ * Kept as a shared class because it is applied to ~15 toolbar buttons and carries a `:disabled` pseudo-state
+ * that a per-element utility string cannot express cleanly.
+ */
 .md-toolbar-btn {
     display: inline-block;
     padding: 0 0.5rem;
@@ -60,9 +66,11 @@
     }
 }
 
-// Popover dropdown item (headers, domain options, AI assistance). Extracted from an identical utility
-// string that was duplicated across the four popover menus; kept as a shared class for the same reason as
-// `.md-toolbar-btn` above — it carries `:hover`/`:disabled` pseudo-states a per-element utility cannot express cleanly.
+/*
+ * Popover dropdown item (headers, domain options, AI assistance). Extracted from an identical utility
+ * string that was duplicated across the four popover menus; kept as a shared class for the same reason as
+ * `.md-toolbar-btn` above — it carries `:hover`/`:disabled` pseudo-states a per-element utility cannot express cleanly.
+ */
 .md-dropdown-item {
     display: block;
     width: 100%;
@@ -85,9 +93,11 @@
     background-color: var(--p-surface-800);
 }
 
-// Action dropdowns (headers, domain options, AI assistance) migrated from ng-bootstrap NgbDropdown
-// to a PrimeNG Popover. The popover is body-appended, so its content must be styled via ::ng-deep on the
-// styleClass target (pre-existing; not a Tailwind utility).
+/*
+ * Action dropdowns (headers, domain options, AI assistance) migrated from ng-bootstrap NgbDropdown
+ * to a PrimeNG Popover. The popover is body-appended, so its content must be styled via ::ng-deep on the
+ * styleClass target (pre-existing; not a Tailwind utility).
+ */
 :host ::ng-deep .md-action-popover {
     .p-popover-content {
         max-height: 300px;

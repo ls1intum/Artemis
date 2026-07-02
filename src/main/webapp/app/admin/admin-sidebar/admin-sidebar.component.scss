@@ -1,8 +1,10 @@
 $menu-width-closed: 64px;
 $menu-width-open: 220px;
 
-// Width is driven by the runtime `collapsed` class and a custom (960px) breakpoint that interact via
-// `!important`, so it stays in SCSS rather than as Tailwind utilities (stateful + custom breakpoint override).
+/*
+ * Width is driven by the runtime `collapsed` class and a custom (960px) breakpoint that interact via
+ * `!important`, so it stays in SCSS rather than as Tailwind utilities (stateful + custom breakpoint override).
+ */
 .sidebar-container {
     width: $menu-width-open;
 
@@ -25,8 +27,10 @@ $menu-width-open: 220px;
     }
 }
 
-// Hover / router-active state for nav links. Stateful selectors plus an `!important` override of the global
-// anchor hover style, so they cannot be plain template utilities.
+/*
+ * Hover / router-active state for nav links. Stateful selectors plus an `!important` override of the global
+ * anchor hover style, so they cannot be plain template utilities.
+ */
 .nav-link-sidebar:hover,
 .nav-link-sidebar.active {
     width: 100%;
@@ -34,7 +38,7 @@ $menu-width-open: 220px;
     color: var(--link-item-color);
 }
 
-// Override global anchor hover styles for sidebar nav links only.
+/* Override global anchor hover styles for sidebar nav links only. */
 .sidebar-container a.nav-link-sidebar:hover {
     text-decoration: none !important;
 }
@@ -45,7 +49,7 @@ $menu-width-open: 220px;
     text-decoration-thickness: 1px;
 }
 
-// Chevron rotation/translation reacts to the runtime `menu-closed` class, so it stays in SCSS.
+/* Chevron rotation/translation reacts to the runtime `menu-closed` class, so it stays in SCSS. */
 .double-arrow.menu-closed {
     transform: translate(16px);
 }
