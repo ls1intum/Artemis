@@ -479,10 +479,12 @@ dependencies {
         // Security hardening for transitive-only dependencies. Artemis does not use these directly; each is
         // pulled in transitively, and the constraint forces a known-good version wherever it appears without
         // declaring a spurious direct dependency.
-        implementation("com.google.guava:guava:33.6.0-jre") {
+        implementation("com.google.guava:guava") {
+            version { strictly("33.6.0-jre") }
             because("Force the newest guava across its many transitive users to avoid outdated-dependency CVEs")
         }
-        implementation("org.apache.santuario:xmlsec:4.0.4") {
+        implementation("org.apache.santuario:xmlsec") {
+            version { strictly("4.0.4") }
             because("Pulled transitively by OpenSAML (SAML2); force the newest version to avoid CVEs")
         }
     }
