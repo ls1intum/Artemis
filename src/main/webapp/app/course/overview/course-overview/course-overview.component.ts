@@ -119,6 +119,16 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     // sidebar-less tabs (Statistics, Calendar, FAQ), where hasSidebar is false for the active route.
     protected readonly actionBarOverContent = computed(() => this.hasSidebar() && this.titleInSidebar());
 
+    // Whether the title bar should show the collapse toggle. Same as hasSidebar for every tab except the dashboard:
+    // the dashboard has no list sidebar and its toggle only drives the Iris chat panel, which exists only when Iris
+    // is enabled for the course, so the toggle is hidden otherwise to avoid a dead button.
+    protected readonly titleBarHasSidebar = computed(() => {
+        if (this.activatedComponentReference() instanceof CourseDashboardComponent) {
+            return this.hasSidebar() && !!this.course()?.irisEnabledInCourse;
+        }
+        return this.hasSidebar();
+    });
+
     protected readonly activeSidebarCollapsed = computed<boolean>(() => {
         const componentRef = this.activatedComponentReference();
         if (!componentRef) {

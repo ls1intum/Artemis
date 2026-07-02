@@ -69,6 +69,7 @@ import { CourseNotificationInfo } from 'app/notification/shared/entities/course-
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseIrisComponent } from 'app/iris/overview/course-iris/course-iris.component';
+import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/course-dashboard.component';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
@@ -778,6 +779,7 @@ describe('CourseOverviewComponent', () => {
             titleInSidebar(): boolean;
             toggleInSidebar(): boolean;
             activeSidebarCollapsed(): boolean;
+            titleBarHasSidebar(): boolean;
             handleComponentActivation(componentRef: unknown): void;
         };
         const internals = (): CourseOverviewInternals => component as unknown as CourseOverviewInternals;
@@ -841,6 +843,29 @@ describe('CourseOverviewComponent', () => {
         it('should mark toggleInSidebar false for tabs that are not relocated', () => {
             component.activatedComponentReference.set(Object.create(CourseExercisesComponent.prototype) as CourseExercisesComponent);
             expect(internals().toggleInSidebar()).toBe(false);
+        });
+
+        it('should keep the title bar toggle for non-dashboard tabs (titleBarHasSidebar follows hasSidebar)', () => {
+            component.hasSidebar.set(true);
+            component.activatedComponentReference.set(Object.create(CourseLecturesComponent.prototype) as CourseLecturesComponent);
+            expect(internals().titleBarHasSidebar()).toBe(true);
+
+            component.hasSidebar.set(false);
+            expect(internals().titleBarHasSidebar()).toBe(false);
+        });
+
+        it('should hide the dashboard title bar toggle when Iris is not enabled', () => {
+            component.hasSidebar.set(true);
+            component.course.set({ id: 1, irisEnabledInCourse: false } as Course);
+            component.activatedComponentReference.set(Object.create(CourseDashboardComponent.prototype) as CourseDashboardComponent);
+            expect(internals().titleBarHasSidebar()).toBe(false);
+        });
+
+        it('should show the dashboard title bar toggle when Iris is enabled', () => {
+            component.hasSidebar.set(true);
+            component.course.set({ id: 1, irisEnabledInCourse: true } as Course);
+            component.activatedComponentReference.set(Object.create(CourseDashboardComponent.prototype) as CourseDashboardComponent);
+            expect(internals().titleBarHasSidebar()).toBe(true);
         });
     });
 });
