@@ -114,7 +114,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
     // When active, the shared action bar is overlaid on top of the content column (offset past the sidebar)
     // instead of spanning full width, so the tab's sidebar can rise to the very top (like the exercises tab).
-    protected readonly actionBarOverContent = computed(() => this.activatedComponentReference() instanceof CourseConversationsComponent);
+    // Applies to every list tab that relocates its title into the sidebar (Lectures, Exams, Tutorials, Communication).
+    protected readonly actionBarOverContent = computed(() => this.titleInSidebar());
 
     protected readonly activeSidebarCollapsed = computed<boolean>(() => {
         const componentRef = this.activatedComponentReference();

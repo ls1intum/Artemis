@@ -22,9 +22,6 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    // Clears the action bar that is overlaid on top of the content column by the course overview layout,
-    // so the course-wide search starts below it while the sidebar beside it still reaches the very top.
-    padding-top: 3.25rem;
 }
 
 .communication-message-wrap {
