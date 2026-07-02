@@ -23,6 +23,8 @@ export class FeedbackNodeComponent implements OnInit {
 
     readonly feedbackItemNode = input<FeedbackNode>(undefined!);
     readonly course = input<Course>();
+    /** While the exam summary is being printed, every group renders expanded regardless of its `open` flag. */
+    readonly isPrinting = input(false);
 
     // This is a workaround for type safety in the template
     readonly feedbackItem = signal<FeedbackItem>(undefined!);
@@ -40,6 +42,17 @@ export class FeedbackNodeComponent implements OnInit {
         } else {
             this.feedbackItem.set(feedbackItemNode as FeedbackItem);
         }
+    }
+
+    /**
+     * Whether the group's members should be shown. A group is expanded while printing (so the exam summary PDF
+     * shows everything) or when the user opened it. Replaces the former parent-side mutate-then-restore of `open`.
+     * Implemented as a method (not a computed) because `group.open` is a plain mutable property toggled on click;
+     * the method re-evaluates each change-detection pass, so it tracks both the `isPrinting()` signal and the
+     * synchronous click mutation — exactly like the previous direct `feedbackItemGroup().open` template read.
+     */
+    isGroupExpanded(): boolean {
+        return this.isPrinting() || !!this.feedbackItemGroup()?.open;
     }
 
     /**

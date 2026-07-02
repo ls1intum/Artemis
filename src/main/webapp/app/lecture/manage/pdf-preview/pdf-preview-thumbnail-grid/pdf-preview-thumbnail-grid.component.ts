@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, Renderer2, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, Renderer2, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
     imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbPopover, TranslateDirective, DragDropModule],
 })
-export class PdfPreviewThumbnailGridComponent implements OnChanges {
+export class PdfPreviewThumbnailGridComponent {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
     FOREVER = dayjs('9999-12-31');
@@ -72,19 +72,30 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     constructor() {
         PDFJS.GlobalWorkerOptions.workerSrc = '/content/scripts/pdf.worker.min.mjs';
-    }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['orderedPages']) {
-            if (!this.reordering()) {
-                this.renderPages();
-            }
-            this.reordering.set(false);
-        }
-        if (changes['updatedSelectedPages']) {
-            this.selectedPages.set(new Set(this.updatedSelectedPages()!));
-            this.updateCheckboxStates();
-        }
+        // Replaces the ngOnChanges 'orderedPages' branch: re-render the thumbnails whenever the ordered pages
+        // change, unless the change originated from a local drag-and-drop reorder (the DOM is already in the new
+        // order, so re-rendering would be redundant). The render side effect and the read/write of `reordering`
+        // run inside untracked() so only orderedPages() retriggers this effect.
+        effect(() => {
+            this.orderedPages();
+            untracked(() => {
+                if (!this.reordering()) {
+                    void this.renderPages();
+                }
+                this.reordering.set(false);
+            });
+        });
+
+        // Replaces the ngOnChanges 'updatedSelectedPages' branch: mirror the externally selected pages into local
+        // state and sync the checkbox DOM. The writes run untracked so only updatedSelectedPages() retriggers it.
+        effect(() => {
+            const updatedSelectedPages = this.updatedSelectedPages();
+            untracked(() => {
+                this.selectedPages.set(new Set(updatedSelectedPages));
+                this.updateCheckboxStates();
+            });
+        });
     }
 
     /**

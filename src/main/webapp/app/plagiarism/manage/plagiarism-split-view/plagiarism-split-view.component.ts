@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, OnDestroy, OnInit, SimpleChanges, afterNextRender, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, afterNextRender, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { PlagiarismComparison, PlagiarismComparisonSummary } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { FromToElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
 import { Subject } from 'rxjs';
@@ -23,7 +23,7 @@ import { PlagiarismCaseExercise } from 'app/plagiarism/shared/entities/Plagiaris
     templateUrl: './plagiarism-split-view.component.html',
     imports: [SplitterModule, TextSubmissionViewerComponent, FaIconComponent, TooltipModule, ArtemisTranslatePipe],
 })
-export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestroy {
+export class PlagiarismSplitViewComponent implements OnInit, OnDestroy {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private readonly hostElement = inject<ElementRef<HTMLElement>>(ElementRef);
 
@@ -62,7 +62,11 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
     protected readonly gutterSize = 12;
     private panelResizeObserver?: ResizeObserver;
 
-    readonly isProgrammingOrTextExercise = signal(false);
+    // Replaces the ngOnChanges 'exercise' branch: pure derived state, recomputed whenever the exercise input changes.
+    readonly isProgrammingOrTextExercise = computed(() => {
+        const exercise = this.exercise();
+        return exercise?.type === ExerciseType.PROGRAMMING || exercise?.type === ExerciseType.TEXT;
+    });
 
     readonly matchesA = signal<Map<string, FromToElement[]> | undefined>(undefined);
     readonly matchesB = signal<Map<string, FromToElement[]> | undefined>(undefined);
@@ -73,7 +77,29 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
     protected readonly faUnlock: IconDefinition = faUnlock;
 
     constructor() {
-        // Track the gutter position once the splitter (and its panels) have rendered.
+        effect(() => {
+            const comparison = this.comparison();
+            if (comparison) {
+                untracked(() => {
+                    const courseId = this.getCourseIdForExercise();
+                    if (courseId === undefined) {
+                        return;
+                    }
+                    this.plagiarismCasesService.getPlagiarismComparisonForSplitView(courseId, comparison.id).subscribe((resp: HttpResponse<PlagiarismComparison>) => {
+                        const plagiarismComparison = resp.body!;
+                        const sortByStudentLogin = this.sortByStudentLogin();
+                        if (sortByStudentLogin && sortByStudentLogin === plagiarismComparison.submissionB.studentLogin) {
+                            this.swapSubmissions(plagiarismComparison);
+                        }
+                        this.plagiarismComparison.set(plagiarismComparison);
+                        if (this.isProgrammingOrTextExercise()) {
+                            this.parseTextMatches(plagiarismComparison);
+                        }
+                    });
+                });
+            }
+        });
+
         afterNextRender(() => this.observeGutterPosition());
     }
 
@@ -104,40 +130,8 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
         this.splitControlSubject()?.subscribe((pane: string) => this.handleSplitControl(pane));
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.exercise) {
-            const exercise = changes.exercise.currentValue as Exercise | PlagiarismCaseExercise | undefined;
-
-            this.isProgrammingOrTextExercise.set(exercise?.type === ExerciseType.PROGRAMMING || exercise?.type === ExerciseType.TEXT);
-        }
-
-        if (changes.comparison || changes.exercise) {
-            this.fetchComparisonIfReady(changes.comparison?.currentValue, changes.exercise?.currentValue);
-        }
-    }
-
-    private fetchComparisonIfReady(changedComparison?: PlagiarismComparison | PlagiarismComparisonSummary, changedExercise?: Exercise | PlagiarismCaseExercise): void {
-        const comparison = changedComparison ?? this.comparison();
-        const courseId = this.getCourseIdForExercise(changedExercise);
-        if (courseId === undefined || comparison?.id === undefined) {
-            return;
-        }
-
-        this.plagiarismCasesService.getPlagiarismComparisonForSplitView(courseId, comparison.id).subscribe((resp: HttpResponse<PlagiarismComparison>) => {
-            const plagiarismComparison = resp.body!;
-            const sortByStudentLogin = this.sortByStudentLogin();
-            if (sortByStudentLogin && sortByStudentLogin === plagiarismComparison.submissionB.studentLogin) {
-                this.swapSubmissions(plagiarismComparison);
-            }
-            this.plagiarismComparison.set(plagiarismComparison);
-            if (this.isProgrammingOrTextExercise()) {
-                this.parseTextMatches(plagiarismComparison);
-            }
-        });
-    }
-
-    private getCourseIdForExercise(changedExercise?: Exercise | PlagiarismCaseExercise): number | undefined {
-        const exercise = changedExercise ?? this.exercise();
+    private getCourseIdForExercise(): number | undefined {
+        const exercise = this.exercise();
         if (!exercise) {
             return undefined;
         }

@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnChanges, OnInit, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnInit, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { DomSanitizer, SafeStyle, SafeUrl } from '@angular/platform-browser';
-import { OutputFormat } from '../interfaces/cropper-options.interface';
+import { CropperOptions, OutputFormat } from '../interfaces/cropper-options.interface';
 import { CropperSettings } from '../interfaces/cropper.settings';
 import { MoveStart, MoveTypes } from '../interfaces/move-start.interface';
 import { CropService } from '../services/crop.service';
@@ -35,7 +35,7 @@ const defaultSettings = new CropperSettings();
         '(document:touchend)': 'moveStop()',
     },
 })
-export class ImageCropperComponent implements OnChanges, OnInit {
+export class ImageCropperComponent implements OnInit {
     private cropService = inject(CropService);
     private cropperPositionService = inject(CropperPositionService);
     private loadImageService = inject(LoadImageService);
@@ -66,7 +66,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     readonly imageVisible = signal(false);
 
     /**
-     * Mutable internal cropper position. Synced from the {@link cropperInput} on each ngOnChanges run.
+     * Mutable internal cropper position. Synced from the {@link cropperInput} whenever it changes (constructor effect).
      * Backed by a signal (template reads it); the getter/setter facade preserves in-place mutation and the
      * pass-by-reference contract with the cropper services. Call commitCropper() after in-place mutations in
      * async paths so the template re-renders.
@@ -121,98 +121,158 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     readonly cropperReady = output<Dimensions>();
     readonly loadImageFailed = output<void>();
 
+    // Snapshot of the inputs whose *change* (not just current value) drives a side effect — replaces the
+    // SimpleChanges-keyed branching of the former ngOnChanges. Seeded with the current input defaults so the first
+    // effect run treats only explicitly-bound, non-default inputs as "changed". (Settings are applied in full each
+    // run, which is idempotent, so they need no snapshot.)
+    private previousCropperInputs = {
+        cropperInput: this.cropperInput(),
+        maintainAspectRatio: this.maintainAspectRatio(),
+        aspectRatio: this.aspectRatio(),
+        transform: this.transform(),
+        containWithinAspectRatio: this.containWithinAspectRatio(),
+        canvasRotation: this.canvasRotation(),
+        imageChangedEvent: this.imageChangedEvent(),
+        imageURL: this.imageURL(),
+        imageBase64: this.imageBase64(),
+        imageFile: this.imageFile(),
+    };
+
     constructor() {
         this.reset();
+
+        // Replaces ngOnChanges using the established previousInputs-diff idiom (see code-editor-monaco.component): the
+        // cropper settings are re-applied in full every run (idempotent), while the cropper-sync, image-load, transform
+        // and aspect-ratio/rotation branches act only on the inputs that actually changed — exactly as the former
+        // SimpleChanges-keyed hook did. All reads happen in the tracked head; the side effects run untracked.
+        effect(() => {
+            // Tracked: read every reactive input so the effect re-runs on any change.
+            const cropperInput = this.cropperInput();
+            const transform = this.transform();
+            const maintainAspectRatio = this.maintainAspectRatio();
+            const aspectRatio = this.aspectRatio();
+            const containWithinAspectRatio = this.containWithinAspectRatio();
+            const canvasRotation = this.canvasRotation();
+            const imageChangedEvent = this.imageChangedEvent();
+            const imageURL = this.imageURL();
+            const imageBase64 = this.imageBase64();
+            const imageFile = this.imageFile();
+            const settingsOptions: Partial<CropperOptions> = {
+                format: this.format(),
+                maintainAspectRatio,
+                transform,
+                aspectRatio,
+                resizeToWidth: this.resizeToWidth(),
+                resizeToHeight: this.resizeToHeight(),
+                cropperMinWidth: this.cropperMinWidth(),
+                cropperMinHeight: this.cropperMinHeight(),
+                cropperMaxHeight: this.cropperMaxHeight(),
+                cropperMaxWidth: this.cropperMaxWidth(),
+                cropperStaticWidth: this.cropperStaticWidth(),
+                cropperStaticHeight: this.cropperStaticHeight(),
+                canvasRotation,
+                initialStepSize: this.initialStepSize(),
+                roundCropper: this.roundCropper(),
+                onlyScaleDown: this.onlyScaleDown(),
+                imageQuality: this.imageQuality(),
+                autoCrop: this.autoCrop(),
+                backgroundColor: this.backgroundColor(),
+                containWithinAspectRatio,
+                hideResizeSquares: this.hideResizeSquares(),
+                alignImage: this.alignImage(),
+            };
+
+            untracked(() => {
+                const prev = this.previousCropperInputs;
+                const cropperInputChanged = cropperInput !== prev.cropperInput;
+                const maintainAspectRatioChanged = maintainAspectRatio !== prev.maintainAspectRatio;
+                const aspectRatioChanged = aspectRatio !== prev.aspectRatio;
+                const transformChanged = transform !== prev.transform;
+                const containWithinAspectRatioChanged = containWithinAspectRatio !== prev.containWithinAspectRatio;
+                const canvasRotationChanged = canvasRotation !== prev.canvasRotation;
+                const imageChangedEventChanged = imageChangedEvent !== prev.imageChangedEvent;
+                const imageURLChanged = imageURL !== prev.imageURL;
+                const imageBase64Changed = imageBase64 !== prev.imageBase64;
+                const imageFileChanged = imageFile !== prev.imageFile;
+                this.previousCropperInputs = {
+                    cropperInput,
+                    maintainAspectRatio,
+                    aspectRatio,
+                    transform,
+                    containWithinAspectRatio,
+                    canvasRotation,
+                    imageChangedEvent,
+                    imageURL,
+                    imageBase64,
+                    imageFile,
+                };
+
+                // Keep the internal mutable cropper in sync with the input.
+                if (cropperInputChanged) {
+                    this.cropper = { ...cropperInput };
+                }
+
+                // Apply the cropper settings (idempotent — replaces settings.setOptionsFromChanges(); settings.cropper
+                // was written by the old code but is never read, so it is intentionally omitted here).
+                this.settings.setOptions(settingsOptions);
+                if (this.settings.cropperStaticHeight && this.settings.cropperStaticWidth) {
+                    this.settings.setOptions({
+                        hideResizeSquares: true,
+                        cropperMinWidth: this.settings.cropperStaticWidth,
+                        cropperMinHeight: this.settings.cropperStaticHeight,
+                        cropperMaxHeight: this.settings.cropperStaticHeight,
+                        cropperMaxWidth: this.settings.cropperStaticWidth,
+                        maintainAspectRatio: false,
+                    });
+                }
+
+                // Image source changes (replaces onChangesInputImage()).
+                if (imageChangedEventChanged || imageURLChanged || imageBase64Changed || imageFileChanged) {
+                    this.reset();
+                }
+                if (imageChangedEventChanged && this.isValidImageChangedEvent()) {
+                    const element = imageChangedEvent?.currentTarget as HTMLInputElement;
+                    if (element.files) {
+                        this.loadImageFile(element.files[0]);
+                    }
+                }
+                if (imageURLChanged && imageURL) {
+                    this.loadImageFromURL(imageURL);
+                }
+                if (imageBase64Changed && imageBase64) {
+                    this.loadBase64Image(imageBase64);
+                }
+                if (imageFileChanged && imageFile) {
+                    this.loadImageFile(imageFile);
+                }
+
+                if (this.loadedImage?.original.image.complete && (containWithinAspectRatioChanged || canvasRotationChanged)) {
+                    this.loadImageService
+                        .transformLoadedImage(this.loadedImage, this.settings)
+                        .then((res) => this.setLoadedImage(res))
+                        .catch((err: Error) => this.loadImageError(err));
+                }
+                if (cropperInputChanged || maintainAspectRatioChanged || aspectRatioChanged) {
+                    this.setMaxSize();
+                    this.setCropperScaledMinSize();
+                    this.setCropperScaledMaxSize();
+                    if (this.maintainAspectRatio() && (maintainAspectRatioChanged || aspectRatioChanged)) {
+                        this.resetCropperPosition();
+                    } else if (cropperInputChanged) {
+                        this.checkCropperPosition(false);
+                        this.doAutoCrop();
+                    }
+                }
+                if (transformChanged) {
+                    this.setCssTransform();
+                    this.doAutoCrop();
+                }
+            });
+        });
     }
 
     ngOnInit(): void {
         this.settings.stepSize = this.initialStepSize();
-    }
-
-    // NOTE (signal migration): intentionally NOT migrated to computed()/effect() yet. This hook is a side-effect
-    // orchestrator, not derived state, and a faithful effect() rewrite would change behavior:
-    //   1. It writes the NON-signal `this.settings` via `settings.setOptionsFromChanges(changes)`, which is keyed on
-    //      WHICH inputs changed this cycle (and remaps the `cropper` alias). Reproducing that "apply only the changed
-    //      inputs" granularity needs manual per-input previous-value tracking.
-    //   2. doAutoCrop()/crop() emit the `startCropImage`/`imageCropped` outputs synchronously during the change cycle;
-    //      an effect() runs after change detection (and after ngOnInit), shifting that emission timing for parents.
-    // Tracked for future removal once a signal-friendly approach exists.
-    // eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges -- needs SimpleChanges input-change granularity and synchronous crop output timing.
-    ngOnChanges(changes: SimpleChanges): void {
-        // Keep the internal mutable cropper in sync with the input.
-        if (changes.cropperInput) {
-            this.cropper = { ...this.cropperInput() };
-        }
-
-        this.onChangesUpdateSettings(changes);
-        this.onChangesInputImage(changes);
-
-        if (this.loadedImage?.original.image.complete && (changes.containWithinAspectRatio || changes.canvasRotation)) {
-            this.loadImageService
-                .transformLoadedImage(this.loadedImage, this.settings)
-                .then((res) => this.setLoadedImage(res))
-                .catch((err: Error) => this.loadImageError(err));
-        }
-        if (changes.cropperInput || changes.maintainAspectRatio || changes.aspectRatio) {
-            this.setMaxSize();
-            this.setCropperScaledMinSize();
-            this.setCropperScaledMaxSize();
-            if (this.maintainAspectRatio() && (changes.maintainAspectRatio || changes.aspectRatio)) {
-                this.resetCropperPosition();
-            } else if (changes.cropperInput) {
-                this.checkCropperPosition(false);
-                this.doAutoCrop();
-            }
-        }
-        if (changes.transform) {
-            this.setCssTransform();
-            this.doAutoCrop();
-        }
-    }
-
-    private onChangesUpdateSettings(changes: SimpleChanges) {
-        // Translate signal-input change keys into the option names CropperSettings expects.
-        const optionChanges: SimpleChanges = { ...changes };
-        if (changes.cropperInput) {
-            optionChanges.cropper = changes.cropperInput;
-            delete optionChanges.cropperInput;
-        }
-        this.settings.setOptionsFromChanges(optionChanges);
-
-        if (this.settings.cropperStaticHeight && this.settings.cropperStaticWidth) {
-            this.settings.setOptions({
-                hideResizeSquares: true,
-                cropperMinWidth: this.settings.cropperStaticWidth,
-                cropperMinHeight: this.settings.cropperStaticHeight,
-                cropperMaxHeight: this.settings.cropperStaticHeight,
-                cropperMaxWidth: this.settings.cropperStaticWidth,
-                maintainAspectRatio: false,
-            });
-        }
-    }
-
-    private onChangesInputImage(changes: SimpleChanges): void {
-        if (changes.imageChangedEvent || changes.imageURL || changes.imageBase64 || changes.imageFile) {
-            this.reset();
-        }
-        if (changes.imageChangedEvent && this.isValidImageChangedEvent()) {
-            const element = this.imageChangedEvent()?.currentTarget as HTMLInputElement;
-            if (element.files) {
-                this.loadImageFile(element.files[0]);
-            }
-        }
-        const imageURL = this.imageURL();
-        if (changes.imageURL && imageURL) {
-            this.loadImageFromURL(imageURL);
-        }
-        const imageBase64 = this.imageBase64();
-        if (changes.imageBase64 && imageBase64) {
-            this.loadBase64Image(imageBase64);
-        }
-        const imageFile = this.imageFile();
-        if (changes.imageFile && imageFile) {
-            this.loadImageFile(imageFile);
-        }
     }
 
     private isValidImageChangedEvent(): boolean {

@@ -1,4 +1,4 @@
-import { Component, OnChanges, SimpleChanges, effect, input } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { CourseCompetencyFormComponent, CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
@@ -13,7 +13,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     styleUrls: ['./competency-form.component.scss'],
     imports: [CommonCourseCompetencyFormComponent, FormsModule, ReactiveFormsModule, FontAwesomeModule, TranslateDirective],
 })
-export class CompetencyFormComponent extends CourseCompetencyFormComponent implements OnChanges {
+export class CompetencyFormComponent extends CourseCompetencyFormComponent {
     formData = input<CourseCompetencyFormData>({
         id: undefined,
         title: undefined,
@@ -27,6 +27,10 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
 
     constructor() {
         super();
+        // Replaces ngOnChanges: builds the form and patches it from the signal inputs. The effect tracks
+        // courseId(), formData() and isEditMode() (the latter via updateTitleUniqueValidator() and the guard
+        // below), i.e. every input the former hook reacted to. The template renders the child only inside
+        // `@if (form)`, so there is no before-child-init ordering hazard despite the effect running after ngOnInit.
         effect(() => {
             this.courseId();
             if (!this.form) {
@@ -38,15 +42,6 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
                 this.setFormValues(fd);
             }
         });
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        this.initializeForm();
-        this.updateTitleUniqueValidator();
-        const fd = this.formData();
-        if (this.isEditMode() && fd) {
-            this.setFormValues(fd);
-        }
     }
 
     private setFormValues(formData: CourseCompetencyFormData) {

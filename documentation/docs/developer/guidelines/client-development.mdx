@@ -258,7 +258,7 @@ export class ExampleComponent {
 }
 ```
 
-An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **warns** on `ngOnChanges` in `@Component` / `@Directive` classes across Angular client files that have a clean baseline. Known migration-backlog files are temporarily excluded in `eslint.config.mjs` so `pnpm run lint` stays warning-clean for unchanged code; remove an entry as soon as its hook is migrated or explicitly justified. The rule is intentionally a warning, not an error.
+An ESLint rule (`localRules/prefer-signal-reactivity-over-ngonchanges`) **warns** on `ngOnChanges` in `@Component` / `@Directive` classes across all (non-spec) Angular client files. The former temporary migration backlog in `eslint.config.mjs` has been cleared — every remaining `ngOnChanges` has either been migrated to `computed()`/`effect()` or carries a justified line-level `eslint-disable` (see below). The rule is intentionally a warning, not an error.
 
 The goal is to **remove `ngOnChanges` entirely**: migrate every usage to `computed()` (derived state) or `effect()` (genuine side effects). For the rare cases that still genuinely need `ngOnChanges` (the bottom two rows above — `SimpleChanges.previousValue` / `isFirstChange()`, or logic that must run before child components initialise), add a **detailed comment** explaining why a signal-based replacement is not yet possible. If a covered file must keep `ngOnChanges`, use a narrowly scoped `eslint-disable-next-line localRules/prefer-signal-reactivity-over-ngonchanges` with a justification that references why `computed()` or `effect()` would change the behavior; do not blanket-disable the rule for a file.
 
