@@ -226,6 +226,7 @@ export default tseslint.config(
             'localRules/enforce-signal-apis': 'error',
             'localRules/enforce-cleanup-on-destroy': 'warn',
             'localRules/no-navigation-in-effect': 'error',
+            'localRules/no-as-unknown-cast': 'error',
         },
     },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived

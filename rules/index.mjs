@@ -7,6 +7,7 @@ import noRawTailwindColorPalette from './no-raw-tailwind-color-palette.mjs';
 import noBootstrapClasses from './no-bootstrap-classes.mjs';
 import noPrimengComponentClasses from './no-primeng-component-classes.mjs';
 import noNavigationInEffect from './no-navigation-in-effect.mjs';
+import noAsUnknownCast from './no-as-unknown-cast.mjs';
 
 export default {
     rules: {
@@ -19,5 +20,6 @@ export default {
         'no-bootstrap-classes': noBootstrapClasses,
         'no-primeng-component-classes': noPrimengComponentClasses,
         'no-navigation-in-effect': noNavigationInEffect,
+        'no-as-unknown-cast': noAsUnknownCast,
     },
 };
