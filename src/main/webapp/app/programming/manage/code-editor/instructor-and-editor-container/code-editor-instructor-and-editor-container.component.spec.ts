@@ -50,7 +50,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
@@ -428,6 +428,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.setCodeGenerationRepositoryEnabled(RepositoryType.TESTS, repositories.includes(RepositoryType.TESTS));
         };
 
+        it('should not generate for non-Java exercises', async () => {
+            comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.PYTHON });
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+
+            comp.generateCode();
+            await Promise.resolve();
+
+            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
+        });
+
         it('should not generate when no exercise id', async () => {
             comp.exercise = undefined as any;
             comp.selectedRepository = RepositoryType.TEMPLATE;
@@ -586,7 +597,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.hyperionEnabled).toBe(false);
         });
 
-        it('should debounce repository pulls across FILE_UPDATED and NEW_FILE events', async () => {
+        it('should debounce repository pulls across file activity events', async () => {
             vi.useFakeTimers();
             try {
                 comp.selectedRepository = RepositoryType.TEMPLATE;
@@ -602,6 +613,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
                 job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
                 job$.next({ type: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 });
+                job$.next({ type: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 3 });
 
                 expect(pullSpy).not.toHaveBeenCalled();
 
@@ -609,6 +621,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
                 expect(pullSpy).toHaveBeenCalledOnce();
                 expect(comp.codeGenerationActivityLog()).toEqual([
+                    expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_DELETED', path: 'src/main/java/Obsolete.java', iteration: 3 }),
                     expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 }),
                     expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 }),
                 ]);
@@ -617,6 +630,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                         comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)!.fileActivities,
                     ),
                 ).toEqual([
+                    {
+                        iteration: 3,
+                        activities: [expect.objectContaining({ path: 'src/main/java/Obsolete.java', iteration: 3 })],
+                    },
                     {
                         iteration: 2,
                         activities: [expect.objectContaining({ path: 'src/test/java/AppTest.java', iteration: 2 })],
