@@ -137,6 +137,8 @@ artemis:
         destination: https://telemetry.artemis.cit.tum.de
     version-control:
         local-vcs-repo-path: ./local-vcs-repos
+        analytics:
+            secret-key: local-development-vcs-analytics-secure-key-value
     continuous-integration:
         build-job:
           retention-period: 365 # Number of days before build job entries are deleted

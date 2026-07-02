@@ -127,6 +127,10 @@ artemis:
 
     tum-live:
         api-base-url: https://mocke.tum.live/api/v2
+    
+    version-control:
+        analytics:
+            secret-key: test-environment-vcs-analytics-secure-key-value
 
 spring:
     application:

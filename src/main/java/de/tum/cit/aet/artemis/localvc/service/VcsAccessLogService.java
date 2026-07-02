@@ -8,6 +8,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
@@ -17,10 +18,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
+import de.tum.cit.aet.artemis.programming.domain.ExperimentalGroup;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.domain.VcsAnalyticsLog;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
+import de.tum.cit.aet.artemis.programming.repository.VcsAnalyticsLogRepository;
+import de.tum.cit.aet.artemis.programming.service.AnalyticsHashUtils;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @Profile(PROFILE_LOCALVC)
@@ -32,15 +37,22 @@ public class VcsAccessLogService {
 
     private final VcsAccessLogRepository vcsAccessLogRepository;
 
+    private final VcsAnalyticsLogRepository vcsAnalyticsLogRepository;
+
     private final ParticipationRepository participationRepository;
 
-    VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository, ParticipationRepository participationRepository) {
+    @Value("${artemis.version-control.analytics.secret-key}")
+    private String analyticsSecretKey;
+
+    VcsAccessLogService(VcsAccessLogRepository vcsAccessLogRepository, VcsAnalyticsLogRepository vcsAnalyticsLogRepository, ParticipationRepository participationRepository) {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
+        this.vcsAnalyticsLogRepository = vcsAnalyticsLogRepository;
         this.participationRepository = participationRepository;
     }
 
     /**
      * Creates a vcs access log entry and stores it to the database
+     * Also uses helper function to create and save vcs analytics log entry to the database
      *
      * @param user                    The user accessing the repository
      * @param participation           The participation which owns the repository
@@ -57,6 +69,25 @@ public class VcsAccessLogService {
         VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) participation, user.getName(), user.getEmail(), actionType, authenticationMechanism, commitHash,
                 ipAddress);
         vcsAccessLogRepository.save(accessLogEntry);
+        saveAnalyticsLog(user, participation.getId(), participation.getExercise().getId(), actionType, authenticationMechanism);
+    }
+
+    /**
+     * Helper function to save the analytics entry to vcsAnalyticsRepository
+     *
+     */
+    private void saveAnalyticsLog(User user, Long participationId, Long exerciseId, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism) {
+        Optional<Long> optionalCourseId = vcsAnalyticsLogRepository.findCourseIdByParticipationId(participationId);
+        if (optionalCourseId.isPresent()) {
+            Long courseId = optionalCourseId.get();
+            ExperimentalGroup experimentalGroup = AnalyticsHashUtils.getGroup(user.getId(), analyticsSecretKey);
+            String maskedId = AnalyticsHashUtils.maskUserId(user.getId(), courseId, analyticsSecretKey);
+            VcsAnalyticsLog analyticsLogEntry = new VcsAnalyticsLog(maskedId, courseId, exerciseId, experimentalGroup, actionType, authenticationMechanism);
+            vcsAnalyticsLogRepository.save(analyticsLogEntry);
+        }
+        else {
+            log.warn("Could not save analytics log: courseId is null for participation {}", participationId);
+        }
     }
 
     /**
@@ -87,17 +118,46 @@ public class VcsAccessLogService {
         if (vcsAccessLog.isPresent()) {
             vcsAccessLog.get().setRepositoryActionType(repositoryActionType);
             vcsAccessLogRepository.save(vcsAccessLog.get());
+            updateAnalyticsActionType(vcsAccessLog.get(), repositoryActionType);
         }
     }
 
     /**
-     * Saves an vcsAccessLog
+     * Helper function to update actionType at vcs_analytics_log table
+     */
+    private void updateAnalyticsActionType(VcsAccessLog vcsAccessLog, RepositoryActionType repositoryActionType) {
+        User user = vcsAccessLog.getUser();
+        Participation participation = vcsAccessLog.getParticipation();
+        if (user == null || participation == null) {
+            log.warn("Cannot update analytics log: user or participation is null");
+            return;
+        }
+        Optional<Long> optionalCourseId = vcsAnalyticsLogRepository.findCourseIdByParticipationId(participation.getId());
+        if (optionalCourseId.isPresent()) {
+            Long courseId = optionalCourseId.get();
+            String maskedUserId = AnalyticsHashUtils.maskUserId(user.getId(), courseId, analyticsSecretKey);
+            Long exerciseId = vcsAccessLog.getParticipation().getExercise().getId();
+            Optional<VcsAnalyticsLog> vcsAnalyticsLog = vcsAnalyticsLogRepository.findLatestByMaskedUserIdAndExerciseId(maskedUserId, exerciseId);
+            if (vcsAnalyticsLog.isPresent()) {
+                vcsAnalyticsLog.get().setRepositoryActionType(repositoryActionType);
+                vcsAnalyticsLogRepository.save(vcsAnalyticsLog.get());
+            }
+        }
+    }
+
+    /**
+     * Saves an vcsAccessLog and vcsAnalyticsLog
      *
      * @param vcsAccessLog The vcsAccessLog to save
      */
     @Async
     public void saveVcsAccesslog(VcsAccessLog vcsAccessLog) {
         vcsAccessLogRepository.save(vcsAccessLog);
+        Participation participation = vcsAccessLog.getParticipation();
+        if (participation != null && vcsAccessLog.getUser() != null) {
+            saveAnalyticsLog(vcsAccessLog.getUser(), participation.getId(), participation.getExercise().getId(), vcsAccessLog.getRepositoryActionType(),
+                    vcsAccessLog.getAuthenticationMechanism());
+        }
     }
 
     /**

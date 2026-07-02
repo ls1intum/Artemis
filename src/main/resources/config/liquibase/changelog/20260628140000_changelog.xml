@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- Table which is anonymously tracking the Git operation usage across experimental groups.
+    Created to analyze the efficiency of different nudging techniques shifting user behaviour away from password-based authentication method-->
+    <changeSet id="20260628140000-1" author="artemis">
+        <createTable tableName="vcs_analytics_log">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="masked_user_id" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experimental_group" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repository_action_type" type="tinyint(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="authentication_mechanism" type="tinyint(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="CURRENT_TIMESTAMP" name="timestamp" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        
+        <createIndex indexName="vcs_analytics_log_course_id_experimental_group" tableName="vcs_analytics_log">
+            <column name="course_id"/>
+            <column name="experimental_group"/>
+        </createIndex>
+        <createIndex indexName="vcs_analytics_log_lookup_idx" tableName="vcs_analytics_log">
+            <column name="masked_user_id"/>
+            <column name="exercise_id"/>
+            <column name="timestamp"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
