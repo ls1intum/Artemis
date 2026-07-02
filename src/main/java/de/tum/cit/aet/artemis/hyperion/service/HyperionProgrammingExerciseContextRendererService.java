@@ -455,4 +455,53 @@ public class HyperionProgrammingExerciseContextRendererService {
             throw new NetworkingException("Failed to access solution repository", e);
         }
     }
+
+    /**
+     * Reads the existing test sources from the test repository so code generation can match the exact API and behaviour
+     * the tests require. Returns a "no tests" marker (never throws) when the repository is absent or empty, so generation
+     * still proceeds from the problem statement alone.
+     *
+     * @param exercise   the programming exercise
+     * @param gitService the git service for repository operations
+     * @return concatenated content of the test source files, or a marker string when none are available
+     */
+    public String getExistingTestCode(ProgrammingExercise exercise, GitService gitService) {
+        String noTests = "No tests available yet.";
+        try {
+            var testRepositoryUri = exercise.getVcsTestRepositoryUri();
+            if (testRepositoryUri == null) {
+                return noTests;
+            }
+            Repository testRepository = gitService.getOrCheckoutRepository(testRepositoryUri, true, "main", false);
+            if (testRepository == null) {
+                return noTests;
+            }
+            Path repositoryPath = testRepository.getLocalPath();
+            StringBuilder testCode = new StringBuilder();
+            try (var paths = Files.walk(repositoryPath)) {
+                // Include the structural spec (test.json for Ares exercises) and test sources (.java) so the exact expected API is visible.
+                // Emit test.json first so the definitive structural contract survives length capping in the caller.
+                // Skip symbolic links (NOFOLLOW_LINKS) so a symlinked file cannot leak server-local content into the prompt.
+                paths.filter(path -> path.toString().endsWith(".java") || path.getFileName().toString().equals("test.json"))
+                        .filter(path -> Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS))
+                        .sorted(Comparator.comparing((Path path) -> isStructuralSpec(path) ? 0 : 1).thenComparing(Path::toString)).forEach(path -> {
+                            try {
+                                testCode.append("// File: ").append(repositoryPath.relativize(path)).append("\n").append(Files.readString(path)).append("\n\n");
+                            }
+                            catch (IOException e) {
+                                log.warn("Failed to read test file {}: {}", path, e.getMessage());
+                            }
+                        });
+            }
+            return testCode.length() > 0 ? testCode.toString() : noTests;
+        }
+        catch (Exception e) {
+            log.warn("Could not read test repository for exercise {}: {}. Generating from the problem statement only.", exercise.getId(), e.getMessage());
+            return noTests;
+        }
+    }
+
+    private static boolean isStructuralSpec(Path path) {
+        return "test.json".equals(path.getFileName().toString());
+    }
 }

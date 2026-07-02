@@ -187,6 +187,11 @@ export class ThemeService {
             html.setAttribute('prime-ng-use-dark-theme', 'false');
         }
 
+        // Mirror the active scheme onto the standard `data-theme` attribute so embedded
+        // widgets that follow that convention switch with Artemis. The Apollon modeling
+        // editor reads `data-theme` from any ancestor for its light/dark base.
+        html.setAttribute('data-theme', theme === Theme.DARK ? 'dark' : 'light');
+
         // Get current <link> theme override
         const overrideTag = document.getElementById(THEME_OVERRIDE_ID);
         if (theme.isDefault) {
