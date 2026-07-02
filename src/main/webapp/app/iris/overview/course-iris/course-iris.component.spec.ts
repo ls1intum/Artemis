@@ -20,7 +20,6 @@ class MockCourseChatbotComponent {
     toggleChatHistory = vi.fn();
 }
 
-// Structural view of the private chatbot viewChild, so the spies avoid `any`.
 type CourseIrisInternals = { courseChatbot: () => { isChatHistoryOpen: () => boolean; toggleChatHistory: () => void } | undefined };
 
 describe('CourseIrisComponent', () => {
@@ -106,7 +105,7 @@ describe('CourseIrisComponent', () => {
 
         component.toggleSidebar();
 
-        expect(toggleChatHistory).toHaveBeenCalled();
+        expect(toggleChatHistory).toHaveBeenCalledOnce();
     });
 
     it('should navigate to exercises when the user opts out of AI via the chat service', async () => {

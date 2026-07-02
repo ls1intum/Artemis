@@ -2637,24 +2637,4 @@ describe('IrisBaseChatbotComponent', () => {
             expect(comp.shouldShowStatusBar()).toBe(false);
         });
     });
-
-    it('should render a collapse toggle in the chat history header and collapse on click', () => {
-        fixture.componentRef.setInput('isChatHistoryAvailable', true);
-        component.isChatHistoryOpen.set(true);
-        fixture.detectChanges();
-
-        const setVisibilitySpy = vi.spyOn(component, 'setChatHistoryVisibility');
-        const toggleButton = fixture.debugElement.query(By.css('.btn-sidebar-collapse'));
-
-        expect(toggleButton).toBeTruthy();
-        toggleButton.triggerEventHandler('click', null);
-        expect(setVisibilitySpy).toHaveBeenCalledWith(false);
-    });
-
-    it('should not render the chat history collapse toggle when chat history is unavailable', () => {
-        fixture.componentRef.setInput('isChatHistoryAvailable', false);
-        fixture.detectChanges();
-
-        expect(fixture.debugElement.query(By.css('.btn-sidebar-collapse'))).toBeNull();
-    });
 });

@@ -774,7 +774,6 @@ describe('CourseOverviewComponent', () => {
     });
 
     describe('sidebar toggle relocation', () => {
-        // Structural view of the protected members under test, so the assertions avoid `any`.
         type CourseOverviewInternals = {
             titleInSidebar(): boolean;
             toggleInSidebar(): boolean;

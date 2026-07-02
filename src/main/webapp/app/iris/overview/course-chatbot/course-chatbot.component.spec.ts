@@ -18,7 +18,6 @@ class MockIrisBaseChatbotComponent {
     readonly isChatHistoryAvailable = input<boolean>();
 }
 
-// Structural view of the private base-chatbot viewChild, so the spies avoid `any`.
 type CourseChatbotInternals = { irisBaseChatbot: () => { isChatHistoryOpen: () => boolean } | undefined };
 
 describe('CourseChatbotComponent', () => {
