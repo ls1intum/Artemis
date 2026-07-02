@@ -67,6 +67,8 @@
             "sshKeyExpiredTip": "Some of your SSH keys are expired. You might need to add a new SSH key to your account {link:here}.",
             "vcsTokenTip": "To access the repository with a VCS access token, you need to add a new one to your account {link:here}.",
             "vcsTokenExpiredTip": "Your VCS access token has expired. Renew it {link:here}.",
+            "repositoryAccessTokenForbidden": "You are not allowed to access this repository.",
+            "repositoryAccessTokenError": "Could not obtain the repository access token. Please try again.",
             "startExerciseBeforeStartDate": "You cannot participate before the start date of the exercise.",
             "deleteMultipleExercisesQuestion": "Are you sure you want to delete the selected exercises of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>? This action can <strong class=\"text-danger\">NOT</strong> be undone!",
             "aiExperienceConfirmation": {

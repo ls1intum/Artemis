@@ -1,4 +1,5 @@
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export class StaticCodeAnalysisIssue {
     public filePath: string;
@@ -13,6 +14,6 @@ export class StaticCodeAnalysisIssue {
     public penalty?: number;
 
     static fromFeedback(feedback: Feedback): StaticCodeAnalysisIssue {
-        return JSON.parse(feedback.detailText!);
+        return parseJson<StaticCodeAnalysisIssue>(feedback.detailText!);
     }
 }

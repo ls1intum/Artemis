@@ -5,6 +5,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import dayjs from 'dayjs/esm';
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -124,10 +125,11 @@ export class ForwardedMessageComponent implements AfterViewInit {
         if (!this.conversation) {
             this.sourceName.set('');
         } else if (this.conversation?.type?.valueOf() === 'channel') {
+            const channelName = (this.conversation as Channel).name;
             if (this.isAnswerPost) {
-                this.sourceName.set((this.conversation as any)?.name ? `a thread in #${(this.conversation as any)?.name} |` : 'a thread in #unknown |');
+                this.sourceName.set(channelName ? `a thread in #${channelName} |` : 'a thread in #unknown |');
             } else {
-                this.sourceName.set((this.conversation as any)?.name ? `#${(this.conversation as any)?.name} |` : '#unknown |');
+                this.sourceName.set(channelName ? `#${channelName} |` : '#unknown |');
             }
         } else if (this.conversation?.type?.valueOf() === 'oneToOneChat') {
             this.sourceName.set(this.isAnswerPost ? 'a thread in a direct message ' : 'a direct message ');

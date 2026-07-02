@@ -8,6 +8,7 @@ import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
+import { parseJson } from 'app/foundation/util/json.util';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
@@ -128,7 +129,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     initDockerFlags() {
-        this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
+        this.dockerFlags = parseJson<DockerFlags>(this.programmingExercise()?.buildConfig?.dockerFlags ?? '');
         if (this.dockerFlags.network) {
             this.network.set(this.dockerFlags.network);
         }

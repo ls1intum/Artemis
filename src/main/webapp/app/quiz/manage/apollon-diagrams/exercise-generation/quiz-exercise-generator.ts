@@ -28,6 +28,19 @@ interface NestedNodeElement {
 
 type DiagramElement = ApollonNode | ApollonEdge | NestedNodeElement;
 
+/**
+ * Minimal structural view of a UML model that exposes both the v3 shape (`elements`/`relationships` records)
+ * and the v4 shape (`nodes`/`edges` arrays). Apollon's {@link UMLModel} type only declares the v4 fields, but
+ * `importDiagram` may hand back either format at runtime, so this interface makes the v3 fields available for
+ * defensive access without disabling type checking on the model.
+ */
+interface VersionedUMLModel {
+    elements?: Record<string, DiagramElement>;
+    relationships?: Record<string, DiagramElement>;
+    nodes?: ApollonNode[];
+    edges?: ApollonEdge[];
+}
+
 function getInteractiveElements(model: UMLModel): string[] {
     return getQuizRelevantElementIds(model);
 }
@@ -72,20 +85,20 @@ function isNestedNodeElement(element: DiagramElement): element is NestedNodeElem
 }
 
 function getModelElements(model: UMLModel): DiagramElement[] {
-    const modelAny = model as any;
+    const versionedModel: VersionedUMLModel = model;
 
     // v3 format: elements and relationships are Records
-    if (modelAny.elements && typeof modelAny.elements === 'object' && !Array.isArray(modelAny.elements)) {
-        const elements = Object.values(modelAny.elements) as DiagramElement[];
-        const relationships = modelAny.relationships ? (Object.values(modelAny.relationships) as DiagramElement[]) : [];
+    if (versionedModel.elements && typeof versionedModel.elements === 'object' && !Array.isArray(versionedModel.elements)) {
+        const elements = Object.values(versionedModel.elements);
+        const relationships = versionedModel.relationships ? Object.values(versionedModel.relationships) : [];
         return [...elements, ...relationships];
     }
 
     // v4 format: nodes and edges are arrays
-    if (Array.isArray(modelAny.nodes)) {
-        const nodes = modelAny.nodes as ApollonNode[];
+    if (Array.isArray(versionedModel.nodes)) {
+        const nodes = versionedModel.nodes;
         const nestedNodeElements = nodes.flatMap(getNestedNodeElements);
-        const edges = (modelAny.edges ?? []) as ApollonEdge[];
+        const edges = versionedModel.edges ?? [];
         return [...nodes, ...nestedNodeElements, ...edges];
     }
 

@@ -18,6 +18,7 @@ import { catchError, concatMap, map, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -164,7 +165,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     if (exampleSubmission.submission) {
                         this.modelingSubmission = exampleSubmission.submission as ModelingSubmission;
                         if (this.modelingSubmission.model) {
-                            this.umlModel.set(importDiagram(JSON.parse(this.modelingSubmission.model)));
+                            this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                         }
                         // Updates the explanation text with example modeling submission's explanation
                         this.explanationText.set(this.modelingSubmission.explanationText ?? '');
@@ -232,7 +233,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 if (exampleSubmission.submission) {
                     this.modelingSubmission = exampleSubmission.submission as ModelingSubmission;
                     if (this.modelingSubmission.model) {
-                        this.umlModel.set(importDiagram(JSON.parse(this.modelingSubmission.model)));
+                        this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                     }
                     // Updates the explanation text with example modeling submission's explanation
                     this.explanationText.set(this.modelingSubmission.explanationText ?? '');
@@ -280,7 +281,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 if (updatedExampleSubmission.submission) {
                     this.modelingSubmission = updatedExampleSubmission.submission as ModelingSubmission;
                     if (this.modelingSubmission.model) {
-                        this.umlModel.set(importDiagram(JSON.parse(this.modelingSubmission.model)));
+                        this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                     }
                     if (this.modelingSubmission.explanationText) {
                         this.explanationText.set(this.modelingSubmission.explanationText);

@@ -2,6 +2,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FeedbackCorrectionError } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
@@ -36,7 +37,7 @@ export class ExampleSubmissionAssessCommand {
             this.feedbackMarker.markAllFeedbackToCorrect();
 
             // Mark all wrongly made feedbacks accordingly.
-            const correctionErrors: FeedbackCorrectionError[] = JSON.parse(error['error']['title'])['errors'];
+            const correctionErrors = parseJson<{ errors: FeedbackCorrectionError[] }>(error['error']['title']).errors;
             this.feedbackMarker.markWrongFeedback(correctionErrors);
 
             const msg = correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
