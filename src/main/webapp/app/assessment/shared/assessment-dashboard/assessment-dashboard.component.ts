@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { User } from 'app/account/user/user.model';
@@ -16,7 +16,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
-import { faClipboard, faHeartBroken, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faHeartBroken, faShieldAlt, faSort, faTable } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -35,11 +35,16 @@ import { ExamAssessmentButtonsComponent } from 'app/assessment/shared/assessment
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
-import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
+import { DeimosService } from 'app/programming/shared/services/deimos.service';
+import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -68,6 +73,8 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
+        DeimosDateRangeModalComponent,
+        FeatureToggleHideDirective,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {
@@ -79,11 +86,13 @@ export class AssessmentDashboardComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private sortService = inject(SortService);
     private profileService = inject(ProfileService);
+    private deimosService = inject(DeimosService);
 
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
 
     readonly plagiarismEnabled = signal<boolean>(false);
+    readonly deimosModuleEnabled = signal<boolean>(false);
 
     // Signal-backed reactive state: these are populated from async subscriptions (and recomputed in place previously),
     // so under zoneless they are signals — each write schedules change detection without markForCheck.
@@ -126,11 +135,16 @@ export class AssessmentDashboardComponent implements OnInit {
 
     isTogglingSecondCorrection: Map<number, boolean> = new Map<number, boolean>();
 
+    readonly FeatureToggle = FeatureToggle;
+    readonly deimosDateRangeModal = viewChild<DeimosDateRangeModalComponent>('deimosDateRangeModal');
+    protected deimosSubmitting = signal(false);
+
     // Icons
     faSort = faSort;
     faTable = faTable;
     faClipboard = faClipboard;
     faHeartBroken = faHeartBroken;
+    faShieldAlt = faShieldAlt;
 
     /**
      * On init set the courseID, load all exercises and statistics for tutors and set the identity for the AccountService.
@@ -146,6 +160,7 @@ export class AssessmentDashboardComponent implements OnInit {
         this.loadAll();
         this.accountService.identity().then((user) => this.tutor.set(user!));
         this.plagiarismEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM));
+        this.deimosModuleEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS));
     }
 
     /**
@@ -461,6 +476,28 @@ export class AssessmentDashboardComponent implements OnInit {
         } else {
             return ['/course-management', this.courseId().toString(), 'assessment-dashboard', exercise.id!.toString()];
         }
+    }
+
+    openDeimosBatchDialog(): void {
+        this.deimosDateRangeModal()?.open(dayjs().subtract(7, 'day'), dayjs());
+    }
+
+    triggerCourseDeimosBatch(selection: DeimosDateRangeSelection): void {
+        if (!this.courseId()) {
+            return;
+        }
+
+        this.deimosSubmitting.set(true);
+        this.deimosService.triggerCourseBatch(this.courseId(), selection.from, selection.to).subscribe({
+            next: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.success('artemisApp.deimos.trigger.success');
+            },
+            error: () => {
+                this.deimosSubmitting.set(false);
+                this.alertService.error('artemisApp.deimos.trigger.error');
+            },
+        });
     }
 
     asQuizExercise(exercise: Exercise): QuizExercise {

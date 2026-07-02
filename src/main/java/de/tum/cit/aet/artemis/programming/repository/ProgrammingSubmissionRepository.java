@@ -206,4 +206,13 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     Set<ParticipationCommitHashDTO> findLatestValidCommitHashForParticipations(@Param("loadedParticipationIds") Set<Long> loadedParticipationIds,
             @Param("filterLateSubmissionsIndividualDueDate") ZonedDateTime filterLateSubmissionsIndividualDueDate, @Param("exerciseDueDate") ZonedDateTime exerciseDueDate);
+
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+            WHERE s.participation.id = :participationId
+                AND s.commitHash IS NOT NULL
+            ORDER BY s.submissionDate ASC, s.id ASC
+            """)
+    List<ProgrammingSubmission> findByParticipationIdOrderBySubmissionDateAsc(@Param("participationId") long participationId);
 }

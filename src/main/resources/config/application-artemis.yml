@@ -156,6 +156,21 @@ artemis:
         minimum-user-messages: 20
         recipients: []
 
+  # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+  deimos:
+    enabled: true
+    executor:
+      core-pool-size: 2
+      max-pool-size: 4
+      queue-capacity: 25
+    llm:
+      base-url: https://gpu.aet.cit.tum.de
+      api-key: dummy-key
+      model: openai/gpt-oss-120b
+      # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
+      completions-path: /api/chat/completions
+      temperature: 0
+
   weaviate:
     enabled: false
 
