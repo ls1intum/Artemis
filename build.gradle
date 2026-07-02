@@ -217,6 +217,10 @@ configurations.configureEach {
     // Note: kotlin-stdlib used to be excluded here ("we do not really use kotlin libraries"), but the
     // official OpenAI Java SDK (com.openai:openai-java, pulled in by spring-ai-openai since 2.0.0-M6)
     // is written in Kotlin and fails at runtime without it (NoClassDefFoundError: kotlin.jvm.internal.Intrinsics).
+    // Keep compile-time annotation marker jars out of the runtime artifact.
+    exclude group: "com.google.android", module: "annotations"
+    exclude group: "com.google.code.findbugs", module: "annotations"
+    exclude group: "org.jetbrains", module: "annotations"
 
     exclude group: "org.springframework.boot", module: "spring-boot-starter-cache"
     exclude group: "net.logstash.logback", module: "logstash-logback-encoder"
