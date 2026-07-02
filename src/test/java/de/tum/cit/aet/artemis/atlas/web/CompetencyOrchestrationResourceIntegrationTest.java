@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -19,6 +20,10 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
+// The orchestrator hard-requires a clustered DistributedDataProvider (no fallback). The default
+// test context (no localci/buildagent profile) has none, so activate the LocalDataProviderService
+// via LocalDataCondition by selecting the local data store.
+@TestPropertySource(properties = "artemis.continuous-integration.data-store=Local")
 class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "atlasorchres";

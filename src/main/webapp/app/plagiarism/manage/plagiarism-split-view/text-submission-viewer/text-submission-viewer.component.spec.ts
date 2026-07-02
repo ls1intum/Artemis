@@ -159,6 +159,17 @@ describe('Text Submission Viewer Component', () => {
         expect(filtered).not.toContain('src/');
     });
 
+    it('falls back to the exercise id when downloading a file without an exercise short name', () => {
+        const downloadFileSpy = vi.spyOn(repositoryService, 'downloadFile');
+        fixture.componentRef.setInput('exercise', { id: 234, type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1, studentLogin: 'student' } as PlagiarismSubmission);
+        comp.currentFile.set('Main.java');
+
+        comp.downloadCurrentFile();
+
+        expect(downloadFileSpy).toHaveBeenCalledWith('Main.java', '234_student_Main.java');
+    });
+
     it('handles file selection', async () => {
         const submissionId = 1;
 

@@ -5,10 +5,10 @@ import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResul
  */
 export class PlagiarismResultDTO {
     plagiarismResult: PlagiarismResult;
-    plagiarismResultStats: PlagiarismResultStats;
+    plagiarismResultStats: PlagiarismResultStatsDTO;
 }
 
-export class PlagiarismResultStats {
+export class PlagiarismResultStatsDTO {
     numberOfDetectedSubmissions: number;
     averageSimilarity: number;
     maximalSimilarity: number;

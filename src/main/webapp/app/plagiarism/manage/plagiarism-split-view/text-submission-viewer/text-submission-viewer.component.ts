@@ -18,6 +18,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass } from '@angular/common';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { PlagiarismCaseExercise } from 'app/plagiarism/shared/entities/PlagiarismCase';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -32,7 +33,7 @@ export class TextSubmissionViewerComponent {
     private repositoryService = inject(CodeEditorRepositoryFileService);
     private textSubmissionService = inject(TextSubmissionService);
 
-    exercise = input<ProgrammingExercise | TextExercise>();
+    exercise = input<ProgrammingExercise | TextExercise | PlagiarismCaseExercise>();
     matches = input<Map<string, FromToElement[]>>();
     plagiarismSubmission = input<PlagiarismSubmission>();
     hideContent = input<boolean>();
@@ -214,7 +215,9 @@ export class TextSubmissionViewerComponent {
      */
     downloadCurrentFile() {
         const currentFile = this.currentFile();
-        this.repositoryService.downloadFile(currentFile!, this.exercise()?.shortName + '_' + this.plagiarismSubmission()?.studentLogin + '_' + currentFile);
+        const exercise = this.exercise();
+        const exerciseName = exercise && 'shortName' in exercise ? exercise.shortName : (exercise?.id ?? 'exercise');
+        this.repositoryService.downloadFile(currentFile!, exerciseName + '_' + this.plagiarismSubmission()?.studentLogin + '_' + currentFile);
     }
 
     getMatchesForCurrentFile() {
