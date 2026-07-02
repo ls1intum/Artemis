@@ -12,6 +12,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationVerdictDTO;
+import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.GenerationPersistenceService;
+import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.GenerationRecoveryService;
 import de.tum.cit.aet.artemis.hyperion.exercisegeneration.verification.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -20,14 +22,15 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * Runs an agentic whole-exercise generation/adaptation session asynchronously and streams progress to the instructor over the existing Hyperion websocket topic.
  * <p>
- * It owns the end-to-end flow: drive the {@link ExerciseGenerationOrchestrationService} and stream every terminal state as a clear, distinct event — {@code SUCCESS} (verified),
- * {@code PARTIAL} (verification did not pass / nothing usable was produced), plus cancellation and error. The verdict {@link ExerciseGenerationVerdictDTO} is mirrored to the
- * client
- * so it can render which gates passed without parsing prose.
+ * It owns the end-to-end flow: drive the {@link ExerciseGenerationOrchestrationService}; when the verifier accepts, hand off to {@link GenerationPersistenceService} to persist a
+ * clean, verified exercise; and when it does NOT accept but the run produced usable work, hand off to {@link GenerationRecoveryService} to persist the best-effort draft and
+ * surface
+ * every verification finding as review comments so a near-miss is recoverable instead of discarded.
  * <p>
- * Persisting a verified exercise through Artemis's normal create/update pipeline (and recovering a near-miss as a reviewable draft) is layered on by the persistence commit: this
- * engine-core commit stops at streaming the differential verdict. The {@link GenerationOutcome} exposes the produced files and problem statement for that hand-off, and is always
- * closed here so the sandbox container is destroyed even when persistence is not yet wired.
+ * Every terminal state emits a clear, distinct event: {@code SUCCESS} (verified and saved), {@code NEEDS_REVIEW} (draft saved with review comments to resolve), {@code PARTIAL}
+ * (nothing usable was produced, or recovery itself failed — the exercise is left untouched and the run can be retried), plus cancellation and error. A recovered draft is never
+ * presented as a verified exercise: only the {@code SUCCESS} path is clean; {@code NEEDS_REVIEW} always carries the gaps the instructor must fix. The {@link GenerationOutcome} is
+ * always closed here so the sandbox container is destroyed on every path.
  */
 @Service
 @Lazy
@@ -40,15 +43,22 @@ public class ExerciseGenerationTaskService {
 
     private final ExerciseGenerationOrchestrationService orchestrator;
 
+    private final GenerationPersistenceService persistenceService;
+
+    private final GenerationRecoveryService recoveryService;
+
     private final HyperionWebsocketService websocket;
 
     private final ExerciseGenerationJobService jobService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public ExerciseGenerationTaskService(ExerciseGenerationOrchestrationService orchestrator, HyperionWebsocketService websocket, ExerciseGenerationJobService jobService,
+    public ExerciseGenerationTaskService(ExerciseGenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService,
+            GenerationRecoveryService recoveryService, HyperionWebsocketService websocket, ExerciseGenerationJobService jobService,
             ProgrammingExerciseRepository programmingExerciseRepository) {
         this.orchestrator = orchestrator;
+        this.persistenceService = persistenceService;
+        this.recoveryService = recoveryService;
         this.websocket = websocket;
         this.jobService = jobService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -89,14 +99,28 @@ public class ExerciseGenerationTaskService {
                         ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, outcome.errorMessage() != null ? outcome.errorMessage() : "Generation failed."));
                 default -> {
                     ExerciseGenerationVerdictDTO verdict = toVerdict(outcome.verification());
-                    // The persistence commit replaces these two branches with the real persist / recovery hand-off; engine-core streams the differential verdict as the terminal
-                    // state so the flow is observable end-to-end without a second grading path.
                     if (outcome.isAccepted()) {
-                        emitter.milestone(ExerciseGenerationEventDTO.done("The exercise passed verification.", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict));
+                        emitter.progress("Checks passed. Saving the exercise.");
+                        try {
+                            persistenceService.persist(exercise, user, outcome);
+                            // Advisory only: surface any spec-fidelity / coverage gaps as review comments WITHOUT changing the accepted status. The differential oracle accepted
+                            // the
+                            // exercise; these are non-blocking notes the instructor may act on. Best-effort — a failed attach never downgrades the SUCCESS.
+                            int advisoryCount = recoveryService.surfaceAdvisoryFindings(exercise, outcome.specFidelityReport());
+                            String advisory = advisoryCount > 0
+                                    ? " " + advisoryCount + " advisory spec-fidelity note(s) were added for your review (these did not affect acceptance)."
+                                    : "";
+                            emitter.milestone(ExerciseGenerationEventDTO.done("The exercise was generated and saved. Review the changes." + advisory,
+                                    ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, verdict));
+                        }
+                        catch (RuntimeException e) {
+                            log.error("Failed to persist generated exercise {}", exerciseId, e);
+                            emitter.milestone(
+                                    ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Verification passed but saving the exercise failed: " + e.getMessage()));
+                        }
                     }
                     else {
-                        String reason = outcome.verification() != null ? outcome.verification().report() : "The exercise could not be completed within the budget.";
-                        emitter.milestone(ExerciseGenerationEventDTO.done(reason, ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
+                        recoverOrReportPartial(exercise, user, exerciseId, jobId, outcome, verdict, emitter);
                     }
                 }
             }
@@ -107,6 +131,48 @@ public class ExerciseGenerationTaskService {
         }
         finally {
             jobService.clearJob(exerciseId, jobId);
+        }
+    }
+
+    /**
+     * Handles a non-accepted (but clean, non-cancelled, non-error) terminal state via {@link GenerationRecoveryService#recover}, emitting {@code NEEDS_REVIEW} when the draft was
+     * persisted (with {@code issueCount < 0} signalling its review comments could not be attached) and falling back to {@code PARTIAL} only when the persist itself failed.
+     *
+     * @param exercise   the target exercise
+     * @param user       the requesting instructor (commit and review-comment author)
+     * @param exerciseId the exercise id (for logging)
+     * @param jobId      the generation job id, used to name the isolated draft branch for an adapt target
+     * @param outcome    the non-accepted outcome holding the produced files, verification report, and agent note
+     * @param verdict    the structured verdict mirrored to the client
+     * @param emitter    the progress emitter for the live transcript
+     */
+    private void recoverOrReportPartial(ProgrammingExercise exercise, User user, long exerciseId, String jobId, GenerationOutcome outcome, ExerciseGenerationVerdictDTO verdict,
+            GenerationProgressEmitter emitter) {
+        String reason = outcome.verification() != null ? outcome.verification().report() : "The exercise could not be completed within the budget.";
+        try {
+            emitter.progress("Verification did not pass. Saving the best-effort draft and recording what to review.");
+            GenerationRecoveryService.RecoveryResult result = recoveryService.recover(exercise, user, outcome, jobId);
+            int issueCount = result.reviewThreadCount();
+            // Where the draft landed: for an adapt of a working exercise it is diverted to an isolated branch and the LIVE exercise is left untouched (it keeps working); for a
+            // from-scratch target it is committed to the exercise in place. The message makes this explicit so the instructor knows whether their working exercise was preserved.
+            String placement = result.liveExerciseUntouched()
+                    ? " Your existing working exercise was left unchanged; the draft was saved to the branch '" + result.draftBranch()
+                            + "' for you to review and merge if you want it."
+                    : "";
+            // recover only throws when persist itself failed, so reaching here means the draft is saved: always NEEDS_REVIEW. issueCount < 0 means a degraded save (review comments
+            // could not be attached), which the message states explicitly.
+            String message = issueCount < 0
+                    ? "A draft exercise was generated but did not pass verification, so it needs your review before use. The review notes could not be attached automatically — "
+                            + "open the exercise and review it manually before grading." + placement + " " + reason
+                    : "A draft exercise was generated but did not pass verification, so it needs your review before use. " + issueCount + " issue(s) to review were added to the "
+                            + "exercise." + placement + " " + reason;
+            emitter.milestone(ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW, verdict));
+        }
+        catch (RuntimeException e) {
+            // Recovery failed at the PERSIST step: nothing durable was saved, so report PARTIAL (the instructor can retry).
+            log.error("Recovery of non-accepted generation outcome failed for exercise {} (draft could not be persisted)", exerciseId, e);
+            emitter.milestone(ExerciseGenerationEventDTO.done(reason + " Saving the draft for review failed (" + e.getMessage() + ").",
+                    ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict));
         }
     }
 

@@ -745,7 +745,7 @@ public class ProgrammingExerciseRepositoryService {
      * @param repository          The repository in which the placeholders should get replaced
      * @throws IOException If replacing the directory name, or file variables throws an exception
      */
-    void replacePlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
+    public void replacePlaceholders(final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
         final Map<String, String> replacements = new HashMap<>();
         final ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
 
