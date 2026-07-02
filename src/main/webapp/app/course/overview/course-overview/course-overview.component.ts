@@ -114,6 +114,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     // Overlay the action bar on the content column for list tabs; gated on hasSidebar so it never leaks onto sidebar-less tabs.
     protected readonly actionBarOverContent = computed(() => this.hasSidebar() && this.titleInSidebar());
 
+    // Iris overlays like the list tabs, but its chat-history panel has a different width, so it uses its own offset.
+    protected readonly actionBarOverIris = computed(() => this.hasSidebar() && this.activatedComponentReference() instanceof CourseIrisComponent);
+
     // Drives the title bar toggle: hasSidebar, except the dashboard also requires Iris (its toggle only drives the chat panel).
     protected readonly titleBarHasSidebar = computed(() => {
         if (this.activatedComponentReference() instanceof CourseDashboardComponent) {

@@ -1,6 +1,6 @@
 // Note: we first need to define our own customizations
 @import 'src/main/webapp/content/scss/artemis-variables';
-@import 'src/main/webapp/content/scss/_artemis-mixins.scss';
+@import 'src/main/webapp/content/scss/_artemis-mixins';
 
 // Then, we include bootstrap so that it can use some magic functions to compute new values based on those customizations
 // The order is very important, otherwise the background and the button colors might not work correctly
@@ -14,7 +14,6 @@
 
 // Needed for the in-house GitHub-style markdown alerts and markdown callouts
 @import 'src/main/webapp/content/scss/github-alerts';
-
 @import 'primeicons/primeicons.css';
 
 // Smooth transition between themes
@@ -1279,6 +1278,15 @@ $transition-in-between-delay: 0.05s;
 
 // List tabs overlay the action bar over the content; push the content (including its own background) below the bar with a margin so the bar reads as a distinct bar over the page background in both expanded and collapsed states.
 .sidebar-tab-content-row > *:not(:first-child) {
+    margin-top: 3.25rem;
+}
+
+// Iris course tab: the shared title bar overlays the chat like the list tabs. Push the chat container below it; the chat-history panel reaches the top when expanded and only clears the (now full-width) bar when collapsed.
+.iris-title-bar-overlay .chat-container {
+    margin-top: 3.25rem;
+}
+
+.iris-title-bar-overlay.iris-sidebar-collapsed .chat-history {
     margin-top: 3.25rem;
 }
 
