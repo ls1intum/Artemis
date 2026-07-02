@@ -28,6 +28,26 @@ export enum CourseOverviewRoutePath {
     CALENDAR = 'calendar',
 }
 
+/**
+ * The child route paths of /courses/:courseId that carry the {@link CourseOverviewGuard} in their
+ * canActivate below — keep in sync with the route definitions. Note that the guard's handleReturn
+ * contains rules for additional paths (e.g. communication) that are intentionally NOT guarded here.
+ * Child routes outside this set (e.g. statistics, settings, calendar) have no access rule and must
+ * never be subjected to the guard's access check.
+ */
+export const COURSE_OVERVIEW_GUARDED_ROUTE_PATHS: ReadonlySet<string> = new Set([
+    CourseOverviewRoutePath.DASHBOARD,
+    CourseOverviewRoutePath.IRIS,
+    CourseOverviewRoutePath.EXAMS,
+    CourseOverviewRoutePath.COMPETENCIES,
+    CourseOverviewRoutePath.TUTORIAL_GROUPS,
+    CourseOverviewRoutePath.FAQ,
+    CourseOverviewRoutePath.LEARNING_PATH,
+    CourseOverviewRoutePath.LECTURES,
+    CourseOverviewRoutePath.TRAINING,
+    CourseOverviewRoutePath.TRAINING_QUIZ,
+]);
+
 export const courseRoutes: Routes = [
     {
         path: '',

@@ -40,19 +40,22 @@ export class CourseOverviewGuard implements CanActivate {
         // If identity() rejects (e.g. transient network error), treat it as unknown — this falls back to today's Iris-or-exercises behavior.
         const user$: Observable<User | undefined> =
             path === CourseOverviewRoutePath.DASHBOARD ? from(this.accountService.identity()).pipe(catchError(() => of(undefined))) : of(undefined);
-        //we need to load the course from the server to check if the user has access to the requested route. The course in the cache might not be sufficient (e.g. misses exams or lectures)
+        const course = this.courseStorageService.getCourse(courseIdNumber);
+        if (course && this.courseStorageService.isCourseFullyLoaded(courseIdNumber)) {
+            // Fast path: the full course is already loaded (e.g. when switching between tabs), so decide without a request.
+            return user$.pipe(switchMap((user) => this.handleReturn(course, path, user)));
+        }
+        // First navigation into the course: only the slim course from the course list might be stored (it e.g. always
+        // has empty exams and would produce wrong access decisions). Load the full course once and decide BEFORE
+        // activating the route, so an inaccessible tab never briefly mounts. findOneForDashboard stores the result, so
+        // the course container reuses it instead of fetching again. On a load error (e.g. 403 for an unregistered user)
+        // allow activation; the container's loadCourse then handles it (course registration redirect / alert).
         return forkJoin({
             courseRes: this.courseManagementService.findOneForDashboard(courseIdNumber),
             user: user$,
         }).pipe(
-            switchMap(({ courseRes, user }) => {
-                if (courseRes.body) {
-                    // Store course in cache
-                    this.courseStorageService.updateCourse(courseRes.body);
-                }
-                // Flatten the result to return Observable<boolean> directly
-                return this.handleReturn(this.courseStorageService.getCourse(courseIdNumber), path, user);
-            }),
+            switchMap(({ courseRes, user }) => this.handleReturn(courseRes.body ?? undefined, path, user)),
+            catchError(() => of(true)),
         );
     }
 

@@ -2,6 +2,9 @@ import { AfterViewInit, Component, OnDestroy, OnInit, computed, inject, signal }
 import { RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, of, throwError } from 'rxjs';
+import { AccountService } from 'app/core/auth/account.service';
+import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
+import { COURSE_OVERVIEW_GUARDED_ROUTE_PATHS, CourseOverviewRoutePath } from 'app/course/overview/courses.route';
 import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
@@ -66,6 +69,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private examParticipationService = inject(ExamParticipationService);
     private sidebarItemService = inject(CourseSidebarItemService);
     private calendarService = inject(CalendarService);
+    private accountService = inject(AccountService);
+    private courseOverviewGuard = inject(CourseOverviewGuard);
     protected readonly courseNotificationSettingService: CourseNotificationSettingService = inject(CourseNotificationSettingService);
     protected readonly courseNotificationService: CourseNotificationService = inject(CourseNotificationService);
 
@@ -119,7 +124,16 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         this.subscription = this.route?.params.subscribe(async (params: { courseId: string }) => {
             const id = Number(params.courseId);
+            const previousCourseId = this.courseId();
             this.courseId.set(id);
+            // In-place navigation to a different course (without destroying this container) must reload the course
+            if (previousCourseId && previousCourseId !== id) {
+                this.courseStorageService.clearFullyLoaded(previousCourseId);
+                this.loadCourseSubscription?.unsubscribe();
+                this.loadCourseSubscription = this.loadCourse().subscribe({
+                    next: () => this.sidebarItems.set(this.getSidebarItems()),
+                });
+            }
 
             this.courseNotificationSettingService.getSettingInfo(this.courseId(), false).subscribe((settingInfo) => {
                 if (settingInfo) {
@@ -188,13 +202,29 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     /**
-     * Fetch the course from the server including all exercises, lectures, exams and competencies
+     * Fetches the course from the server including all exercises, lectures, exams and competencies.
+     * This is the only place that issues the (expensive) for-dashboard call when navigating into a course;
+     * the {@link CourseOverviewGuard} reuses the stored result instead of fetching itself.
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse.set(refresh);
-        const observable = this.courseManagementService.findOneForDashboard(this.courseId()).pipe(
+        const courseId = this.courseId();
+        const storedCourse = this.courseStorageService.getCourse(courseId);
+        if (!refresh && storedCourse && this.courseStorageService.isCourseFullyLoaded(courseId)) {
+            // The CourseOverviewGuard already loaded and stored the full course before activating the route, so reuse it
+            // instead of issuing a second for-dashboard call (load once). Re-check access for the target child route,
+            // because on an in-place course switch the guard is not re-evaluated.
+            this.checkChildRouteAccess(storedCourse);
+            this.course.set(storedCourse);
+            this.refreshingCourse.set(false);
+            return of(undefined);
+        }
+        const observable = this.courseManagementService.findOneForDashboard(courseId).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
+                    // Unguarded routes and in-place switches reach loadCourse without the guard having decided; re-check
+                    // the target child route now that the course is loaded so an inaccessible tab is redirected away.
+                    this.checkChildRouteAccess(res.body);
                     this.course.set(res.body);
                 }
 
@@ -457,8 +487,31 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
     }
 
+    /**
+     * Re-checks that the currently targeted child route (course tab) is accessible for the given course and redirects otherwise.
+     * This complements the {@link CourseOverviewGuard}: the guard decides on the first navigation into a course, but it is
+     * not re-evaluated on an in-place course switch (different courseId without re-creating this container), so the access
+     * check for the new target route has to run here once the course has been (re)loaded.
+     */
+    private checkChildRouteAccess(course: Course): void {
+        const childPath = this.route.snapshot.firstChild?.routeConfig?.path;
+        // Only re-check routes that the CourseOverviewGuard actually protects: other child routes
+        // (e.g. settings, statistics, calendar) have no access rule and must not be redirected
+        if (!childPath || !COURSE_OVERVIEW_GUARDED_ROUTE_PATHS.has(childPath)) {
+            return;
+        }
+        // The user is only needed for the dashboard fallback decision (AI opt-out); at this point the identity is already resolved
+        const user = childPath === CourseOverviewRoutePath.DASHBOARD ? this.accountService.userIdentity() : undefined;
+        // handleReturn navigates away synchronously when access is denied; subscribe to make the consumption explicit
+        this.courseOverviewGuard.handleReturn(course, childPath, user).subscribe();
+    }
+
     ngOnDestroy() {
         super.ngOnDestroy();
+        // Clear the fully-loaded marker so the next visit re-fetches fresh course data from the server
+        // instead of reusing a potentially stale cached course. Within the current visit, tab switches
+        // still skip the duplicate findOneForDashboard call because the marker remains set until destroy.
+        this.courseStorageService.clearFullyLoaded(this.courseId());
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
         }
