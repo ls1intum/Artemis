@@ -79,9 +79,9 @@ public class HyperionCodeGenerationExecutionService {
 
     private static final int MAX_FEEDBACK_SUMMARY_TEXT_LENGTH = 500;
 
-    private static final String DELETABLE_SOURCE_PATH_PREFIX = "src/";
+    private static final String SOURCE_PATH_PREFIX = "src/";
 
-    private static final String DELETABLE_TEST_PATH_PREFIX = "test/";
+    private static final String TEST_PATH_PREFIX = "test/";
 
     private record RepositorySetupResult(Repository repository, String originalCommitHash, boolean success) {
     }
@@ -287,7 +287,7 @@ public class HyperionCodeGenerationExecutionService {
                     return Optional.empty();
                 }
             }
-            return isDeletablePathForRepositoryType(normalized, repositoryType) ? Optional.of(normalized) : Optional.empty();
+            return isAllowedPathForRepositoryType(normalized, repositoryType) ? Optional.of(normalized) : Optional.empty();
         }
         catch (InvalidPathException e) {
             return Optional.empty();
@@ -298,11 +298,11 @@ public class HyperionCodeGenerationExecutionService {
         return List.of(path.split("/")).contains("..");
     }
 
-    private boolean isDeletablePathForRepositoryType(String normalizedPath, RepositoryType repositoryType) {
-        // Whitelist by repo type: SOLUTION/TEMPLATE may only delete under src/; TESTS only under test/. Excludes the bare prefix itself.
+    private boolean isAllowedPathForRepositoryType(String normalizedPath, RepositoryType repositoryType) {
+        // Whitelist by repo type for both generated and deleted files: SOLUTION/TEMPLATE may only touch src/; TESTS only test/. Excludes the bare prefix itself.
         String prefix = switch (repositoryType) {
-            case TEMPLATE, SOLUTION -> DELETABLE_SOURCE_PATH_PREFIX;
-            case TESTS -> DELETABLE_TEST_PATH_PREFIX;
+            case TEMPLATE, SOLUTION -> SOURCE_PATH_PREFIX;
+            case TESTS -> TEST_PATH_PREFIX;
             default -> null;
         };
         return prefix != null && normalizedPath.startsWith(prefix) && normalizedPath.length() > prefix.length();
@@ -542,7 +542,7 @@ public class HyperionCodeGenerationExecutionService {
             HyperionCodeGenerationEventPublisher publisher, int iteration) throws IOException {
         boolean publishedAnyFile = false;
         for (GeneratedFileDTO file : generatedFiles) {
-            Optional<GeneratedFileDTO> safeFile = normalizeGeneratedFile(file);
+            Optional<GeneratedFileDTO> safeFile = normalizeGeneratedFile(file, repositoryType);
             if (safeFile.isEmpty()) {
                 log.warn("Ignoring generated file '{}' for {} repository in exercise {}", file != null ? file.path() : null, repositoryType, exercise.getId());
                 continue;
@@ -568,7 +568,7 @@ public class HyperionCodeGenerationExecutionService {
         return publishedAnyFile;
     }
 
-    private Optional<GeneratedFileDTO> normalizeGeneratedFile(GeneratedFileDTO file) {
+    private Optional<GeneratedFileDTO> normalizeGeneratedFile(GeneratedFileDTO file, RepositoryType repositoryType) {
         if (file == null || file.path() == null || file.path().isBlank()) {
             return Optional.empty();
         }
@@ -582,6 +582,10 @@ public class HyperionCodeGenerationExecutionService {
                 return Optional.empty();
             }
             String normalized = normalizedPath.toString().replace('\\', '/');
+            // Confine writes to the repository-type source root so a generated path cannot create or overwrite build/config files (pom.xml, .github/..., build.gradle).
+            if (!isAllowedPathForRepositoryType(normalized, repositoryType)) {
+                return Optional.empty();
+            }
             return Optional.of(new GeneratedFileDTO(normalized, file.content()));
         }
         catch (InvalidPathException e) {

@@ -196,14 +196,14 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
-        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), eq("pom.xml"), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -265,14 +265,14 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
-        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -305,14 +305,14 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
-        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -358,14 +358,14 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
-        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
@@ -392,14 +392,14 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId);
-        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -437,14 +437,14 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
-        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
@@ -667,6 +667,20 @@ class HyperionCodeGenerationExecutionServiceTest {
         verify(repositoryService, never()).deleteFile(any(), anyString());
         verify(repositoryService, never()).createFile(any(), anyString(), any());
         verify(publisher, never()).fileUpdated(anyString(), any(), anyInt());
+        verify(publisher, never()).newFile(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void publishGeneratedFiles_withPathOutsideSourceRoot_skipsFile() throws Exception {
+        Repository mockRepository = mock(Repository.class);
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        GeneratedFileDTO generatedFile = new GeneratedFileDTO("pom.xml", "<project/>");
+
+        boolean publishedAnyFile = ReflectionTestUtils.invokeMethod(service, "publishGeneratedFiles", mockRepository, List.of(generatedFile), exercise, RepositoryType.SOLUTION,
+                publisher, 1);
+
+        assertThat(publishedAnyFile).isFalse();
+        verify(repositoryService, never()).createFile(any(), anyString(), any());
         verify(publisher, never()).newFile(anyString(), any(), anyInt());
     }
 
@@ -953,14 +967,14 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
         when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
-        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
         when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
         when(templateStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("Test.java", "public class Test {}")), List.of()));
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
         when(programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId())).thenReturn(templateParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(templateParticipation, "new-hash", RepositoryType.TEMPLATE);
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(templateParticipation));
