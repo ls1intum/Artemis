@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, sig
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -552,7 +552,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const formData = new FormData();
             formData.append('file', instructorPdfFile);
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
-            formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnit()!));
+            const attachmentVideoUnit = this.attachmentVideoUnit()!;
+            attachmentVideoUnit.attachmentUpdateIntent = AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED;
+            formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
 
             void this.getFinalPageOrder().then((finalPageOrder) => {
                 formData.append(

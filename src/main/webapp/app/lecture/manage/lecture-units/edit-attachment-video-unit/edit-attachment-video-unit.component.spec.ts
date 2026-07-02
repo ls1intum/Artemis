@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from '../attachment-video-unit-form/attachment-video-unit-form.component';
 import { AttachmentVideoUnitService } from '../services/attachment-video-unit.service';
 import { EditAttachmentVideoUnitComponent } from './edit-attachment-video-unit.component';
-import { AttachmentVideoUnit } from '../../../shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from '../../../shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment, AttachmentType } from '../../../shared/entities/attachment.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -35,6 +35,11 @@ describe('EditAttachmentVideoUnitComponent', () => {
     let attachmentVideoUnit: AttachmentVideoUnit;
     let baseFormData: FormData;
     let fakeFile: File;
+
+    const getAttachmentVideoUnitPayload = async (formData: FormData) => {
+        const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
+        return JSON.parse(await attachmentVideoUnitPart.text());
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -166,6 +171,8 @@ describe('EditAttachmentVideoUnitComponent', () => {
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        const updateFormData = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
         expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -225,6 +232,8 @@ describe('EditAttachmentVideoUnitComponent', () => {
         fixture.detectChanges();
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        const updateFormData = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE });
         expect(navigateSpy).toHaveBeenCalledTimes(1);
     });
 });

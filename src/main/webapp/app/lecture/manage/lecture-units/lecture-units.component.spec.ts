@@ -21,7 +21,7 @@ import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
@@ -76,6 +76,11 @@ describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponent: LectureUpdateUnitsComponent;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let unitManagementComponentMock: Pick<LectureUnitManagementComponent, 'loadData'>;
+
+    const getAttachmentVideoUnitPayload = async (formData: FormData) => {
+        const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
+        return JSON.parse(await attachmentVideoUnitPart.text());
+    };
 
     const mockUnitManagementComponent = () => {
         unitManagementComponentMock = {
@@ -499,6 +504,8 @@ describe('LectureUpdateUnitsComponent', () => {
         await wizardUnitComponentFixture.whenStable();
 
         expect(createAttachmentVideoUnitStub).toHaveBeenCalledTimes(1);
+        const updateFormData = createAttachmentVideoUnitStub.mock.calls[0][2] as FormData;
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({ attachmentUpdateIntent: AttachmentUpdateIntent.FILE_UPLOAD });
         expect(updateSpy).toHaveBeenCalledTimes(1);
 
         updateSpy.mockRestore();

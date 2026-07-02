@@ -2,7 +2,7 @@ import { Component, ElementRef, OnInit, computed, inject, input, signal, viewChi
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentUpdateIntent, AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -208,6 +208,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
             attachmentVideoUnit.description = description;
         }
         attachmentVideoUnit.competencyLinks = competencyLinks;
+        if (this.isEditingLectureUnit()) {
+            attachmentVideoUnit.attachmentUpdateIntent = file ? AttachmentUpdateIntent.FILE_UPLOAD : AttachmentUpdateIntent.NO_FILE_CHANGE;
+        }
         this.currentlyProcessedAttachmentVideoUnit.set(attachmentVideoUnit);
 
         const formData = new FormData();
