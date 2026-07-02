@@ -129,9 +129,16 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             // In-place navigation to a different course (without destroying this container) must reload the course content
             // and re-check tab access, because the CourseOverviewGuard is not re-evaluated when only the parent courseId changes.
             if (previousCourseId && previousCourseId !== id) {
+                // Reset quiz websocket subscription so it points at the new course's topic
+                this.quizExercisesSubscription?.unsubscribe();
+                this.quizExercisesChannel = '';
+                this.subscribeForQuizChanges();
                 // loadCourse() unsubscribes any in-flight loadCourseSubscription internally before returning the observable
                 this.loadCourseSubscription = this.loadCourse().subscribe({
-                    next: () => this.sidebarItems.set(this.getSidebarItems()),
+                    next: () => {
+                        this.sidebarItems.set(this.getSidebarItems());
+                        this.courseActionItems.set(this.getCourseActionItems());
+                    },
                 });
                 this.checkChildRouteAccess(id);
             }
