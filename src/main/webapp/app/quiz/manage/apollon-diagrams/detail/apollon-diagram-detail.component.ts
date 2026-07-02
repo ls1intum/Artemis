@@ -20,6 +20,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { hasQuizRelevantElements } from 'app/modeling/shared/apollon-model.util';
 import { DialogService } from 'primeng/dynamicdialog';
+import { parseJson } from 'app/foundation/util/json.util';
+
+/** Host DOM element augmented with the ApollonEditor instance exposed for E2E test access. */
+type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -98,7 +102,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
                 this.apollonDiagram.set(diagram);
 
-                const model: UMLModel | undefined = diagram.jsonRepresentation ? importDiagram(JSON.parse(diagram.jsonRepresentation)) : undefined;
+                const model: UMLModel | undefined = diagram.jsonRepresentation ? importDiagram(parseJson(diagram.jsonRepresentation)) : undefined;
                 this.lastSavedModelJson = model ? JSON.stringify(model) : '';
                 this.initializeApollonEditor(model);
                 this.setAutoSaveTimer();
@@ -119,7 +123,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (this.apollonEditor) {
             this.apollonEditor.destroy();
         }
-        (this.elementRef.nativeElement as any).__apollonEditor = undefined;
+        (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
     }
 
     /**
@@ -143,7 +147,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         } as ConstructorParameters<typeof ApollonEditor>[1];
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
         // Expose the ApollonEditor instance on the host DOM element for E2E test access.
-        (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
+        (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
         // Apollon's React/Zustand store fires outside Angular; the isSaved signal write below schedules
         // change detection under zoneless, so template bindings (e.g. the save button state) stay fresh.
         this.apollonEditor.subscribeToModelChange((newModel) => {

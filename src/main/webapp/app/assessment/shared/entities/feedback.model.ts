@@ -242,7 +242,8 @@ export class Feedback implements BaseEntity {
         that.text = text;
         // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
         // Support both: dropInfo.instruction.id (expected shape) and dropInfo.id (actual Apollon shape)
-        const instruction = dropInfo?.instruction ?? ((dropInfo as any)?.id ? (dropInfo as any) : undefined);
+        const flatDropInfo = dropInfo as (GradingInstruction & { instruction?: GradingInstruction }) | undefined;
+        const instruction = flatDropInfo?.instruction ?? (flatDropInfo?.id ? flatDropInfo : undefined);
         if (instruction?.id) {
             that.gradingInstruction = instruction;
         }

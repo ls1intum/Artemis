@@ -14,6 +14,7 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { parseJson } from 'app/foundation/util/json.util';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 
@@ -60,7 +61,7 @@ export class AssessmentInstructionsComponent {
         const exercise = this.exercise();
         if (exercise.type === ExerciseType.MODELING) {
             const modelingExercise = exercise as ModelingExercise;
-            return modelingExercise.exampleSolutionModel ? importDiagram(JSON.parse(modelingExercise.exampleSolutionModel)) : undefined;
+            return modelingExercise.exampleSolutionModel ? importDiagram(parseJson(modelingExercise.exampleSolutionModel)) : undefined;
         }
         return undefined;
     });
