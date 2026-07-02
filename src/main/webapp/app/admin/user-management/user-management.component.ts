@@ -19,6 +19,8 @@ import { DialogModule } from 'primeng/dialog';
 import { TableModule } from 'primeng/table';
 import { SortEvent } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
+import { ButtonGroupModule } from 'primeng/buttongroup';
+import { TooltipModule } from 'primeng/tooltip';
 import { InputTextModule } from 'primeng/inputtext';
 import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
@@ -128,6 +130,8 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         PaginatorModule,
         TableModule,
         ButtonModule,
+        ButtonGroupModule,
+        TooltipModule,
         InputTextModule,
         CheckboxModule,
         RadioButtonModule,

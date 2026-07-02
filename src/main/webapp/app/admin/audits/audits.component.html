@@ -2,9 +2,10 @@
     <h5 *adminTitleBarTitle id="audits-page-heading" class="mb-0" jhiTranslate="audits.title"></h5>
     <div class="mb-4">
         <h4 jhiTranslate="audits.filter.title"></h4>
-        <div class="flex flex-wrap gap-2 items-start" data-testid="audits-date-filter">
-            <div class="flex flex-col gap-1">
-                <label for="audits-from-date" class="font-bold text-sm" jhiTranslate="audits.filter.from"></label>
+        <div class="flex flex-wrap gap-2 items-center" data-testid="audits-date-filter">
+            <!-- items-start: the picker's validation message must hang below the field, not stretch the addon. -->
+            <p-inputgroup class="w-auto items-start">
+                <p-inputgroup-addon jhiTranslate="audits.filter.from" />
                 <jhi-date-time-picker
                     #fromPicker
                     name="start"
@@ -16,9 +17,9 @@
                     (valueChange)="updateFromDate(fromPicker.value()); transition()"
                     data-testid="audits-from-date"
                 />
-            </div>
-            <div class="flex flex-col gap-1">
-                <label for="audits-to-date" class="font-bold text-sm" jhiTranslate="audits.filter.to"></label>
+            </p-inputgroup>
+            <p-inputgroup class="w-auto items-start">
+                <p-inputgroup-addon jhiTranslate="audits.filter.to" />
                 <jhi-date-time-picker
                     #toPicker
                     name="end"
@@ -30,7 +31,7 @@
                     (valueChange)="updateToDate(toPicker.value()); transition()"
                     data-testid="audits-to-date"
                 />
-            </div>
+            </p-inputgroup>
         </div>
     </div>
     @if (audits().length) {

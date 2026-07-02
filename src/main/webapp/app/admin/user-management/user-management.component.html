@@ -180,19 +180,31 @@
                     <td>{{ user.lastModifiedBy }}</td>
                     <td>{{ user.lastModifiedDate | artemisDate }}</td>
                     <td class="text-end">
-                        <div class="flex items-center justify-end gap-2">
-                            <a [routerLink]="['./', user.login]" pButton size="small" severity="info">
+                        <p-buttonGroup>
+                            <a [routerLink]="['./', user.login]" pButton size="small" severity="info" [pTooltip]="'entity.action.view' | artemisTranslate">
                                 <fa-icon [icon]="faEye" />
-                                <span class="hidden md:inline" jhiTranslate="entity.action.view"></span>
                             </a>
-                            <a [routerLink]="['./', user.login, 'edit']" queryParamsHandling="merge" pButton size="small" severity="warn">
+                            <a
+                                [routerLink]="['./', user.login, 'edit']"
+                                queryParamsHandling="merge"
+                                pButton
+                                size="small"
+                                severity="warn"
+                                [pTooltip]="'entity.action.edit' | artemisTranslate"
+                            >
                                 <fa-icon [icon]="faPencil" />
-                                <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
                             </a>
                             @if (isLdapEnabled() && !user.internal) {
-                                <button pButton size="small" severity="success" type="button" (click)="ldapSync(user.id!)" data-testid="ldap-sync-button">
+                                <button
+                                    pButton
+                                    size="small"
+                                    severity="success"
+                                    type="button"
+                                    (click)="ldapSync(user.id!)"
+                                    data-testid="ldap-sync-button"
+                                    [pTooltip]="'entity.action.ldap' | artemisTranslate"
+                                >
                                     <fa-icon [icon]="faSync" />
-                                    <span class="hidden md:inline" jhiTranslate="entity.action.ldap"></span>
                                 </button>
                             }
                             <button
@@ -206,10 +218,11 @@
                                 (delete)="deleteUser(user.login!)"
                                 [dialogError]="dialogError"
                                 [disabled]="!currentAccount() || currentAccount()?.login === user.login"
+                                [pTooltip]="'entity.action.delete' | artemisTranslate"
                             >
                                 <fa-icon [icon]="faTrash" />
                             </button>
-                        </div>
+                        </p-buttonGroup>
                     </td>
                 </tr>
             </ng-template>
