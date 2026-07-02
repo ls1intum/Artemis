@@ -335,8 +335,13 @@ public class ProgrammingExerciseUpdateResource {
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
 
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
+        // The problem statement is owned by the collaborative (Yjs) editor and its dedicated PATCH endpoint, not by this metadata
+        // update. A blank or absent value here means the editor has not finished its initial sync yet (e.g. the user saved a
+        // category change on a slow connection before the statement loaded), so we keep the persisted statement instead of wiping
+        // it. See issue #13046.
+        if (dto.problemStatement() != null && !dto.problemStatement().isBlank()) {
+            exercise.setProblemStatement(dto.problemStatement());
+        }
 
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());

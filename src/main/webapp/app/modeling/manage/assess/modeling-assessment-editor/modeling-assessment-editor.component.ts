@@ -27,6 +27,7 @@ import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entitie
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
@@ -231,7 +232,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.hasAssessmentDueDatePassed.set(!!this.modelingExercise()?.assessmentDueDate && dayjs(this.modelingExercise()!.assessmentDueDate).isBefore(dayjs()));
 
         if (this.submission()!.model) {
-            this.model.set(importDiagram(JSON.parse(this.submission()!.model!)));
+            this.model.set(importDiagram(parseJson(this.submission()!.model!)));
         } else {
             this.alertService.closeAll();
             this.alertService.warning('artemisApp.modelingAssessmentEditor.messages.noModel');
