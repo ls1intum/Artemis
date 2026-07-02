@@ -813,21 +813,15 @@ describe('CourseOverviewComponent', () => {
             expect(internals().activeSidebarCollapsed()).toBe(false);
         });
 
-        it('should hide the dashboard title bar toggle when Iris is not enabled', () => {
+        it('should drive the title bar toggle from hasSidebar', () => {
             component.hasSidebar.set(true);
-            component.course.set({ id: 1, irisEnabledInCourse: false } as Course);
-            component.activatedComponentReference.set(Object.create(CourseDashboardComponent.prototype) as CourseDashboardComponent);
+            expect(internals().titleBarHasSidebar()).toBe(true);
+
+            component.hasSidebar.set(false);
             expect(internals().titleBarHasSidebar()).toBe(false);
         });
 
-        it('should show the dashboard title bar toggle when Iris is enabled', () => {
-            component.hasSidebar.set(true);
-            component.course.set({ id: 1, irisEnabledInCourse: true } as Course);
-            component.activatedComponentReference.set(Object.create(CourseDashboardComponent.prototype) as CourseDashboardComponent);
-            expect(internals().titleBarHasSidebar()).toBe(true);
-        });
-
-        it('should not show the shared title bar for any of the sidebar tabs', () => {
+        it('should not show the shared title bar for any of the sidebar tabs or the dashboard', () => {
             for (const Ctor of [
                 CourseExercisesComponent,
                 CourseLecturesComponent,
@@ -835,14 +829,15 @@ describe('CourseOverviewComponent', () => {
                 CourseExamsComponent,
                 CourseConversationsComponent,
                 CourseIrisComponent,
+                CourseDashboardComponent,
             ]) {
                 component.activatedComponentReference.set(Object.create(Ctor.prototype) as InstanceType<typeof Ctor>);
                 expect(internals().showCourseTitleBar()).toBe(false);
             }
         });
 
-        it('should show the shared title bar for a non-sidebar tab (dashboard)', () => {
-            component.activatedComponentReference.set(Object.create(CourseDashboardComponent.prototype) as CourseDashboardComponent);
+        it('should show the shared title bar for non-sidebar pages', () => {
+            component.activatedComponentReference.set(undefined);
             expect(internals().showCourseTitleBar()).toBe(true);
         });
     });

@@ -94,8 +94,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         | CourseDashboardComponent
         | undefined
     >(undefined);
-    // Sidebar tabs render their own full-height content with the collapse toggle in the sidebar/content header
-    // (like Exercises), so the shared title bar is only used by the dashboard and other non-sidebar pages.
+    // Sidebar tabs and the dashboard render their own full-height content with the collapse toggle in the sidebar/content
+    // header (like Exercises), so the shared title bar is only used by the remaining non-sidebar pages.
     protected readonly showCourseTitleBar = computed(() => {
         const componentRef = this.activatedComponentReference();
         return !(
@@ -104,17 +104,12 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             componentRef instanceof CourseTutorialGroupsComponent ||
             componentRef instanceof CourseExamsComponent ||
             componentRef instanceof CourseConversationsComponent ||
-            componentRef instanceof CourseIrisComponent
+            componentRef instanceof CourseIrisComponent ||
+            componentRef instanceof CourseDashboardComponent
         );
     });
 
-    // Drives the title bar toggle: hasSidebar, except the dashboard also requires Iris (its toggle only drives the chat panel).
-    protected readonly titleBarHasSidebar = computed(() => {
-        if (this.activatedComponentReference() instanceof CourseDashboardComponent) {
-            return this.hasSidebar() && !!this.course()?.irisEnabledInCourse;
-        }
-        return this.hasSidebar();
-    });
+    protected readonly titleBarHasSidebar = computed(() => this.hasSidebar());
 
     protected readonly activeSidebarCollapsed = computed<boolean>(() => {
         const componentRef = this.activatedComponentReference();
