@@ -114,6 +114,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    /** Emits a review-thread id when the instructor asks to adapt the exercise from that thread; the host adds it to the shared feedback selection and opens the adapt dialog. */
+    readonly onAdaptReviewCommentThread = output<number>();
     readonly onSavedFiles = output<{ [fileName: string]: string | undefined }>();
     readonly onInlineFixCommitted = output<void>();
     readonly onEditorLoaded = output<void>();
@@ -840,8 +842,13 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onApplyInlineFix: ({ thread }) => this.persistInlineFixApplication(thread),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
+                onAdaptThread: (threadId) => this.onAdaptReviewCommentThread.emit(threadId),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
                 showFeedbackAction: (thread) =>
+                    thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
+                    thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
+                    thread.targetType === CommentThreadLocationType.TEST_REPO,
+                showAdaptAction: (thread) =>
                     thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
                     thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
                     thread.targetType === CommentThreadLocationType.TEST_REPO,

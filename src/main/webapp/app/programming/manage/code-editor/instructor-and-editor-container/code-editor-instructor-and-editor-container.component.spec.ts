@@ -59,6 +59,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 
 /**
  * Typed view onto the component's protected/private members so the spec can read and stub them
@@ -2281,5 +2282,109 @@ describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () =>
 
             expect(createFileBindingSpy).not.toHaveBeenCalled();
         });
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback', () => {
+    setupTestBed({ zoneless: true });
+
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+    let generationService: { generate: ReturnType<typeof vi.fn> };
+    let dialogOpen: ReturnType<typeof vi.fn>;
+    let attachToJob: ReturnType<typeof vi.fn>;
+    let selectedIds: WritableSignal<number[]>;
+    let reviewCommentService: {
+        setExercise: ReturnType<typeof vi.fn>;
+        reloadThreads: ReturnType<typeof vi.fn>;
+        getSelectedFeedbackThreadIdsForRepository: ReturnType<typeof vi.fn>;
+        threads: WritableSignal<any[]>;
+        selectThreadAsFeedback: ReturnType<typeof vi.fn>;
+        selectedFeedbackThreads: ReturnType<typeof vi.fn>;
+        selectedFeedbackThreadIds: WritableSignal<number[]>;
+    };
+
+    beforeEach(async () => {
+        selectedIds = signal<number[]>([]);
+        reviewCommentService = {
+            setExercise: vi.fn(),
+            reloadThreads: vi.fn((onLoaded?: () => void) => onLoaded?.()),
+            getSelectedFeedbackThreadIdsForRepository: vi.fn(() => []),
+            threads: signal([]),
+            selectThreadAsFeedback: vi.fn((threadId: number) => selectedIds.update((ids) => (ids.includes(threadId) ? ids : [...ids, threadId]))),
+            selectedFeedbackThreads: vi.fn(() => []),
+            selectedFeedbackThreadIds: selectedIds,
+        };
+        generationService = { generate: vi.fn(() => of({ jobId: 'job-adapt-1' })) };
+        // The dialog resolves with instructions by default; individual tests can re-point this mock.
+        dialogOpen = vi.fn(() => ({ onClose: of({ instructions: 'also rename the method' }) }));
+
+        await configureTestBed([
+            { provide: ExerciseReviewCommentService, useValue: reviewCommentService },
+            { provide: HyperionExerciseGenerationService, useValue: generationService },
+            { provide: DialogService, useValue: { open: dialogOpen } },
+        ]);
+
+        // Hyperion must be enabled at construction (read once in the AI-operations helper) so the adapt gate opens.
+        vi.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        // Java + at-least-editor so canAdaptWithFeedback() is satisfied.
+        comp.exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true });
+
+        attachToJob = vi.fn();
+        (comp as any).generationActivity = () => ({ attachToJob });
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        vi.clearAllMocks();
+    });
+
+    it('adaptFromThread selects the thread once, opens the dialog, then dispatches an ADAPT run and attaches it', () => {
+        (comp as any).adaptFromThread(9);
+
+        expect(reviewCommentService.selectThreadAsFeedback).toHaveBeenCalledExactlyOnceWith(9);
+        expect(dialogOpen).toHaveBeenCalledOnce();
+        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
+            mode: 'ADAPT',
+            prompt: 'also rename the method',
+            selectedFeedbackThreadIds: [9],
+        });
+        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'ADAPT');
+    });
+
+    it('openAdaptDialog with no selected threads dispatches an ADAPT run with undefined ids', () => {
+        (comp as any).openAdaptDialog();
+
+        expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, {
+            mode: 'ADAPT',
+            prompt: 'also rename the method',
+            selectedFeedbackThreadIds: undefined,
+        });
+        expect(attachToJob).toHaveBeenCalledExactlyOnceWith('job-adapt-1', 'ADAPT');
+    });
+
+    it('does not dispatch a run when the adapt dialog is dismissed', () => {
+        dialogOpen.mockReturnValue({ onClose: of(undefined) });
+
+        (comp as any).openAdaptDialog();
+
+        expect(dialogOpen).toHaveBeenCalledOnce();
+        expect(generationService.generate).not.toHaveBeenCalled();
+        expect(attachToJob).not.toHaveBeenCalled();
+    });
+
+    it('surfaces an alert and does not attach when starting the ADAPT run fails', () => {
+        generationService.generate.mockReturnValue(throwError(() => new Error('boom')));
+        const alertService = TestBed.inject(AlertService);
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        (comp as any).openAdaptDialog();
+
+        expect(generationService.generate).toHaveBeenCalledOnce();
+        expect(attachToJob).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.adaptStartFailed');
     });
 });

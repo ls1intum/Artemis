@@ -1,6 +1,8 @@
 import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { Comment } from 'app/exercise/shared/entities/review/comment.model';
+import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { TranslateService } from '@ngx-translate/core';
 
 /**
  * Sorts comments by creation timestamp and then by id for deterministic ordering.
@@ -100,4 +102,119 @@ export function isReviewCommentsSupportedRepository(repositoryType?: RepositoryT
         default:
             return false;
     }
+}
+
+/**
+ * Returns the consistency-issue content of a thread's first (chronological) comment, or {@code undefined} if that comment is not a consistency-check finding. Used to decide whether
+ * a thread can be turned into Artemis Intelligence adapt feedback.
+ *
+ * @param thread The comment thread to inspect.
+ * @returns The consistency-issue content, if the first comment is one.
+ */
+export function firstConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
+    const firstComment = getFirstCommentByCreatedDateThenId(thread.comments);
+    if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+        return undefined;
+    }
+    const content = firstComment.content as CommentContent | undefined;
+    if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
+        return undefined;
+    }
+    return content;
+}
+
+/**
+ * Maps a thread location type to its human-readable repository label.
+ *
+ * @param targetType The thread location type.
+ * @param translate The translate service used to resolve the label.
+ * @returns The translated repository label.
+ */
+export function reviewRepositoryLabel(targetType: CommentThreadLocationType, translate: TranslateService): string {
+    switch (targetType) {
+        case CommentThreadLocationType.PROBLEM_STATEMENT:
+            return translate.instant('artemisApp.review.relatedLocationRepository.problemStatement');
+        case CommentThreadLocationType.TEMPLATE_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.template');
+        case CommentThreadLocationType.SOLUTION_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.solution');
+        case CommentThreadLocationType.TEST_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.tests');
+        case CommentThreadLocationType.AUXILIARY_REPO:
+            return translate.instant('artemisApp.review.relatedLocationRepository.auxiliary');
+        default:
+            return translate.instant('artemisApp.review.relatedLocationRepository.repository');
+    }
+}
+
+/**
+ * Builds a short location label ({@code Repository: file:line}) for a thread, or {@code undefined} when it has no concrete line.
+ *
+ * @param thread The comment thread whose location to label.
+ * @param translate The translate service used to resolve the repository label.
+ * @returns The location label, if the thread has a concrete line.
+ */
+export function threadLocationLabel(thread: CommentThread, translate: TranslateService): string | undefined {
+    const lineNumber = thread.lineNumber ?? thread.initialLineNumber;
+    if (!lineNumber || lineNumber < 1) {
+        return undefined;
+    }
+    const repositoryLabel = reviewRepositoryLabel(thread.targetType, translate);
+    if (thread.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
+        return `${repositoryLabel}:${lineNumber}`;
+    }
+    const filePath = thread.filePath ?? thread.initialFilePath;
+    if (!filePath) {
+        return undefined;
+    }
+    return `${repositoryLabel}: ${filePath}:${lineNumber}`;
+}
+
+/**
+ * A structured consistency finding for the adapt dialog's read-only display (severity tag, category, location, description, suggested fix). The dialog renders these as cards; the
+ * agent prompt itself is assembled server-side from the selected thread ids, so this type never leaves the client.
+ */
+export interface AdaptFinding {
+    category: ConsistencyIssueCommentContent['category'];
+    severity: ConsistencyIssueCommentContent['severity'];
+    /** A short {@code Repository: file:line} label, absent when the thread has no concrete line. */
+    locationLabel?: string;
+    /** The finding's description text. */
+    description: string;
+    /** The optional concrete code change the check suggests. */
+    suggestedFix?: InlineCodeChange;
+}
+
+/**
+ * Builds the structured {@link AdaptFinding} shown in the adapt dialog for a single consistency-issue content.
+ *
+ * @param issueContent The consistency-issue content.
+ * @param locationLabel The optional {@code Repository: file:line} label.
+ * @returns The structured finding for display.
+ */
+export function adaptFinding(issueContent: ConsistencyIssueCommentContent, locationLabel: string | undefined): AdaptFinding {
+    return {
+        category: issueContent.category,
+        severity: issueContent.severity,
+        locationLabel,
+        description: issueContent.text,
+        suggestedFix: issueContent.suggestedFix ?? undefined,
+    };
+}
+
+/**
+ * The structured findings for a set of threads (only consistency-issue threads contribute), highest-severity first is left to the dialog. Used for the read-only cards in the adapt
+ * dialog.
+ *
+ * @param threads The threads to derive findings from.
+ * @param translate The translate service used to resolve location labels.
+ * @returns The structured findings, in thread order.
+ */
+export function selectedThreadsFindings(threads: CommentThread[], translate: TranslateService): AdaptFinding[] {
+    return threads
+        .map((thread) => {
+            const issue = firstConsistencyIssueContent(thread);
+            return issue ? adaptFinding(issue, threadLocationLabel(thread, translate)) : undefined;
+        })
+        .filter((finding): finding is AdaptFinding => !!finding);
 }

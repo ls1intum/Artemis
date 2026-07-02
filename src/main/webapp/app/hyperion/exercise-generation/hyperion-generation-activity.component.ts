@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject
 import type * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faCircleCheck, faCircleXmark, faSpinner, faThumbTack, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleCheck, faCircleXmark, faRotateLeft, faSpinner, faThumbTack, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import {
@@ -16,6 +17,7 @@ import {
     HyperionGenerationCompletionStatus,
     HyperionGenerationEvent,
     HyperionGenerationMessage,
+    HyperionGenerationMode,
     HyperionGenerationVerdict,
     HyperionSnapshotRepo,
     isFileSnapshot,
@@ -43,6 +45,7 @@ interface RepoFileGroup {
 })
 export class HyperionGenerationActivityComponent implements OnDestroy {
     private readonly service = inject(HyperionExerciseGenerationService);
+    private readonly alertService = inject(AlertService);
 
     /** The exercise whose active run to show; the drawer self-hides while it is undefined or no run is retained. */
     readonly exerciseId = input<number | undefined>();
@@ -51,6 +54,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     // Run state, folded from the status endpoint and the live stream.
     readonly jobId = signal<string | undefined>(undefined);
+    readonly mode = signal<HyperionGenerationMode | undefined>(undefined);
     readonly running = signal<boolean>(false);
     readonly events = signal<HyperionGenerationEvent[]>([]);
     readonly snapshots = signal<HyperionFileSnapshot[]>([]);
@@ -63,8 +67,18 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     readonly pinnedPath = signal<string | undefined>(undefined);
     readonly cancelRequested = signal<boolean>(false);
 
+    // Revert affordance for a completed, accepted in-place adaptation.
+    readonly reverting = signal<boolean>(false);
+    readonly reverted = signal<boolean>(false);
+
     /** The drawer is visible only once a run (live or recently finished) is known. */
     readonly visible = computed(() => this.jobId() !== undefined);
+
+    /** The header status label reflects the intent: an adapt run reads "Adapting…", a generate run "Generating…". */
+    readonly runningLabelKey = computed(() => (this.mode() === 'ADAPT' ? 'artemisApp.hyperion.generationActivity.adapting' : 'artemisApp.hyperion.generationActivity.running'));
+
+    /** The revert button is offered only once an in-place adaptation has finished and was accepted (the server holds a captured pre-run baseline for it). */
+    readonly canRevert = computed(() => this.mode() === 'ADAPT' && !this.running() && !this.reverted() && (this.verdict()?.accepted ?? false));
 
     readonly progressEvents = computed(() => this.events().filter((event) => event.type === 'STARTED' || event.type === 'PROGRESS' || TERMINAL_EVENT_TYPES.has(event.type)));
 
@@ -91,6 +105,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
     protected readonly faCircleCheck = faCircleCheck;
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faRotateLeft = faRotateLeft;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     private streamSubscription?: Subscription;
@@ -123,6 +138,43 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.streamSubscription?.unsubscribe();
+    }
+
+    /**
+     * Attaches the drawer to a freshly started run so it streams live on the same surface that triggered it. The mode drives the header label ("Adapting…" vs "Generating…") and
+     * whether the revert affordance is offered when the run completes.
+     * @param jobId the started job id
+     * @param mode the explicit run intent
+     */
+    attachToJob(jobId: string, mode: HyperionGenerationMode): void {
+        if (this.exerciseId() === undefined) {
+            return;
+        }
+        this.reset();
+        this.mode.set(mode);
+        this.jobId.set(jobId);
+        this.running.set(true);
+        this.openStream(jobId);
+    }
+
+    /** Reverts the completed in-place adaptation, resetting the exercise repositories to the captured pre-run baseline. */
+    revert(): void {
+        const id = this.exerciseId();
+        if (id === undefined || !this.canRevert() || this.reverting()) {
+            return;
+        }
+        this.reverting.set(true);
+        this.service.revertAdaptation(id).subscribe({
+            next: () => {
+                this.reverting.set(false);
+                this.reverted.set(true);
+                this.alertService.success('artemisApp.hyperion.generationActivity.revertSuccess');
+            },
+            error: () => {
+                this.reverting.set(false);
+                this.alertService.error('artemisApp.hyperion.generationActivity.revertFailed');
+            },
+        });
     }
 
     /** Follows the agent again (jumping back to the latest file) or, when turning follow off, pins the current file so the preview stops auto-swapping. */
@@ -166,6 +218,7 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
                     return;
                 }
                 this.jobId.set(status.jobId);
+                this.mode.set(status.mode);
                 this.events.set(status.events ?? []);
                 this.snapshots.set(status.fileSnapshots ?? []);
                 this.restoreTerminalState(status.events ?? []);
@@ -260,7 +313,10 @@ export class HyperionGenerationActivityComponent implements OnDestroy {
         this.streamSubscription?.unsubscribe();
         this.streamSubscription = undefined;
         this.jobId.set(undefined);
+        this.mode.set(undefined);
         this.running.set(false);
+        this.reverting.set(false);
+        this.reverted.set(false);
         this.events.set([]);
         this.snapshots.set([]);
         this.completionStatus.set(undefined);

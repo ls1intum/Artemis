@@ -17,6 +17,7 @@ import com.hazelcast.core.HazelcastInstance;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -98,6 +99,16 @@ class ExerciseGenerationJobServiceTest {
         // The oldest PROGRESS lines were dropped from the front of the remainder; the survivors are the most recent 499, still in order.
         assertThat(events.get(1).message()).isEqualTo("p" + (overflow - 499));
         assertThat(events.getLast().message()).isEqualTo("p" + (overflow - 1));
+    }
+
+    @Test
+    void getStatus_carriesExplicitMode_soReconnectRestoresAdaptAffordances() {
+        ProgrammingExercise exercise = exercise(31L);
+        User owner = user("owner");
+        jobService.startJob(owner, exercise, "fix it", GenerationMode.ADAPT);
+
+        // A reconnecting client must recover the run intent from the status alone (it drives the header label and the revert button).
+        assertThat(jobService.getStatus(owner, exercise).orElseThrow().mode()).isEqualTo(GenerationMode.ADAPT);
     }
 
     @Test

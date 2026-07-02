@@ -110,6 +110,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     onEditorLoaded = output<void>();
     onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
     onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+    onAdaptReviewCommentThread = output<number>();
     onCommit = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */

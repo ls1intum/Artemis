@@ -41,6 +41,7 @@
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
             (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
+            (onAdaptReviewCommentThread)="adaptFromThread($event)"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -336,6 +337,20 @@
                                                 </div>
                                             </div>
                                         </p-popover>
+                                    }
+                                    @if (canAdaptWithFeedback()) {
+                                        <!-- Adapt the exercise with Artemis Intelligence to address the selected review-comment threads (empty selection => free-form adapt). -->
+                                        <button class="ai-menu-item" (click)="openAdaptDialog(); aiMenuPopover.hide()" data-testid="hyperion-adapt-with-feedback">
+                                            <fa-icon [icon]="facArtemisIntelligence" class="me-2" />
+                                            @if (selectedAdaptFeedbackCount() === 0) {
+                                                <span jhiTranslate="artemisApp.review.adaptExercise.menuItemEmpty"></span>
+                                            } @else {
+                                                <span
+                                                    jhiTranslate="artemisApp.review.adaptExercise.menuItemSelected"
+                                                    [translateValues]="{ count: selectedAdaptFeedbackCount() }"
+                                                ></span>
+                                            }
+                                        </button>
                                     }
                                     @if (exercise.isAtLeastEditor) {
                                         <!-- Problem Statement Refinement -->

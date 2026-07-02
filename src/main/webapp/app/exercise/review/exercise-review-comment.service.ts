@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
@@ -109,6 +109,17 @@ export class ExerciseReviewCommentService implements OnDestroy {
     }
 
     /**
+     * The currently selected feedback threads, resolved against the loaded threads in selection order. Threads that are no longer loaded are dropped. Derived from
+     * {@link selectedFeedbackThreadIds} — the single source of truth — so callers (e.g. the adapt dialog) never rebuild the selection state.
+     */
+    readonly selectedFeedbackThreads = computed<CommentThread[]>(() => {
+        const threadsById = new Map(this.threads().map((thread) => [thread.id, thread]));
+        return this.selectedFeedbackThreadIds()
+            .map((threadId) => threadsById.get(threadId))
+            .filter((thread): thread is CommentThread => thread !== undefined);
+    });
+
+    /**
      * Toggles whether a thread should be included as feedback in the next Hyperion generation request.
      *
      * @param threadId The thread id to toggle.
@@ -120,6 +131,16 @@ export class ExerciseReviewCommentService implements OnDestroy {
             }
             return [...threadIds, threadId];
         });
+    }
+
+    /**
+     * Ensures a thread is part of the feedback selection, adding it if absent (idempotent). Used by the per-thread "Adapt with feedback" action so the thread always flows through the
+     * shared selection store instead of a one-off finding object.
+     *
+     * @param threadId The thread id to select as feedback.
+     */
+    selectThreadAsFeedback(threadId: number): void {
+        this.selectedFeedbackThreadIds.update((threadIds) => (threadIds.includes(threadId) ? threadIds : [...threadIds, threadId]));
     }
 
     /**

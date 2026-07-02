@@ -58,7 +58,24 @@
                 "MEDIUM": "Medium",
                 "HIGH": "High"
             },
-            "submitBeforeComment": "Submit the exercise before starting a thread."
+            "submitBeforeComment": "Submit the exercise before starting a thread.",
+            "adaptExercise": {
+                "title": "Adapt exercise with Artemis Intelligence",
+                "menuItemEmpty": "Adapt exercise…",
+                "menuItemSelected": "Adapt with {{ count }} selected comment(s)",
+                "threadAction": "Adapt with feedback",
+                "summary": "Artemis Intelligence will adapt the exercise to address the selected review comments.",
+                "freeSummary": "Artemis Intelligence will adapt the exercise following your instructions.",
+                "findingsListLabel": "Selected comments ({{ count }})",
+                "freeHelp": "No review comments are selected. Describe the change you want Artemis Intelligence to make.",
+                "instructionsLabel": "Additional instructions",
+                "instructionsPlaceholder": "Optional: add extra guidance for the adaptation…",
+                "freeInstructionsPlaceholder": "Describe the change you want to make…",
+                "suggestedFixLabel": "Suggested fix",
+                "suggestedFixRemoveLabel": "Remove",
+                "cancel": "Cancel",
+                "confirm": "Adapt exercise"
+            }
         }
     }
 }

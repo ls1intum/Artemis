@@ -143,7 +143,7 @@ public class ExerciseGenerationJobService {
             throw new ConflictException("Exercise generation is already running for this exercise", ENTITY_NAME, "exerciseGenerationRunning");
         }
         // Fresh transcript and snapshot store for this run (overwrites any previous run's retained state for this exercise).
-        transcriptMap.put(key(exercise.getId()), new JobTranscript(jobId, user.getLogin(), exercise.getId(), new ArrayList<>(), false));
+        transcriptMap.put(key(exercise.getId()), new JobTranscript(jobId, user.getLogin(), exercise.getId(), mode, new ArrayList<>(), false));
         snapshotMap.put(key(exercise.getId()), new JobFileSnapshots(jobId, user.getLogin(), new LinkedHashMap<>()));
         eventPublisher.publishEvent(new ExerciseGenerationStartedEvent(jobId, user, exercise, userPrompt, mode));
         return jobId;
@@ -168,7 +168,7 @@ public class ExerciseGenerationJobService {
             while (events.size() > MAX_RETAINED_EVENTS) {
                 events.remove(1);
             }
-            return new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), events, terminal || transcript.done());
+            return new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), events, terminal || transcript.done());
         });
     }
 
@@ -211,7 +211,8 @@ public class ExerciseGenerationJobService {
         }
         JobInfo active = jobMap.get(key(exercise.getId()));
         boolean running = active != null && active.jobId().equals(transcript.jobId()) && !transcript.done();
-        return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), running, transcript.events(), latestSnapshotsFor(exercise.getId(), transcript.jobId())));
+        return Optional
+                .of(new ExerciseGenerationStatusDTO(transcript.jobId(), running, transcript.mode(), transcript.events(), latestSnapshotsFor(exercise.getId(), transcript.jobId())));
     }
 
     /**
@@ -301,7 +302,7 @@ public class ExerciseGenerationJobService {
         // Keep the transcript (TTL-bounded) for replay but mark it done, so a reconnecting client knows the run finished even if the terminal event was never recorded.
         transcriptMap.computeIfPresent(key,
                 (k, transcript) -> transcript.jobId().equals(jobId) && !transcript.done()
-                        ? new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.events(), true)
+                        ? new JobTranscript(transcript.jobId(), transcript.userLogin(), transcript.exerciseId(), transcript.mode(), transcript.events(), true)
                         : transcript);
     }
 
@@ -324,10 +325,12 @@ public class ExerciseGenerationJobService {
      * @param jobId      the job id
      * @param userLogin  the owner's login (transcripts are private to the instructor who started the run)
      * @param exerciseId the exercise id
+     * @param mode       the explicit run intent (generate vs. adapt), carried so a reconnecting client can restore the header label and revert affordance
      * @param events     the events produced so far, oldest first (bounded)
      * @param done       whether the run has finished (so a reconnecting client knows whether to keep listening)
      */
-    public record JobTranscript(String jobId, String userLogin, long exerciseId, List<ExerciseGenerationEventDTO> events, boolean done) implements Serializable {
+    public record JobTranscript(String jobId, String userLogin, long exerciseId, GenerationMode mode, List<ExerciseGenerationEventDTO> events, boolean done)
+            implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;

@@ -33,6 +33,13 @@ class MockService {
         return of(undefined);
     }
 
+    revertCalls: number[] = [];
+
+    revertAdaptation(exerciseId: number): Observable<void> {
+        this.revertCalls.push(exerciseId);
+        return of(undefined);
+    }
+
     subscribeToStream(): Observable<HyperionGenerationMessage> {
         return this.stream$.asObservable();
     }
@@ -124,5 +131,59 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentInstance.cancel();
         expect(service.cancelCalls).toEqual([[42, 'j1']]);
         expect(fixture.componentInstance.cancelRequested()).toBe(true);
+    });
+
+    it('attaches to a freshly started adapt run and shows the adapting label', () => {
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+
+        component.attachToJob('j9', 'ADAPT');
+        expect(component.visible()).toBe(true);
+        expect(component.jobId()).toBe('j9');
+        expect(component.running()).toBe(true);
+        expect(component.runningLabelKey()).toBe('artemisApp.hyperion.generationActivity.adapting');
+    });
+
+    it('offers revert only for an accepted adapt run and reverts to the captured baseline', () => {
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+
+        component.attachToJob('j9', 'ADAPT');
+        // A generate run never offers revert, even once accepted.
+        expect(component.canRevert()).toBe(false);
+
+        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } });
+        expect(component.running()).toBe(false);
+        expect(component.canRevert()).toBe(true);
+
+        component.revert();
+        expect(service.revertCalls).toEqual([42]);
+        expect(component.reverted()).toBe(true);
+        expect(component.canRevert()).toBe(false);
+    });
+
+    it('restores the adapt mode on reconnect so the revert affordance survives a reload', () => {
+        // A completed, accepted in-place adaptation rehydrated from the status endpoint (not a live attach): mode must come from the status, or the header label and revert are lost.
+        const fixture = createWith({
+            jobId: 'j5',
+            running: false,
+            mode: 'ADAPT',
+            events: [{ type: 'DONE', completionStatus: 'SUCCESS', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 4, reasons: [] } }],
+            fileSnapshots: [],
+        });
+        const component = fixture.componentInstance;
+
+        expect(component.mode()).toBe('ADAPT');
+        expect(component.runningLabelKey()).toBe('artemisApp.hyperion.generationActivity.adapting');
+        expect(component.canRevert()).toBe(true);
+    });
+
+    it('does not offer revert for an accepted generate run', () => {
+        const fixture = createWith(null);
+        const component = fixture.componentInstance;
+
+        component.attachToJob('j9', 'GENERATE');
+        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', verdict: { accepted: true, solutionPassed: true, templateFailed: true, testCount: 3, reasons: [] } });
+        expect(component.canRevert()).toBe(false);
     });
 });

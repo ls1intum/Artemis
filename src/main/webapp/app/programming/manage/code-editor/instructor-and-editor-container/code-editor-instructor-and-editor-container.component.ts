@@ -54,10 +54,16 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import {
+    ReviewAdaptExerciseDialogComponent,
+    ReviewAdaptExerciseDialogData,
+    ReviewAdaptExerciseDialogResult,
+} from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
+import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { getFirstCommentByCreatedDateThenId, selectedThreadsFindings } from 'app/exercise/review/review-comment-utils';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -209,6 +215,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly codeGenerationRunningModal = viewChild.required<TemplateRef<unknown>>('codeGenerationRunningModal');
     readonly resultComp = viewChild(UpdatingResultComponent);
     readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
+    /** The owner-only live "Generation activity" drawer; the adapt/generate flows attach a freshly started run to it so the run streams on this surface. */
+    private readonly generationActivity = viewChild(HyperionGenerationActivityComponent);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
@@ -293,6 +301,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private hyperionWs = inject(HyperionWebsocketService);
     private repoService = inject(CodeEditorRepositoryService);
     private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
+    private generationService = inject(HyperionExerciseGenerationService);
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
@@ -338,6 +347,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly totalSelectedFeedbackThreadCount = computed(() =>
         this.codeGenerationSelectedFeedbackSummaries().reduce((threadCount, summary) => threadCount + summary.threadCount, 0),
     );
+    /** How many review-comment threads are currently selected as adapt feedback (drives the "Adapt with N selected comment(s)" menu label). Derived from the shared selection store. */
+    readonly selectedAdaptFeedbackCount = computed(() => this.exerciseReviewCommentService.selectedFeedbackThreadIds().length);
 
     constructor() {
         super();
@@ -441,6 +452,75 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     protected showGenerationActivity(): boolean {
         return this.hyperionEnabled && !!this.exercise?.id && (this.exercise?.isAtLeastEditor ?? false) && this.canGenerateCode();
+    }
+
+    /**
+     * Whether the "Adapt with feedback" action may be offered: gated exactly like the generation drawer (Hyperion enabled, exercise loaded, at least editor, supported language).
+     */
+    protected canAdaptWithFeedback(): boolean {
+        return this.showGenerationActivity();
+    }
+
+    /**
+     * Handles the per-thread inline "Adapt with feedback" action: adds the thread to the shared feedback selection store (instead of bypassing it with a one-off finding object) and
+     * opens the same adapt dialog the AI-menu item uses.
+     * @param threadId the review-comment thread to adapt from
+     */
+    protected adaptFromThread(threadId: number): void {
+        if (!this.canAdaptWithFeedback()) {
+            return;
+        }
+        this.exerciseReviewCommentService.selectThreadAsFeedback(threadId);
+        this.openAdaptDialog();
+    }
+
+    /**
+     * Opens the Artemis Intelligence adapt dialog, rendering the currently selected review-comment findings read-only plus an optional free-form instructions field. On confirm it
+     * starts an {@code ADAPT} run for the selected feedback threads. Both the AI-menu item and the per-thread inline action route through here so the shared selection store stays the
+     * single source of truth.
+     */
+    protected openAdaptDialog(): void {
+        if (!this.canAdaptWithFeedback()) {
+            return;
+        }
+        const findings = selectedThreadsFindings(this.exerciseReviewCommentService.selectedFeedbackThreads(), this.translateService);
+        const dialogRef = this.dialogService.open(ReviewAdaptExerciseDialogComponent, {
+            header: this.translateService.instant('artemisApp.review.adaptExercise.title'),
+            modal: true,
+            dismissableMask: true,
+            width: '40rem',
+            data: { findings } satisfies ReviewAdaptExerciseDialogData,
+        });
+        dialogRef?.onClose.pipe(take(1)).subscribe((result?: ReviewAdaptExerciseDialogResult) => {
+            if (!result) {
+                return;
+            }
+            this.startAdaptation(result.instructions);
+        });
+    }
+
+    /**
+     * Starts an agentic in-place adaptation run for the selected feedback threads (plus any optional instructions) and attaches the freshly started job to the live drawer so it
+     * streams on this surface with an "Adapting…" header.
+     * @param instructions the optional free-form instructions the instructor added
+     */
+    private startAdaptation(instructions?: string): void {
+        const exerciseId = this.exercise?.id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        const selectedFeedbackThreadIds = this.exerciseReviewCommentService.selectedFeedbackThreadIds();
+        this.generationService
+            .generate(exerciseId, {
+                mode: 'ADAPT',
+                prompt: instructions,
+                selectedFeedbackThreadIds: selectedFeedbackThreadIds.length > 0 ? selectedFeedbackThreadIds : undefined,
+            })
+            .pipe(take(1))
+            .subscribe({
+                next: ({ jobId }) => this.generationActivity()?.attachToJob(jobId, 'ADAPT'),
+                error: () => this.alertService.error('artemisApp.hyperion.generationActivity.adaptStartFailed'),
+            });
     }
 
     /**

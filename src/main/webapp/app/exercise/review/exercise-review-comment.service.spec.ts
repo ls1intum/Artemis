@@ -409,6 +409,25 @@ describe('ExerciseReviewCommentService', () => {
         expect(service.selectedFeedbackThreadIds()).toEqual([]);
     });
 
+    it('selectThreadAsFeedback should add a thread once and be idempotent', () => {
+        service.selectThreadAsFeedback(5);
+        service.selectThreadAsFeedback(5);
+        service.selectThreadAsFeedback(7);
+
+        expect(service.selectedFeedbackThreadIds()).toEqual([5, 7]);
+    });
+
+    it('selectedFeedbackThreads should resolve selected ids against loaded threads in selection order and drop unloaded ones', () => {
+        service.threads.set([
+            { id: 3, targetType: CommentThreadLocationType.SOLUTION_REPO },
+            { id: 1, targetType: CommentThreadLocationType.TEMPLATE_REPO },
+        ] as any);
+        // 2 is selected but not loaded, so it is dropped; 3 and 1 resolve in selection order.
+        service.selectedFeedbackThreadIds.set([3, 2, 1]);
+
+        expect(service.selectedFeedbackThreads().map((thread) => thread.id)).toEqual([3, 1]);
+    });
+
     it('getSelectedFeedbackThreadIdsForRepository should keep only active matching threads in selection order', () => {
         service.threads.set([
             { id: 3, targetType: CommentThreadLocationType.SOLUTION_REPO, resolved: false, outdated: false },

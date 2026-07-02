@@ -232,7 +232,8 @@ class HyperionExerciseGenerationResourceTest {
 
     @Test
     void getExerciseGenerationStatus_whenRunRetained_returns200WithTranscript() {
-        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", true, List.of(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "go")));
+        ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", true, GenerationMode.ADAPT,
+                List.of(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "go")), List.of());
         when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(1L)).thenReturn(testExercise);
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(testUser);
         when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
@@ -243,6 +244,7 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().jobId()).isEqualTo("job-42");
         assertThat(response.getBody().running()).isTrue();
+        assertThat(response.getBody().mode()).isEqualTo(GenerationMode.ADAPT);
     }
 
     @Test

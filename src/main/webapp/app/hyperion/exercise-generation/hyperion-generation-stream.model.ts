@@ -55,6 +55,25 @@ export function isFileSnapshot(message: HyperionGenerationMessage): message is H
 export interface HyperionGenerationStatus {
     jobId: string;
     running: boolean;
+    /** The explicit run intent, so a reconnecting client restores the correct header label and the revert affordance without inferring it. Absent on runs started before this field existed. */
+    mode?: HyperionGenerationMode;
     events: HyperionGenerationEvent[];
     fileSnapshots?: HyperionFileSnapshot[];
+}
+
+/** The explicit intent of a run, mirroring the server {@code GenerationMode}. Chosen by the client, never inferred from the exercise's contents. */
+export type HyperionGenerationMode = 'GENERATE' | 'ADAPT';
+
+/** Request body for starting an agentic whole-exercise generation/adaptation run (mirrors the server {@code ExerciseGenerationRequestDTO}). */
+export interface HyperionGenerationRequest {
+    mode?: HyperionGenerationMode;
+    /** Optional brief (generate) or free-form instructions (adapt). */
+    prompt?: string;
+    /** Optional review-comment thread ids an adapt run should address; the server renders them into the brief. */
+    selectedFeedbackThreadIds?: number[];
+}
+
+/** Response returned when a run is started: the id of the job whose progress the client then follows over the websocket. */
+export interface HyperionGenerationJobStart {
+    jobId: string;
 }

@@ -8,7 +8,7 @@
             <span class="hyperion-activity-status">
                 @if (running()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
-                    <span jhiTranslate="artemisApp.hyperion.generationActivity.running"></span>
+                    <span [jhiTranslate]="runningLabelKey()"></span>
                     <p-button
                         size="small"
                         severity="danger"
@@ -38,6 +38,25 @@
                         <span jhiTranslate="artemisApp.hyperion.generationActivity.verdict.template"></span>
                     </p-tag>
                     <p-tag severity="secondary">{{ currentVerdict.testCount }} {{ 'artemisApp.hyperion.generationActivity.verdict.tests' | artemisTranslate }}</p-tag>
+                }
+                @if (canRevert()) {
+                    <p-button
+                        size="small"
+                        severity="secondary"
+                        [text]="true"
+                        [disabled]="reverting()"
+                        (onClick)="revert()"
+                        [pTooltip]="'artemisApp.hyperion.generationActivity.revertTooltip' | artemisTranslate"
+                        data-testid="hyperion-generation-revert"
+                    >
+                        <fa-icon [icon]="reverting() ? faSpinner : faRotateLeft" [animation]="reverting() ? 'spin' : undefined" />
+                        <span jhiTranslate="artemisApp.hyperion.generationActivity.revert"></span>
+                    </p-button>
+                }
+                @if (reverted()) {
+                    <p-tag severity="secondary" data-testid="hyperion-generation-reverted">
+                        <span jhiTranslate="artemisApp.hyperion.generationActivity.reverted"></span>
+                    </p-tag>
                 }
             </span>
         </div>
