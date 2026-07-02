@@ -1,4 +1,4 @@
-<p-select [formControl]="form()" [inputId]="selectId()" [options]="taxonomyOptions" optionLabel="value" optionValue="value" [showClear]="true" styleClass="w-full">
+<p-select [formControl]="form()" [inputId]="selectId()" [options]="taxonomyOptions" optionLabel="value" optionValue="value" [showClear]="true" styleClass="w-full" appendTo="body">
     <ng-template let-option #item>
         <span class="whitespace-pre">{{ option.indent }}&boxur; </span>
         <span [jhiTranslate]="'artemisApp.courseCompetency.taxonomies.' + option.value"></span>
