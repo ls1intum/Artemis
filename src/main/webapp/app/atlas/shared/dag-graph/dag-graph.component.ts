@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, TemplateRef,
 import { Graph, layout as dagreLayout } from '@dagrejs/dagre';
 import { curveBundle, line } from 'd3-shape';
 import { DagGraphEdge, DagGraphLayout, DagGraphLayoutEdge, DagGraphLayoutNode, DagGraphNode, GraphNodeDimension, GraphPosition } from 'app/atlas/shared/dag-graph/dag-graph.model';
+import { captureException } from '@sentry/angular';
 
 interface PanState {
     pointerX: number;
@@ -210,7 +211,7 @@ export class DagGraphComponent implements OnDestroy {
         } catch (error) {
             // dagre can throw (e.g. stack overflow on pathologically deep chains); degrade to an empty
             // graph instead of breaking change detection. Realistic competency graphs never hit this.
-            globalThis.console.error('DagGraphComponent: dagre layout failed, rendering an empty graph', error);
+            captureException(new Error('DagGraphComponent: dagre layout failed, rendering an empty graph', { cause: error }));
             return { nodes: [], edges: [], width: 0, height: 0 };
         }
 

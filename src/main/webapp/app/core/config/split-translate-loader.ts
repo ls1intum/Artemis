@@ -66,7 +66,7 @@ export class SplitTranslateLoader implements TranslateLoader {
             return;
         }
 
-        const ric = (globalThis as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
+        const ric = (window as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number }).requestIdleCallback;
         if (typeof ric === 'function') {
             ric(() => this.runUpgrade(lang), { timeout: LANDING_IDLE_TIMEOUT_MS });
             return;

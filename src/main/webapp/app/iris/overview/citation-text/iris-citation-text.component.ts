@@ -238,7 +238,7 @@ export class IrisCitationTextComponent {
 
         return `
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" fill="currentColor">
-                <path d="${svgPath}"/>
+                <path d="${Array.isArray(svgPath) ? svgPath.join('') : svgPath}"/>
             </svg>
         `.trim();
     }
