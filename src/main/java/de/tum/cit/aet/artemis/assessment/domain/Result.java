@@ -234,6 +234,11 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param course      the course that specifies the accuracy
      */
     public void setScore(double totalPoints, double maxPoints, Course course) {
+        if (maxPoints <= 0.0) {
+            setScore(0.0, course);
+            return;
+        }
+
         setScore(totalPoints / maxPoints * 100, course);
     }
 
