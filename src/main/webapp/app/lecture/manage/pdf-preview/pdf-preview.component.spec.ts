@@ -35,6 +35,10 @@ describe('PdfPreviewComponent', () => {
         const attachmentVideoUnitPart = formData.get('attachmentVideoUnit') as Blob;
         return JSON.parse(await attachmentVideoUnitPart.text());
     };
+    const getHiddenPagesPayload = async (formData: FormData) => {
+        const hiddenPagesPart = formData.get('hiddenPages') as Blob;
+        return JSON.parse(await hiddenPagesPart.text());
+    };
 
     beforeEach(async () => {
         engineService = new MockPdfEngineService();
@@ -256,6 +260,55 @@ describe('PdfPreviewComponent', () => {
         });
         expect(component.attachmentVideoUnit()).toBe(attachmentVideoUnit);
         expect(component.attachmentVideoUnit()!.attachmentUpdateIntent).toBeUndefined();
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
+        expect(alertService.success).toHaveBeenCalled();
+    });
+
+    it('should clear hidden pages without uploading PDF files', async () => {
+        await loadOriginal(2);
+        const hiddenDate = dayjs().add(1, 'day');
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.initialHiddenPages.set({
+            [component.pageOrder()[0].slideId]: { date: hiddenDate, exerciseId: undefined },
+        });
+        component.hiddenPages.set({});
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).toHaveBeenCalledOnce();
+        const updateFormData = attachmentVideoUnitService.update.mock.calls[0][2] as FormData;
+        expect(updateFormData.get('file')).toBeNull();
+        expect(updateFormData.get('studentVersion')).toBeNull();
+        expect(updateFormData.get('hiddenPages')).toBeInstanceOf(Blob);
+        await expect(getHiddenPagesPayload(updateFormData)).resolves.toEqual([]);
+        await expect(getAttachmentVideoUnitPayload(updateFormData)).resolves.toMatchObject({
+            attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
+        });
+        expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
+    });
+
+    it('should not save no-net hidden-page operation history', async () => {
+        await loadOriginal(2);
+        const hiddenDate = dayjs().add(1, 'day');
+        const hiddenPages = {
+            [component.pageOrder()[0].slideId]: { date: hiddenDate, exerciseId: undefined },
+        };
+        component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+        component.initialHiddenPages.set(hiddenPages);
+        component.hiddenPages.set(hiddenPages);
+        component.operations.set([
+            { type: 'SHOW', timestamp: dayjs(), data: { slideIds: [component.pageOrder()[0].slideId] } },
+            { type: 'HIDE', timestamp: dayjs().add(1, 'millisecond'), data: { pages: [{ slideId: component.pageOrder()[0].slideId, date: hiddenDate, exerciseId: undefined }] } },
+        ] as any);
+        const applyOperationsSpy = vi.spyOn(component, 'applyOperations');
+
+        await component.updateAttachmentWithFile();
+
+        expect(component.hasChanges()).toBe(false);
+        expect(applyOperationsSpy).not.toHaveBeenCalled();
+        expect(attachmentVideoUnitService.update).not.toHaveBeenCalled();
         expect(attachmentVideoUnitService.updateStudentVersion).not.toHaveBeenCalled();
         expect(alertService.success).toHaveBeenCalled();
     });

@@ -154,7 +154,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     });
 
     hasChanges = computed(() => {
-        return this.operations().length > 0 || this.hiddenPagesChanged() || this.pageOrderChanged() || this.isFileChanged();
+        return this.hasPdfContentChanges() || this.hiddenPagesChanged() || this.pageOrderChanged();
     });
     sortedHiddenSelectedPages = computed(() => {
         return Array.from(this.selectedPages())
@@ -489,12 +489,16 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         this.isSaving.set(true);
 
-        if (this.attachmentVideoUnit() && !this.hasPdfContentChanges() && this.hiddenPagesChanged()) {
-            try {
-                await this.updateAttachmentVideoUnitWithoutFile(this.getHiddenPages());
+        if (this.attachmentVideoUnit() && !this.hasPdfContentChanges()) {
+            if (this.hiddenPagesChanged()) {
+                try {
+                    await this.updateAttachmentVideoUnitWithoutFile(this.getHiddenPages());
+                    this.finishSaving();
+                } catch {
+                    // The helper already handles user-facing error state.
+                }
+            } else {
                 this.finishSaving();
-            } catch {
-                // The helper already handles user-facing error state.
             }
             return;
         }
@@ -567,10 +571,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitWithoutFile));
             formData.append('attachment', objectToJsonBlob(attachmentVideoUnit.attachment!));
-
-            if (hiddenPages.length > 0) {
-                formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
-            }
+            formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
 
             this.attachmentVideoUnitService.update(attachmentVideoUnit.lecture!.id!, attachmentVideoUnit.id!, formData).subscribe({
                 next: () => resolve(),
