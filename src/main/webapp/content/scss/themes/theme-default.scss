@@ -41,7 +41,8 @@ html {
 @import '../global';
 
 // Needed for highlighting code in the markdown editor
-@import 'node_modules/highlight.js/styles/vs.css';
+/* Bare specifier (not 'node_modules/…') so Tailwind's PostCSS @import resolver can resolve this .css file. */
+@import 'highlight.js/styles/vs.css';
 
 // Added to match the already existing style in theme-dark.scss
 .btn-outline-primary:not(.list-group-item) {
@@ -52,13 +53,9 @@ html {
     color: $white;
 }
 
-// Feature toggle cards & course overview cards
+// Course overview cards
 :root {
-    --feature-card-active-bg: #d1e7dd;
-    --feature-card-disabled-bg: #f8d7da;
-    --feature-card-inactive-bg: #e9ecef;
-    --feature-card-heading-color: #212529;
     --overview-card-bg: #ffffff;
-    --overview-card-nested-bg: #f3f4f6;
-    --overview-card-hover-bg: #e5e7eb;
+    --overview-card-nested-bg: #f1f5f9;
+    --overview-card-hover-bg: #e2e8f0;
 }

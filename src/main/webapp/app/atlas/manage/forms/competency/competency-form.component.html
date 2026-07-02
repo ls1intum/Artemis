@@ -3,8 +3,6 @@
         @if (form) {
             <form [formGroup]="form" (ngSubmit)="submitForm()">
                 <jhi-common-course-competency-form
-                    [formData]="formData()"
-                    [isEditMode]="isEditMode()"
                     [isInConnectMode]="isInConnectMode()"
                     [isInSingleLectureMode]="isInSingleLectureMode()"
                     [averageStudentScore]="averageStudentScore()"

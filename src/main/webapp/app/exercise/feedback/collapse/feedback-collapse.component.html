@@ -1,19 +1,19 @@
-<div class="feedback-text">
+<div class="font-[monospace]">
     @if (!previewText()) {
-        <p>{{ feedback().text }}</p>
+        <p class="inline whitespace-pre-wrap break-words">{{ feedback().text }}</p>
     } @else {
         @if (isCollapsed()) {
             <div>
-                <div class="d-inline fa-angle" (click)="toggleCollapse()">
+                <div class="inline cursor-pointer" (click)="toggleCollapse()">
                     <fa-icon [icon]="faAngleRight" />
                     <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
                 </div>
                 <!-- Only show first line as preview -->
-                <p>{{ previewText() }}</p>
+                <p class="inline whitespace-pre-wrap break-words">{{ previewText() }}</p>
             </div>
         } @else {
             <div>
-                <fa-icon class="fa-angle" [icon]="faAngleDown" (click)="toggleCollapse()" />
+                <fa-icon class="cursor-pointer" [icon]="faAngleDown" (click)="toggleCollapse()" />
                 <jhi-feedback-text [feedback]="feedback()" />
             </div>
         }

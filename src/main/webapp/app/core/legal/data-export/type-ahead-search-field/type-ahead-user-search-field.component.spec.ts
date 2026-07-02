@@ -105,11 +105,4 @@ describe('TypeAheadUserSearchFieldComponent', () => {
         const user = { login: 'ge12abc', name: 'abc' } as User;
         expect(component.resultFormatter(user)).toBe('abc (ge12abc)');
     });
-
-    it('should format the input correctly', () => {
-        const user = { login: 'ge12abc' } as User;
-        expect(component.inputFormatter(user)).toBe('ge12abc');
-        const loginString = 'ge12abc';
-        expect(component.inputFormatter(loginString)).toBe('ge12abc');
-    });
 });

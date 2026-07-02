@@ -55,8 +55,8 @@ describe('DataExportConfirmationDialogComponent', () => {
         cancelButton.nativeElement.click();
         expect(comp.visible()).toBe(false);
 
-        const inputFormGroup = debugElement.query(By.css('.form-group'));
-        expect(inputFormGroup).not.toBeNull();
+        const confirmNameInput = debugElement.query(By.css('#confirm-entity-name'));
+        expect(confirmNameInput).not.toBeNull();
     });
 
     it('should correctly enable and disable request button', async () => {

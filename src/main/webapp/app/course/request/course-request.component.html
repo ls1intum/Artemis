@@ -1,13 +1,13 @@
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
+<div class="mx-auto max-w-5xl px-3 py-4">
+    <div class="flex justify-center">
+        <div class="w-full lg:w-2/3">
             <h2 class="mb-2" jhiTranslate="artemisApp.courseRequest.title"></h2>
-            <p class="text-secondary mb-4" jhiTranslate="artemisApp.courseRequest.description"></p>
+            <p class="text-muted-color mb-4" jhiTranslate="artemisApp.courseRequest.description"></p>
 
             <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
                 <jhi-course-request-form [form]="form" [semesters]="semesters" [dateRangeInvalid]="dateRangeInvalid()" [showReasonPlaceholder]="true" />
 
-                <div class="d-flex justify-content-end">
+                <div class="flex justify-end">
                     <jhi-button
                         id="submit-course-request"
                         [btnType]="ButtonType.PRIMARY"

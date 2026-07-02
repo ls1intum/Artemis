@@ -24,7 +24,7 @@ test.describe('Check artemis system health', { tag: '@fast' }, () => {
 
     for (const healthCheck of healthChecks) {
         test(`Checks ${healthCheck.name} health`, async () => {
-            const statusLocator = page.locator(`#healthCheck ${healthCheck.selector} .status`);
+            const statusLocator = page.locator(`#healthCheck ${healthCheck.selector} [data-testid="status-cell"]`);
             await expect(statusLocator).toHaveText(healthCheck.expectedStatus, { timeout: 5000 });
         });
     }
@@ -32,7 +32,7 @@ test.describe('Check artemis system health', { tag: '@fast' }, () => {
     // WebSocket connection test handled separately with reload mechanism since
     // the client-side WebSocket connection may take longer to establish on CI
     test('Checks websocket connection health', async () => {
-        const statusLocator = page.locator('#healthCheck #websocketConnection .status');
+        const statusLocator = page.locator('#healthCheck #websocketConnection [data-testid="status-cell"]');
         const timeout = 60000;
         const reloadInterval = 5000;
         const startTime = Date.now();

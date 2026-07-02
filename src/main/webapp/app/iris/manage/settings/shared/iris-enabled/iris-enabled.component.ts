@@ -19,7 +19,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-iris-enabled',
     templateUrl: './iris-enabled.component.html',
     imports: [TranslateDirective, RouterLink, FaIconComponent],
-    standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `
@@ -36,7 +35,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 
             .iris-toggle-group {
                 display: flex;
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--p-content-border-color);
                 border-radius: 0.625rem;
                 overflow: hidden;
             }
@@ -45,26 +44,26 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
                 flex: 1;
                 padding: 0.5rem 1rem;
                 border: none;
-                background: var(--overview-card-nested-bg, var(--bs-body-bg));
-                color: var(--bs-secondary-color);
+                background: var(--overview-card-nested-bg, var(--p-content-background));
+                color: var(--p-text-muted-color);
                 font-weight: 500;
                 font-size: 0.88rem;
                 cursor: pointer;
                 transition: all 0.2s ease;
 
                 &:first-child {
-                    border-right: 1px solid var(--bs-border-color);
+                    border-right: 1px solid var(--p-content-border-color);
                 }
             }
 
             .iris-toggle-btn--active-on {
-                background: #10b981;
+                background: var(--success);
                 color: white;
                 font-weight: 600;
             }
 
             .iris-toggle-btn--active-off {
-                background: #ef4444;
+                background: var(--danger);
                 color: white;
                 font-weight: 600;
             }
@@ -75,18 +74,18 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
                 justify-content: center;
                 gap: 0.4rem;
                 padding: 0.5rem 1rem;
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--p-content-border-color);
                 border-radius: 0.625rem;
-                background: var(--overview-card-nested-bg, var(--bs-body-bg));
-                color: var(--bs-body-color);
+                background: var(--overview-card-nested-bg, var(--p-content-background));
+                color: var(--p-text-color);
                 font-weight: 500;
                 font-size: 0.88rem;
                 text-decoration: none;
                 transition: all 0.2s ease;
 
                 &:hover {
-                    background: var(--bs-tertiary-bg);
-                    border-color: var(--bs-secondary-border-subtle);
+                    background: var(--p-content-hover-background);
+                    border-color: var(--p-content-border-color);
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
                 }
             }

@@ -159,7 +159,7 @@ export class ResultHistoryDropdownComponent {
     getResultColorClass(result: Result): string {
         const participation = result.submission?.participation;
         if (!participation) {
-            return 'text-secondary';
+            return 'text-muted-color';
         }
         const templateStatus = evaluateTemplateStatus(this.exercise(), participation, result, false, MissingResultInformation.NONE);
         return getTextColorClass(result, participation, templateStatus);
@@ -203,23 +203,9 @@ export class ResultHistoryDropdownComponent {
     getBadge(result: Result): Badge {
         const participation = result.submission?.participation ?? this.studentParticipation();
         if (!participation) {
-            return { class: 'bg-secondary', text: '', tooltip: '' };
+            return { severity: 'secondary', text: '', tooltip: '' };
         }
         return ResultService.evaluateBadge(participation, result);
-    }
-
-    getBadgeSeverity(result: Result): 'success' | 'info' | 'secondary' | 'warn' | 'danger' | 'contrast' | undefined {
-        const badge = this.getBadge(result);
-        switch (badge.class) {
-            case 'bg-success':
-                return 'success';
-            case 'bg-info':
-                return 'info';
-            case 'bg-secondary':
-                return 'secondary';
-            default:
-                return undefined;
-        }
     }
 
     isRowClickable(): boolean {

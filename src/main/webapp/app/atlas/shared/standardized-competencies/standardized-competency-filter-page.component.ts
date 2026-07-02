@@ -1,106 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { KnowledgeAreaDTO, KnowledgeAreaForTree, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { KnowledgeAreaTreeNode, TREE_NODE_TYPE_KNOWLEDGE_AREA, convertToTreeNodes } from './knowledge-area-tree.component';
-
-/**
- * A lightweight replacement for the Angular Material `MatTreeNestedDataSource`. It only holds the (mutable) domain data
- * and notifies its owner whenever the data reference is reassigned, so the derived PrimeNG `TreeNode[]` can be rebuilt.
- * Keeping the `data` getter/setter API means the consuming components (and their specs) keep working unchanged.
- */
-export class KnowledgeAreaTreeDataSource {
-    private currentData: KnowledgeAreaForTree[] = [];
-
-    constructor(private readonly onChange: () => void) {}
-
-    get data(): KnowledgeAreaForTree[] {
-        return this.currentData;
-    }
-
-    set data(data: KnowledgeAreaForTree[]) {
-        this.currentData = data ?? [];
-        this.onChange();
-    }
-}
-
-/**
- * An in-house replacement for the programmatic `MatTree` control used previously. It tracks the expansion state of knowledge
- * areas by id (so it survives `TreeNode` rebuilds) and exposes the same method names that the templates and the filter logic
- * relied on (`collapseAll`, `expandAll`, `expand`, `isExpanded`). Mutating the expansion state triggers a `TreeNode` rebuild.
- *
- * PrimeNG `<p-tree>` toggles a node by mutating its `expanded` flag directly. To keep the manual user toggles consistent with
- * this control (so they survive the periodic `TreeNode` rebuilds done after CRUD operations), the live nodes' expansion state
- * is harvested into this control via {@link harvestLiveExpansion} before a data-driven rebuild.
- */
-export class KnowledgeAreaTreeControl {
-    private readonly expandedIds = new Set<number>();
-
-    constructor(
-        private readonly getData: () => KnowledgeAreaForTree[],
-        private readonly getNodes: () => KnowledgeAreaTreeNode[],
-        private readonly onChange: () => void,
-    ) {}
-
-    /** Whether the given knowledge area is currently expanded (by its id). */
-    isExpanded(knowledgeArea: KnowledgeAreaForTree): boolean {
-        return knowledgeArea.id !== undefined && this.expandedIds.has(knowledgeArea.id);
-    }
-
-    /** Whether the knowledge area with the given id is currently expanded; used by {@link convertToTreeNodes} to seed each node's `expanded` flag. */
-    isExpandedById(id: number | undefined): boolean {
-        return id !== undefined && this.expandedIds.has(id);
-    }
-
-    /** Expands the given knowledge area, first harvesting any manual p-tree toggles so they are not lost on the ensuing rebuild. */
-    expand(knowledgeArea: KnowledgeAreaForTree): void {
-        this.harvestLiveExpansion();
-        if (knowledgeArea.id !== undefined && !this.expandedIds.has(knowledgeArea.id)) {
-            this.expandedIds.add(knowledgeArea.id);
-        }
-        this.onChange();
-    }
-
-    /** Collapses every knowledge area and triggers a tree rebuild. */
-    collapseAll(): void {
-        this.expandedIds.clear();
-        this.onChange();
-    }
-
-    /** Expands every knowledge area (and descendants) and triggers a tree rebuild. */
-    expandAll(): void {
-        this.getData().forEach((knowledgeArea) => this.addSelfAndDescendants(knowledgeArea));
-        this.onChange();
-    }
-
-    /**
-     * Merges the expansion state that PrimeNG `<p-tree>` may have mutated on the live nodes (via its built-in toggler) back
-     * into this control, so manual user toggles are not lost when the node array is later rebuilt (e.g. after a CRUD update).
-     */
-    harvestLiveExpansion(): void {
-        this.mergeNodesExpansion(this.getNodes());
-    }
-
-    private mergeNodesExpansion(nodes: KnowledgeAreaTreeNode[] | undefined): void {
-        for (const node of nodes ?? []) {
-            const id = node.data?.id;
-            if (id !== undefined) {
-                if (node.expanded) {
-                    this.expandedIds.add(id);
-                } else {
-                    this.expandedIds.delete(id);
-                }
-            }
-            // recurse into the child knowledge-area nodes (competency leaf nodes have no expansion state)
-            this.mergeNodesExpansion((node.children ?? []).filter((child): child is KnowledgeAreaTreeNode => child.type === TREE_NODE_TYPE_KNOWLEDGE_AREA));
-        }
-    }
-
-    private addSelfAndDescendants(knowledgeArea: KnowledgeAreaForTree): void {
-        if (knowledgeArea.id !== undefined) {
-            this.expandedIds.add(knowledgeArea.id);
-        }
-        knowledgeArea.children?.forEach((child) => this.addSelfAndDescendants(child));
-    }
-}
+import { KnowledgeAreaTreeComponent, KnowledgeAreaTreeDataSource } from './knowledge-area-tree.component';
 
 /**
  * An abstract component that provides the logic to filter a {@link KnowledgeAreaTreeComponent} by competency title and knowledge area.
@@ -122,32 +22,14 @@ export abstract class StandardizedCompetencyFilterPageComponent {
      */
     protected knowledgeAreaMap = new Map<number, KnowledgeAreaForTree>();
 
-    // data for the tree structure: the mutable domain data plus the derived PrimeNG TreeNode[] consumed by `<p-tree>`
-    // when the data reference changes, harvest any manual expansion the user toggled on `<p-tree>` first, then rebuild
-    protected dataSource = new KnowledgeAreaTreeDataSource(() => {
-        this.tree.harvestLiveExpansion();
-        this.rebuildTreeNodes();
-    });
-    /** The PrimeNG `TreeNode[]` rendered by the tree component. Rebuilt whenever the data or the expansion state changes. */
-    protected readonly treeNodes = signal<KnowledgeAreaTreeNode[]>([]);
+    // data for the tree structure. A plain mutable object so the tree picks up in-place data writes.
+    protected dataSource: KnowledgeAreaTreeDataSource = { data: [] };
 
     /**
-     * The in-house tree control replacing the previous `MatTree`. It tracks expansion state and is the source for the
-     * expansion flags of the rebuilt {@link treeNodes}.
+     * Returns the KnowledgeAreaTreeComponent for programmatic tree control.
+     * Subclasses must implement this to provide access to their tree component.
      */
-    protected readonly tree = new KnowledgeAreaTreeControl(
-        () => this.dataSource.data,
-        () => this.treeNodes(),
-        () => this.rebuildTreeNodes(),
-    );
-
-    /**
-     * Rebuilds the PrimeNG {@link TreeNode} array from the current data, applying the visibility filter and the current
-     * expansion state tracked by {@link tree}.
-     */
-    protected rebuildTreeNodes(): void {
-        this.treeNodes.set(convertToTreeNodes(this.dataSource.data, (id) => this.tree.isExpandedById(id)));
-    }
+    protected abstract get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined;
 
     /**
      * Filters out all knowledge areas except for the one specified in the {@link knowledgeAreaFilter} and its direct ancestors.
@@ -170,7 +52,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
             this.setVisibilityOfSelfAndDescendants(filteredKnowledgeArea, true);
             this.setVisibleAndExpandSelfAndAncestors(filteredKnowledgeArea);
         }
-        this.rebuildTreeNodes();
+        this.knowledgeAreaTreeComponent?.rebuild();
     }
 
     /**
@@ -190,10 +72,10 @@ export abstract class StandardizedCompetencyFilterPageComponent {
         if (!trimmedFilter) {
             this.setVisibilityOfAllCompetencies(true);
         } else {
-            this.tree.collapseAll();
+            this.knowledgeAreaTreeComponent?.collapseAll();
             this.dataSource.data.forEach((knowledgeArea) => this.filterCompetenciesForSelfAndChildren(knowledgeArea, trimmedFilter));
         }
-        this.rebuildTreeNodes();
+        this.knowledgeAreaTreeComponent?.rebuild();
     }
 
     /**
@@ -220,7 +102,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
             }
         }
         if (hasMatch) {
-            this.tree.expand(knowledgeArea);
+            this.knowledgeAreaTreeComponent?.expand(knowledgeArea);
         }
         return hasMatch;
     }
@@ -254,7 +136,7 @@ export abstract class StandardizedCompetencyFilterPageComponent {
      */
     private setVisibleAndExpandSelfAndAncestors(knowledgeArea: KnowledgeAreaForTree) {
         knowledgeArea.isVisible = true;
-        this.tree.expand(knowledgeArea);
+        this.knowledgeAreaTreeComponent?.expand(knowledgeArea);
         const parent = this.getKnowledgeAreaByIdIfExists(knowledgeArea.parentId);
         if (parent) {
             this.setVisibleAndExpandSelfAndAncestors(parent);

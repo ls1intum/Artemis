@@ -3,43 +3,37 @@
         <span jhiTranslate="artemisApp.organizationManagement.detail.title"></span> [<b>{{ organization().name }}</b
         >]
     </h5>
-    <div class="container">
-        <div class="row">
-            <div class="col">
-                <dl class="row-md jh-entity-details">
-                    <dt><span jhiTranslate="global.field.id"></span></dt>
-                    <dd>{{ organization().id ?? '-' }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.name"></span></dt>
-                    <dd>{{ organization().name ?? '-' }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></dt>
-                    <dd>{{ organization().shortName ?? '-' }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.url"></span></dt>
-                    <dd>{{ organization().url ?? '-' }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.logoUrl"></span></dt>
-                    <dd>{{ organization().logoUrl ?? '-' }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.description"></span></dt>
-                    <dd>{{ organization().description ?? '-' }}</dd>
-                    <dt><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></dt>
-                    <dd>{{ organization().emailPattern ?? '-' }}</dd>
-                </dl>
-            </div>
-        </div>
-        <div class="row">
-            <h3>
-                <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
-            </h3>
-            <jhi-table-view
-                [cols]="courseColumns()"
-                [vals]="courses()"
-                [totalRows]="coursesTotal()"
-                [loading]="coursesLoading()"
-                (onLazyLoad)="loadCourses($event)"
-                [options]="tableOptions"
-            />
-        </div>
-    </div>
-    <div class="container p-2">
-        <h3>
+    <div class="p-4">
+        <dl class="grid grid-cols-1 md:grid-cols-[12rem_1fr] gap-x-4 gap-y-1">
+            <dt class="font-semibold"><span jhiTranslate="global.field.id"></span></dt>
+            <dd>{{ organization().id ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.name"></span></dt>
+            <dd>{{ organization().name ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></dt>
+            <dd>{{ organization().shortName ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.url"></span></dt>
+            <dd>{{ organization().url ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.logoUrl"></span></dt>
+            <dd>{{ organization().logoUrl ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.description"></span></dt>
+            <dd>{{ organization().description ?? '-' }}</dd>
+            <dt class="font-semibold"><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></dt>
+            <dd>{{ organization().emailPattern ?? '-' }}</dd>
+        </dl>
+
+        <h3 class="mt-4">
+            <span jhiTranslate="artemisApp.organizationManagement.courses"></span>
+        </h3>
+        <jhi-table-view
+            [cols]="courseColumns()"
+            [vals]="courses()"
+            [totalRows]="coursesTotal()"
+            [loading]="coursesLoading()"
+            (onLazyLoad)="loadCourses($event)"
+            [options]="tableOptions"
+        />
+
+        <h3 class="mt-4">
             <span jhiTranslate="artemisApp.organizationManagement.users"></span>
         </h3>
         <jhi-table-view
@@ -72,14 +66,19 @@
 
 <ng-template #userActions let-user>
     <button
+        pButton
+        severity="danger"
+        size="small"
+        [renderButtonStyle]="false"
         jhiDeleteButton
         [actionType]="ActionType.Remove"
         [entityTitle]="user.login || user.email || ''"
         deleteQuestion="artemisApp.organizationManagement.userSearch.removeFromOrganization.modalQuestion"
         (delete)="removeFromOrganization(user)"
         [dialogError]="dialogError$"
+        data-testid="remove-user-btn"
     >
-        <fa-icon [icon]="faUserSlash" class="me-1" />
+        <fa-icon [icon]="faUserSlash" />
     </button>
 </ng-template>
 

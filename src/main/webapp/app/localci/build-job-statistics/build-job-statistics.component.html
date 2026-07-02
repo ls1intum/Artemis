@@ -1,29 +1,29 @@
 <div class="mb-4">
-    <div class="d-flex align-items-center gap-2 mb-3">
+    <div class="flex items-center gap-2 mb-3">
         <h5 id="build-queue-overview" class="mb-0" jhiTranslate="artemisApp.buildQueue.statistics.title"></h5>
         @if (displaySpanSelector()) {
             <jhi-help-icon class="ps-1" text="artemisApp.buildQueue.statistics.titleTooltip" />
-            <div class="btn-group btn-group-toggle btn-group-sm ms-2" data-toggle="buttons">
-                <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.DAY">
-                    <input type="radio" name="options" (click)="onTabChange(SpanType.DAY)" />
-                    <span jhiTranslate="artemisApp.buildQueue.statistics.daySpan"></span>
-                </label>
-                <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.WEEK">
-                    <input type="radio" name="options" checked (click)="onTabChange(SpanType.WEEK)" />
-                    <span jhiTranslate="artemisApp.buildQueue.statistics.weekSpan"></span>
-                </label>
-                <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.MONTH">
-                    <input type="radio" name="options" (click)="onTabChange(SpanType.MONTH)" />
-                    <span jhiTranslate="artemisApp.buildQueue.statistics.monthSpan"></span>
-                </label>
-            </div>
+            <p-selectbutton
+                class="ms-2"
+                [options]="spanOptions"
+                [ngModel]="currentSpan()"
+                (ngModelChange)="onTabChange($event)"
+                optionLabel="label"
+                optionValue="value"
+                size="small"
+                [unselectable]="false"
+            >
+                <ng-template let-option #item>
+                    {{ option.label | artemisTranslate }}
+                </ng-template>
+            </p-selectbutton>
         }
     </div>
-    <div class="d-flex align-items-center flex-wrap gap-3">
+    <div class="flex items-center flex-wrap gap-3">
         <div class="chart-container">
             <p-chart type="doughnut" [data]="chartData()" [options]="chartOptions()" [responsive]="false" width="80px" height="80px" />
         </div>
-        <div class="d-flex flex-wrap gap-2 stats-container">
+        <div class="flex flex-wrap gap-2 stats-container">
             <div class="stats-item">
                 <span class="stats-label" jhiTranslate="artemisApp.buildQueue.statistics.totalBuilds"></span>
                 <span class="stats-value">{{ buildJobStatistics().totalBuilds }}</span>

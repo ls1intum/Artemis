@@ -25,7 +25,7 @@ export class LtiConfigurationService {
     /**
      * Sends a GET request to retrieve all lti platform configurations
      */
-    query(req?: any): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
+    query(req?: Record<string, unknown>): Observable<HttpResponse<LtiPlatformConfiguration[]>> {
         const params: HttpParams = createRequestOption(req);
         return this.http.get<LtiPlatformConfiguration[]>('api/lti/lti-platforms', {
             params,

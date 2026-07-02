@@ -7,7 +7,10 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { CommonModule } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
+import { TagModule } from 'primeng/tag';
+import { MessageModule } from 'primeng/message';
+import { InputTextModule } from 'primeng/inputtext';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildJobStatisticsComponent } from 'app/localci/build-job-statistics/build-job-statistics.component';
@@ -46,7 +49,10 @@ import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-ad
     imports: [
         FontAwesomeModule,
         RouterModule,
-        CommonModule,
+        ButtonModule,
+        TagModule,
+        MessageModule,
+        InputTextModule,
         TranslateDirective,
         ArtemisDatePipe,
         BuildJobStatisticsComponent,

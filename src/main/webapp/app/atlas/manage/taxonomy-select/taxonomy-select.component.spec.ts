@@ -5,6 +5,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MockDirective } from 'ng-mocks';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
+import { Select } from 'primeng/select';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -37,12 +38,19 @@ describe('TaxonomySelectComponent', () => {
     });
 
     it('should set taxonomy correcty', () => {
-        const select = componentFixture.debugElement.query(By.css('.form-select')).nativeElement;
-        expect(select.value).toBe('');
+        componentFixture.detectChanges();
+
+        const select = componentFixture.debugElement.query(By.directive(Select));
+        expect(select).not.toBeNull();
+        const selectInstance: Select = select.componentInstance;
+        // No taxonomy selected yet (the p-select ControlValueAccessor normalizes the empty value to null).
+        expect((component.form() as FormControl).value).toBeFalsy();
+        expect(selectInstance.selectedOption).toBeFalsy();
 
         (component.form() as FormControl).setValue(CompetencyTaxonomy.ANALYZE);
         componentFixture.detectChanges();
 
-        expect(select.value).toContain(CompetencyTaxonomy.ANALYZE);
+        expect((component.form() as FormControl).value).toBe(CompetencyTaxonomy.ANALYZE);
+        expect(selectInstance.selectedOption?.value).toBe(CompetencyTaxonomy.ANALYZE);
     });
 });

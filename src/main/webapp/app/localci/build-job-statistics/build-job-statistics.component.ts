@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { BuildJobStatistics, SpanType } from 'app/localci/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { onError } from 'app/foundation/util/global.utils';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartModule } from 'primeng/chart';
@@ -28,7 +31,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
  */
 @Component({
     selector: 'jhi-build-job-statistics',
-    imports: [TranslateDirective, ChartModule, HelpIconComponent],
+    imports: [TranslateDirective, ChartModule, HelpIconComponent, SelectButtonModule, FormsModule, ArtemisTranslatePipe],
     templateUrl: './build-job-statistics.component.html',
     styleUrl: './build-job-statistics.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,6 +48,13 @@ export class BuildJobStatisticsComponent implements OnInit {
     buildJobStatisticsInput = input<BuildJobStatistics>();
 
     protected readonly SpanType = SpanType;
+
+    /** Options for the time span selector (day, week, month) */
+    protected readonly spanOptions = [
+        { label: 'artemisApp.buildQueue.statistics.daySpan', value: SpanType.DAY },
+        { label: 'artemisApp.buildQueue.statistics.weekSpan', value: SpanType.WEEK },
+        { label: 'artemisApp.buildQueue.statistics.monthSpan', value: SpanType.MONTH },
+    ];
 
     /** Currently selected time span for statistics (day, week, or month) */
     readonly currentSpan = signal<SpanType>(SpanType.WEEK);

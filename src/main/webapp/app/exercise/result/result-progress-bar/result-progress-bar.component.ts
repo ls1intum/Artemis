@@ -1,18 +1,17 @@
 import { Component, OnDestroy, effect, input, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
 
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { TooltipModule } from 'primeng/tooltip';
 
 @Component({
     selector: 'jhi-result-progress-bar',
-    imports: [CommonModule, TranslateDirective, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe, FontAwesomeModule, NgbTooltipModule],
+    imports: [TranslateDirective, ArtemisTranslatePipe, ArtemisDurationFromSecondsPipe, FontAwesomeModule, ProgressBarModule, TooltipModule],
     templateUrl: './result-progress-bar.component.html',
-    styleUrl: './result-progress-bar.component.scss',
 })
 export class ResultProgressBarComponent implements OnDestroy {
     estimatedRemaining = input<number>(0);

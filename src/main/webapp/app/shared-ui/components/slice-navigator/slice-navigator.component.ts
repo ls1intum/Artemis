@@ -1,6 +1,7 @@
 import { Component, computed, effect, input, output, signal } from '@angular/core';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 
 export interface PaginationConfig {
@@ -16,15 +17,10 @@ export interface PageChangeEvent {
 
 @Component({
     selector: 'jhi-slice-navigator',
-    imports: [ButtonComponent],
+    imports: [ButtonModule, TooltipModule, ArtemisTranslatePipe],
     templateUrl: './slice-navigator.component.html',
 })
 export class SliceNavigatorComponent {
-    protected readonly faChevronLeft = faChevronLeft;
-    protected readonly faChevronRight = faChevronRight;
-    protected readonly buttonType = ButtonType.SECONDARY;
-    protected readonly buttonSize = ButtonSize.SMALL;
-
     config = input.required<PaginationConfig>();
     hasMoreItems = input<boolean>(true);
     isLoading = input<boolean>(false);

@@ -35,7 +35,7 @@ export type EntityArrayResponseType = HttpResponse<Result[]>;
 export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPerGradingCriterion[]>;
 
 export interface Badge {
-    class: string;
+    severity: 'success' | 'info' | 'secondary';
     text: string;
     tooltip: string;
 }
@@ -333,11 +333,11 @@ export class ResultService implements IResultService {
     public static evaluateBadge(participation: Participation, result: Result): Badge {
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
             if (isPracticeMode(participation) || isPracticeResult(result)) {
-                return { class: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
+                return { severity: 'secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
             }
         }
         return result.rated
-            ? { class: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
-            : { class: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
+            ? { severity: 'success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
+            : { severity: 'info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
     }
 }

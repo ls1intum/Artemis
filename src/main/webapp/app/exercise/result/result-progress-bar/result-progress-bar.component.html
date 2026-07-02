@@ -1,9 +1,9 @@
 <div
-    class="mw-custom text-nowrap"
-    [ngClass]="{ 'rounded-3 p-1 border border-1 bg-module fw-semibold': showBorder() }"
-    [ngbTooltip]="'artemisApp.editor.toolTip' | artemisTranslate"
+    class="max-w-fit min-w-[14.4rem] max-h-[2.22rem] overflow-hidden text-nowrap"
+    [class]="showBorder() ? 'rounded-lg p-1 border bg-module font-semibold' : ''"
+    [pTooltip]="'artemisApp.editor.toolTip' | artemisTranslate"
 >
-    <div class="mb-1 progress-bar-status-text">
+    <div class="mb-1 text-[0.82rem]">
         <fa-icon [icon]="faCircleNotch" animation="spin" class="me-1" />
         @if (isQueued()) {
             <span jhiTranslate="artemisApp.editor.queued"></span>
@@ -14,22 +14,27 @@
             <span> {{ estimatedRemaining() | artemisDurationFromSeconds }}</span>
         }
     </div>
-    <div class="d-flex justify-content-center align-items-center gap-2 w-100">
-        <div class="progress w-25" role="progressbar" [style.height.px]="3">
-            <div
-                class="progress-bar progress-bar-striped bg-warning"
-                [ngClass]="{ 'no-transition': !isQueueProgressBarAnimated() }"
-                [style.opacity]="queueProgressBarOpacity()"
-                [style.width.%]="queueProgressBarValue()"
-            ></div>
-        </div>
-        <div class="progress w-75" role="progressbar" [style.height.px]="3">
-            <div
-                class="progress-bar progress-bar-striped progress-bar-animated"
-                [ngClass]="{ 'no-transition': !isBuildProgressBarAnimated() }"
-                [style.opacity]="buildProgressBarOpacity()"
-                [style.width.%]="buildProgressBarValue()"
-            ></div>
-        </div>
+    <div class="flex justify-center items-center gap-2 w-full">
+        <p-progressbar
+            class="w-1/4"
+            [class.transition-opacity]="!isQueueProgressBarAnimated()"
+            [class.duration-500]="!isQueueProgressBarAnimated()"
+            [style.opacity]="queueProgressBarOpacity()"
+            [value]="queueProgressBarValue()"
+            [showValue]="false"
+            color="var(--warning)"
+            [style]="{ height: '3px' }"
+            aria-label="queue progress"
+        />
+        <p-progressbar
+            class="w-3/4"
+            [class.transition-opacity]="!isBuildProgressBarAnimated()"
+            [class.duration-500]="!isBuildProgressBarAnimated()"
+            [style.opacity]="buildProgressBarOpacity()"
+            [value]="buildProgressBarValue()"
+            [showValue]="false"
+            [style]="{ height: '3px' }"
+            aria-label="build progress"
+        />
     </div>
 </div>

@@ -4,6 +4,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 
 /**
  * Modal component for confirming the action to clear all distributed data.
@@ -18,7 +20,7 @@ import { FormsModule } from '@angular/forms';
  */
 @Component({
     selector: 'jhi-build-agent-clear-distributed-data',
-    imports: [FaIconComponent, TranslateDirective, FormsModule],
+    imports: [FaIconComponent, TranslateDirective, FormsModule, ButtonModule, InputTextModule],
     templateUrl: './build-agent-clear-distributed-data.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

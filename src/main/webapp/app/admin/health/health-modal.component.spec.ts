@@ -17,7 +17,7 @@ describe('HealthModalComponent', () => {
         await TestBed.configureTestingModule({
             imports: [HealthModalComponent],
         })
-            .overrideTemplate(HealthModalComponent, '<button class="btn-close" (click)="dismiss()"></button>')
+            .overrideTemplate(HealthModalComponent, '<button data-testid="dismiss-button" (click)="dismiss()"></button>')
             .compileComponents();
 
         fixture = TestBed.createComponent(HealthModalComponent);
@@ -121,6 +121,14 @@ describe('HealthModalComponent', () => {
                 startDate: '2025-01-01T12:00:00Z',
             },
         ]);
+    });
+
+    it('should map build agent status to the correct badge severity', () => {
+        expect(comp.getStatusBadgeSeverity('ACTIVE')).toBe('success');
+        expect(comp.getStatusBadgeSeverity('IDLE')).toBe('secondary');
+        expect(comp.getStatusBadgeSeverity('PAUSED')).toBe('warn');
+        expect(comp.getStatusBadgeSeverity('SELF_PAUSED')).toBe('warn');
+        expect(comp.getStatusBadgeSeverity('UNKNOWN_STATUS')).toBe('secondary');
     });
 
     it('should set visible to false when dismiss is called', () => {

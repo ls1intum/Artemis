@@ -12,25 +12,25 @@
     contentStyleClass="pt-0"
 >
     <ng-template pTemplate="header">
-        <h4 class="m-0 d-flex align-items-center gap-2">
+        <h4 class="m-0 flex items-center gap-2">
             <i class="pi pi-users" style="font-size: 1.5rem"></i>
             <span>{{ titleKey() | artemisTranslate }}</span>
         </h4>
     </ng-template>
 
-    <div class="d-flex flex-column h-100 gap-3">
-        <p class="text-muted mb-0" jhiTranslate="userRegistrationModal.description"></p>
+    <div class="flex flex-col h-full gap-3">
+        <p class="text-muted-color mb-0" jhiTranslate="userRegistrationModal.description"></p>
 
         <!-- Search bar row -->
-        <div class="d-flex align-items-center gap-2">
-            <jhi-search-filter class="flex-grow-1" [placeholderKey]="searchPlaceholderKey()" [disabled]="isViewingSelected()" (newSearchEvent)="onSearch($event)" />
+        <div class="flex items-center gap-2">
+            <jhi-search-filter class="grow" [placeholderKey]="searchPlaceholderKey()" [disabled]="isViewingSelected()" (newSearchEvent)="onSearch($event)" />
             @if (selectedCount() > 0) {
                 @if (isViewingSelected()) {
-                    <button pButton type="button" size="small" variant="outlined" severity="secondary" class="flex-shrink-0" (click)="toggleViewSelected()">
+                    <button pButton type="button" size="small" variant="outlined" severity="secondary" class="shrink-0" (click)="toggleViewSelected()">
                         <i class="pi pi-search me-1"></i><span jhiTranslate="userRegistrationModal.backToSearch"></span>
                     </button>
                 } @else {
-                    <button pButton type="button" size="small" variant="outlined" severity="info" class="flex-shrink-0" (click)="toggleViewSelected()">
+                    <button pButton type="button" size="small" variant="outlined" severity="info" class="shrink-0" (click)="toggleViewSelected()">
                         <i class="pi pi-eye me-1"></i><span>{{ 'userRegistrationModal.viewSelected' | artemisTranslate: { count: selectedCount() } }}</span>
                     </button>
                 }
@@ -39,7 +39,7 @@
 
         <!-- Selection info row -->
         @if (selectedCount() > 0) {
-            <p-message severity="info" size="small" styleClass="selection-info-message w-100" [closable]="false">
+            <p-message severity="info" size="small" styleClass="selection-info-message w-full" [closable]="false">
                 <span>{{ 'userRegistrationModal.selectedCount' | artemisTranslate: { count: selectedCount() } }}</span>
                 <button pButton type="button" variant="text" severity="secondary" size="small" class="py-0" (click)="clearSelection()">
                     <span jhiTranslate="userRegistrationModal.clearSelection"></span>
@@ -48,9 +48,9 @@
         }
 
         <!-- Table area -->
-        <div class="d-flex flex-column flex-grow-1" style="min-height: 0">
+        <div class="flex flex-col grow min-h-0">
             @if (showTable()) {
-                <div style="flex: 1; min-height: 0">
+                <div class="flex-1 min-h-0">
                     <jhi-table-view
                         [cols]="columns()"
                         [vals]="tableValues()"
@@ -67,14 +67,14 @@
             } @else if (noResults()) {
                 <div class="placeholder-area">
                     <i class="pi pi-users placeholder-icon mb-3"></i>
-                    <p class="fw-semibold mb-1">{{ 'userRegistrationModal.noResultsTitle' | artemisTranslate: { term: searchTerm() } }}</p>
-                    <p class="text-muted small" jhiTranslate="userRegistrationModal.noResultsHint"></p>
+                    <p class="font-semibold mb-1">{{ 'userRegistrationModal.noResultsTitle' | artemisTranslate: { term: searchTerm() } }}</p>
+                    <p class="text-muted-color text-sm" jhiTranslate="userRegistrationModal.noResultsHint"></p>
                 </div>
             } @else {
                 <div class="placeholder-area">
                     <i class="pi pi-search placeholder-icon mb-3"></i>
-                    <p class="fw-semibold mb-1" jhiTranslate="userRegistrationModal.initialTitle"></p>
-                    <p class="text-muted small" jhiTranslate="userRegistrationModal.initialHint"></p>
+                    <p class="font-semibold mb-1" jhiTranslate="userRegistrationModal.initialTitle"></p>
+                    <p class="text-muted-color text-sm" jhiTranslate="userRegistrationModal.initialHint"></p>
                 </div>
             }
         </div>
@@ -102,13 +102,13 @@
 
 <ng-template #nameLoginTemplate let-cell>
     <div class="name-login-cell">
-        <div class="d-flex align-items-center gap-1">
+        <div class="flex items-center gap-1">
             <span class="user-name" [innerHTML]="cell.data.name | highlightMatch: searchTerm()"></span>
             @if (cell.data.isRegistered) {
-                <i class="pi pi-check-circle text-success flex-shrink-0"></i>
+                <i class="pi pi-check-circle text-state-success shrink-0"></i>
             }
         </div>
-        <span class="user-login text-muted" [innerHTML]="cell.data.login | highlightMatch: searchTerm()"></span>
+        <span class="user-login text-muted-color" [innerHTML]="cell.data.login | highlightMatch: searchTerm()"></span>
     </div>
 </ng-template>
 

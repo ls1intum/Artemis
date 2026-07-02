@@ -58,7 +58,7 @@ describe('LogsComponent', () => {
 
     it('should change log level correctly', () => {
         const log = new Log('main', 'ERROR');
-        vi.spyOn(service, 'changeLevel').mockReturnValue(of({}));
+        vi.spyOn(service, 'changeLevel').mockReturnValue(of(undefined));
         vi.spyOn(service, 'findAll').mockReturnValue(
             of({
                 loggers: {
@@ -155,10 +155,19 @@ describe('LogsComponent', () => {
         ]);
     });
 
-    it('should update filter via updateFilter method', () => {
-        comp.updateFilter('testFilter');
-
-        expect(comp.filter()).toBe('testFilter');
+    it('should update filter via updateFilter method (debounced)', () => {
+        vi.useFakeTimers();
+        try {
+            comp.updateFilter('testFilter');
+            // the immediate signal reflects the input right away for responsive typing
+            expect(comp.filterInput()).toBe('testFilter');
+            // the debounced filter only applies after the debounce window
+            expect(comp.filter()).toBe('');
+            vi.advanceTimersByTime(200);
+            expect(comp.filter()).toBe('testFilter');
+        } finally {
+            vi.useRealTimers();
+        }
     });
 
     it('should update sort via updateSort method', () => {

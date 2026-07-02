@@ -1,11 +1,19 @@
-<div class="d-flex flex-column">
+<div class="flex flex-col">
     <div class="mb-2">
-        <div class="d-flex justify-content-between">
+        <div class="flex justify-between">
             <h4 jhiTranslate="artemisApp.standardizedCompetency.details.title"></h4>
-            <button type="button" class="btn-close" (click)="close()"></button>
+            <p-button
+                severity="secondary"
+                size="small"
+                [text]="true"
+                [rounded]="true"
+                icon="pi pi-times"
+                (onClick)="close()"
+                [ariaLabel]="'entity.action.close' | artemisTranslate"
+            />
         </div>
     </div>
-    <div class="detail-body d-flex flex-column">
+    <div class="detail-body flex flex-col">
         <div class="detail-row">
             <h5 jhiTranslate="artemisApp.standardizedCompetency.model.title"></h5>
             <p class="mb-0">{{ competency().title }}</p>

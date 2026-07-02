@@ -165,19 +165,15 @@ describe('AdminDataExportsComponent', () => {
         expect(component.getStateIcon(DataExportState.DOWNLOADED_DELETED)).toBe(component['faTimes']);
     });
 
-    it('should return unique badge class for each state', () => {
-        expect(component.getStateBadgeClass(DataExportState.REQUESTED)).toBe('bg-primary');
-        expect(component.getStateBadgeClass(DataExportState.IN_CREATION)).toBe('bg-info');
-        expect(component.getStateBadgeClass(DataExportState.EMAIL_SENT)).toBe('bg-success');
-        expect(component.getStateBadgeClass(DataExportState.DOWNLOADED)).toBe('bg-warning text-dark');
-        expect(component.getStateBadgeClass(DataExportState.FAILED)).toBe('bg-danger');
-        expect(component.getStateBadgeClass(DataExportState.DELETED)).toBe('bg-secondary');
-        expect(component.getStateBadgeClass(DataExportState.DOWNLOADED_DELETED)).toBe('bg-secondary');
-    });
-
-    it('should track items by id', () => {
-        const item = mockExports[0];
-        expect(component.trackIdentity(0, item)).toBe(item.id);
+    it('maps each data-export state to its severity token', () => {
+        expect(component.getStateSeverity(DataExportState.REQUESTED)).toBe('contrast');
+        expect(component.getStateSeverity(DataExportState.IN_CREATION)).toBe('info');
+        expect(component.getStateSeverity(DataExportState.EMAIL_SENT)).toBe('success');
+        expect(component.getStateSeverity(DataExportState.DOWNLOADED)).toBe('warn');
+        expect(component.getStateSeverity(DataExportState.FAILED)).toBe('danger');
+        expect(component.getStateSeverity(DataExportState.EMAIL_FAILED)).toBe('warn');
+        expect(component.getStateSeverity(DataExportState.DELETED)).toBe('secondary');
+        expect(component.getStateSeverity(DataExportState.DOWNLOADED_DELETED)).toBe('secondary');
     });
 
     it('should initialize pagination signals with default values', () => {

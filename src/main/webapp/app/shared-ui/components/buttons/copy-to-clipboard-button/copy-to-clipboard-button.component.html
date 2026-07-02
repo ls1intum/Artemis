@@ -1,14 +1,15 @@
 @if (copyText().length > 0) {
-    <button
+    <p-button
         id="copyButton"
         type="button"
-        class="btn btn-sm ms-1"
-        [class.btn-success]="wasCopied()"
-        [class]="class()"
+        [text]="true"
+        size="small"
+        [severity]="wasCopied() ? 'success' : 'secondary'"
+        [styleClass]="'ms-1 ' + class()"
         [cdkCopyToClipboard]="copyText()"
         (cdkCopyToClipboardCopied)="onCopyFinished()"
-        ngbTooltip="{{ 'global.generic.copy' | artemisTranslate }}"
+        [pTooltip]="'global.generic.copy' | artemisTranslate"
     >
         <fa-icon [icon]="wasCopied() ? faCheck : faCopy" />
-    </button>
+    </p-button>
 }

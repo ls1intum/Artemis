@@ -57,6 +57,33 @@ describe('DeleteUsersButtonComponent', () => {
         vi.restoreAllMocks();
     });
 
+    describe('rendering', () => {
+        it('should render a PrimeNG delete button that triggers loadUserList on click', async () => {
+            TestBed.resetTestingModule();
+            await TestBed.configureTestingModule({
+                imports: [DeleteUsersButtonComponent],
+                providers: [
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: DialogService, useClass: MockDialogService },
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                ],
+            }).compileComponents();
+
+            const renderFixture = TestBed.createComponent(DeleteUsersButtonComponent);
+            const renderComponent = renderFixture.componentInstance;
+            const loadUserListSpy = vi.spyOn(renderComponent, 'loadUserList').mockImplementation(() => {});
+            renderFixture.detectChanges();
+
+            const button = renderFixture.nativeElement.querySelector('[data-testid="delete-users-button"]');
+            expect(button).toBeTruthy();
+
+            const nativeButton: HTMLButtonElement = button.querySelector('button') ?? button;
+            nativeButton.click();
+            expect(loadUserListSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     describe('loadUserList', () => {
         it('should load users and open delete dialog when users exist', () => {
             vi.spyOn(component, 'openDeleteDialog').mockImplementation(() => {});

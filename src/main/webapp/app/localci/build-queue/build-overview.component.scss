@@ -7,18 +7,15 @@
     display: flex;
     flex-direction: column;
     height: 100%;
+
     // Pull up to counteract parent padding
     margin: -1rem;
 
     .build-queue-nav-bar {
         flex-shrink: 0;
-        background-color: #fff;
+        background-color: var(--p-content-background);
         padding: 0.5rem 1rem;
         z-index: 10;
-
-        :host-context(.dark) & {
-            background-color: var(--bs-body-bg);
-        }
     }
 
     .build-queue-main-content {

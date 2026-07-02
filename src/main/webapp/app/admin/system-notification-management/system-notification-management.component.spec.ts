@@ -286,20 +286,6 @@ describe('SystemNotificationManagementComponent', () => {
         });
     });
 
-    describe('trackIdentity', () => {
-        it('should return notification id', () => {
-            const notification = { id: 5 } as SystemNotification;
-
-            expect(component.trackIdentity(0, notification)).toBe(5);
-        });
-
-        it('should return -1 when id is undefined', () => {
-            const notification = {} as SystemNotification;
-
-            expect(component.trackIdentity(0, notification)).toBe(-1);
-        });
-    });
-
     describe('registerChangeInNotifications', () => {
         it('should reload notifications when event is broadcast', async () => {
             // Wait for ngOnInit to complete and subscriptions to be set up

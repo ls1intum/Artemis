@@ -1,6 +1,5 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import { NgClass } from '@angular/common';
 import { Subscription, filter } from 'rxjs';
 
 import { AdminSidebarComponent } from 'app/admin/admin-sidebar/admin-sidebar.component';
@@ -20,12 +19,12 @@ import { IS_AT_LEAST_SUPER_ADMIN } from 'app/foundation/constants/authority.cons
 @Component({
     selector: 'jhi-admin-container',
     templateUrl: './admin-container.component.html',
-    styleUrls: ['./admin-container.component.scss'],
-    imports: [NgClass, RouterOutlet, AdminSidebarComponent, AdminTitleBarComponent],
+    imports: [RouterOutlet, AdminSidebarComponent, AdminTitleBarComponent],
     host: {
         '(window:resize)': 'onResize()',
         '(document:keydown.control.m)': 'onKeyDown($event)',
     },
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminContainerComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
@@ -63,7 +62,6 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
             this.standardizedCompetenciesEnabled.set(isActive);
         });
 
-        // Check initial collapse state based on breakpoint
         this.updateCollapseState();
 
         // Subscribe to router events to handle navigation

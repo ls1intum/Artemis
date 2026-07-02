@@ -1,11 +1,12 @@
-<div class="d-flex flex-column h-100">
+<div class="flex flex-col h-full">
     <h5 *adminTitleBarTitle id="organization-management-page-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.title"></h5>
     <div *adminTitleBarActions>
-        <button class="btn btn-primary btn-sm jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="faPlus" /> <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
+        <button pButton size="small" [routerLink]="['./new']" data-testid="add-organization-btn">
+            <fa-icon [icon]="faPlus" />
+            <span jhiTranslate="artemisApp.organizationManagement.addLabel"></span>
         </button>
     </div>
-    <div style="flex: 1; min-height: 0">
+    <div class="flex-1 min-h-0">
         <jhi-table-view
             [cols]="columns()"
             [vals]="organizations()"
@@ -25,24 +26,34 @@
 </ng-template>
 
 <ng-template #organizationActions let-organization>
-    <div class="btn-group flex-btn-group-container">
-        <div class="btn-group-vertical me-1">
-            <button type="button" [routerLink]="['./', organization.id, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm" (click)="$event.stopPropagation()">
-                <fa-icon [icon]="faWrench" />
-                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-            </button>
-        </div>
-        <div class="btn-group-vertical">
-            <button
-                jhiDeleteButton
-                [entityTitle]="organization.name"
-                deleteQuestion="artemisApp.organizationManagement.delete.question"
-                (delete)="deleteOrganization(organization.id)"
-                [dialogError]="dialogError$"
-                (click)="$event.stopPropagation()"
-            >
-                <fa-icon [icon]="faTimes" />
-            </button>
-        </div>
+    <div class="flex items-center justify-end gap-2" data-testid="organization-row-actions">
+        <button
+            pButton
+            size="small"
+            severity="warn"
+            type="button"
+            [routerLink]="['./', organization.id, 'edit']"
+            queryParamsHandling="merge"
+            (click)="$event.stopPropagation()"
+            data-testid="edit-organization-btn"
+        >
+            <fa-icon [icon]="faPencil" />
+            <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+        </button>
+        <button
+            pButton
+            severity="danger"
+            size="small"
+            [renderButtonStyle]="false"
+            jhiDeleteButton
+            [entityTitle]="organization.name"
+            deleteQuestion="artemisApp.organizationManagement.delete.question"
+            (delete)="deleteOrganization(organization.id)"
+            [dialogError]="dialogError$"
+            (click)="$event.stopPropagation()"
+            data-testid="delete-organization-btn"
+        >
+            <fa-icon [icon]="faTrash" />
+        </button>
     </div>
 </ng-template>

@@ -5,9 +5,9 @@ import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
-import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MessageModule } from 'primeng/message';
+import { TooltipModule } from 'primeng/tooltip';
 import { FeedbackCollapseComponent } from '../collapse/feedback-collapse.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-feedback-node',
     templateUrl: './feedback-node.component.html',
     styleUrls: ['./feedback-node.scss'],
-    imports: [NgClass, FaIconComponent, NgbTooltip, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, MessageModule, TooltipModule, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackNodeComponent implements OnInit {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
@@ -39,6 +39,25 @@ export class FeedbackNodeComponent implements OnInit {
             this.feedbackItemGroup.set(feedbackItemNode);
         } else {
             this.feedbackItem.set(feedbackItemNode as FeedbackItem);
+        }
+    }
+
+    /**
+     * Maps the legacy Bootstrap alert color of a feedback item (`success` / `info` / `warning` / `danger`)
+     * to the corresponding PrimeNG message severity used by `p-message`.
+     */
+    messageSeverity(color: string | undefined): 'success' | 'info' | 'warn' | 'error' | 'secondary' {
+        switch (color) {
+            case 'success':
+                return 'success';
+            case 'info':
+                return 'info';
+            case 'warning':
+                return 'warn';
+            case 'danger':
+                return 'error';
+            default:
+                return 'secondary';
         }
     }
 

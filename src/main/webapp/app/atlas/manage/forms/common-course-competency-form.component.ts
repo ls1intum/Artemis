@@ -3,7 +3,6 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription, merge } from 'rxjs';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
@@ -32,8 +31,6 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 export class CommonCourseCompetencyFormComponent {
     private translateService = inject(TranslateService);
 
-    formData = input.required<CourseCompetencyFormData>();
-    isEditMode = input<boolean>(false);
     isInConnectMode = input<boolean>(false);
     isInSingleLectureMode = input<boolean>(false);
     averageStudentScore = input<number>();
@@ -81,12 +78,6 @@ export class CommonCourseCompetencyFormComponent {
     }
 
     constructor() {
-        // Patch the form with the provided data in edit mode (replaces ngOnChanges).
-        effect(() => {
-            if (this.isEditMode() && this.formData()) {
-                this.setFormValues(this.formData());
-            }
-        });
         effect((onCleanup) => {
             const titleCtrl = this.titleControl;
             const descCtrl = this.descriptionControl;
@@ -98,10 +89,6 @@ export class CommonCourseCompetencyFormComponent {
                 onCleanup(() => subscription.unsubscribe());
             }
         });
-    }
-
-    private setFormValues(formData: CourseCompetencyFormData) {
-        this.form().patchValue(formData);
     }
 
     /**

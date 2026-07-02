@@ -1,10 +1,11 @@
-import { Component, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
+import { TagModule } from 'primeng/tag';
+import { ButtonModule } from 'primeng/button';
 
 /**
  * Represents a formatted build agent for display in the health modal.
@@ -55,21 +56,22 @@ type BuildAgentDetail = SimplifiedBuildAgent | LegacyBuildAgent;
 @Component({
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
-    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, CommonModule, DialogModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, DialogModule, TagModule, ButtonModule],
 })
 export class HealthModalComponent {
     readonly visible = model<boolean>(false);
 
     readonly health = input<{ key: HealthKey; value: HealthDetails } | undefined>(undefined);
 
-    readableValue(value: any): string {
+    readableValue(value: unknown): string {
         if (this.health()?.key === 'diskSpace') {
             // Should display storage space in a human-readable unit
-            const val = value / 1073741824;
+            const val = (value as number) / 1073741824;
             if (val > 1) {
                 return `${val.toFixed(2)} GB`;
             }
-            return `${(value / 1048576).toFixed(2)} MB`;
+            return `${((value as number) / 1048576).toFixed(2)} MB`;
         }
 
         if (typeof value === 'object') {
@@ -185,20 +187,15 @@ export class HealthModalComponent {
         return 'maxJobs' in agent || 'currentJobs' in agent || 'runningJobs' in agent;
     }
 
-    /**
-     * Returns a CSS class for the build agent status badge.
-     */
-    getStatusBadgeClass(status: string): string {
+    getStatusBadgeSeverity(status: string): 'success' | 'secondary' | 'warn' {
         switch (status) {
             case 'ACTIVE':
-                return 'bg-success';
-            case 'IDLE':
-                return 'bg-secondary';
+                return 'success';
             case 'PAUSED':
             case 'SELF_PAUSED':
-                return 'bg-warning';
+                return 'warn';
             default:
-                return 'bg-secondary';
+                return 'secondary';
         }
     }
 

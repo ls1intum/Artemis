@@ -7,6 +7,7 @@ import dayjs from 'dayjs/esm';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -74,6 +75,17 @@ describe('FinishedBuildsFilterModalComponent', () => {
     it('should return correct build agent addresses', () => {
         component.finishedBuildJobs = mockFinishedJobs;
         expect(component.buildAgentAddresses).toEqual(['agent5', 'agent6']);
+    });
+
+    it('should suggest all addresses on an empty query (focus discoverability) and filter on a term', () => {
+        component.finishedBuildJobs = mockFinishedJobs;
+
+        // Empty query is the focus case ([completeOnFocus]=true) — must surface all agent addresses.
+        component.searchBuildAgentAddresses({ query: '' } as unknown as AutoCompleteCompleteEvent);
+        expect(component.buildAgentAddressSuggestions()).toEqual(['agent5', 'agent6']);
+
+        component.searchBuildAgentAddresses({ query: 'agent5' } as unknown as AutoCompleteCompleteEvent);
+        expect(component.buildAgentAddressSuggestions()).toEqual(['agent5']);
     });
 
     it('should return correct number of filters applied', () => {

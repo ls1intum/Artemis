@@ -8,7 +8,7 @@ import { Audit } from 'app/admin/audits/audit.model';
 export class AuditsService {
     private http = inject(HttpClient);
 
-    query(req: any): Observable<HttpResponse<Audit[]>> {
+    query(req: Record<string, unknown>): Observable<HttpResponse<Audit[]>> {
         const params: HttpParams = createRequestOption(req);
 
         const requestURL = 'api/admin/audits';

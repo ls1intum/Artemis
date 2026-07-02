@@ -1,41 +1,38 @@
-<label class="mb-1 form-check-label" for="typeahead-search" jhiTranslate="artemisApp.dataExport.loginOrName"></label>
-<div class="search-container">
-    <input
-        id="typeahead-search"
-        name="search-filter"
-        type="text"
-        class="form-control"
-        [ngModel]="loginOrName()"
-        (ngModelChange)="loginOrName.set($event)"
-        [ngbTypeahead]="search"
-        [placeholder]="'artemisApp.dataExport.loginOrName' | artemisTranslate"
-        (input)="onChange()"
-        (change)="onChange()"
-        (focus)="onChange()"
-        (select)="onChange()"
-        (blur)="onChange()"
-        [resultFormatter]="resultFormatter"
-        [inputFormatter]="inputFormatter"
-        autocomplete="nope"
-        role="searchbox"
-        aria-autocomplete="list"
-        data-1p-ignore="true"
-        data-lpignore="true"
-        data-form-type="other"
-    />
+<label class="mb-1" for="typeahead-search" jhiTranslate="artemisApp.dataExport.loginOrName"></label>
+<p-autoComplete
+    inputId="typeahead-search"
+    name="search-filter"
+    styleClass="w-full"
+    [ngModel]="loginOrName()"
+    (ngModelChange)="loginOrName.set($event)"
+    [suggestions]="suggestions()"
+    (completeMethod)="onComplete($event)"
+    (onSelect)="onSelectUser($event)"
+    optionLabel="login"
+    [minLength]="MIN_SEARCH_QUERY_LENGTH"
+    [placeholder]="'artemisApp.dataExport.loginOrName' | artemisTranslate"
+    (input)="onChange()"
+    (onClear)="onChange()"
+    (onFocus)="onChange()"
+    (onBlur)="onChange()"
+    autocomplete="nope"
+    role="searchbox"
+    aria-autocomplete="list"
+    data-1p-ignore="true"
+    data-lpignore="true"
+    data-form-type="other"
+>
+    <ng-template let-user #item>
+        {{ resultFormatter(user) }}
+    </ng-template>
+</p-autoComplete>
 
-    <div class="search-info" [class.active]="searching()">
-        <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
-    </div>
-    <div class="search-info" [class.active]="searchFailed()">
-        <span class="badge bg-danger" [jhiTranslate]="'artemisApp.dataTable.search.failed'"> Search failed </span>
-    </div>
-    <div class="search-info" [class.active]="searchNoResults()">
-        <span class="badge bg-warning" [jhiTranslate]="'artemisApp.dataTable.search.noResults'"> No results </span>
-    </div>
-    <div class="search-info" [class.active]="searchQueryTooShort()">
-        <span class="badge bg-info" [jhiTranslate]="'artemisApp.dataExport.searchQueryTooShort'" [translateValues]="{ length: MIN_SEARCH_QUERY_LENGTH }">
-            Please enter at least {{ MIN_SEARCH_QUERY_LENGTH }} characters
-        </span>
-    </div>
-</div>
+@if (searching()) {
+    <small class="mt-1 block text-muted-color"><fa-icon size="lg" [icon]="faCircleNotch" animation="spin" /></small>
+} @else if (searchQueryTooShort()) {
+    <small class="mt-1 block text-muted-color">{{ 'artemisApp.dataExport.searchQueryTooShort' | artemisTranslate: { length: MIN_SEARCH_QUERY_LENGTH } }}</small>
+} @else if (searchFailed()) {
+    <small class="mt-1 block text-state-danger" jhiTranslate="artemisApp.dataTable.search.failed"></small>
+} @else if (searchNoResults()) {
+    <small class="mt-1 block text-state-warning" jhiTranslate="artemisApp.dataTable.search.noResults"></small>
+}

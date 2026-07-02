@@ -1,74 +1,80 @@
-<div>
-    <h5 *adminTitleBarTitle id="cleanup-page-heading" class="mb-0" jhiTranslate="cleanupService.title"></h5>
-    <div class="table-responsive">
-        <table id="cleanupOperations" class="table table-striped" aria-describedby="cleanup-page-heading">
-            <thead>
-                <tr>
-                    <th scope="col" jhiTranslate="cleanupService.table.operation"></th>
-                    <th scope="col" jhiTranslate="cleanupService.table.deleteFrom"></th>
-                    <th scope="col" jhiTranslate="cleanupService.table.deleteTo"></th>
-                    <th scope="col" jhiTranslate="cleanupService.table.lastExecuted"></th>
-                    <th scope="col"></th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (operation of cleanupOperations(); track operation) {
-                    <tr>
-                        <td>
-                            <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>
-                            <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
-                        </td>
-                        <td>
-                            @if (operation.name !== 'deleteOrphans') {
-                                <div class="col-md-12">
-                                    <jhi-date-time-picker
-                                        id="deleteFromDate"
-                                        [labelName]="'cleanupService.table.deleteFrom' | artemisTranslate"
-                                        [hideLabelName]="true"
-                                        [(ngModel)]="operation.deleteFrom"
-                                        (valueChange)="validateDates(operation)"
-                                        [shouldDisplayTimeZoneWarning]="false"
-                                        [error]="!operation.datesValid()"
-                                    />
-                                </div>
-                            }
-                        </td>
-                        <td>
-                            @if (operation.name !== 'deleteOrphans') {
-                                <div class="col-md-12">
-                                    <jhi-date-time-picker
-                                        id="deleteToDate"
-                                        [labelName]="'cleanupService.table.deleteTo' | artemisTranslate"
-                                        [hideLabelName]="true"
-                                        [(ngModel)]="operation.deleteTo"
-                                        (valueChange)="validateDates(operation)"
-                                        [shouldDisplayTimeZoneWarning]="false"
-                                        [error]="!operation.datesValid()"
-                                    />
-                                </div>
-                                @if (!operation.datesValid()) {
-                                    <span class="invalid-feedback" jhiTranslate="cleanupService.error.datesInvalid"></span>
-                                }
-                            }
-                        </td>
-                        <td>
-                            @if (!operation.lastExecuted) {
-                                {{ 'cleanupService.notRunYet' | artemisTranslate }}
-                            } @else {
-                                {{ operation.lastExecuted | artemisDate }}
-                            }
-                        </td>
-                        <td>
-                            <button id="execute-operation" class="btn btn-md btn-danger" [disabled]="!operation.datesValid()" (click)="openCleanupOperationModal(operation)">
-                                {{ 'entity.action.delete' | artemisTranslate }}
-                            </button>
-                        </td>
-                    </tr>
+<h5 *adminTitleBarTitle id="cleanup-page-heading" class="mb-0" jhiTranslate="cleanupService.title"></h5>
+
+<p-table [value]="cleanupOperations()" [tableStyle]="{ 'min-width': '100%' }" aria-describedby="cleanup-page-heading" data-testid="cleanup-operations-table" id="cleanupOperations">
+    <ng-template #header>
+        <tr>
+            <th scope="col" jhiTranslate="cleanupService.table.operation"></th>
+            <th scope="col" jhiTranslate="cleanupService.table.deleteFrom"></th>
+            <th scope="col" jhiTranslate="cleanupService.table.deleteTo"></th>
+            <th scope="col" jhiTranslate="cleanupService.table.lastExecuted"></th>
+            <th scope="col"></th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-operation>
+        <tr [attr.data-testid]="'cleanup-row-' + operation.name">
+            <td>
+                <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>
+                <jhi-help-icon class="ps-1" text="{{ 'cleanupService.tooltip.' + operation.name }}" />
+            </td>
+            <td>
+                @if (operation.name !== 'deleteOrphans') {
+                    <p-datepicker
+                        [inputId]="'deleteFromDate-' + operation.name"
+                        [ngModel]="toDate(operation, 'from')"
+                        (ngModelChange)="onDeleteFromChange(operation, $event)"
+                        [firstDayOfWeek]="1"
+                        [invalid]="!operation.datesValid()"
+                        [showTime]="true"
+                        hourFormat="24"
+                        [appendTo]="'body'"
+                        [baseZIndex]="100000"
+                        data-testid="delete-from-picker"
+                    />
                 }
-            </tbody>
-        </table>
-    </div>
-</div>
+            </td>
+            <td>
+                @if (operation.name !== 'deleteOrphans') {
+                    <p-datepicker
+                        [inputId]="'deleteToDate-' + operation.name"
+                        [ngModel]="toDate(operation, 'to')"
+                        (ngModelChange)="onDeleteToChange(operation, $event)"
+                        [firstDayOfWeek]="1"
+                        [invalid]="!operation.datesValid()"
+                        [showTime]="true"
+                        hourFormat="24"
+                        [appendTo]="'body'"
+                        [baseZIndex]="100000"
+                        data-testid="delete-to-picker"
+                    />
+                    @if (!operation.datesValid()) {
+                        <div class="text-state-danger text-sm mt-1" jhiTranslate="cleanupService.error.datesInvalid"></div>
+                    }
+                }
+            </td>
+            <td>
+                @if (!operation.lastExecuted) {
+                    {{ 'cleanupService.notRunYet' | artemisTranslate }}
+                } @else {
+                    {{ operation.lastExecuted | artemisDate }}
+                }
+            </td>
+            <td>
+                <button
+                    pButton
+                    id="execute-operation"
+                    severity="danger"
+                    size="small"
+                    [disabled]="!operation.datesValid()"
+                    (click)="openCleanupOperationModal(operation)"
+                    data-testid="execute-operation"
+                >
+                    <fa-icon [icon]="faTrash" />
+                    <span jhiTranslate="entity.action.delete"></span>
+                </button>
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
 
 @if (selectedOperation()) {
     <jhi-cleanup-operation-modal [(visible)]="showCleanupModal" [operation]="selectedOperation()!" />

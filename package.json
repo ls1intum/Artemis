@@ -78,6 +78,7 @@
         "@angular/compiler-cli": "21.2.17",
         "@angular/language-service": "21.2.17",
         "@eslint/js": "10.0.1",
+        "@tailwindcss/postcss": "4.3.1",
         "@types/d3-shape": "3.1.8",
         "@types/lodash-es": "4.17.12",
         "@types/markdown-it": "14.1.2",
@@ -108,6 +109,8 @@
         "stylelint-config-html": "1.1.0",
         "stylelint-config-standard-scss": "17.0.0",
         "stylelint-scss": "7.2.0",
+        "tailwindcss": "4.3.1",
+        "tailwindcss-primeui": "0.6.1",
         "ts-morph": "28.0.0",
         "typescript": "5.9.3",
         "typescript-eslint": "8.61.1",
@@ -142,6 +145,7 @@
         "test:ci": "pnpm run prebuild && pnpm run vitest:ci && pnpm run vitest:monaco",
         "test": "pnpm run prebuild && pnpm exec vitest run",
         "test:one": "pnpm run prebuild && pnpm exec vitest run",
+        "test:rules": "vitest run --config rules/vitest.config.mjs",
         "setupCourse": "node supporting_scripts/course-scripts/setup-course/setup-course.mjs",
         "vitest": "vitest",
         "vitest:run": "vitest run",
@@ -158,6 +162,8 @@
         "webapp:prod": "pnpm run clean-www && pnpm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production",
         "sbom:generate-full": "cross-env FETCH_LICENSE=false pnpm dlx @cyclonedx/cdxgen@12.4.0 --type pnpm --output build/reports/client-sbom-full.json --spec-version 1.6 --no-babel --no-recurse --profile generic",
         "sbom:filter-shipped": "node supporting_scripts/sbom-filter-by-bundle.mjs build/reports/client-sbom-full.json build/reports/client-sbom.json build/resources/main/static",
-        "sbom:generate": "pnpm run sbom:generate-full && pnpm run sbom:filter-shipped"
+        "sbom:generate": "pnpm run sbom:generate-full && pnpm run sbom:filter-shipped",
+        "migrate:status": "node supporting_scripts/migration/migrate.mjs status",
+        "migrate:check": "node supporting_scripts/migration/migrate.mjs check"
     }
 }

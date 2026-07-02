@@ -3,7 +3,8 @@ import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/f
 import { faClock, faGlobe, faQuestionCircle, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
+import { ButtonModule } from 'primeng/button';
 import { DatePicker, DatePickerModule } from 'primeng/datepicker';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -25,7 +26,7 @@ export enum DateTimePickerType {
             useExisting: forwardRef(() => FormDateTimePickerComponent),
         },
     ],
-    imports: [FaStackComponent, NgbTooltip, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaStackComponent, TooltipModule, ButtonModule, FaIconComponent, FaStackItemSizeDirective, FormsModule, DatePickerModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FormDateTimePickerComponent implements ControlValueAccessor, AfterViewInit {
     protected readonly faGlobe = faGlobe;
@@ -35,6 +36,12 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
 
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
+    // Suppress the inline "missing/invalid" message. Filters (e.g. the audits from/to range) convey invalid
+    // input through the red border alone and must not grow taller when it appears; the invalid border still shows.
+    hideValidationMessage = input<boolean>(false);
+    // Id of the inner input, so a consumer can pair its own <label for> and keep ids unique when several
+    // pickers share a page (e.g. the audits from/to filter).
+    inputId = input<string>('date-input-field');
     labelTooltip = input<string>();
     value = model<dayjs.Dayjs | Date | null>();
     disabled = input<boolean>(false);
@@ -86,7 +93,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
      * template) so the two never disagree. The wrapper class is the load-bearing one: under zoneless
      * change detection the OnPush picker view can stay stale when validity flips as a result of the
      * picker's own `ngModelChange` (the message, rendered by this wrapper, updates but the picker's
-     * border does not — see PR #13009 review). Driving the border from a wrapper class lets plain CSS
+     * border does not). Driving the border from a wrapper class lets plain CSS
      * cascade onto the (existing) input element, so the border always matches the message regardless of
      * the inner picker's change-detection timing.
      */
@@ -138,8 +145,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
      *
      * The inner `[ngModel]="value()"` one-way binding does NOT reliably update the OnPush p-datepicker
      * when this wrapper lives inside an OnPush parent under zoneless change detection: the parent is not
-     * re-checked after `writeValue`, so an edit form opens with the picker blank (PR #13009 review — the
-     * tutorial free-period form). This only runs on the programmatic (form patch / reset) path; user
+     * re-checked after `writeValue`, so an edit form opens with the picker blank (e.g. the tutorial
+     * free-period form). This only runs on the programmatic (form patch / reset) path; user
      * typing flows through `updateField` and must NOT be reformatted here (it would erase keepInvalid text).
      */
     private reflectValueInPicker(next: Date | null) {
@@ -271,7 +278,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
 
     /**
      * p-datepicker accepts a valid *prefix* and silently ignores trailing characters, so
-     * "13.06.2026 18:30adasdasdsad" parses to 13.06.2026 18:30 and looks valid (PR #13009 review).
+     * "13.06.2026 18:30adasdasdsad" parses to 13.06.2026 18:30 and looks valid.
      * On blur, reject input whose full text does not match the field's display format so such entries
      * are flagged instead of accepted. Time-only pickers keep PrimeNG's lenient parsing (decided
      * separately in review), and empty input is handled as valid-but-missing elsewhere.
@@ -298,7 +305,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, AfterV
      * Confirm button for the time picker. A time-only picker shows the default time (startAt / current
      * time) in its spinner but does not write it to the model until the user nudges a spinner field, so
      * applying the shown time previously took two clicks (nudge + close). When the field is still empty,
-     * commit the displayed time here so a single click applies it; otherwise just close (PR #13009 review).
+     * commit the displayed time here so a single click applies it; otherwise just close.
      */
     applyAndClose(picker: DatePicker) {
         if (this.timeOnly() && this.value() == undefined) {

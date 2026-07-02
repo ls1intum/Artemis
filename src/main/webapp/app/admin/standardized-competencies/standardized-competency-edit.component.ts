@@ -1,17 +1,26 @@
-import { Component, effect, inject, input, model, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, output } from '@angular/core';
 import { faBan, faPencil, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, Source, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/atlas/shared/entities/standardized-competency.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { Observable } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { MessageModule } from 'primeng/message';
+
+/** Option shown in the source select, with a precomputed display label. */
+interface SourceOption {
+    id?: number;
+    label: string;
+}
 
 /**
  * Form structure for standardized competency editing.
@@ -31,9 +40,9 @@ interface StandardizedCompetencyForm {
 @Component({
     selector: 'jhi-standardized-competency-edit',
     templateUrl: './standardized-competency-edit.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
-        ButtonComponent,
         DeleteButtonDirective,
         FaIconComponent,
         FormsModule,
@@ -41,6 +50,11 @@ interface StandardizedCompetencyForm {
         MarkdownEditorMonacoComponent,
         TaxonomySelectComponent,
         HtmlForMarkdownPipe,
+        ArtemisTranslatePipe,
+        ButtonModule,
+        InputTextModule,
+        SelectModule,
+        MessageModule,
     ],
 })
 export class StandardizedCompetencyEditComponent {
@@ -51,6 +65,14 @@ export class StandardizedCompetencyEditComponent {
 
     /** Available sources for selection */
     readonly sources = input<Source[]>([]);
+
+    /** Sources mapped to select options with a display label (author + title), omitting the uri to keep it short */
+    protected readonly sourceOptions = computed<SourceOption[]>(() =>
+        this.sources().map((source) => ({
+            id: source.id,
+            label: `${source.author ? source.author + '. ' : ''}"${source.title}"`,
+        })),
+    );
 
     /** The competency being edited (required) */
     readonly competency = input.required<StandardizedCompetencyDTO>();
@@ -80,8 +102,6 @@ export class StandardizedCompetencyEditComponent {
     protected readonly faSave = faSave;
 
     /** Constants */
-    protected readonly ButtonSize = ButtonSize;
-    protected readonly ButtonType = ButtonType;
     protected readonly validators = StandardizedCompetencyValidators;
 
     constructor() {

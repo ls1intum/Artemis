@@ -8,7 +8,6 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Router } from '@angular/router';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { MockProvider } from 'ng-mocks';
 
@@ -35,7 +34,6 @@ describe('OrganizationManagementComponent', () => {
                 LocalStorageService,
                 SessionStorageService,
                 { provide: ActivatedRoute, useValue: { data: of({}) } },
-                { provide: Router, useValue: { navigate: vi.fn() } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
@@ -110,17 +108,5 @@ describe('OrganizationManagementComponent', () => {
         expect(organizationService.deleteOrganization).toHaveBeenCalledWith(5);
         expect(getOrganizationsSpy).toHaveBeenCalledTimes(2);
         expect(component.organizations()).toHaveLength(0);
-    });
-
-    it('should navigate to organization details on select', () => {
-        const organization = new Organization();
-        organization.id = 5;
-        organization.name = 'orgOne';
-
-        const router = TestBed.inject(Router);
-        const navigateSpy = vi.spyOn(router, 'navigate');
-
-        component.onOrganizationSelect(organization);
-        expect(navigateSpy).toHaveBeenCalledWith([5], { relativeTo: component['route'] });
     });
 });

@@ -1,14 +1,15 @@
 import { Component, input, output } from '@angular/core';
 import { StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-standardized-competency-detail',
     templateUrl: './standardized-competency-detail.component.html',
     styleUrls: ['./standardized-competency-detail.component.scss'],
-    imports: [HtmlForMarkdownPipe, TranslateDirective],
+    imports: [HtmlForMarkdownPipe, TranslateDirective, ArtemisTranslatePipe, ButtonModule],
 })
 export class StandardizedCompetencyDetailComponent {
     // values for the knowledge area select
@@ -17,10 +18,6 @@ export class StandardizedCompetencyDetailComponent {
     sourceString = input('');
 
     onClose = output<void>();
-
-    // other constants
-    protected readonly ButtonSize = ButtonSize;
-    protected readonly ButtonType = ButtonType;
 
     close() {
         this.onClose.emit();

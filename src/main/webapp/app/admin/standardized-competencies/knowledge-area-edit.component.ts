@@ -1,15 +1,18 @@
-import { Component, effect, inject, input, model, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, model, output } from '@angular/core';
 import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/atlas/shared/entities/standardized-competency.model';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { SelectModule } from 'primeng/select';
+import { MessageModule } from 'primeng/message';
 
 /**
  * Form structure for knowledge area editing.
@@ -28,7 +31,21 @@ interface KnowledgeAreaForm {
 @Component({
     selector: 'jhi-knowledge-area-edit',
     templateUrl: './knowledge-area-edit.component.html',
-    imports: [TranslateDirective, ButtonComponent, DeleteButtonDirective, FaIconComponent, FormsModule, ReactiveFormsModule, MarkdownEditorMonacoComponent, HtmlForMarkdownPipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        DeleteButtonDirective,
+        FaIconComponent,
+        FormsModule,
+        ReactiveFormsModule,
+        MarkdownEditorMonacoComponent,
+        HtmlForMarkdownPipe,
+        ArtemisTranslatePipe,
+        ButtonModule,
+        InputTextModule,
+        SelectModule,
+        MessageModule,
+    ],
 })
 export class KnowledgeAreaEditComponent {
     private readonly formBuilder = inject(FormBuilder);
@@ -71,8 +88,6 @@ export class KnowledgeAreaEditComponent {
     protected readonly faPlus = faPlus;
 
     /** Constants */
-    protected readonly ButtonSize = ButtonSize;
-    protected readonly ButtonType = ButtonType;
     protected readonly validators = KnowledgeAreaValidators;
 
     constructor() {

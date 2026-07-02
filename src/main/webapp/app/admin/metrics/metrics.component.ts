@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
@@ -17,6 +17,7 @@ import { MetricsCacheComponent } from './blocks/metrics-cache/metrics-cache.comp
 import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-datasource.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
+import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
 
 interface NodeOption {
@@ -27,7 +28,7 @@ interface NodeOption {
 @Component({
     selector: 'jhi-metrics',
     templateUrl: './metrics.component.html',
-    styleUrl: './metrics.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
         FaIconComponent,
@@ -41,6 +42,7 @@ interface NodeOption {
         MetricsDatasourceComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        ButtonModule,
         SelectModule,
         FormsModule,
     ],

@@ -66,7 +66,7 @@
                     @if (additionalChecks()![checkKey]) {
                         <div class="check-item">
                             <p-checkbox [inputId]="'additional-check-' + i" [(ngModel)]="additionalChecksValues[checkKey]" [name]="'checkbox-' + i" [binary]="true" />
-                            <label [for]="'additional-check-' + i" class="check-label text-danger">
+                            <label [for]="'additional-check-' + i" class="check-label text-state-danger">
                                 {{ additionalChecks()![checkKey] | artemisTranslate }}
                             </label>
                         </div>

@@ -1,19 +1,6 @@
-.light-background {
-    background-color: var(--overview-light-background-color);
-}
-
-.split-container {
-    display: flex;
-    width: 100%;
-    align-items: flex-start;
-}
-
-.tree-panel {
-    flex: 1 1 auto;
-    min-width: 200px;
-    overflow: auto;
-}
-
+/*
+ * Single-edge resizable detail/inspector panel (driven by the shared jhiResizable directive).
+ */
 .sc-detail-panel {
     display: flex;
     flex-shrink: 0;

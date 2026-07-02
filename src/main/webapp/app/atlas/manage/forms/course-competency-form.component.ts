@@ -1,4 +1,4 @@
-import { Component, InputSignal, inject, input, output } from '@angular/core';
+import { Component, InputSignal, effect, inject, input, output } from '@angular/core';
 import { AsyncValidatorFn, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
@@ -63,6 +63,24 @@ export abstract class CourseCompetencyFormComponent {
     formSubmitted = output<CourseCompetencyFormData>();
 
     form: FormGroup;
+
+    private lastPopulatedId: number | undefined;
+
+    constructor() {
+        effect(() => {
+            if (!this.form) {
+                this.initializeForm();
+            }
+            this.updateTitleUniqueValidator();
+            // Populate the form only when a different entity loads. This effect also re-runs when courseId or the
+            // title validity change; re-applying the loaded values then would discard the user's in-progress edits.
+            const formData = this.formData();
+            if (this.isEditMode() && formData && formData.id !== this.lastPopulatedId) {
+                this.lastPopulatedId = formData.id;
+                this.form.patchValue(formData);
+            }
+        });
+    }
 
     // Icons
     protected readonly faTimes = faTimes;

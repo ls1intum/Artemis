@@ -13,7 +13,7 @@ import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Title } from '@angular/platform-browser';
-import { AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
+import { AutoCompleteCompleteEvent, AutoCompleteSelectEvent, AutoCompleteUnselectEvent } from 'primeng/autocomplete';
 import * as Sentry from '@sentry/angular';
 
 import { UserManagementUpdateComponent } from 'app/admin/user-management/update/user-management-update.component';
@@ -335,48 +335,16 @@ describe('UserManagementUpdateComponent', () => {
         expect(component.user().organizations).toEqual([organization1]);
     });
 
-    /** Builds an AutoComplete select event carrying the picked group label. */
-    const groupSelectEvent = (value: string) => ({ value }) as AutoCompleteSelectEvent;
-
-    /** Builds a keydown event with the typed group value, as the input element would emit on Enter. */
-    const groupEnterEvent = (value: string) => {
-        const input = { value } as HTMLInputElement;
-        return { target: input, preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as KeyboardEvent;
-    };
-
-    it('should add selected group from autocomplete panel to user', () => {
+    it('should add selected group from autocomplete to user', () => {
         const newGroup = 'nicegroup';
         component.user.set({ groups: [] } as unknown as User);
         component.allGroups = [newGroup];
 
-        component.onGroupSelect(groupSelectEvent(newGroup));
+        const event = { value: newGroup } as unknown as AutoCompleteSelectEvent;
+
+        component.onGroupSelect(event);
 
         expect(component.user().groups).toEqual([newGroup]);
-    });
-
-    it('should add group to user on chip input', () => {
-        const newGroup = 'nicegroup';
-        component.allGroups = [newGroup];
-        component.user.set({ groups: [] } as unknown as User);
-
-        const event = groupEnterEvent(newGroup);
-
-        component.onGroupAdd(component.user(), event);
-
-        expect(component.user().groups).toEqual([newGroup]);
-        expect((event.target as HTMLInputElement).value).toBe('');
-    });
-
-    it('should cancel the Enter event so adding a group does not submit the surrounding form', () => {
-        const newGroup = 'nicegroup';
-        component.allGroups = [newGroup];
-        component.user.set({ groups: [] } as unknown as User);
-
-        const event = groupEnterEvent(newGroup);
-        component.onGroupAdd(component.user(), event);
-
-        expect(event.preventDefault).toHaveBeenCalledOnce();
-        expect(event.stopPropagation).toHaveBeenCalledOnce();
     });
 
     it('should not add group that is not in allowed groups list', () => {
@@ -385,68 +353,46 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [allowedGroup];
         component.user.set({ groups: [] } as unknown as User);
 
-        const event = groupEnterEvent(notAllowedGroup);
+        const event = { value: notAllowedGroup } as unknown as AutoCompleteSelectEvent;
+
+        component.onGroupSelect(event);
+
+        expect(component.user().groups).toEqual([]);
+    });
+
+    it('should add the typed group on Enter and cancel the key so it does not submit the form', () => {
+        const newGroup = 'nicegroup';
+        component.user.set({ groups: [] } as unknown as User);
+        component.allGroups = [newGroup];
+        const input = { value: newGroup } as HTMLInputElement;
+        const event = { target: input, preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as Event;
+
+        component.onGroupAdd(component.user(), event);
+
+        expect(component.user().groups).toEqual([newGroup]);
+        expect(event.preventDefault).toHaveBeenCalledOnce();
+        expect(event.stopPropagation).toHaveBeenCalledOnce();
+        expect(input.value).toBe('');
+    });
+
+    it('should not add a typed group on Enter when it is not in the allowed groups list', () => {
+        component.allGroups = ['nicegroup'];
+        component.user.set({ groups: [] } as unknown as User);
+        const event = { target: { value: 'badgroup' }, preventDefault: vi.fn(), stopPropagation: vi.fn() } as unknown as Event;
 
         component.onGroupAdd(component.user(), event);
 
         expect(component.user().groups).toEqual([]);
-        expect((event.target as HTMLInputElement).value).toBe('');
     });
 
-    it('should remove group from user', () => {
+    it('should remove group from user on unselect', () => {
         const group1 = 'nicegroup';
         const group2 = 'badgroup';
         component.user.set({ groups: [group1, group2] } as unknown as User);
 
-        component.onGroupRemove(component.user(), group1);
+        component.onGroupUnselect({ value: group1 } as unknown as AutoCompleteUnselectEvent);
 
         expect(component.user().groups).toEqual([group2]);
-    });
-
-    it('should remove the unselected group from the user via onGroupUnselect', () => {
-        const group1 = 'nicegroup';
-        const group2 = 'badgroup';
-        component.user.set({ groups: [group1, group2] } as unknown as User);
-
-        component.onGroupUnselect({ value: group1 } as AutoCompleteUnselectEvent);
-
-        expect(component.user().groups).not.toContain(group1);
-        expect(component.user().groups).toContain(group2);
-    });
-
-    // Zoneless-correctness guard: adding a group must rebuild BOTH the user object and the groups array with NEW
-    // references so the one-way [ngModel] binding sees a changed reference and PrimeNG re-renders the chip list.
-    it('should rebuild the user and groups references (not mutate in place) when adding a group', () => {
-        const newGroup = 'nicegroup';
-        component.allGroups = [newGroup];
-        component.user.set({ groups: [] } as unknown as User);
-
-        const prevUser = component.user();
-        const prevGroups = prevUser.groups;
-
-        component.onGroupSelect(groupSelectEvent(newGroup));
-
-        expect(component.user()).not.toBe(prevUser);
-        expect(component.user().groups).not.toBe(prevGroups);
-        expect(component.user().groups).toContain(newGroup);
-    });
-
-    // Zoneless-correctness guard: removing a group must also rebuild BOTH the user object and the groups array.
-    it('should rebuild the user and groups references (not mutate in place) when removing a group', () => {
-        const group1 = 'nicegroup';
-        const group2 = 'badgroup';
-        component.allGroups = [group1, group2];
-        component.user.set({ groups: [group1, group2] } as unknown as User);
-
-        const prevUser = component.user();
-        const prevGroups = prevUser.groups;
-
-        component.onGroupRemove(component.user(), group1);
-
-        expect(component.user()).not.toBe(prevUser);
-        expect(component.user().groups).not.toBe(prevGroups);
-        expect(component.user().groups).not.toContain(group1);
-        expect(component.user().groups).toContain(group2);
     });
 
     describe('previousState', () => {
@@ -483,8 +429,7 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [newGroup];
         component.user.set({} as User); // No groups property
 
-        const event = groupEnterEvent(newGroup);
-        component.onGroupAdd(component.user(), event);
+        component.onGroupSelect({ value: newGroup } as unknown as AutoCompleteSelectEvent);
 
         expect(component.user().groups).toEqual([newGroup]);
     });
@@ -494,18 +439,16 @@ describe('UserManagementUpdateComponent', () => {
         component.allGroups = [existingGroup];
         component.user.set({ groups: [existingGroup] } as unknown as User);
 
-        const event = groupEnterEvent(existingGroup);
-        component.onGroupAdd(component.user(), event);
+        component.onGroupSelect({ value: existingGroup } as unknown as AutoCompleteSelectEvent);
 
         expect(component.user().groups).toEqual([existingGroup]);
     });
 
-    it('should handle empty group value on chip input', () => {
+    it('should handle empty group value on select', () => {
         component.allGroups = ['nicegroup'];
         component.user.set({ groups: [] } as unknown as User);
 
-        const event = groupEnterEvent('');
-        component.onGroupAdd(component.user(), event);
+        component.onGroupSelect({ value: '' } as unknown as AutoCompleteSelectEvent);
 
         expect(component.user().groups).toEqual([]);
     });
@@ -806,44 +749,92 @@ describe('UserManagementUpdateComponent', () => {
     });
 
     describe('group suggestions', () => {
-        it('should filter groups based on input value', async () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
+        it('should filter group suggestions based on query value', () => {
+            component.allGroups = ['AdminGroup', 'StudentGroup', 'TutorGroup'];
+            component.user.set({ groups: [] } as unknown as User);
 
-            component.ngOnInit();
-            await fixture.whenStable();
-
-            component.onGroupComplete({ originalEvent: new Event('input'), query: 'admin' });
+            component.filterGroups({ query: 'admin' } as unknown as AutoCompleteCompleteEvent);
 
             expect(component.groupSuggestions()).toEqual(['AdminGroup']);
         });
 
-        it('should return all groups when query is empty', async () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['Group1', 'Group2'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
-
-            component.ngOnInit();
-            await fixture.whenStable();
-
-            component.onGroupComplete({ originalEvent: new Event('input'), query: '' });
-
-            expect(component.groupSuggestions()).toEqual(['Group1', 'Group2']);
-        });
-
-        it('should exclude groups already assigned to the user', async () => {
-            const courseAdminService = TestBed.inject(CourseAdminService);
-            const mockGroups = ['Group1', 'Group2'];
-            vi.spyOn(courseAdminService, 'getAllGroupsForAllCourses').mockReturnValue(of(new HttpResponse({ body: mockGroups })));
-
-            component.ngOnInit();
-            await fixture.whenStable();
+        it('should suggest all unassigned groups when query is empty', () => {
+            component.allGroups = ['Group1', 'Group2'];
             component.user.set({ groups: ['Group1'] } as unknown as User);
 
-            component.onGroupComplete({ originalEvent: new Event('input'), query: '' });
+            component.filterGroups({ query: '' } as unknown as AutoCompleteCompleteEvent);
 
             expect(component.groupSuggestions()).toEqual(['Group2']);
         });
+
+        it('does not throw when the group autocomplete is used before groups load', () => {
+            // Do NOT reassign component.allGroups here: the point of this test is to exercise the as-constructed
+            // state, where allGroups is populated solely by the field initializer. Removing the initializer must
+            // make filterGroups() -> filter() deref undefined and fail this test.
+            expect(component.allGroups).toBeDefined();
+
+            expect(() => component.filterGroups({ query: 'x' } as unknown as AutoCompleteCompleteEvent)).not.toThrow();
+            expect(component.groupSuggestions()).toEqual([]);
+        });
+    });
+});
+
+/**
+ * Renders the real template (no overrideTemplate) to guard against the global-role checkbox firing
+ * toggleAuthority twice per click: the role wrapper's bubbled click must not re-fire the inner
+ * p-checkbox's onChange and cancel the toggle. A single rendered control must toggle exactly once.
+ */
+describe('UserManagementUpdateComponent global-role checkbox rendering', () => {
+    setupTestBed({ zoneless: true });
+
+    let component: UserManagementUpdateComponent;
+    let fixture: ComponentFixture<UserManagementUpdateComponent>;
+
+    const parentRoute = { data: of({ user: undefined }) } as unknown as ActivatedRoute;
+    const mockRoute = { parent: parentRoute } as unknown as ActivatedRoute;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [UserManagementUpdateComponent],
+            providers: [
+                { provide: ActivatedRoute, useValue: mockRoute },
+                LocalStorageService,
+                SessionStorageService,
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(UserManagementUpdateComponent);
+        component = fixture.componentInstance;
+        const adminUserService = TestBed.inject(AdminUserService);
+        // ROLE_INSTRUCTOR is not filtered out for non-super-admins, so the role item renders for any current user.
+        vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.INSTRUCTOR]));
+
+        component.ngOnInit();
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should toggle the authority exactly once per checkbox click', () => {
+        const toggleSpy = vi.spyOn(component, 'toggleAuthority');
+
+        const roleItem = fixture.nativeElement.querySelector('[data-testid="global-role-item"]') as HTMLLabelElement;
+        expect(roleItem).not.toBeNull();
+        const checkboxInput = roleItem.querySelector('input[type="checkbox"]') as HTMLInputElement;
+        expect(checkboxInput).not.toBeNull();
+
+        checkboxInput.click();
+        fixture.detectChanges();
+
+        expect(toggleSpy).toHaveBeenCalledExactlyOnceWith(Authority.INSTRUCTOR);
+        expect(component.hasAuthority(Authority.INSTRUCTOR)).toBe(true);
     });
 });

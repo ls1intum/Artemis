@@ -1,15 +1,16 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupCount, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 import { Observable, Subject } from 'rxjs';
-import { faCheckCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
 
 /**
  * Modal component for executing and monitoring cleanup operations.
@@ -18,7 +19,8 @@ import { DialogModule } from 'primeng/dialog';
 @Component({
     selector: 'jhi-cleanup-operation-modal',
     templateUrl: './cleanup-operation-modal.component.html',
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, FontAwesomeModule, DialogModule, ButtonModule],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CleanupOperationModalComponent {
     /** Whether the dialog is visible */
@@ -39,6 +41,7 @@ export class CleanupOperationModalComponent {
     private readonly dataCleanupService = inject(DataCleanupService);
 
     protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
     protected readonly faCheckCircle = faCheckCircle;
 
     /** Keys from the CleanupCount object for iteration */
@@ -71,7 +74,7 @@ export class CleanupOperationModalComponent {
                 this.operationExecuted.set(true);
                 this.updateCounts();
             },
-            error: (error: any) => {
+            error: (error: unknown) => {
                 this.dialogErrorSource.next(error instanceof HttpErrorResponse ? error.message : 'An unexpected error occurred.');
             },
         };

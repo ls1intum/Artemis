@@ -1,11 +1,13 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { Services } from 'app/admin/metrics/metrics.model';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
+import { TableModule } from 'primeng/table';
 
 @Component({
     selector: 'jhi-metrics-endpoints-requests',
     templateUrl: './metrics-endpoints-requests.component.html',
-    imports: [DecimalPipe, KeyValuePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TableModule, DecimalPipe, KeyValuePipe],
 })
 export class MetricsEndpointsRequestsComponent {
     /**

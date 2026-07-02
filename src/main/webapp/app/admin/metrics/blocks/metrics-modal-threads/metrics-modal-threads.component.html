@@ -2,72 +2,47 @@
     <ng-template #header>
         <h4 jhiTranslate="metrics.jvm.threads.dump.title"></h4>
     </ng-template>
-    <div class="mb-3">
-        <span class="badge bg-primary hand" (click)="selectedThreadState = undefined">
-            @if (selectedThreadState === undefined) {
-                <fa-icon [icon]="faCheck" />
-            }
-            All&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpAll() }}</span>
-        </span>
-        <span class="badge bg-success hand" (click)="selectedThreadState = ThreadState.Runnable">
-            @if (selectedThreadState === ThreadState.Runnable) {
-                <fa-icon [icon]="faCheck" />
-            }
-            Runnable&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpRunnable() }}</span>
-        </span>
-        <span class="badge bg-info hand" (click)="selectedThreadState = ThreadState.Waiting">
-            @if (selectedThreadState === ThreadState.Waiting) {
-                <fa-icon [icon]="faCheck" />
-            }
-            Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpWaiting() }}</span>
-        </span>
-        <span class="badge bg-warning hand" (click)="selectedThreadState = ThreadState.TimedWaiting">
-            @if (selectedThreadState === ThreadState.TimedWaiting) {
-                <fa-icon [icon]="faCheck" />
-            }
-            Timed Waiting&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpTimedWaiting() }}</span>
-        </span>
-        <span class="badge bg-danger hand" (click)="selectedThreadState = ThreadState.Blocked">
-            @if (selectedThreadState === ThreadState.Blocked) {
-                <fa-icon [icon]="faCheck" />
-            }
-            Blocked&nbsp;<span class="badge badge-pill badge-default">{{ threadDumpBlocked() }}</span>
-        </span>
-    </div>
-    <div class="mt-2">&nbsp;</div>
-    {{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}
-    <input type="text" [(ngModel)]="threadFilter" class="form-control" />
+    <p-selectButton
+        class="block mb-3"
+        [options]="filterOptions"
+        [(ngModel)]="selectedThreadState"
+        optionValue="value"
+        size="small"
+        [allowEmpty]="false"
+        aria-label="Filter threads by state"
+    >
+        <ng-template let-option #item>
+            <span class="flex items-center gap-2" [attr.data-testid]="option.testId">
+                <p-tag [severity]="option.severity" [value]="option.label" />
+                <span>{{ option.count() }}</span>
+            </span>
+        </ng-template>
+    </p-selectButton>
+    <div class="mt-2 mb-1 text-muted-color">{{ 'metrics.filter' | artemisTranslate }}: {{ filteredThreads().length }} {{ 'metrics.matches' | artemisTranslate }}</div>
+    <input type="text" [(ngModel)]="threadFilter" pInputText class="w-full mb-3" />
     @for (thread of filteredThreads(); track thread) {
-        <div class="pad">
-            <h6>
-                <span class="badge" [ngClass]="getBgClass(thread.threadState)">{{ thread.threadState }}</span>
-                &nbsp;{{ thread.threadName }} (ID {{ thread.threadId }})
-                <a (click)="thread.showThreadDump = !thread.showThreadDump" href="javascript:void(0);">
+        <div class="py-2 border-b border-surface-200 dark:border-surface-700">
+            <h6 class="flex items-center gap-2 flex-wrap">
+                <p-tag [severity]="getBadgeSeverity(thread.threadState)" [value]="thread.threadState" data-testid="thread-state-tag" />
+                {{ thread.threadName }} (ID {{ thread.threadId }})
+                <a (click)="thread.showThreadDump = !thread.showThreadDump" href="javascript:void(0);" class="text-primary">
                     <span [hidden]="thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.show"></span>
                     <span [hidden]="!thread.showThreadDump" jhiTranslate="metrics.jvm.threads.dump.hide"></span>
                 </a>
             </h6>
-            <div class="card" [hidden]="!thread.showThreadDump">
-                <div class="card-body">
-                    @for (st of thread.stackTrace; track st) {
-                        <div class="break">
-                            <samp
-                                >{{ st.className }}.{{ st.methodName }}(<code>{{ st.fileName }}:{{ st.lineNumber }}</code
-                                >)</samp
-                            >
-                            <span class="mt-1"></span>
-                        </div>
-                    }
-                </div>
+            <div class="rounded-lg border border-surface-200 dark:border-surface-700 p-3 font-mono text-sm" [hidden]="!thread.showThreadDump">
+                @for (st of thread.stackTrace; track st) {
+                    <div class="mb-1">
+                        <samp
+                            >{{ st.className }}.{{ st.methodName }}(<code>{{ st.fileName }}:{{ st.lineNumber }}</code
+                            >)</samp
+                        >
+                    </div>
+                }
             </div>
-            <table class="table table-sm table-responsive">
-                <caption>
-                    Threads dump:
-                    {{
-                        thread.threadName
-                    }}
-                </caption>
-                <thead>
+            <p-table [value]="[thread]" [tableStyle]="{ 'min-width': '30rem' }">
+                <ng-template #caption>Threads dump: {{ thread.threadName }}</ng-template>
+                <ng-template #header>
                     <tr>
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.blockedtime"></th>
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.blockedcount"></th>
@@ -75,22 +50,24 @@
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.waitedcount"></th>
                         <th scope="col" jhiTranslate="metrics.jvm.threads.dump.lockname"></th>
                     </tr>
-                </thead>
-                <tbody>
+                </ng-template>
+                <ng-template #body let-t>
                     <tr>
-                        <td>{{ thread.blockedTime }}</td>
-                        <td>{{ thread.blockedCount }}</td>
-                        <td>{{ thread.waitedTime }}</td>
-                        <td>{{ thread.waitedCount }}</td>
-                        <td class="thread-dump-modal-lock" title="{{ thread.lockName }}">
-                            <code>{{ thread.lockName }}</code>
+                        <td>{{ t.blockedTime }}</td>
+                        <td>{{ t.blockedCount }}</td>
+                        <td>{{ t.waitedTime }}</td>
+                        <td>{{ t.waitedCount }}</td>
+                        <td class="max-w-xs truncate" [title]="t.lockName">
+                            <code>{{ t.lockName }}</code>
                         </td>
                     </tr>
-                </tbody>
-            </table>
+                </ng-template>
+            </p-table>
         </div>
     }
     <ng-template #footer>
-        <button type="button" class="btn btn-secondary float-left" (click)="dismiss()">Done</button>
+        <p-button severity="secondary" size="small" (onClick)="dismiss()" data-testid="dismiss-button">
+            <span jhiTranslate="entity.action.done"></span>
+        </p-button>
     </ng-template>
 </p-dialog>

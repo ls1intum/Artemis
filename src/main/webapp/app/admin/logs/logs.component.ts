@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { Level, Log, LoggersResponse } from 'app/admin/logs/log.model';
 import { LogsService } from 'app/admin/logs/logs.service';
@@ -7,8 +7,12 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass, SlicePipe } from '@angular/common';
+import { SlicePipe } from '@angular/common';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { ButtonModule } from 'primeng/button';
+import { ButtonGroupModule } from 'primeng/buttongroup';
+import { TableModule } from 'primeng/table';
+import { InputTextModule } from 'primeng/inputtext';
 
 /**
  * Component for managing application log levels.
@@ -17,17 +21,45 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 @Component({
     selector: 'jhi-logs',
     templateUrl: './logs.component.html',
-    styleUrls: ['./logs.component.scss'],
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgClass, SlicePipe, AdminTitleBarTitleDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        SlicePipe,
+        AdminTitleBarTitleDirective,
+        ButtonModule,
+        ButtonGroupModule,
+        TableModule,
+        InputTextModule,
+    ],
 })
-export class LogsComponent implements OnInit {
+export class LogsComponent implements OnInit, OnDestroy {
     private readonly logsService = inject(LogsService);
+
+    /** Debounce delay (ms) before the filter is applied to the (potentially large) logger list */
+    private static readonly FILTER_DEBOUNCE_MS = 200;
+
+    /**
+     * Fixed virtual-scroll row height (px). MUST match the rendered body-row height, or the virtual scroller
+     * miscomputes the spacer and the list jumps / last rows become unreachable. ~60px for the current theme
+     * (small level button group + cell padding); keep in sync if the row markup changes.
+     */
+    protected readonly logsTableRowHeight = 60;
 
     /** All available loggers */
     readonly loggers = signal<Log[]>([]);
 
-    /** Filter string for logger names */
+    /** Immediate value bound to the filter input (keeps typing responsive) */
+    readonly filterInput = signal('');
+
+    /** Debounced filter string actually used for filtering/sorting the logger list */
     readonly filter = signal('');
+
+    /** Pending debounce timer handle for the filter input */
+    private filterDebounceHandle?: ReturnType<typeof setTimeout>;
 
     /** Property to sort by */
     readonly orderProp = signal<keyof Log>('name');
@@ -76,11 +108,26 @@ export class LogsComponent implements OnInit {
     }
 
     /**
+     * Cleans up any pending debounce timer.
+     */
+    ngOnDestroy(): void {
+        if (this.filterDebounceHandle !== undefined) {
+            clearTimeout(this.filterDebounceHandle);
+        }
+    }
+
+    /**
      * Updates filter value for logger filtering.
+     * The bound input updates immediately for responsiveness, while the actual filter applied to the
+     * (potentially large) logger list is debounced so the filter+sort computation does not re-run on every keystroke.
      * @param value - The filter string
      */
     updateFilter(value: string): void {
-        this.filter.set(value);
+        this.filterInput.set(value);
+        if (this.filterDebounceHandle !== undefined) {
+            clearTimeout(this.filterDebounceHandle);
+        }
+        this.filterDebounceHandle = setTimeout(() => this.filter.set(value), LogsComponent.FILTER_DEBOUNCE_MS);
     }
 
     /**

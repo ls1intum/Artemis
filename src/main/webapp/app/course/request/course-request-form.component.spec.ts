@@ -5,6 +5,12 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { CheckboxModule } from 'primeng/checkbox';
+
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -36,7 +42,17 @@ describe('CourseRequestFormComponent', () => {
         })
             .overrideComponent(CourseRequestFormComponent, {
                 set: {
-                    imports: [ReactiveFormsModule, MockComponent(FormDateTimePickerComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+                    imports: [
+                        ReactiveFormsModule,
+                        ButtonModule,
+                        InputTextModule,
+                        TextareaModule,
+                        SelectModule,
+                        CheckboxModule,
+                        MockComponent(FormDateTimePickerComponent),
+                        MockDirective(TranslateDirective),
+                        MockPipe(ArtemisTranslatePipe),
+                    ],
                 },
             })
             .compileComponents();

@@ -398,4 +398,59 @@ export default tseslint.config(
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
         },
     },
+    {
+        // Forbid raw Tailwind color palette classes (e.g. text-green-500) and hand-written PrimeNG component root
+        // classes (e.g. class="p-button") in ALL client templates: Tailwind + PrimeNG are loaded app-wide, so both
+        // are wrong everywhere — use semantic brand tokens and real PrimeNG components instead. The stylelint
+        // hex/--bs- guard (.stylelintrc.json) is scoped per migrated module. See client-development.mdx (### Styling).
+        files: ['src/main/webapp/app/**/*.html'],
+        languageOptions: {
+            parser: angularTemplateParser,
+        },
+        plugins: {
+            localRules: localRulesPlugin,
+        },
+        rules: {
+            'localRules/no-raw-tailwind-color-palette': 'error',
+            'localRules/no-primeng-component-classes': 'error',
+        },
+    },
+    {
+        // Regression lock: these modules are fully migrated to Tailwind + PrimeNG, so Bootstrap CSS classes are
+        // forbidden in their templates. Add each module here once it is fully Bootstrap-free. See client-development.mdx
+        // (### Styling).
+        files: [
+            'src/main/webapp/app/admin/**/*.html',
+            'src/main/webapp/app/course/request/**/*.html',
+            'src/main/webapp/app/exercise/result/**/*.html',
+            'src/main/webapp/app/iris/manage/settings/**/*.html',
+            'src/main/webapp/app/shared-ui/date-time-picker/**/*.html',
+            'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
+            'src/main/webapp/app/localci/build-queue/**/*.html',
+            'src/main/webapp/app/shared-ui/user-import/**/*.html',
+            'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
+            // Admin-reachable global shell + delete-dialog chain (rendered on every admin page / during admin deletes).
+            'src/main/webapp/app/shared-ui/confirm-entity-name/**/*.html',
+            'src/main/webapp/app/shared-ui/delete-dialog/**/*.html',
+            'src/main/webapp/app/core/alert/**/*.html',
+            'src/main/webapp/app/core/layouts/footer/**/*.html',
+            // Only the modal shell is migrated; its search subcomponents go with the navbar/search follow-up.
+            'src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.html',
+            'src/main/webapp/app/course/overview/setup-passkey-modal/**/*.html',
+            'src/main/webapp/app/notification/course-notification/course-notification-popup-overlay/**/*.html',
+            'src/main/webapp/app/localci/build-agent-summary/**/*.html',
+            'src/main/webapp/app/localci/build-agent-details/**/*.html',
+            'src/main/webapp/app/localci/build-job-statistics/**/*.html',
+            'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
+        ],
+        languageOptions: {
+            parser: angularTemplateParser,
+        },
+        plugins: {
+            localRules: localRulesPlugin,
+        },
+        rules: {
+            'localRules/no-bootstrap-classes': 'error',
+        },
+    },
 );

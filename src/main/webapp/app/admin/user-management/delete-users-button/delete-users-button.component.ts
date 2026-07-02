@@ -1,8 +1,11 @@
-import { Component, EventEmitter, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, output, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { faEraser } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonModule } from 'primeng/button';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -17,7 +20,8 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-delete-users-button',
     templateUrl: './delete-users-button.component.html',
-    imports: [ButtonComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [ButtonModule, FaIconComponent, TranslateDirective],
 })
 export class DeleteUsersButtonComponent {
     private readonly adminUserService = inject(AdminUserService);
@@ -36,7 +40,6 @@ export class DeleteUsersButtonComponent {
 
     /** Icons */
     protected readonly faEraser = faEraser;
-    protected readonly ButtonType = ButtonType;
 
     /**
      * Load the list of users to user confirmation and delete.
@@ -62,7 +65,7 @@ export class DeleteUsersButtonComponent {
      * Opens delete dialog
      */
     openDeleteDialog() {
-        const conformer = new EventEmitter<any>();
+        const conformer = new EventEmitter<{ [key: string]: boolean }>();
         conformer.subscribe(() => this.onConfirm());
         const deleteDialogData: DeleteDialogData = {
             requireConfirmationOnlyForAdditionalChecks: false,

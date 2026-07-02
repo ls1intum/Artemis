@@ -9,8 +9,8 @@ $gray-400: #ced4da;
 $gray-500: #adb5bd;
 $gray-600: #888;
 $gray-700: #444;
-$gray-800: #303030;
-$gray-900: #222;
+$gray-800: #22272e; /* cool-slate (h213 s12). Unifies the dark backdrop + $gray-800-derived surfaces with the navbar/module temperature */
+$gray-900: #1f242b; /* cool-slate (h213). Keeps gray-900-derived dark surfaces (text-exercise editor, Monaco suggest widget, link-item) on the slate family */
 $black: #000;
 
 $blue: #3e8acc;
@@ -115,14 +115,19 @@ $table-striped-color: $body-color;
 $table-color: $body-color;
 
 // Global colors
-$artemis-dark: #353d47; // (not bootstrap)
+$artemis-dark: #353d47;
 $link-color: #3e8acc;
 
 // Border
 $border-color: lighten($body-bg, 10);
 
-// Base for dark spaces
-$neutral-dark: rgb(24, 26, 24); // (not bootstrap)
+/*
+ * Base for dark spaces — cool-slate (h214 s14 l10).
+ * This is the de-facto app-wide dark surface token (--module-bg, --card-bg, panels). Keeping it on the
+ * same hue as the navbar ($artemis-dark #353d47, h213) and varying only lightness via the lighten()
+ * steps below makes every dark surface one cohesive cool-slate family.
+ */
+$neutral-dark: #16191d;
 
 $neutral-dark-l-5: lighten($neutral-dark, 5%);
 $neutral-dark-l-10: lighten($neutral-dark, 10%);
@@ -680,8 +685,8 @@ $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-700;
 
 // Tutorial Groups
-$registration-suggestion-panel-bg: #18181b;
-$registration-suggestion-panel-selection-bg: #27272a;
+$registration-suggestion-panel-bg: $neutral-dark; /* track the slate surface family */
+$registration-suggestion-panel-selection-bg: $neutral-dark-l-10;
 
 // LLM Selection Popup
 $ai-modal-card-bg: $neutral-dark-l-10;

@@ -71,14 +71,14 @@ describe('MetricsModalThreadsComponent', () => {
         });
     });
 
-    describe('background class', () => {
-        it('should compute correct bg-* class based on thread state', () => {
-            expect(comp.getBgClass(ThreadState.Runnable)).toBe('bg-success');
-            expect(comp.getBgClass(ThreadState.Waiting)).toBe('bg-info');
-            expect(comp.getBgClass(ThreadState.TimedWaiting)).toBe('bg-warning');
-            expect(comp.getBgClass(ThreadState.Blocked)).toBe('bg-danger');
-            expect(comp.getBgClass(ThreadState.New)).toBe('');
-            expect(comp.getBgClass(ThreadState.Terminated)).toBe('');
+    describe('badge severity', () => {
+        it('should compute correct PrimeNG severity based on thread state', () => {
+            expect(comp.getBadgeSeverity(ThreadState.Runnable)).toBe('success');
+            expect(comp.getBadgeSeverity(ThreadState.Waiting)).toBe('info');
+            expect(comp.getBadgeSeverity(ThreadState.TimedWaiting)).toBe('warn');
+            expect(comp.getBadgeSeverity(ThreadState.Blocked)).toBe('danger');
+            expect(comp.getBadgeSeverity(ThreadState.New)).toBe('secondary');
+            expect(comp.getBadgeSeverity(ThreadState.Terminated)).toBe('secondary');
         });
     });
 
@@ -86,7 +86,7 @@ describe('MetricsModalThreadsComponent', () => {
         it('should return all threads when no filter is applied', () => {
             fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
             fixture.detectChanges();
-            comp.selectedThreadState = undefined;
+            comp.selectedThreadState.set('ALL');
 
             expect(comp.filteredThreads()).toEqual(runnableThreads.concat(waitingThreads));
         });
@@ -94,7 +94,7 @@ describe('MetricsModalThreadsComponent', () => {
         it('should filter threads by selected thread state', () => {
             fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
             fixture.detectChanges();
-            comp.selectedThreadState = ThreadState.Runnable;
+            comp.selectedThreadState.set(ThreadState.Runnable);
 
             expect(comp.filteredThreads()).toEqual(runnableThreads);
         });
@@ -119,7 +119,7 @@ describe('MetricsModalThreadsComponent', () => {
             fixture.componentRef.setInput('threads', runnableThreads.concat(waitingThreads));
             fixture.detectChanges();
             comp.threadFilter = '2';
-            comp.selectedThreadState = ThreadState.Waiting;
+            comp.selectedThreadState.set(ThreadState.Waiting);
 
             expect(comp.filteredThreads()).toEqual([]);
         });

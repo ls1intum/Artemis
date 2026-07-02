@@ -1,31 +1,31 @@
-<div class="row justify-content-center">
-    <div class="col-md-8">
+<div class="flex justify-center">
+    <div class="w-full md:max-w-2xl">
         <h5 *adminTitleBarTitle id="organization-update-heading" class="mb-0" jhiTranslate="artemisApp.organizationManagement.addOrEditLabel"></h5>
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <div>
-                <div class="form-group">
-                    <label for="name" class="form-control-label" jhiTranslate="artemisApp.organizationManagement.name"></label>
-                    <input id="name" type="text" class="form-control" name="name" #nameInput="ngModel" [(ngModel)]="organization().name" required minlength="1" maxlength="100" />
+            <div class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="name" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.name"></label>
+                    <input id="name" type="text" pInputText name="name" #nameInput="ngModel" [(ngModel)]="organization().name" required minlength="1" maxlength="100" />
                     @if (nameInput.dirty && nameInput.invalid) {
                         <div>
-                            @if (nameInput.errors?.required) {
-                                <small class="form-text text-danger" jhiTranslate="entity.validation.required"></small>
+                            @if (nameInput.errors?.['required']) {
+                                <small class="text-state-danger" jhiTranslate="entity.validation.required"></small>
                             }
-                            @if (nameInput.errors?.maxlength) {
-                                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 100 }"></small>
+                            @if (nameInput.errors?.['maxlength']) {
+                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 100 }"></small>
                             }
-                            @if (nameInput.errors?.pattern) {
-                                <small class="form-text text-danger" jhiTranslate="entity.validation.patternLogin"></small>
+                            @if (nameInput.errors?.['pattern']) {
+                                <small class="text-state-danger" jhiTranslate="entity.validation.patternLogin"></small>
                             }
                         </div>
                     }
                 </div>
-                <div class="form-group">
-                    <label for="shortName" class="form-control-label" jhiTranslate="artemisApp.organizationManagement.shortName"></label>
+                <div class="flex flex-col gap-2">
+                    <label for="shortName" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.shortName"></label>
                     <input
                         id="shortName"
                         type="text"
-                        class="form-control"
+                        pInputText
                         name="shortName"
                         #shortNameInput="ngModel"
                         [(ngModel)]="organization().shortName"
@@ -36,60 +36,55 @@
                     />
                     @if (shortNameInput.dirty && shortNameInput.invalid) {
                         <div>
-                            @if (shortNameInput.errors?.required) {
-                                <small class="form-text text-danger" jhiTranslate="entity.validation.required"></small>
+                            @if (shortNameInput.errors?.['required']) {
+                                <small class="text-state-danger" jhiTranslate="entity.validation.required"></small>
                             }
-                            @if (shortNameInput.errors?.maxlength) {
-                                <small class="form-text text-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 50 }"></small>
+                            @if (shortNameInput.errors?.['maxlength']) {
+                                <small class="text-state-danger" jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: 50 }"></small>
                             }
-                            @if (nameInput.errors?.pattern) {
-                                <small class="form-text text-danger" jhiTranslate="entity.validation.patternLogin"></small>
+                            @if (shortNameInput.errors?.['pattern']) {
+                                <small class="text-state-danger" jhiTranslate="entity.validation.patternLogin"></small>
                             }
                         </div>
                     }
                 </div>
-                <div class="form-group">
-                    <label for="url" class="form-control-label" jhiTranslate="artemisApp.organizationManagement.url"></label>
-                    <input id="url" type="text" class="form-control" name="url" #urlInput="ngModel" [(ngModel)]="organization().url" />
+                <div class="flex flex-col gap-2">
+                    <label for="url" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.url"></label>
+                    <input id="url" type="text" pInputText name="url" #urlInput="ngModel" [(ngModel)]="organization().url" />
                 </div>
-                <div class="form-group">
-                    <label for="description" jhiTranslate="artemisApp.organizationManagement.description"></label>
-                    <input id="description" type="text" class="form-control" name="description" #descriptionInput="ngModel" [(ngModel)]="organization().description" />
+                <div class="flex flex-col gap-2">
+                    <label for="description" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.description"></label>
+                    <input id="description" type="text" pInputText name="description" #descriptionInput="ngModel" [(ngModel)]="organization().description" />
                 </div>
-                <div class="form-group">
-                    <label for="logoUrl" jhiTranslate="artemisApp.organizationManagement.logoUrl"></label>
-                    <input id="logoUrl" type="text" class="form-control" name="logoUrl" #logoUrlInput="ngModel" [(ngModel)]="organization().logoUrl" />
+                <div class="flex flex-col gap-2">
+                    <label for="logoUrl" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.logoUrl"></label>
+                    <input id="logoUrl" type="text" pInputText name="logoUrl" #logoUrlInput="ngModel" [(ngModel)]="organization().logoUrl" />
                 </div>
-                <div class="form-group">
-                    <div class="alert alert-warning">
+                <div class="flex flex-col gap-2">
+                    <p-message severity="warn">
                         <span jhiTranslate="artemisApp.organizationManagement.patternChangeWarning"
-                            >Changing the email pattern will trigger a re-assignment of all users to this organization()</span
+                            >Changing the email pattern will trigger a re-assignment of all users to this organization</span
                         >
-                    </div>
-                    <label for="emailPattern" jhiTranslate="artemisApp.organizationManagement.emailPattern"></label>
-                    <input
-                        id="emailPattern"
-                        type="text"
-                        required
-                        class="form-control"
-                        name="emailPattern"
-                        validPattern
-                        #emailPattern="ngModel"
-                        [(ngModel)]="organization().emailPattern"
-                    />
+                    </p-message>
+                    <label for="emailPattern" class="font-semibold" jhiTranslate="artemisApp.organizationManagement.emailPattern"></label>
+                    <input id="emailPattern" type="text" required pInputText name="emailPattern" validPattern #emailPattern="ngModel" [(ngModel)]="organization().emailPattern" />
                     @if (emailPattern?.dirty && emailPattern?.invalid) {
                         <div>
-                            @if (emailPattern.errors?.validPattern) {
-                                <small class="form-text text-danger" jhiTranslate="entity.validation.invalidPattern"></small>
+                            @if (emailPattern.errors?.['validPattern']) {
+                                <small class="text-state-danger" jhiTranslate="entity.validation.invalidPattern"></small>
                             }
                         </div>
                     }
                 </div>
             </div>
-            <div>
-                <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
-                <button type="submit" [disabled]="editForm.form.invalid || isSaving()" class="btn btn-primary">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+            <div class="flex items-center justify-end gap-2 mt-4">
+                <button id="cancelButton" type="button" pButton size="small" severity="secondary" (click)="previousState()" data-testid="cancel-btn">
+                    <fa-icon [icon]="faBan" />
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </button>
+                <button id="saveButton" type="submit" pButton size="small" [disabled]="editForm.form.invalid || isSaving()" data-testid="save-btn">
+                    <fa-icon [icon]="faSave" />
+                    <span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>
         </form>
