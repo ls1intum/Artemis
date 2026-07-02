@@ -319,7 +319,7 @@
                     "undefined": "Du musst einen Titel angeben.",
                     "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!",
                     "disallowedValue": "Der Titel wird bereits für eine andere Aufgabe genutzt!",
-                    "maxlength": "Der Titel muss weniger als {{max}} Zeichen lang sein!"
+                    "maxlength": "Der Titel darf höchstens {{max}} Zeichen lang sein!"
                 },
                 "channelName": {
                     "empty": "Du musst einen Kanalnamen angeben."
