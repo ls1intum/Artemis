@@ -33,15 +33,19 @@ export class DeleteButtonDirective implements OnInit {
     animation = input<boolean>(true);
 
     deleteTextSpan?: HTMLElement;
+    private callerProvidedAriaLabel = false;
 
     /**
-     * Applies the legacy Bootstrap button styling + injected label span, and sets the submit type, on the host
-     * button. The Bootstrap style and the injected `d-none`/`d-xl-inline` label are gated behind
-     * `renderButtonStyle` so PrimeNG-styled callers (`[renderButtonStyle]="false"`) stay Bootstrap-free and
-     * provide their own content.
+     * Styles the host button and gives it an accessible name. The Bootstrap `btn` classes and the injected
+     * `d-none`/`d-xl-inline` label span are gated behind `renderButtonStyle`, so PrimeNG-styled callers
+     * (`[renderButtonStyle]="false"`) stay Bootstrap-free. Independently, the translated action is set as the
+     * host's `aria-label` (unless the caller already set one): the icon-only variants — the PrimeNG path and the
+     * Bootstrap label below its `d-xl` breakpoint — carry no visible text, so a screen reader would otherwise
+     * announce only "button".
      */
     ngOnInit() {
-        // set button classes and submit property
+        this.callerProvidedAriaLabel = !!this.elementRef.nativeElement.getAttribute('aria-label');
+
         if (this.renderButtonStyle()) {
             this.renderer.addClass(this.elementRef.nativeElement, 'btn');
             this.renderer.addClass(this.elementRef.nativeElement, this.buttonType());
@@ -50,22 +54,18 @@ export class DeleteButtonDirective implements OnInit {
         }
         this.renderer.setProperty(this.elementRef.nativeElement, 'type', 'submit');
 
-        // Inject the label span only for the Bootstrap-styled variant — its d-none/d-xl-inline classes are
-        // Bootstrap, so PrimeNG-styled buttons must provide their own content instead.
+        // The label span's d-none/d-xl-inline classes are Bootstrap, so inject it only for the Bootstrap variant.
         if (this.renderButtonStyle() && this.renderButtonText()) {
             this.deleteTextSpan = this.renderer.createElement('span');
             if (this.buttonType() === ButtonType.ERROR) {
                 this.renderer.addClass(this.deleteTextSpan, 'd-none');
             }
             this.renderer.addClass(this.deleteTextSpan, 'd-xl-inline');
-            this.setTextContent();
             this.renderer.appendChild(this.elementRef.nativeElement, this.deleteTextSpan);
-
-            // update the span title on each language change
-            this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-                this.setTextContent();
-            });
         }
+
+        this.applyActionLabel();
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.applyActionLabel());
     }
 
     /**
@@ -99,7 +99,14 @@ export class DeleteButtonDirective implements OnInit {
         this.openDeleteDialog();
     }
 
-    private setTextContent() {
-        this.renderer.setProperty(this.deleteTextSpan, 'textContent', this.translateService.instant(`entity.action.${this.actionType()}`));
+    /** Keeps the accessible name (and the Bootstrap label span, when present) on the translated action. */
+    private applyActionLabel() {
+        const action = this.translateService.instant(`entity.action.${this.actionType()}`);
+        if (this.deleteTextSpan) {
+            this.renderer.setProperty(this.deleteTextSpan, 'textContent', action);
+        }
+        if (!this.callerProvidedAriaLabel) {
+            this.renderer.setAttribute(this.elementRef.nativeElement, 'aria-label', action);
+        }
     }
 }

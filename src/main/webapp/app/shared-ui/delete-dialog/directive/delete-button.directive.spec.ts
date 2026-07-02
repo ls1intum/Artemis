@@ -87,12 +87,16 @@ describe('DeleteDialogDirective', () => {
         expect(directiveInstance.deleteConfirmationText()).toBe('text');
     });
 
-    it('should not inject the Bootstrap label span or button classes when PrimeNG-styled', () => {
+    it('should give the PrimeNG-styled (icon-only) button a translated aria-label and no Bootstrap span/classes', () => {
         comp.renderStyle = false;
         fixture.detectChanges();
 
         expect(debugElement.query(By.css('.d-none.d-xl-inline'))).toBeNull();
         expect(debugElement.query(By.css('.btn'))).toBeNull();
+
+        // The icon-only path has no visible text, so the directive must supply an accessible name.
+        const button = debugElement.query(By.css('button[jhiDeleteButton]'));
+        expect(button.nativeElement.getAttribute('aria-label')).toContain('entity.action.delete');
     });
 
     it('on click should call delete dialog service', () => {
