@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Introduce exercise variant groups: a course-owned grouping of interchangeable exercise variants that share
+         a timeline and a points cap. -->
+    <changeSet id="20260615105237-1" author="dominikremo">
+        <createTable tableName="exercise_variant_group">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="title" type="varchar(255)"/>
+            <column name="max_points" type="double"/>
+            <column name="release_date" type="datetime(3)"/>
+            <column name="start_date" type="datetime(3)"/>
+            <column name="due_date" type="datetime(3)"/>
+            <column name="assessment_due_date" type="datetime(3)"/>
+            <column name="example_solution_publication_date" type="datetime(3)"/>
+            <column name="build_and_test_student_submissions_after_due_date" type="datetime(3)"/>
+            <column name="course_id" type="bigint"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260615105237-2" author="dominikremo">
+        <addColumn tableName="exercise">
+            <column name="exercise_variant_group_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260615105237-3" author="dominikremo">
+        <createIndex indexName="IDX_exercise_variant_group_course" tableName="exercise_variant_group">
+            <column name="course_id"/>
+        </createIndex>
+        <createIndex indexName="IDX_exercise_exercise_variant_group" tableName="exercise">
+            <column name="exercise_variant_group_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260615105237-4" author="dominikremo">
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="exercise_variant_group"
+                                 constraintName="FK_exercise_variant_group_course" deferrable="false" initiallyDeferred="false"
+                                 onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <!-- SET NULL: the group only aggregates its variants, so deleting a group must not delete the exercises;
+             they survive and simply lose their group membership. -->
+        <addForeignKeyConstraint baseColumnNames="exercise_variant_group_id" baseTableName="exercise"
+                                 constraintName="FK_exercise_exercise_variant_group" deferrable="false" initiallyDeferred="false"
+                                 onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise_variant_group" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

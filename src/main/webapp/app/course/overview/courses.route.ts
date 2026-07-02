@@ -92,8 +92,20 @@ export const courseRoutes: Routes = [
                     showRefreshButton: true,
                 },
                 canActivate: [UserRouteAccessService],
-
                 children: [
+                    {
+                        // Exercise-group detail page. Declared before :exerciseId so 'group' is not parsed as an id.
+                        path: 'group/:groupId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () =>
+                            import('app/course/overview/course-exercises/group-detail/course-exercise-group-detail.component').then((m) => m.CourseExerciseGroupDetailComponent),
+                    },
                     {
                         path: ':exerciseId',
                         data: {

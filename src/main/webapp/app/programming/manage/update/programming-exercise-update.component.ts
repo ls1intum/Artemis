@@ -45,6 +45,7 @@ import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -82,6 +83,7 @@ const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerati
         ProgrammingExerciseProblemComponent,
         ProgrammingExerciseVersionControlComponent,
         ProgrammingExerciseGradingComponent,
+        ExerciseGroupTimelineLockComponent,
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
         FeatureOverlayComponent,

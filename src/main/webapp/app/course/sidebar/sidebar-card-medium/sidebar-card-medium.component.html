@@ -16,7 +16,7 @@
                 'border-success': sidebarItem()?.difficulty === DifficultyLevel.EASY,
                 'border-warning': sidebarItem()?.difficulty === DifficultyLevel.MEDIUM,
                 'border-danger': sidebarItem()?.difficulty === DifficultyLevel.HARD,
-                'border-module': !sidebarItem()?.difficulty,
+                'border-secondary': !sidebarItem()?.difficulty,
             }"
             [routerLink]="sidebarItem()?.targetComponentSubRoute ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id] : ['./', sidebarItem().id]"
             (click)="onNonExamCardClicked()"

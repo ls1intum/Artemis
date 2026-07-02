@@ -1,4 +1,18 @@
-<div class="frame">
+<div class="frame" [class.locked-to-group]="lockedToGroup()">
+    @if (lockedToGroup()) {
+        <div
+            class="timeline-lock-overlay"
+            role="button"
+            tabindex="0"
+            (click)="lockedClick.emit()"
+            (keydown.enter)="lockedClick.emit()"
+            (keydown.space)="lockedClick.emit()"
+            [pTooltip]="'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate"
+            tooltipPosition="top"
+        >
+            <i class="pi pi-lock timeline-lock-icon"></i>
+        </div>
+    }
     @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
         <div class="timeline-item-row">
             @let isInvalid =
@@ -43,13 +57,13 @@
                         placeholder="dd.mm.yyyy hh:mm"
                         keepInvalid="true"
                         showClear="true"
-                        [showIcon]="!readonly()"
+                        [showIcon]="!isReadonly()"
                         iconDisplay="input"
                         appendTo="body"
                         showOnFocus="false"
                         [baseZIndex]="1050"
                         [invalid]="isInvalid"
-                        [disabled]="readonly()"
+                        [disabled]="isReadonly()"
                     />
                     @if (isInvalid) {
                         <i class="pi pi-info-circle timeline-datepicker-info-icon" [pTooltip]="internalItem.tooltip" tooltipPosition="right"></i>

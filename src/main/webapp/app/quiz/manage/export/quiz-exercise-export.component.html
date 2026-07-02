@@ -1,4 +1,4 @@
-<div>
+<div class="d-flex flex-column flex-grow-1 overflow-hidden">
     <h2>
         @if (course(); as course) {
             <span jhiTranslate="artemisApp.quizExercise.export.title" [translateValues]="{ param: course.title }"></span>
@@ -6,7 +6,13 @@
     </h2>
     <div class="row"></div>
     <br />
-    <div class="table-responsive">
+    @if (isLoading()) {
+        <div class="d-flex align-items-center gap-2 py-4 text-muted">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span jhiTranslate="artemisApp.quizExercise.export.loading"></span>
+        </div>
+    }
+    <div class="table-responsive flex-grow-1 overflow-auto" [hidden]="isLoading()">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -41,7 +47,13 @@
     <div class="edit-quiz-footer">
         <div class="container">
             <div class="edit-quiz-footer-content">
-                <div class="form-group"></div>
+                <div class="form-group">
+                    @if (isDialog) {
+                        <p-button severity="secondary" [outlined]="true" size="small" (onClick)="back()">
+                            <fa-icon [icon]="faArrowLeft" class="me-1" /><span jhiTranslate="entity.action.back"></span>
+                        </p-button>
+                    }
+                </div>
                 <div class="form-group">
                     <button class="btn btn-success" (click)="exportQuiz()" jhiTranslate="artemisApp.quizExercise.export.export"></button>
                 </div>

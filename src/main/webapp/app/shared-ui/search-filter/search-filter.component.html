@@ -8,7 +8,7 @@
         pInputText
         [value]="searchValue()"
         (input)="setSearchValue(searchInput.value)"
-        [placeholder]="placeholderKey() | artemisTranslate"
+        [placeholder]="placeholder()"
         [disabled]="disabled()"
         aria-label="Filter Search Field"
         aria-describedby="filter-search-field"

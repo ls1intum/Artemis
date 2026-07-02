@@ -2,6 +2,26 @@
     display: flex;
     flex-direction: column;
 
+    &.locked-to-group {
+        position: relative;
+    }
+
+    // Transparent click-catcher shown over a timeline whose dates are governed by the variant group. It sits above the
+    // disabled datepickers so a click opens the group-edit dialog instead of interacting with the read-only fields.
+    .timeline-lock-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        cursor: pointer;
+
+        .timeline-lock-icon {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            color: var(--bs-secondary);
+        }
+    }
+
     .timeline-item-row {
         display: flex;
         flex-direction: row;

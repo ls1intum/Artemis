@@ -171,4 +171,54 @@ export interface SidebarCardElement {
     attendanceText?: string;
 
     attendanceChipColor?: string;
+
+    /**
+     * Optional nested cards. When set, this card acts as a header for a group of exercises (e.g. a
+     * course-level exercise group) and the nested cards are rendered indented underneath it. Existing
+     * sidebars do not set this, so their rendering is unaffected.
+     */
+    groupedItems?: SidebarCardElement[];
+
+    /**
+     * How the group header is rendered when {@link groupedItems} is set: 'card' (default) shows the
+     * header as a normal sidebar card/tile; 'label' shows just the title (with icon and subtitle) as a
+     * plain, non-clickable heading.
+     */
+    groupHeaderStyle?: 'card' | 'label';
+
+    /**
+     * Optional helper line shown below a 'label' group title (e.g. "Pick 1 of 3"). Only rendered when set.
+     */
+    groupPickHint?: string;
+
+    /**
+     * When true on a group header, each nested exercise gets a checkbox for single-select (max one
+     * selected per group). Only meaningful together with {@link groupedItems}.
+     */
+    groupSelectable?: boolean;
+
+    /**
+     * Adds a clickable affordance (pointer + hover) to a 'label' group: 'heading' highlights only the
+     * title row, 'group' highlights the whole group container. Only meaningful with {@link groupedItems}.
+     */
+    groupClickable?: 'heading' | 'group';
+
+    /**
+     * When true, the group renders as one connected stack of tiles (header tile + flush exercise tiles)
+     * with only the outer corners rounded, no padding and no indent. Pair with {@link groupHeaderStyle}
+     * 'card'. Only meaningful with {@link groupedItems}.
+     */
+    groupConnected?: boolean;
+
+    /** Optional icon shown before {@link subtitleLeft} (and the group hint), e.g. a warning triangle. */
+    subtitleLeftIcon?: IconProp;
+
+    /** Optional CSS class(es) applied to {@link subtitleLeft} (and the group hint), e.g. 'text-warning'. */
+    subtitleLeftClass?: string;
+
+    /** Optional tooltip (native title) for {@link subtitleLeft} (and the group hint). */
+    subtitleLeftTooltip?: string;
+
+    /** Whether this (nested) exercise is currently selected within its group. */
+    selected?: boolean;
 }

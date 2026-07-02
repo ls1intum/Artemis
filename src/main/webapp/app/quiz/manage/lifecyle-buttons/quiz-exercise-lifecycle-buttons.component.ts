@@ -1,21 +1,28 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, input, output, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faEye, faFileExport, faPlayCircle, faPlus, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBoxesStacked, faEye, faFileExport, faPlayCircle, faPlus, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { input, output } from '@angular/core';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TooltipModule } from 'primeng/tooltip';
+import { Popover, PopoverModule } from 'primeng/popover';
 import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
     templateUrl: './quiz-exercise-lifecycle-buttons.component.html',
-    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective],
+    styleUrl: './quiz-exercise-lifecycle-buttons.component.scss',
+    // flex-nowrap: keep the lifecycle buttons (e.g. Batches + End) on a single line rather than stacking them when space
+    // is tight — they are a related action group, and the exercise-management table measures their inline width to size
+    // the actions column (a wrap would mis-measure it).
+    host: { class: 'd-flex gap-1 align-items-center flex-nowrap' },
+    imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisTranslatePipe, TooltipModule, PopoverModule],
 })
 export class QuizExerciseLifecycleButtonsComponent {
     private quizExerciseService = inject(QuizExerciseService);
@@ -26,6 +33,7 @@ export class QuizExerciseLifecycleButtonsComponent {
     protected readonly ActionType = ActionType;
 
     // Icons
+    faBoxesStacked = faBoxesStacked;
     faSort = faSort;
     faPlus = faPlus;
     faTimes = faTimes;
@@ -43,6 +51,38 @@ export class QuizExerciseLifecycleButtonsComponent {
 
     readonly loadOne = output<number>();
     readonly handleNewQuizExercise = output<QuizExercise>();
+
+    protected readonly isInVariantGroup = computed(() => !!this.quizExercise().exerciseVariantGroup);
+
+    private readonly batchMenu = viewChild<Popover>('batchMenu');
+
+    readonly showBatchMenu = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
+    });
+
+    protected readonly showStartButton = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return (
+            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor && !quiz.quizStarted
+        );
+    });
+
+    protected readonly showEndButton = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return (
+            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE) && quiz.quizMode !== QuizMode.SYNCHRONIZED && !!quiz.isAtLeastInstructor && !quiz.quizEnded
+        );
+    });
+
+    protected readonly showSetVisibleButton = computed<boolean>(() => {
+        const quiz = this.quizExercise();
+        return quiz.status === QuizStatus.INVISIBLE && !!quiz.isAtLeastEditor && !quiz.visibleToStudents;
+    });
+
+    protected toggleBatchMenu(event: MouseEvent): void {
+        this.batchMenu()?.toggle(event);
+    }
 
     /**
      * Start the given quiz-exercise immediately

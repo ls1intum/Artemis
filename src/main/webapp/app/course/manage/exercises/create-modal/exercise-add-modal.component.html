@@ -1,0 +1,80 @@
+<p-dialog
+    [header]="dialogHeader"
+    [visible]="visible()"
+    (visibleChange)="visibleChange.emit($event)"
+    [modal]="true"
+    appendTo="body"
+    [style]="{ width: '680px', maxWidth: '95vw' }"
+    [draggable]="false"
+>
+    <div class="tab-bar mb-3">
+        <button
+            class="tab-btn {{ activeTab() === 'create' ? 'tab-btn--active' : '' }}"
+            (click)="setActiveTab('create')"
+            jhiTranslate="artemisApp.exerciseManagement.addModal.tab.create"
+        ></button>
+        <button
+            class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}"
+            (click)="setActiveTab('import')"
+            jhiTranslate="artemisApp.exerciseManagement.addModal.tab.import"
+        ></button>
+        <button
+            class="tab-btn {{ activeTab() === 'export' ? 'tab-btn--active' : '' }}"
+            (click)="requestExport()"
+            jhiTranslate="artemisApp.exerciseManagement.addModal.tab.export"
+        ></button>
+    </div>
+
+    <!-- ── Create tab ── -->
+    @if (activeTab() === 'create') {
+        <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.createHint"></p>
+        <div class="exercise-grid">
+            @for (card of exerciseTypeCards; track card.type) {
+                <button class="exercise-card {{ card.accentClass }}" (click)="navigateToCreate(card)" type="button">
+                    <div class="card-icon-wrapper">
+                        <fa-icon [icon]="card.icon" />
+                    </div>
+                    <h6>{{ card.labelKey | artemisTranslate }}</h6>
+                    <p>{{ card.descriptionKey | artemisTranslate }}</p>
+                    <span class="card-cta">
+                        <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
+                        <fa-icon [icon]="faArrowRight" class="ms-1" />
+                    </span>
+                </button>
+            }
+            <button class="exercise-card card--group" (click)="createGroup()" type="button">
+                <div class="card-icon-wrapper">
+                    <fa-icon [icon]="faLayerGroup" />
+                </div>
+                <h6 jhiTranslate="artemisApp.exerciseManagement.addModal.group.title"></h6>
+                <p jhiTranslate="artemisApp.exerciseManagement.addModal.group.createDescription"></p>
+                <span class="card-cta">
+                    <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
+                    <fa-icon [icon]="faArrowRight" class="ms-1" />
+                </span>
+            </button>
+        </div>
+    }
+
+    <!-- ── Import tab ── -->
+    @if (activeTab() === 'import') {
+        <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.importHint"></p>
+        <div class="exercise-grid">
+            @for (card of exerciseTypeCards; track card.type) {
+                <button class="exercise-card {{ card.accentClass }}" (click)="startImport(card.type)" type="button">
+                    <div class="card-icon-wrapper">
+                        <fa-icon [icon]="card.icon" />
+                    </div>
+                    <h6>{{ card.labelKey | artemisTranslate }}</h6>
+                    <p>{{ card.descriptionKey | artemisTranslate }}</p>
+                    <span class="card-cta">
+                        <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.select"></span>
+                        <fa-icon [icon]="faArrowRight" class="ms-1" />
+                    </span>
+                </button>
+            }
+        </div>
+    }
+
+    <!-- The Export tab opens the quiz export dialog directly (see requestExport); no separate page is rendered here. -->
+</p-dialog>

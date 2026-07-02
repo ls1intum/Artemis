@@ -39,8 +39,8 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
 import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
-import { getSignalBasedOnRoute } from '../../foundation/route/getSignalBasedOnRoute';
-import { getCurrentRouteSignal } from '../../foundation/route/getCurrentRouteSignal';
+import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
+import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { Course } from 'app/course/shared/entities/course.model';
 
 @Component({
@@ -480,6 +480,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 case 'exercises':
                     this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
                     return;
+                case 'group':
+                    this.addResolvedTitleAsCrumb(EntityType.EXERCISE_VARIANT_GROUP, [Number(segment)], currentPath, segment);
+                    return;
                 case 'tutorial-lectures':
                     this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                     return;
@@ -611,6 +614,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         switch (segment) {
             // No breadcrumbs for those segments
             case 'reset':
+            case 'group':
             case 'groups':
             case 'code-editor':
             case 'repository':

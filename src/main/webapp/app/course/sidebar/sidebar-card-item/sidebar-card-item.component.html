@@ -119,7 +119,10 @@
                 }
             </div>
             <div class="d-flex justify-content-between align-items-baseline small" [ngClass]="{ 'mt-1': item.subtitleLeft }">
-                <small class="me-2 text-truncate">
+                <small class="me-2 text-truncate" [ngClass]="item.subtitleLeftClass" [title]="item.subtitleLeftTooltip">
+                    @if (item.subtitleLeftIcon) {
+                        <fa-icon [icon]="item.subtitleLeftIcon" />
+                    }
                     {{ item.subtitleLeft }}
                 </small>
                 <small class="text-truncate d-inline">

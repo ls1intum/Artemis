@@ -4,6 +4,37 @@
 @import '../../shared/course-base-container/course-variables';
 @import '../../shared/course-base-container/course-base-container.component';
 
+// Make mat-sidenav-content a flex column so the sticky title bar and scrollable
+// body container share the fixed height correctly.
+::ng-deep .mat-drawer-content {
+    display: flex !important;
+    flex-direction: column;
+    overflow: hidden !important;
+}
+
+// The sticky title bar and the scrollable body stack inside the fixed-height, overflow-hidden .layout-content. Lay it
+// out as a flex column so the body fills exactly the height the title bar leaves — regardless of how many rows the
+// title bar has. The fixed body height (.scrollable-content, tuned for a single-row title bar) otherwise made the body
+// taller than the available space once a second title-bar row was added (the exercises view's view-switch + search),
+// pushing the last rows past the clip edge and breaking scroll-to-bottom.
+.layout-content {
+    display: flex;
+    flex-direction: column;
+
+    // Non-sidebar pages: let the otherwise fixed-height scroll body shrink/grow to fill the remaining column space.
+    > .scrollable-content {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+}
+
+// In sidebar mode the body container fills the remaining height and scrolls.
+.sidebar-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 /* Component-specific styles only */
 .controls {
     display: flex;

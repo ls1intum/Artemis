@@ -27,6 +27,9 @@ export class SidebarCardMediumComponent {
     readonly groupKey = input<string>();
 
     onNonExamCardClicked() {
+        if (this.sidebarItem().groupedItems?.length) {
+            return;
+        }
         this.storeTargetComponentSubRoute();
         if (this.itemSelected()) {
             this.refreshChildComponent();

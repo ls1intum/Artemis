@@ -1,0 +1,33 @@
+// Overlay the (position: relative) actions cell instead of sitting in its flow, so the
+// buttons never contribute to the column's intrinsic width and cannot widen the table.
+// The cell clips us (overflow: hidden).
+:host {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.inline-item {
+    display: inline-flex;
+}
+
+// Fixed width so the overflow calculation can reserve an exact amount for the ellipsis trigger (ELLIPSIS_WIDTH_PX).
+.action-more {
+    flex: none;
+    justify-content: center;
+    width: 40px;
+    padding-inline: 0;
+}
+
+.btn {
+    border-radius: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.6rem;
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
+}

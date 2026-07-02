@@ -1,0 +1,82 @@
+<div #actionsRow class="d-flex gap-1 align-items-center justify-content-end flex-nowrap w-100">
+    <!-- Quiz lifecycle buttons always stay visible; grouped so their reserved width can be measured. -->
+    <span #quizGroup class="d-flex gap-1 align-items-center flex-nowrap">
+        @if (quizExercise(); as quiz) {
+            <jhi-quiz-exercise-lifecycle-buttons [quizExercise]="quiz" (handleNewQuizExercise)="onQuizLifecycleUpdate($event)" (loadOne)="onQuizReload()" />
+            @if (hasQuizButtons() && mainActions().length > 0) {
+                <div class="vr mx-1"></div>
+            }
+        }
+    </span>
+
+    <!-- Main buttons: all rendered once (stable DOM). Overflowing ones get `d-none` and appear in the menu instead;
+         resizing only toggles that class, it never recreates buttons. -->
+    @for (action of mainActions(); track action.id) {
+        <span #inlineItem class="inline-item" [attr.data-signature]="signatureOf(action)" [class.d-none]="hiddenIds().has(action.id)">
+            <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: false }" />
+        </span>
+    }
+    <button
+        type="button"
+        class="btn btn-outline-secondary action-more"
+        [class.d-none]="!hasOverflow()"
+        (click)="toggleMenu($event)"
+        [title]="'artemisApp.exerciseManagement.moreActions' | artemisTranslate"
+    >
+        <fa-icon [icon]="faEllipsis" />
+    </button>
+    <p-popover #menu appendTo="body">
+        <div class="d-flex flex-column gap-1" style="min-width: 11rem">
+            @for (action of hiddenActions(); track action.id) {
+                <ng-container [ngTemplateOutlet]="actionTpl" [ngTemplateOutletContext]="{ $implicit: action, inMenu: true }" />
+            }
+        </div>
+    </p-popover>
+</div>
+
+<ng-template #actionTpl let-action let-inMenu="inMenu">
+    @switch (action.kind) {
+        @case ('delete') {
+            <button
+                jhiDeleteButton
+                [renderButtonText]="false"
+                [renderButtonStyle]="false"
+                [entityTitle]="exercise().title!"
+                entitySummaryTitle="artemisApp.exercise.delete.summary.title"
+                [fetchEntitySummary]="deletionSummary()"
+                deleteQuestion="artemisApp.exercise.delete.question"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                [translateValues]="deleteTranslateValues()"
+                (delete)="onDelete($event)"
+                [dialogError]="dialogError$"
+                class="btn {{ action.styleClass }}"
+                [class.text-start]="inMenu"
+                [class.w-100]="inMenu"
+            >
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
+            </button>
+        }
+        @case ('button') {
+            <button type="button" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="runAction(action)">
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
+            </button>
+        }
+        @default {
+            <a
+                [routerLink]="action.disabled ? null : action.link"
+                class="btn {{ action.styleClass }}"
+                [class.disabled]="action.disabled"
+                [class.text-start]="inMenu"
+                [class.w-100]="inMenu"
+                [attr.aria-disabled]="action.disabled || null"
+                [attr.tabindex]="action.disabled ? -1 : null"
+                [style.pointer-events]="action.disabled ? 'auto' : null"
+                [pTooltip]="action.disabledTooltip ? (action.disabledTooltip | artemisTranslate) : ''"
+                tooltipPosition="top"
+                (click)="closeMenuIfOpen(inMenu)"
+            >
+                <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
+            </a>
+        }
+    }
+</ng-template>

@@ -1,9 +1,11 @@
 import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { Params } from '@angular/router';
+import { Params, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { CheckboxModule } from 'primeng/checkbox';
 import { SidebarCardDirective } from '../directive/sidebar-card.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -18,12 +20,13 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgbCollapse, NgClass, FormsModule, CheckboxModule, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     private metisConversationService = inject(MetisConversationService);
     private localStorageService = inject(LocalStorageService);
+    private router = inject(Router);
     private ngUnsubscribe = new Subject<void>();
 
     readonly onUpdateSidebar = output<void>();
@@ -153,5 +156,18 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
 
     getGroupedByWeek(groupKey: string): WeekGroup[] {
         return WeekGroupingUtil.getGroupedByWeek(this.groupedData()[groupKey].entityData, this.storageId(), groupKey, this.searchValue());
+    }
+
+    onGroupVariantSelected(group: SidebarCardElement, variant: SidebarCardElement, checked: boolean): void {
+        group.groupedItems?.forEach((item) => (item.selected = false));
+        variant.selected = checked;
+    }
+
+    onGroupClicked(event: MouseEvent, group: SidebarCardElement): void {
+        const target = event.target as HTMLElement;
+        if (!group.routerLink || target.closest('.sidebar-group-variant') || target.closest('.sidebar-group-header')) {
+            return;
+        }
+        this.router.navigateByUrl(group.routerLink);
     }
 }

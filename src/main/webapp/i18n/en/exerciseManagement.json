@@ -1,0 +1,105 @@
+{
+    "artemisApp": {
+        "exerciseManagement": {
+            "title": "Exercises",
+            "moreActions": "More actions",
+            "action": {
+                "import": "Import",
+                "export": "Export"
+            },
+            "error": {
+                "onlyIndividualQuiz": "Only individual-mode quizzes can be added to an exercise group."
+            },
+            "view": {
+                "list": "List",
+                "type": "Type",
+                "week": "Week",
+                "group": "Group"
+            },
+            "noExercisesMatch": "No exercises match \"{{ search }}\".",
+            "selection": {
+                "count": "{{ count }} selected",
+                "deselectAll": "Deselect all"
+            },
+            "bucket": {
+                "all": "All Exercises",
+                "ungrouped": "Ungrouped",
+                "unscheduled": "Unscheduled",
+                "week": "Week {{ number }}",
+                "group": "Group {{ id }}"
+            },
+            "type": {
+                "PROGRAMMING": "Programming",
+                "QUIZ": "Quiz",
+                "MODELING": "Modeling",
+                "TEXT": "Text",
+                "FILE_UPLOAD": "File Upload"
+            },
+            "groupMeta": {
+                "maxPoints": "Max points:",
+                "maxPointsTooltip": "Caps the total points this group contributes to the course score.",
+                "none": "none"
+            },
+            "table": {
+                "dates": "Dates",
+                "group": "Group",
+                "noGroup": "No group",
+                "none": "none",
+                "empty": "No exercises",
+                "dragTooltip": "Drag to reorder or move between groups",
+                "nonIndividualQuizTooltip": "Synchronized and batched quizzes have a single shared run and cannot be added to a group."
+            },
+            "addModal": {
+                "header": "Manage Exercises",
+                "tab": {
+                    "create": "Create",
+                    "import": "Import",
+                    "export": "Export"
+                },
+                "createHint": "Select an exercise type. You can customise all details in the next step.",
+                "importHint": "Select what you want to import.",
+                "cta": {
+                    "create": "Create",
+                    "select": "Select"
+                },
+                "group": {
+                    "title": "Exercise Group",
+                    "createDescription": "A set of variant exercises on the same topic. Students can work on any or all variants.",
+                    "importDescription": "Import a group of variant exercises from another course, including all its exercises."
+                },
+                "import": {
+                    "groupHeader": "Import Exercise Group",
+                    "groupHint": "Select groups to import. All exercises in the group are included.",
+                    "exerciseCount": "{{ count }} exercises",
+                    "confirm": "Import",
+                    "confirmCount": "Import ({{ count }})"
+                },
+                "cardDescription": {
+                    "PROGRAMMING": "Automated grading with test suites. Supports Java, Python, C, and more.",
+                    "QUIZ": "Multiple choice, short answer, and drag-and-drop questions.",
+                    "MODELING": "UML diagrams and model-based exercises with semi-automatic assessment.",
+                    "TEXT": "Free-text essays and open-ended questions with manual review.",
+                    "FILE_UPLOAD": "Worksheet or document submissions reviewed by instructors."
+                }
+            },
+            "groupEdit": {
+                "header": "Edit Group",
+                "name": "Name",
+                "namePlaceholder": "Group name",
+                "maxPoints": "Max points",
+                "maxPointsTooltip": "Caps the total points this group contributes to the course score. Students earn at most this value from the group, regardless of which variant they complete.",
+                "maxPointsPlaceholder": "No cap",
+                "dates": "Dates",
+                "datesOverrideWarning": "Group dates override individual exercise dates.",
+                "datesInvalidOrder": "The dates are not in a valid order."
+            },
+            "batch": {
+                "label": "Batch {{ id }}",
+                "password": "PW: {{ password }}",
+                "done": "Done",
+                "running": "Running",
+                "empty": "No batches yet."
+            }
+        }
+    }
+}

@@ -1,6 +1,7 @@
 import { Component, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -30,7 +31,7 @@ type InternalTimelineItem = TimelineItem & {
 
 @Component({
     selector: 'jhi-exercise-timeline',
-    imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective],
+    imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './exercise-timeline.component.html',
     styleUrl: './exercise-timeline.component.scss',
 })
@@ -46,6 +47,15 @@ export class ExerciseTimelineComponent {
 
     timelineItems = input.required<TimelineItem[]>();
     readonly = input<boolean>(false);
+    /**
+     * When true the dates are governed by the exercise's variant group: every datepicker is disabled and a click
+     * anywhere on the timeline emits {@link lockedClick} so the host can open the group-edit dialog.
+     */
+    lockedToGroup = input<boolean>(false);
+    /** Emitted when the user clicks the timeline while {@link lockedToGroup} is set. */
+    lockedClick = output<void>();
+    /** Effective read-only state: either explicitly {@link readonly} or locked to the variant group. */
+    isReadonly = computed<boolean>(() => this.readonly() || this.lockedToGroup());
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
     timelineStatus = computed<ExerciseTimelineStatus>(() => this.computeExerciseTimelineStatus());
     timelineStatusChange = output<ExerciseTimelineStatus>();

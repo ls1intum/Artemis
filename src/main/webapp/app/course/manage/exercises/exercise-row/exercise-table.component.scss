@@ -1,0 +1,91 @@
+:host {
+    display: block;
+}
+
+/* Fill the panel; the table's own scroll container absorbs horizontal overflow. */
+:host ::ng-deep .p-datatable-table {
+    width: 100%;
+}
+
+/* Readable width that still shrinks on narrow viewports. */
+.col-title {
+    width: 28rem;
+    max-width: 28rem;
+    min-width: 14rem;
+}
+
+.col-dates {
+    min-width: 16rem;
+}
+
+/*
+ * Actions column sizing. `width: 100%` makes it greedily take the table's leftover width (after the fixed title/dates
+ * columns), so it is responsive: more space (wider viewport / zoomed out) ⇒ wider column ⇒ more buttons fit; less space
+ * ⇒ narrower column ⇒ buttons collapse into the ellipsis. `max-width` caps it at the widest button set (a full quiz
+ * row) so it never grows into pure whitespace. Buttons are an absolute overlay (exercise-actions.component) so they
+ * never inflate the column; overflow:hidden clips anything past it.
+ *
+ * `min-width` keeps the always-visible part of the overlay on screen. By default that is just the ellipsis trigger
+ * (`4rem`), so the column can collapse fully. When a row has quiz lifecycle buttons (which never fold into the ellipsis)
+ * the component sets `--actions-min-width` to the widest measured quiz-button + ellipsis width across its rows, so the
+ * column shrinks — collapsing every main button into the ellipsis — right down to that point and no further. The table
+ * only starts scrolling horizontally (the p-table is [scrollable]) past it, keeping the quiz buttons reachable. The var
+ * is left unset when no row has quiz buttons, so the `4rem` default applies and the ellipsis collapses completely.
+ */
+th.col-actions,
+td.col-actions {
+    width: 100%;
+    max-width: 60rem;
+    min-width: var(--actions-min-width, 4rem);
+    position: relative;
+    overflow: hidden;
+}
+
+.col-group-select {
+    width: 10rem;
+}
+
+.sort-col {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+
+    &:hover {
+        background-color: var(--bs-tertiary-bg);
+    }
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--bs-secondary-color);
+
+    &:active {
+        cursor: grabbing;
+    }
+
+    &.disabled {
+        cursor: not-allowed;
+        opacity: 0.4;
+    }
+}
+
+/* Card shown under the cursor while dragging a row. */
+.exercise-drag-preview {
+    display: flex;
+    align-items: center;
+    padding: 0.4rem 0.75rem;
+    background-color: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    box-shadow: 0 5px 12px rgb(0 0 0 / 0.2);
+}
+
+/* Gap where the dragged row sits. */
+.cdk-drag-placeholder {
+    opacity: 0.4;
+}
+
+/* Settle animation on drop. */
+.cdk-drag-animating {
+    transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}

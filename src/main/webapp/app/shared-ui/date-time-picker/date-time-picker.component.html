@@ -15,6 +15,19 @@
     </fa-stack>
 }
 <div class="d-flex position-relative" [class.invalid-date-input]="showErrorBorder()">
+    @if (lockedToGroup()) {
+        <div
+            class="date-lock-overlay"
+            role="button"
+            tabindex="0"
+            (click)="lockedClick.emit()"
+            (keydown.enter)="lockedClick.emit()"
+            (keydown.space)="lockedClick.emit()"
+            ngbTooltip="{{ 'artemisApp.exerciseVariantGroup.timelineLocked.tooltip' | artemisTranslate }}"
+        >
+            <fa-icon [icon]="faLock" class="date-lock-icon text-secondary" />
+        </div>
+    }
     <p-datepicker
         #datePicker
         inputId="date-input-field"
@@ -43,7 +56,7 @@
         [minDate]="minDate()"
         [maxDate]="maxDate()"
         [defaultDate]="startDate()"
-        [disabled]="disabled()"
+        [disabled]="effectiveDisabled()"
         [showButtonBar]="showTime() || timeOnly()"
         [invalid]="showErrorBorder()"
     >
