@@ -143,7 +143,7 @@ public class AttachmentVideoUnitService {
             }
             else if (existingAttachment != null) {
                 boolean isFileNeutralSlideMetadataUpdate = attachmentUpdateIntent == AttachmentUpdateIntent.NO_FILE_CHANGE && hasHiddenPagesRequestPart;
-                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages, !isFileNeutralSlideMetadataUpdate);
+                updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages, hasUploadedFile);
 
                 if (isFileNeutralSlideMetadataUpdate) {
                     Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
@@ -276,16 +276,16 @@ public class AttachmentVideoUnitService {
      * @param updateAttachment    the new attachment containing updated information
      * @param attachmentVideoUnit the attachment video unit to update
      * @param hiddenPages         the hidden pages in the attachment
-     * @param clearStudentVersionWhenHiddenPagesEmpty whether to clear the student version when hiddenPages is explicitly empty
+     * @param clearStudentVersionWhenNoHiddenPages whether to clear the student version when hiddenPages is absent or empty
      */
     private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentVideoUnit attachmentVideoUnit, List<HiddenPageInfoDTO> hiddenPages,
-            boolean clearStudentVersionWhenHiddenPagesEmpty) {
+            boolean clearStudentVersionWhenNoHiddenPages) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentVideoUnit(attachmentVideoUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
-        if (clearStudentVersionWhenHiddenPagesEmpty && hiddenPages != null && hiddenPages.isEmpty() && existingAttachment.getStudentVersion() != null) {
+        if (clearStudentVersionWhenNoHiddenPages && (hiddenPages == null || hiddenPages.isEmpty()) && existingAttachment.getStudentVersion() != null) {
             existingAttachment.setStudentVersion(null);
         }
     }
