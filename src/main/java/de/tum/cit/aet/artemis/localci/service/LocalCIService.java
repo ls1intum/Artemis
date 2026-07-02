@@ -20,9 +20,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 /**
@@ -53,12 +53,12 @@ public class LocalCIService implements ContinuousIntegrationService {
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUri repositoryUri, VcsRepositoryUri testRepositoryUri,
             VcsRepositoryUri solutionRepositoryUri) {
-        // Not implemented for local CI. no build plans must be created, because all the information for building
+        // Not implemented for local CI. No build plans must be created, because all the information for building
         // a submission and running tests is contained in the participation.
     }
 
     /**
-     * Fetches the default build plan configuration for the given localci exercise
+     * Fetches the default build plan configuration for the given localci exercise.
      *
      * @param exercise for which the build plans should be recreated
      */
@@ -73,7 +73,6 @@ public class LocalCIService implements ContinuousIntegrationService {
         ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
         buildConfig.setBuildScript(null);
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration());
-        // recreating the build plans for the exercise means we need to store the updated build config in the database
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }
 
@@ -83,7 +82,7 @@ public class LocalCIService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void createProjectForExercise(ProgrammingExercise programmingExercise) {
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException {
         // Not needed for local CI. Build plans are grouped into projects automatically.
     }
 
@@ -99,7 +98,7 @@ public class LocalCIService implements ContinuousIntegrationService {
      */
     @Override
     public void deleteProject(String projectKey) {
-        // Not implemented for local CI. No build plans exist and thus no projects exist that contain build plans.
+        // Not implemented for local CI. No projects exist that contain build plans.
     }
 
     /**
@@ -144,21 +143,18 @@ public class LocalCIService implements ContinuousIntegrationService {
     /**
      * Extract the plan key from the requestBody.
      *
-     * @param requestBody The request Body received from the CI-Server.
-     * @return the plan key or null if it can't be found.
-     * @throws LocalCIException is thrown on casting errors.
+     * @param requestBody the request body received from the CI server
+     * @return the plan key, or null if it cannot be found
+     * @throws LocalCIException on casting errors
      */
     @Override
     public String getPlanKey(Object requestBody) throws LocalCIException {
-        // This method is called in the processNewProgrammingExerciseResult method of the ResultResource.
-        // It is thus never called for local CI as the local CI results directly go to the method processNewProgrammingExerciseResult in the ProgrammingExerciseGradingService.
+        // Never called for local CI — results go directly to ProgrammingExerciseGradingService.
         return null;
     }
 
     @Override
     public ConnectorHealth health() {
-        // Return a simplified view of build agents for health check
-        // This excludes sensitive/large data like build scripts, repository URIs, SSH keys
         var buildAgentsSummary = distributedDataAccessService.getBuildAgentInformation().stream().map(agent -> {
             var buildAgent = agent.buildAgent();
             var name = buildAgent.name() != null ? buildAgent.name() : "Unknown";
@@ -181,14 +177,13 @@ public class LocalCIService implements ContinuousIntegrationService {
     /**
      * Check if the given build plan is valid and accessible on the local CI system.
      *
+     * @param projectKey  the key of the related programming exercise
      * @param buildPlanId unique identifier for build plan on CI system
-     * @return true if the build plan exists.
+     * @return true if the build plan exists
      */
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
-        // TODO: we should check that the build script in the programming exercises exists, otherwise builds will fail
-        // For local CI, no build plans exist. This method is always used in a context where build plans should exist and an error is thrown if they don't.
-        // It is safe here to always return true.
+        // For local CI, no build plans exist. Always return true since builds are triggered via participation.
         return true;
     }
 

@@ -123,7 +123,7 @@ public class ExerciseDeletionService {
             return;
         }
 
-        // Cleanup in parallel to speedup the process
+        // Cleanup in parallel to speed up the process
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = exercise.getStudentParticipations().stream().map(participation -> CompletableFuture.runAsync(() -> {
                 try {

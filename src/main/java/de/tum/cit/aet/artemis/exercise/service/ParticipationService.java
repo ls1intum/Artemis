@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -78,6 +79,8 @@ public class ParticipationService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final ProfileService profileService;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final ParticipationRepository participationRepository;
@@ -98,12 +101,13 @@ public class ParticipationService {
 
     private final ResultRepository resultRepository;
 
-    public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+    public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, ProfileService profileService,
+            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
+        this.profileService = profileService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -274,11 +278,15 @@ public class ParticipationService {
     private StudentParticipation startProgrammingParticipation(ProgrammingExerciseStudentParticipation participation) {
         // Step 1c) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(participation);
-        // Step 2a) create the build plan (based on the BASE build plan)
-        participation = copyBuildPlan(participation);
-        // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
-        participation = configureBuildPlan(participation);
-        // Step 3a) Set the InitializationState to initialized to indicate, the programming exercise is ready
+        // Step 2) Jenkins (stateful) requires Artemis to manage build plans; LocalCI/ Hades trigger builds without one
+        if (profileService.isJenkinsActive()) {
+            // Step 2a) create the build plan (based on the BASE build plan)
+            participation = copyBuildPlan(participation);
+            // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
+            participation = configureBuildPlan(participation);
+        }
+        // Step 3a) Set the InitializationState to initialized to indicate, the
+        // programming exercise is ready
         participation.setInitializationState(InitializationState.INITIALIZED);
         // after saving, we need to make sure the object that is used after the if statement is the right one
         return participation;
@@ -425,10 +433,12 @@ public class ParticipationService {
      */
     public ProgrammingExerciseStudentParticipation resumeProgrammingExercise(ProgrammingExerciseStudentParticipation participation) {
         // this method assumes that the student git repository already exists (compare startProgrammingExercise) so steps 1, 2 and 5 are not necessary
-        // Step 2a) create the build plan (based on the BASE build plan)
-        participation = copyBuildPlan(participation);
-        // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
-        participation = configureBuildPlan(participation);
+        if (profileService.isJenkinsActive()) {
+            // Step 2a) create the build plan (based on the BASE build plan)
+            participation = copyBuildPlan(participation);
+            // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
+            participation = configureBuildPlan(participation);
+        }
         // Note: the repository webhook (step 1c) already exists, so we don't need to set it up again, the empty commit hook (step 2c) is also not necessary here
         // and must be handled by the calling method in case it would be necessary
 

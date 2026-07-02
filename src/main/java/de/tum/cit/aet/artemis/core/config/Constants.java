@@ -328,6 +328,11 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
+     * The name of the Spring profile used for the external CI system Hades.
+     */
+    public static final String PROFILE_HADES = "hades";
+
+    /**
      * The name of the Spring profile used for activating the scheduling functionality.
      * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
      * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,

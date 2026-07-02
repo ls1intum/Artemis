@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.localci.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -19,7 +22,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  */
 @Lazy
 @Service
-@Profile("localci")
+@Profile({ PROFILE_LOCALCI, PROFILE_HADES })
 public class BuildScriptProviderService {
 
     /**

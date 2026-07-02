@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
@@ -36,6 +37,8 @@ public class ProgrammingExerciseImportService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+
+    private final ProfileService profileService;
 
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
@@ -56,13 +59,15 @@ public class ProgrammingExerciseImportService {
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
-            ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, TemplateUpgradePolicyService templateUpgradePolicyService,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProfileService profileService,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            TemplateUpgradePolicyService templateUpgradePolicyService, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.profileService = profileService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
@@ -81,7 +86,7 @@ public class ProgrammingExerciseImportService {
      * @param templateExercise The template exercise which plans should get copied
      * @param newExercise      The new exercise to which all plans should get copied
      */
-    public void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+    private void importBuildPlans(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
         final var templateParticipation = newExercise.getTemplateParticipation();
         final var solutionParticipation = newExercise.getSolutionParticipation();
         final var targetExerciseProjectKey = newExercise.getProjectKey();
@@ -203,10 +208,11 @@ public class ProgrammingExerciseImportService {
             // Create completely new build plans for the exercise
             programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(newProgrammingExercise);
         }
-        else {
+        else if (profileService.isJenkinsActive()) {
             // We have removed the automatic build trigger from test to base for new programming exercises.
             // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
-            // The importBuildPlans method includes this process
+            // The importBuildPlans method includes this process.
+            // Note: LocalCI/Hades have no per-exercise build plan to clone; their builds are triggered on-demand from the participation.
             importBuildPlans(originalProgrammingExercise, newProgrammingExercise);
         }
 

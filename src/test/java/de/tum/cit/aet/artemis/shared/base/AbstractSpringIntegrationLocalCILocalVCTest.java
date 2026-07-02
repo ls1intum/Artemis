@@ -54,10 +54,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
-import de.tum.cit.aet.artemis.localci.service.LocalCIService;
 import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.TestBuildAgentConfiguration;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
@@ -186,7 +186,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
-    protected LocalCIService continuousIntegrationService;
+    protected ContinuousIntegrationService continuousIntegrationService;
 
     @MockitoSpyBean
     protected LocalCITriggerService localCITriggerService;

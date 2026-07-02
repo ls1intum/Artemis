@@ -1,34 +1,17 @@
 package de.tum.cit.aet.artemis.localci.service.ci;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
-
-import java.util.regex.Pattern;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 
 /**
  * Abstract service for managing entities related to continuous integration.
  */
-public interface ContinuousIntegrationService {
-
-    // Match Unix and Windows paths because the notification plugin uses '/' and reports Windows paths like '/C:/
-    String matchPathEndingWithAssignmentDirectory = "(/?[^\0]+)*" + ASSIGNMENT_DIRECTORY;
-
-    String orMatchStartingWithRepoName = "|^" + ASSIGNMENT_REPO_NAME + "/"; // Needed for C build logs
-
-    Pattern ASSIGNMENT_PATH = Pattern.compile(matchPathEndingWithAssignmentDirectory + orMatchStartingWithRepoName);
-
-    enum BuildStatus {
-        INACTIVE, QUEUED, BUILDING
-    }
+public interface ContinuousIntegrationService extends StatelessCIService {
 
     /**
      * Creates the base build plan for the given programming exercise
@@ -95,8 +78,8 @@ public interface ContinuousIntegrationService {
     void deleteBuildPlan(String projectKey, String buildPlanId);
 
     /**
-     * Get the plan key of the finished build, the information of the build gets passed via the requestBody. The requestBody must match the information passed from the
-     * jenkins-server-notification-plugin, the body is described here: <a href="https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
+     * Get the plan key of the finished build, the information of the build get passed via the requestBody. The requestBody must match the information passed from the
+     * jenkins-server-notification-plugin, the body is described here: <a href= "https://github.com/ls1intum/jenkins-server-notification-plugin">...</a>
      *
      * @param requestBody The request Body received from the CI-Server.
      * @return the plan key of the build
@@ -104,14 +87,6 @@ public interface ContinuousIntegrationService {
      */
     // TODO: Move to a new ContinuousIntegrationBuildPlanService that is only implemented by the Jenkins subsystem
     String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
-
-    /**
-     * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
-     *
-     * @param participation participation for which to get status
-     * @return build status
-     */
-    BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation);
 
     /**
      * Check if the given build plan ID is valid and accessible.

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -29,12 +30,15 @@ public class ConsistencyCheckService {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
+    private final ProfileService profileService;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ConsistencyCheckService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProfileService profileService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.profileService = profileService;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
@@ -64,9 +68,10 @@ public class ConsistencyCheckService {
      * @return List containing the resulting errors, if any.
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfProgrammingExercise(ProgrammingExercise programmingExercise) {
-        List<ConsistencyErrorDTO> result = new ArrayList<>();
-        result.addAll(checkVCSConsistency(programmingExercise));
-        result.addAll(checkCIConsistency(programmingExercise));
+        List<ConsistencyErrorDTO> result = new ArrayList<>(checkVCSConsistency(programmingExercise));
+        if (profileService.isJenkinsActive()) {
+            result.addAll(checkCIConsistency(programmingExercise));
+        }
         return result;
     }
 
@@ -105,7 +110,7 @@ public class ConsistencyCheckService {
 
     /**
      * Checks if build plans (TEMPLATE, SOLUTION) exist in the CI for a given
-     * programming exercise.
+     * programming exercise. Only applicable for Jenkins; LocalCI/ Hades have no build plans to check.
      *
      * @param programmingExercise to check
      * @return List containing the resulting errors, if any.
@@ -123,5 +128,4 @@ public class ConsistencyCheckService {
 
         return result;
     }
-
 }

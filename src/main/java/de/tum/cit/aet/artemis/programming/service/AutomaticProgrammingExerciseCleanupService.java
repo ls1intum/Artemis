@@ -80,9 +80,10 @@ public class AutomaticProgrammingExerciseCleanupService {
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
+
         try {
-            if (!profileService.isLocalCIActive()) {
-                // no build plan cleanup is needed for systems using LocalCI
+            if (profileService.isJenkinsActive()) {
+                // build plan cleanup is only needed for Jenkins; LocalCI/Hades have no per-participation build plan to clean up
                 cleanupBuildPlansOnContinuousIntegrationServer();
             }
         }
@@ -185,7 +186,7 @@ public class AutomaticProgrammingExerciseCleanupService {
     }
 
     /**
-     * Cleans up old build plans on the continuous integration server
+     * Cleans up old build plans on the continuous integration server. Only applicable for Jenkins.
      */
     public void cleanupBuildPlansOnContinuousIntegrationServer() {
         log.info("Find build plans for potential cleanup");

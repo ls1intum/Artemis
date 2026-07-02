@@ -375,6 +375,37 @@ public class ProgrammingExerciseParticipationService {
      */
     public ProgrammingExerciseStudentParticipation findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId) throws EntityNotFoundException {
         ProgrammingExerciseStudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
+        return attachLatestSubmissionWithResult(participation, participationId);
+    }
+
+    /**
+     * Retrieves the {@link ProgrammingExerciseParticipation} (template, solution, or student) for the given ID,
+     * enriched with its latest {@link Submission} and the most recent {@link Result} with feedback (if available).
+     *
+     * <p>
+     * The lookup checks the template repository, then the solution repository, then the student repository,
+     * in that order. This is needed for CI callbacks (e.g., Hades) that send back only the participation ID
+     * without indicating the participation type.
+     * </p>
+     *
+     * @param participationId the ID of the participation to retrieve
+     * @return the participation enriched with its latest submission and corresponding result (if available)
+     * @throws EntityNotFoundException if no participation with the given ID exists in any of the three repositories
+     */
+    public ProgrammingExerciseParticipation findProgrammingExerciseParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(long participationId)
+            throws EntityNotFoundException {
+        Optional<TemplateProgrammingExerciseParticipation> template = templateParticipationRepository.findById(participationId);
+        if (template.isPresent()) {
+            return attachLatestSubmissionWithResult(template.get(), participationId);
+        }
+        Optional<SolutionProgrammingExerciseParticipation> solution = solutionParticipationRepository.findById(participationId);
+        if (solution.isPresent()) {
+            return attachLatestSubmissionWithResult(solution.get(), participationId);
+        }
+        return findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(participationId);
+    }
+
+    private <T extends Participation & ProgrammingExerciseParticipation> T attachLatestSubmissionWithResult(T participation, long participationId) {
         Optional<Submission> latestSubmissionOptional = submissionRepository.findLatestSubmissionByParticipationId(participationId);
         if (latestSubmissionOptional.isEmpty()) {
             participation.setSubmissions(Set.of());
