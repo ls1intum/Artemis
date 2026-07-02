@@ -143,6 +143,18 @@ export const courseRoutes: Routes = [
                         loadChildren: () => import('app/modeling/overview/modeling-exercise-split-panel.route').then((m) => m.modelingExerciseSplitPanelRoute),
                     },
                     {
+                        path: 'math-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/math/participate/math-editor.route').then((m) => m.mathEditorRoute),
+                    },
+                    {
                         path: 'file-upload-exercises/:exerciseId',
                         data: {
                             authorities: IS_AT_LEAST_STUDENT,

@@ -86,7 +86,7 @@ export class ExerciseGroupsComponent implements OnInit {
     exam = signal<Exam | undefined>(undefined);
     exerciseGroups = signal<ExerciseGroup[] | undefined>(undefined);
     dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
+    dialogError$ = this.dialogErrorSource.asObservable();
     exerciseType = ExerciseType;
     latestIndividualEndDate = signal<dayjs.Dayjs | undefined>(undefined);
     exerciseGroupToExerciseTypesDict = signal<Map<number, ExerciseType[]>>(new Map<number, ExerciseType[]>());
@@ -132,6 +132,7 @@ export class ExerciseGroupsComponent implements OnInit {
         this.textExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT));
         this.modelingExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING));
         this.fileUploadExerciseEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD));
+
         if (!this.textExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
         }
@@ -141,6 +142,7 @@ export class ExerciseGroupsComponent implements OnInit {
         if (!this.fileUploadExerciseEnabled()) {
             this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
         }
+        this.disabledExerciseTypes.push(ExerciseType.MATH);
     }
 
     /**

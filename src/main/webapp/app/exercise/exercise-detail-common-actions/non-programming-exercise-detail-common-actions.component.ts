@@ -6,6 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { Course } from 'app/course/shared/entities/course.model';
+import { MathExerciseService } from 'app/math/manage/service/math-exercise.service';
 import { Router, RouterLink } from '@angular/router';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -30,6 +31,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     private textExerciseService = inject(TextExerciseService);
     private fileUploadExerciseService = inject(FileUploadExerciseService);
     private modelingExerciseService = inject(ModelingExerciseService);
+    private mathExerciseService = inject(MathExerciseService);
     private exerciseService = inject(ExerciseService);
     private profileService = inject(ProfileService);
     private eventManager = inject(EventManager);
@@ -131,6 +133,19 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                         this.eventManager.broadcast({
                             name: 'modelingExerciseListModification',
                             content: 'Deleted an modelingExercise',
+                        });
+                        this.dialogErrorSource.next('');
+                        this.navigateToOverview();
+                    },
+                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                });
+                break;
+            case ExerciseType.MATH:
+                this.mathExerciseService.delete(exercise.id!).subscribe({
+                    next: () => {
+                        this.eventManager.broadcast({
+                            name: 'mathExerciseListModification',
+                            content: 'Deleted a mathExercise',
                         });
                         this.dialogErrorSource.next('');
                         this.navigateToOverview();

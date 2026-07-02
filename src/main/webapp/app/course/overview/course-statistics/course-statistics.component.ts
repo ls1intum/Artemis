@@ -43,6 +43,7 @@ const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
 const MODELING_EXERCISE_COLOR = '#6610f2';
 const TEXT_EXERCISE_COLOR = '#B00B6B';
 const FILE_UPLOAD_EXERCISE_COLOR = '#2D9C88';
+const MATH_EXERCISE_COLOR = '#4A90D9';
 
 interface YourOverallPointsEntry extends ChartSeriesEntry {
     color: string;
@@ -181,6 +182,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         MODELING_EXERCISE_COLOR,
         TEXT_EXERCISE_COLOR,
         FILE_UPLOAD_EXERCISE_COLOR,
+        MATH_EXERCISE_COLOR,
         GraphColors.LIGHT_BLUE,
         GraphColors.RED,
     ];
@@ -196,6 +198,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     modelingPointLabel = 'modelingPointLabel';
     textPointLabel = 'textPointLabel';
     fileUploadPointLabel = 'fileUploadPointLabel';
+    mathPointLabel = 'mathPointLabel';
     presentationPointsLabel = 'presentationPointsLabel';
     missingPointsLabel = 'missingPointsLabel';
     labels = [
@@ -204,6 +207,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.modelingPointLabel,
         this.textPointLabel,
         this.fileUploadPointLabel,
+        this.mathPointLabel,
         this.presentationPointsLabel,
         this.missingPointsLabel,
     ];
@@ -325,6 +329,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.exerciseTitles.set(ExerciseType.PROGRAMMING, new ExerciseTitle(this.translateService.instant('artemisApp.course.programmingExercises'), PROGRAMMING_EXERCISE_COLOR));
         this.exerciseTitles.set(ExerciseType.TEXT, new ExerciseTitle(this.translateService.instant('artemisApp.course.textExercises'), TEXT_EXERCISE_COLOR));
         this.exerciseTitles.set(ExerciseType.FILE_UPLOAD, new ExerciseTitle(this.translateService.instant('artemisApp.course.fileUploadExercises'), FILE_UPLOAD_EXERCISE_COLOR));
+        this.exerciseTitles.set(ExerciseType.MATH, new ExerciseTitle(this.translateService.instant('artemisApp.course.mathExercises'), MATH_EXERCISE_COLOR));
     }
 
     ngAfterViewInit() {
@@ -488,6 +493,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const modelingExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MODELING, ScoreType.ABSOLUTE_SCORE);
         const textExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.TEXT, ScoreType.ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.ABSOLUTE_SCORE);
+        const mathExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MATH, ScoreType.ABSOLUTE_SCORE);
         const course = this.course();
         this.overallPoints.set(this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE));
         const totalPresentationPoints = course?.presentationScore ? 0 : this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE);
@@ -502,6 +508,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             modelingExerciseTotalScore,
             textExerciseTotalScore,
             fileUploadExerciseTotalScore,
+            mathExerciseTotalScore,
             totalPresentationPoints,
             totalMissedPoints,
         ];
@@ -511,6 +518,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.overallPointsPerExercise.set(ExerciseType.MODELING, modelingExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.TEXT, textExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseTotalScore);
+        this.overallPointsPerExercise.set(ExerciseType.MATH, mathExerciseTotalScore);
         const doughnutEntriesTemp: YourOverallPointsEntry[] = [];
         scores.forEach((score, index) => {
             if (score > 0) {
@@ -534,11 +542,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const modelingExerciseTotalMaxPoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MODELING, ScoreType.MAX_POINTS);
         const textExerciseTotalMaxPoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.TEXT, ScoreType.MAX_POINTS);
         const fileUploadExerciseTotalMaxPoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.MAX_POINTS);
+        const mathExerciseTotalMaxPoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MATH, ScoreType.MAX_POINTS);
         this.overallMaxPointsPerExercise.set(ExerciseType.QUIZ, quizzesTotalMaxPoints);
         this.overallMaxPointsPerExercise.set(ExerciseType.PROGRAMMING, programmingExerciseTotalMaxPoints);
         this.overallMaxPointsPerExercise.set(ExerciseType.MODELING, modelingExerciseTotalMaxPoints);
         this.overallMaxPointsPerExercise.set(ExerciseType.TEXT, textExerciseTotalMaxPoints);
         this.overallMaxPointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseTotalMaxPoints);
+        this.overallMaxPointsPerExercise.set(ExerciseType.MATH, mathExerciseTotalMaxPoints);
         this.overallMaxPoints.set(this.retrieveTotalScoreByScoreType(ScoreType.MAX_POINTS));
     }
 
@@ -551,11 +561,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const modelingExerciseRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MODELING, ScoreType.RELATIVE_SCORE);
         const textExerciseRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.TEXT, ScoreType.RELATIVE_SCORE);
         const fileUploadExerciseRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.RELATIVE_SCORE);
+        const mathExerciseRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MATH, ScoreType.RELATIVE_SCORE);
         this.relativeScoresPerExercise.set(ExerciseType.QUIZ, quizzesRelativeScore);
         this.relativeScoresPerExercise.set(ExerciseType.PROGRAMMING, programmingExerciseRelativeScore);
         this.relativeScoresPerExercise.set(ExerciseType.MODELING, modelingExerciseRelativeScore);
         this.relativeScoresPerExercise.set(ExerciseType.TEXT, textExerciseRelativeScore);
         this.relativeScoresPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseRelativeScore);
+        this.relativeScoresPerExercise.set(ExerciseType.MATH, mathExerciseRelativeScore);
         this.totalRelativeScore.set(this.retrieveTotalScoreByScoreType(ScoreType.RELATIVE_SCORE));
     }
 
@@ -568,11 +580,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const modelingExercisesReachablePoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MODELING, ScoreType.REACHABLE_POINTS);
         const textExercisesReachablePoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.TEXT, ScoreType.REACHABLE_POINTS);
         const fileUploadExercisesReachablePoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.REACHABLE_POINTS);
+        const mathExercisesReachablePoints = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MATH, ScoreType.REACHABLE_POINTS);
         this.reachablePointsPerExercise.set(ExerciseType.QUIZ, quizzesReachablePoints);
         this.reachablePointsPerExercise.set(ExerciseType.PROGRAMMING, programmingExercisesReachablePoints);
         this.reachablePointsPerExercise.set(ExerciseType.MODELING, modelingExercisesReachablePoints);
         this.reachablePointsPerExercise.set(ExerciseType.TEXT, textExercisesReachablePoints);
         this.reachablePointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExercisesReachablePoints);
+        this.reachablePointsPerExercise.set(ExerciseType.MATH, mathExercisesReachablePoints);
         this.reachablePoints.set(this.retrieveTotalScoreByScoreType(ScoreType.REACHABLE_POINTS));
     }
 
@@ -585,11 +599,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const modelingExerciseCurrentRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MODELING, ScoreType.CURRENT_RELATIVE_SCORE);
         const textExerciseCurrentRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.TEXT, ScoreType.CURRENT_RELATIVE_SCORE);
         const fileUploadExerciseCurrentRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.CURRENT_RELATIVE_SCORE);
+        const mathExerciseCurrentRelativeScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MATH, ScoreType.CURRENT_RELATIVE_SCORE);
         this.currentRelativeScoresPerExercise.set(ExerciseType.QUIZ, quizzesCurrentRelativeScore);
         this.currentRelativeScoresPerExercise.set(ExerciseType.PROGRAMMING, programmingExerciseCurrentRelativeScore);
         this.currentRelativeScoresPerExercise.set(ExerciseType.MODELING, modelingExerciseCurrentRelativeScore);
         this.currentRelativeScoresPerExercise.set(ExerciseType.TEXT, textExerciseCurrentRelativeScore);
         this.currentRelativeScoresPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseCurrentRelativeScore);
+        this.currentRelativeScoresPerExercise.set(ExerciseType.MATH, mathExerciseCurrentRelativeScore);
         this.currentRelativeScore.set(this.retrieveTotalScoreByScoreType(ScoreType.CURRENT_RELATIVE_SCORE));
     }
 
@@ -606,6 +622,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.presentationScoresPerExercise.set(ExerciseType.MODELING, modelingExercisePresentationScore);
         this.presentationScoresPerExercise.set(ExerciseType.TEXT, textExercisePresentationScore);
         this.presentationScoresPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExercisePresentationScore);
+        this.presentationScoresPerExercise.set(ExerciseType.MATH, 0);
         this.overallPresentationScore.set(this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE));
     }
 

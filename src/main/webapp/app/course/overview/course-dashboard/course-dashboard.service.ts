@@ -111,6 +111,8 @@ export class CourseDashboardService {
                 return ExerciseType.TEXT;
             case 'file-upload':
                 return ExerciseType.FILE_UPLOAD;
+            case 'math':
+                return ExerciseType.MATH;
             default:
                 throw new Error(`Unknown exercise type: ${type}`);
         }

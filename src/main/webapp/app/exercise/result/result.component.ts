@@ -227,11 +227,18 @@ export class ResultComponent {
         const exerciseService = this.exerciseCacheService ?? this.exerciseService;
         const exercise = this.resolvedExercise();
         const participation = this.resolvedParticipation();
-        if (exercise?.type === ExerciseType.TEXT || exercise?.type === ExerciseType.MODELING) {
+        if (exercise?.type === ExerciseType.TEXT || exercise?.type === ExerciseType.MODELING || exercise?.type === ExerciseType.MATH) {
             const courseId = getCourseFromExercise(exercise)?.id;
             const submissionId = result.submission?.id;
 
-            const exerciseTypePath = exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
+            let exerciseTypePath: string;
+            if (exercise?.type === ExerciseType.TEXT) {
+                exerciseTypePath = 'text-exercises';
+            } else if (exercise?.type === ExerciseType.MATH) {
+                exerciseTypePath = 'math-exercises';
+            } else {
+                exerciseTypePath = 'modeling-exercises';
+            }
 
             this.router.navigate([
                 '/courses',

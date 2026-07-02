@@ -17,6 +17,7 @@ import { InitializationState } from 'app/exercise/shared/entities/participation/
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
@@ -608,11 +609,13 @@ export class ExerciseService {
                 break;
             case ExerciseType.TEXT:
             case ExerciseType.FILE_UPLOAD:
-                const textOrFileUploadExercise = exercise as TextExercise & FileUploadExercise;
-                if (textOrFileUploadExercise.exampleSolution) {
-                    exampleSolution = artemisMarkdown.safeHtmlForMarkdown(textOrFileUploadExercise.exampleSolution);
+            case ExerciseType.MATH: {
+                const textOrFileUploadOrMathExercise = exercise as TextExercise & FileUploadExercise & MathExercise;
+                if (textOrFileUploadOrMathExercise.exampleSolution) {
+                    exampleSolution = artemisMarkdown.safeHtmlForMarkdown(textOrFileUploadOrMathExercise.exampleSolution);
                 }
                 break;
+            }
             case ExerciseType.PROGRAMMING:
                 programmingExercise = exercise as ProgrammingExercise;
                 break;

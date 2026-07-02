@@ -425,6 +425,6 @@ export class ExamExerciseImportComponent implements OnInit {
     }
 
     protected isExerciseTypeEnabled(type: ExerciseType | undefined): boolean {
-        return !(type === ExerciseType.TEXT && !this.textExerciseEnabled);
+        return type !== ExerciseType.MATH && !(type === ExerciseType.TEXT && !this.textExerciseEnabled);
     }
 }

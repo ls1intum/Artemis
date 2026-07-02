@@ -159,7 +159,8 @@
                     "modeling": "Modeling",
                     "text": "Text",
                     "fileUpload": "File Upload",
-                    "quiz": "Quiz"
+                    "quiz": "Quiz",
+                    "math": "Math"
                 },
                 "metis": {
                     "post": "Post",

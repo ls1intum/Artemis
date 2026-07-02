@@ -6,6 +6,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
+import { MathSubmissionComponent } from 'app/math/participate/math-submission/math-submission.component';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
@@ -180,6 +181,8 @@ export class ExerciseSplitPanelComponent {
                 return 'artemisApp.courseOverview.exerciseDetails.fileUploadEditor';
             case ExerciseType.QUIZ:
                 return 'artemisApp.courseOverview.exerciseDetails.quizEditor';
+            case ExerciseType.MATH:
+                return 'artemisApp.courseOverview.exerciseDetails.mathEditor';
             default:
                 return 'artemisApp.courseOverview.exerciseDetails.codeEditor';
         }
@@ -187,7 +190,14 @@ export class ExerciseSplitPanelComponent {
 
     readonly usesRouterOutlet = computed(() => {
         const type = this.exercise().type;
-        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD || type === ExerciseType.QUIZ || this.showCodeEditor();
+        return (
+            type === ExerciseType.TEXT ||
+            type === ExerciseType.MODELING ||
+            type === ExerciseType.FILE_UPLOAD ||
+            type === ExerciseType.QUIZ ||
+            type === ExerciseType.MATH ||
+            this.showCodeEditor()
+        );
     });
 
     readonly showComplaintView = computed(() => {
@@ -260,6 +270,8 @@ export class ExerciseSplitPanelComponent {
                     this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
                 } else if (type === ExerciseType.FILE_UPLOAD) {
                     this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+                } else if (type === ExerciseType.MATH) {
+                    this.router.navigate(['math-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
                 }
             });
         });
@@ -292,7 +304,7 @@ export class ExerciseSplitPanelComponent {
         if (type === ExerciseType.PROGRAMMING) {
             return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
         }
-        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD;
+        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD || type === ExerciseType.MATH;
     });
 
     submitExercise(): void {
@@ -300,6 +312,8 @@ export class ExerciseSplitPanelComponent {
         if (context?.outlet?.isActivated) {
             const component = context.outlet.component;
             if (component instanceof TextEditorComponent) {
+                component.submit();
+            } else if (component instanceof MathSubmissionComponent) {
                 component.submit();
             } else if (component instanceof CodeEditorStudentContainerComponent) {
                 component.commit();

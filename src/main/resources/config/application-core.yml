@@ -17,6 +17,8 @@ artemis:
         enabled: true
     fileupload:
         enabled: true
+    math:
+        enabled: false
     lecture:
         enabled: true
     sharing:

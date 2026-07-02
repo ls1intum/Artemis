@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -471,6 +472,8 @@ public class ExamImportService {
                         // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
                         yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
                     }
+
+                    case MATH -> throw new BadRequestAlertException("Math exercises cannot be imported into an exam", "exam", "mathNotAllowedInExam");
                 };
                 // Attach the newly created Exercise to the new Exercise Group only if the importing was successful.
                 // An empty result means the exercise could not be imported (e.g. the responsible import module is

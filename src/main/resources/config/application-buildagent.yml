@@ -24,6 +24,8 @@ artemis:
         enabled: false
     fileupload:
         enabled: false
+    math:
+        enabled: false
     lecture:
         enabled: false
     tutorialgroup:

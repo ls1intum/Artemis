@@ -141,6 +141,11 @@ public class ExerciseVersionService {
             log.error("createExerciseVersion called with null");
             return;
         }
+        if (targetExercise.getExerciseType() == ExerciseType.MATH) {
+            // Math exercise versioning is not yet implemented; skip explicitly so we do not log a misleading "not found" error.
+            log.debug("Skipping exercise version creation for math exercise {} (versioning not yet supported)", targetExercise.getId());
+            return;
+        }
         try {
             Exercise exercise = fetchExerciseEagerly(targetExercise);
             if (exercise == null) {
@@ -213,6 +218,7 @@ public class ExerciseVersionService {
             case TEXT -> textRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case MODELING -> modelingRepositoryApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
+            case MATH -> null; // TODO: Implement mathExerciseRepository.findForVersioningById
         };
         if (fetched != null) {
             Channel channel = channelRepository.findChannelByExerciseId(fetched.getId());

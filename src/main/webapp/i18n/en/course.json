@@ -44,6 +44,7 @@
                     "numberOfModelingExercises": "Modeling Exercises",
                     "numberOfQuizExercises": "Quiz Exercises",
                     "numberOfFileUploadExercises": "File Upload Exercises",
+                    "numberOfMathExercises": "Math Exercises",
                     "numberOfParticipations": "Participations",
                     "numberOfSubmissions": "Submissions",
                     "numberOfResults": "Results",
@@ -274,6 +275,7 @@
             "quizExercises": "Quiz Exercises",
             "modelingExercises": "Modeling Exercises",
             "textExercises": "Text Exercises",
+            "mathExercises": "Math Exercises",
             "upload": "Upload",
             "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises",
@@ -299,7 +301,8 @@
                         "quiz": "Quiz Exercises",
                         "modeling": "Modeling Exercises",
                         "text": "Text Exercises",
-                        "file-upload": "File Upload Exercises"
+                        "file-upload": "File Upload Exercises",
+                        "math": "Math Exercises"
                     }
                 }
             },
@@ -512,6 +515,7 @@
             "modeling": "Modeling",
             "text": "Text",
             "file-upload": "File Upload",
+            "math": "Math",
             "chartLegend": {
                 "lowest": "Lowest performing third",
                 "average": "Average performing third",

@@ -131,7 +131,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     @ParameterizedTest
-    @EnumSource(ExerciseType.class)
+    // MATH excluded: math exercise versioning is not yet implemented (see createExerciseByType)
+    @EnumSource(value = ExerciseType.class, names = "MATH", mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExerciseVersionOnCreate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
@@ -140,7 +141,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     @ParameterizedTest
-    @EnumSource(ExerciseType.class)
+    // MATH excluded: math exercise versioning is not yet implemented (see createExerciseByType)
+    @EnumSource(value = ExerciseType.class, names = "MATH", mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExerciseVersionOnUpdate(ExerciseType exerciseType) throws Exception {
         Exercise exercise = createExerciseByType(exerciseType);
@@ -169,7 +171,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     @ParameterizedTest
-    @EnumSource(value = ExerciseType.class, names = "QUIZ", mode = EnumSource.Mode.EXCLUDE)
+    // MATH excluded: math exercise versioning is not yet implemented (see createExerciseByType)
+    @EnumSource(value = ExerciseType.class, names = { "QUIZ", "MATH" }, mode = EnumSource.Mode.EXCLUDE)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExerciseVersionOnInvalidUpdate(ExerciseType exerciseType) throws Exception {
         Exercise exercise = createExerciseByType(exerciseType);
@@ -235,6 +238,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
             case QUIZ -> createQuizExercise();
             case MODELING -> createModelingExercise();
             case FILE_UPLOAD -> createFileUploadExercise();
+            case MATH -> throw new UnsupportedOperationException("Math exercise versioning is not yet implemented");
         };
     }
 

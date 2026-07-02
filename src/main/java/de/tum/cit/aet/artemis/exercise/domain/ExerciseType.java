@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.domain;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.math.domain.MathExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -10,7 +11,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 public enum ExerciseType {
 
-    TEXT("text"), PROGRAMMING("programming"), MODELING("modeling"), FILE_UPLOAD("file-upload"), QUIZ("quiz");
+    TEXT("text"), PROGRAMMING("programming"), MODELING("modeling"), FILE_UPLOAD("file-upload"), QUIZ("quiz"), MATH("math");
 
     private final String value;
 
@@ -50,6 +51,7 @@ public enum ExerciseType {
             case MODELING -> ModelingExercise.class;
             case FILE_UPLOAD -> FileUploadExercise.class;
             case QUIZ -> QuizExercise.class;
+            case MATH -> MathExercise.class;
         };
     }
 
@@ -66,6 +68,7 @@ public enum ExerciseType {
             case "ModelingExercise" -> MODELING;
             case "FileUploadExercise" -> FILE_UPLOAD;
             case "QuizExercise" -> QUIZ;
+            case "MathExercise" -> MATH;
             default -> throw new IllegalArgumentException("Received unexecpted exercise class name %s".formatted(exerciseClass.getSimpleName()));
         };
     }

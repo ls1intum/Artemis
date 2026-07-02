@@ -1,0 +1,126 @@
+import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MathExercise } from 'app/math/shared/entities/math-exercise.model';
+import { resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { MathExerciseService } from '../service/math-exercise.service';
+import { FormsModule } from '@angular/forms';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
+import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
+
+@Component({
+    selector: 'jhi-math-exercise-update',
+    templateUrl: './math-exercise-update.component.html',
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        CategorySelectorPrimengComponent,
+        DifficultyPickerComponent,
+        IncludedInOverallScorePickerComponent,
+        MarkdownEditorMonacoComponent,
+        FormDateTimePickerComponent,
+        ArtemisTranslatePipe,
+        DocumentationButtonComponent,
+        ButtonModule,
+        CheckboxModule,
+        InputTextModule,
+        TextareaModule,
+        TooltipModule,
+    ],
+})
+export class MathExerciseUpdateComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private mathExerciseService = inject(MathExerciseService);
+    private exerciseService = inject(ExerciseService);
+    private router = inject(Router);
+
+    protected readonly documentationType: DocumentationType = 'Exercise';
+
+    // mathExercise is deeply template-bound through [(ngModel)] and populated asynchronously from the route;
+    // using a getter/setter-over-signal facade satisfies prefer-signal-template-state while
+    // keeping the existing synchronous reads/writes ([(ngModel)] bindings, this.mathExercise = ... assignments) unchanged.
+    private readonly _mathExercise = signal<MathExercise>(undefined!);
+    get mathExercise(): MathExercise {
+        return this._mathExercise();
+    }
+    set mathExercise(value: MathExercise) {
+        this._mathExercise.set(value);
+    }
+
+    readonly isSaving = signal(false);
+    readonly isImport = signal(false);
+    exerciseCategories = signal<ExerciseCategory[]>([]);
+    existingCategories = signal<ExerciseCategory[]>([]);
+
+    releaseDateField = viewChild<FormDateTimePickerComponent>('releaseDate');
+    startDateField = viewChild<FormDateTimePickerComponent>('startDate');
+    dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
+    assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
+
+    ngOnInit() {
+        this.isSaving.set(false);
+        this.isImport.set(this.activatedRoute.snapshot.url.some((segment) => segment.path === 'import'));
+        this.activatedRoute.data.subscribe(({ mathExercise }) => {
+            this.mathExercise = mathExercise;
+            if (this.isImport()) {
+                // Keep the source id (the import endpoint needs it as a query parameter) but clear the
+                // schedule-related fields so the copy starts as a fresh, unscheduled exercise.
+                resetForImport(this.mathExercise);
+            }
+            this.exerciseCategories.set(this.mathExercise.categories || []);
+        });
+    }
+
+    updateCategories(categories: ExerciseCategory[]) {
+        this.mathExercise.categories = categories;
+    }
+
+    validateDate() {
+        this.exerciseService.validateDate(this.mathExercise);
+    }
+
+    save() {
+        this.isSaving.set(true);
+        if (this.isImport()) {
+            this.mathExerciseService.import(this.mathExercise).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
+        } else if (this.mathExercise.id !== undefined) {
+            this.mathExerciseService.update(this.mathExercise).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
+        } else {
+            this.mathExerciseService.create(this.mathExercise).subscribe({
+                next: () => this.onSaveSuccess(),
+                error: () => this.onSaveError(),
+            });
+        }
+    }
+
+    previousState() {
+        this.router.navigate(['course-management', this.mathExercise.course?.id || this.activatedRoute.snapshot.params['courseId'], 'math-exercises']);
+    }
+
+    private onSaveSuccess() {
+        this.isSaving.set(false);
+        this.previousState();
+    }
+
+    private onSaveError() {
+        this.isSaving.set(false);
+    }
+}

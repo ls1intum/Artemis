@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
+import de.tum.cit.aet.artemis.math.util.MathExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -56,6 +57,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentBa
         var quizExercise = QuizExerciseFactory.generateQuizExercise(null, null, null, course);
         var fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(null, null, null, null, course);
         var programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(null, null, course);
+        var mathExercise = MathExerciseFactory.generateMathExercise(null, null, null, course);
 
         exerciseByType = new HashMap<>();
         exerciseByType.put(ExerciseType.TEXT, textExercise);
@@ -63,6 +65,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentBa
         exerciseByType.put(ExerciseType.QUIZ, quizExercise);
         exerciseByType.put(ExerciseType.FILE_UPLOAD, fileUploadExercise);
         exerciseByType.put(ExerciseType.PROGRAMMING, programmingExercise);
+        exerciseByType.put(ExerciseType.MATH, mathExercise);
     }
 
     @ParameterizedTest
@@ -360,6 +363,7 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentBa
             case QUIZ -> new QuizSubmission();
             case FILE_UPLOAD -> new FileUploadSubmission();
             case PROGRAMMING -> new ProgrammingSubmission();
+            case MATH -> new de.tum.cit.aet.artemis.math.domain.MathSubmission();
         };
     }
 }

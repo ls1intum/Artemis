@@ -113,4 +113,23 @@
             />
         </jhi-course-exercise-card>
     }
+    @if (mathExerciseEnabled()) {
+        <jhi-course-exercise-card
+            [headingJhiTranslate]="'artemisApp.course.mathExercises'"
+            [leadingIcon]="iconMap[ExerciseType.MATH]"
+            [exerciseCount]="mathExercisesCount()"
+            [hidden]="shouldHideExerciseCard('math')"
+            [course]="course()!"
+        >
+            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course()!" [exerciseType]="ExerciseType.MATH" />
+            <jhi-math-exercise
+                exercises
+                [embedded]="true"
+                [course]="course()!"
+                [exerciseFilter]="exerciseFilter()"
+                (exerciseCount)="mathExercisesCount.set($event)"
+                (filteredExerciseCount)="filteredMathExercisesCount.set($event)"
+            />
+        </jhi-course-exercise-card>
+    }
 }

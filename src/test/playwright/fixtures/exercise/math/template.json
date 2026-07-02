@@ -1,0 +1,16 @@
+{
+    "type": "math",
+    "title": "Math Exercise 1",
+    "shortName": "math1",
+    "maxPoints": 10,
+    "bonusPoints": 0,
+    "includedInOverallScore": "INCLUDED_COMPLETELY",
+    "problemStatement": "Prove that 0 + x = x.",
+    "description": "Apply the add_zero_left rule to reach the goal.",
+    "exampleSolution": "Apply add_zero_left at the root.",
+    "presentationScoreEnabled": false,
+    "secondCorrectionEnabled": false,
+    "allowFeedbackRequests": false,
+    "allowComplaintsForAutomaticAssessments": false,
+    "manualDerivation": false
+}

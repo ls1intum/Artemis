@@ -16,7 +16,7 @@ import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entit
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faCalculator, faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 export enum DifficultyLevel {
@@ -37,6 +37,7 @@ export enum ExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+    MATH = 'math',
 }
 
 export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
@@ -64,7 +65,7 @@ export const DEFAULT_PLAGIARISM_DETECTION_CONFIG: PlagiarismDetectionConfig = {
     minimumScore: 0,
 };
 
-export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
+export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ, ExerciseType.MATH];
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
 export enum IncludedInOverallScore {
@@ -189,6 +190,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.QUIZ]: faCheckDouble,
         [ExerciseType.TEXT]: faFont,
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
+        [ExerciseType.MATH]: faCalculator,
     };
 
     return icons[exerciseType] ?? (faQuestion as IconProp);
@@ -204,6 +206,7 @@ export function getIconTooltip(exerciseType?: ExerciseType): string {
         [ExerciseType.QUIZ]: 'artemisApp.exercise.isQuiz',
         [ExerciseType.TEXT]: 'artemisApp.exercise.isText',
         [ExerciseType.FILE_UPLOAD]: 'artemisApp.exercise.isFileUpload',
+        [ExerciseType.MATH]: 'artemisApp.exercise.isMath',
     };
 
     return tooltips[exerciseType];
@@ -244,6 +247,8 @@ export function declareExerciseType(exerciseInfo: ExerciseInfo): ExerciseType | 
             return ExerciseType.FILE_UPLOAD;
         case 'QuizExercise':
             return ExerciseType.QUIZ;
+        case 'MathExercise':
+            return ExerciseType.MATH;
     }
     return undefined;
 }
@@ -265,6 +270,8 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
             return 'file-upload-exercises';
         case ExerciseType.QUIZ:
             return 'quiz-exercises';
+        case ExerciseType.MATH:
+            return 'math-exercises';
         default:
             throw Error('Unexpected exercise type: ' + exerciseType);
     }

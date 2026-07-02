@@ -16,10 +16,12 @@ import multipleChoiceSubmissionTemplate from '../../fixtures/exercise/quiz/multi
 import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_answer/submission.json';
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
+import mathExerciseTemplate from '../../fixtures/exercise/math/template.json';
 import {
     ExerciseMode,
     MODELING_EXERCISE_BASE,
     PROGRAMMING_EXERCISE_BASE,
+    MATH_EXERCISE_BASE,
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
     QUIZ_EXERCISE_BASE,
@@ -278,6 +280,36 @@ export class ExerciseAPIRequests {
      */
     async deleteTextExercise(exerciseId: number) {
         await this.page.request.delete(`${TEXT_EXERCISE_BASE}/${exerciseId}`);
+    }
+
+    /**
+     * Creates a math exercise on the given course.
+     *
+     * Math exercises are course-only — they cannot be added to exam exercise groups.
+     *
+     * @param body - An object containing the course the exercise will be added to.
+     * @param title - The title for the math exercise (optional, default: auto-generated).
+     * @param exerciseTemplate - The DTO payload skeleton (optional, default: math template fixture).
+     */
+    async createMathExercise(body: { course: Course }, title = 'Math ' + generateUUID(), exerciseTemplate: any = mathExerciseTemplate): Promise<any> {
+        const shortName = ('math' + generateUUID()).replace(/-/g, '').slice(0, 20);
+        const payload = {
+            ...exerciseTemplate,
+            title,
+            shortName,
+            courseId: body.course.id,
+        };
+        const response = await this.page.request.post(MATH_EXERCISE_BASE, { data: payload });
+        return response.json();
+    }
+
+    /**
+     * Deletes a math exercise with the specified exercise ID.
+     *
+     * @param exerciseId - The ID of the math exercise to be deleted.
+     */
+    async deleteMathExercise(exerciseId: number) {
+        await this.page.request.delete(`${MATH_EXERCISE_BASE}/${exerciseId}`);
     }
 
     /**

@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.math.domain.MathSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -64,6 +65,7 @@ public class SubmissionFilterService {
             case ModelingSubmission modelingSubmission -> isModelingSubmissionRelevantForCourseDashboard(modelingSubmission, ignoreAssessmentDueDate);
             case TextSubmission textSubmission -> isTextSubmissionRelevantForCourseDashboard(textSubmission, ignoreAssessmentDueDate);
             case FileUploadSubmission fileUploadSubmission -> isFileUploadSubmissionRelevantForCourseDashboard(fileUploadSubmission, ignoreAssessmentDueDate);
+            case MathSubmission mathSubmission -> isMathSubmissionRelevantForCourseDashboard(mathSubmission, ignoreAssessmentDueDate);
             case QuizSubmission quizSubmission -> isQuizSubmissionRelevantForCourseDashboard(quizSubmission);
             default -> throw new IllegalArgumentException("Unsupported submission type: " + submission.getClass());
         };
@@ -125,6 +127,10 @@ public class SubmissionFilterService {
 
     private boolean isFileUploadSubmissionRelevantForCourseDashboard(FileUploadSubmission fileUploadSubmission, boolean ignoreAssessmentDueDate) {
         return isNonProgrammingSubmissionRelevantForCourseDashboard(fileUploadSubmission, ignoreAssessmentDueDate);
+    }
+
+    private boolean isMathSubmissionRelevantForCourseDashboard(MathSubmission mathSubmission, boolean ignoreAssessmentDueDate) {
+        return isNonProgrammingSubmissionRelevantForCourseDashboard(mathSubmission, ignoreAssessmentDueDate);
     }
 
     private boolean isQuizSubmissionRelevantForCourseDashboard(QuizSubmission quizSubmission) {
