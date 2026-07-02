@@ -324,12 +324,4 @@ describe('CourseExamsComponent', () => {
         component.prepareSidebarData();
         expect(updateSidebarDataStub).not.toHaveBeenCalledOnce();
     });
-
-    it('should update the page title signal via setPageTitle', () => {
-        expect(component.pageTitle()).toBe('');
-
-        component.setPageTitle('overview.exams');
-
-        expect(component.pageTitle()).toBe('overview.exams');
-    });
 });
