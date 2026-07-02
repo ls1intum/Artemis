@@ -167,8 +167,10 @@ public class HyperionCompetencyContextService {
             // Exercises are passed through an intermediate LLM call that extracts core challenges
             // and learning objectives, avoiding raw problem statement text in the final prompt.
             // Capped at MAX_EXERCISE_SUMMARIES to bound the number of synchronous LLM calls.
-            competencyRelationApi.get().findExercisesByCompetencyIds(selectedIds).stream().filter(ex -> ex.getProblemStatement() != null && !ex.getProblemStatement().isBlank())
-                    .limit(MAX_EXERCISE_SUMMARIES).map(this::summarizeExercise).filter(Objects::nonNull).forEach(snippets::add);
+            // The summarization calls are independent, so they run in parallel via parallelStream().
+            List<Exercise> exercisesToSummarize = competencyRelationApi.get().findExercisesByCompetencyIds(selectedIds).stream()
+                    .filter(ex -> ex.getProblemStatement() != null && !ex.getProblemStatement().isBlank()).limit(MAX_EXERCISE_SUMMARIES).toList();
+            snippets.addAll(exercisesToSummarize.parallelStream().map(this::summarizeExercise).filter(Objects::nonNull).toList());
         }
 
         return snippets.stream().distinct().toList();

@@ -1,9 +1,10 @@
-import { Component, DestroyRef, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
-import { faCircleNotch, faPaperPlane, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TooltipModule } from 'primeng/tooltip';
+import { faCircleNotch, faPaperPlane, faRotateLeft, faWandMagicSparkles, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,6 +14,7 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, finalize } from 'rxjs/operators';
@@ -22,7 +24,7 @@ import { debounceTime, finalize } from 'rxjs/operators';
     templateUrl: './quiz-ai-question-refinement-panel.component.html',
     styleUrl: './quiz-ai-question-refinement-panel.component.scss',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ButtonModule, TextareaModule, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, ButtonModule, TextareaModule, TooltipModule, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class QuizAiQuestionRefinementPanelComponent {
     private alertService = inject(AlertService);
@@ -35,6 +37,7 @@ export class QuizAiQuestionRefinementPanelComponent {
     protected readonly faPaperPlane = faPaperPlane;
     protected readonly faWandMagicSparkles = faWandMagicSparkles;
     protected readonly faCloseMark = faXmark;
+    protected readonly faRotateLeft = faRotateLeft;
     readonly hyperionEnabled: boolean = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     question = input.required<QuizQuestion>();
@@ -43,14 +46,19 @@ export class QuizAiQuestionRefinementPanelComponent {
     isRefinementPanelCollapsed = input(false);
     /** Reasoning text provided by the parent after a global bulk refinement; shown in place of the per-question reasoning. */
     externalReasoning = input<string | undefined>(undefined);
+    /** Snapshot of this question before the last global bulk refinement, provided by the parent. */
+    externalPreviousQuestion = input<MultipleChoiceQuestion | undefined>(undefined);
 
     questionRefined = output<MultipleChoiceQuestion>();
-    /** Emitted when the user dismisses an externally-provided reasoning card. */
+    /** Emitted when the user dismisses an externally-provided reasoning card (or restores a previous version). */
     reasoningDismissed = output();
 
     refinePrompt = signal('');
     isRefining = signal(false);
     refinementExplanation = signal<string | undefined>(undefined);
+    /** Snapshot of this question taken just before the last per-question refinement. */
+    previousQuestion = signal<MultipleChoiceQuestion | undefined>(undefined);
+    restorable = computed(() => this.previousQuestion() ?? this.externalPreviousQuestion());
     promptPlaceholder = signal(this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.promptPlaceholder'));
 
     private refineSubscription?: Subscription;
@@ -67,6 +75,7 @@ export class QuizAiQuestionRefinementPanelComponent {
             if (!this.isOpen()) {
                 this.refinePrompt.set('');
                 this.refinementExplanation.set(undefined);
+                this.previousQuestion.set(undefined);
                 this.refineSubscription?.unsubscribe();
                 this.isRefining.set(false);
             }
@@ -77,9 +86,24 @@ export class QuizAiQuestionRefinementPanelComponent {
     dismissReasoning(): void {
         if (this.refinementExplanation() !== undefined) {
             this.refinementExplanation.set(undefined);
+            this.previousQuestion.set(undefined);
         } else {
             this.reasoningDismissed.emit();
         }
+    }
+
+    /** Reverts the question to the state it was in before the last refinement. */
+    restorePreviousQuestion(): void {
+        const prev = this.restorable();
+        if (!prev) {
+            return;
+        }
+        const currentQuestion = this.question() as MultipleChoiceQuestion;
+        Object.assign(currentQuestion, deepClone(prev));
+        this.questionRefined.emit(currentQuestion);
+        this.refinementExplanation.set(undefined);
+        this.previousQuestion.set(undefined);
+        this.reasoningDismissed.emit();
     }
 
     onEnterKey(event: Event): void {
@@ -112,6 +136,8 @@ export class QuizAiQuestionRefinementPanelComponent {
             )
             .subscribe({
                 next: (result) => {
+                    this.reasoningDismissed.emit();
+                    this.previousQuestion.set(result.previousQuestion);
                     const reasoning = result.reasoning?.trim() || this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.defaultReasoning');
                     this.refinementExplanation.set(reasoning);
                     this.refinePrompt.set('');
