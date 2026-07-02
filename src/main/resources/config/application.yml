@@ -376,7 +376,7 @@ sentry:
     # It is only provided to prevent the SDK from choosing the default value 'production', which might lead to confusion
     environment: test
 
-# Properties to be exposed on the /info management endpoint via DeduplicatedEnvironmentInfoContributor.
+# Properties to be exposed on the /management/info endpoint via DeduplicatedEnvironmentInfoContributor.
 # Define keys in camelCase here; INFO_* environment-variable overrides (necessarily all-lowercase) are case-normalized back to these camelCase keys.
 info:
     sentry:
