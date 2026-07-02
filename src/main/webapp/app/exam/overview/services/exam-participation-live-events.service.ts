@@ -464,6 +464,15 @@ export class ExamParticipationLiveEventsService {
     }
 
     /**
+     * A working time update whose working time did not actually change only carries a schedule (start/end date)
+     * update for the system countdown handler. It must not be surfaced to the user as a "working time changed"
+     * notification, so it is filtered out of the user-facing observers below.
+     */
+    private isScheduleOnlyWorkingTimeUpdate(event: ExamLiveEvent): boolean {
+        return event.eventType === ExamLiveEventType.WORKING_TIME_UPDATE && (event as WorkingTimeUpdateEvent).oldWorkingTime === (event as WorkingTimeUpdateEvent).newWorkingTime;
+    }
+
+    /**
      * Returns an observable that emits events intended for user-facing notification
      * (e.g., the exam live events overlay that shows announcements and attendance checks).
      *
@@ -471,6 +480,7 @@ export class ExamParticipationLiveEventsService {
      *   - Problem statement updates created before the exam start date are suppressed,
      *     because instructors may update problem statements during the preparation phase
      *     and students should not see stale pre-exam notifications.
+     *   - Schedule-only working time updates (working time unchanged) are suppressed; they only drive the countdown.
      *
      * @param eventTypes    optional filter for specific event types
      * @param examStartDate the exam's official start date, used to suppress pre-exam events
@@ -483,7 +493,9 @@ export class ExamParticipationLiveEventsService {
                     (eventTypes.length === 0 || eventTypes.includes(event.eventType)) &&
                     // Suppress problem statement updates that were created before the exam started,
                     // as these reflect instructor preparation, not live exam changes
-                    !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(examStartDate)),
+                    !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(examStartDate)) &&
+                    // Suppress schedule-only working time updates (working time unchanged); they only drive the countdown
+                    !this.isScheduleOnlyWorkingTimeUpdate(event),
             ),
             tap((event: ExamLiveEvent) => this.setEventAcknowledgeTimestamps(event)),
             distinct((event) => event.id),
@@ -502,7 +514,10 @@ export class ExamParticipationLiveEventsService {
      */
     public observeAllEvents(eventTypes: ExamLiveEventType[] = []): Observable<ExamLiveEvent[]> {
         return this.allEventsSubject.asObservable().pipe(
-            map((events: ExamLiveEvent[]) => (eventTypes.length === 0 ? events : events.filter((event) => eventTypes.includes(event.eventType)))),
+            map((events: ExamLiveEvent[]) =>
+                // Also drop schedule-only working time updates so the history overlay does not show a no-op "working time changed" entry.
+                events.filter((event) => (eventTypes.length === 0 || eventTypes.includes(event.eventType)) && !this.isScheduleOnlyWorkingTimeUpdate(event)),
+            ),
             tap((events: ExamLiveEvent[]) => events.forEach((event) => this.setEventAcknowledgeTimestamps(event))),
         );
     }

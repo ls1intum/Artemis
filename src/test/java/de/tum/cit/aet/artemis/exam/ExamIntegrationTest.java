@@ -619,7 +619,27 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).anySatisfy(event -> {
             assertThat(event).isInstanceOf(WorkingTimeUpdateEvent.class);
             assertThat(((WorkingTimeUpdateEvent) event).getNewStartDate()).isEqualTo(examDb.getStartDate().toInstant());
+            assertThat(((WorkingTimeUpdateEvent) event).getNewEndDate()).isEqualTo(examDb.getEndDate().toInstant());
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_startDateChangeOutsideConductionWindow_doesNotSendScheduleUpdate() throws Exception {
+        StudentExam studentExam = examUtilService.addStudentExam(exam1);
+        // Far-future exam: no student can be in the pre-start conduction window yet.
+        exam1.setVisibleDate(now().plusDays(1));
+        exam1.setStartDate(now().plusDays(1).plusMinutes(30));
+        exam1.setEndDate(now().plusDays(1).plusMinutes(90));
+        exam1 = examRepository.save(exam1);
+
+        // Shift start and end by the same amount (working time unchanged) so only the schedule-update path could fire.
+        exam1.setStartDate(now().plusDays(1).plusMinutes(35));
+        exam1.setEndDate(now().plusDays(1).plusMinutes(95));
+        request.put("/api/exam/courses/" + course1.getId() + "/exams", ExamUpdateDTO.of(exam1), HttpStatus.OK);
+
+        // The exam is far in the future, so no schedule update must be persisted for the student exam (issue #13071).
+        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isEmpty();
     }
 
     @Test

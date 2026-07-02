@@ -4,7 +4,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { Observable, Subject, firstValueFrom } from 'rxjs';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
+import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import dayjs from 'dayjs/esm';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -294,6 +294,64 @@ describe('ExamParticipationLiveEventsService', () => {
         const eventIds = service['events'].map((e: any) => e.id);
         expect(eventIds).toContain(99);
         expect(eventIds).toContain(5);
+    });
+
+    // Regression test for issue #13071: a WORKING_TIME_UPDATE event carries the exam's new start and end
+    // dates as ISO strings over the wire. They must be converted to dayjs objects so the pre-start countdown
+    // and the start-based content visibility can recompute from real dates rather than strings.
+    it('should convert the start and end dates of a working time update event to dayjs (issue #13071)', () => {
+        service['events'] = [];
+        const wsEvent = {
+            id: 7,
+            eventType: ExamLiveEventType.WORKING_TIME_UPDATE,
+            createdDate: '2021-08-02T12:00:00.000Z',
+            oldWorkingTime: 3600,
+            newWorkingTime: 3600,
+            courseWide: true,
+            newStartDate: '2021-08-02T12:05:00.000Z',
+            newEndDate: '2021-08-02T13:05:00.000Z',
+        } as unknown as ExamLiveEvent;
+
+        service['receiveExamLiveEvent'](wsEvent);
+
+        const stored = service['events'][0] as WorkingTimeUpdateEvent;
+        expect(dayjs.isDayjs(stored.newStartDate)).toBe(true);
+        expect(dayjs.isDayjs(stored.newEndDate)).toBe(true);
+        expect(stored.newStartDate.toISOString()).toBe('2021-08-02T12:05:00.000Z');
+        expect(stored.newEndDate.toISOString()).toBe('2021-08-02T13:05:00.000Z');
+    });
+
+    // Regression test for issue #13071: a schedule-only working time update (working time unchanged) is sent purely to
+    // drive the pre-start countdown. It must reach the system observer but must NOT surface as a user-facing "working
+    // time changed" dialog or a no-op history entry.
+    it('should surface a schedule-only working time update to the system observer but not to the user (issue #13071)', async () => {
+        service['events'] = [];
+        const scheduleOnly = {
+            id: 1,
+            eventType: ExamLiveEventType.WORKING_TIME_UPDATE,
+            createdDate: '2021-08-02T12:00:00.000Z',
+            oldWorkingTime: 3600,
+            newWorkingTime: 3600,
+            courseWide: true,
+            newStartDate: '2021-08-02T12:05:00.000Z',
+            newEndDate: '2021-08-02T13:05:00.000Z',
+        } as unknown as ExamLiveEvent;
+
+        const userEvents: ExamLiveEvent[] = [];
+        const systemEvents: ExamLiveEvent[] = [];
+        const allEvents: ExamLiveEvent[][] = [];
+        service.observeNewEventsAsUser([], dayjs()).subscribe((event) => userEvents.push(event));
+        service.observeNewEventsAsSystem().subscribe((event) => systemEvents.push(event));
+        service.observeAllEvents().subscribe((events) => allEvents.push(events));
+
+        service['receiveExamLiveEvent'](scheduleOnly);
+
+        // Flush the microtask-deferred replayEvents() in the observeNewEventsAs* observers.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(systemEvents.map((event) => event.id)).toContain(1);
+        expect(userEvents.map((event) => event.id)).not.toContain(1);
+        expect(allEvents.at(-1)?.map((event) => event.id) ?? []).not.toContain(1);
     });
 
     it('acknowledgeEvent should set the correct timestamp and store it', () => {

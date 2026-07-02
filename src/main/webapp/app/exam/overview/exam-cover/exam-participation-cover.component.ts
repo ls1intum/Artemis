@@ -85,8 +85,13 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             if (!exam || !studentExam) {
                 return;
             }
-            this.confirmed = false;
-            this.startEnabled.set(false);
+            // Do not reset the confirmation once the student is already waiting for the exam start: a live schedule
+            // update (start/end date change) replaces the exam object and would otherwise un-confirm the student
+            // mid-countdown. The confirm/start controls are disabled during the wait anyway.
+            if (!this.waitingForExamStart()) {
+                this.confirmed = false;
+                this.startEnabled.set(false);
+            }
 
             if (this.startView()) {
                 this.examParticipationService.setEndView(false);
