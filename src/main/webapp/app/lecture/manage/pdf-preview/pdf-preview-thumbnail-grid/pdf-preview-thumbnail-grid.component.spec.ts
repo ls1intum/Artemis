@@ -17,7 +17,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     let component: PdfPreviewThumbnailGridComponent;
     let fixture: ComponentFixture<PdfPreviewThumbnailGridComponent>;
     let engineService: MockPdfEngineService;
-    let alertServiceMock: { error: ReturnType<typeof vi.fn> };
+    let alertServiceMock: { error: ReturnType<typeof vi.fn>; addAlert: ReturnType<typeof vi.fn> };
 
     const sourceDoc = createMockPdfDocument('source1', 3);
     // A fresh set per call: onPageDrop mutates page.order in place, so tests must not share objects.
@@ -36,7 +36,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
     beforeEach(async () => {
         engineService = new MockPdfEngineService();
-        alertServiceMock = { error: vi.fn() };
+        alertServiceMock = { error: vi.fn(), addAlert: vi.fn() };
 
         await TestBed.configureTestingModule({
             imports: [PdfPreviewThumbnailGridComponent],
@@ -151,5 +151,209 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
         expect(component.findPageBySlideId('slide3')?.order).toBe(3);
         expect(component.findPageBySlideId('missing')).toBeUndefined();
+    });
+
+    it('should draw a canvas per rendered page and mark it as loaded', async () => {
+        await setPages();
+
+        const container = component.pdfContainer().nativeElement;
+        // renderPages appends one <canvas> into each #pdf-page-<slideId> container.
+        expect(container.querySelectorAll('.pdf-canvas-container canvas')).toHaveLength(3);
+        // Every page order was recorded once the canvas was appended.
+        expect(Array.from(component.loadedPages()).sort()).toEqual([1, 2, 3]);
+    });
+
+    it('should remove previously rendered canvases before re-rendering', async () => {
+        await setPages();
+        const container = component.pdfContainer().nativeElement;
+        expect(container.querySelectorAll('.pdf-canvas-container canvas')).toHaveLength(3);
+
+        const removeChildSpy = vi.spyOn(component['renderer'], 'removeChild');
+
+        // A second render must clear the three stale canvases (lines 85-87) before drawing again.
+        await component.renderPages();
+
+        // The three canvases from the first render were removed via the renderer.
+        expect(removeChildSpy).toHaveBeenCalledTimes(3);
+        // After re-rendering there are still exactly three canvases (no leftovers).
+        expect(container.querySelectorAll('.pdf-canvas-container canvas')).toHaveLength(3);
+    });
+
+    it('should scroll to the bottom after rendering when appending a file', async () => {
+        fixture.componentRef.setInput('isAppendingFile', true);
+        fixture.detectChanges();
+
+        const scrollToSpy = vi.fn();
+        // scrollHeight is used as the target top offset.
+        const containerEl = component.pdfContainer().nativeElement;
+        Object.defineProperty(containerEl, 'scrollHeight', { value: 1234, configurable: true });
+        containerEl.scrollTo = scrollToSpy as unknown as typeof containerEl.scrollTo;
+
+        await setPages();
+
+        expect(scrollToSpy).toHaveBeenCalledWith({ top: 1234, left: 0, behavior: 'smooth' });
+    });
+
+    it('should not scroll to the bottom after rendering when not appending a file', async () => {
+        fixture.componentRef.setInput('isAppendingFile', false);
+        fixture.detectChanges();
+
+        const scrollToSpy = vi.fn();
+        component.pdfContainer().nativeElement.scrollTo = scrollToSpy as unknown as HTMLDivElement['scrollTo'];
+
+        await setPages();
+
+        expect(scrollToSpy).not.toHaveBeenCalled();
+    });
+
+    it('should report an error via the alert service when rendering fails', async () => {
+        const failure = new Error('render boom');
+        engineService.engine.renderPageRaw.mockImplementationOnce(() => {
+            throw failure;
+        });
+
+        await setPages();
+
+        // onError routes an unexpected error through AlertService.addAlert.
+        expect(alertServiceMock.addAlert).toHaveBeenCalled();
+    });
+
+    it('should activate the hide/show button and raise its opacity when toggling visibility', async () => {
+        fixture.componentRef.setInput('isAttachmentVideoUnit', true);
+        await setPages();
+
+        const button = component.pdfContainer().nativeElement.querySelector('#hide-show-button-slide2') as HTMLButtonElement;
+        expect(button).toBeTruthy();
+        const stopPropagation = vi.fn();
+        const setStyleSpy = vi.spyOn(component['renderer'], 'setStyle');
+
+        component.toggleVisibility('slide2', { target: button, stopPropagation } as unknown as Event);
+
+        expect(component.activeButtonPage()?.slideId).toBe('slide2');
+        expect(setStyleSpy).toHaveBeenCalledWith(button, 'opacity', '1');
+        expect(stopPropagation).toHaveBeenCalledOnce();
+    });
+
+    it('should still stop propagation when toggling an unknown slide', () => {
+        fixture.componentRef.setInput('orderedPages', makePages());
+        fixture.detectChanges();
+        const stopPropagation = vi.fn();
+
+        component.toggleVisibility('missing', { target: document.createElement('span'), stopPropagation } as unknown as Event);
+
+        // No page found: activeButtonPage stays undefined, but the event is still consumed.
+        expect(component.activeButtonPage()).toBeUndefined();
+        expect(stopPropagation).toHaveBeenCalledOnce();
+    });
+
+    it('should remove a page from the selection when its checkbox is unchecked', () => {
+        const pages = makePages();
+        fixture.componentRef.setInput('orderedPages', pages);
+        fixture.detectChanges();
+        // Pre-seed the selection so the uncheck branch has something to delete.
+        component.selectedPages.set(new Set([pages[1]]));
+        const emitted = vi.fn();
+        component.selectedPagesOutput.subscribe(emitted);
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = false;
+        component.togglePageSelection('slide2', { target: checkbox } as unknown as Event);
+
+        const selection: Set<OrderedPage> = emitted.mock.calls.at(-1)![0];
+        expect(Array.from(selection)).toHaveLength(0);
+        expect(component.selectedPages().size).toBe(0);
+    });
+
+    it('should not emit a selection change for an unknown slide', () => {
+        fixture.componentRef.setInput('orderedPages', makePages());
+        fixture.detectChanges();
+        const emitted = vi.fn();
+        component.selectedPagesOutput.subscribe(emitted);
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = true;
+        component.togglePageSelection('missing', { target: checkbox } as unknown as Event);
+
+        expect(emitted).not.toHaveBeenCalled();
+    });
+
+    it('should enlarge the canvas of the clicked page', async () => {
+        await setPages();
+
+        component.displayEnlargedCanvas(2, 'slide2');
+
+        const expectedCanvas = component.pdfContainer().nativeElement.querySelector('#pdf-page-slide2 canvas');
+        expect(component.originalCanvas()).toBe(expectedCanvas);
+        expect(component.isEnlargedView()).toBe(true);
+        expect(component.initialPageNumber()).toBe(2);
+    });
+
+    it('should emit hidden pages for an array of pages including the exercise id', () => {
+        fixture.componentRef.setInput('orderedPages', makePages());
+        fixture.detectChanges();
+        const emitted = vi.fn();
+        component.hiddenPagesOutput.subscribe(emitted);
+        const date = dayjs();
+
+        component.onHiddenPagesReceived([
+            { slideId: 'slide1', date, exerciseId: 42 },
+            { slideId: 'slide2', date, exerciseId: undefined },
+        ]);
+
+        const map = emitted.mock.calls.at(-1)![0];
+        expect(map['slide1'].exerciseId).toBe(42);
+        expect(map['slide2'].exerciseId).toBeUndefined();
+        expect(map['slide1'].date.isSame(date)).toBe(true);
+    });
+
+    it('should hide the action button of a shown page via the renderer', async () => {
+        fixture.componentRef.setInput('isAttachmentVideoUnit', true);
+        fixture.componentRef.setInput('hiddenPages', { slide2: { date: dayjs(), exerciseId: undefined } });
+        await setPages();
+
+        const button = component.pdfContainer().nativeElement.querySelector('#hide-show-button-slide2') as HTMLButtonElement;
+        expect(button).toBeTruthy();
+        const setStyleSpy = vi.spyOn(component['renderer'], 'setStyle');
+
+        component.hideActionButton('slide2');
+
+        expect(setStyleSpy).toHaveBeenCalledWith(button, 'opacity', '0');
+    });
+
+    it('should do nothing when hiding the action button of a missing slide', async () => {
+        fixture.componentRef.setInput('isAttachmentVideoUnit', true);
+        await setPages();
+        const setStyleSpy = vi.spyOn(component['renderer'], 'setStyle');
+
+        component.hideActionButton('does-not-exist');
+
+        expect(setStyleSpy).not.toHaveBeenCalled();
+    });
+
+    it('should sync checkbox states from updatedSelectedPages when the input changes', async () => {
+        const pages = makePages();
+        fixture.componentRef.setInput('orderedPages', pages);
+        // isAttachmentVideoUnit renders the checkboxes once pages report as loaded.
+        fixture.componentRef.setInput('isAttachmentVideoUnit', true);
+        fixture.detectChanges();
+        await flushAsync();
+        fixture.detectChanges();
+
+        // ngOnChanges copies the input into the selectedPages signal and reconciles the DOM checkboxes.
+        fixture.componentRef.setInput('updatedSelectedPages', new Set([pages[0], pages[2]]));
+        fixture.detectChanges();
+
+        expect(
+            Array.from(component.selectedPages())
+                .map((page) => page.slideId)
+                .sort(),
+        ).toEqual(['slide1', 'slide3']);
+
+        const container = component.pdfContainer().nativeElement;
+        expect((container.querySelector('#checkbox-slide1') as HTMLInputElement).checked).toBe(true);
+        expect((container.querySelector('#checkbox-slide2') as HTMLInputElement).checked).toBe(false);
+        expect((container.querySelector('#checkbox-slide3') as HTMLInputElement).checked).toBe(true);
     });
 });
