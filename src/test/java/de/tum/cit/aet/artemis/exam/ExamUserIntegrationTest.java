@@ -572,6 +572,20 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSearchUsersForExamRegistration_paginationIsStableAcrossPages() throws Exception {
+        // Regression test for issue #13069: consecutive pages must form a stable, non-overlapping partition of the
+        // matches. Without a deterministic ORDER BY the same user could appear on multiple pages (or on none),
+        // making some students impossible to select and add to the exam.
+        List<UserForRegistrationDTO> combined = new ArrayList<>();
+        combined.addAll(request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 0, 2)));
+        combined.addAll(request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 1, 2)));
+
+        assertThat(combined).extracting(UserForRegistrationDTO::login).doesNotHaveDuplicates().containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2",
+                TEST_PREFIX + "student3", TEST_PREFIX + "student4");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSearchUsersForExamRegistration_noResultsForUnknownTerm() throws Exception {
         List<UserForRegistrationDTO> result = request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class,
                 searchParams("zzz_no_match_zzz", 0, 10));

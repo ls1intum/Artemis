@@ -25,6 +25,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -329,7 +330,11 @@ public class ExamUserService {
      * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
      */
     public Page<UserForRegistrationDTO> searchUsersForExamRegistration(long examId, String searchTerm, int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
+        // Sort by id so the LIMIT/OFFSET pages are stable across requests. Without a deterministic order the
+        // database may return the paginated results in a different order for each page, so a matching user can
+        // shuffle between pages and never appear on the page the instructor is viewing (see issue #13069),
+        // making that student impossible to select and add to the exam.
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"));
         Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm);
 
         List<Long> userIds = users.getContent().stream().map(User::getId).toList();
