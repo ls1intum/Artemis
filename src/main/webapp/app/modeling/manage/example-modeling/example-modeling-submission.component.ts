@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -18,6 +18,7 @@ import { catchError, concatMap, map, tap } from 'rxjs/operators';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -26,7 +27,6 @@ import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, fa
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
-import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -64,8 +64,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     readonly modelingEditor = viewChild(ModelingEditorComponent);
     readonly assessmentEditor = viewChild(ModelingAssessmentComponent);
-
-    private readonly themeService = inject(ThemeService);
 
     readonly isNewSubmission = signal(false);
     readonly assessmentMode = signal(false);
@@ -119,7 +117,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     highlightedElements = signal<Map<string, string>>(new Map<string, string>());
     referencedExampleFeedback: Feedback[] = [];
-    highlightColor = computed(() => (this.themeService.userPreference() === Theme.DARK ? 'darkblue' : 'lightblue'));
+    // Apollon paints the highlight as an HTML overlay div (inline background/box-shadow), so a CSS token
+    // resolves: a translucent tint of Artemis's primary keeps element text readable and re-resolves on
+    // theme toggle for free (primary already lightens in dark).
+    readonly highlightColor = 'color-mix(in srgb, var(--p-primary-color) 35%, transparent)';
 
     // Icons
     faSave = faSave;
@@ -127,20 +128,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     faInfoCircle = faInfoCircle;
     faCodeBranch = faCodeBranch;
     faChalkboardTeacher = faChalkboardTeacher;
-
-    constructor() {
-        effect(() => {
-            // Update highlighted elements as soon as current theme changes
-            const highlightColor = this.highlightColor();
-            untracked(() => {
-                const updatedHighlights = new Map<string, string>();
-                this.highlightedElements().forEach((_, key) => {
-                    updatedHighlights.set(key, highlightColor);
-                });
-                this.highlightedElements.set(updatedHighlights);
-            });
-        });
-    }
 
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
@@ -178,7 +165,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                     if (exampleSubmission.submission) {
                         this.modelingSubmission = exampleSubmission.submission as ModelingSubmission;
                         if (this.modelingSubmission.model) {
-                            this.umlModel.set(importDiagram(JSON.parse(this.modelingSubmission.model)));
+                            this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                         }
                         // Updates the explanation text with example modeling submission's explanation
                         this.explanationText.set(this.modelingSubmission.explanationText ?? '');
@@ -246,7 +233,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 if (exampleSubmission.submission) {
                     this.modelingSubmission = exampleSubmission.submission as ModelingSubmission;
                     if (this.modelingSubmission.model) {
-                        this.umlModel.set(importDiagram(JSON.parse(this.modelingSubmission.model)));
+                        this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                     }
                     // Updates the explanation text with example modeling submission's explanation
                     this.explanationText.set(this.modelingSubmission.explanationText ?? '');
@@ -294,7 +281,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
                 if (updatedExampleSubmission.submission) {
                     this.modelingSubmission = updatedExampleSubmission.submission as ModelingSubmission;
                     if (this.modelingSubmission.model) {
-                        this.umlModel.set(importDiagram(JSON.parse(this.modelingSubmission.model)));
+                        this.umlModel.set(importDiagram(parseJson(this.modelingSubmission.model)));
                     }
                     if (this.modelingSubmission.explanationText) {
                         this.explanationText.set(this.modelingSubmission.explanationText);
@@ -502,7 +489,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         );
         const highlightedElements = new Map<string, string>();
         for (const feedback of missedReferencedExampleFeedbacks) {
-            highlightedElements.set(feedback.referenceId!, this.highlightColor());
+            highlightedElements.set(feedback.referenceId!, this.highlightColor);
         }
         this.highlightedElements.set(highlightedElements);
     }

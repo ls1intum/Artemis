@@ -4,6 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { LectureChatbotComponent } from './lecture-chatbot.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { of } from 'rxjs';
 
 describe('LectureChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -15,7 +16,12 @@ describe('LectureChatbotComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LectureChatbotComponent],
-            providers: [MockProvider(IrisChatService, { switchTo: vi.fn() })],
+            providers: [
+                MockProvider(IrisChatService, {
+                    switchTo: vi.fn(),
+                    currentChatMode: vi.fn(() => of(ChatServiceMode.LECTURE)),
+                }),
+            ],
         })
             .overrideComponent(LectureChatbotComponent, {
                 set: {
@@ -56,5 +62,46 @@ describe('LectureChatbotComponent', () => {
 
         expect(baseChatbot.isChatHistoryOpen).toHaveBeenCalled();
         expect(setChatHistoryVisibility).toHaveBeenCalledWith(false);
+    });
+
+    describe('contextProvider', () => {
+        it('should return undefined when contextsProvider is not provided', () => {
+            fixture.detectChanges();
+
+            const result = component.contextProvider();
+
+            expect(result).toBeUndefined();
+        });
+
+        it('should return a function when contextsProvider is provided', () => {
+            const mockProvider = {
+                getVisibleContexts: vi.fn().mockReturnValue([]),
+            };
+            fixture.componentRef.setInput('contextsProvider', mockProvider);
+            fixture.detectChanges();
+
+            const result = component.contextProvider();
+
+            expect(result).toBeDefined();
+            expect(typeof result).toBe('function');
+        });
+
+        it('should call getVisibleContexts when the returned function is invoked', () => {
+            const mockContexts = [
+                { type: 'slides', lectureUnitId: 123, page: 5 },
+                { type: 'video', lectureUnitId: 123, timestamp: 42.5 },
+            ];
+            const mockProvider = {
+                getVisibleContexts: vi.fn().mockReturnValue(mockContexts),
+            };
+            fixture.componentRef.setInput('contextsProvider', mockProvider);
+            fixture.detectChanges();
+
+            const contextFn = component.contextProvider();
+            const result = contextFn?.();
+
+            expect(mockProvider.getVisibleContexts).toHaveBeenCalled();
+            expect(result).toEqual(mockContexts);
+        });
     });
 });

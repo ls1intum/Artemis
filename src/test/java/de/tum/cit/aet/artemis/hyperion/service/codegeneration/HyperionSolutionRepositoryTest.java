@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +29,10 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -46,6 +48,12 @@ class HyperionSolutionRepositoryServiceTest {
     private HyperionPromptTemplateService templates;
 
     @Mock
+    private GitService gitService;
+
+    @Mock
+    private HyperionProgrammingExerciseContextRendererService contextRenderer;
+
+    @Mock
     private LLMTokenUsageService llmTokenUsageService;
 
     private HyperionSolutionRepositoryService solutionRepository;
@@ -57,11 +65,11 @@ class HyperionSolutionRepositoryServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        // Since Spring AI 2.0 the ChatClient merges request options into the model's options (getOptions since RC1, getDefaultOptions before), which must be non-null
+        // ChatClient merges request options into the model's options, so the mocked ChatModel must return non-null options from both getters.
         lenient().when(chatModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
-        this.solutionRepository = new HyperionSolutionRepositoryService(chatClient, templates, llmTokenUsageService);
+        this.solutionRepository = new HyperionSolutionRepositoryService(chatClient, templates, gitService, contextRenderer, llmTokenUsageService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -108,37 +116,34 @@ class HyperionSolutionRepositoryServiceTest {
 
     @Test
     void generateClassAndMethodHeaders_callsDefineFileStructureAndUsesResult() throws Exception {
-        String fileStructureJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"stub\"}]}";
+        CodeGenerationResponseDTO fileStructure = new CodeGenerationResponseDTO("plan", List.of(new GeneratedFileDTO("Sort.java", "stub")), List.of());
         String headersJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort { void sort(); }\"}]}";
 
-        when(templates.renderObject(eq("/prompts/hyperion/solution/2_file_structure.st"), anyMap())).thenReturn("rendered");
         when(templates.renderObject(eq("/prompts/hyperion/solution/3_headers.st"), anyMap())).thenReturn("rendered");
-        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(fileStructureJson)).thenReturn(createChatResponse(headersJson));
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(headersJson));
 
         CodeGenerationResponseDTO result = solutionRepository.generateClassAndMethodHeaders(user, exercise, 1L, "solution plan", "repo structure", BUILD_ENVIRONMENT_CONTEXT,
-                "consistency issues");
+                "consistency issues", "{\"threads\":[]}", fileStructure);
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles().getFirst().content()).contains("void sort()");
-        verify(chatModel, times(2)).call(any(Prompt.class));
+        verify(chatModel).call(any(Prompt.class));
     }
 
     @Test
     void generateCoreLogic_callsHeadersAndUsesResult() throws Exception {
-        String fileStructureJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"stub\"}]}";
-        String headersJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort { void sort(); }\"}]}";
+        CodeGenerationResponseDTO headers = new CodeGenerationResponseDTO("plan", List.of(new GeneratedFileDTO("Sort.java", "class Sort { void sort(); }")), List.of());
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Sort.java\",\"content\":\"class Sort { void sort() { /* implementation */ } }\"}]}";
 
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
-        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(fileStructureJson)).thenReturn(createChatResponse(headersJson))
-                .thenReturn(createChatResponse(coreLogicJson));
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(coreLogicJson));
 
         CodeGenerationResponseDTO result = solutionRepository.generateCoreLogic(user, exercise, 1L, "solution plan", "repo structure", BUILD_ENVIRONMENT_CONTEXT,
-                "consistency issues");
+                "consistency issues", "{\"threads\":[]}", headers);
 
         assertThat(result).isNotNull();
         assertThat(result.getFiles().getFirst().content()).contains("implementation");
-        verify(chatModel, times(3)).call(any(Prompt.class));
+        verify(chatModel).call(any(Prompt.class));
     }
 
     @Test

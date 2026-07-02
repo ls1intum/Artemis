@@ -10,6 +10,14 @@ buildscript {
         }
     }
     dependencies {
+        // Force the entire Jackson 2.x family to 2.22.0 on the build-script / plugin classpath too.
+        // The org.openapi.generator and springdoc plugins otherwise drag in older jackson-databind
+        // (2.19.x requested, resolved to 2.21.3), which the GitHub dependency graph reports and
+        // Dependabot flags even though the shipped WAR only ever contains 2.22.0. enforcedPlatform
+        // applies the jackson-bom's authoritative per-module versions (e.g. jackson-annotations 2.22),
+        // so no version is invented. Build-time only, not shipped. Keep in sync with the project-level
+        // jackson-bom import below. (Jackson 3, group tools.jackson.*, is intentionally not touched.)
+        classpath enforcedPlatform("com.fasterxml.jackson:jackson-bom:2.22.0")
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
         // This is required so that the latest version of the liquibase gradle plugin works
         classpath("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -124,6 +132,21 @@ gitProperties {
 //                 GHSA-5mp6-jrq3-r938, GHSA-fv25-8xcx-gqjc, GHSA-gx5v-xp9w-j4cg, GHSA-9m89-8frq-c98c
 ext["thymeleaf.version"] = "3.1.5.RELEASE"
 ext["tomcat.version"] = "11.0.22"
+
+// Pin the entire Jackson 2.x family to 2.22.0, a release outside every known jackson-databind vulnerable range.
+// Spring Boot 4.1 / Spring AI manage an older 2.21.4 jackson-bom as a dependency-management constraint, which beats
+// transitive requests, so a plain dependency bump is not enough. Re-importing jackson-bom here overrides that managed
+// version while applying the BOM's authoritative per-module versions (e.g. jackson-annotations is 2.22, not 2.22.0).
+// This is done via the dependencyManagement DSL rather than ext["jackson-bom.version"], because overriding an
+// imported-BOM version property breaks io.spring.dependency-management 1.1.7 on Spring Boot 4.1 (it nulls the versions
+// of other managed sub-BOMs such as micrometer / spring-security). The Jackson 3 line (group tools.jackson.*, pinned
+// to 3.1.4 below) is intentionally untouched.
+// Fixes the jackson-databind advisories CVE-2026-54512 / 54513 / 54514 / 54515 / 54516 / 54517 / 54518.
+dependencyManagement {
+    imports {
+        mavenBom "com.fasterxml.jackson:jackson-bom:2.22.0"
+    }
+}
 
 configurations {
     mockitoAgent
@@ -345,17 +368,17 @@ dependencies {
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
     implementation "com.google.protobuf:protobuf-java:4.35.1"
 
-    // Jackson 2 core modules — versions managed by Spring Boot BOM
+    // Jackson 2 core modules — versions supplied by the jackson-bom 2.22.0 override (dependencyManagement block above)
     implementation "com.fasterxml.jackson.core:jackson-annotations"
     implementation "com.fasterxml.jackson.core:jackson-core"
     implementation "com.fasterxml.jackson.core:jackson-databind"
     // Java Time (JSR310) support for Jackson
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     // Support JSON serialization and deserialization of Hibernate specific data types and properties; especially lazy-loading aspects
-    // Use hibernate7 variant for Hibernate 7.x compatibility
-    // NOTE: version pinned because the Spring Boot BOM does not include the hibernate7 variant.
-    // Must be kept in sync with the Jackson 2.x version managed by the BOM.
-    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7:2.21.4"
+    // Use hibernate7 variant for Hibernate 7.x compatibility.
+    // NOTE: version pinned because jackson-bom does not include the hibernate7 variant (separate project).
+    // Must be kept in sync with the Jackson 2.x version (jackson-bom 2.22.0 import above).
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate7:2.22.0"
     // Support XML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml"
     // Support YML serialization and deserialization

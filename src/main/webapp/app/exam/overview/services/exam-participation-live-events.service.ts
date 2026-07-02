@@ -8,6 +8,7 @@ import { BehaviorSubject, Observable, Subject, Subscription, distinct, filter, m
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 const EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY = 'examLastAcknowledgedEvent';
 
@@ -378,7 +379,7 @@ export class ExamParticipationLiveEventsService {
      */
     private loadAcknowledgedEventsMapFromLocalStorage(): { [studentExamId: string]: StudentExamAcknowledgedEvents } {
         const fromStorage = this.localStorageService.retrieve<string>(EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY);
-        return fromStorage ? JSON.parse(fromStorage) : {};
+        return fromStorage ? parseJson<{ [studentExamId: string]: StudentExamAcknowledgedEvents }>(fromStorage) : {};
     }
 
     /**

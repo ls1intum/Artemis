@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { NgxExtendedPdfViewerModule, PDFNotificationService, type PdfLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
+import { type IPDFViewerApplication, NgxExtendedPdfViewerModule, PDFNotificationService, type PdfLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     faChevronDown,
@@ -36,17 +36,14 @@ import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-
 // Configure pdf.js default options
 pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
 
-interface PDFViewerApplication {
-    eventBus?: {
-        dispatch: (eventName: string, data?: unknown) => void;
-    };
-    appConfig?: {
-        mainContainer?: HTMLElement;
-    };
-    pdfViewer?: {
-        container?: HTMLElement;
-        currentScale?: number;
-    };
+/**
+ * The library's {@link IPDFViewerApplication}, augmented with the extra runtime fields the toolbar relies on.
+ * PDF.js exposes `appConfig.mainContainer` and `pdfViewer.container` at runtime, but they are absent from
+ * ngx-extended-pdf-viewer's type definitions, so we add them here (as a proper subtype) instead of casting through `unknown`.
+ */
+interface PDFViewerApplication extends IPDFViewerApplication {
+    appConfig: IPDFViewerApplication['appConfig'] & { mainContainer?: HTMLElement };
+    pdfViewer: IPDFViewerApplication['pdfViewer'] & { container?: HTMLElement };
 }
 
 interface FindMatchesCount {
@@ -189,6 +186,14 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
                 this.isFullscreenMode.set(data?.viewerMode === 'fullscreen');
                 this.updateDarkMode(data?.isDarkMode);
                 this.updateLanguage(data?.languageKey);
+                break;
+            case 'setPage':
+                if (data?.page !== undefined && Number.isInteger(data.page) && data.page > 0) {
+                    const totalPages = this.totalPages();
+                    if (totalPages === 0 || data.page <= totalPages) {
+                        this.setCurrentPage(data.page);
+                    }
+                }
                 break;
             case 'viewerModeChange':
                 this.isFullscreenMode.set(data?.viewerMode === 'fullscreen');
@@ -366,7 +371,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     }
 
     private getPdfViewerApplication(): PDFViewerApplication | undefined {
-        return this.pdfNotificationService.onPDFJSInitSignal() as unknown as PDFViewerApplication | undefined;
+        return this.pdfNotificationService.onPDFJSInitSignal() as PDFViewerApplication | undefined;
     }
 
     private dispatchFindCommand(type: 'find' | 'again', query: string, highlightAll: boolean, findPrevious: boolean): void {
