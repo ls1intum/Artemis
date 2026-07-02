@@ -113,9 +113,9 @@ describe('AuditsComponent', () => {
     });
 
     describe('picker value round-trip', () => {
-        // Regression: the picker emits a Date/dayjs; the audits filter stores yyyy-MM-dd strings in the URL. The
-        // conversion must use dayjs format tokens (YYYY-MM-DD), not Angular DatePipe tokens, or the URL value is
-        // malformed (e.g. "yyyy-06-We") and the picker can never round-trip it back.
+        // The picker emits a Date/dayjs; the audits filter stores yyyy-MM-dd strings in the URL. The conversion
+        // must use dayjs format tokens (YYYY-MM-DD), not Angular DatePipe tokens, or the URL value is malformed
+        // (e.g. "yyyy-06-We") and the picker can never round-trip it back.
         it('stores a picker date as a yyyy-MM-dd string', () => {
             comp.updateFromDate(new Date(2026, 5, 17, 0, 0, 0));
             expect(comp.fromDate()).toBe('2026-06-17');

@@ -43,11 +43,9 @@ export class LogsComponent implements OnInit, OnDestroy {
     private static readonly FILTER_DEBOUNCE_MS = 200;
 
     /**
-     * Fixed row height (px) used by the table's virtual scroll. This MUST match the actual rendered
-     * height of a body row (PrimeNG cell padding + the size="small" level button group + border),
-     * otherwise PrimeNG's virtual scroller miscomputes the spacer and the list jumps / the last rows
-     * become unreachable. Measured against the current theme (PrimeNG small button group + cell
-     * padding renders at 60px); keep in sync if the row markup changes.
+     * Fixed virtual-scroll row height (px). MUST match the rendered body-row height, or the virtual scroller
+     * miscomputes the spacer and the list jumps / last rows become unreachable. ~60px for the current theme
+     * (small level button group + cell padding); keep in sync if the row markup changes.
      */
     protected readonly logsTableRowHeight = 60;
 

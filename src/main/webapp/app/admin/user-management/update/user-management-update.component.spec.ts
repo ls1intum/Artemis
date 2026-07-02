@@ -791,8 +791,8 @@ describe('UserManagementUpdateComponent', () => {
 
 /**
  * Renders the real template (no overrideTemplate) to guard against the global-role checkbox firing
- * toggleAuthority twice per click — the regression where the role wrapper's bubbled click re-fired the
- * inner p-checkbox's onChange, cancelling the toggle. A single rendered control must toggle exactly once.
+ * toggleAuthority twice per click: the role wrapper's bubbled click must not re-fire the inner
+ * p-checkbox's onChange and cancel the toggle. A single rendered control must toggle exactly once.
  */
 describe('UserManagementUpdateComponent global-role checkbox rendering', () => {
     setupTestBed({ zoneless: true });

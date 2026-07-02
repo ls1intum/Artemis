@@ -122,7 +122,6 @@ export class UserManagementUpdateComponent implements OnInit {
     /** All available groups for autocomplete */
     allGroups: string[] = [];
 
-    /** Filtered group suggestions shown in the autocomplete dropdown. */
     readonly groupSuggestions = signal<string[]>([]);
 
     /** Authority to translation key mapping */

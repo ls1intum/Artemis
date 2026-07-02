@@ -45,7 +45,6 @@ export class HealthComponent implements OnInit, OnDestroy {
     /** Current system health status */
     readonly health = signal<Health | undefined>(undefined);
 
-    /** Whether the client is currently connected to the server via websocket */
     readonly websocketConnected = signal<boolean>(false);
     private websocketStatusSubscription?: Subscription;
 

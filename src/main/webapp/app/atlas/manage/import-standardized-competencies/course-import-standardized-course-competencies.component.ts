@@ -46,7 +46,6 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
     protected translateService = inject(TranslateService);
     protected sortService = inject(SortService);
 
-    /** Reference to the knowledge area tree component for tree control */
     private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
 
     protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {

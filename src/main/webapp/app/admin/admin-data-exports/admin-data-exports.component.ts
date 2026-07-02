@@ -164,7 +164,6 @@ export class AdminDataExportsComponent implements OnInit {
         }
     }
 
-    /** Returns the PrimeNG Tag severity for a given export state. */
     getStateSeverity(state: DataExportState): 'contrast' | 'info' | 'success' | 'warn' | 'danger' | 'secondary' {
         switch (state) {
             case DataExportState.REQUESTED:

@@ -73,7 +73,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
 
-    /** Reference to the knowledge area tree component for tree control */
     private readonly knowledgeAreaTree = viewChild(KnowledgeAreaTreeComponent);
 
     protected override get knowledgeAreaTreeComponent(): KnowledgeAreaTreeComponent | undefined {
@@ -98,7 +97,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     /** Width (px) of the resizable detail panel; persisted across competency/knowledge-area selections. */
     protected readonly detailPanelWidth = signal<number | undefined>(undefined);
 
-    // Cancel confirmation dialog state
     protected readonly confirmDialogVisible = signal(false);
     protected readonly confirmDialogTitle = signal('');
     protected readonly confirmDialogTextKey = signal('');

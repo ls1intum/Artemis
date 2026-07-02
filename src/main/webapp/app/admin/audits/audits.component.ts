@@ -112,8 +112,7 @@ export class AuditsComponent implements OnInit {
 
     /**
      * Updates the from date filter from the shared date picker value.
-     * The picker emits a dayjs/Date (or null); the audits service consumes yyyy-MM-dd strings,
-     * so we convert at the boundary and keep the rest of the date handling untouched.
+     * The picker emits a dayjs/Date (or null); the audits service consumes yyyy-MM-dd strings, so convert at the boundary.
      */
     updateFromDate(value: dayjs.Dayjs | Date | null | undefined): void {
         this.fromDate.set(this.toDateString(value));

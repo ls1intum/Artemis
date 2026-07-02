@@ -414,7 +414,6 @@ export class AdminSbomComponent implements OnInit {
      * Handles a PrimeNG table sort event. PrimeNG already resolves the toggled field/order
      * (the table runs in `[customSort]` mode), so the handler only mirrors that state onto the
      * `sortField`/`sortAscending` signals that drive the client-side sort in `filteredComponents()`.
-     * @param event - The PrimeNG sort event
      */
     onTableSort(event: SortEvent): void {
         const field = event.field;

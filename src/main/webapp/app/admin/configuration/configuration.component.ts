@@ -74,7 +74,6 @@ export class ConfigurationComponent implements OnInit {
      * Handles a PrimeNG table sort event. The table runs in `[customSort]` mode and only sorts by
      * the single `prefix` field, so the handler just mirrors the resolved order onto the
      * `beansAscending` signal that drives the client-side sort in `beans()`.
-     * @param event - The PrimeNG sort event
      */
     onTableSort(event: SortEvent): void {
         this.beansAscending.set((event.order ?? 1) === 1);

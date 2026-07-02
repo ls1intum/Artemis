@@ -118,14 +118,8 @@ export class CleanupServiceComponent implements OnInit {
 
     /**
      * Per-operation cache of the native {@link Date} objects handed to the PrimeNG datepickers.
-     *
-     * The picker is bound via `[ngModel]="toDate(...)"`. A template method binding is re-evaluated
-     * on every change-detection pass, and a naive `value.toDate()` allocates a brand-new `Date`
-     * each time. PrimeNG compares the incoming model by reference, so a new instance forces it to
-     * re-run `writeValue` -> `updateUI` -> `createMonths` (a full 6x7 month-grid rebuild) on each
-     * pass. With two datepickers per cleanup-operation row this dominated the render
-     * cost. We therefore memoize the converted `Date` per dayjs value and only allocate a new one
-     * when the underlying timestamp actually changes, giving the picker a stable reference.
+     * PrimeNG compares the `[ngModel]` value by reference, so a fresh `Date` each change-detection
+     * pass forces a full month-grid rebuild. Memoize per dayjs value for a stable reference.
      */
     private readonly dateCache = new WeakMap<CleanupOperation, { fromMs?: number; fromDate?: Date; toMs?: number; toDate?: Date }>();
 
