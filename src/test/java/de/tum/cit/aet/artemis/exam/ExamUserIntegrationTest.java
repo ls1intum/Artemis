@@ -574,14 +574,17 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSearchUsersForExamRegistration_paginationIsStableAcrossPages() throws Exception {
         // Regression test for issue #13069: consecutive pages must form a stable, non-overlapping partition of the
-        // matches. Without a deterministic ORDER BY the same user could appear on multiple pages (or on none),
-        // making some students impossible to select and add to the exam.
+        // matches, so no student shuffles between pages or disappears and becomes impossible to add to the exam. The
+        // precise ordering guarantee lives in the repository and is unit-tested in UserRepositoryStableSearchSortUnitTest;
+        // here we verify it end-to-end through the registration endpoint.
         List<UserForRegistrationDTO> combined = new ArrayList<>();
         combined.addAll(request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 0, 2)));
         combined.addAll(request.getList(searchUrl(course1.getId(), exam1.getId()), HttpStatus.OK, UserForRegistrationDTO.class, searchParams(TEST_PREFIX + "student", 1, 2)));
 
         assertThat(combined).extracting(UserForRegistrationDTO::login).doesNotHaveDuplicates().containsExactlyInAnyOrder(TEST_PREFIX + "student1", TEST_PREFIX + "student2",
                 TEST_PREFIX + "student3", TEST_PREFIX + "student4");
+        // The pages are served in ascending id order, so concatenating page 0 and page 1 yields a globally sorted list.
+        assertThat(combined).extracting(UserForRegistrationDTO::id).isSorted();
     }
 
     @Test

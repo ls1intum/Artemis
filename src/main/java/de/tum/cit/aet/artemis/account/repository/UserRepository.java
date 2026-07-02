@@ -643,7 +643,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             return Page.empty(page);
         }
         String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-        return findAllByLoginOrNameOrEmailOrRegistrationNumber(page, escaped);
+        // Guarantee a deterministic order so the LIMIT/OFFSET pages form a stable, non-overlapping partition. Without a
+        // fixed order the database may return the results in a different order per page, so a matching user can shuffle
+        // between pages and never appear on the page the caller is viewing (see issue #13069). Applied here so every
+        // caller (exam and organization registration) is covered; a caller that already requested an order keeps it.
+        Pageable stablePage = page.getSort().isSorted() ? page : PageRequest.of(page.getPageNumber(), page.getPageSize(), Sort.by(Sort.Direction.ASC, "id"));
+        return findAllByLoginOrNameOrEmailOrRegistrationNumber(stablePage, escaped);
     }
 
     @Query("""
