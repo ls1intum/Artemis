@@ -363,6 +363,30 @@ describe('HyperionExerciseGenerationComponent', () => {
         }
     });
 
+    it('self-heals a missed terminal websocket message by reconciling against /status while running', () => {
+        vi.useFakeTimers();
+        try {
+            generationService.generateExercise.mockReturnValue(of({ jobId: 'job-heal' }));
+            const completed: boolean[] = [];
+            component.generationCompleted.subscribe((v) => completed.push(v));
+
+            component.generate();
+            expect(component.running()).toBe(true);
+
+            // The terminal event never arrives on the live stream (dropped across a broker reconnect), but the server's retained status carries it.
+            generationService.getStatus.mockReturnValue(
+                of({ jobId: 'job-heal', running: false, events: [{ type: 'DONE', completionStatus: 'NEEDS_REVIEW', message: 'draft saved' }] }),
+            );
+            vi.advanceTimersByTime(10000);
+
+            expect(component.running()).toBe(false);
+            expect(component.needsReview()).toBe(true);
+            expect(completed).toEqual([true]);
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('resets the streamed events, verdict and elapsed timer when a new run starts', () => {
         generationService.generateExercise.mockReturnValue(of({ jobId: 'job-reset' }));
         component.generate();

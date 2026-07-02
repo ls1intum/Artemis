@@ -234,6 +234,8 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private dialogRef?: DynamicDialogRef;
     private autoStartHandled = false;
     private elapsedTimer?: ReturnType<typeof setInterval>;
+    /** While running, reconcile against the server's retained status this often (seconds) so a dropped terminal websocket message cannot leave the card spinning forever. */
+    private readonly statusReconcileIntervalSeconds = 10;
     private terminalFocusHandled = false;
     /** One-shot: ensures the terminal outcome re-opens the compact popover once even if it was dismissed mid-run, so the verdict is always surfaced. Re-armed per run. */
     private terminalOpenHandled = false;
@@ -439,19 +441,47 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
     private handleEvent(event: ExerciseGenerationEvent): void {
         this.progressEvents.update((events) => [...events, event]);
         if (this.isTerminal(event)) {
-            this.finalEvent.set(event);
-            this.running.set(false);
-            this.cancelling.set(false);
-            this.stopTimer();
-            this.teardownSubscription();
-            if (this.succeeded()) {
-                this.alertService.success('artemisApp.programmingExercise.generateExercise.success');
-            } else if (this.needsReview()) {
-                this.alertService.info('artemisApp.programmingExercise.generateExercise.needsReview');
-            }
-            // A recovered draft also changed the exercise, so signal completion (review too) to let the editor reload the persisted draft and its review comments.
-            this.generationCompleted.emit(this.succeeded() || this.needsReview());
+            this.finalize(event);
         }
+    }
+
+    /** Applies a terminal event from either the live stream or a status reconciliation: records the verdict, ends the run, and signals completion. The running guard keeps it idempotent. */
+    private finalize(event: ExerciseGenerationEvent): void {
+        this.finalEvent.set(event);
+        this.running.set(false);
+        this.cancelling.set(false);
+        this.stopTimer();
+        this.teardownSubscription();
+        if (this.succeeded()) {
+            this.alertService.success('artemisApp.programmingExercise.generateExercise.success');
+        } else if (this.needsReview()) {
+            this.alertService.info('artemisApp.programmingExercise.generateExercise.needsReview');
+        }
+        // A recovered draft also changed the exercise, so signal completion (review too) to let the editor reload the persisted draft and its review comments.
+        this.generationCompleted.emit(this.succeeded() || this.needsReview());
+    }
+
+    /**
+     * Safety net for a dropped terminal websocket message: while a run is believed active, confirm against the server's retained status and finalize if it has already ended. The
+     * STOMP relay can drop an in-flight subscription's last message across a broker reconnect, which would otherwise leave the card spinning forever on a run that finished.
+     */
+    private reconcileRunningStatus(): void {
+        if (!this.running()) {
+            return;
+        }
+        this.generationService
+            .getStatus(this.exerciseId())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((status) => {
+                if (!status || status.running || !this.running()) {
+                    return;
+                }
+                const terminal = status.events.findLast((event) => this.isTerminal(event));
+                if (terminal) {
+                    this.progressEvents.set(status.events);
+                    this.finalize(terminal);
+                }
+            });
     }
 
     private isTerminal(event: ExerciseGenerationEvent): boolean {
@@ -476,7 +506,12 @@ export class HyperionExerciseGenerationComponent implements OnInit, OnDestroy {
         this.stopTimer();
         // Seed from the first event's timestamp so a reconnect to a run already in flight shows the true elapsed time, not a counter restarting at zero. A fresh run has no events yet.
         this.elapsedSeconds.set(this.initialElapsedSeconds());
-        this.elapsedTimer = setInterval(() => this.elapsedSeconds.update((seconds) => seconds + 1), 1000);
+        this.elapsedTimer = setInterval(() => {
+            this.elapsedSeconds.update((seconds) => seconds + 1);
+            if (this.elapsedSeconds() % this.statusReconcileIntervalSeconds === 0) {
+                this.reconcileRunningStatus();
+            }
+        }, 1000);
     }
 
     private initialElapsedSeconds(): number {

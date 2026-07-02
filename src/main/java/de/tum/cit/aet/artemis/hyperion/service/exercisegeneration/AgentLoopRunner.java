@@ -20,11 +20,10 @@ import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionResult;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
@@ -118,6 +117,18 @@ public class AgentLoopRunner {
     }
 
     /**
+     * The model id the configured {@link ChatModel} was set up with (e.g. {@code openai/gpt-oss-120b}). Must be pinned on every {@link OpenAiChatOptions} this loop builds:
+     * {@code OpenAiChatOptions.builder()} seeds {@code model} with Spring AI's {@code DEFAULT_CHAT_MODEL} ({@code gpt-5-mini}), and that non-null value would win the
+     * request-options
+     * merge in {@code OpenAiChatModel#buildRequestPrompt} over the deployment's configured model — sending {@code gpt-5-mini} to an endpoint that does not serve it. Returns
+     * {@code null} when the model exposes no default options (e.g. the test {@code GpuEndpointChatModel}, which carries its own model and ignores the request options' model).
+     */
+    @Nullable
+    private String configuredModel() {
+        return chatModel != null && chatModel.getDefaultOptions() != null ? chatModel.getDefaultOptions().getModel() : null;
+    }
+
+    /**
      * Drives the agent loop for one generation session.
      *
      * @param systemPrompt the system prompt describing the task and the available tools
@@ -139,7 +150,16 @@ public class AgentLoopRunner {
         ToolCallback[] toolCallbacks = provider.getToolCallbacks();
 
         // Spring AI 2.0 never auto-executes tools, so the response carries raw tool calls that this loop executes explicitly via toolCallingManager.executeToolCalls(...).
-        ToolCallingChatOptions options = ToolCallingChatOptions.builder().toolCallbacks(toolCallbacks).build();
+        // Build OpenAiChatOptions (not the generic ToolCallingChatOptions): OpenAiChatModel#buildRequestPrompt casts the prompt's runtime options directly to OpenAiChatOptions, so
+        // a
+        // DefaultToolCallingChatOptions throws ClassCastException. The model is pinned explicitly (see configuredModel()); temperature/reasoning-effort still merge in from the
+        // configured default options.
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder().toolCallbacks(toolCallbacks);
+        String configuredModel = configuredModel();
+        if (configuredModel != null) {
+            optionsBuilder.model(configuredModel);
+        }
+        OpenAiChatOptions options = optionsBuilder.build();
 
         List<Message> conversation = new ArrayList<>();
         conversation.add(new SystemMessage(systemPrompt));
@@ -567,8 +587,16 @@ public class AgentLoopRunner {
         }
         List<Message> summaryPrompt = List.of(new SystemMessage(SUMMARIZATION_SYSTEM_PROMPT),
                 new UserMessage("Summarize the following earlier session messages into the structured summary described above:\n\n" + transcript));
-        // Plain ChatOptions (no tool callbacks) so the summarizer cannot call tools; the output cap keeps the summary small.
-        ChatResponse response = chatModel.call(new Prompt(summaryPrompt, ChatOptions.builder().maxTokens(SUMMARY_MAX_OUTPUT_TOKENS).build()));
+        // OpenAiChatOptions with no tool callbacks so the summarizer cannot call tools; the output cap keeps the summary small. Must be OpenAiChatOptions (not a generic
+        // ChatOptions): OpenAiChatModel#buildRequestPrompt casts the prompt's runtime options to OpenAiChatOptions, so a DefaultChatOptions would throw ClassCastException. The
+        // model
+        // is pinned explicitly for the same reason as the agent loop (see configuredModel()).
+        OpenAiChatOptions.Builder summaryOptions = OpenAiChatOptions.builder().maxTokens(SUMMARY_MAX_OUTPUT_TOKENS);
+        String configuredModel = configuredModel();
+        if (configuredModel != null) {
+            summaryOptions.model(configuredModel);
+        }
+        ChatResponse response = chatModel.call(new Prompt(summaryPrompt, summaryOptions.build()));
         emitUsage(usageSink, response);
         String text = extractText(response);
         if (text == null || text.isBlank()) {

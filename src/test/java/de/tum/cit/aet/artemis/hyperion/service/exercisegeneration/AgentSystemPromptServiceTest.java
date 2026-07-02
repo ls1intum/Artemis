@@ -83,14 +83,16 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void resolvePrompt_briefIsSubordinateToAReviewedSpec_soThePlanReviewBinds() {
-        // A reviewed statement AND a brief: the reviewed statement stays authoritative and the brief is applied as a refinement, never returned alone.
+    void resolvePrompt_briefWithSpec_isAuthoritativeButKeepsTheStatementWhereSilent() {
+        // A statement on one topic plus a brief that changes it: the brief governs (so an adaptation can change the task) while the existing statement is still referenced as the
+        // starting point, never discarded into a bare from-scratch run.
         ExerciseGenerationRequestDTO request = new ExerciseGenerationRequestDTO("Make it about graph traversal.");
         ProgrammingExercise exercise = exerciseWithStatement("Implement a stack with push, pop and peek operations for integers.");
 
         String prompt = systemPromptService.resolvePrompt(request, exercise);
 
-        assertThat(prompt).contains(SPEC_MODE_MARKER).contains("Make it about graph traversal.").doesNotContain(FROM_SCRATCH_MARKER);
+        assertThat(prompt).contains("Make it about graph traversal.").contains("current problem statement").contains("may refine that statement or change the task")
+                .doesNotContain(FROM_SCRATCH_MARKER);
         assertThat(prompt).isNotEqualTo("Make it about graph traversal.");
     }
 
@@ -130,10 +132,11 @@ class AgentSystemPromptServiceTest {
     }
 
     @Test
-    void build_specMode_whenStatementPresent_tellsAgentToMatchIt() {
-        // A present statement selects spec mode.
+    void build_specMode_whenStatementPresent_buildsToMatchItButLetsTheBriefChangeTheTask() {
+        // A present statement selects spec mode: the agent matches the current statement, but the brief may refine or change it, so the statement is the starting point, not a
+        // lock.
         String prompt = systemPromptService.build(exerciseWithStatement("Implement an LRU cache with get/put returning -1 on a miss and evicting the least recently used key."));
-        assertThat(prompt).contains(SPEC_MODE_MARKER).doesNotContain("you write it");
+        assertThat(prompt).contains("CURRENT problem statement and the starting point").contains("may refine this statement or change the task").doesNotContain("you write it");
     }
 
     @Test
