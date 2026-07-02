@@ -9,8 +9,8 @@ import { admin } from '../../support/users';
 const uid = generateUUID();
 
 async function selectTaxonomy(page: Page, taxonomy: string) {
-    // The taxonomy control is a PrimeNG p-select (migrated from a native <select>): open its overlay and pick
-    // the option whose translated label matches the requested taxonomy.
+    // The taxonomy control is a PrimeNG p-select: open its overlay and click the option whose translated label
+    // matches the requested taxonomy.
     await page
         .locator('p-select')
         .filter({ has: page.locator('#taxonomy') })

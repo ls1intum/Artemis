@@ -104,7 +104,7 @@ describe('FormDateTimePickerComponent', () => {
 
     describe('invalid border rendering', () => {
         // The red border is driven by a class on the wrapper element (not only the inner p-datepicker
-        // [invalid] input) so it stays in sync with the message under zoneless change detection (PR #13009).
+        // [invalid] input) so it stays in sync with the message under zoneless change detection.
         const wrapper = () => fixture.nativeElement.querySelector('[data-testid="date-picker-wrapper"]') as HTMLElement;
         const hasInvalidClass = () => wrapper().classList.contains('invalid-date-input');
 
