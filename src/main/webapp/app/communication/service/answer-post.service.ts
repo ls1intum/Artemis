@@ -75,6 +75,16 @@ export class AnswerPostService extends PostingService<AnswerPost> {
             .pipe(map((response) => response.body!));
     }
 
+    /**
+     * Approves an Iris-generated answer post (optionally with edited content). Tutor role required server-side.
+     */
+    verify(courseId: number, answerPostId: number, content?: string): Observable<EntityResponseType> {
+        const body = content && content.trim().length > 0 ? { content } : {};
+        return this.http
+            .patch<AnswerPost>(`api/communication/courses/${courseId}/answer-messages/${answerPostId}/verify`, body, { observe: 'response' })
+            .pipe(map(this.convertPostingResponseDateFromServer));
+    }
+
     private getResourceEndpoint(courseId: number, param: AnswerPost): string {
         if (param.post?.conversation) {
             return `api/communication/courses/${courseId}/answer-messages`;

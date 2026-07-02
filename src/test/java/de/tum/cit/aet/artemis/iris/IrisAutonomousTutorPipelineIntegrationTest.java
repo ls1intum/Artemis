@@ -114,7 +114,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
         var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
 
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Polymorphism allows ...", true, 0.9, List.of(), List.of());
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Polymorphism allows ...", 0.9, List.of(), List.of());
         var response = pyrisInternalStatusUpdateResource.setAutonomousTutorJobStatus(token, statusUpdate, mockRequest);
 
         assertThat(response.getStatusCode().value()).isEqualTo(200);
@@ -128,7 +128,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
         var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
 
-        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Encapsulation hides ...", true, 0.9, List.of(), List.of());
+        var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Encapsulation hides ...", 0.9, List.of(), List.of());
 
         assertThatThrownBy(() -> pyrisInternalStatusUpdateResource.setAutonomousTutorJobStatus("wrong-run-id", statusUpdate, mockRequest)).isInstanceOf(ConflictException.class);
     }

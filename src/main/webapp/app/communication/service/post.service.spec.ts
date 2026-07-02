@@ -5,7 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { take } from 'rxjs/operators';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostService } from 'app/communication/service/post.service';
-import { DisplayPriority } from 'app/communication/metis.util';
+import { DisplayPriority, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1 } from 'test/helpers/sample/metis-sample-data';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -146,6 +146,112 @@ describe('Post Service', () => {
             });
             req.flush(returnedFromService);
             vi.advanceTimersByTime(0);
+        });
+
+        it('should include postSortCriterion in query params when provided', () => {
+            service.getPosts(metisCourse.id!, { postSortCriterion: PostSortCriterion.CREATION_DATE }).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('postSortCriterion') === PostSortCriterion.CREATION_DATE);
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should include sortingOrder in query params when provided', () => {
+            service.getPosts(metisCourse.id!, { sortingOrder: SortDirection.DESCENDING }).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('sortingOrder') === SortDirection.DESCENDING);
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should include searchText in query params when provided', () => {
+            service.getPosts(metisCourse.id!, { searchText: 'hello world' }).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('searchText') === 'hello world');
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should include authorIds in query params when provided', () => {
+            service
+                .getPosts(metisCourse.id!, { authorIds: [1, 2] })
+                .pipe(take(1))
+                .subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('authorIds') === '1,2');
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should include filterToCourseWide in query params when provided', () => {
+            service.getPosts(metisCourse.id!, { filterToCourseWide: true }).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('filterToCourseWide') === 'true');
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should include filterToUnresolved in query params when provided', () => {
+            service.getPosts(metisCourse.id!, { filterToUnresolved: true }).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('filterToUnresolved') === 'true');
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should include filterToAnsweredOrReacted in query params when provided', () => {
+            service.getPosts(metisCourse.id!, { filterToAnsweredOrReacted: true }).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('filterToAnsweredOrReacted') === 'true');
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should include filterToUnverifiedIris in query params when provided', () => {
+            service.getPosts(metisCourse.id!, { filterToUnverifiedIris: true }).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('filterToUnverifiedIris') === 'true');
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should include pinnedOnly in query params when provided', () => {
+            service.getPosts(metisCourse.id!, { pinnedOnly: true }).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('pinnedOnly') === 'true');
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should include paging params when pagingEnabled is set', () => {
+            service.getPosts(metisCourse.id!, { pagingEnabled: true, page: 2, pageSize: 20 }).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.params.get('pagingEnabled') === 'true' && r.params.get('page') === '2' && r.params.get('size') === '20');
+            req.flush([]);
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should route create to /messages endpoint when post has a conversation', () => {
+            const postWithConversation = Object.assign(new Post(), { conversation: { id: 5 } });
+            service.create(metisCourse.id!, postWithConversation).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/communication/courses/${metisCourse.id}/messages`);
+            req.flush({});
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should route create to /posts endpoint when post has no conversation', () => {
+            const postWithoutConversation = new Post();
+            service.create(metisCourse.id!, postWithoutConversation).pipe(take(1)).subscribe();
+            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/plagiarism/courses/${metisCourse.id}/posts`);
+            req.flush({});
+            vi.advanceTimersByTime(0);
+        });
+
+        it('should handle null body in convertPostResponseArrayDatesFromServer gracefully', () => {
+            const { HttpResponse } = require('@angular/common/http');
+            const res = new HttpResponse({ body: null });
+            const result = service.convertPostResponseArrayDatesFromServer(res);
+            expect(result.body).toBeNull();
+        });
+
+        it('should convert creation dates for posts and answers in convertPostResponseArrayDatesFromServer', () => {
+            const { HttpResponse } = require('@angular/common/http');
+            const rawDate = '2024-06-01T10:00:00Z';
+            const postWithAnswer = { creationDate: rawDate, answers: [{ creationDate: rawDate }] };
+            const res = new HttpResponse({ body: [postWithAnswer] });
+            const result = service.convertPostResponseArrayDatesFromServer(res);
+            expect(result.body![0].creationDate).toBeDefined();
+            expect(result.body![0].answers![0].creationDate).toBeDefined();
         });
     });
 });

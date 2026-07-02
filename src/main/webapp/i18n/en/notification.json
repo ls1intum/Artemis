@@ -198,6 +198,11 @@
                 "content": "{{replyMarkdownContent}}",
                 "settingsTitle": "New thread answer"
             },
+            "irisResponseNeedsReviewNotification": {
+                "title": "Iris reply needs review",
+                "content": "{{replyMarkdownContent}}",
+                "settingsTitle": "Iris reply needs review"
+            },
             "newMentionNotification": {
                 "title": "You were mentioned",
                 "content": "{{postMarkdownContent}}",
@@ -340,7 +345,8 @@
             },
             "category": {
                 "general": "General",
-                "communication": "Communication"
+                "communication": "Communication",
+                "iris_review": "Iris Review"
             },
             "setting": {
                 "headline": "Notifications"

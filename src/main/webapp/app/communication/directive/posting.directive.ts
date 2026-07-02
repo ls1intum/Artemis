@@ -47,29 +47,18 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     }
 
     ngOnDestroy(): void {
-        if (this.deleteTimer !== undefined) {
-            clearTimeout(this.deleteTimer);
-            // Only delete if still marked as deleted
-            if (this.isDeleted) {
-                this.deletePostingWithoutTimeout();
-            }
-        }
-
-        if (this.deleteInterval !== undefined) {
-            clearInterval(this.deleteInterval);
+        const shouldDeletePosting = this.deleteTimer !== undefined && this.isDeleted;
+        this.clearDeleteTimers();
+        // Only delete if still marked as deleted
+        if (shouldDeletePosting) {
+            this.deletePostingWithoutTimeout();
         }
     }
 
     onDeleteEvent(isDelete: boolean) {
         this.isDeleted = isDelete;
 
-        if (this.deleteTimer !== undefined) {
-            clearTimeout(this.deleteTimer);
-        }
-
-        if (this.deleteInterval !== undefined) {
-            clearInterval(this.deleteInterval);
-        }
+        this.clearDeleteTimers();
 
         if (isDelete) {
             this.deleteTimerInSeconds.set(this.timeToDeleteInSeconds);
@@ -77,6 +66,8 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
             this.deleteTimer = setTimeout(
                 () => {
                     this.deletePostingWithoutTimeout();
+                    this.isDeleted = false;
+                    this.clearDeleteTimers();
                 },
                 // We add a tiny buffer to make it possible for the user to react a bit longer than the ui displays (+1000)
                 this.deleteTimerInSeconds() * 1000 + 1000,
@@ -85,6 +76,18 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
             this.deleteInterval = setInterval(() => {
                 this.deleteTimerInSeconds.set(Math.max(0, this.deleteTimerInSeconds() - 1));
             }, 1000);
+        }
+    }
+
+    private clearDeleteTimers() {
+        if (this.deleteTimer !== undefined) {
+            clearTimeout(this.deleteTimer);
+            this.deleteTimer = undefined;
+        }
+
+        if (this.deleteInterval !== undefined) {
+            clearInterval(this.deleteInterval);
+            this.deleteInterval = undefined;
         }
     }
 
@@ -184,7 +187,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
             return;
         }
         if (this.isAnswerPost) {
-            this.metisService.deleteAnswerPost(posting);
+            this.metisService.deleteAnswerPost(posting).subscribe();
         } else {
             this.metisService.deletePost(posting);
         }

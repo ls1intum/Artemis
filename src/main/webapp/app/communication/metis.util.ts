@@ -53,6 +53,7 @@ export interface PostContextFilter {
     page?: number;
     pageSize?: number;
     pinnedOnly?: boolean;
+    filterToUnverifiedIris?: boolean;
 }
 
 /**
