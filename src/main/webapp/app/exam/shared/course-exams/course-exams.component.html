@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-between sidebar-tab-content-row">
+<div class="d-flex justify-content-between" [class.sidebar-tab-content-row]="!isExamStarted()">
     @if (course()) {
         @if (sidebarData(); as currentSidebarData) {
             <div id="exam-sidebar-test" [class.sidebar-collapsed]="isCollapsed()" [hidden]="isExamStarted()">
