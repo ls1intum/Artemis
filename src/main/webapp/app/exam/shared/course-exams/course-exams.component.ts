@@ -85,11 +85,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     private readonly activeExamDetails = signal<ExamParticipationComponent | undefined>(undefined);
-
-    constructor() {
-        // Push the collapse state and toggle into the active exam participation so its start cover can render the toggle in its header when collapsed.
-        effect(() => this.activeExamDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
-    }
+    protected readonly activeExamDetailsSidebarSync = effect(() => this.activeExamDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter

@@ -63,12 +63,10 @@ export class CourseTutorialGroupsComponent {
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
 
     private readonly activeDetail = signal<CourseTutorialGroupDetailContainerComponent | undefined>(undefined);
+    protected readonly activeDetailSidebarSync = effect(() => this.activeDetail()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     constructor() {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup'));
-
-        // Push the collapse state and toggle into the active tutorial detail so it can render the toggle in its header when collapsed.
-        effect(() => this.activeDetail()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
         effect(() => {
             const courseId = this.courseId();

@@ -74,11 +74,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
     private readonly activeLectureDetails = signal<CourseLectureDetailsComponent | undefined>(undefined);
-
-    constructor() {
-        // Push the collapse state and toggle into the active lecture detail so it can render the toggle in its header when collapsed.
-        effect(() => this.activeLectureDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
-    }
+    protected readonly activeLectureDetailsSidebarSync = effect(() => this.activeLectureDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     ngOnInit() {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture'));
