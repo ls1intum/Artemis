@@ -9,28 +9,20 @@ import { admin } from '../../support/users';
 const uid = generateUUID();
 
 async function selectTaxonomy(page: Page, taxonomy: string) {
-    const select = page.locator('#taxonomy');
-    await expect(select).toBeVisible();
-
-    const optionValue = await page.locator('#taxonomy option').evaluateAll((options, desired) => {
-        const wanted = String(desired).trim().toLowerCase();
-        for (const option of options) {
-            const text = (option.textContent ?? '').trim();
-            const lowerText = text.toLowerCase();
-
-            const normalized = lowerText.replace(/^\d+\s*:\s*/, '').trim();
-            if (normalized === wanted || normalized.includes(wanted) || lowerText.includes(wanted)) {
-                return (option as HTMLOptionElement).value;
-            }
-        }
-        return null;
-    }, taxonomy);
-
-    if (optionValue === null) {
-        throw new Error(`Could not find taxonomy option ending with '${taxonomy}'`);
-    }
-
-    await select.selectOption(optionValue);
+    // The taxonomy control is a PrimeNG p-select (migrated from a native <select>): open its overlay and pick
+    // the option whose translated label matches the requested taxonomy.
+    await page
+        .locator('p-select')
+        .filter({ has: page.locator('#taxonomy') })
+        .click();
+    const overlay = page.locator('.p-select-overlay');
+    await expect(overlay).toBeVisible();
+    await overlay
+        .locator('.p-select-option')
+        .filter({ hasText: new RegExp(taxonomy.trim(), 'i') })
+        .first()
+        .click();
+    await expect(overlay).toBeHidden();
 }
 
 async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: number, day: number) {

@@ -58,9 +58,14 @@
 </div>
 @if (!hideValidationMessage() && (!isInputValid() || (requiredField() && !dateInputValue()))) {
     @if (labelName()) {
-        <div class="text-state-danger text-sm mt-1 block" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName() }"></div>
+        <div
+            class="text-state-danger text-sm mt-1 block"
+            data-testid="date-picker-validation-message"
+            jhiTranslate="entity.dateMissingOrNotValid"
+            [translateValues]="{ labelName: labelName() }"
+        ></div>
     } @else {
-        <div class="text-state-danger text-sm mt-1 block" jhiTranslate="entity.dateMissingOrNotValidGeneric"></div>
+        <div class="text-state-danger text-sm mt-1 block" data-testid="date-picker-validation-message" jhiTranslate="entity.dateMissingOrNotValidGeneric"></div>
     }
 }
 @if (warning()) {
