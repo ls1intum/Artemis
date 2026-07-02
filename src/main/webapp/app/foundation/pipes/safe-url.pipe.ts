@@ -7,9 +7,10 @@ export class SafeUrlPipe implements PipeTransform {
 
     /**
      * Bypasses the security checks for a specified URL.
-     * @param value The URL that is considered safe.
+     * @param value The URL that is considered safe. May be nullish (e.g. when the source URL could not be built),
+     *              in which case it is passed through to the sanitizer unchanged to preserve prior behavior.
      */
-    transform(value: string) {
-        return this.sanitizer.bypassSecurityTrustUrl(value);
+    transform(value: string | undefined | null) {
+        return this.sanitizer.bypassSecurityTrustUrl(value as string);
     }
 }

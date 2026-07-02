@@ -134,7 +134,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(fixture.debugElement.query(By.css('.loading-spinner'))).toBeNull();
 
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
-            const ev = { target: { files: [file] } };
+            const ev = { target: { files: [file] } } as unknown as Event;
             comp.setImportFile(ev);
             expect(comp.importFile).toStrictEqual(file);
             expect(comp.importFileName).toBe('testFileName');
@@ -149,7 +149,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             fixture.detectChanges(false);
             expect(fixture.debugElement.query(By.css('.loading-spinner'))).toBeNull();
 
-            const ev = { target: { files: [] } };
+            const ev = { target: { files: [] } } as unknown as Event;
             comp.setImportFile(ev);
             expect(comp.importFile).toBeUndefined();
             expect(comp.importFileName).toBe('');

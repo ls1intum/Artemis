@@ -237,7 +237,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const studentSubmission = createFileUploadSubmission();
         fixture.componentRef.setInput('studentSubmission', studentSubmission);
         const jhiErrorSpy = vi.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
+        const event = { target: { files: [submissionFile] } } as unknown as Event;
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 
@@ -266,7 +266,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const studentSubmission = createFileUploadSubmission();
         fixture.componentRef.setInput('studentSubmission', studentSubmission);
         const jhiErrorSpy = vi.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
+        const event = { target: { files: [submissionFile] } } as unknown as Event;
         comp.setFileSubmissionForExercise(event);
         fixture.detectChanges();
 

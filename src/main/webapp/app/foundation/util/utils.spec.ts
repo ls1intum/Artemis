@@ -106,7 +106,7 @@ describe('Range', () => {
 
 describe('getAsMutableObject', () => {
     it('should return immutable object as mutable object', () => {
-        const immutableObject = Object.freeze({
+        const immutableObject: Readonly<{ name: string; familyName: string; age: number }> = Object.freeze({
             name: 'Jane',
             familyName: 'Doe',
             age: 26,

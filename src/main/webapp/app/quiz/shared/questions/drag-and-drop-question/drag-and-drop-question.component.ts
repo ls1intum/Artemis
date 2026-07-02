@@ -153,10 +153,10 @@ export class DragAndDropQuestionComponent {
 
     /**
      * Prevent scrolling when dragging elements on mobile devices
-     * @param event a drag event wrapping the underlying native mouse event
+     * @param event the native drag event emitted by the drop location element
      */
-    preventDefault(event: { mouseEvent: MouseEvent }) {
-        event.mouseEvent.preventDefault();
+    preventDefault(event: Event) {
+        event.preventDefault();
         return false;
     }
 

@@ -5,7 +5,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { By } from '@angular/platform-browser';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -14,7 +14,7 @@ import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/a
 import { MockCodeEditorConflictStateService } from 'test/helpers/mocks/service/mock-code-editor-conflict-state.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
-import { CommitState, EditorState, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { CommitState, EditorState, FileSubmission, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -310,7 +310,7 @@ describe('CodeEditorActionsComponent', () => {
         fixture.componentRef.setInput('unsavedFiles', unsavedFiles);
         fixture.detectChanges();
 
-        saveChangedFilesStub.mockReturnValue(saveObservable);
+        saveChangedFilesStub.mockReturnValue(saveObservable as unknown as Observable<FileSubmission | undefined>);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
         expect(commitButton.nativeElement.disabled).toBe(false);

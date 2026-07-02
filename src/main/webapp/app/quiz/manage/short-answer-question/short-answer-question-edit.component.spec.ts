@@ -11,6 +11,7 @@ import { MatchPercentageInfoModalComponent } from 'app/quiz/manage/match-percent
 import { CdkDrag, CdkDragHandle, CdkDragPlaceholder, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
@@ -337,7 +338,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
             item: {
                 data: testSolution1,
             },
-        };
+        } as unknown as CdkDragDrop<ShortAnswerSolution>;
 
         fixture.detectChanges();
         component.onDragDrop(dropSpot, event);

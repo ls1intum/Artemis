@@ -135,8 +135,9 @@ export class ExerciseFilterModalComponent implements OnInit {
     resultFormatter = (exerciseCategory: ExerciseCategoryFilterOption) => exerciseCategory.category.category ?? '';
 
     // Bound to both the typeahead's (selectItem) output and (keydown.enter): the former emits an
-    // NgbTypeaheadSelectItemEvent (carrying the selected item), the latter a KeyboardEvent (no item).
-    onSelectItem(event: NgbTypeaheadSelectItemEvent<ExerciseCategoryFilterOption> | KeyboardEvent) {
+    // NgbTypeaheadSelectItemEvent (carrying the selected item), the latter a native keyboard Event (no item).
+    // The keydown binding types its payload as the generic DOM Event, hence the widened union here.
+    onSelectItem(event: NgbTypeaheadSelectItemEvent<ExerciseCategoryFilterOption> | Event) {
         const isEnterPressedForNotExistingItem = !('item' in event) || !event.item;
         if (isEnterPressedForNotExistingItem) {
             event.preventDefault();

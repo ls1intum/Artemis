@@ -98,7 +98,7 @@ describe('TextExercise Service', () => {
             const returnedFromService = Object.assign({ exampleSolution: 'BBBBBB' }, elemDefault);
             const expected = Object.assign({}, returnedFromService);
             service
-                .query(expected)
+                .query(expected as unknown as Record<string, unknown>)
                 .pipe(take(1))
                 .subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'GET' });

@@ -2,7 +2,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({ name: 'searchFilter' })
 export class SearchFilterPipe implements PipeTransform {
-    transform<T extends Record<string, unknown>>(array: T[] | undefined, fields: string[], value: string): T[] {
+    transform<T>(array: T[] | undefined, fields: string[], value: string): T[] {
         if (!Array.isArray(array)) {
             return [];
         }
@@ -11,7 +11,7 @@ export class SearchFilterPipe implements PipeTransform {
                 return false;
             }
             return fields.some((field) => {
-                const elementValue = element[field];
+                const elementValue = (element as Record<string, unknown>)[field];
                 return elementValue && typeof elementValue === 'string' ? elementValue.toLowerCase().includes(value?.toLowerCase()) : false;
             });
         });
