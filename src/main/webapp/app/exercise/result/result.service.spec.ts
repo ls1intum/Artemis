@@ -374,6 +374,16 @@ describe('ResultService', () => {
     });
 
     describe('evaluateBadge', () => {
+        it('should identify Athena results as AI feedback', () => {
+            const participation: Participation = {};
+            const result: Result = { rated: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                class: 'bg-ai',
+                text: 'artemisApp.result.ai',
+                tooltip: 'artemisApp.result.aiTooltip',
+            });
+        });
+
         it('should be calculated correctly for practice mode', () => {
             const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
             const result: Result = {};

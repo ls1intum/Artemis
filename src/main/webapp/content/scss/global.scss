@@ -17,6 +17,11 @@
 
 @import 'primeicons/primeicons.css';
 
+.bg-ai {
+    color: var(--white) !important;
+    background-color: var(--purple) !important;
+}
+
 // Smooth transition between themes
 * {
     transition:

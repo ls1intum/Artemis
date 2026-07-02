@@ -87,6 +87,18 @@ describe('ResultHistoryDropdownComponent', () => {
     });
 
     describe('activeResultId', () => {
+        it('should keep the first programming result active', () => {
+            const results = [createResult(10, 75), createResult(20, 50)];
+            fixture.componentRef.setInput('sortedHistoryResults', results);
+            fixture.componentRef.setInput('studentParticipation', {
+                id: 1,
+                submissions: [{ results: [results[1]] }],
+            } as StudentParticipation);
+            fixture.detectChanges();
+
+            expect(component.activeResultId()).toBe(10);
+        });
+
         it('should return undefined when no student participation', () => {
             expect(component.activeResultId()).toBeUndefined();
         });
@@ -99,6 +111,7 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should return the highest result id from participation submissions', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, course: { id: 1 } } as Exercise);
             const result1: Result = { id: 10 } as Result;
             const result2: Result = { id: 20 } as Result;
             fixture.componentRef.setInput('studentParticipation', {
@@ -380,6 +393,7 @@ describe('ResultHistoryDropdownComponent', () => {
             component.showFeedback(result, event);
 
             expect(event.stopPropagation).toHaveBeenCalled();
+            expect(component.isViewingSubmission()).toBe(false);
             expect(openSpy).toHaveBeenCalledWith(
                 FeedbackComponent,
                 expect.objectContaining({
