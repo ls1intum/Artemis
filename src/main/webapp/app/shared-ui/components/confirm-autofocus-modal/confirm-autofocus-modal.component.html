@@ -18,7 +18,7 @@
         <ng-container [ngTemplateOutlet]="data.contentRef" />
     }
 </div>
-<div class="modal-footer">
+<div class="modal-footer gap-2">
     <button type="button" class="btn btn-outline-secondary" (click)="cancel()" jhiTranslate="global.form.cancel"></button>
     <button #confirmButton type="button" class="btn btn-danger" (click)="confirm()" jhiTranslate="global.form.confirm" [disabled]="data.confirmDisabled"></button>
 </div>

@@ -5,7 +5,6 @@ import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -46,9 +45,6 @@ import { CourseDashboardComponent } from 'app/course/overview/course-dashboard/c
     styleUrls: ['./course-overview.scss', './course-overview.component.scss'],
     imports: [
         NgClass,
-        MatSidenavContainer,
-        MatSidenavContent,
-        MatSidenav,
         RouterOutlet,
         NgTemplateOutlet,
         FaIconComponent,

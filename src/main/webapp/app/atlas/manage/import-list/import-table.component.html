@@ -63,16 +63,7 @@
     </table>
 </div>
 <div class="d-flex justify-content-between p-2">
-    <ngb-pagination
-        [collectionSize]="collectionSize()"
-        [pageSize]="pageSize()"
-        [page]="page()"
-        (pageChange)="setPage($event)"
-        [maxSize]="5"
-        [rotate]="true"
-        [ellipses]="true"
-        [boundaryLinks]="true"
-    />
+    <p-paginator [first]="(page() - 1) * pageSize()" [rows]="pageSize()" [totalRecords]="collectionSize()" (onPageChange)="onPageChange($event)" />
 </div>
 
 <ng-template #sortIcon let-sortedColumn="sortedColumn" let-currentSortedColumn="currentSortedColumn" let-sortingOrder="sortingOrder">

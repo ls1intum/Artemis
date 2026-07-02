@@ -11,11 +11,12 @@ import dayjs from 'dayjs/esm';
 import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ProgressBar } from 'primeng/progressbar';
 
 export interface CompetencyAccordionToggleEvent {
     opened: boolean;
@@ -26,7 +27,7 @@ export interface CompetencyAccordionToggleEvent {
     selector: 'jhi-competency-accordion',
     templateUrl: './competency-accordion.component.html',
     styleUrl: './competency-accordion.component.scss',
-    imports: [FaIconComponent, NgbTooltip, NgbProgressbar, CompetencyRingsComponent, TranslateDirective, CourseExerciseRowComponent, RouterLink, ArtemisTranslatePipe],
+    imports: [FaIconComponent, NgbTooltip, CompetencyRingsComponent, TranslateDirective, CourseExerciseRowComponent, RouterLink, ArtemisTranslatePipe, ProgressBar],
 })
 export class CompetencyAccordionComponent implements OnChanges {
     private router = inject(Router);

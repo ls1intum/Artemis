@@ -133,6 +133,7 @@ public class FeatureToggleService {
         if (!features.containsKey(Feature.Deimos)) {
             features.put(Feature.Deimos, false);
         }
+
         // Disable LectureContentProcessing in dev profile to avoid issues with local file system access
         if (profileService.isDevActive() && !lectureContentProcessingEnabledOnStart) {
             features.put(Feature.LectureContentProcessing, false);
