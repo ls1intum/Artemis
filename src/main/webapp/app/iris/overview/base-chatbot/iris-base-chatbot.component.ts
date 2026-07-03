@@ -1,4 +1,5 @@
 import {
+    faAnglesRight,
     faArrowDown,
     faCheck,
     faChevronDown,
@@ -8,6 +9,7 @@ import {
     faCopy,
     faExpand,
     faLink,
+    faMagnifyingGlass,
     faPaperPlane,
     faPenToSquare,
     faThumbsDown,
@@ -181,6 +183,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
     protected readonly faChevronDown = faChevronDown;
+    protected readonly faAnglesRight = faAnglesRight;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;

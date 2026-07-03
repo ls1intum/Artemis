@@ -5,7 +5,22 @@
         <div class="chat-history" [class.chat-history-open]="isChatHistoryOpen()">
             @if (!isChatHistoryOpen()) {
                 <div class="chat-history-collapsed">
-                    <jhi-course-sidebar-toggle-button [isCollapsed]="true" (toggleSidebar)="setChatHistoryVisibility(true)" />
+                    <button
+                        type="button"
+                        class="collapsed-icon-button"
+                        (click)="setChatHistoryVisibility(true)"
+                        [attr.aria-label]="'artemisApp.iris.chatHistory.openChatHistory' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faAnglesRight" />
+                    </button>
+                    <button
+                        type="button"
+                        class="collapsed-icon-button"
+                        (click)="setChatHistoryVisibility(true)"
+                        [attr.aria-label]="'artemisApp.iris.chatHistory.searchChatHistory' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faMagnifyingGlass" />
+                    </button>
                     <div
                         class="new-chat-button"
                         (click)="openNewSession()"
