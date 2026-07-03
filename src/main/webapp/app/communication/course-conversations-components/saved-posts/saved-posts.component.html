@@ -1,6 +1,9 @@
 <div class="saved-posts pt-2 px-2 d-flex flex-column h-100">
     <div>
         <h4 class="mb-0 p-1 pb-0">
+            <button class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
+                <fa-icon [icon]="faChevronLeft" />
+            </button>
             <span jhiTranslate="artemisApp.metis.overview.savedPosts"></span>
             @if (savedPostStatus()) {
                 (<span [jhiTranslate]="'artemisApp.metis.overview.' + savedPostStatus()?.toString()"></span>)
