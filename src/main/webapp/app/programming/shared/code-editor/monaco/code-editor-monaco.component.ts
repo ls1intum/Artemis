@@ -46,6 +46,7 @@ import {
 } from 'app/exercise/review/review-comment-utils';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { parseJson } from 'app/foundation/util/json.util';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -498,7 +499,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     private setupAddFeedbackShortcut(): void {
         this.disposeAddFeedbackShortcut();
-        this.addFeedbackKeydownListener = this.editor().onKeyDown((event: any) => {
+        this.addFeedbackKeydownListener = this.editor().onKeyDown((event) => {
             const browserEvent = event?.browserEvent as KeyboardEvent | undefined;
             const code = browserEvent?.code;
             const key = browserEvent?.key;
@@ -991,7 +992,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * Loads annotations from local storage
      */
     loadAnnotations() {
-        return JSON.parse(this.localStorageService.retrieve<string>('annotations-' + this.sessionId()) || '{}');
+        return parseJson<{ [hash: string]: Annotation }>(this.localStorageService.retrieve<string>('annotations-' + this.sessionId()) || '{}');
     }
 
     setBuildAnnotations(buildAnnotations: Annotation[]): void {

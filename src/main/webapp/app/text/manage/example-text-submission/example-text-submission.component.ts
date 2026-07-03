@@ -104,7 +104,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     private get referencedFeedback(): Feedback[] {
-        return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined) as Feedback[];
+        return this.textBlockRefs.map(({ feedback }) => feedback).filter(notUndefined);
     }
 
     private get assessments(): Feedback[] {
@@ -147,7 +147,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
 
         this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe(async (exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
             this.exampleSubmission = exampleSubmissionResponse.body!;
-            this.submission = this.exampleSubmission.submission as TextSubmission;
+            this.submission = this.exampleSubmission.submission;
             await this.fetchExampleResult();
             if (this.toComplete()) {
                 this.state = State.forCompletion(this);
@@ -221,7 +221,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
                 this.exampleSubmission = exampleSubmissionResponse.body!;
                 this.exampleSubmission.exercise = this.exercise;
                 this.exampleSubmissionId = this.exampleSubmission.id!;
-                this.submission = this.exampleSubmission.submission as TextSubmission;
+                this.submission = this.exampleSubmission.submission;
                 this.isNewSubmission.set(false);
                 this.unsavedSubmissionChanges.set(false);
                 this.state.edit();
@@ -251,7 +251,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     saveSubmissionIfNeeded(): Observable<ExampleSubmissionResponseType> {
         // If there are no unsaved changes, no need for server call
         if (!this.unsavedSubmissionChanges()) {
-            return of({} as ExampleSubmissionResponseType);
+            return of(new HttpResponse<ExampleSubmission>());
         }
 
         return this.exampleSubmissionService.update(this.exampleSubmissionForNetwork(), this.exerciseId).pipe(
@@ -272,7 +272,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             )
             .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body!;
-                this.submission = this.exampleSubmission.submission as TextSubmission;
+                this.submission = this.exampleSubmission.submission;
 
                 const newResult = new Result();
                 newResult.submission = this.submission;
@@ -313,7 +313,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
      * Otherwise redirects back to the exercise's edit view either for exam exercises or normal exercises.
      */
     async back(): Promise<void> {
-        const courseId = getCourseFromExercise(this.exercise!)?.id;
+        const courseId = getCourseFromExercise(this.exercise)?.id;
         // check if exam exercise
         if (this.exercise?.exerciseGroup) {
             const examId = this.exercise.exerciseGroup.exam?.id;
@@ -366,7 +366,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             .filter((feedback) => feedback != undefined)
             .concat(this.unreferencedFeedback())
             .forEach((feedback) => {
-                feedback!.correctionStatus = 'CORRECT';
+                feedback.correctionStatus = 'CORRECT';
             });
     }
 

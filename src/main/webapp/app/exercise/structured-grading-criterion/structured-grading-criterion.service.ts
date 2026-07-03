@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 @Injectable({ providedIn: 'root' })
 export class StructuredGradingCriterionService {
@@ -10,11 +12,11 @@ export class StructuredGradingCriterionService {
      * the SGI element sent on drag in processed in this method
      * the corresponding drag method is in StructuredGradingInstructionsAssessmentLayoutComponent
      */
-    updateFeedbackWithStructuredGradingInstructionEvent(feedback: Feedback, event: any) {
+    updateFeedbackWithStructuredGradingInstructionEvent(feedback: Feedback, event: Event) {
         event.preventDefault();
         try {
-            const data = event.dataTransfer.getData('text/plain');
-            const instruction = JSON.parse(data);
+            const data = (event as DragEvent).dataTransfer!.getData('text/plain');
+            const instruction = parseJson<GradingInstruction>(data);
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
         } catch (err) {

@@ -61,7 +61,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     readonly teamsForTable = computed<TeamRow[]>(() =>
         this.teams().map((team) => {
             // Clone via Object.assign rather than object spread, per the repository TypeScript guidelines.
-            const row = Object.assign({} as TeamRow, team);
+            const row = Object.assign({}, team) as TeamRow;
             row.studentsSearchText = team.students?.flatMap((student) => [student.login, student.name].filter(Boolean)).join(' ') ?? '';
             return row;
         }),
