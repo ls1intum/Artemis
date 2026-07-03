@@ -473,15 +473,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private buildDisplayedActions(): MarkdownActionsByGroup {
         const domainActions = this.domainActions();
         return {
-            style: this.filterDisplayedActions(this.defaultActions()).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
+            style: this.filterDisplayedActions(this.defaultActions()).filter((action) => action instanceof TextStyleTextEditorAction),
             standard: this.filterDisplayedActions(this.defaultActions()).filter((action) => !(action instanceof TextStyleTextEditorAction)),
             header: this.filterDisplayedActions(this.headerActions()?.actions ?? []),
             color: this.filterDisplayedAction(this.colorAction()),
             domain: {
                 withoutOptions: this.filterDisplayedActions(domainActions.filter((action) => !(action instanceof TextEditorDomainActionWithOptions))),
-                withOptions: this.filterDisplayedActions(
-                    domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions),
-                ) as TextEditorDomainActionWithOptions[],
+                withOptions: this.filterDisplayedActions(domainActions.filter((action) => action instanceof TextEditorDomainActionWithOptions)),
             },
             lecture: this.filterDisplayedAction(this.lectureReferenceAction()),
             artemisIntelligence: this.filterDisplayedActions(this.artemisIntelligenceActions() ?? []),
@@ -928,11 +926,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     /**
      * Called when the user selects a file to upload.
-     * @param event The event that contains the files to upload (typed as any to avoid compilation errors).
+     * @param event The change event of the file input that contains the files to upload.
      */
-    onFileUpload(event: any): void {
-        if (event.target.files.length >= 1) {
-            this.embedFiles(Array.from(event.target.files), event.target);
+    onFileUpload(event: Event): void {
+        const inputElement = event.target as HTMLInputElement;
+        if (inputElement.files && inputElement.files.length >= 1) {
+            this.embedFiles(Array.from(inputElement.files), inputElement);
         }
     }
 
@@ -990,7 +989,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     private processFileUploadResponse(response: FileUploadResponse, file: File): void {
         const extension = file.name.split('.').last()?.toLocaleLowerCase();
 
-        const attachmentAction: AttachmentAction | undefined = this.defaultActions().find((action) => action instanceof AttachmentAction) as AttachmentAction;
+        const attachmentAction: AttachmentAction | undefined = this.defaultActions().find((action) => action instanceof AttachmentAction);
         const urlAction: UrlAction | undefined = this.defaultActions().find((action) => action instanceof UrlAction);
         if (!attachmentAction || !urlAction || !response.path) {
             throw new Error('Cannot process file upload.');

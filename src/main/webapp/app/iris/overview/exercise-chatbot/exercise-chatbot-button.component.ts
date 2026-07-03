@@ -73,8 +73,8 @@ export class IrisExerciseChatbotButtonComponent {
         this.chatService.newIrisMessage.pipe(
             filter((msg) => !!msg),
             switchMap((msg) => {
-                if (msg!.content && msg!.content.length > 0 && isTextContent(msg!.content[0])) {
-                    return of(msg!.content[0].textContent);
+                if (msg.content && msg.content.length > 0 && isTextContent(msg.content[0])) {
+                    return of(msg.content[0].textContent);
                 }
                 return EMPTY;
             }),
@@ -85,8 +85,9 @@ export class IrisExerciseChatbotButtonComponent {
 
     // Convert route params to signals for proper reactive handling
     // (route.params emits synchronously on subscription, before inputs are set in constructor)
-    private readonly routeParams = toSignal(this.route.params, { initialValue: {} as Params });
-    private readonly queryParams = toSignal(this.route.queryParams, { initialValue: {} as Params });
+    private readonly emptyParams: Params = {};
+    private readonly routeParams = toSignal(this.route.params, { initialValue: this.emptyParams });
+    private readonly queryParams = toSignal(this.route.queryParams, { initialValue: this.emptyParams });
 
     private bubbleTimeoutId: ReturnType<typeof setTimeout> | undefined;
 

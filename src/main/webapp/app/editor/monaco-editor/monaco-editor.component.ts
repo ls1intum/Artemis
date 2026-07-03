@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { captureException } from '@sentry/angular';
 import { MonacoTextEditorAdapter } from 'app/editor/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorDiffText, MonacoEditorTextModel } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
@@ -459,13 +460,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (this.diffListenersAttached || !this._diffEditor) return;
         this.diffListenersAttached = true;
 
-        this.diffUpdateListener = this._diffEditor!.onDidUpdateDiff(() => {
+        this.diffUpdateListener = this._diffEditor.onDidUpdateDiff(() => {
             const monacoLineChanges = this._diffEditor!.getLineChanges() ?? [];
             const lineChange = convertMonacoLineChanges(monacoLineChanges);
             this.diffChanged.emit({ ready: true, lineChange });
         });
 
-        this.diffLayoutListener = this._diffEditor!.getOriginalEditor().onDidLayoutChange((info) => {
+        this.diffLayoutListener = this._diffEditor.getOriginalEditor().onDidLayoutChange((info) => {
             this.diffOriginalPaneLayoutChanged.emit(info.width);
         });
     }
@@ -839,7 +840,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     setLineDecorationsHoverButton(className: string, clickCallback: (lineNumber: number) => void): void {
         if (!this.lineDecorationsHoverButton) {
             this.lineDecorationsFoldingBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.folding);
-            this.lineDecorationsWidthBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.lineDecorationsWidth) as string | number;
+            this.lineDecorationsWidthBeforeHoverButton = this._editor.getOption(monaco.editor.EditorOption.lineDecorationsWidth);
         }
         this.lineDecorationsHoverButton?.dispose();
         this.lineDecorationsHoverButton = new MonacoEditorLineDecorationsHoverButton(
@@ -917,8 +918,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 action.dispose();
                 action.register(this.textEditorAdapter, this.translateService);
             } catch (error) {
-                // eslint-disable-next-line no-undef
-                console.warn(`Failed to re-register Monaco action '${action.id}'`, error);
+                captureException(new Error(`Failed to re-register Monaco action '${action.id}'`, { cause: error }));
             }
         }
     }

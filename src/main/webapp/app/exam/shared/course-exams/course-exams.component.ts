@@ -156,17 +156,17 @@ export class CourseExamsComponent {
      * @return value for sort()-function
      */
     protected sortExamsByStartDate(exam1: Exam, exam2: Exam): number {
-        if (dayjs(exam1.startDate!).isBefore(exam2.startDate!)) {
+        if (dayjs(exam1.startDate).isBefore(exam2.startDate)) {
             return -1;
         }
-        if (dayjs(exam1.startDate!).isAfter(exam2.startDate!)) {
+        if (dayjs(exam1.startDate).isAfter(exam2.startDate)) {
             return 1;
         }
         return 0;
     }
 
     protected groupExamsByRealOrTestOrAttempt(realExams: Exam[], testExams: Exam[], testExamAttemptsMap: Map<number, StudentExam[]>): AccordionGroups {
-        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS) as AccordionGroups;
+        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
 
         const realExamWorkingTimeByExamId = this.realExamWorkingTimeByExamId();
         for (const realExam of realExams) {

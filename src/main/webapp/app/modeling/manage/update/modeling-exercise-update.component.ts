@@ -35,6 +35,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { cloneDeep, isEmpty } from 'lodash-es';
@@ -176,7 +177,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
             this.modelingExercise = modelingExercise;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
-                this.exampleSolution.set(importDiagram(JSON.parse(this.modelingExercise.exampleSolutionModel)));
+                this.exampleSolution.set(importDiagram(parseJson(this.modelingExercise.exampleSolutionModel)));
             }
 
             this.backupExercise = cloneDeep(this.modelingExercise);
@@ -195,7 +196,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     if (!this.isExamMode()) {
                         this.exerciseCategories.set(this.modelingExercise.categories || []);
                         if (this.modelingExercise.course) {
-                            courseId = this.modelingExercise.course!.id!;
+                            courseId = this.modelingExercise.course.id!;
                         } else {
                             courseId = this.modelingExercise.exerciseGroup!.exam!.course!.id!;
                         }
@@ -316,10 +317,10 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         }
 
         const focusableElements = Array.from(
-            formRoot.querySelectorAll(
+            formRoot.querySelectorAll<HTMLElement>(
                 'input:not([disabled]):not([readonly]):not([tabindex="-1"]):not([hidden]):not([type="hidden"]), ' + 'select:not([disabled]):not([tabindex="-1"]):not([hidden])',
             ),
-        ) as HTMLElement[];
+        );
 
         const currentIndex = focusableElements.indexOf(activeElement);
         if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {

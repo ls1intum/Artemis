@@ -7,7 +7,7 @@ export class RemoveKeysPipe implements PipeTransform {
      * @param items The array of objects whose keys will be removed.
      * @param keys The array with keys to be removed.
      */
-    transform(items: Array<{ key: string; value: any }>, keys: Array<string>): any {
+    transform<T extends { key: string }>(items: Array<T>, keys: Array<string>): T[] {
         if (!items || !keys) {
             return items;
         }

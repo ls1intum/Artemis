@@ -37,6 +37,7 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/subm
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { SortService } from 'app/foundation/service/sort.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -233,8 +234,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     readonly isAutomaticAssessedProgrammingExercise = signal(false);
 
     // links (set in setupLinks alongside exercise.set() in the getForTutors subscribe)
-    readonly complaintsLink = signal<any[]>(undefined!);
-    readonly moreFeedbackRequestsLink = signal<any[]>(undefined!);
+    readonly complaintsLink = signal<(string | number)[]>(undefined!);
+    readonly moreFeedbackRequestsLink = signal<(string | number)[]>(undefined!);
 
     // Icons
     faSpinner = faSpinner;
@@ -338,7 +339,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         this.modelingExercise.set(modelingExercise);
                         if (modelingExercise.exampleSolutionModel) {
                             this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(modelingExercise.exampleSolutionExplanation));
-                            this.exampleSolutionModel.set(importDiagram(JSON.parse(modelingExercise.exampleSolutionModel)));
+                            this.exampleSolutionModel.set(importDiagram(parseJson(modelingExercise.exampleSolutionModel)));
                         }
                         break;
                     case ExerciseType.FILE_UPLOAD:
@@ -346,7 +347,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(fileUploadExercise.exampleSolution));
                         break;
                     case ExerciseType.PROGRAMMING:
-                        this.programmingExercise.set(exercise as ProgrammingExercise);
+                        this.programmingExercise.set(exercise);
                         break;
                 }
 
@@ -579,7 +580,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             const latestResult = getLatestSubmissionResult(submission);
             if (latestResult) {
                 // reconnect some associations
-                latestResult!.submission = submission;
+                latestResult.submission = submission;
                 setLatestSubmissionResult(submission, latestResult);
             }
             return submission;
@@ -681,7 +682,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 next: (res: HttpResponse<TutorParticipationDTO>) => {
                     const dto = res.body!;
                     this.tutorParticipation.set(dto);
-                    this.tutorParticipationStatus.set(dto.status!);
+                    this.tutorParticipationStatus.set(dto.status);
                     this.alertService.success('artemisApp.exerciseAssessmentDashboard.participation.instructionsReviewed');
                 },
                 error: this.onError,
@@ -803,7 +804,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     toggleSecondCorrection() {
         this.togglingSecondCorrectionButton.set(true);
         this.exerciseService.toggleSecondCorrection(this.exerciseId()).subscribe((res: boolean) => {
-            this.secondCorrectionEnabled.set(res as boolean);
+            this.secondCorrectionEnabled.set(res);
             this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
             this.togglingSecondCorrectionButton.set(false);
         });
