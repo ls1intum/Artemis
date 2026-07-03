@@ -11,7 +11,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,12 +26,16 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseForExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupUpdateDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -60,6 +63,9 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
 
     @Autowired
     private ExamTestRepository examRepository;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -114,10 +120,11 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
 
     private void testAllPreAuthorize() throws Exception {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.FORBIDDEN);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", ExerciseGroupCreateDTO.of(exerciseGroup), HttpStatus.FORBIDDEN);
         request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", ExerciseGroupUpdateDTO.of(exerciseGroup1), HttpStatus.FORBIDDEN);
-        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN, ExerciseGroup.class);
-        request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.FORBIDDEN, ExerciseGroup.class);
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN,
+                ExerciseGroupDTO.class);
+        request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.FORBIDDEN, ExerciseGroupDTO.class);
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
         request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(exerciseGroup), ExerciseGroup.class,
                 HttpStatus.FORBIDDEN);
@@ -126,19 +133,42 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCreateExerciseGroup_asEditor() throws Exception {
-        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
-        exerciseGroup.setId(55L);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.BAD_REQUEST);
-        exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
-        exerciseGroup.setExam(null);
-        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.CONFLICT);
-        exerciseGroup = ExamFactory.generateExerciseGroup(true, exam2);
-        exerciseGroup.setTitle("      ExerciseGroup 123       ");
-        URI exerciseGroupUri = request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exercise-groups", exerciseGroup, HttpStatus.CREATED);
-        verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam2.getId());
-        ExerciseGroup savedExerciseGroup = request.get(String.valueOf(exerciseGroupUri), HttpStatus.OK, ExerciseGroup.class);
-        assertThat(savedExerciseGroup.getTitle()).isEqualTo("ExerciseGroup 123");
+        int groupsBefore = examRepository.findWithExerciseGroupsById(exam2.getId()).orElseThrow().getExerciseGroups().size();
 
+        ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam2);
+        exerciseGroup.setTitle("      ExerciseGroup 123       ");
+        URI exerciseGroupUri = request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exercise-groups", ExerciseGroupCreateDTO.of(exerciseGroup),
+                HttpStatus.CREATED);
+        verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam2.getId());
+
+        ExerciseGroupDTO savedExerciseGroup = request.get(String.valueOf(exerciseGroupUri), HttpStatus.OK, ExerciseGroupDTO.class);
+        // title is stripped server-side, mandatory flag is persisted, and the created group belongs to the path exam's course
+        assertThat(savedExerciseGroup.title()).isEqualTo("ExerciseGroup 123");
+        assertThat(savedExerciseGroup.isMandatory()).isTrue();
+        assertThat(savedExerciseGroup.exam()).isNotNull();
+        assertThat(savedExerciseGroup.exam().id()).isEqualTo(exam2.getId());
+
+        // Independent DB check: exactly one new exercise group row was created for the exam (B1: never trust the response body).
+        Exam reloaded = examRepository.findWithExerciseGroupsById(exam2.getId()).orElseThrow();
+        assertThat(reloaded.getExerciseGroups()).hasSize(groupsBefore + 1);
+        assertThat(reloaded.getExerciseGroups()).extracting(ExerciseGroup::getTitle).contains("ExerciseGroup 123");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCreateExerciseGroup_ignoresEntityShapedBody_asEditor() throws Exception {
+        // The Angular client posts a full entity-shaped body: it sets the nested exam and may include an id / exercises.
+        // The create DTO uses @JsonIgnoreProperties(ignoreUnknown = true), so those extra properties must be silently
+        // ignored and the group created (201), proving zero-client-change compatibility.
+        ExerciseGroup entityShaped = ExamFactory.generateExerciseGroup(true, exam2);
+        entityShaped.setId(55L);
+        entityShaped.setTitle("Entity Shaped Group");
+
+        URI uri = request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exercise-groups", entityShaped, HttpStatus.CREATED);
+        ExerciseGroupDTO created = request.get(String.valueOf(uri), HttpStatus.OK, ExerciseGroupDTO.class);
+        assertThat(created.title()).isEqualTo("Entity Shaped Group");
+        // The client-sent id 55 must NOT be honored: the server assigns a fresh id.
+        assertThat(created.id()).isNotEqualTo(55L);
     }
 
     @Test
@@ -157,21 +187,38 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExerciseGroup_asEditor() throws Exception {
-        ExerciseGroup result = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.OK,
-                ExerciseGroup.class);
+        ExerciseGroupDTO result = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.OK,
+                ExerciseGroupDTO.class);
         verify(examAccessService).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1);
-        assertThat(result.getExam()).isEqualTo(exam1);
+        // The single-group response embeds the nested exam (with its course) that the exam-exercise editors read to
+        // rebuild course / exam references. Assert the exact fields the client reads, at the endpoint.
+        assertThat(result.id()).isEqualTo(exerciseGroup1.getId());
+        assertThat(result.exam()).isNotNull();
+        assertThat(result.exam().id()).isEqualTo(exam1.getId());
+        assertThat(result.exam().testExam()).isEqualTo(exam1.isTestExam());
+        assertThat(result.exam().course()).isNotNull();
+        assertThat(result.exam().course().id()).isEqualTo(course1.getId());
+        // The list-only exercises component is intentionally not populated on the single-group response.
+        assertThat(result.exercises()).isNull();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExerciseGroupsForExam_asEditor() throws Exception {
-        List<ExerciseGroup> result = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.OK, ExerciseGroup.class);
+        List<ExerciseGroupDTO> result = assertThatDb(
+                () -> request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.OK, ExerciseGroupDTO.class))
+                .hasBeenCalledAtMostTimes(5);
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
         assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getExercises()).hasSize(1);
-        assertThat(result.getFirst().getExercises()).contains(textExercise1);
-        assertThat(result.getFirst().getExam()).isEqualTo(exam1);
+        // The list response embeds the exercise summaries (and omits the exam, matching the previous wire).
+        ExerciseGroupDTO group = result.getFirst();
+        assertThat(group.exam()).isNull();
+        assertThat(group.exercises()).hasSize(1);
+        ExerciseForExerciseGroupDTO exercise = group.exercises().getFirst();
+        assertThat(exercise.id()).isEqualTo(textExercise1.getId());
+        assertThat(exercise.type()).isEqualTo(ExerciseType.TEXT);
+        assertThat(exercise.title()).isEqualTo(textExercise1.getTitle());
+        assertThat(exercise.maxPoints()).isEqualTo(textExercise1.getMaxPoints());
     }
 
     @Test
@@ -195,6 +242,42 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testDeleteExerciseGroup_asEditor() throws Exception {
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCreateExerciseGroup_setsExamBackReferenceOnChild_asEditor() throws Exception {
+        // C3: after a create, reload the CHILD directly (not via the parent) and assert its exam FK back-reference is set.
+        // A parent-side-only assertion passes while the child.exam_id column is null.
+        ExerciseGroup toCreate = ExamFactory.generateExerciseGroup(true, exam2);
+        toCreate.setTitle("Back-reference group");
+        URI uri = request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exercise-groups", ExerciseGroupCreateDTO.of(toCreate), HttpStatus.CREATED);
+        long createdId = Long.parseLong(uri.toString().substring(uri.toString().lastIndexOf('/') + 1));
+
+        ExerciseGroup child = exerciseGroupRepository.findByIdElseThrow(createdId);
+        assertThat(child.getExam()).as("the created exercise group must reference its exam").isNotNull();
+        assertThat(child.getExam().getId()).isEqualTo(exam2.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteNonLastExerciseGroup_preservesOrderColumn_asInstructor() throws Exception {
+        // C4: deleting a NON-LAST element of the @OrderColumn exercise-group list must not leave a null slot in the
+        // reloaded list, and the remaining ids must stay stable and in order.
+        Exam exam = ExamFactory.generateExam(course1);
+        ExamFactory.generateExerciseGroupWithTitle(true, exam, "first");
+        ExamFactory.generateExerciseGroupWithTitle(true, exam, "second");
+        ExamFactory.generateExerciseGroupWithTitle(true, exam, "third");
+        exam = examRepository.save(exam);
+        Long firstId = exam.getExerciseGroups().get(0).getId();
+        Long secondId = exam.getExerciseGroups().get(1).getId();
+        Long thirdId = exam.getExerciseGroups().get(2).getId();
+
+        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups/" + secondId, HttpStatus.OK);
+
+        Exam reloaded = examRepository.findWithExerciseGroupsById(exam.getId()).orElseThrow();
+        assertThat(reloaded.getExerciseGroups()).as("the ordered exercise-group list must not contain a null gap").doesNotContainNull();
+        assertThat(reloaded.getExerciseGroups()).extracting(ExerciseGroup::getId).as("the remaining ids stay stable and in order").containsExactly(firstId, thirdId);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -222,21 +305,23 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         Exam targetExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
         final List<ExerciseGroup> exerciseGroupsBefore = targetExam.getExerciseGroups();
+        final List<Long> idsBefore = exerciseGroupsBefore.stream().map(ExerciseGroup::getId).toList();
 
-        final List<ExerciseGroup> exerciseGroupsNow = request
+        final List<ExerciseGroupDTO> exerciseGroupsNow = request
                 .postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", exerciseGroupsBefore,
                         ExerciseGroupImportResultDTO.class, HttpStatus.OK)
                 .exerciseGroups();
 
-        assertThat(exerciseGroupsNow).hasSize(9).containsAll(exerciseGroupsBefore).allMatch(element -> element.getId() != null);
+        // Response shape: the 5 pre-existing groups plus the 4 imported groups (the empty source group is skipped) = 9, all with ids.
+        assertThat(exerciseGroupsNow).hasSize(9).allMatch(element -> element.id() != null);
+        assertThat(exerciseGroupsNow).extracting(ExerciseGroupDTO::id).containsAll(idsBefore);
 
-        for (var exerciseGroup : exerciseGroupsBefore) {
-            assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getId(), exerciseGroup.getId())).hasSize(1);
-
-            // empty group did not get imported
-            assertThat(exerciseGroupsNow).filteredOn(element -> Objects.equals(element.getTitle(), exerciseGroup.getTitle()))
-                    .filteredOn(element -> Objects.equals(element.getIsMandatory(), exerciseGroup.getIsMandatory())).hasSize(exerciseGroup.getExercises().isEmpty() ? 1 : 2);
-        }
+        // B1 independent DB check: count the actually persisted exercise-group rows via a fresh reload, never trusting the
+        // HTTP response body. A merge-cascade duplicate row would surface here as a size mismatch that the in-memory /
+        // response-body check cannot see.
+        Exam reloaded = examRepository.findWithExerciseGroupsById(targetExam.getId()).orElseThrow();
+        assertThat(reloaded.getExerciseGroups()).as("exactly 9 exercise-group rows persisted (5 existing + 4 imported)").hasSize(9);
+        assertThat(reloaded.getExerciseGroups()).extracting(ExerciseGroup::getId).containsAll(idsBefore);
     }
 
     @Test
@@ -284,7 +369,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         Exam secondExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
-        final List<ExerciseGroup> listReceived = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+        final List<ExerciseGroupDTO> listReceived = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 listSendToServer, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
 
         final List<ExerciseGroup> listExpected = new ArrayList<>(targetExam.getExerciseGroups());
@@ -292,13 +377,13 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
 
         assertThat(listReceived).hasSize(9);
         for (int i = 0; i <= 4; i++) {
-            assertThat(listReceived.get(i)).isEqualTo(listExpected.get(i));
+            assertThat(listReceived.get(i).id()).isEqualTo(listExpected.get(i).getId());
         }
         for (int i = 5; i < 8; i++) {
-            assertThat(listReceived.get(i).getId()).isNotNull();
-            assertThat(listReceived.get(i).getId()).isNotEqualTo(listExpected.get(i).getId());
-            assertThat(listReceived.get(i).getTitle()).isEqualTo(listExpected.get(i).getTitle());
-            assertThat(listReceived.get(i).getIsMandatory()).isEqualTo(listExpected.get(i).getIsMandatory());
+            assertThat(listReceived.get(i).id()).isNotNull();
+            assertThat(listReceived.get(i).id()).isNotEqualTo(listExpected.get(i).getId());
+            assertThat(listReceived.get(i).title()).isEqualTo(listExpected.get(i).getTitle());
+            assertThat(listReceived.get(i).isMandatory()).isEqualTo(listExpected.get(i).getIsMandatory());
         }
     }
 
@@ -311,7 +396,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         Exam secondExam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         final List<ExerciseGroup> listSendToServer = secondExam.getExerciseGroups();
 
-        final List<ExerciseGroup> listReceived = request.postWithResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
+        final List<ExerciseGroupDTO> listReceived = request.postWithResponseBody("/api/exam/courses/" + course2.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 listSendToServer, ExerciseGroupImportResultDTO.class, HttpStatus.OK).exerciseGroups();
         assertThat(listReceived).hasSize(9);
 
@@ -319,19 +404,21 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         listExpected.addAll(listSendToServer);
 
         for (int i = 0; i <= 4; i++) {
-            assertThat(listReceived.get(i)).isEqualTo(listExpected.get(i));
+            assertThat(listReceived.get(i).id()).isEqualTo(listExpected.get(i).getId());
         }
         for (int i = 5; i < 8; i++) {
-            assertThat(listReceived.get(i).getId()).isNotNull();
-            assertThat(listReceived.get(i).getId()).isNotEqualTo(listExpected.get(i).getId());
-            assertThat(listReceived.get(i).getTitle()).isEqualTo(listExpected.get(i).getTitle());
-            assertThat(listReceived.get(i).getIsMandatory()).isEqualTo(listExpected.get(i).getIsMandatory());
+            assertThat(listReceived.get(i).id()).isNotNull();
+            assertThat(listReceived.get(i).id()).isNotEqualTo(listExpected.get(i).getId());
+            assertThat(listReceived.get(i).title()).isEqualTo(listExpected.get(i).getTitle());
+            assertThat(listReceived.get(i).isMandatory()).isEqualTo(listExpected.get(i).getIsMandatory());
 
-            Exercise expected = listReceived.get(i).getExercises().stream().findFirst().orElseThrow();
-            Exercise exerciseReceived = listExpected.get(i).getExercises().stream().findFirst().orElseThrow();
-            assertThat(exerciseReceived.getId()).isNotEqualTo(expected.getId());
-            assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(expected.getExerciseGroup());
-            assertThat(exerciseReceived.getTitle()).isEqualTo(expected.getTitle());
+            // D3: the raw JSON response deserializes into the new DTO types and the embedded exercise summary survives
+            // (a fresh id, distinct from the source, with the copied title and a non-null type discriminator).
+            ExerciseForExerciseGroupDTO importedExercise = listReceived.get(i).exercises().stream().findFirst().orElseThrow();
+            Exercise sourceExercise = listExpected.get(i).getExercises().stream().findFirst().orElseThrow();
+            assertThat(importedExercise.id()).isNotNull().isNotEqualTo(sourceExercise.getId());
+            assertThat(importedExercise.type()).isNotNull();
+            assertThat(importedExercise.title()).isEqualTo(sourceExercise.getTitle());
         }
     }
 
