@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/account/user/user.model';
 import { StudentWithTeam, Team } from 'app/exercise/shared/entities/team/team.model';
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
+import { parseJson } from 'app/foundation/util/json.util';
 import { parse } from 'papaparse';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -67,7 +68,7 @@ export class TeamsImportFromFileFormComponent {
         try {
             // Read the file and get list of teams from the file
             if (this.importFile?.type === 'application/json') {
-                this.importedTeams = JSON.parse(fileReader.result as string) as StudentWithTeam[];
+                this.importedTeams = parseJson<StudentWithTeam[]>(fileReader.result as string);
             } else if (this.importFile?.type === 'text/csv') {
                 const csvEntries = await this.parseCSVFile(fileReader.result as string);
                 this.importedTeams = this.convertCsvEntries(csvEntries);
@@ -95,9 +96,10 @@ export class TeamsImportFromFileFormComponent {
      * Assigns the uploaded import file
      * @param event object containing the uploaded file
      */
-    setImportFile(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setImportFile(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (input.files?.length) {
+            const fileList: FileList = input.files;
             this.importFile = fileList[0];
             this.importFileName = this.importFile.name;
             this.loading.set(true);
@@ -122,7 +124,7 @@ export class TeamsImportFromFileFormComponent {
                 transformHeader: (header: string) => header.toLowerCase().replace(' ', '').replace('_', ''),
                 skipEmptyLines: true,
                 complete: (results) => resolve(results.data as CsvEntry[]),
-                error: (error: any) => reject(error),
+                error: (error: Error) => reject(error),
             });
         });
     }
@@ -132,28 +134,18 @@ export class TeamsImportFromFileFormComponent {
      * @param entries All entries of the csv file
      */
     convertCsvEntries(entries: CsvEntry[]): StudentWithTeam[] {
-        return entries.map(
-            (entry) =>
-                ({
-                    registrationNumber: entry[csvColumns.registrationNumber] || entry[csvColumns.matrikelNummer] || entry[csvColumns.matriculationNumber] || undefined,
-                    username:
-                        entry[csvColumns.login] ||
-                        entry[csvColumns.username] ||
-                        entry[csvColumns.user] ||
-                        entry[csvColumns.benutzer] ||
-                        entry[csvColumns.benutzerName] ||
-                        undefined,
-                    firstName: entry[csvColumns.firstName] || entry[csvColumns.vorname] || undefined,
-                    lastName:
-                        entry[csvColumns.lastName] ||
-                        entry[csvColumns.familyName] ||
-                        entry[csvColumns.surname] ||
-                        entry[csvColumns.name] ||
-                        entry[csvColumns.nachname] ||
-                        undefined,
-                    teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || undefined,
-                }) as StudentWithTeam,
-        );
+        return entries.map((entry): StudentWithTeam => {
+            const student: StudentWithTeam = {
+                registrationNumber: entry[csvColumns.registrationNumber] || entry[csvColumns.matrikelNummer] || entry[csvColumns.matriculationNumber] || undefined,
+                username:
+                    entry[csvColumns.login] || entry[csvColumns.username] || entry[csvColumns.user] || entry[csvColumns.benutzer] || entry[csvColumns.benutzerName] || undefined,
+                firstName: entry[csvColumns.firstName] || entry[csvColumns.vorname] || undefined,
+                lastName:
+                    entry[csvColumns.lastName] || entry[csvColumns.familyName] || entry[csvColumns.surname] || entry[csvColumns.name] || entry[csvColumns.nachname] || undefined,
+                teamName: entry[csvColumns.teamName] || entry[csvColumns.team] || entry[csvColumns.gruppe] || '',
+            };
+            return student;
+        });
     }
 
     /**

@@ -78,8 +78,8 @@ export class AlertService {
             this.addErrorAlert(errorResponse.message, errorResponse.translationKey, errorResponse.translationParams);
         });
 
-        this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
-            const httpErrorResponse: HttpErrorResponse = response.content;
+        this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: EventWithContent<unknown> | string) => {
+            const httpErrorResponse = (response as EventWithContent<HttpErrorResponse>).content;
             if (httpErrorResponse.error?.skipAlert) {
                 return;
             }
@@ -163,7 +163,16 @@ export class AlertService {
             onClose: alert.onClose,
             dismissible: alert.dismissible,
             isOpen: false,
-        } as AlertInternal;
+            close: () => {
+                alertInternal.isOpen = false;
+                if (this.alerts().includes(alertInternal)) {
+                    this.alerts.update((alerts) => alerts.filter((existingAlert) => existingAlert !== alertInternal));
+                    if (alertInternal.onClose) {
+                        alertInternal.onClose(alertInternal);
+                    }
+                }
+            },
+        };
 
         if (!alert.disableTranslation && (alert.translationKey || alert.message)) {
             // in case a translation key is defined, we use it to create the message
@@ -196,15 +205,6 @@ export class AlertService {
         alertInternal.message = this.sanitizer.sanitize(SecurityContext.HTML, alertInternal.message ?? '') ?? '';
         alertInternal.timeout = alertInternal.timeout ?? DEFAULT_TIMEOUT;
         alertInternal.dismissible = alertInternal.dismissible ?? DEFAULT_DISMISSIBLE;
-        alertInternal.close = () => {
-            alertInternal.isOpen = false;
-            if (this.alerts().includes(alertInternal)) {
-                this.alerts.update((alerts) => alerts.filter((existingAlert) => existingAlert !== alertInternal));
-                if (alertInternal.onClose) {
-                    alertInternal.onClose(alertInternal);
-                }
-            }
-        };
         if (alertInternal.action) {
             alertInternal.action = {
                 label: this.sanitizer.sanitize(SecurityContext.HTML, this.translateService.instant(alertInternal.action.label) ?? '') ?? '',
@@ -220,7 +220,7 @@ export class AlertService {
             // we prevent more than one alert with the same content to be spawned within 50 milliseconds.
             // If such an alert already exists, we return the old one instead.
             const olderAlertWithIdenticalContent: AlertInternal | undefined = this.alerts().find(
-                (otherAlert) => alertInternal.message === otherAlert.message && Math.abs(alertInternal.openedAt!.diff(otherAlert.openedAt!, 'ms')) <= 50,
+                (otherAlert) => alertInternal.message === otherAlert.message && Math.abs(alertInternal.openedAt!.diff(otherAlert.openedAt, 'ms')) <= 50,
             );
             if (olderAlertWithIdenticalContent) {
                 return olderAlertWithIdenticalContent;
@@ -270,7 +270,9 @@ export class AlertService {
         });
     }
 
-    addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+    addErrorAlert(message?: string, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+        // Some callers forward a server error field that is typed `any`, so it may not actually be a string at
+        // runtime; coerce defensively before display.
         if (message && typeof message !== 'string') {
             message = '' + message;
         }

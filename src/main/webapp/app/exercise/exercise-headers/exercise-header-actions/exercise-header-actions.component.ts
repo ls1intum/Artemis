@@ -144,7 +144,7 @@ export class ExerciseHeaderActionsComponent {
     private readonly quizExerciseStatus = computed(() => {
         const exercise = this.exercise();
         if (exercise.type === ExerciseType.QUIZ) {
-            return this.quizExerciseService.getStatus(exercise as QuizExercise);
+            return this.quizExerciseService.getStatus(exercise);
         }
         return undefined;
     });
@@ -254,7 +254,7 @@ export class ExerciseHeaderActionsComponent {
             this._uninitializedQuiz.set(ArtemisQuizService.isUninitialized(quizExercise));
             this._quizNotStarted.set(ArtemisQuizService.notStarted(quizExercise));
         } else if (exercise.type === ExerciseType.PROGRAMMING) {
-            this._programmingExercise.set(exercise as ProgrammingExercise);
+            this._programmingExercise.set(exercise);
         } else if (exercise.type === ExerciseType.MODELING) {
             this._editorLabel.set('openModelingEditor');
         } else if (exercise.type === ExerciseType.TEXT) {

@@ -234,7 +234,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
             exam &&
             exam.visibleDate &&
             exam.visibleDate.isBefore(now) &&
-            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(exam.startDate!)
+            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(exam.startDate)
         );
     }
 

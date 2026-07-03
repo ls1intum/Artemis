@@ -24,7 +24,7 @@ export class MonacoEditorService {
         this.registerCustomMarkdownLanguage();
 
         // Expose Monaco globally for testing frameworks like Playwright
-        (window as any).monaco = monaco;
+        (window as Window & { monaco?: typeof monaco }).monaco = monaco;
 
         effect(() => {
             this.applyTheme(this.currentTheme());

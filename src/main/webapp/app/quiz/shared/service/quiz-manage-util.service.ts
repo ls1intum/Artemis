@@ -281,15 +281,15 @@ export function checkForInvalidFlaggedQuestions(questions: QuizQuestion[]): Inva
         const invalidQuestion = question.invalid;
         const invalidElements: InvalidElement[] = [];
         if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-            pushToInvalidElements((<MultipleChoiceQuestion>question).answerOptions, invalidElements);
+            pushToInvalidElements((question as MultipleChoiceQuestion).answerOptions, invalidElements);
         } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-            pushToInvalidElements((<DragAndDropQuestion>question).dragItems, invalidElements);
-            pushToInvalidElements((<DragAndDropQuestion>question).correctMappings, invalidElements);
-            pushToInvalidElements((<DragAndDropQuestion>question).dropLocations, invalidElements);
+            pushToInvalidElements((question as DragAndDropQuestion).dragItems, invalidElements);
+            pushToInvalidElements((question as DragAndDropQuestion).correctMappings, invalidElements);
+            pushToInvalidElements((question as DragAndDropQuestion).dropLocations, invalidElements);
         } else {
-            pushToInvalidElements((<ShortAnswerQuestion>question).solutions, invalidElements);
-            pushToInvalidElements((<ShortAnswerQuestion>question).correctMappings, invalidElements);
-            pushToInvalidElements((<ShortAnswerQuestion>question).spots, invalidElements);
+            pushToInvalidElements((question as ShortAnswerQuestion).solutions, invalidElements);
+            pushToInvalidElements((question as ShortAnswerQuestion).correctMappings, invalidElements);
+            pushToInvalidElements((question as ShortAnswerQuestion).spots, invalidElements);
         }
         if (invalidQuestion || invalidElements.length !== 0) {
             invalidQuestions[question.id!] = invalidElements.length !== 0 ? invalidElements : [];
@@ -306,7 +306,7 @@ export function checkForInvalidFlaggedQuestions(questions: QuizQuestion[]): Inva
  */
 function pushToInvalidElements(array: CanBecomeInvalid[] | undefined, invalidElements: InvalidElement[]): void {
     if (array !== undefined) {
-        array!.forEach(function (option: CanBecomeInvalid) {
+        array.forEach(function (option: CanBecomeInvalid) {
             if (option.invalid) {
                 invalidElements.push(option);
             }

@@ -106,9 +106,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     // courseId is template-bound and written asynchronously (inside the route subscription), so it is backed by a
     // signal to schedule change detection. The public getter/setter preserves external assignment by the learning path parent.
-    private readonly _courseId = signal<number>(undefined as unknown as number);
+    // The backing signal is honestly typed as number | undefined (its construction-time value is genuinely undefined);
+    // the getter narrows with a single non-null assertion because courseId is always assigned before it is ever read.
+    private readonly _courseId = signal<number | undefined>(undefined);
     public get courseId(): number {
-        return this._courseId();
+        return this._courseId()!;
     }
     public set courseId(value: number) {
         this._courseId.set(value);
@@ -355,8 +357,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
     private resultSortFunction = (a: Result, b: Result) => {
-        const aValue = dayjs(a.completionDate!).valueOf();
-        const bValue = dayjs(b.completionDate!).valueOf();
+        const aValue = dayjs(a.completionDate).valueOf();
+        const bValue = dayjs(b.completionDate).valueOf();
         return aValue - bValue;
     };
 
@@ -380,7 +382,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const participations = this._studentParticipations();
         if (this.exercise && participations?.length) {
             participations.forEach((participation) => {
-                this.participationWebsocketService.addParticipation(participation, this.exercise!);
+                this.participationWebsocketService.addParticipation(participation, this.exercise);
             });
         }
 
@@ -449,7 +451,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             )
             .subscribe((teamAssignment) => {
                 if (this.exercise && teamAssignment.studentParticipations) {
-                    const updatedExercise = deepClone(this.exercise!);
+                    const updatedExercise = deepClone(this.exercise);
                     updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
                     updatedExercise.studentParticipations = teamAssignment.studentParticipations;
                     this.exercise = updatedExercise;
@@ -617,7 +619,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     get quizExerciseStatus(): QuizStatus | undefined {
         if (this.exercise?.type === ExerciseType.QUIZ) {
-            return this.quizExerciseService.getStatus(this.exercise as QuizExercise);
+            return this.quizExerciseService.getStatus(this.exercise);
         }
         return undefined;
     }

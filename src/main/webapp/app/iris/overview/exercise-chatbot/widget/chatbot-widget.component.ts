@@ -340,7 +340,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     }
 
     setPositionAndScale() {
-        const nE = this.widgetEl ?? (this.document.querySelector('.chat-widget') as HTMLElement | null);
+        const nE = this.widgetEl ?? this.document.querySelector<HTMLElement>('.chat-widget');
         const cntRect = this.getContainerRect();
         if (!cntRect || !nE) {
             return;
