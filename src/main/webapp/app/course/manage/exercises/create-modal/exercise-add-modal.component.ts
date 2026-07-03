@@ -1,7 +1,11 @@
-import { Component, Type, effect, inject, input, output, signal } from '@angular/core';
+import { Component, Type, computed, effect, inject, input, output, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { DialogModule } from 'primeng/dialog';
@@ -83,7 +87,33 @@ export class ExerciseAddModalComponent {
     readonly groupCreate = output<void>();
     readonly exportRequested = output<void>();
 
-    protected readonly exerciseTypeCards = EXERCISE_TYPE_CARDS;
+    private readonly profileService = inject(ProfileService);
+    private readonly featureToggleService = inject(FeatureToggleService);
+
+    /** Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. */
+    private readonly programmingEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
+
+    /**
+     * The exercise-type cards actually shown, gated the same way as the legacy add popover: text / modeling /
+     * file-upload are hidden when their module feature is inactive, and programming is hidden while its feature toggle
+     * is off. This keeps the modal from routing users into create/import screens for unavailable exercise types.
+     */
+    protected readonly exerciseTypeCards = computed<ExerciseTypeCard[]>(() =>
+        EXERCISE_TYPE_CARDS.filter((card) => {
+            switch (card.type) {
+                case ExerciseType.PROGRAMMING:
+                    return this.programmingEnabled();
+                case ExerciseType.TEXT:
+                    return this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+                case ExerciseType.MODELING:
+                    return this.profileService.isModuleFeatureActive(MODULE_FEATURE_MODELING);
+                case ExerciseType.FILE_UPLOAD:
+                    return this.profileService.isModuleFeatureActive(MODULE_FEATURE_FILEUPLOAD);
+                default:
+                    return true;
+            }
+        }),
+    );
 
     readonly activeTab = signal<'create' | 'import' | 'export'>('create');
 

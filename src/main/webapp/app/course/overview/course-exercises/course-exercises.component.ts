@@ -168,7 +168,11 @@ export class CourseExercisesComponent {
         if (!exerciseId && lastSelectedExercise) {
             this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {
-            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
+            // A grouped upcoming exercise must open its group detail page, not a single raw variant, matching the
+            // sidebar's group route. Ungrouped exercises keep navigating directly to their exercise id.
+            const groupId = upcomingExercise.exerciseVariantGroup?.id;
+            const target = groupId !== undefined ? ['group', groupId] : [upcomingExercise.id];
+            this.router.navigate(target, { relativeTo: this.route, replaceUrl: true });
         } else {
             this._exerciseSelected.set(!!exerciseId);
         }

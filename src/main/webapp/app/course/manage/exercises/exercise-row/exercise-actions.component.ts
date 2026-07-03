@@ -436,11 +436,28 @@ export class ExerciseActionsComponent {
 
     /**
      * The lifecycle component emits `loadOne` to reload a quiz from the server (e.g. after a failed mutation reverts the
-     * optimistic state). This view holds the exercise locally, so we just re-emit the current value to force
-     * the parent to refresh that row.
+     * optimistic state). Re-emitting the stale local exercise would keep offering an action the server just rejected, so
+     * we re-fetch the quiz by id, recompute its client-derived status, and emit the fresh value to the parent.
      */
     protected onQuizReload(): void {
-        this.exerciseUpdated.emit(this.exercise());
+        const exerciseId = this.exercise().id;
+        if (exerciseId === undefined) {
+            return;
+        }
+        this.quizExerciseService
+            .find(exerciseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (response) => {
+                    const quiz = response.body;
+                    if (quiz) {
+                        quiz.status = this.quizExerciseService.getStatus(quiz);
+                        quiz.quizStarted = quiz.status === QuizStatus.ACTIVE;
+                        this.exerciseUpdated.emit(quiz);
+                    }
+                },
+                error: (e: HttpErrorResponse) => this.dialogErrorSource.next(e.message),
+            });
     }
 
     protected onDelete(event: { [key: string]: boolean }): void {

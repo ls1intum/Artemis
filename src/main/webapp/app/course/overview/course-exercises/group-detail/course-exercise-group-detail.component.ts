@@ -23,7 +23,7 @@ import { InformationBox, InformationBoxComponent } from 'app/shared-ui/informati
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
 import { TooltipModule } from 'primeng/tooltip';
@@ -96,13 +96,11 @@ export class CourseExerciseGroupDetailComponent {
     protected readonly achievedGroupPoints = computed<number>(() => {
         const course = this.course();
         const achieved = this.exercises().reduce((sum, ex) => {
-            const participation = this.exerciseParticipation(ex);
-            const results = getAllResultsOfAllSubmissions(participation?.submissions);
-            const latestRated = results.filter((r) => r.rated).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0];
-            if (!latestRated?.score || !ex.maxPoints) {
+            const relevantResult = getLatestResultOfStudentParticipation(this.exerciseParticipation(ex), false);
+            if (!relevantResult?.score || !ex.maxPoints) {
                 return sum;
             }
-            return sum + (roundValueSpecifiedByCourseSettings((latestRated.score * ex.maxPoints) / 100, course) ?? 0);
+            return sum + (roundValueSpecifiedByCourseSettings((relevantResult.score * ex.maxPoints) / 100, course) ?? 0);
         }, 0);
         const cap = this.group()?.maxPoints;
         return cap !== undefined ? Math.min(achieved, cap) : achieved;

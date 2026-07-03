@@ -28,6 +28,7 @@ export class SidebarCardMediumComponent {
 
     onNonExamCardClicked() {
         if (this.sidebarItem().groupedItems?.length) {
+            this.storeTargetComponentSubRoute();
             return;
         }
         this.storeTargetComponentSubRoute();

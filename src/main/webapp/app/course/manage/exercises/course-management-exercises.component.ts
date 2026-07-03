@@ -672,10 +672,14 @@ export class CourseManagementExercisesComponent implements OnInit {
                     exampleSolutionPublicationDate: updated.exampleSolutionPublicationDate,
                     buildAndTestStudentSubmissionsAfterDueDate: updated.buildAndTestStudentSubmissionsAfterDueDate,
                 })
-                .subscribe((dto) => {
-                    const created = toCourseExerciseGroup(dto, this.exercisesById());
-                    this.groups.set([...this.groups(), created]);
-                    this.buildBuckets();
+                .subscribe({
+                    next: (dto) => {
+                        const created = toCourseExerciseGroup(dto, this.exercisesById());
+                        this.groups.set([...this.groups(), created]);
+                        this.buildBuckets();
+                    },
+                    error: (errorRes: HttpErrorResponse) =>
+                        this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
                 });
             return;
         }
@@ -693,12 +697,52 @@ export class CourseManagementExercisesComponent implements OnInit {
                     exampleSolutionPublicationDate: updated.exampleSolutionPublicationDate,
                     buildAndTestStudentSubmissionsAfterDueDate: updated.buildAndTestStudentSubmissionsAfterDueDate,
                 })
-                .subscribe((dto) => {
-                    const mapped = toCourseExerciseGroup(dto, this.exercisesById());
-                    this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...mapped } : g)));
-                    this.buildBuckets();
+                .subscribe({
+                    next: (dto) => {
+                        // The group timeline may have changed. Re-sync each member exercise's own date fields and quiz
+                        // client state (mirroring the server-side re-sync) so member dates and quiz badges / lifecycle
+                        // buttons reflect the new dates immediately, without waiting for a full reload.
+                        const memberIds = new Set(dto.exerciseIds ?? []);
+                        const now = dayjs();
+                        const refreshedExercises = this.exercises().map((ex) => (ex.id !== undefined && memberIds.has(ex.id) ? this.applyGroupTimelineToMember(ex, dto, now) : ex));
+                        this.exercises.set(refreshedExercises);
+                        const refreshedById = new Map(refreshedExercises.filter((e) => e.id !== undefined).map((e) => [e.id!, e]));
+                        const mapped = toCourseExerciseGroup(dto, refreshedById);
+                        this.groups.set(this.groups().map((g) => (g.id === updated.id ? { ...g, ...mapped } : g)));
+                        this.buildBuckets();
+                    },
+                    error: (errorRes: HttpErrorResponse) =>
+                        this.alertService.addErrorAlert(errorRes.error?.title ?? errorRes.message, errorRes.error?.message, errorRes.error?.params),
                 });
         }
+    }
+
+    /**
+     * Applies a group's shared timeline to one member exercise (returning a fresh copy so signal inputs react) and
+     * recomputes quiz client state, mirroring the server-side re-sync in `applyGroupTimelineToExercises`. Used after a
+     * group edit so member dates and quiz badges / lifecycle buttons update without a full page reload.
+     */
+    private applyGroupTimelineToMember(exercise: Exercise, groupDto: ExerciseVariantGroupDTO, now: dayjs.Dayjs): Exercise {
+        const updated: Exercise = {
+            ...exercise,
+            releaseDate: groupDto.releaseDate,
+            startDate: groupDto.startDate,
+            dueDate: groupDto.dueDate,
+            assessmentDueDate: groupDto.assessmentDueDate,
+            exampleSolutionPublicationDate: groupDto.exampleSolutionPublicationDate,
+        };
+        if (updated.type === ExerciseType.QUIZ) {
+            const quiz = updated as QuizExercise;
+            const startDate = quiz.startDate ?? quiz.releaseDate;
+            if (startDate !== undefined) {
+                quiz.visibleToStudents = startDate.isBefore(now);
+            }
+            if (quiz.dueDate !== undefined) {
+                quiz.quizEnded = quiz.dueDate.isBefore(now);
+            }
+            this.applyQuizClientState(quiz);
+        }
+        return updated;
     }
 
     /** Recomputes the client-derived quiz `status` / `quizStarted` flags (the server does not serialize them). */
