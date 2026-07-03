@@ -24,8 +24,8 @@ export class QuizStatisticUtil {
         }
 
         // Otherwise, we are in the exam mode
-        const examId = quizExercise.exerciseGroup!.exam!.id!;
-        const groupId = quizExercise.exerciseGroup!.id!;
+        const examId = quizExercise.exerciseGroup.exam!.id!;
+        const groupId = quizExercise.exerciseGroup.id!;
         return `/course-management/${courseId}/exams/${examId}/exercise-groups/${groupId}/quiz-exercises/${quizExercise.id}`;
     }
 
@@ -45,7 +45,7 @@ export class QuizStatisticUtil {
         });
         // go to quiz-statistic if the position = 0
         if (index === 0) {
-            this.router.navigateByUrl(baseUrl + '/quiz-point-statistic');
+            void this.router.navigateByUrl(baseUrl + '/quiz-point-statistic');
         } else {
             // go to previous Question-statistic
             this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions![index - 1]);
@@ -68,7 +68,7 @@ export class QuizStatisticUtil {
         });
         // go to quiz-statistic if the position = last position
         if (index === quizExercise.quizQuestions!.length - 1) {
-            this.router.navigateByUrl(baseUrl + '/quiz-point-statistic');
+            void this.router.navigateByUrl(baseUrl + '/quiz-point-statistic');
         } else {
             // go to next Question-statistic
             this.navigateToStatisticOf(quizExercise, quizExercise.quizQuestions![index + 1]);
@@ -84,11 +84,11 @@ export class QuizStatisticUtil {
         const baseUrl = this.getBaseUrlForQuizExercise(quizExercise);
 
         if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-            this.router.navigateByUrl(baseUrl + `/mc-question-statistic/${question.id}`);
+            void this.router.navigateByUrl(baseUrl + `/mc-question-statistic/${question.id}`);
         } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-            this.router.navigateByUrl(baseUrl + `/dnd-question-statistic/${question.id}`);
+            void this.router.navigateByUrl(baseUrl + `/dnd-question-statistic/${question.id}`);
         } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-            this.router.navigateByUrl(baseUrl + `/sa-question-statistic/${question.id}`);
+            void this.router.navigateByUrl(baseUrl + `/sa-question-statistic/${question.id}`);
         }
     }
 }

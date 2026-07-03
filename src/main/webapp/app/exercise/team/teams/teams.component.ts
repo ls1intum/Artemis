@@ -61,7 +61,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     readonly teamsForTable = computed<TeamRow[]>(() =>
         this.teams().map((team) => {
             // Clone via Object.assign rather than object spread, per the repository TypeScript guidelines.
-            const row = Object.assign({} as TeamRow, team);
+            const row = Object.assign({}, team) as TeamRow;
             row.studentsSearchText = team.students?.flatMap((student) => [student.login, student.name].filter(Boolean)).join(' ') ?? '';
             return row;
         }),
@@ -101,7 +101,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
     ]);
 
     constructor() {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User) => {
             this.currentUser.set(user);
             this.isAdmin.set(this.accountService.isAdmin());
         });
@@ -159,7 +159,7 @@ export class TeamsComponent implements OnInit, OnDestroy {
      */
     updateTeamFilter(filter: FilterProp) {
         this.teamCriteria.filterProp = filter;
-        this.router.navigate([], { relativeTo: this.route, queryParams: { filter }, queryParamsHandling: 'merge', replaceUrl: true });
+        void this.router.navigate([], { relativeTo: this.route, queryParams: { filter }, queryParamsHandling: 'merge', replaceUrl: true });
         this.loadAll();
     }
 

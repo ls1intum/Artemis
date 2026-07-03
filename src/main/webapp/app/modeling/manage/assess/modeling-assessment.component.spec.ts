@@ -30,6 +30,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         destroy = vi.fn();
 
+        setElementHighlights = vi.fn();
+
         addOrUpdateAssessment = vi.fn((assessment: any) => {
             if (this._model) {
                 if (!this._model.assessments) {
@@ -393,34 +395,40 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
     });
 
-    it('should highlight elements', async () => {
-        const highlightedElements = new Map<string, string>();
-        highlightedElements.set(ELEMENT_ID_1, 'red');
-        highlightedElements.set(RELATIONSHIP_ID, 'blue');
-
-        const v4Model = createV4ModelWithNodes();
-
+    it('applies highlight overlays to the editor when the highlightedElements input changes', async () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
-        fixture.componentRef.setInput('highlightedElements', highlightedElements);
-
         fixture.detectChanges();
         await waitForApollonInitialization();
 
-        expect(comp.apollonEditor).not.toBeNull();
+        const setHighlights = comp.apollonEditor!.setElementHighlights as unknown as ReturnType<typeof vi.fn>;
+        setHighlights.mockClear();
 
-        // Mock the apollonEditor.model to return our v4 model with populated nodes/edges
-        const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
+        const highlights = new Map<string, string>([
+            [ELEMENT_ID_1, 'red'],
+            [RELATIONSHIP_ID, 'blue'],
+        ]);
+        fixture.componentRef.setInput('highlightedElements', highlights);
+        fixture.detectChanges();
+        await waitForApollonInitialization();
 
-        // Call updateHighlightedElements which sets highlight property on nodes/edges
-        await (comp as any).updateHighlightedElements(highlightedElements);
+        expect(setHighlights).toHaveBeenCalledWith(highlights);
+    });
 
-        // Verify the highlight property was actually set on the model elements
-        const updatedModel = getCapturedModel();
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
-        expect(findElementById(updatedModel.edges as any[], RELATIONSHIP_ID).highlight).toBe('blue');
+    it('clears stale overlays when highlightedElements is reset to undefined (no lingering highlights)', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.componentRef.setInput('highlightedElements', new Map<string, string>([[ELEMENT_ID_1, 'red']]));
+        fixture.detectChanges();
+        await waitForApollonInitialization();
 
-        // Verify elements not in highlightedElements don't have highlight set
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBeUndefined();
+        const setHighlights = comp.apollonEditor!.setElementHighlights as unknown as ReturnType<typeof vi.fn>;
+        setHighlights.mockClear();
+
+        fixture.componentRef.setInput('highlightedElements', undefined);
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+
+        // undefined must reach Apollon as null (clear), not be swallowed as a no-op.
+        expect(setHighlights).toHaveBeenCalledWith(null);
     });
 
     it('should update model', async () => {
@@ -449,44 +457,6 @@ describe('ModelingAssessmentComponent', () => {
         // Verify the apollon editor is still valid and has the correct diagram type
         const apollonModel = comp.apollonEditor!.model;
         expect(apollonModel.type).toBe(newModel.type);
-    });
-
-    it('should update highlighted elements', async () => {
-        const initialHighlights = new Map<string, string>();
-        initialHighlights.set(ELEMENT_ID_1, 'red');
-        initialHighlights.set(ELEMENT_ID_2, 'blue');
-
-        const v4Model = createV4ModelWithNodes();
-
-        fixture.componentRef.setInput('umlModel', makeMockModel());
-        fixture.componentRef.setInput('highlightedElements', initialHighlights);
-
-        fixture.detectChanges();
-        await waitForApollonInitialization();
-
-        expect(comp.apollonEditor).not.toBeNull();
-
-        // Mock the apollonEditor.model to return our v4 model with populated nodes/edges
-        const { getCapturedModel } = mockApollonEditorModel(comp.apollonEditor!, v4Model);
-
-        // Apply initial highlights
-        await (comp as any).updateHighlightedElements(initialHighlights);
-
-        let updatedModel = getCapturedModel();
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBe('red');
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('blue');
-
-        // Now update with different highlights - only ELEMENT_ID_2 should be green
-        const newHighlights = new Map<string, string>();
-        newHighlights.set(ELEMENT_ID_2, 'green');
-
-        await (comp as any).updateHighlightedElements(newHighlights);
-
-        updatedModel = getCapturedModel();
-        // ELEMENT_ID_1 should now have undefined highlight (removed)
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_1).highlight).toBeUndefined();
-        // ELEMENT_ID_2 should have green highlight (updated)
-        expect(findElementById(updatedModel.nodes as any[], ELEMENT_ID_2).highlight).toBe('green');
     });
 
     it('should update highlighted assessments first round', async () => {

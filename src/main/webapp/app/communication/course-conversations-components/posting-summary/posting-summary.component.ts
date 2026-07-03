@@ -51,11 +51,11 @@ export class PostingSummaryComponent {
             untracked(() => {
                 const isShowPosting = post !== undefined;
                 this.isShowPosting.set(isShowPosting);
-                this.isShowSummary.set(isShowPosting && post!.conversation !== undefined && post!.conversation!.type !== undefined && post!.conversation!.title !== undefined);
-                this.isShowContent.set(isShowPosting && post!.author !== undefined && post!.content !== undefined && post!.postingType !== undefined);
+                this.isShowSummary.set(isShowPosting && post.conversation !== undefined && post.conversation.type !== undefined && post.conversation.title !== undefined);
+                this.isShowContent.set(isShowPosting && post.author !== undefined && post.content !== undefined && post.postingType !== undefined);
                 this.isAnswerPost.set(post?.postingType === PostingType.ANSWER.valueOf());
                 if (post) {
-                    this.postingIsOfToday.set(dayjs().isSame(post!.creationDate, 'day'));
+                    this.postingIsOfToday.set(dayjs().isSame(post.creationDate, 'day'));
                 }
             });
         });

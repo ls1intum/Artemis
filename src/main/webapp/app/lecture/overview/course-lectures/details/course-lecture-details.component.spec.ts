@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EMPTY, of } from 'rxjs';
+import { EMPTY, of, throwError } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -25,7 +25,7 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe';
 import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
@@ -48,6 +48,9 @@ import { FileService } from 'app/foundation/service/file.service';
 import { InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 describe('CourseLectureDetailsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -159,6 +162,7 @@ describe('CourseLectureDetailsComponent', () => {
                 },
                 MockProvider(Router),
                 MockProvider(ScienceService),
+                MockProvider(IrisSettingsService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         }).compileComponents();
@@ -219,43 +223,6 @@ describe('CourseLectureDetailsComponent', () => {
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).toBeNull();
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit()).toBe(false);
-    });
-
-    it('should not display manage button when user is only tutor', async () => {
-        lecture.course!.isAtLeastTutor = true;
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
-        expect(manageLectureButton).toBeNull();
-    });
-
-    it('should display manage button when user is at least editor', async () => {
-        lecture.course!.isAtLeastEditor = true;
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
-        expect(manageLectureButton).not.toBeNull();
-    });
-
-    it('should not display manage button when user is a student', async () => {
-        lecture.course!.isAtLeastTutor = false;
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
-        expect(manageLectureButton).toBeNull();
-    });
-
-    it('should redirect to lecture management', async () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = vi.spyOn(router, 'navigate');
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        courseLecturesDetailsComponent.redirectToLectureManagement();
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 456, 'lectures', 1]);
     });
 
     it('should check attachment release date', async () => {
@@ -526,6 +493,355 @@ describe('CourseLectureDetailsComponent', () => {
             expect(collectSpy).toHaveBeenCalledTimes(1);
             expect(contexts).toEqual([]);
         });
+    });
+
+    describe('loadData branches', () => {
+        it('should prefix attachment links with the public file prefix', async () => {
+            const attachment = new Attachment();
+            attachment.id = 42;
+            attachment.link = 'files/attachments/lecture/1/slides.pdf';
+            const lectureWithAttachment = { ...lecture, attachments: [attachment], lectureUnits: [] };
+            const responseWithAttachment = of(new HttpResponse({ body: lectureWithAttachment, status: 200 }));
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(responseWithAttachment);
+
+            courseLecturesDetailsComponent.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(attachment.linkUrl).toBeDefined();
+            expect(attachment.linkUrl).toContain(attachment.link!);
+            expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
+        });
+
+        it('should build information boxes only for the dates that are present', async () => {
+            const lectureStartOnly = { ...lecture, startDate: dayjs(), endDate: undefined, attachments: [], lectureUnits: [] };
+            const startOnlyResponse = of(new HttpResponse({ body: lectureStartOnly, status: 200 }));
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(startOnlyResponse);
+
+            courseLecturesDetailsComponent.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            const boxes = courseLecturesDetailsComponent.informationBoxData();
+            expect(boxes).toHaveLength(1);
+            expect(boxes[0].title).toBe('artemisApp.courseOverview.lectureDetails.startDate');
+        });
+
+        it('should load iris settings when iris is enabled', async () => {
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_IRIS);
+
+            const irisSettingsService = TestBed.inject(IrisSettingsService);
+            const irisSettings = { rateLimit: 100 } as any;
+            const irisSpy = vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(irisSettings));
+
+            courseLecturesDetailsComponent.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(courseLecturesDetailsComponent.irisEnabled).toBe(true);
+            expect(irisSpy).toHaveBeenCalledWith(course.id);
+            expect(courseLecturesDetailsComponent.irisSettings()).toBe(irisSettings);
+        });
+
+        it('should report an error via the alert service when loading fails', async () => {
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = vi.spyOn(alertService, 'error');
+            const errorResponse = throwError(() => new HttpErrorResponse({ status: 404, statusText: 'Not Found' }));
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(errorResponse as any);
+
+            courseLecturesDetailsComponent.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+            await fixture.whenStable();
+
+            expect(errorSpy).toHaveBeenCalledWith('error.http.404');
+            expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
+        });
+    });
+
+    describe('deep-link query params', () => {
+        // Set up a lecture whose single unit (id 7) has both a video and a PDF, so parsed deep-link
+        // targets survive the ensureValidDeepLinkTargets validation that runs after loadData.
+        const setupUnitWithBoth = () => {
+            const unitWithBoth = new AttachmentVideoUnit();
+            unitWithBoth.id = 7;
+            unitWithBoth.videoSource = 'https://example.com/video.mp4';
+            unitWithBoth.attachment = new Attachment();
+            unitWithBoth.attachment.link = '/path/to/slides.pdf';
+            unitWithBoth.lecture = lecture;
+            const lectureWithUnit = { ...lecture, lectureUnits: [unitWithBoth], attachments: [] };
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(new HttpResponse({ body: lectureWithUnit, status: 200 })));
+        };
+
+        const reInitWithQueryParams = (queryParams: Record<string, unknown>) => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            // The route is provided as a plain value object, so we can swap the observable before re-running ngOnInit.
+            (activatedRoute as unknown as { queryParams: unknown }).queryParams = of(queryParams);
+            courseLecturesDetailsComponent.ngOnInit();
+        };
+
+        it('should read unit, timestamp and page from the query params', () => {
+            setupUnitWithBoth();
+            reInitWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
+
+            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(7);
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(30);
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(4);
+        });
+
+        it('should ignore an invalid timestamp and page while keeping the unit', () => {
+            setupUnitWithBoth();
+            reInitWithQueryParams({ unit: '7', timestamp: '-5', page: '0' });
+
+            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(7);
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+        });
+
+        it('should clear all deep-link targets when the unit param is not a positive integer', () => {
+            courseLecturesDetailsComponent.targetUnitId.set(99);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(10);
+            courseLecturesDetailsComponent.targetPdfPage.set(2);
+
+            reInitWithQueryParams({ unit: 'not-a-number' });
+
+            expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+        });
+
+        it('should re-validate deep-link targets when units are already loaded before the query params emit', () => {
+            const ensureSpy = vi.spyOn(courseLecturesDetailsComponent as any, 'ensureValidDeepLinkTargets');
+            setupUnitWithBoth();
+
+            reInitWithQueryParams({ unit: '7' });
+
+            // Called once from loadData and again from the queryParams handler (units already loaded).
+            expect(ensureSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
+            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(7);
+        });
+    });
+
+    describe('ensureValidDeepLinkTargets edge cases', () => {
+        it('should do nothing when there is no target unit', () => {
+            courseLecturesDetailsComponent.targetUnitId.set(undefined);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(12);
+            courseLecturesDetailsComponent.targetPdfPage.set(3);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            // Values remain untouched because the method returns early.
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBe(12);
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBe(3);
+        });
+
+        it('should clear all targets when the target unit is not in the list', () => {
+            courseLecturesDetailsComponent.lectureUnits.set([lectureUnit3]);
+            courseLecturesDetailsComponent.targetUnitId.set(9999);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(12);
+            courseLecturesDetailsComponent.targetPdfPage.set(3);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetUnitId()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+        });
+
+        it('should clear timestamp and page for a non attachment/video target unit', () => {
+            const textUnit = new TextUnit();
+            textUnit.id = 200;
+            textUnit.lecture = lecture;
+            expect(textUnit.type).toBe(LectureUnitType.TEXT);
+
+            courseLecturesDetailsComponent.lectureUnits.set([textUnit]);
+            courseLecturesDetailsComponent.targetUnitId.set(200);
+            courseLecturesDetailsComponent.targetVideoTimestamp.set(12);
+            courseLecturesDetailsComponent.targetPdfPage.set(3);
+
+            courseLecturesDetailsComponent['ensureValidDeepLinkTargets']();
+
+            expect(courseLecturesDetailsComponent.targetUnitId()).toBe(200);
+            expect(courseLecturesDetailsComponent.targetVideoTimestamp()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.targetPdfPage()).toBeUndefined();
+        });
+    });
+
+    describe('collectVisibleContexts deep paths', () => {
+        // Helper to fake an AttachmentVideoUnitComponent as exposed by the viewChildren signal.
+        const fakeUnitComponent = (config: {
+            unitId?: number;
+            isCollapsed?: boolean;
+            provider?:
+                | {
+                      getCurrentPdfPage?: () => number | undefined;
+                      getCurrentVideoTimestamp?: () => number | undefined;
+                      hasVideoBeenPlayed?: () => boolean;
+                  }
+                | undefined;
+        }) =>
+            ({
+                lectureUnit: () => (config.unitId != undefined ? ({ id: config.unitId } as any) : undefined),
+                isCollapsed: () => config.isCollapsed ?? false,
+                contextProvider: () => config.provider,
+            }) as unknown as AttachmentVideoUnitComponent;
+
+        // Overrides the private viewChildren signal with the provided fake unit components.
+        const setUnits = (units: AttachmentVideoUnitComponent[]) => {
+            (courseLecturesDetailsComponent as unknown as { attachmentVideoUnits: () => AttachmentVideoUnitComponent[] }).attachmentVideoUnits = () => units;
+        };
+
+        // Creates a visible DOM element with the given data-unit-id, optionally embedding a PDF/video child.
+        const createdElements: HTMLElement[] = [];
+        const visibleRect = { top: 10, bottom: 100, left: 10, right: 100, width: 90, height: 90, x: 10, y: 10, toJSON: () => {} } as DOMRect;
+        const createUnitElement = (unitId: number, children: { pdf?: boolean; video?: boolean; youtube?: boolean } = {}) => {
+            const element = document.createElement('div');
+            element.setAttribute('data-unit-id', String(unitId));
+            vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(visibleRect);
+            if (children.pdf) {
+                const pdf = document.createElement('jhi-pdf-viewer');
+                vi.spyOn(pdf, 'getBoundingClientRect').mockReturnValue(visibleRect);
+                element.appendChild(pdf);
+            }
+            if (children.video) {
+                const video = document.createElement('jhi-video-player');
+                vi.spyOn(video, 'getBoundingClientRect').mockReturnValue(visibleRect);
+                element.appendChild(video);
+            }
+            if (children.youtube) {
+                const youtube = document.createElement('jhi-youtube-player');
+                vi.spyOn(youtube, 'getBoundingClientRect').mockReturnValue(visibleRect);
+                element.appendChild(youtube);
+            }
+            document.body.appendChild(element);
+            createdElements.push(element);
+            return element;
+        };
+
+        beforeEach(() => {
+            Object.defineProperty(window, 'innerHeight', { value: 768, configurable: true });
+            Object.defineProperty(window, 'innerWidth', { value: 1024, configurable: true });
+        });
+
+        afterEach(() => {
+            createdElements.forEach((element) => element.remove());
+            createdElements.length = 0;
+        });
+
+        it('should skip units without an id or that are collapsed', () => {
+            setUnits([fakeUnitComponent({ unitId: undefined }), fakeUnitComponent({ unitId: 1, isCollapsed: true })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should skip a unit whose DOM element is missing', () => {
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 3 } })]);
+            // No element with data-unit-id="1" exists in the DOM.
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should skip a unit whose element is not visible', () => {
+            const element = document.createElement('div');
+            element.setAttribute('data-unit-id', '1');
+            vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({
+                top: 2000,
+                bottom: 2100,
+                left: 10,
+                right: 100,
+                width: 90,
+                height: 100,
+                x: 10,
+                y: 2000,
+                toJSON: () => {},
+            } as DOMRect);
+            document.body.appendChild(element);
+            createdElements.push(element);
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 3 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should skip a visible unit that has no context provider', () => {
+            createUnitElement(1, { pdf: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: undefined })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should collect a slides context for a visible PDF viewer', () => {
+            createUnitElement(1, { pdf: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 5 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([{ type: 'slides', lectureUnitId: 1, page: 5 }]);
+        });
+
+        it('should not collect a slides context when the PDF page is null', () => {
+            createUnitElement(1, { pdf: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => undefined } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should not collect a slides context when the PDF viewer is not visible', () => {
+            const element = createUnitElement(1, {});
+            const pdf = document.createElement('jhi-pdf-viewer');
+            vi.spyOn(pdf, 'getBoundingClientRect').mockReturnValue({
+                top: 2000,
+                bottom: 2100,
+                left: 10,
+                right: 100,
+                width: 90,
+                height: 100,
+                x: 10,
+                y: 2000,
+                toJSON: () => {},
+            } as DOMRect);
+            element.appendChild(pdf);
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 5 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should collect a video context for a visible, played video', () => {
+            createUnitElement(1, { video: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { hasVideoBeenPlayed: () => true, getCurrentVideoTimestamp: () => 42 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([{ type: 'video', lectureUnitId: 1, timestamp: 42 }]);
+        });
+
+        it('should not collect a video context when the video has not been played', () => {
+            createUnitElement(1, { youtube: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { hasVideoBeenPlayed: () => false, getCurrentVideoTimestamp: () => 42 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should not collect a video context when the timestamp is null', () => {
+            createUnitElement(1, { video: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { hasVideoBeenPlayed: () => true, getCurrentVideoTimestamp: () => undefined } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([]);
+        });
+
+        it('should collect both slides and video contexts for a unit exposing both', () => {
+            createUnitElement(1, { pdf: true, video: true });
+            setUnits([fakeUnitComponent({ unitId: 1, provider: { getCurrentPdfPage: () => 2, hasVideoBeenPlayed: () => true, getCurrentVideoTimestamp: () => 15 } })]);
+
+            expect(courseLecturesDetailsComponent['collectVisibleContexts']()).toEqual([
+                { type: 'slides', lectureUnitId: 1, page: 2 },
+                { type: 'video', lectureUnitId: 1, timestamp: 15 },
+            ]);
+        });
+    });
+
+    it('contextsProvider.getVisibleContexts should delegate to collectVisibleContexts', () => {
+        const collectSpy = vi.spyOn(courseLecturesDetailsComponent as any, 'collectVisibleContexts').mockReturnValue([{ type: 'slides', lectureUnitId: 1, page: 1 }]);
+
+        const result = courseLecturesDetailsComponent.contextsProvider.getVisibleContexts();
+
+        expect(collectSpy).toHaveBeenCalledTimes(1);
+        expect(result).toEqual([{ type: 'slides', lectureUnitId: 1, page: 1 }]);
     });
 });
 

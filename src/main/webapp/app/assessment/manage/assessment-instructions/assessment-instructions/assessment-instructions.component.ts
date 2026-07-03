@@ -14,6 +14,7 @@ import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { parseJson } from 'app/foundation/util/json.util';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 
@@ -51,16 +52,16 @@ export class AssessmentInstructionsComponent {
         return exercise.gradingInstructions ? this.markdownService.safeHtmlForMarkdown(exercise.gradingInstructions) : undefined;
     });
 
-    readonly programmingExercise = computed(() => {
+    readonly programmingExercise = computed<ProgrammingExercise | undefined>(() => {
         const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING ? (exercise as ProgrammingExercise) : undefined;
+        return exercise.type === ExerciseType.PROGRAMMING ? exercise : undefined;
     });
 
     readonly sampleSolutionModel = computed<UMLModel | undefined>(() => {
         const exercise = this.exercise();
         if (exercise.type === ExerciseType.MODELING) {
             const modelingExercise = exercise as ModelingExercise;
-            return modelingExercise.exampleSolutionModel ? importDiagram(JSON.parse(modelingExercise.exampleSolutionModel)) : undefined;
+            return modelingExercise.exampleSolutionModel ? importDiagram(parseJson(modelingExercise.exampleSolutionModel)) : undefined;
         }
         return undefined;
     });

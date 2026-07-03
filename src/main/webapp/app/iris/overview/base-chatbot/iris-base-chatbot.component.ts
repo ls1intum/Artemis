@@ -1,4 +1,5 @@
 import {
+    faAnglesRight,
     faArrowDown,
     faCheck,
     faChevronDown,
@@ -66,7 +67,7 @@ import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.s
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -79,6 +80,7 @@ import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
@@ -140,6 +142,7 @@ const PLACEHOLDER_FADE_DURATION_MS = 300;
         ConfirmDialogModule,
         MenuModule,
         ContextSelectionComponent,
+        CourseSidebarToggleButtonComponent,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -176,11 +179,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faThumbsDown = faThumbsDown;
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faLink = faLink;
-    protected readonly faMagnifyingGlass = faMagnifyingGlass;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
     protected readonly faChevronDown = faChevronDown;
+    protected readonly faAnglesRight = faAnglesRight;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -285,7 +289,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         () =>
             this.isLoading() ||
             !this.active() ||
-            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo()!.currentMessageCount === this.rateLimitInfo()!.rateLimit) ||
+            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo().currentMessageCount === this.rateLimitInfo().rateLimit) ||
             this.hasActiveStage(),
     );
     readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
@@ -294,7 +298,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             !!this.suggestions()?.length &&
             this.isAIEnabled() &&
             this.active() &&
-            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo()!.currentMessageCount !== this.rateLimitInfo()!.rateLimit) &&
+            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo().currentMessageCount !== this.rateLimitInfo().rateLimit) &&
             !this.hasActiveStage(),
     );
     readonly isScrolledToBottom = signal(true);
@@ -523,7 +527,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
 
         // Handle route query params (irisQuestion)
-        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: any) => {
+        this.route.queryParams?.pipe(takeUntilDestroyed()).subscribe((params: Params) => {
             if (params?.irisQuestion) {
                 this.newMessageTextContent.set(params.irisQuestion);
             }

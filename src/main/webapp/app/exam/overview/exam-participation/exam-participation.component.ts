@@ -2,9 +2,6 @@ import { Component, HostListener, OnDestroy, OnInit, inject, signal, viewChildre
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -37,6 +34,7 @@ import { ProgrammingExamSubmissionComponent } from '../exercises/programming/pro
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { JhiConnectionStatusComponent } from 'app/shared-ui/connection-status/connection-status.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ExamResultSummaryComponent } from '../summary/exam-result-summary.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExamExerciseOverviewPageComponent } from '../exercises/exercise-overview-page/exam-exercise-overview-page.component';
@@ -86,6 +84,7 @@ type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
         AsyncPipe,
         ArtemisTranslatePipe,
         ExamExerciseOverviewPageComponent,
+        CourseSidebarToggleButtonComponent,
     ],
 })
 export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
@@ -126,6 +125,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly testExam = signal(false);
     readonly studentExamId = signal<number>(undefined!);
     readonly testStartTime = signal<dayjs.Dayjs | undefined>(undefined);
+
+    readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    readonly toggleSidebar = (): void => this.sidebarToggle()?.();
 
     // determines if component was once drawn visited
     readonly pageComponentVisited = signal<boolean[]>(undefined!);
@@ -311,9 +314,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
         return this.currentPageComponents().find(
-            (submissionComponent) =>
-                !this.activeExamPage().isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage().exercise!.id,
+            (submissionComponent) => !this.activeExamPage().isOverviewPage && submissionComponent.getExerciseId() === this.activeExamPage().exercise!.id,
         );
+    }
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
     }
 
     /**
@@ -350,7 +357,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // initialize all submissions as synced
             this.studentExam().exercises!.forEach((exercise) => {
                 if (exercise.studentParticipations) {
-                    exercise.studentParticipations!.forEach((participation) => {
+                    exercise.studentParticipations.forEach((participation) => {
                         if (participation.submissions && participation.submissions.length > 0) {
                             participation.submissions.forEach((submission) => {
                                 // When resuming from local storage after a failed save, keep the locally cached sync state:
@@ -462,12 +469,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     if (this.testRunId()) {
                         // If this is a test run, forward the user directly to the exam summary
-                        this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);
+                        void this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);
                     }
 
                     if (this.testExam()) {
                         this.examParticipationService.resetExamLayout();
-                        this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam().id]);
+                        void this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam().id]);
                         this.examParticipationService.setShouldUpdateTestExams(true);
                     }
 
@@ -740,7 +747,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE])
             .subscribe((event: WorkingTimeUpdateEvent) => {
                 // Create new object to make change detection work, otherwise the date will not update
-                this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime! });
+                this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
                 this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
                 this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
                 this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
@@ -927,7 +934,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
         this.studentExam().exercises!.forEach((exercise: Exercise) => {
             if (exercise.studentParticipations) {
-                exercise.studentParticipations!.forEach((participation) => {
+                exercise.studentParticipations.forEach((participation) => {
                     if (participation.submissions) {
                         participation.submissions
                             .filter((submission) => !submission.isSynced)
@@ -948,13 +955,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
-                        this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe({
+                        this.textSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
                         });
                         break;
                     case ExerciseType.MODELING:
-                        this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe({
+                        this.modelingSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
                         });
@@ -963,7 +970,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // nothing to do here, because programming exercises are submitted differently
                         break;
                     case ExerciseType.QUIZ:
-                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
+                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission).subscribe({
                             next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
                         });

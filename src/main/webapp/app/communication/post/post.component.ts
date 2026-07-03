@@ -333,7 +333,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
                 this.originalPostDetails.set(this.forwardedAnswerPosts()[0]);
             }
         } catch (error) {
-            throw new Error(error.toString(), { cause: error });
+            throw new Error(String(error), { cause: error });
         }
     }
 
@@ -392,7 +392,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
             if (this.isCommunicationPage()) {
                 this.metisConversationService.setActiveConversation(channelId);
             } else {
-                this.router.navigate(['courses', course.id, 'communication'], {
+                void this.router.navigate(['courses', course.id, 'communication'], {
                     queryParams: {
                         conversationId: channelId,
                     },

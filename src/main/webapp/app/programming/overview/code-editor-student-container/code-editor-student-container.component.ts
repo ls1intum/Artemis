@@ -87,7 +87,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
-        this.paramSub = this.route!.params.subscribe((params) => {
+        this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation.set(true);
             this.participationCouldNotBeFetched.set(false);
             const participationId = this.participationId() ?? Number(params['participationId']);

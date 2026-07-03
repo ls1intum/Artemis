@@ -5,6 +5,7 @@ import { ChannelDTO } from 'app/communication/shared/entities/conversation/chann
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { ConfirmFeedbackChannelCreationModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/confirm-feedback-channel-creation/confirm-feedback-channel-creation-modal.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -61,7 +62,7 @@ export class FeedbackDetailChannelModalComponent {
             modalRef.componentInstance.affectedStudentsCount = signal(this.feedbackDetail().count);
             return await modalRef.result;
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
             return false;
         }
     }
