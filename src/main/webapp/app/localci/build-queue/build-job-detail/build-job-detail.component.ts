@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { captureException } from '@sentry/angular';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BuildJob, BuildJobDetail } from 'app/localci/shared/entities/build-job.model';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
@@ -283,8 +284,7 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
             try {
                 downloadFile(blob, `${this.buildJobId}.log`);
             } catch (error) {
-                // eslint-disable-next-line no-undef
-                console.error('Failed to download build logs:', error);
+                captureException(new Error('Failed to download build logs', { cause: error }));
                 this.alertService.error('artemisApp.buildQueue.logs.downloadError');
             }
         }
