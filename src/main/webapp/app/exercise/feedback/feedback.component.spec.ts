@@ -292,6 +292,28 @@ describe('FeedbackComponent', () => {
         expect(comp.isLoading()).toBe(false);
     });
 
+    it('should build the score chart when showScoreChart is set and feedback items exist', () => {
+        const { feedbacks } = generateFeedbacksAndExpectedItems();
+        fixture.componentRef.setInput('showScoreChart', true);
+        comp.result().feedbacks = feedbacks;
+
+        comp.ngOnInit();
+
+        // updateChart ran (the chart stays visible) and the derived chart signals are available.
+        expect(comp.scoreChartVisible()).toBe(true);
+        expect(comp.feedbackItemNodes()?.length).toBeGreaterThan(0);
+        expect(comp.scoreChartData()).toBeDefined();
+        expect(comp.scoreChartOptions()).toBeDefined();
+    });
+
+    it('should hide the score chart when there is no chart data', () => {
+        fixture.componentRef.setInput('showScoreChart', true);
+        // No feedbacks -> no feedback item nodes -> updateChart hides the chart.
+        comp['updateChart']([]);
+
+        expect(comp.scoreChartVisible()).toBe(false);
+    });
+
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
         getFeedbackDetailsForResultStub.mockReturnValue(of({ body: feedbacks } as HttpResponse<Feedback[]>));
