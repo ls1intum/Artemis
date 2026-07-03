@@ -11,6 +11,17 @@ import { ProgrammingTestStatusDetailComponent } from 'app/shared-ui/detail-overv
 import { ProgrammingDiffReportDetailComponent } from 'app/shared-ui/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
 import { ExerciseCategoriesDetailComponent } from 'app/shared-ui/detail-overview-list/components/exercise-categories-detail/exercise-categories-detail.component';
 
+type DetailComponent =
+    | TextDetailComponent
+    | DateDetailComponent
+    | LinkDetailComponent
+    | BooleanDetailComponent
+    | ProgrammingRepositoryButtonsDetailComponent
+    | ProgrammingAuxiliaryRepositoryButtonsDetailComponent
+    | ProgrammingTestStatusDetailComponent
+    | ProgrammingDiffReportDetailComponent
+    | ExerciseCategoriesDetailComponent;
+
 @Directive({
     selector: '[jhiExerciseDetail]',
 })
@@ -19,7 +30,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
 
     detail = input<Detail>();
 
-    private componentRef: ComponentRef<any>;
+    private componentRef: ComponentRef<DetailComponent>;
 
     ngOnInit() {
         const detail = this.detail();
@@ -29,17 +40,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
         const shownDetail = detail as ShownDetail;
 
         const detailTypeToComponent: {
-            [key in DetailType]?: Type<
-                | TextDetailComponent
-                | DateDetailComponent
-                | LinkDetailComponent
-                | BooleanDetailComponent
-                | ProgrammingRepositoryButtonsDetailComponent
-                | ProgrammingAuxiliaryRepositoryButtonsDetailComponent
-                | ProgrammingTestStatusDetailComponent
-                | ProgrammingDiffReportDetailComponent
-                | ExerciseCategoriesDetailComponent
-            >;
+            [key in DetailType]?: Type<DetailComponent>;
         } = {
             [DetailType.Text]: TextDetailComponent,
             [DetailType.Date]: DateDetailComponent,

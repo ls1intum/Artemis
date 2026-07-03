@@ -136,7 +136,7 @@ export class ThemeService {
      */
     public async print(): Promise<void> {
         return new Promise<void>((resolve) => {
-            const overrideTag: any = document.getElementById(THEME_OVERRIDE_ID);
+            const overrideTag = document.getElementById(THEME_OVERRIDE_ID) as HTMLLinkElement | null;
             if (overrideTag) {
                 overrideTag.rel = 'none-tmp';
             }
@@ -250,7 +250,7 @@ export class ThemeService {
      * @return displayAttribute of the notification sidebar before hiding it
      */
     private modifyNotificationSidebarDisplayStyling(newDisplayAttribute?: string): string {
-        const notificationSidebarElement: any = document.getElementById('notification-sidebar');
+        const notificationSidebarElement: HTMLElement | null = document.getElementById('notification-sidebar');
         let displayBefore = '';
 
         if (notificationSidebarElement) {

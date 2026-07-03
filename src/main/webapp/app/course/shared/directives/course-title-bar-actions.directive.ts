@@ -5,7 +5,7 @@ import { CourseTitleBarService } from 'app/course/shared/services/course-title-b
     selector: '[titleBarActions]',
 })
 export class CourseTitleBarActionsDirective implements OnDestroy {
-    private templateRef: TemplateRef<any> = inject(TemplateRef);
+    private templateRef: TemplateRef<unknown> = inject(TemplateRef);
     private courseTitleBarService: CourseTitleBarService = inject(CourseTitleBarService);
 
     constructor() {

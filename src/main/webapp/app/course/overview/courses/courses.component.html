@@ -44,7 +44,7 @@
         <div class="row">
             <h4 class="col m-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed"></h4>
         </div>
-        <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: recentlyAccessedCourses() }" />
+        <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: recentlyAccessedCourses() }" />
         @if (regularCourses().length) {
             <div class="row">
                 <h4 class="col m-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.otherCourses"></h4>
@@ -59,7 +59,7 @@
             </div>
         </div>
     } @else {
-        <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: regularCourses() }" />
+        <ng-container *ngTemplateOutlet="courseCardTemplate; context: { $implicit: regularCourses() }" />
     }
 </div>
 @if (coursesLoaded()) {
@@ -71,10 +71,11 @@
 }
 
 <ng-template #courseCardTemplate let-courses>
-    @if ((courses | searchFilter: ['title'] : searchCourseText()).length > 0) {
+    @let filteredCourses = asCourses(courses) | searchFilter: ['title'] : searchCourseText();
+    @if (filteredCourses.length > 0) {
         <div class="container-fluid">
             <div class="course-grid justify-content-center align-items-center">
-                @for (course of courses | searchFilter: ['title'] : searchCourseText(); track course) {
+                @for (course of filteredCourses; track course) {
                     <div class="course-card-wrapper">
                         <jhi-overview-course-card [course]="course" />
                     </div>

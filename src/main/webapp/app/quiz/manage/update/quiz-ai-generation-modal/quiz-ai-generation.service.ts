@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { HyperionQuizQuestionGenerationApiService } from 'app/openapi/api/hyperionQuizQuestionGenerationApi.service';
-import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 import { QuizQuestionBulkRefinementRequest } from 'app/openapi/model/quizQuestionBulkRefinementRequest';
 import { QuizQuestionRefinementResponse } from 'app/openapi/model/quizQuestionRefinementResponse';
@@ -50,7 +49,7 @@ export class QuizAiGenerationService {
                 })),
             },
             refinementPrompt,
-        } as QuizQuestionRefinementRequest;
+        };
 
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
             map((response: QuizQuestionRefinementResponse) => {
@@ -78,7 +77,7 @@ export class QuizAiGenerationService {
     refineAllMultipleChoiceQuestions(courseId: number, questions: MultipleChoiceQuestion[], refinementPrompt: string): Observable<Map<MultipleChoiceQuestion, string>> {
         const request: QuizQuestionBulkRefinementRequest = {
             questions: questions.map((q) => ({
-                type: (q.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuestionType,
+                type: q.singleChoice ? 'single-choice' : 'multiple-choice',
                 title: q.title?.trim() || 'Untitled Question',
                 questionText: q.text ?? '',
                 hint: q.hint ?? undefined,

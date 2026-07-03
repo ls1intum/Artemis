@@ -81,7 +81,7 @@ describe('StudentsUploadImagesDialogComponent', () => {
         component.notFoundUsers.set({ numberOfUsersNotFound: 1, numberOfImagesSaved: 10 });
         component.hasParsed.set(true);
 
-        const event = { target: { files: [{ file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' }] } };
+        const event = { target: { files: [{ file: new File([''], 'testFile.pdf', { type: 'application/pdf' }), fileName: 'testFile' }] } } as unknown as Event;
         await component.onPDFFileSelect(event);
 
         expect(component.notFoundUsers()).toBeUndefined();

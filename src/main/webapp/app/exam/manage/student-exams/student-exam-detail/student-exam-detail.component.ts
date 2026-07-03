@@ -164,8 +164,8 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam.set(studentExam);
 
-        this.student.set(studentExam.user!);
-        this.course.set(studentExam.exam!.course!);
+        this.student.set(studentExam.user);
+        this.course.set(studentExam.exam!.course);
 
         this.workingTimeSeconds.set(studentExam.workingTime ?? 0);
 

@@ -27,7 +27,7 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     readonly announcementCreationAllowed = signal(false);
 
     private dialogRef: DynamicDialogRef | null | undefined;
-    private timeoutRef: any;
+    private timeoutRef: ReturnType<typeof setTimeout> | undefined;
     private subscription: Subscription | undefined;
 
     ngOnInit() {
