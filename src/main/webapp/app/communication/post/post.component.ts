@@ -333,7 +333,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
                 this.originalPostDetails.set(this.forwardedAnswerPosts()[0]);
             }
         } catch (error) {
-            throw new Error(error.toString(), { cause: error });
+            throw new Error(String(error), { cause: error });
         }
     }
 
