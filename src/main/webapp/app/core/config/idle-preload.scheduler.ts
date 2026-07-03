@@ -137,7 +137,7 @@ export class IdlePreloadScheduler {
     }
 
     private scheduleIdle(cb: () => void): void {
-        const ric = (globalThis as { requestIdleCallback?: RequestIdleCallback }).requestIdleCallback;
+        const ric = (window as { requestIdleCallback?: RequestIdleCallback }).requestIdleCallback;
         if (typeof ric === 'function') {
             ric(() => cb(), { timeout: IDLE_TIMEOUT_MS });
             return;
