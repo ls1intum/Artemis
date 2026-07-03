@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -77,6 +78,19 @@ class IrisLectureUnitSyncEventListenerTest {
         assertThat(state.getLastSyncedVisibilityHash()).isNull();
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
         assertThat(state.getNextRetryAt()).isEqualTo(nextRetryAt);
+    }
+
+    @Test
+    void dirtyEventDeletesSyncStateWhenAttachmentVideoUnitIsMissing() {
+        var state = syncState();
+        state.setMetadataHash("metadata-hash");
+        when(syncStateRepository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.of(state));
+        when(attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
+
+        listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
+
+        verify(syncStateRepository).delete(state);
+        verify(syncStateRepository, never()).save(state);
     }
 
     private static IrisLectureUnitSyncState syncState() {

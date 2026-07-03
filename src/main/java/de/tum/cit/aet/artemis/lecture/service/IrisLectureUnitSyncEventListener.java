@@ -78,6 +78,7 @@ public class IrisLectureUnitSyncEventListener {
             AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(state.getLectureUnitId()).orElse(null);
             if (unit == null) {
                 log.debug("Skipping Iris lecture unit sync for missing attachment video unit {}", state.getLectureUnitId());
+                syncStateRepository.delete(state);
                 return;
             }
 

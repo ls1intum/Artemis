@@ -10,6 +10,7 @@ import java.util.Map;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -75,12 +76,20 @@ public class IrisLectureUnitSyncService {
     }
 
     private IrisLectureUnitSyncState stateFor(Long lectureUnitId) {
-        return repository.findByLectureUnitId(lectureUnitId).orElseGet(() -> {
-            IrisLectureUnitSyncState state = new IrisLectureUnitSyncState();
-            state.setLectureUnitId(lectureUnitId);
-            state.setStatus(IrisLectureUnitSyncState.STATUS_CLEAN);
-            return state;
-        });
+        return repository.findByLectureUnitId(lectureUnitId).orElseGet(() -> createState(lectureUnitId));
+    }
+
+    private IrisLectureUnitSyncState createState(Long lectureUnitId) {
+        IrisLectureUnitSyncState state = new IrisLectureUnitSyncState();
+        state.setLectureUnitId(lectureUnitId);
+        state.setStatus(IrisLectureUnitSyncState.STATUS_CLEAN);
+
+        try {
+            return repository.saveAndFlush(state);
+        }
+        catch (DataIntegrityViolationException e) {
+            return repository.findByLectureUnitId(lectureUnitId).orElseThrow(() -> e);
+        }
     }
 
     private static void markDirty(IrisLectureUnitSyncState state) {

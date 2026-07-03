@@ -140,6 +140,7 @@ public class AttachmentVideoUnitService {
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
         AttachmentFileUpdateResult fileUpdateResult = AttachmentFileUpdateResult.unchanged(existingAttachment != null ? existingAttachment.getVersion() : null);
         boolean createdNewAttachment = false;
+        Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber = null;
 
         if (existingAttachment == null && updateAttachment != null) {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
@@ -188,6 +189,7 @@ public class AttachmentVideoUnitService {
                             }
                             else {
                                 slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit, hiddenPages, pageOrder);
+                                projectedSlideHiddenUntilBySlideNumber = buildProjectedSlideHiddenUntilBySlideNumber(hiddenPages, pageOrder);
                             }
                         }
                     }
@@ -203,7 +205,7 @@ public class AttachmentVideoUnitService {
             }
         }
 
-        LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit);
+        LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
         var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
         triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds);
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
@@ -230,13 +232,27 @@ public class AttachmentVideoUnitService {
     }
 
     private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit) {
+        return buildSnapshot(unit, null);
+    }
+
+    private LectureContentUpdateSnapshot buildSnapshot(AttachmentVideoUnit unit, Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber) {
         Lecture lecture = unit.getLecture();
         Course course = lecture != null ? lecture.getCourse() : null;
         Attachment attachment = unit.getAttachment();
 
         return new LectureContentUpdateSnapshot(unit.getId(), unit.getName(), lecture != null ? lecture.getTitle() : null, course != null ? course.getTitle() : null,
                 course != null ? course.getDescription() : null, attachment != null ? attachment.getVersion() : null, attachment != null ? attachment.getLink() : null,
-                unit.getVideoSource(), resolveReleaseDate(unit, attachment), buildSlideHiddenUntilBySlideNumber(unit.getId()));
+                unit.getVideoSource(), resolveReleaseDate(unit, attachment),
+                projectedSlideHiddenUntilBySlideNumber != null ? projectedSlideHiddenUntilBySlideNumber : buildSlideHiddenUntilBySlideNumber(unit.getId()));
+    }
+
+    private Map<Integer, ZonedDateTime> buildProjectedSlideHiddenUntilBySlideNumber(List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
+        Map<String, ZonedDateTime> hiddenUntilBySlideId = hiddenPages == null ? Map.of()
+                : hiddenPages.stream().collect(LinkedHashMap::new, (map, hiddenPage) -> map.put(hiddenPage.slideId(), hiddenPage.date()), LinkedHashMap::putAll);
+        var projectedSlideHiddenUntilBySlideNumber = new LinkedHashMap<Integer, ZonedDateTime>();
+        pageOrder.stream().sorted(Comparator.comparingInt(SlideOrderDTO::order))
+                .forEach(orderedSlide -> projectedSlideHiddenUntilBySlideNumber.put(orderedSlide.order(), hiddenUntilBySlideId.get(orderedSlide.slideId())));
+        return projectedSlideHiddenUntilBySlideNumber;
     }
 
     private Map<Integer, ZonedDateTime> buildSlideHiddenUntilBySlideNumber(Long attachmentVideoUnitId) {

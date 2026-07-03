@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -14,18 +17,24 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
+import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
+import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
@@ -67,10 +76,14 @@ class AttachmentVideoUnitServiceTest {
     @Mock
     private IrisLectureUnitSyncService irisLectureUnitSyncService;
 
+    @TempDir
+    private Path tempDir;
+
     private AttachmentVideoUnitService service;
 
     @BeforeEach
     void setUp() {
+        FilePathConverter.setFileUploadPath(tempDir);
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.<CompetencyProgressApi>empty(),
                 lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifierService(),
                 slideRepository, irisLectureUnitSyncService);
@@ -136,6 +149,28 @@ class AttachmentVideoUnitServiceTest {
         verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
+    }
+
+    @Test
+    void updateAttachmentVideoUnitProjectsRequestedSlideVisibilityForByteChangedPdfUpload() {
+        var attachment = attachment();
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var uploadedFile = new MockMultipartFile("file", "unit.pdf", "application/pdf", "different content".getBytes(StandardCharsets.UTF_8));
+        var hiddenUntil = ZonedDateTime.parse("2026-07-04T12:00:00Z");
+        var hiddenPages = List.of(new HiddenPageInfoDTO("slide-a", hiddenUntil, null));
+        var pageOrder = List.of(new SlideOrderDTO("slide-b", 1), new SlideOrderDTO("slide-a", 2));
+        String newHash = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", newHash));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, false, hiddenPages, pageOrder, Set.of());
+
+        verify(contentProcessingService).triggerProcessing(unit);
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(unit, hiddenPages, pageOrder);
+        var snapshotCaptor = ArgumentCaptor.forClass(LectureContentUpdateSnapshot.class);
+        verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(snapshotCaptor.capture());
+        assertThat(snapshotCaptor.getValue().slideHiddenUntilBySlideNumber()).containsEntry(1, null).containsEntry(2, hiddenUntil).hasSize(2);
     }
 
     private static AttachmentVideoUnit attachmentVideoUnit(String name, Attachment attachment) {

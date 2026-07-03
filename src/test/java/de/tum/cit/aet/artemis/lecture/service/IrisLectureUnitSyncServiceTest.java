@@ -21,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
@@ -51,6 +52,7 @@ class IrisLectureUnitSyncServiceTest {
     @Test
     void markMetadataDirtyCreatesStateAndPublishesEvent() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
+        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var snapshot = snapshot();
 
@@ -72,6 +74,7 @@ class IrisLectureUnitSyncServiceTest {
     @Test
     void markVisibilityDirtyCreatesStateAndPublishesEvent() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
+        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var snapshot = snapshot(slideHiddenMap(2, HIDDEN_UNTIL, 1, HIDDEN_UNTIL.plusDays(1)));
 
@@ -94,6 +97,7 @@ class IrisLectureUnitSyncServiceTest {
     @Test
     void markMetadataDirtyPublishesEventOnlyAfterActiveTransactionCommits() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
+        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         TransactionSynchronizationManager.initSynchronization();
         try {
@@ -118,6 +122,11 @@ class IrisLectureUnitSyncServiceTest {
     void markingDirtyAgainReusesExistingState() {
         AtomicReference<IrisLectureUnitSyncState> persistedState = new AtomicReference<>();
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenAnswer(invocation -> Optional.ofNullable(persistedState.get()));
+        when(repository.saveAndFlush(any())).thenAnswer(invocation -> {
+            IrisLectureUnitSyncState state = invocation.getArgument(0);
+            persistedState.set(state);
+            return state;
+        });
         when(repository.save(any())).thenAnswer(invocation -> {
             IrisLectureUnitSyncState state = invocation.getArgument(0);
             persistedState.set(state);
@@ -136,6 +145,7 @@ class IrisLectureUnitSyncServiceTest {
     @Test
     void metadataHashIsDeterministicForEquivalentInput() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
+        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var firstSnapshot = snapshot();
         var secondSnapshot = snapshot();
@@ -151,6 +161,7 @@ class IrisLectureUnitSyncServiceTest {
     @Test
     void visibilityHashIsDeterministicForEquivalentInputAndChangesWithHiddenState() {
         when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty());
+        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         var firstSnapshot = snapshot(slideHiddenMap(2, HIDDEN_UNTIL.plusDays(1), 1, HIDDEN_UNTIL));
         var equivalentSnapshotWithDifferentInsertionOrder = snapshot(slideHiddenMap(1, HIDDEN_UNTIL, 2, HIDDEN_UNTIL.plusDays(1)));
@@ -165,6 +176,22 @@ class IrisLectureUnitSyncServiceTest {
         List<IrisLectureUnitSyncState> states = stateCaptor.getAllValues();
         assertThat(states.getFirst().getVisibilityHash()).isEqualTo(states.get(1).getVisibilityHash());
         assertThat(states.get(2).getVisibilityHash()).isNotEqualTo(states.getFirst().getVisibilityHash());
+    }
+
+    @Test
+    void markingDirtyReloadsStateWhenConcurrentCreateAlreadyInsertedRow() {
+        var existingState = new IrisLectureUnitSyncState();
+        existingState.setLectureUnitId(LECTURE_UNIT_ID);
+        existingState.setStatus(IrisLectureUnitSyncState.STATUS_CLEAN);
+        when(repository.findByLectureUnitId(LECTURE_UNIT_ID)).thenReturn(Optional.empty(), Optional.of(existingState));
+        when(repository.saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("duplicate lecture unit state"));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.markMetadataDirtyAfterCommit(snapshot());
+
+        verify(repository).save(existingState);
+        assertThat(existingState.getMetadataHash()).hasSize(64);
+        assertThat(existingState.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_DIRTY);
     }
 
     private static LectureContentUpdateSnapshot snapshot() {
