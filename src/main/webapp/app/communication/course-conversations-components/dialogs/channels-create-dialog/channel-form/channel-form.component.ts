@@ -94,7 +94,8 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     }
 
     submitForm() {
-        this.formSubmitted.emit({ ...this.form.value } as ChannelFormData);
+        const channelFormData: ChannelFormData = { ...this.form.value };
+        this.formSubmitted.emit(channelFormData);
     }
 
     private initializeForm() {

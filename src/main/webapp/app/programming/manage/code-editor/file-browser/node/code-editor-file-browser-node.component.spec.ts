@@ -100,7 +100,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
             const emitSpy = vi.spyOn(comp.onSetRenamingNode, 'emit');
             const event = { stopPropagation: vi.fn() };
 
-            comp.setRenamingNode(event);
+            comp.setRenamingNode(event as unknown as Event);
 
             expect(event.stopPropagation).toHaveBeenCalledOnce();
             expect(emitSpy).toHaveBeenCalledWith(mockItem);
@@ -112,7 +112,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
             const emitSpy = vi.spyOn(comp.onClearRenamingNode, 'emit');
             const event = { stopPropagation: vi.fn() };
 
-            comp.clearRenamingNode(event);
+            comp.clearRenamingNode(event as unknown as Event);
 
             expect(event.stopPropagation).toHaveBeenCalledOnce();
             expect(emitSpy).toHaveBeenCalled();
@@ -126,7 +126,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
             fixture.detectChanges();
             const event = { target: { value: 'newName.ts' } };
 
-            comp.renameNode(event);
+            comp.renameNode(event as unknown as Event);
 
             expect(emitSpy).toHaveBeenCalledWith('newName.ts');
         });
@@ -137,7 +137,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
             fixture.detectChanges();
             const event = { target: { value: '' } };
 
-            comp.renameNode(event);
+            comp.renameNode(event as unknown as Event);
 
             expect(emitSpy).not.toHaveBeenCalled();
         });
@@ -148,7 +148,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
             fixture.detectChanges();
             const event = { target: { value: 'newName.ts' } };
 
-            comp.renameNode(event);
+            comp.renameNode(event as unknown as Event);
 
             expect(emitSpy).not.toHaveBeenCalled();
         });
@@ -160,7 +160,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
             fixture.detectChanges();
             const event = { target: { value: 'test.ts' } };
 
-            comp.renameNode(event);
+            comp.renameNode(event as unknown as Event);
 
             expect(clearSpy).toHaveBeenCalled();
             expect(renameSpy).not.toHaveBeenCalled();
@@ -172,7 +172,7 @@ describe('CodeEditorFileBrowserNodeComponent', () => {
             const emitSpy = vi.spyOn(comp.onDeleteNode, 'emit');
             const event = { stopPropagation: vi.fn() };
 
-            comp.deleteNode(event);
+            comp.deleteNode(event as unknown as Event);
 
             expect(event.stopPropagation).toHaveBeenCalledOnce();
             expect(emitSpy).toHaveBeenCalledWith(mockItem);
