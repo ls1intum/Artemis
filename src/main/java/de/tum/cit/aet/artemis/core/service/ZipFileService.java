@@ -60,14 +60,41 @@ public class ZipFileService {
                 if (!Files.isReadable(path)) {
                     continue;
                 }
-                // A single file is stored at the zip root under its file name; a directory is stored recursively with
-                // the directory name as the top-level entry. Both are achieved by walking the path and relativizing
-                // each contained file against the path's parent.
-                try (Stream<Path> files = Files.walk(path)) {
-                    ZipStreamHelper.addPathsToZipStream(zipOutputStream, files, path.getParent(), null, Set.of());
+                if (Files.isDirectory(path)) {
+                    addDirectoryToZip(zipOutputStream, path);
+                }
+                else {
+                    // A single file is stored at the zip root under its file name (matching the previous zip4j addFile).
+                    addFileToZip(zipOutputStream, path, path.getFileName().toString());
                 }
             }
         }
+    }
+
+    /**
+     * Recursively adds a directory to the zip stream. Entries are prefixed with the directory name so the directory
+     * itself appears as the top-level entry, matching the previous zip4j addFolder behaviour.
+     */
+    private static void addDirectoryToZip(ZipOutputStream zipOutputStream, Path directory) throws IOException {
+        String prefix = directory.getFileName().toString();
+        List<Path> files;
+        try (Stream<Path> walk = Files.walk(directory)) {
+            files = walk.filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).toList();
+        }
+        for (Path file : files) {
+            addFileToZip(zipOutputStream, file, prefix + "/" + directory.relativize(file).toString().replace('\\', '/'));
+        }
+    }
+
+    /**
+     * Writes a single file into the zip stream under the given entry name. Uses {@link FileUtils#copyFile} so that a
+     * read/copy failure surfaces as an {@link IOException} (preserving this class's checked-exception contract) rather
+     * than the unchecked exception the streaming helper raises.
+     */
+    private static void addFileToZip(ZipOutputStream zipOutputStream, Path file, String entryName) throws IOException {
+        zipOutputStream.putNextEntry(new ZipEntry(entryName));
+        FileUtils.copyFile(file.toFile(), zipOutputStream);
+        zipOutputStream.closeEntry();
     }
 
     /**
