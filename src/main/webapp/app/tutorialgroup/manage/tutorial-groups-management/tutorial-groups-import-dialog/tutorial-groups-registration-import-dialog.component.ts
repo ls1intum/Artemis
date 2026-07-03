@@ -197,7 +197,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
                 csvRows = parseResult.data as ParsedCSVRow[];
             }
         } catch (error) {
-            this.validationErrors.update((errors) => [...errors, error.message]);
+            this.validationErrors.update((errors) => [...errors, error instanceof Error ? error.message : String(error)]);
         } finally {
             this.isCSVParsing.set(false);
         }
