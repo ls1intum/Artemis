@@ -1,4 +1,5 @@
 .controls {
+    /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
     ::ng-deep p-selectbutton .p-togglebutton {
         padding-block: 0.25rem;
 
@@ -14,9 +15,12 @@
 
 /* Keep a too-wide table scrolling inside its panel, not the page: min-width:0 lets PrimeNG's grid
    track shrink and overflow:hidden clips the rest. */
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
 :host ::ng-deep .p-panel-content-container {
     overflow: hidden;
 }
+
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
 :host ::ng-deep .p-panel-content-wrapper {
     min-width: 0;
 }

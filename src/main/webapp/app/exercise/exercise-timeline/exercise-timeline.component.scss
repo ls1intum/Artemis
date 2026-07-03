@@ -6,8 +6,8 @@
         position: relative;
     }
 
-    // Transparent click-catcher shown over a timeline whose dates are governed by the variant group. It sits above the
-    // disabled datepickers so a click opens the group-edit dialog instead of interacting with the read-only fields.
+    /* Transparent click-catcher shown over a timeline whose dates are governed by the variant group. It sits above the
+       disabled datepickers so a click opens the group-edit dialog instead of interacting with the read-only fields. */
     .timeline-lock-overlay {
         position: absolute;
         inset: 0;
