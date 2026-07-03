@@ -49,7 +49,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
-                                        return undefined;
+                                        return null;
                                     },
                                 }),
                                 parent: {
@@ -59,7 +59,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                                                 case 'courseId':
                                                     return 1;
                                             }
-                                            return undefined;
+                                            return null;
                                         },
                                     }),
                                 },

@@ -224,6 +224,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     }
 
     override ngOnDestroy(): void {
+        super.ngOnDestroy();
         if (AnswerPostComponent.activeDropdownPost === this) {
             AnswerPostComponent.cleanupActiveDropdown();
         }

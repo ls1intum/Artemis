@@ -53,10 +53,10 @@ describe('EditAttachmentVideoUnitComponent', () => {
                         paramMap: of({
                             get: (key: string) => {
                                 switch (key) {
-                                    case 'attachmentUnitId':
+                                    case 'attachmentVideoUnitId':
                                         return 1;
                                 }
-                                return undefined;
+                                return null;
                             },
                         }),
                         parent: {
@@ -67,7 +67,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
                                             case 'lectureId':
                                                 return 1;
                                         }
-                                        return undefined;
+                                        return null;
                                     },
                                 }),
                             },
