@@ -19,14 +19,10 @@ export class CourseTitleBarComponent {
     isSidebarCollapsed = input(false);
     pageTitle = input('');
     isExamStarted = input(false);
-    titleInSidebar = input(false);
-    toggleInSidebar = input(false);
 
     toggleSidebar = output<void>();
 
     private courseTitleBarService = inject(CourseTitleBarService);
     readonly customTitleTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.titleTemplate());
     readonly customActionsTemplate: Signal<TemplateRef<unknown> | undefined> = computed(() => this.courseTitleBarService.actionsTemplate());
-    // Relocated tabs never show the default title in the top bar (it lives in the sidebar header).
-    readonly hideDefaultTitle = computed(() => this.titleInSidebar() && this.hasSidebar());
 }

@@ -68,8 +68,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private courseOverviewGuard = inject(CourseOverviewGuard);
     private courseTitleBarService = inject(CourseTitleBarService);
 
-    // The title bar only hosts content that pages project via [titleBarActions]/[titleBarTitle] (e.g. the FAQ page);
-    // the sidebar tabs render their own header, and pages without projected content show no title bar.
+    // Only shown when a page projects title-bar content (e.g. FAQ); sidebar tabs and plain pages render none.
     protected readonly showCourseTitleBar = computed(() => !!(this.courseTitleBarService.actionsTemplate() || this.courseTitleBarService.titleTemplate()));
 
     private toggleSidebarEventSubscription: Subscription;

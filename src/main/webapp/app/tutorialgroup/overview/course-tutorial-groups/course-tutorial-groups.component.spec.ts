@@ -99,24 +99,40 @@ describe('CourseTutorialGroupsComponent', () => {
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ tutorialGroups: [], lectures: [] });
         });
 
-        it('should sync the collapse state into an activated tutorial group detail', () => {
-            const setSidebarToggle = vi.fn();
+        it('should sync the collapse state and a working toggle into an activated tutorial group detail', () => {
+            let receivedCollapsed: boolean | undefined;
+            let receivedToggle: (() => void) | undefined;
+            const setSidebarToggle = vi.fn((collapsed: boolean, toggle: () => void) => {
+                receivedCollapsed = collapsed;
+                receivedToggle = toggle;
+            });
             const detail = Object.assign(Object.create(CourseTutorialGroupDetailContainerComponent.prototype), { setSidebarToggle });
 
             component.onSubRouteActivate(detail);
             fixture.detectChanges();
 
-            expect(setSidebarToggle).toHaveBeenCalledWith(component.isCollapsed(), expect.any(Function));
+            expect(receivedCollapsed).toBe(component.isCollapsed());
+            const collapsedBeforeToggle = component.isCollapsed();
+            receivedToggle?.();
+            expect(component.isCollapsed()).toBe(!collapsedBeforeToggle);
         });
 
-        it('should sync the collapse state into an activated tutorial lecture detail', () => {
-            const setSidebarToggle = vi.fn();
+        it('should sync the collapse state and a working toggle into an activated tutorial lecture detail', () => {
+            let receivedCollapsed: boolean | undefined;
+            let receivedToggle: (() => void) | undefined;
+            const setSidebarToggle = vi.fn((collapsed: boolean, toggle: () => void) => {
+                receivedCollapsed = collapsed;
+                receivedToggle = toggle;
+            });
             const detail = Object.assign(Object.create(CourseLectureDetailsComponent.prototype), { setSidebarToggle });
 
             component.onSubRouteActivate(detail);
             fixture.detectChanges();
 
-            expect(setSidebarToggle).toHaveBeenCalledWith(component.isCollapsed(), expect.any(Function));
+            expect(receivedCollapsed).toBe(component.isCollapsed());
+            const collapsedBeforeToggle = component.isCollapsed();
+            receivedToggle?.();
+            expect(component.isCollapsed()).toBe(!collapsedBeforeToggle);
         });
     });
 
