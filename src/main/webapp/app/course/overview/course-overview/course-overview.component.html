@@ -41,6 +41,7 @@
                             'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar(),
                             'mx-2': !isExamStarted(),
                         }"
+                        [class.no-header-bar-height]="!hasSidebar() && !showCourseTitleBar()"
                     >
                         @if (!hasSidebar()) {
                             <ng-container class="d-flex ms-auto" #controlsViewContainer />

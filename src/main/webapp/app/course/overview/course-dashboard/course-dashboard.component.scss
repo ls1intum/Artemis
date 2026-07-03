@@ -1,6 +1,9 @@
-@import 'src/main/webapp/content/scss/artemis-mixins.scss';
+@import 'src/main/webapp/content/scss/artemis-mixins';
 
 :host {
+    // No course title bar on this page, so only reserve the small residual gap (matches the sidebar/exercises no-header-bar convention).
+    --header-height: 16px;
+
     @include dynamic-content-height(--header-height);
 
     width: 100%;
@@ -27,6 +30,7 @@
         overflow-x: hidden;
         scrollbar-color: var(--gray-500) transparent;
         scrollbar-width: thin;
+
         // Content surface: white in light mode, elevated dark surface in dark mode.
         // Matches the `.module-bg` content container used by sibling course pages (e.g. statistics);
         // without it the charts render directly on the page body background.
