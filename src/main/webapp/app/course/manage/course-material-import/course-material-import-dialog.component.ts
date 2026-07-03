@@ -115,7 +115,7 @@ export class CourseMaterialImportDialogComponent {
         // Load courses when dialog opens
         effect(() => {
             if (this.show()) {
-                untracked(() => this.loadCourses());
+                void untracked(() => this.loadCourses());
             }
         });
     }
@@ -193,7 +193,7 @@ export class CourseMaterialImportDialogComponent {
      */
     onSearchChange(): void {
         this.first.set(0);
-        this.loadCourses();
+        void this.loadCourses();
     }
 
     /**
@@ -202,7 +202,7 @@ export class CourseMaterialImportDialogComponent {
     onPageChange(event: PaginatorState): void {
         this.first.set(event.first ?? 0);
         this.rows.set(event.rows ?? 10);
-        this.loadCourses();
+        void this.loadCourses();
     }
 
     /**

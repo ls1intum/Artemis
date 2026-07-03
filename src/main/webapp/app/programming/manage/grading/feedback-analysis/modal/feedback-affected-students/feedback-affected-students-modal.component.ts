@@ -30,7 +30,7 @@ export class AffectedStudentsModalComponent {
 
     constructor() {
         effect(() => {
-            untracked(async () => {
+            void untracked(async () => {
                 await this.loadAffected();
             });
         });

@@ -1832,19 +1832,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             switch (location.targetType) {
                 case CommentThreadLocationType.TEMPLATE_REPO:
                     if (codeEditorContainer.selectedRepository() !== RepositoryType.TEMPLATE) {
-                        this.selectTemplateParticipation();
+                        void this.selectTemplateParticipation();
                         return;
                     }
                     break;
                 case CommentThreadLocationType.SOLUTION_REPO:
                     if (codeEditorContainer.selectedRepository() !== RepositoryType.SOLUTION) {
-                        this.selectSolutionParticipation();
+                        void this.selectSolutionParticipation();
                         return;
                     }
                     break;
                 case CommentThreadLocationType.TEST_REPO:
                     if (codeEditorContainer.selectedRepository() !== RepositoryType.TESTS) {
-                        this.selectTestRepository();
+                        void this.selectTestRepository();
                         return;
                     }
                     break;
@@ -1854,7 +1854,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         auxiliaryRepositoryId !== undefined &&
                         (codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY || this.selectedRepositoryId !== auxiliaryRepositoryId)
                     ) {
-                        this.selectAuxiliaryRepository(auxiliaryRepositoryId);
+                        void this.selectAuxiliaryRepository(auxiliaryRepositoryId);
                         return;
                     }
                     break;

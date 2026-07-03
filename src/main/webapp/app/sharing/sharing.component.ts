@@ -179,7 +179,7 @@ export class SharingComponent implements OnInit {
                 return;
             }
 
-            this.userRouteAccessService.checkLogin(IS_AT_LEAST_EDITOR, this.router.url).then((isLoggedIn) => {
+            void this.userRouteAccessService.checkLogin(IS_AT_LEAST_EDITOR, this.router.url).then((isLoggedIn) => {
                 if (!isLoggedIn) {
                     this.alertService.error('artemisApp.sharing.error.atLeastEditorNeeded');
                     return;

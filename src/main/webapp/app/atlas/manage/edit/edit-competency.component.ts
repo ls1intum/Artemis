@@ -79,7 +79,7 @@ export class EditCompetencyComponent extends EditCourseCompetencyComponent imple
                 finalize(() => {
                     this.isLoading.set(false);
                     // currently at /course-management/{courseId}/competency-management/{competencyId}/edit, going back to /course-management/{courseId}/competency-management/
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 }),
             )
             .subscribe({

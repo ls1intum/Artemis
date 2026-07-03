@@ -82,7 +82,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.loadCurrentUser();
 
         effect(() => {
-            this.loadPasskeysWhenUserDetailsChange().then();
+            void this.loadPasskeysWhenUserDetailsChange();
         });
     }
 

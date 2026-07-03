@@ -41,7 +41,7 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     }
 
     onOnboardingCompleted() {
-        this.loadProfile();
+        void this.loadProfile();
     }
 
     /**

@@ -78,7 +78,7 @@ export class ArtemisVersionInterceptor implements HttpInterceptor {
         const update = this.updates.isEnabled ? this.updates.checkForUpdate() : Promise.resolve(hasUpdate);
 
         // first update the service worker
-        update.then((updateAvailable: boolean) => {
+        void update.then((updateAvailable: boolean) => {
             if (this.hasSeenOutdatedInThisSession || updateAvailable) {
                 this.hasSeenOutdatedInThisSession = true;
 

@@ -297,6 +297,18 @@ export default tseslint.config(
             'no-restricted-globals': ['error', { name: 'globalThis', message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.' }],
         },
     },
+    // Require every Promise to be handled in production code. A floating Promise silently swallows rejections
+    // (unhandled errors) and hides ordering bugs. Handle it: `await` it (in an async function, typically with a
+    // try/catch that routes to `onError`), attach `.then(...)/.catch(...)`, or mark it deliberately fire-and-forget
+    // with the `void` operator (`ignoreVoid: true`). `ignoreIIFE` allows `(async () => { … })()`. This overrides the
+    // `'off'` default above for production code; specs may float promises for brevity (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true, ignoreIIFE: true }],
+        },
+    },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
     // state and effect() for genuine side effects. `ngOnChanges` still works in Angular 21 (it fires for signal inputs),
     // so this is a consistency preference, not a correctness rule. Existing migration-backlog files are excluded above
