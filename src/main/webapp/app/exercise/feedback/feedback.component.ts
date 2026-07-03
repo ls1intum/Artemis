@@ -241,7 +241,10 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter());
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
-                        this.feedbackItemNodes.set(this.feedbackItemService.group(feedbackItems, this.resolvedExercise()!));
+                        const exercise = this.resolvedExercise();
+                        if (exercise) {
+                            this.feedbackItemNodes.set(this.feedbackItemService.group(feedbackItems, exercise));
+                        }
                         if (this.isExamReviewPage()) {
                             this.expandFeedbackItemGroups();
                         }
@@ -252,8 +255,14 @@ export class FeedbackComponent implements OnInit, OnChanges {
                     // If the submission is marked with buildFailed, fetch the build logs.
                     const buildFailed = submission?.buildFailed;
 
-                    if (result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && this.exerciseType() === ExerciseType.PROGRAMMING && buildFailed) {
-                        return this.fetchAndSetBuildLogs(participation.id!, result.id);
+                    const participationId = participation.id;
+                    if (
+                        result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
+                        this.exerciseType() === ExerciseType.PROGRAMMING &&
+                        buildFailed &&
+                        participationId !== undefined
+                    ) {
+                        return this.fetchAndSetBuildLogs(participationId, result.id);
                     }
 
                     if (this.scoreChartVisible() && this.feedbackItemNodes() !== undefined) {
