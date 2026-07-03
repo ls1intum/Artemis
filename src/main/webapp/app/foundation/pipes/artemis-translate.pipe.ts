@@ -15,7 +15,7 @@ export class ArtemisTranslatePipe implements PipeTransform {
     // Reading this signal in transform() re-renders the host view on language change (required under zoneless change detection).
     private languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
 
-    transform(query: string | undefined | null, args?: any): string {
+    transform(query: string | undefined | null, args?: object): string {
         if (!query || query.length === 0) {
             return query ?? '';
         }

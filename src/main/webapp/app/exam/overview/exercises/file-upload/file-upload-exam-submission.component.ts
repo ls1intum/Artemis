@@ -91,9 +91,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * Here the file selected with the -browse- button is handled.
      * @param event {object} Event object which contains the uploaded file
      */
-    setFileSubmissionForExercise(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setFileSubmissionForExercise(event: Event): void {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (fileList && fileList.length) {
             const submissionFile = fileList[0];
             const allowedFileExtensions = this.exercise().filePattern!.split(',');
             if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
@@ -144,11 +144,11 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if ((this.studentSubmission().isSynced && this.studentSubmission().filePath) || (this.examTimeline() && this.studentSubmission().filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
-            const filePath = this.studentSubmission()!.filePath!.split('/');
+            const filePath = this.studentSubmission().filePath!.split('/');
             const submittedFileName = filePath.last()!;
             this.submittedFileName.set(submittedFileName);
             const fileName = submittedFileName.split('.');
-            this.submittedFileExtension.set(fileName.last()!);
+            this.submittedFileExtension.set(fileName.last());
         }
     }
 
@@ -160,7 +160,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if (!this.submissionFile) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission() as FileUploadSubmission, this.exercise().id!, this.submissionFile).subscribe({
+        this.fileUploadSubmissionService.update(this.studentSubmission(), this.exercise().id!, this.submissionFile).subscribe({
             next: (res) => {
                 const submissionFromServer = res.body!;
                 this.studentSubmission().filePath = submissionFromServer.filePath;

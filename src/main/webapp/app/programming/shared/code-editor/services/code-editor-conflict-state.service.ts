@@ -32,9 +32,9 @@ export class CodeEditorConflictStateService extends DomainDependentService imple
         if (!subject) {
             const repoSubject = new BehaviorSubject(GitConflictState.OK);
             this.conflictSubjects.set(domainKey, repoSubject);
-            return repoSubject.pipe(distinctUntilChanged()) as Observable<GitConflictState>;
+            return repoSubject.pipe(distinctUntilChanged());
         } else {
-            return subject.pipe(distinctUntilChanged()) as Observable<GitConflictState>;
+            return subject.pipe(distinctUntilChanged());
         }
     };
 

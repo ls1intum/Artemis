@@ -203,12 +203,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
 
         // check if question was generated with an ApollonDiagram
         if (question.importedFiles) {
-            this.setBackgroundFile({ target: { files: [new File([question.importedFiles.get('diagram-background.png')!], 'diagram-background.png')] } });
+            this.setBackgroundFileFromFile(new File([question.importedFiles.get('diagram-background.png')!], 'diagram-background.png'));
             for (const dragItem of question.dragItems ?? []) {
                 if (dragItem.pictureFilePath && question.importedFiles.has(dragItem.pictureFilePath)) {
-                    this.changeToPictureDragItem(dragItem, {
-                        target: { files: [new File([question.importedFiles.get(dragItem.pictureFilePath!)!], dragItem.pictureFilePath!)] },
-                    });
+                    this.changeToPictureDragItemFromFile(dragItem, new File([question.importedFiles.get(dragItem.pictureFilePath)!], dragItem.pictureFilePath));
                 }
             }
         }
@@ -316,9 +314,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     /**
      * event {object} Event object which contains the uploaded file
      */
-    setBackgroundFile(event: any): void {
-        const fileList: FileList = event.target.files as FileList;
-        if (fileList.length) {
+    setBackgroundFile(event: Event): void {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (fileList?.length) {
             const file = fileList[0];
             this.setBackgroundFileFromFile(file);
         }
@@ -573,13 +571,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     /**
      * Add a Picture Drag Item with the selected file as its picture to the question
      */
-    createImageDragItem(event: any): DragItem | undefined {
+    createImageDragItem(event: Event): DragItem | undefined {
         const dragItemFile = this.getFileFromEvent(event);
         if (!dragItemFile) {
             return undefined;
         }
         const dragItem = this.createImageDragItemFromFile(dragItemFile);
-        event.target.value = '';
+        (event.target as HTMLInputElement).value = '';
         return dragItem;
     }
 
@@ -799,12 +797,15 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragItem {dragItem} the dragItem, which will be changed
      * @param event file upload event
      */
-    changeToPictureDragItem(dragItem: DragItem, event: any): void {
+    changeToPictureDragItem(dragItem: DragItem, event: Event): void {
         const dragItemFile = this.getFileFromEvent(event);
         if (!dragItemFile) {
             return;
         }
+        this.changeToPictureDragItemFromFile(dragItem, dragItemFile);
+    }
 
+    changeToPictureDragItemFromFile(dragItem: DragItem, dragItemFile: File): void {
         const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool());
 
         this.addNewFile.emit({ fileName, file: dragItemFile });
@@ -814,9 +815,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.questionUpdated.emit();
     }
 
-    private getFileFromEvent(event: any): File | undefined {
-        const fileList = event.target.files as FileList;
-        if (!fileList.length) {
+    private getFileFromEvent(event: Event): File | undefined {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (!fileList?.length) {
             return undefined;
         }
         return fileList[0];
@@ -1001,7 +1002,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
                         );
 
                         dataUrl = canvas.toDataURL('image/png');
-                        const dragItemCreated = this.createImageDragItemFromFile(this.dataUrlToFile(dataUrl, 'placeholder' + someLocation.posX!))!;
+                        const dragItemCreated = this.createImageDragItemFromFile(this.dataUrlToFile(dataUrl, 'placeholder' + someLocation.posX!));
                         const dndMapping = new DragAndDropMapping(dragItemCreated, someLocation);
                         question.correctMappings!.push(dndMapping);
                     }

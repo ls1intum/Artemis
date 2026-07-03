@@ -1,6 +1,6 @@
 import { TreeViewItem } from '../models/tree-view-item';
 
-export function findItem<T>(root: TreeViewItem<T> | undefined, value: any): TreeViewItem<T> | undefined {
+export function findItem<T>(root: TreeViewItem<T> | undefined, value: T): TreeViewItem<T> | undefined {
     if (!root) {
         return undefined;
     }
@@ -21,7 +21,7 @@ export function findItem<T>(root: TreeViewItem<T> | undefined, value: any): Tree
     return undefined;
 }
 
-export function findItemInList<T>(list: TreeViewItem<T>[] | undefined, value: any): TreeViewItem<T> | undefined {
+export function findItemInList<T>(list: TreeViewItem<T>[] | undefined, value: T): TreeViewItem<T> | undefined {
     if (!list) {
         return undefined;
     }

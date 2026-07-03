@@ -5,7 +5,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
-import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { EmojiData, EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { TranslateService } from '@ngx-translate/core';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
@@ -46,7 +46,7 @@ describe('EmojiPickerComponent', () => {
 
     it('should emit an event on emoji select', () => {
         const emitSpy = vi.spyOn(comp.emojiSelect, 'emit');
-        comp.onEmojiSelect({ test: 123 });
+        comp.onEmojiSelect({ test: 123 } as unknown as EmojiEvent);
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith({ test: 123 });
     });

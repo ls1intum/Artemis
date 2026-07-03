@@ -357,8 +357,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
     private resultSortFunction = (a: Result, b: Result) => {
-        const aValue = dayjs(a.completionDate!).valueOf();
-        const bValue = dayjs(b.completionDate!).valueOf();
+        const aValue = dayjs(a.completionDate).valueOf();
+        const bValue = dayjs(b.completionDate).valueOf();
         return aValue - bValue;
     };
 
@@ -382,7 +382,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const participations = this._studentParticipations();
         if (this.exercise && participations?.length) {
             participations.forEach((participation) => {
-                this.participationWebsocketService.addParticipation(participation, this.exercise!);
+                this.participationWebsocketService.addParticipation(participation, this.exercise);
             });
         }
 
@@ -451,7 +451,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             )
             .subscribe((teamAssignment) => {
                 if (this.exercise && teamAssignment.studentParticipations) {
-                    const updatedExercise = deepClone(this.exercise!);
+                    const updatedExercise = deepClone(this.exercise);
                     updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
                     updatedExercise.studentParticipations = teamAssignment.studentParticipations;
                     this.exercise = updatedExercise;
@@ -528,7 +528,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const cachedExercise = course?.exercises?.find((exercise) => exercise.id === exerciseId);
         if (course && cachedExercise) {
             cachedExercise.studentParticipations = this._studentParticipations();
-            this.courseStorageService.updateCourse(course);
+            // Enriching the cached course in place must not change its loaded-ness: preserve the fully-loaded marker
+            // the CourseOverviewGuard relies on, otherwise switching to a guarded tab would no longer be access-checked.
+            this.courseStorageService.updateCourse(course, this.courseStorageService.isCourseFullyLoaded(this.courseId));
         }
     }
 
@@ -619,7 +621,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     get quizExerciseStatus(): QuizStatus | undefined {
         if (this.exercise?.type === ExerciseType.QUIZ) {
-            return this.quizExerciseService.getStatus(this.exercise as QuizExercise);
+            return this.quizExerciseService.getStatus(this.exercise);
         }
         return undefined;
     }

@@ -28,7 +28,7 @@ export class ExamEditWorkingTimeComponent implements OnInit, OnDestroy {
     readonly workingTimeChangeAllowed = signal(false);
 
     private dialogRef: DynamicDialogRef | null | undefined;
-    private timeoutRef: any;
+    private timeoutRef: ReturnType<typeof setTimeout> | undefined;
     private subscription: Subscription | undefined;
 
     ngOnInit() {

@@ -62,9 +62,9 @@ export abstract class QuizExerciseValidationDirective {
             this.quizExercise().quizQuestions != undefined &&
             !!this.quizExercise().quizQuestions!.length;
 
-        const areAllQuestionsValid = this.quizExercise().quizQuestions?.every(function (question) {
+        const areAllQuestionsValid = this.quizExercise().quizQuestions?.every((question) => {
             return isQuizQuestionValid(question, this.dragAndDropQuestionUtil, this.shortAnswerQuestionUtil);
-        }, this);
+        });
         const maxPointsReachableInQuiz = this.quizExercise()
             .quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0)
             .reduce((a, b) => a + b, 0);
@@ -95,7 +95,7 @@ export abstract class QuizExerciseValidationDirective {
             ? []
             : this.quizExercise()
                   .quizQuestions?.map((question, index) => {
-                      if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (<MultipleChoiceQuestion>question).answerOptions!.some((option) => !option.explanation)) {
+                      if (question.type === QuizQuestionType.MULTIPLE_CHOICE && (question as MultipleChoiceQuestion).answerOptions!.some((option) => !option.explanation)) {
                           return {
                               translateKey: 'artemisApp.quizExercise.invalidReasons.explanationIsMissing',
                               translateValues: { index: index + 1 },
@@ -158,9 +158,9 @@ export abstract class QuizExerciseValidationDirective {
         //         });
         //     }
         // }
-        this.quizExercise().quizQuestions!.forEach(function (question: QuizQuestion, index: number) {
+        this.quizExercise().quizQuestions!.forEach((question: QuizQuestion, index: number) => {
             computeQuizQuestionInvalidReason(invalidReasons, question, index, this.dragAndDropQuestionUtil, this.shortAnswerQuestionUtil);
-        }, this);
+        });
         const invalidFlaggedReasons = !this.quizExercise()
             ? []
             : this.quizExercise()
@@ -200,7 +200,7 @@ export abstract class QuizExerciseValidationDirective {
      * check if Dictionary is empty
      * @param obj the dictionary to be checked
      */
-    protected isEmpty(obj: any) {
+    protected isEmpty(obj: object) {
         return Object.keys(obj).length === 0;
     }
 }
