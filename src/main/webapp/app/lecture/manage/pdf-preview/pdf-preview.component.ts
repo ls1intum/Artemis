@@ -563,17 +563,25 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     private async updateAttachmentVideoUnitWithoutFile(hiddenPages: HiddenPage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            const attachmentVideoUnit = this.attachmentVideoUnit()!;
+            const attachmentVideoUnit = this.attachmentVideoUnit();
+            if (!attachmentVideoUnit?.attachment || !attachmentVideoUnit.lecture || attachmentVideoUnit.lecture.id === undefined || attachmentVideoUnit.id === undefined) {
+                const error = new Error('Cannot update attachment video unit without attachment, lecture, and id');
+                this.isSaving.set(false);
+                this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                reject(error);
+                return;
+            }
+
             const formData = new FormData();
             const attachmentVideoUnitWithoutFile = Object.assign(new AttachmentVideoUnit(), attachmentVideoUnit, {
                 attachmentUpdateIntent: AttachmentUpdateIntent.NO_FILE_CHANGE,
             });
 
             formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitWithoutFile));
-            formData.append('attachment', objectToJsonBlob(attachmentVideoUnit.attachment!));
+            formData.append('attachment', objectToJsonBlob(attachmentVideoUnit.attachment));
             formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
 
-            this.attachmentVideoUnitService.update(attachmentVideoUnit.lecture!.id!, attachmentVideoUnit.id!, formData).subscribe({
+            this.attachmentVideoUnitService.update(attachmentVideoUnit.lecture.id, attachmentVideoUnit.id, formData).subscribe({
                 next: () => resolve(),
                 error: (error) => {
                     this.isSaving.set(false);
@@ -589,13 +597,26 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     private async updateAttachmentVideoUnit(instructorPdfFile: File, hiddenPages: HiddenPage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment);
+            const attachmentVideoUnitToUpdate = this.attachmentVideoUnit();
+            if (
+                !attachmentVideoUnitToUpdate?.attachment ||
+                !attachmentVideoUnitToUpdate.lecture ||
+                attachmentVideoUnitToUpdate.lecture.id === undefined ||
+                attachmentVideoUnitToUpdate.id === undefined
+            ) {
+                reject(new Error('Cannot update attachment video unit without attachment, lecture, and id'));
+                return;
+            }
+
+            const lectureId = attachmentVideoUnitToUpdate.lecture.id;
+            const attachmentVideoUnitId = attachmentVideoUnitToUpdate.id;
+            this.attachmentToBeEdited.set(attachmentVideoUnitToUpdate.attachment);
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
             const formData = new FormData();
             formData.append('file', instructorPdfFile);
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited()!));
-            const attachmentVideoUnit = Object.assign(new AttachmentVideoUnit(), this.attachmentVideoUnit()!, {
+            const attachmentVideoUnit = Object.assign(new AttachmentVideoUnit(), attachmentVideoUnitToUpdate, {
                 attachmentUpdateIntent: AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED,
             });
             formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
@@ -620,7 +641,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                     formData.append('hiddenPages', new Blob([JSON.stringify(hiddenPages)], { type: 'application/json' }));
                 }
 
-                this.attachmentVideoUnitService.update(this.attachmentVideoUnit()!.lecture!.id!, this.attachmentVideoUnit()!.id!, formData).subscribe({
+                this.attachmentVideoUnitService.update(lectureId, attachmentVideoUnitId, formData).subscribe({
                     next: () => resolve(),
                     error: (error) => {
                         this.isSaving.set(false);
