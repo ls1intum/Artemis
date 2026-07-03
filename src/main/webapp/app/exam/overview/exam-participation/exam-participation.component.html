@@ -178,7 +178,12 @@
                 </div>
             } @else {
                 <!-- Display submission not in time view -->
-                <div class="d-flex justify-content-between">
+                <div class="d-flex flex-column">
+                    @if (isSidebarCollapsed()) {
+                        <div>
+                            <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                        </div>
+                    }
                     <div class="col-12 text-center my-auto">
                         <h3 class="mt-2">{{ exam().title }}</h3>
                         <div class="mb-2 font-weight-bold text-danger">
@@ -213,7 +218,7 @@
     }
 }
 @if (!loadingExam() && !exam()) {
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-start gap-2">
         @if (isSidebarCollapsed()) {
             <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
         }
