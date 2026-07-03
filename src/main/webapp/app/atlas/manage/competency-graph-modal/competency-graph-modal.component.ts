@@ -5,6 +5,7 @@ import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dy
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ScienceEventType } from 'app/foundation/science/science.model';
@@ -53,7 +54,7 @@ export class CompetencyGraphModalComponent {
             const competencyGraph = await this.learningPathApiService.getLearningPathCompetencyGraph(learningPathId);
             this.competencyGraph.set(competencyGraph);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }

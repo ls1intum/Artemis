@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, model, signal } from '@angular/core';
 import { Observable, firstValueFrom } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
@@ -82,7 +81,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
             this.emitExerciseCount(exercises.length);
             this.applyFilter();
         } catch (error: unknown) {
-            onError(this.alertService, error as HttpErrorResponse);
+            onError(this.alertService, error);
         }
     }
 
