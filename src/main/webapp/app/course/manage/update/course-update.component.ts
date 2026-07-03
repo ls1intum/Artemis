@@ -790,7 +790,7 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
                 }
             } catch (err) {
-                onError(this.alertService, err as HttpErrorResponse);
+                onError(this.alertService, err);
             }
         }
 
