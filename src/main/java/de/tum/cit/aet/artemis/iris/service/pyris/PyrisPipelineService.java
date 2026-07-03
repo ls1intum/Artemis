@@ -106,12 +106,13 @@ public class PyrisPipelineService {
      * @param name          the name of the pipeline to be executed
      * @param aiSelection   the current AI selection of the user
      * @param variant       the variant of the pipeline
+     * @param supportLevel  the instructional support level ("low" / "moderate" / "high")
      * @param event         an optional event variant that can be used to trigger specific event of the given pipeline
      * @param jobToken      a unique job token for tracking the pipeline execution
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
      */
-    public void executePipeline(String name, AiSelectionDecision aiSelection, String variant, Optional<String> event, String jobToken,
+    public void executePipeline(String name, AiSelectionDecision aiSelection, String variant, String supportLevel, Optional<String> event, String jobToken,
             Function<PyrisPipelineExecutionDTO, Object> dtoMapper, Consumer<List<PyrisStageDTO>> statusUpdater) {
         // Define the preparation stages of pipeline execution with their initial states
         // There will be more stages added in Pyris later
@@ -121,7 +122,7 @@ public class PyrisPipelineService {
         // Send initial status update indicating that the preparation stage is in progress
         statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
 
-        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant), List.of(preparing.done()));
+        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant, supportLevel), List.of(preparing.done()));
         var pipelineDto = dtoMapper.apply(baseDto);
 
         try {
@@ -148,16 +149,17 @@ public class PyrisPipelineService {
      * The caller provides a DTO builder lambda that constructs the context-specific {@link PyrisChatPipelineExecutionDTO}.
      *
      * @param variant      the variant of the pipeline
+     * @param supportLevel the instructional support level ("low" / "moderate" / "high")
      * @param session      the chat session
      * @param eventVariant the event variant to trigger, if any
      * @param dtoBuilder   a function that receives the base execution DTO, the persisted user and the feature-gated Pyris user DTO
      */
-    public void executeChatPipeline(String variant, IrisChatSession session, Optional<String> eventVariant, ChatPipelineDTOBuilder dtoBuilder) {
+    public void executeChatPipeline(String variant, String supportLevel, IrisChatSession session, Optional<String> eventVariant, ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         // @formatter:off
-        executePipeline("chat", user.getSelectedLLMUsage(), variant, eventVariant,
+        executePipeline("chat", user.getSelectedLLMUsage(), variant, supportLevel, eventVariant,
             pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
@@ -178,6 +180,8 @@ public class PyrisPipelineService {
      * - The user that created the session
      *
      * @param variant                the variant of the pipeline
+     * @param supportLevel           the instructional support level ("low" / "moderate" / "high"), sent for consistency with the other pipelines; whether the
+     *                                   tutor-suggestion pipeline acts on it is determined by Pyris
      * @param session                the chat session
      * @param eventVariant           the event variant if this function triggers a pipeline execution due to a specific event
      * @param lectureId              the optional lecture ID if this is due to a specific event
@@ -186,7 +190,7 @@ public class PyrisPipelineService {
      * @param programmingExerciseDTO the optional programming exercise DTO if this is due to a specific event
      * @param postDTO                the post DTO containing the post
      */
-    public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureId,
+    public void executeTutorSuggestionPipeline(String variant, String supportLevel, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureId,
             Optional<PyrisTextExerciseDTO> textExerciseDTO, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO,
             PostDTO postDTO) {
         var post = postDTO.post();
@@ -200,6 +204,7 @@ public class PyrisPipelineService {
             "tutor-suggestion",
             user.getSelectedLLMUsage(),
             variant,
+            supportLevel,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
@@ -225,6 +230,7 @@ public class PyrisPipelineService {
      * single-flight slot on a preparation/connector ERROR (no callback will then arrive).
      *
      * @param variant       resolved Iris variant (e.g. "default")
+     * @param supportLevel  the instructional support level ("low" / "moderate" / "high")
      * @param jobToken      the token already registered in the job map (StruggleInterventionJob)
      * @param user          the student (for the AI selection + user DTO)
      * @param signal        the struggle signal from the client engine
@@ -236,11 +242,11 @@ public class PyrisPipelineService {
      * @param intent        the slot intent ({@code decide} | {@code confirm_close} | {@code stale_check})
      * @param episode       the client-allocated episode block (null when not sent)
      */
-    public void executeStruggleInterventionPipeline(String variant, String jobToken, User user, PyrisStruggleSignalDTO signal, PyrisProgrammingExerciseDTO exerciseDTO,
-            @Nullable PyrisSubmissionDTO submissionDTO, PyrisCourseDTO courseDTO, List<PyrisMessageDTO> chatHistory, long exerciseId, @Nullable String intent,
-            @Nullable StruggleEpisodeDTO episode) {
+    public void executeStruggleInterventionPipeline(String variant, String supportLevel, String jobToken, User user, PyrisStruggleSignalDTO signal,
+            PyrisProgrammingExerciseDTO exerciseDTO, @Nullable PyrisSubmissionDTO submissionDTO, PyrisCourseDTO courseDTO, List<PyrisMessageDTO> chatHistory, long exerciseId,
+            @Nullable String intent, @Nullable StruggleEpisodeDTO episode) {
         var pyrisUser = toPyrisUserDTO(user);
-        executePipeline("struggle-intervention", user.getSelectedLLMUsage(), variant, Optional.empty(), jobToken,
+        executePipeline("struggle-intervention", user.getSelectedLLMUsage(), variant, supportLevel, Optional.empty(), jobToken,
                 executionDto -> new PyrisStruggleInterventionPipelineExecutionDTO(signal, exerciseDTO, submissionDTO, chatHistory, courseDTO, pyrisUser, executionDto.settings(),
                         executionDto.initialStages(), intent, episode),
                 stages -> {
@@ -260,6 +266,7 @@ public class PyrisPipelineService {
      * and either posts it directly or discards it based on confidence.
      *
      * @param variant                the variant of the pipeline
+     * @param supportLevel           the instructional support level ("low" / "moderate" / "high")
      * @param aiSelection            the current AI selection of the user
      * @param post                   the student's post to respond to
      * @param course                 the course the post belongs to
@@ -269,7 +276,7 @@ public class PyrisPipelineService {
      * @param lectureDTO             optional lecture if the channel is linked to one
      * @param statusUpdateConsumer   consumer to handle status updates (e.g., for logging or future websocket support)
      */
-    public void executeAutonomousTutorPipeline(String variant, AiSelectionDecision aiSelection, PyrisPostDTO post, Course course, PyrisUserDTO student,
+    public void executeAutonomousTutorPipeline(String variant, String supportLevel, AiSelectionDecision aiSelection, PyrisPostDTO post, Course course, PyrisUserDTO student,
             PyrisProgrammingExerciseDTO programmingExerciseDTO, PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO,
             Consumer<List<PyrisStageDTO>> statusUpdateConsumer) {
         // @formatter:off
@@ -277,6 +284,7 @@ public class PyrisPipelineService {
             "autonomous-tutor",
             aiSelection,
             variant,
+            supportLevel,
             Optional.empty(),
             pyrisJobService.addAutonomousTutorJob(post.id(), course.getId()),
             executionDto -> new PyrisAutonomousTutorPipelineExecutionDTO(

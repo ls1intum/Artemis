@@ -308,7 +308,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
-                this.course.set(this.metisConversationService.course!);
+                this.course.set(this.metisConversationService.course);
                 this.initializeCourseWideSearchConfig();
                 this.initializeSidebarAccordions();
                 this.setupMetis();
@@ -381,7 +381,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 if (this.postInThread()?.id !== messageId) {
                     const conversationId = queryParams.conversationId && !isNaN(Number(queryParams.conversationId)) ? Number(queryParams.conversationId) : undefined;
                     this.pendingThreadPostId = messageId;
-                    this.postInThread.set({ id: messageId, conversation: { id: conversationId } } as Post);
+                    this.postInThread.set({ id: messageId, conversation: { id: conversationId } });
                     // Immediately try to resolve the full post from already-loaded posts
                     this.metisService.posts.pipe(take(1)).subscribe((posts) => {
                         if (posts) {
@@ -426,7 +426,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
         this.focusPostId.set(post.referencePostId);
         this.openThreadOnFocus.set((post.postingType as PostingType) === PostingType.ANSWER);
-        this.metisConversationService.setActiveConversation(post.conversation!.id!);
+        this.metisConversationService.setActiveConversation(post.conversation.id);
     }
 
     updateQueryParameters() {

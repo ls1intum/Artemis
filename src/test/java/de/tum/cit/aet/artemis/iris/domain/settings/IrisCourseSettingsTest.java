@@ -14,27 +14,29 @@ class IrisCourseSettingsTest {
     private final ObjectMapper objectMapper = JsonObjectMapper.get();
 
     @Test
-    void of_trimsBlankInstructionsAndDefaultsVariant() {
-        var dto = IrisCourseSettings.of(true, "  trimmed text  ", null, null);
+    void of_trimsBlankInstructionsAndDefaultsVariantAndSupportLevel() {
+        var dto = IrisCourseSettings.of(true, "  trimmed text  ", null, null, null);
 
         assertThat(dto.customInstructions()).isEqualTo("trimmed text");
         assertThat(dto.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
+        assertThat(dto.supportLevel()).isEqualTo(IrisSupportLevel.MODERATE);
         // null rateLimit is preserved (means "use defaults"), not converted to empty()
         assertThat(dto.rateLimit()).isNull();
     }
 
     @Test
     void of_convertsEmptyInstructionsToNull() {
-        var dto = IrisCourseSettings.of(true, "   ", IrisPipelineVariant.ADVANCED, IrisRateLimitConfiguration.empty());
+        var dto = IrisCourseSettings.of(true, "   ", IrisPipelineVariant.ADVANCED, IrisSupportLevel.HIGH, IrisRateLimitConfiguration.empty());
 
         assertThat(dto.customInstructions()).isNull();
         assertThat(dto.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
+        assertThat(dto.supportLevel()).isEqualTo(IrisSupportLevel.HIGH);
         assertThat(dto.rateLimit()).isEqualTo(IrisRateLimitConfiguration.empty());
     }
 
     @Test
     void jsonRoundtrip_preservesSanitizedPayload() throws JsonProcessingException {
-        var original = IrisCourseSettings.of(false, "  trimmed text  ", IrisPipelineVariant.ADVANCED, new IrisRateLimitConfiguration(10, 5));
+        var original = IrisCourseSettings.of(false, "  trimmed text  ", IrisPipelineVariant.ADVANCED, IrisSupportLevel.LOW, new IrisRateLimitConfiguration(10, 5));
 
         String serialized = objectMapper.writeValueAsString(original);
         var deserialized = objectMapper.readValue(serialized, IrisCourseSettings.class);
@@ -42,14 +44,15 @@ class IrisCourseSettingsTest {
         assertThat(deserialized.enabled()).isFalse();
         assertThat(deserialized.customInstructions()).isEqualTo("trimmed text");
         assertThat(deserialized.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
+        assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.LOW);
         assertThat(deserialized.rateLimit()).isEqualTo(new IrisRateLimitConfiguration(10, 5));
     }
 
     @Test
     void proactiveStruggle_defaultsOff_andRoundtripsWhenEnabled() throws JsonProcessingException {
-        assertThat(IrisCourseSettings.of(true, null, null, null).proactiveStruggleEnabled()).isFalse();
+        assertThat(IrisCourseSettings.of(true, null, null, null, null).proactiveStruggleEnabled()).isFalse();
 
-        var enabled = IrisCourseSettings.of(true, null, IrisPipelineVariant.DEFAULT, null, true);
+        var enabled = IrisCourseSettings.of(true, null, IrisPipelineVariant.DEFAULT, null, null, true);
         var json = objectMapper.writeValueAsString(enabled);
         assertThat(objectMapper.readValue(json, IrisCourseSettings.class).proactiveStruggleEnabled()).isTrue();
     }
@@ -61,6 +64,20 @@ class IrisCourseSettingsTest {
         // actual default-off guarantee (independent of how a false is serialized on the way back out).
         var legacyJson = "{\"enabled\":true,\"variant\":\"default\"}";
         assertThat(objectMapper.readValue(legacyJson, IrisCourseSettings.class).proactiveStruggleEnabled()).isFalse();
+    }
+
+    @Test
+    void deserialization_withoutSupportLevel_defaultsToModerate() throws JsonProcessingException {
+        var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\"}", IrisCourseSettings.class);
+
+        assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.MODERATE);
+    }
+
+    @Test
+    void deserialization_withHighSupportLevel_isPreserved() throws JsonProcessingException {
+        var deserialized = objectMapper.readValue("{\"enabled\":true,\"variant\":\"default\",\"supportLevel\":\"high\"}", IrisCourseSettings.class);
+
+        assertThat(deserialized.supportLevel()).isEqualTo(IrisSupportLevel.HIGH);
     }
 
     @Test

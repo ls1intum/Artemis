@@ -86,7 +86,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Update existing platform configuration
      */
-    updateLtiConfiguration(platformConfiguration: any) {
+    updateLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
         this.ltiConfigurationService
             .updateLtiPlatformConfiguration(platformConfiguration)
             .pipe(
@@ -105,7 +105,7 @@ export class EditLtiConfigurationComponent implements OnInit {
     /**
      * Create new platform configuration
      */
-    addLtiConfiguration(platformConfiguration: any) {
+    addLtiConfiguration(platformConfiguration: LtiPlatformConfiguration) {
         this.ltiConfigurationService
             .addLtiPlatformConfiguration(platformConfiguration)
             .pipe(

@@ -67,8 +67,8 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         // activateIrisFor leaves proactive struggle OFF (the §13 default). The accepted-path test needs it ON;
         // the course-off test below flips it back off for its own case.
         var courseSettings = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(),
-                IrisCourseSettings.of(courseSettings.enabled(), courseSettings.customInstructions(), courseSettings.variant(), courseSettings.rateLimit(), true), true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(courseSettings.enabled(), courseSettings.customInstructions(), courseSettings.variant(),
+                courseSettings.supportLevel(), courseSettings.rateLimit(), true), true);
     }
 
     private long exerciseId() {
@@ -93,8 +93,9 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         assertThat(accepted.exerciseId()).isEqualTo(exerciseId());
         assertThat(accepted.jobId()).isNotNull();
 
-        // executeStruggleInterventionPipeline(variant, jobToken, user, signal, exercise, submission, course, chatHistory, exerciseId, intent, episode)
-        verify(pyrisPipelineService, timeout(3000)).executeStruggleInterventionPipeline(any(), anyString(), any(), any(), any(), any(), any(), any(), anyLong(), any(), any());
+        // executeStruggleInterventionPipeline(variant, supportLevel, jobToken, user, signal, exercise, submission, course, chatHistory, exerciseId, intent, episode)
+        verify(pyrisPipelineService, timeout(3000)).executeStruggleInterventionPipeline(any(), any(), anyString(), any(), any(), any(), any(), any(), any(), anyLong(), any(),
+                any());
     }
 
     @Test
@@ -102,7 +103,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
     void courseProactiveDisabled_returnsAcceptedFalseCourseDisabled() throws Exception {
         var settings = irisSettingsService.getSettingsForCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
         irisSettingsService.updateCourseSettings(exercise.getCourseViaExerciseGroupOrCourseMember().getId(),
-                IrisCourseSettings.of(settings.enabled(), settings.customInstructions(), settings.variant(), settings.rateLimit(), false), true);
+                IrisCourseSettings.of(settings.enabled(), settings.customInstructions(), settings.variant(), settings.supportLevel(), settings.rateLimit(), false), true);
 
         var body = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", requestBody(), StruggleInterventionAcceptedDTO.class,
                 HttpStatus.ACCEPTED);

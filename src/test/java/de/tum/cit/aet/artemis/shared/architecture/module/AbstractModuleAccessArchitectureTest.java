@@ -6,11 +6,13 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPac
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackage;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.data.repository.Repository;
 import org.springframework.stereotype.Controller;
 
 import com.tngtech.archunit.core.domain.Dependency;
@@ -56,6 +58,24 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
         };
 
         classes().that().resideOutsideOfPackage(getModuleWithSubpackage()).should(onlyAllowedDependencies).check(productionClasses);
+    }
+
+    /**
+     * Safeguard against re-introducing cross-module repository leaks. A module's repository must never be placed on the
+     * access ignore list to silence {@link #shouldOnlyAccessApiDomainDtoAndAllowedException()}: a class in another module
+     * that depends directly on an (optional) module's repository breaks application startup when that module is disabled,
+     * because the repository bean does not exist. This is exactly how {@code ExerciseVersionService} ended up hard-wired to
+     * {@code TextExerciseRepository}. Cross-module repository access must go through the module's {@code api} package, which
+     * is gated by the same {@code @Conditional} as the repository and can therefore be injected as {@code Optional<...Api>}.
+     */
+    @Test
+    void ignoredClassesShouldNotContainRepositories() {
+        for (Class<?> ignoredClass : getIgnoredClasses()) {
+            boolean isRepository = ignoredClass.getPackageName().contains(".repository") || Repository.class.isAssignableFrom(ignoredClass);
+            assertThat(isRepository).as(
+                    "%s must not be on the module access ignore list: cross-module access to a repository must go through the module's api package, otherwise disabling the module breaks application startup",
+                    ignoredClass.getName()).isFalse();
+        }
     }
 
     @Test

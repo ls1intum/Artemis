@@ -1,0 +1,51 @@
+name: Open failure tracking issue
+description: >-
+  For a failed nightly monitoring job, open a GitHub issue assigned to a maintainer, or comment on the
+  already-open one (deduplicated by exact title), so the failure is noticed and owned instead of scrolling
+  past in a chat channel. The caller job must grant issues write permission and must have checked out the
+  repository (this is a local composite action).
+
+inputs:
+  title:
+    description: Issue title. Also the deduplication key, so keep it stable per monitor.
+    required: true
+  assignee:
+    description: GitHub username a newly created issue is assigned to.
+    required: true
+  body:
+    description: Body for a newly created issue. The workflow run URL and a housekeeping note are appended automatically.
+    required: true
+  github-token:
+    description: Token with issues write permission, usually the default github.token.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Create or update the tracking issue
+      shell: bash
+      # All values are passed via env and referenced as shell variables (never interpolated into the
+      # command line), and the inputs are hardcoded constants from the calling workflow, not untrusted
+      # event data. jq matches the exact title via env.ISSUE_TITLE rather than string interpolation.
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        ISSUE_TITLE: ${{ inputs.title }}
+        ISSUE_ASSIGNEE: ${{ inputs.assignee }}
+        ISSUE_BODY: ${{ inputs.body }}
+        REPO: ${{ github.repository }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        set -euo pipefail
+        today="$(date -u +%Y-%m-%d)"
+        # Narrow server-side by the title phrase, then confirm an exact title match client-side (env.ISSUE_TITLE)
+        # so we never open a duplicate while a previous failure issue is still open.
+        existing="$(gh issue list --repo "$REPO" --state open --search "\"$ISSUE_TITLE\" in:title" \
+          --json number,title --jq 'map(select(.title == env.ISSUE_TITLE)) | .[0].number // empty')"
+        if [ -n "$existing" ]; then
+          echo "Open tracking issue #$existing already exists; commenting instead of opening a duplicate."
+          gh issue comment "$existing" --repo "$REPO" --body "Still failing on ${today} UTC. Run: ${RUN_URL}"
+        else
+          echo "No open tracking issue found; creating one assigned to ${ISSUE_ASSIGNEE}."
+          full_body="$(printf '%s\n\nWorkflow run: %s\n\nAuto-created by the nightly workflow and deduplicated by title; it receives a comment on each subsequent nightly failure. Close it once the monitor is green again.' "$ISSUE_BODY" "$RUN_URL")"
+          gh issue create --repo "$REPO" --title "$ISSUE_TITLE" --assignee "$ISSUE_ASSIGNEE" --body "$full_body"
+        fi

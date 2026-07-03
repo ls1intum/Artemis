@@ -23,7 +23,7 @@ class PyrisStruggleInterventionExecutionDTOTest {
 
     @Test
     void serializesTopLevelSettingsInitialStagesAndSignal() throws Exception {
-        var settings = new PyrisPipelineExecutionSettingsDTO("job-1", null, "http://localhost:8080", "default");
+        var settings = new PyrisPipelineExecutionSettingsDTO("job-1", null, "http://localhost:8080", "default", "moderate");
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), List.of(), 1);
         var stage = new PyrisStageDTO("Init", 10, PyrisStageState.NOT_STARTED, null, false, null);
         // Non-empty initialStages so NON_EMPTY keeps it: this proves it is hoisted as a top-level sibling of
@@ -39,7 +39,7 @@ class PyrisStruggleInterventionExecutionDTOTest {
 
     @Test
     void serializesIntentAndEpisodeWithEmptyHintsPresent() throws Exception {
-        var settings = new PyrisPipelineExecutionSettingsDTO("job-2", null, "http://localhost:8080", "default");
+        var settings = new PyrisPipelineExecutionSettingsDTO("job-2", null, "http://localhost:8080", "default", "moderate");
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), List.of(), 1);
         var episode = new StruggleEpisodeDTO("ep-1", true, List.of());
         var stage = new PyrisStageDTO("Init", 10, PyrisStageState.NOT_STARTED, null, false, null);
@@ -57,7 +57,7 @@ class PyrisStruggleInterventionExecutionDTOTest {
 
     @Test
     void nullIntentAndEpisodeAreOmittedByNonEmpty() throws Exception {
-        var settings = new PyrisPipelineExecutionSettingsDTO("job-3", null, "http://localhost:8080", "default");
+        var settings = new PyrisPipelineExecutionSettingsDTO("job-3", null, "http://localhost:8080", "default", "moderate");
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), List.of(), 1);
         var stage = new PyrisStageDTO("Init", 10, PyrisStageState.NOT_STARTED, null, false, null);
         var dto = new PyrisStruggleInterventionPipelineExecutionDTO(signal, null, null, List.of(), null, null, settings, List.of(stage), null, null);

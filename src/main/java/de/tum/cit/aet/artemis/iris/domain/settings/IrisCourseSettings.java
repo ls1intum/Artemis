@@ -19,17 +19,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH) @Nullable String customInstructions, IrisPipelineVariant variant,
-        @Valid @Nullable IrisRateLimitConfiguration rateLimit, boolean proactiveStruggleEnabled) implements Serializable {
+        IrisSupportLevel supportLevel, @Valid @Nullable IrisRateLimitConfiguration rateLimit, boolean proactiveStruggleEnabled) implements Serializable {
 
-    private static final IrisCourseSettings DEFAULT = new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, false);
+    private static final IrisCourseSettings DEFAULT = new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, IrisSupportLevel.MODERATE, null, false);
 
     @JsonCreator
     public IrisCourseSettings(@JsonProperty("enabled") boolean enabled, @JsonProperty("customInstructions") @Nullable String customInstructions,
-            @JsonProperty("variant") IrisPipelineVariant variant, @JsonProperty("rateLimit") @Valid IrisRateLimitConfiguration rateLimit,
-            @JsonProperty("proactiveStruggleEnabled") boolean proactiveStruggleEnabled) {
+            @JsonProperty("variant") IrisPipelineVariant variant, @JsonProperty("supportLevel") @Nullable IrisSupportLevel supportLevel,
+            @JsonProperty("rateLimit") @Valid IrisRateLimitConfiguration rateLimit, @JsonProperty("proactiveStruggleEnabled") boolean proactiveStruggleEnabled) {
         this.enabled = enabled;
         this.customInstructions = sanitizeCustomInstructions(customInstructions);
         this.variant = Objects.requireNonNullElse(variant, IrisPipelineVariant.DEFAULT);
+        this.supportLevel = Objects.requireNonNullElse(supportLevel, IrisSupportLevel.MODERATE);
         this.rateLimit = rateLimit; // null = use defaults, non-null = explicit override (even if values are null = unlimited)
         this.proactiveStruggleEnabled = proactiveStruggleEnabled;
     }
@@ -52,27 +53,29 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
      * @param enabled            desired enabled flag
      * @param customInstructions optional custom instructions
      * @param variant            desired variant (defaults to {@link IrisPipelineVariant#DEFAULT})
+     * @param supportLevel       desired instructional support level (defaults to {@link IrisSupportLevel#MODERATE})
      * @param rateLimit          optional rate limit overrides
      * @return sanitized instance
      */
-    public static IrisCourseSettings of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant,
+    public static IrisCourseSettings of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant, @Nullable IrisSupportLevel supportLevel,
             @Nullable IrisRateLimitConfiguration rateLimit) {
-        return new IrisCourseSettings(enabled, customInstructions, variant, rateLimit, false);
+        return new IrisCourseSettings(enabled, customInstructions, variant, supportLevel, rateLimit, false);
     }
 
     /**
-     * Like {@link #of(boolean, String, IrisPipelineVariant, IrisRateLimitConfiguration)} but carries the admin-only
+     * Like {@link #of(boolean, String, IrisPipelineVariant, IrisSupportLevel, IrisRateLimitConfiguration)} but carries the admin-only
      * proactive-struggle flag (spec §13). Used by the update path and the admin/test paths that must set or preserve it.
      *
      * @param enabled                  desired enabled flag
      * @param customInstructions       optional custom instructions
      * @param variant                  desired variant (defaults to {@link IrisPipelineVariant#DEFAULT})
+     * @param supportLevel             desired instructional support level (defaults to {@link IrisSupportLevel#MODERATE})
      * @param rateLimit                optional rate limit overrides
      * @param proactiveStruggleEnabled whether proactive struggle detection is on for the course (default off)
      * @return sanitized instance
      */
-    public static IrisCourseSettings of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant, @Nullable IrisRateLimitConfiguration rateLimit,
-            boolean proactiveStruggleEnabled) {
-        return new IrisCourseSettings(enabled, customInstructions, variant, rateLimit, proactiveStruggleEnabled);
+    public static IrisCourseSettings of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant, @Nullable IrisSupportLevel supportLevel,
+            @Nullable IrisRateLimitConfiguration rateLimit, boolean proactiveStruggleEnabled) {
+        return new IrisCourseSettings(enabled, customInstructions, variant, supportLevel, rateLimit, proactiveStruggleEnabled);
     }
 }

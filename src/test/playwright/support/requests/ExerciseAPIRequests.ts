@@ -93,6 +93,8 @@ export class ExerciseAPIRequests {
         mode?: ExerciseMode;
         teamAssignmentConfig?: TeamAssignmentConfig;
         problemStatement?: string;
+        // Note: the name must not be a reserved repository type name (exercise, solution, tests, auxiliary, user).
+        auxiliaryRepositories?: { name: string; checkoutDirectory: string; description?: string }[];
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -110,6 +112,7 @@ export class ExerciseAPIRequests {
             mode = ExerciseMode.INDIVIDUAL,
             teamAssignmentConfig,
             problemStatement,
+            auxiliaryRepositories,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -132,6 +135,7 @@ export class ExerciseAPIRequests {
             ...(course ? { course } : {}),
             ...(exerciseGroup ? { exerciseGroup } : {}),
             ...(problemStatement ? { problemStatement } : {}),
+            ...(auxiliaryRepositories ? { auxiliaryRepositories } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {

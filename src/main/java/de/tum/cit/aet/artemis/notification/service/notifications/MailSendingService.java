@@ -94,7 +94,7 @@ public class MailSendingService {
      * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
      * @param isHtml      Whether the mail should support HTML tags
      */
-    @Async
+    @Async("mailTaskExecutor")
     public void sendEmail(MailRecipientDTO recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
         executeSend(recipient.email(), recipient.login(), subject, content, isMultipart, isHtml);
     }
@@ -133,7 +133,7 @@ public class MailSendingService {
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
-    @Async
+    @Async("mailTaskExecutor")
     public void buildAndSendAsync(@NonNull MailRecipientDTO recipient, @NonNull String subjectKey, @NonNull String contentTemplate,
             @NonNull Map<String, Object> additionalContextVariables) {
         buildAndSend(recipient, subjectKey, List.of(), contentTemplate, additionalContextVariables);
@@ -148,7 +148,7 @@ public class MailSendingService {
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
      */
-    @Async
+    @Async("mailTaskExecutor")
     public void buildAndSendAsync(@NonNull MailRecipientDTO recipient, @NonNull String subjectKey, @NonNull List<String> subjectArgs, @NonNull String contentTemplate,
             @NonNull Map<String, Object> additionalContextVariables) {
         buildAndSend(recipient, subjectKey, subjectArgs, contentTemplate, additionalContextVariables);

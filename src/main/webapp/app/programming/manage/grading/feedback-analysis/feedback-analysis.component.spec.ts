@@ -5,9 +5,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackAnalysisComponent, FeedbackAnalysisState } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.component';
+import { PaginatorState } from 'primeng/paginator';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import '@angular/localize/init';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel/feedback-detail-channel-modal.component';
@@ -290,6 +290,18 @@ describe('FeedbackAnalysisComponent', () => {
             component.setPage(2);
             expect(component.page()).toBe(2);
             expect(loadDataSpy).toHaveBeenCalledOnce();
+        });
+
+        it('onPageChange converts the 0-indexed PrimeNG page to a 1-indexed page', () => {
+            const setPageSpy = vi.spyOn(component, 'setPage');
+            component.onPageChange({ page: 1 } as PaginatorState);
+            expect(setPageSpy).toHaveBeenCalledWith(2);
+        });
+
+        it('onPageChange defaults an undefined PrimeNG page to the first page', () => {
+            const setPageSpy = vi.spyOn(component, 'setPage');
+            component.onPageChange({} as PaginatorState);
+            expect(setPageSpy).toHaveBeenCalledWith(1);
         });
     });
 

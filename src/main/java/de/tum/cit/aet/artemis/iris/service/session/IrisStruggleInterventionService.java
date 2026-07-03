@@ -176,8 +176,8 @@ public class IrisStruggleInterventionService {
             log.info("Struggle intervention already in flight for user {} exercise {}, skipping", user.getId(), exerciseId);
             return TriggerPreparation.inFlight();
         }
-        return TriggerPreparation.triggered(
-                new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), tokenOpt.get(), intent, episode, confirmReason, requestToken));
+        return TriggerPreparation.triggered(new PreparedTrigger(course.getId(), exerciseId, user.getId(), settings.variant().jsonValue(), settings.supportLevel().jsonValue(),
+                tokenOpt.get(), intent, episode, confirmReason, requestToken));
     }
 
     /**
@@ -213,8 +213,8 @@ public class IrisStruggleInterventionService {
         var chatHistory = irisChatSessionRepository
                 .findLatestByEntityIdAndChatModeAndUserIdWithMessages(p.exerciseId(), IrisChatMode.PROGRAMMING_EXERCISE_CHAT, p.userId(), Pageable.ofSize(1)).stream().findFirst()
                 .map(s -> pyrisDTOService.toPyrisMessageDTOListForStruggle(s.getMessages())).orElse(List.of());
-        pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory, p.exerciseId(),
-                p.intent(), p.episode());
+        pyrisPipelineService.executeStruggleInterventionPipeline(p.variant(), p.supportLevel(), p.jobToken(), user, signal, exerciseDTO, submissionDTO, courseDTO, chatHistory,
+                p.exerciseId(), p.intent(), p.episode());
     }
 
     /**
@@ -708,8 +708,8 @@ public class IrisStruggleInterventionService {
      * Immutable snapshot of the synchronously-prepared trigger (ids + payload only - NO entity crosses threads).
      * The new episode/intent/confirmReason/requestToken fields are immutable value objects, safe to cross threads.
      */
-    public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String jobToken, @Nullable String intent, @Nullable StruggleEpisodeDTO episode,
-            @Nullable String confirmReason, @Nullable String requestToken) {
+    public record PreparedTrigger(long courseId, long exerciseId, long userId, String variant, String supportLevel, String jobToken, @Nullable String intent,
+            @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken) {
     }
 
     /**

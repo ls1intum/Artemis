@@ -136,8 +136,8 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
 
         // activateIrisFor leaves proactive struggle OFF (the §13 default); this end-to-end run needs it ON.
         var courseSettings = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(),
-                IrisCourseSettings.of(courseSettings.enabled(), courseSettings.customInstructions(), courseSettings.variant(), courseSettings.rateLimit(), true), true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(courseSettings.enabled(), courseSettings.customInstructions(), courseSettings.variant(),
+                courseSettings.supportLevel(), courseSettings.rateLimit(), true), true);
     }
 
     private void createSubmission(ProgrammingExerciseStudentParticipation studentParticipation) {

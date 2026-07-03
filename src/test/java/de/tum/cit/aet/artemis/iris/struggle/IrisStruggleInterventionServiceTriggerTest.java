@@ -164,7 +164,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         // The user reloaded on the async thread is no longer opted into LLM usage (aiSelectionDecision == null) -
         // sendToPyris must bail before any Pyris egress and release the reserved single-flight slot.
         when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
-        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "tok", null, null, null, null);
+        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", null, null, null, null);
         var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), List.of(), 1);
 
         service.sendToPyris(prepared, signal, Map.of());
@@ -174,14 +174,14 @@ class IrisStruggleInterventionServiceTriggerTest {
     }
 
     private static IrisCourseSettings enabledSettings() {
-        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, true);   // Iris + proactive ON
+        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, null, true);   // Iris + proactive ON
     }
 
     private static IrisCourseSettings disabledSettings() {
-        return new IrisCourseSettings(false, null, IrisPipelineVariant.DEFAULT, null, false);  // Iris OFF
+        return new IrisCourseSettings(false, null, IrisPipelineVariant.DEFAULT, null, null, false);  // Iris OFF
     }
 
     private static IrisCourseSettings proactiveOffSettings() {
-        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, false);   // Iris ON, proactive OFF
+        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, null, false);   // Iris ON, proactive OFF
     }
 }

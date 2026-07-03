@@ -20,9 +20,11 @@ import java.util.stream.Stream;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthContributor;
 import org.springframework.boot.health.contributor.HealthContributors;
@@ -183,7 +185,11 @@ public class MetricsBean {
     // NOTE: only active on scheduling node
     private final AtomicLong failedBuildsGauge = new AtomicLong(0);
 
-    private boolean scheduledMetricsEnabled = false;
+    @Value("${artemis.scheduled-metrics.enabled:true}")
+    private boolean scheduledMetricsEnabled = true;
+
+    @Value("${artemis.websocket-log.enabled:false}")
+    private boolean websocketLogEnabled = false;
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
@@ -241,10 +247,12 @@ public class MetricsBean {
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
 
-        if (profileService.isSchedulingActive()) {
-            // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
-            scheduledMetricsEnabled = true;
+        // Scheduled metrics are identical across instances, so they run only on the scheduling node. They can additionally be turned off via
+        // artemis.scheduled-metrics.enabled. Combine the injected configuration flag with the scheduling profile (instead of forcing it on) so
+        // the configured value is respected and the scheduled recalculation methods below correctly skip on non-scheduling nodes.
+        scheduledMetricsEnabled = scheduledMetricsEnabled && profileService.isSchedulingActive();
 
+        if (scheduledMetricsEnabled) {
             registerActiveAdminMetrics();
             registerExerciseAndExamMetrics();
             registerStudentExerciseMetrics();
@@ -270,7 +278,7 @@ public class MetricsBean {
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
         // Note: this mechanism prevents that this is logged during testing
-        if (!profileService.isProfileActive(SPRING_PROFILE_TEST)) {
+        if (!profileService.isProfileActive(SPRING_PROFILE_TEST) && websocketLogEnabled) {
             webSocketStats.setLoggingPeriod(WEBSOCKET_LOGGING_DELAY_SECONDS * 1000L);
             scheduler.scheduleAtFixedRate(() -> {
                 final var connectedUsers = userRegistry.getUsers();
@@ -780,7 +788,10 @@ public class MetricsBean {
      * @param health the Health whose status should be mapped
      * @return a double corresponding to the health status
      */
-    private double mapHealthToDouble(Health health) {
+    private double mapHealthToDouble(@Nullable Health health) {
+        if (health == null) {
+            return -3;
+        }
         return switch (health.getStatus().getCode()) {
             case "UP" -> 1;
             case "DOWN" -> 0;

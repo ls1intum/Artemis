@@ -176,6 +176,6 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         // But the legacy chat pipeline must NOT fire. after(2000) gives the async dispatch time to settle so the
         // never() assertion does not race ahead of a pipeline call that would otherwise be in flight (mirrors how
         // PyrisEventSystemIntegrationTest asserts the negative case).
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
     }
 }

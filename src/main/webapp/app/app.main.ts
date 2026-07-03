@@ -23,9 +23,16 @@ bootstrapApplication(AppComponent, appConfig)
 
         // Perform initialization logic
         registerLocaleData(locale);
+        // Attach all ng-bootstrap tooltips to <body> so they are not clipped by `overflow: hidden` ancestors
+        // (e.g. the flex sidebar / layout-content), and suppress them on touch (Handset) devices.
+        // ~140 [ngbTooltip] usages still rely on this global default until they are migrated to PrimeNG p-tooltip.
         tooltipConfig.container = 'body';
-
         tooltipConfig.disableTooltip = breakpointObserver.isMatched(Breakpoints.Handset);
     })
-    // eslint-disable-next-line no-undef
-    .catch((err) => console.error(err));
+    .catch((err) => {
+        // This is the last-resort handler for a failed application bootstrap. It runs before AppComponent has
+        // initialized Sentry (see AppComponent.initSentry), so captureException would be a no-op here — the
+        // console is the only reliable channel to surface a startup failure instead of it vanishing silently.
+        // eslint-disable-next-line no-console, no-undef -- bootstrap failure handler; Sentry is not yet initialized
+        console.error('Failed to bootstrap the Angular application', err);
+    });

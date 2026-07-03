@@ -102,6 +102,9 @@
             "processingIngesting": "Indizierung läuft",
             "processingComplete": "Verarbeitung abgeschlossen",
             "processingFailed": "Verarbeitung fehlgeschlagen",
+            "videoSlideSync": {
+                "toggle": "Folien und Video synchronisieren"
+            },
             "processing": {
                 "cancelled": "Verarbeitung wurde abgebrochen",
                 "error": {
@@ -246,7 +249,8 @@
                 "pageInputPlaceholder": "Seite",
                 "downloadPdf": "PDF herunterladen",
                 "openFullscreen": "Vollbild öffnen",
-                "closeFullscreen": "Vollbild schließen"
+                "closeFullscreen": "Vollbild schließen",
+                "fullscreenDialog": "PDF-Vollbildanzeige"
             }
         },
         "exerciseUnit": {

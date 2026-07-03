@@ -33,16 +33,16 @@
             class="me-1"
             [btnSize]="ButtonSize.SMALL"
             [icon]="faMinimize"
-            (onClick)="tree?.collapseAll()"
+            (onClick)="tree.collapseAll()"
             tooltip="artemisApp.standardizedCompetency.manage.collapseButtonTooltip"
         />
-        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="tree?.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
+        <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="tree.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
     </div>
     @if (dataSource.data?.length || selectedKnowledgeArea() || selectedCompetency()) {
         <div class="split-container">
             @if (dataSource.data?.length) {
                 <div class="tree-panel">
-                    <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100" [dataSource]="dataSource">
+                    <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100" [nodes]="treeNodes()">
                         <ng-template let-knowledgeArea="knowledgeArea" #knowledgeAreaTemplate>
                             <div class="d-flex align-items-center">
                                 <fa-icon
