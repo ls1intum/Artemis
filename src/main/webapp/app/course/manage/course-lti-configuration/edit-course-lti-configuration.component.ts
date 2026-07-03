@@ -114,7 +114,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     }
 
     transition(): void {
-        this.router.navigate(['/admin/lti-configuration'], {
+        void this.router.navigate(['/admin/lti-configuration'], {
             queryParams: {
                 page: this.page(),
                 sort: ['id', 'asc'],
@@ -171,7 +171,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
      * Returns to the lti configuration page
      */
     navigateToLtiConfigurationPage() {
-        this.router.navigate(['course-management', this.course().id!.toString(), 'lti-configuration']);
+        void this.router.navigate(['course-management', this.course().id!.toString(), 'lti-configuration']);
     }
 
     setPlatform(platform: LtiPlatformConfiguration) {

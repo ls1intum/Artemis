@@ -158,9 +158,9 @@ export class CourseExercisesComponent {
         }
 
         if (!exerciseId && lastSelectedExercise) {
-            this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([lastSelectedExercise], { relativeTo: this.route, replaceUrl: true });
         } else if (!exerciseId && upcomingExercise) {
-            this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
         } else {
             this._exerciseSelected.set(!!exerciseId);
         }

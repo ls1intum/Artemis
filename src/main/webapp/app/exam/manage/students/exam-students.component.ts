@@ -495,7 +495,7 @@ export class ExamStudentsComponent implements OnDestroy {
         if (!this.hasExamStarted() || !exam?.id) {
             return;
         }
-        this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
+        void this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
     }
 
     private openIndividualExamsStatusPopover(event?: Event, defer = false) {

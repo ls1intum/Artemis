@@ -303,7 +303,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
         this.subscribeForNewResults();
-        this.subscribeToTeamAssignmentUpdates();
+        void this.subscribeToTeamAssignmentUpdates();
 
         this._baseResource.set(`/course-management/${this.courseId}/${this.exercise?.type}-exercises/${this.exercise?.id}/`);
         if (this.exercise?.type) {
@@ -759,7 +759,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         } else {
             return;
         }
-        this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
+        void this.router.navigate(['/courses', this.courseId, 'exercises', exerciseTypePath, this.exercise.id, 'participate', changedParticipation.id, 'submission', submissionId]);
     }
 
     ngOnDestroy() {

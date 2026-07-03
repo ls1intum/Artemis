@@ -964,13 +964,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             return;
         }
         files.forEach((file) => {
-            (this.useCommunicationForFileUpload()
-                ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
-                      file,
-                      this.metisService?.getCourse()?.id,
-                      this.metisService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
-                  )
-                : this.fileUploaderService.uploadMarkdownFile(file)
+            void (
+                this.useCommunicationForFileUpload()
+                    ? this.fileUploaderService.uploadMarkdownFileInCurrentMetisConversation(
+                          file,
+                          this.metisService?.getCourse()?.id,
+                          this.metisService?.getCurrentConversation()?.id ?? this.fallbackConversationId(),
+                      )
+                    : this.fileUploaderService.uploadMarkdownFile(file)
             )
                 .then(
                     (response) => this.processFileUploadResponse(response, file),
