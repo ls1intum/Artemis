@@ -55,7 +55,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart {
 
     readonly xAxisLabel = signal('');
 
-    readonly data = signal<any[]>([]);
+    readonly data = signal<{ name: string; series: { name?: string; value?: number }[] }[]>([]);
     // Data changes will be stored in the copy first, to trigger change detection when ready
     dataCopy: { name: string; series: { name?: string; value?: number }[] }[] = [
         {

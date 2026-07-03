@@ -14,6 +14,12 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { Subject, takeUntil } from 'rxjs';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
+// CollapseState is an intersection with Record<...> group unions, so an empty seed cannot be expressed as a type
+// annotation or `satisfies`; the working copy is populated before use. Assert through a named variable so the ban on
+// object-literal assertions is respected.
+const emptyCollapseState: Record<string, boolean> = {};
+const EMPTY_COLLAPSE_STATE = emptyCollapseState as CollapseState;
+
 @Component({
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
@@ -42,7 +48,7 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
 
     /** Working copy of the collapse state. Seeded by reference from the {@link collapseState} input so in-place
      *  property mutations remain visible to the parent, but can be replaced when a stored state is restored. */
-    readonly collapseStateInternal = signal<CollapseState>({} as CollapseState);
+    readonly collapseStateInternal = signal<CollapseState>(EMPTY_COLLAPSE_STATE);
 
     readonly faChevronRight = faChevronRight;
     readonly faFile = faFile;

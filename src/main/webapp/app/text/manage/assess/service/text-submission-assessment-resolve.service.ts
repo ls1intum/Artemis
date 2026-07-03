@@ -22,7 +22,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
         if (exerciseId) {
             return this.textSubmissionService
                 .getSubmissionWithoutAssessment(exerciseId, 'lock', correctionRound)
-                .pipe(map((submission?: TextSubmission) => <StudentParticipation | undefined>submission?.participation))
+                .pipe(map((submission?: TextSubmission) => submission?.participation))
                 .pipe(catchError(() => of(undefined)));
         }
         return of(undefined);

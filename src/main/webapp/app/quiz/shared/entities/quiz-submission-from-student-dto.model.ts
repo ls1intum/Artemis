@@ -84,11 +84,11 @@ function createShortAnswerSubmittedAnswerFromStudentDTO(submittedAnswer: ShortAn
 
 function createSubmittedAnswerFromStudentDTO(submittedAnswer: SubmittedAnswer): SubmittedAnswerFromStudentDTO {
     if (submittedAnswer.type === 'multiple-choice') {
-        return createMultipleChoiceSubmittedAnswerFromStudentDTO(submittedAnswer as MultipleChoiceSubmittedAnswer);
+        return createMultipleChoiceSubmittedAnswerFromStudentDTO(submittedAnswer);
     } else if (submittedAnswer.type === 'drag-and-drop') {
-        return createDragAndDropSubmittedAnswerFromStudentDTO(submittedAnswer as DragAndDropSubmittedAnswer);
+        return createDragAndDropSubmittedAnswerFromStudentDTO(submittedAnswer);
     } else if (submittedAnswer.type === 'short-answer') {
-        return createShortAnswerSubmittedAnswerFromStudentDTO(submittedAnswer as ShortAnswerSubmittedAnswer);
+        return createShortAnswerSubmittedAnswerFromStudentDTO(submittedAnswer);
     }
     throw new Error('Unknown submitted answer type: ' + submittedAnswer.type);
 }

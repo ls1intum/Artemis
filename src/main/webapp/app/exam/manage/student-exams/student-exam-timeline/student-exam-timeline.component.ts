@@ -141,7 +141,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         if (activeProgrammingComponent) {
             activeProgrammingComponent.studentParticipation.update(() => this.currentExercise!.studentParticipations![0]);
             activeProgrammingComponent.exercise.update(() => this.currentExercise!);
-            activeProgrammingComponent.currentSubmission.update(() => this.currentSubmission as ProgrammingSubmission);
+            activeProgrammingComponent.currentSubmission.update(() => this.currentSubmission);
             activeProgrammingComponent.previousSubmission.update(() => this.findPreviousProgrammingSubmission(this.currentExercise!, this.currentSubmission!));
             activeProgrammingComponent.submissions.update(() =>
                 this.programmingSubmissions.filter((submission) => submission.participation?.exercise?.id === this.currentExercise?.id),
@@ -335,7 +335,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
-        return this.currentPageComponents().find((submissionComponent) => (submissionComponent as ExamSubmissionComponent).getExercise().id === this.activeExamPage.exercise?.id);
+        return this.currentPageComponents().find((submissionComponent) => submissionComponent.getExercise().id === this.activeExamPage.exercise?.id);
     }
 
     /**

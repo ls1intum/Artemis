@@ -55,7 +55,7 @@ export abstract class AbstractDialogComponent implements OnInit {
         this.dialogRef?.destroy();
     }
 
-    close(result?: any) {
+    close(result?: unknown) {
         this.dialogRef?.close(result);
     }
 }

@@ -106,7 +106,7 @@ describe('UsersImportDialogComponent', () => {
         component.hasImported.set(true);
 
         const event = { target: { files: [studentCsvColumns] } };
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(component.usersToImport()).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
@@ -114,7 +114,7 @@ describe('UsersImportDialogComponent', () => {
 
     it('should read no students from csv file', async () => {
         const event = { target: { files: [studentCsvColumns] } };
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(component.usersToImport()).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
@@ -124,7 +124,7 @@ describe('UsersImportDialogComponent', () => {
     it('should read students from csv file', async () => {
         const csv = `${studentCsvColumns}\n"1","Max","Mustermann"\n"2","John","Wick"`;
         const event = { target: { files: [csv] } };
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(component.usersToImport()).toHaveLength(2);
         expect(component.notFoundUsers).toHaveLength(0);
@@ -136,7 +136,7 @@ describe('UsersImportDialogComponent', () => {
         const invalidCsv = `"1","Max","Mustermann"\n"2","John","Wick"`;
 
         const event = { target: { files: [invalidCsv] } };
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(component.validationError()).toHaveLength(1);
     });
@@ -147,7 +147,7 @@ describe('UsersImportDialogComponent', () => {
         const alertSpy = vi.spyOn(alertService, 'error');
         const event = { target: { files: [studentCsvColumns], value: 'students.csv' } };
 
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
         expect(component.isParsing()).toBe(false);
@@ -181,7 +181,7 @@ describe('UsersImportDialogComponent', () => {
             const pathToTestFile = path.join(testDir, testFileName);
             const csv = fs.readFileSync(pathToTestFile, 'utf-8');
             const event = { target: { files: [csv] } };
-            await component.onCSVFileSelect(event);
+            await component.onCSVFileSelect(event as unknown as Event);
 
             expect(component.usersToImport()).toHaveLength(5);
 
@@ -213,7 +213,7 @@ describe('UsersImportDialogComponent', () => {
         const csv = fs.readFileSync(pathToTestFile, 'utf-8');
         const event = { target: { files: [csv] } };
 
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(component.usersToImport()).toHaveLength(5);
 
@@ -236,7 +236,7 @@ describe('UsersImportDialogComponent', () => {
         const csv = fs.readFileSync(pathToTestFile, 'utf-8');
         const event = { target: { files: [csv] } };
 
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(component.examUsersToImport()).toHaveLength(4);
 
@@ -286,7 +286,7 @@ describe('UsersImportDialogComponent', () => {
         const csv = `${studentCsvColumns}\n"","Max","Mustermann"\n"","John","Wick"`;
         const event = { target: { files: [csv], value: 'students.csv' } };
 
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(component.validationError()).toBe('2, 3');
     });
@@ -361,7 +361,7 @@ describe('UsersImportDialogComponent', () => {
         });
         const event = { target: { files: [studentCsvColumns], value: 'exam-users.csv' } };
 
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(component.validationError()).toBe('2, 4');
         expect(component.noUsersFoundError()).toBeUndefined();
@@ -378,7 +378,7 @@ describe('UsersImportDialogComponent', () => {
         });
         const event = { target: { files: [studentCsvColumns], value: 'exam-users.csv' } };
 
-        await component.onCSVFileSelect(event);
+        await component.onCSVFileSelect(event as unknown as Event);
 
         expect(component.noUsersFoundError()).toBe(true);
         expect(component.validationError()).toBeUndefined();
