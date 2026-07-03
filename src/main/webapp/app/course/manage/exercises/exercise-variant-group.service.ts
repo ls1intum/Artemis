@@ -96,7 +96,7 @@ export class ExerciseVariantGroupService {
             assessmentDueDate: convertDateFromClient(group.assessmentDueDate),
             exampleSolutionPublicationDate: convertDateFromClient(group.exampleSolutionPublicationDate),
             buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(group.buildAndTestStudentSubmissionsAfterDueDate),
-        } as unknown as T;
+        } as T;
     }
 }
 

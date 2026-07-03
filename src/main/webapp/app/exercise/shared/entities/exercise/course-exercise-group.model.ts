@@ -1,6 +1,11 @@
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+
+/** Structural subset of `ProgrammingExercise` needed here, avoided importing the full type to prevent a module layering cycle. */
+interface ExerciseWithBuildAndTestDate extends Exercise {
+    buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
+}
 
 /**
  * Course-level grouping of exercises. Distinct from the exam-scoped `ExerciseGroup`.
@@ -84,6 +89,9 @@ export function effectiveDate(exercise: Exercise, group: CourseExerciseGroup | u
     if (group) {
         return group[field];
     }
-    // buildAndTestStudentSubmissionsAfterDueDate only exists on ProgrammingExercise, not on the base Exercise type.
-    return (exercise as unknown as Record<GroupTimelineField, dayjs.Dayjs | undefined>)[field];
+    if (field === 'buildAndTestStudentSubmissionsAfterDueDate') {
+        // Only ProgrammingExercise carries this field; other exercise types have no such date.
+        return exercise.type === ExerciseType.PROGRAMMING ? (exercise as ExerciseWithBuildAndTestDate).buildAndTestStudentSubmissionsAfterDueDate : undefined;
+    }
+    return exercise[field];
 }
