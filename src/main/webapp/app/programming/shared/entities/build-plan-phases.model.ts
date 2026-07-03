@@ -1,3 +1,5 @@
+import { parseJson } from 'app/foundation/util/json.util';
+
 /**
  * Supported execution conditions for a build phase.
  * Note: Matches BuildPhaseCondition.java
@@ -43,7 +45,7 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
     }
     let data;
     try {
-        data = JSON.parse(json);
+        data = parseJson(json);
     } catch {
         return undefined;
     }
@@ -65,7 +67,7 @@ function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {
     if (typeof value !== 'object' || value === null) {
         return false;
     }
-    const v = value as any;
+    const v = value as { phases?: unknown; dockerImage?: unknown };
     return Array.isArray(v.phases) && v.phases.every(isBuildPhase) && (v.dockerImage == null || typeof v.dockerImage === 'string');
 }
 
@@ -73,7 +75,7 @@ function isBuildPhase(value: unknown): value is BuildPhase {
     if (typeof value !== 'object' || value === null) {
         return false;
     }
-    const v = value as any;
+    const v = value as { name?: unknown; script?: unknown; condition?: unknown; forceRun?: unknown; resultPaths?: unknown };
     return (
         typeof v.name === 'string' &&
         typeof v.script === 'string' &&
