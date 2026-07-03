@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { LearningPathNavigationDTO, LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 
 @Injectable({ providedIn: 'root' })
 export class LearningPathNavigationService {
@@ -21,7 +22,7 @@ export class LearningPathNavigationService {
             const learningPathNavigation = await this.learningPathApiService.getLearningPathNavigation(learningPathId);
             this.learningPathNavigation.set(learningPathNavigation);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }
@@ -37,7 +38,7 @@ export class LearningPathNavigationService {
             );
             this.learningPathNavigation.set(learningPathNavigation);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         }
     }
 

@@ -29,6 +29,7 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { IS_AT_LEAST_INSTRUCTOR } from 'app/foundation/constants/authority.constants';
 import { AccountService } from 'app/core/auth/account.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -119,7 +120,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             const courseSettings = await firstValueFrom(this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId()));
             this.irisEnabled.set(courseSettings?.settings?.enabled ?? false);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         }
     }
 
@@ -144,7 +145,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
             }
             this.courseCompetencies.set(courseCompetencies);
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
             done();
@@ -204,7 +205,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 this.alertService.warning(`artemisApp.courseCompetency.importAll.warning`, { courseTitle: courseTitle });
             }
         } catch (error) {
-            this.alertService.error(error);
+            this.alertService.error(getErrorMessage(error));
         }
     }
 
