@@ -231,6 +231,8 @@ describe('Course Management Service', () => {
         courseManagementService.findAllForDashboard().subscribe((res) => expect(res.body).toBeNull());
 
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-dashboard` });
+        // The dynamic, uncached for-dashboard call must bypass the service worker to avoid a phantom canceled request.
+        expect(req.request.headers.get('ngsw-bypass')).toBe('true');
         req.flush(null);
     });
 
@@ -253,6 +255,8 @@ describe('Course Management Service', () => {
         courseManagementService.findOneForDashboard(course.id!).subscribe((res) => expect(res.body).toBeNull());
 
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
+        // The dynamic, uncached for-dashboard call must bypass the service worker to avoid a phantom canceled request.
+        expect(req.request.headers.get('ngsw-bypass')).toBe('true');
         req.flush(null);
     });
 

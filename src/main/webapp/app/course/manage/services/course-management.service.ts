@@ -218,7 +218,11 @@ export class CourseManagementService implements OnDestroy {
     findAllForDashboard(): Observable<HttpResponse<CoursesForDashboardDTO>> {
         this.fetchingCoursesForNotifications = true;
         const generation = this.stateGeneration;
-        return this.http.get<CoursesForDashboardDTO>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
+        // Bypass the Angular service worker: for-dashboard is dynamic and is not covered by any dataGroup in
+        // ngsw-config.json, so the worker never caches it and only wraps the call in a passthrough fetch. That
+        // passthrough makes Firefox render a phantom duplicate of the request marked NS_BINDING_ABORTED next to the
+        // real (200) service-worker entry. Going straight to the network keeps a single, clean request.
+        return this.http.get<CoursesForDashboardDTO>(`${this.resourceUrl}/for-dashboard`, { headers: { 'ngsw-bypass': 'true' }, observe: 'response' }).pipe(
             map((res: HttpResponse<CoursesForDashboardDTO>) => {
                 if (this.stateGeneration !== generation) return res;
                 if (res.body) {
@@ -251,7 +255,10 @@ export class CourseManagementService implements OnDestroy {
      */
     findOneForDashboard(courseId: number): Observable<EntityResponseType> {
         const params = new HttpParams();
-        return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { params, observe: 'response' }).pipe(
+        // Bypass the Angular service worker (see findAllForDashboard): the single-course for-dashboard call is dynamic
+        // and uncached, so the worker only adds a passthrough that Firefox surfaces as a phantom NS_BINDING_ABORTED
+        // duplicate of this request. Going straight to the network keeps exactly one clean request per navigation.
+        return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { headers: { 'ngsw-bypass': 'true' }, params, observe: 'response' }).pipe(
             map((res: HttpResponse<CourseForDashboardDTO>) => {
                 if (res.body) {
                     const courseForDashboardDTO: CourseForDashboardDTO = res.body;
