@@ -47,7 +47,7 @@ export class LoadImageService {
                 canvas.width = img.width;
                 canvas.height = img.height;
                 context.drawImage(img, 0, 0);
-                this.loadBase64Image(canvas.toDataURL(), cropperSettings).then(resolve);
+                void this.loadBase64Image(canvas.toDataURL(), cropperSettings).then(resolve);
             };
             img.crossOrigin = 'anonymous';
             img.src = url;

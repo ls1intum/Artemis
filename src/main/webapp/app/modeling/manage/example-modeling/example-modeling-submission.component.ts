@@ -497,7 +497,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     readAndUnderstood() {
         this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission(), this.exerciseId).subscribe(() => {
             this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
-            this.back();
+            void this.back();
         });
     }
 

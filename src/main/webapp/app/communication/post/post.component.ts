@@ -392,7 +392,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
             if (this.isCommunicationPage()) {
                 this.metisConversationService.setActiveConversation(channelId);
             } else {
-                this.router.navigate(['courses', course.id, 'communication'], {
+                void this.router.navigate(['courses', course.id, 'communication'], {
                     queryParams: {
                         conversationId: channelId,
                     },

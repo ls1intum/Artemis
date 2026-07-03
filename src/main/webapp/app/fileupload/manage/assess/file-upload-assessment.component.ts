@@ -118,7 +118,7 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.busy.set(true);
 
         // Used to check if the assessor is the current user
-        this.accountService.identity().then((user) => {
+        void this.accountService.identity().then((user) => {
             if (user?.id) {
                 this.userId = user.id;
             }
@@ -317,7 +317,7 @@ export class FileUploadAssessmentComponent implements OnInit {
                     this.examId,
                     this.exerciseGroupId,
                 );
-                this.router.navigate(url);
+                void this.router.navigate(url);
             },
             error: (error: HttpErrorResponse) => {
                 this.isLoading.set(false);

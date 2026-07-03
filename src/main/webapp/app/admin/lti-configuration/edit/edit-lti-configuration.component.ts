@@ -170,6 +170,6 @@ export class EditLtiConfigurationComponent implements OnInit {
      * Returns to the lti configuration page
      */
     navigateToLtiConfigurationPage() {
-        this.router.navigate(['admin', 'lti-configuration']);
+        void this.router.navigate(['admin', 'lti-configuration']);
     }
 }

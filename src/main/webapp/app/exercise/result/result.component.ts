@@ -233,7 +233,7 @@ export class ResultComponent {
 
             const exerciseTypePath = exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
 
-            this.router.navigate([
+            void this.router.navigate([
                 '/courses',
                 courseId,
                 'exercises',

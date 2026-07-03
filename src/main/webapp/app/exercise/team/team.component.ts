@@ -69,7 +69,7 @@ export class TeamComponent implements OnInit {
     ];
 
     constructor() {
-        this.accountService.identity().then((user: User) => {
+        void this.accountService.identity().then((user: User) => {
             this.currentUser.set(user);
             this.isAdmin.set(this.accountService.isAdmin());
         });
@@ -129,6 +129,6 @@ export class TeamComponent implements OnInit {
      */
     onTeamDelete() {
         const exercise = this.exercise();
-        this.router.navigate(['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams']);
+        void this.router.navigate(['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams']);
     }
 }
