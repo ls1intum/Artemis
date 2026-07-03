@@ -26,6 +26,7 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { captureException } from '@sentry/angular';
 
 export interface CourseCompetencyRequestDTO {
     id?: number;
@@ -192,7 +193,7 @@ const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise |
             exercise = new QuizExercise(course, undefined);
             break;
         default:
-            globalThis.console.warn(`Unknown exercise type '${dto.type}' for competency exercise mapping (id=${dto.id}); falling back to TextExercise.`);
+            captureException(new Error(`Unknown exercise type '${dto.type}' for competency exercise mapping (id=${dto.id}); falling back to TextExercise.`));
             exercise = new TextExercise(course, undefined);
             break;
     }

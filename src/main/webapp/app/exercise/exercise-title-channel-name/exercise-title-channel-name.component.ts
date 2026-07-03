@@ -43,17 +43,15 @@ export class ExerciseTitleChannelNameComponent {
 
     constructor() {
         const exerciseService = inject(ExerciseService);
-        effect(
-            function fetchExistingExerciseNamesOnInit() {
-                const courseId = this.courseId() ?? this.course()?.id;
-                const exercise = this.exercise();
-                if (courseId && exercise.type) {
-                    exerciseService.getExistingExerciseDetailsInCourse(courseId, exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
-                        this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
-                    });
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            const courseId = this.courseId() ?? this.course()?.id;
+            const exercise = this.exercise();
+            if (courseId && exercise.type) {
+                exerciseService.getExistingExerciseDetailsInCourse(courseId, exercise.type).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
+                    this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? new Set());
+                });
+            }
+        });
     }
 
     updateTitle(newTitle: string | undefined) {
