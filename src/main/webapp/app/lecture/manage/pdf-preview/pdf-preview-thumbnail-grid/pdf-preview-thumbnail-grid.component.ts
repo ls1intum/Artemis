@@ -151,7 +151,7 @@ export class PdfPreviewThumbnailGridComponent {
         const scrollOptions: ScrollToOptions = {
             top: this.pdfContainer().nativeElement.scrollHeight,
             left: 0,
-            behavior: 'smooth' as ScrollBehavior,
+            behavior: 'smooth',
         };
         this.pdfContainer().nativeElement.scrollTo(scrollOptions);
     }
@@ -240,7 +240,7 @@ export class PdfPreviewThumbnailGridComponent {
      * */
     displayEnlargedCanvas(pageOrder: number, slideId: string): void {
         const canvas = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${slideId} canvas`) as HTMLCanvasElement;
-        this.originalCanvas.set(canvas!);
+        this.originalCanvas.set(canvas);
         this.isEnlargedView.set(true);
         this.initialPageNumber.set(pageOrder);
     }
