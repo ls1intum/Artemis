@@ -273,11 +273,10 @@ export class ResultComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            inputValues: {
                 exercise,
                 result,
                 participation,
-                exerciseType: feedbackComponentParameters.exerciseType,
                 showScoreChart: feedbackComponentParameters.showScoreChart,
                 messageKey: feedbackComponentParameters.messageKey,
                 latestDueDate: feedbackComponentParameters.latestDueDate,
