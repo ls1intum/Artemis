@@ -53,7 +53,7 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
     readonly waitingForQuizStart = signal(false);
     readonly remainingTimeText = signal('?');
     readonly remainingTimeSeconds = signal(0);
-    interval: any;
+    interval: ReturnType<typeof setInterval>;
 
     // Icons
     farListAlt = faListAlt;
