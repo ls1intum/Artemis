@@ -15,13 +15,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 /**
  * DTO wire representation of an {@link ExerciseGroup}.
  * <p>
- * The same record serves several endpoints; the two nullable components mirror what each endpoint's fetch graph
- * serialized as an entity today:
+ * The same record serves several endpoints; the two nullable components differ per endpoint:
  * <ul>
  * <li>single-group responses (create / update / get-by-id) carry the nested {@link ExamForExerciseGroupDTO} (which the
- * exercise editors read to rebuild course / exam references) and omit the exercises list;</li>
- * <li>list / import responses carry the embedded {@link ExerciseForExerciseGroupDTO} summaries and omit the exam
- * (today's list serializes the exercises, and the import response suppresses the exam back-reference).</li>
+ * exercise editors read to rebuild course / exam references) and omit the (previously never serialized, lazy)
+ * exercises list;</li>
+ * <li>list / import responses carry the embedded {@link ExerciseForExerciseGroupDTO} summaries and omit the exam. The
+ * import response never serialized the exam back-reference; the list endpoint previously did, but no consumer reads it
+ * (the web client does not call the list endpoint at all), so it is deliberately dropped for data economy.</li>
  * </ul>
  *
  * @param id          the id of the exercise group

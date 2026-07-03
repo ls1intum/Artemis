@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -136,6 +137,20 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     void testCreateExerciseGroup_asEditor() throws Exception {
         int groupsBefore = examRepository.findWithExerciseGroupsById(exam2.getId()).orElseThrow().getExerciseGroups().size();
 
+        // A body carrying an id is rejected, preserving the previous endpoint behavior (400 idExists).
+        ExerciseGroup withId = ExamFactory.generateExerciseGroup(true, exam1);
+        withId.setId(55L);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", withId, HttpStatus.BAD_REQUEST);
+
+        // A body without an exam reference is rejected (409 missingExam).
+        ExerciseGroup withoutExam = ExamFactory.generateExerciseGroup(true, exam1);
+        withoutExam.setExam(null);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", ExerciseGroupCreateDTO.of(withoutExam), HttpStatus.CONFLICT);
+
+        // A body whose exam reference does not match the path exam is rejected (409 wrongExamId).
+        ExerciseGroup wrongExam = ExamFactory.generateExerciseGroup(true, exam1);
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exercise-groups", ExerciseGroupCreateDTO.of(wrongExam), HttpStatus.CONFLICT);
+
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam2);
         exerciseGroup.setTitle("      ExerciseGroup 123       ");
         URI exerciseGroupUri = request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exercise-groups", ExerciseGroupCreateDTO.of(exerciseGroup),
@@ -157,19 +172,41 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testCreateExerciseGroup_ignoresEntityShapedBody_asEditor() throws Exception {
-        // The Angular client posts a full entity-shaped body: it sets the nested exam and may include an id / exercises.
-        // The create DTO uses @JsonIgnoreProperties(ignoreUnknown = true), so those extra properties must be silently
-        // ignored and the group created (201), proving zero-client-change compatibility.
+    void testCreateExerciseGroup_acceptsEntityShapedBody_asEditor() throws Exception {
+        // The Angular client posts a full entity-shaped body (no id, but a fully nested exam and possibly exercises).
+        // The create DTO uses @JsonIgnoreProperties(ignoreUnknown = true), so all properties beyond the declared ones
+        // must be silently ignored and the group created (201), proving zero-client-change compatibility.
         ExerciseGroup entityShaped = ExamFactory.generateExerciseGroup(true, exam2);
-        entityShaped.setId(55L);
         entityShaped.setTitle("Entity Shaped Group");
 
         URI uri = request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exercise-groups", entityShaped, HttpStatus.CREATED);
         ExerciseGroupDTO created = request.get(String.valueOf(uri), HttpStatus.OK, ExerciseGroupDTO.class);
         assertThat(created.title()).isEqualTo("Entity Shaped Group");
-        // The client-sent id 55 must NOT be honored: the server assigns a fresh id.
-        assertThat(created.id()).isNotEqualTo(55L);
+        assertThat(created.id()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCreateExerciseGroup_defaultsMandatoryToTrue_asEditor() throws Exception {
+        // A body omitting isMandatory must fall back to the entity default (true), preserving the previous
+        // deserialization behavior where the absent field left the entity's initialized value untouched.
+        Map<String, Object> body = Map.of("title", "Default Mandatory Group", "exam", Map.of("id", exam2.getId()));
+
+        URI uri = request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exercise-groups", body, HttpStatus.CREATED);
+        long createdId = Long.parseLong(uri.toString().substring(uri.toString().lastIndexOf('/') + 1));
+        ExerciseGroup created = exerciseGroupRepository.findByIdElseThrow(createdId);
+        assertThat(created.getIsMandatory()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetExerciseGroupsForExam_withoutGroups_returnsEmptyList() throws Exception {
+        // The repository query left-joins the groups off the exam, so an exam without groups yields a single null row;
+        // the endpoint must filter it and return the documented empty list instead of failing to map.
+        Exam emptyExam = examUtilService.addExam(course1);
+        List<ExerciseGroupDTO> result = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + emptyExam.getId() + "/exercise-groups", HttpStatus.OK,
+                ExerciseGroupDTO.class);
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -211,7 +248,8 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
                 .hasBeenCalledAtMostTimes(5);
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
         assertThat(result).hasSize(1);
-        // The list response embeds the exercise summaries (and omits the exam, matching the previous wire).
+        // The list response embeds the exercise summaries. The previously serialized exam of each group is deliberately
+        // dropped: the web client does not call this endpoint at all, and the Playwright helper reads only the exercises.
         ExerciseGroupDTO group = result.getFirst();
         assertThat(group.exam()).isNull();
         assertThat(group.exercises()).hasSize(1);
