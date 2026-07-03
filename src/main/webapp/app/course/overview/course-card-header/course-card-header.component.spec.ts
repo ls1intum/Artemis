@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterLink, provideRouter } from '@angular/router';
+import { Router, RouterLink, provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { CourseCardHeaderComponent } from 'app/course/overview/course-card-header/course-card-header.component';
@@ -42,5 +42,20 @@ describe('CourseCardHeaderComponent', () => {
         // The single link must be the accessible stretched-link anchor, not a clickable div.
         expect(routerLinks[0].nativeElement.tagName).toBe('A');
         expect(routerLinks[0].nativeElement.getAttribute('href')).toBe('/courses/42');
+    });
+
+    // Regression test for issue #12905: a single click on the card must trigger exactly one router navigation.
+    // Previously the redundant div routerLink meant the click also bubbled to a second routerLink, firing two
+    // navigations to the same URL; with onSameUrlNavigation: 'reload' this issued (and canceled) a duplicate
+    // courses/{id}/for-dashboard request. Two navigations here would mean two guard fetches downstream.
+    it('should trigger exactly one navigation when the card is clicked', () => {
+        fixture.detectChanges();
+        const router = TestBed.inject(Router);
+        const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+        const link = fixture.nativeElement.querySelector('a.stretched-link') as HTMLElement;
+        link.click();
+
+        expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
     });
 });
