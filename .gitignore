@@ -3,6 +3,7 @@
 ######################
 # Project Specific
 ######################
+/docs
 .github/act-events/
 /build/www/**
 /src/test/javascript/coverage/
