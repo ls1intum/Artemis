@@ -1710,13 +1710,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void reEvaluateWithEmptyCompetencyLinksDoesNotCrash() throws Exception {
-        // Dogus's repro (500 on test4): re-evaluate an EXISTING exercise (past due date) that has grading criteria
-        // and an assessed submission. The client ALWAYS sends "competencyLinks": [] (never null), but the re-evaluate
-        // load query did not fetch competencyLinks. With OSIV disabled the exercise is detached, so
-        // CompetencyExerciseLinkService.updateCompetencyLinks() -> getCompetencyLinks().clear() on the lazy,
-        // uninitialized collection threw a LazyInitializationException -> 500. Note: UpdateTextExerciseDTO.of() emits
-        // competencyLinks=null for an uninitialized collection, which hid this in earlier tests; we mirror the real
-        // client payload by sending an initialized empty set.
         textExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         textExercise.setStartDate(null);
         textExercise.setDueDate(ZonedDateTime.now().minusHours(2));
@@ -1730,10 +1723,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         TextExercise reloaded = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(textExercise.getId());
 
-        // The Angular client serializes competencyLinks as [] (empty, non-null). UpdateTextExerciseDTO is
-        // @JsonInclude(NON_EMPTY), so serializing the DTO object would drop an empty set and the server would see null
-        // (which hides the bug). Build the JSON tree and set an explicit empty competencyLinks array to mirror the
-        // real client payload; a JsonNode body is serialized verbatim, bypassing NON_EMPTY.
+        // Re-evaluate applies the request's competencyLinks to the exercise, which is detached (open-in-view is off),
+        // so the collection must be eagerly fetched rather than cleared lazily. Send competencyLinks as an explicit []
+        // via raw JSON: @JsonInclude(NON_EMPTY) drops an empty set from a serialized DTO, whereas a JsonNode body is
+        // written verbatim.
         ObjectNode body = (ObjectNode) request.getObjectMapper().valueToTree(de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(reloaded));
         body.set("competencyLinks", request.getObjectMapper().createArrayNode());
 
