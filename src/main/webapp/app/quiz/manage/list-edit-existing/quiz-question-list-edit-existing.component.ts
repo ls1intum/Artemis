@@ -103,7 +103,7 @@ export class QuizQuestionListEditExistingComponent {
         this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
             next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -128,7 +128,7 @@ export class QuizQuestionListEditExistingComponent {
         this.quizExerciseService.findForExam(selectedExam.id!).subscribe({
             next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
+                    this.applyQuestionsAndFilter(quizExercisesResponse.body);
                 }
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
@@ -160,9 +160,9 @@ export class QuizQuestionListEditExistingComponent {
      * Assigns the uploaded import file
      * @param event object containing the uploaded file
      */
-    setImportFile(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setImportFile(event: Event): void {
+        const fileList = (event.target as HTMLInputElement).files;
+        if (fileList?.length) {
             this.importFile.set(fileList[0]);
             this.importFileName.set(fileList[0].name);
         }
