@@ -87,7 +87,7 @@ export class TeamsImportFromFileFormComponent {
             }
         } catch (e) {
             this.loading.set(false);
-            const message = `${this.translateService.instant('artemisApp.team.errors.importFailed')} ${e}`;
+            const message = `${this.translateService.instant('artemisApp.team.errors.importFailed')} ${String(e)}`;
             alert(message);
         }
     }

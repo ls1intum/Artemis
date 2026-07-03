@@ -14,11 +14,6 @@
                     <fa-icon class="me-2" [icon]="faChalkboardTeacher" />
                     {{ lecture.title }}
                 </h5>
-                @if (lecture.course?.isAtLeastEditor) {
-                    <div class="col-auto d-flex align-items-center">
-                        <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()" jhiTranslate="artemisApp.courseOverview.manage"></button>
-                    </div>
-                }
             </div>
 
             <hr class="mt-2 mb-3" />
