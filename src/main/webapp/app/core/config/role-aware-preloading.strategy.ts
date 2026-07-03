@@ -101,7 +101,16 @@ export class RoleAwarePreloadingStrategy implements PreloadingStrategy {
             return of(null);
         }
         this.enqueuedRoutes.add(route);
-        this.scheduler.enqueue(load, tier);
+        const guardedLoad = () => {
+            if (!this.accountService.isAuthenticated()) {
+                return of(null);
+            }
+            if (authorities && authorities.length > 0 && !this.accountService.hasAnyAuthorityDirect(authorities)) {
+                return of(null);
+            }
+            return load();
+        };
+        this.scheduler.enqueue(guardedLoad, tier);
         return of(null);
     }
 }

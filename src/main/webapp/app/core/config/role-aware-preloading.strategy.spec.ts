@@ -38,7 +38,8 @@ describe('RoleAwarePreloadingStrategy', () => {
 
     it('enqueues an eligible route at its tier and never preloads on the critical path', () => {
         expect(emitted(route({ authorities: IS_AT_LEAST_STUDENT }))).toBeNull();
-        expect(enqueue).toHaveBeenCalledExactlyOnceWith(load, 1);
+        expect(enqueue).toHaveBeenCalledOnce();
+        expect(enqueue.mock.calls[0][1]).toBe(1);
     });
 
     it('prunes a route whose authorities the user lacks', () => {
@@ -66,20 +67,52 @@ describe('RoleAwarePreloadingStrategy', () => {
 
     it('preloads authority-less lazy parents when opted in via preload:eager', () => {
         emitted(route({ usesModuleBackground: true, preload: 'eager' }));
-        expect(enqueue).toHaveBeenCalledExactlyOnceWith(load, 0);
+        expect(enqueue).toHaveBeenCalledOnce();
+        expect(enqueue.mock.calls[0][1]).toBe(0);
     });
 
     it('enqueues a given route only once across repeated preload passes (re-walk dedupe)', () => {
         const r = route({ authorities: IS_AT_LEAST_STUDENT });
         emitted(r);
         emitted(r);
-        expect(enqueue).toHaveBeenCalledExactlyOnceWith(load, 1);
+        expect(enqueue).toHaveBeenCalledOnce();
+        expect(enqueue.mock.calls[0][1]).toBe(1);
     });
 
     it('skips a route with a non-array authorities value (defensive)', () => {
         emitted(route({ authorities: 'ROLE_ADMIN' }));
         expect(accountStub.hasAnyAuthorityDirect).not.toHaveBeenCalled();
         expect(enqueue).not.toHaveBeenCalled();
+    });
+
+    it('does not load a queued route when the user loses eligibility before execution', () => {
+        const loader = vi.fn(() => of(undefined));
+        const r = route({ authorities: IS_AT_LEAST_ADMIN });
+        strategy.preload(r, loader).subscribe();
+        expect(enqueue).toHaveBeenCalledOnce();
+
+        const guardedLoad = enqueue.mock.calls[0][0] as () => unknown;
+
+        accountStub.hasAnyAuthorityDirect.mockReturnValue(false);
+        let result: unknown = 'unset';
+        (guardedLoad() as ReturnType<typeof of>).subscribe((v: unknown) => (result = v));
+        expect(loader).not.toHaveBeenCalled();
+        expect(result).toBeNull();
+    });
+
+    it('does not load a queued route when the user logs out before execution', () => {
+        const loader = vi.fn(() => of(undefined));
+        const r = route({ authorities: IS_AT_LEAST_STUDENT });
+        strategy.preload(r, loader).subscribe();
+        expect(enqueue).toHaveBeenCalledOnce();
+
+        const guardedLoad = enqueue.mock.calls[0][0] as () => unknown;
+
+        accountStub.isAuthenticated.mockReturnValue(false);
+        let result: unknown = 'unset';
+        (guardedLoad() as ReturnType<typeof of>).subscribe((v: unknown) => (result = v));
+        expect(loader).not.toHaveBeenCalled();
+        expect(result).toBeNull();
     });
 });
 
