@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -106,6 +107,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
+    private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
+
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
@@ -116,7 +119,7 @@ public class ProgrammingExerciseCreationUpdateService {
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<VersionControlService> versionControlService, GitService gitService, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -136,6 +139,7 @@ public class ProgrammingExerciseCreationUpdateService {
         this.gitService = gitService;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.automaticAfterDueDateService = automaticAfterDueDateService;
+        this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
     }
 
     /**
@@ -239,7 +243,13 @@ public class ProgrammingExerciseCreationUpdateService {
         // Restore competency links with proper exercise reference before final save
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
-        return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+
+        // Pre-provision repository-scoped VCS access tokens for all current course staff for the exercise's base repositories. Done asynchronously (after the exercise is saved) so
+        // exercise creation does not block on token generation for potentially many staff members; the clone-dialog lazy fallback covers the brief window before the tokens exist.
+        repositoryVcsAccessTokenService.ensureTokensForExerciseAsync(createdProgrammingExercise.getId());
+
+        return createdProgrammingExercise;
     }
 
     /**
@@ -348,6 +358,11 @@ public class ProgrammingExerciseCreationUpdateService {
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
+        // Provision repository-scoped VCS access tokens for newly added base repositories (e.g. auxiliary repositories) for the course's staff. Done asynchronously (after the
+        // save)
+        // so updating an exercise does not block on token generation; the clone-dialog lazy fallback covers the brief window before the tokens exist.
+        repositoryVcsAccessTokenService.ensureTokensForExerciseAsync(savedProgrammingExercise.getId());
+
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
@@ -410,8 +425,14 @@ public class ProgrammingExerciseCreationUpdateService {
 
         programmingExercise.validateDates();
         if (automaticAfterDueDateService.isPresent()) {
-            final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
-            setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+            try {
+                final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, originalBuildAndTestOffset);
+                setBuildAndTestDateAndEnforceFeedbackRequestInvariant(programmingExercise, computedBuildAndTestDate);
+            }
+            catch (JsonProcessingException e) {
+                throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
+                        "invalidBuildPlanConfiguration");
+            }
         }
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);

@@ -14,6 +14,9 @@ import { HtmlForMarkdownPipe } from 'app/foundation/pipes/html-for-markdown.pipe
 import { getModelNodes } from 'app/modeling/shared/apollon-model.util';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
+/** Host element augmented with the Apollon editor instance exposed for E2E test access. */
+type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
+
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
@@ -171,7 +174,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
             // Expose the ApollonEditor instance on the host DOM element for E2E test access.
             // In production mode, ng.getComponent() is not available, so tests use this property instead.
-            (this.elementRef.nativeElement as any).__apollonEditor = this.apollonEditor;
+            (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
 
             this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
                 if (this.isDestroyed) {
@@ -199,7 +202,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             }
             this.apollonEditor.destroy();
             this.apollonEditor = undefined;
-            (this.elementRef.nativeElement as any).__apollonEditor = undefined;
+            (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = undefined;
         }
     }
 

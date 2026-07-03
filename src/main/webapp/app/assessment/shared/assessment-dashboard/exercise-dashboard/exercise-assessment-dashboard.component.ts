@@ -30,6 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -42,6 +43,7 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/subm
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { SortService } from 'app/foundation/service/sort.service';
 import { onError } from 'app/foundation/util/global.utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -194,6 +196,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     reverseOrders = [true, false, false];
 
     readonly ExerciseType = ExerciseType;
+    protected readonly RepositoryType = RepositoryType;
 
     // Mutated in place only within the getForTutors subscribe (alongside exercise.set()), so it renders on that signal's CD tick.
     stats = {
@@ -341,7 +344,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         this.modelingExercise.set(modelingExercise);
                         if (modelingExercise.exampleSolutionModel) {
                             this.formattedSampleSolution.set(this.artemisMarkdown.safeHtmlForMarkdown(modelingExercise.exampleSolutionExplanation));
-                            this.exampleSolutionModel.set(importDiagram(JSON.parse(modelingExercise.exampleSolutionModel)));
+                            this.exampleSolutionModel.set(importDiagram(parseJson(modelingExercise.exampleSolutionModel)));
                         }
                         break;
                     case ExerciseType.FILE_UPLOAD:

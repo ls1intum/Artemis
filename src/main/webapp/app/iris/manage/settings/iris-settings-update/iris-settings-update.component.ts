@@ -1,13 +1,14 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { faCheck, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faExclamationTriangle, faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faUser } from '@fortawesome/free-regular-svg-icons';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
+import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
@@ -15,14 +16,33 @@ import { captureException } from '@sentry/angular';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import {
     IRIS_PIPELINE_VARIANTS,
+    IRIS_SUPPORT_LEVELS,
     IrisCourseSettingsDTO,
     IrisCourseSettingsWithRateLimitDTO,
     IrisPipelineVariant,
     IrisRateLimitConfiguration,
+    IrisSupportLevel,
+    SLIDER_VALUE_TO_SUPPORT_LEVEL,
+    SUPPORT_LEVEL_SLIDER_VALUES,
+    createDefaultCourseSettings,
 } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TabsModule } from 'primeng/tabs';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { SliderModule } from 'primeng/slider';
+import { TextareaModule } from 'primeng/textarea';
+import { SelectModule } from 'primeng/select';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { ButtonDirective } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+
+interface SaveSettingsOptions {
+    keepPersistedRateLimit?: boolean;
+}
 
 /**
  * Component for editing Iris course-level settings.
@@ -31,7 +51,25 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
-    imports: [ButtonComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent, CourseTitleBarTitleComponent, CourseTitleBarTitleDirective],
+    styleUrl: './iris-settings-update.component.scss',
+    imports: [
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FormsModule,
+        FaIconComponent,
+        CourseTitleBarTitleComponent,
+        CourseTitleBarTitleDirective,
+        TabsModule,
+        ToggleSwitchModule,
+        SliderModule,
+        TextareaModule,
+        SelectModule,
+        InputNumberModule,
+        ButtonDirective,
+        MessageModule,
+        ProgressSpinnerModule,
+        IrisLogoComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
@@ -40,6 +78,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
 
     public courseId?: number;
 
@@ -48,11 +87,19 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     readonly effectiveRateLimit = signal<IrisRateLimitConfiguration | undefined>(undefined);
     readonly applicationDefaults = signal<IrisRateLimitConfiguration | undefined>(undefined);
 
+    // Localized default values for the rate-limit placeholders. Uses nullish
+    // coalescing so a configured default of 0 is preserved (not treated as
+    // "unlimited"), and falls back to a translated string instead of a raw literal.
+    readonly rateLimitRequestsDefault = computed(() => this.applicationDefaults()?.requests ?? this.translateService.instant('artemisApp.iris.settings.unlimited'));
+    readonly rateLimitTimeframeDefault = computed(() => this.applicationDefaults()?.timeframeHours ?? this.translateService.instant('artemisApp.iris.settings.unlimited'));
+
     // Original settings for dirty checking
     private readonly originalSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
 
-    // Available variants (expose constant for template)
-    protected readonly IRIS_PIPELINE_VARIANTS = IRIS_PIPELINE_VARIANTS;
+    // Available variants for the admin pipeline-variant select.
+    // A mutable copy of the readonly IRIS_PIPELINE_VARIANTS constant, since
+    // PrimeNG's p-select `options` input expects a mutable array.
+    protected readonly pipelineVariantOptions: IrisPipelineVariant[] = [...IRIS_PIPELINE_VARIANTS];
 
     // Local form fields for rate limit (separate from settings to preserve null semantics)
     // These are always safe to bind in the template, and we reconstruct rateLimit on save
@@ -126,21 +173,89 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         return settingsChanged || rateLimitChanged;
     });
 
-    // Button types
-    PRIMARY = ButtonType.PRIMARY;
-    WARNING = ButtonType.WARNING;
-    SUCCESS = ButtonType.SUCCESS;
-
     // Icons
-    faSave = faSave;
-    faCheck = faCheck;
-    faExclamationTriangle = faExclamationTriangle;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faCog = faCog;
+    readonly faClock = faClock;
+    readonly faLightbulb = faLightbulb;
+    readonly faUser = faUser;
+
+    // Active settings tab
+    readonly activeTab = signal<string>('general');
+
+    /**
+     * Updates the active tab from the PrimeNG tabs valueChange event, which emits
+     * `string | number | undefined`. All tab values in this component are strings.
+     */
+    protected setActiveTab(value: string | number | undefined): void {
+        if (value !== undefined) {
+            this.activeTab.set(String(value));
+        }
+    }
 
     // Character limit for custom instructions
     readonly CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
 
+    /**
+     * Current instructional support level, defaulting to MODERATE to mirror the backend.
+     */
+    readonly currentSupportLevel = computed((): IrisSupportLevel => this.settings()?.supportLevel ?? 'moderate');
+
+    /**
+     * Discrete slider position (0 / 50 / 100) for the current support level.
+     */
+    readonly supportLevelSliderValue = computed(() => SUPPORT_LEVEL_SLIDER_VALUES[this.currentSupportLevel()] ?? 50);
+
+    /**
+     * Clickable tick marks for the support-level slider, one per support level.
+     * Derived from the shared support-level constants so the slider stays in sync.
+     */
+    readonly supportLevelTicks: ReadonlyArray<{ level: IrisSupportLevel; value: number }> = IRIS_SUPPORT_LEVELS.map((level) => ({
+        level,
+        value: SUPPORT_LEVEL_SLIDER_VALUES[level],
+    }));
+
+    /** Drives the slider handle's "pop" micro animation; see playHandlePop(). */
+    readonly handlePopping = signal(false);
+
+    /**
+     * The Additional Guidelines textarea. PrimeNG's `[autoResize]` sizes the
+     * textarea from its `scrollHeight`, which is `0` while the General tab is
+     * hidden (the inactive tab panel is `display: none`). Returning to the tab
+     * does not re-trigger that calculation, so the textarea stays collapsed
+     * until the next `input` event. We hold a reference to recompute the
+     * height ourselves whenever the General tab becomes visible again.
+     */
+    private readonly customInstructionsTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('customInstructionsTextarea');
+
     constructor() {
         this.isAdmin.set(this.accountService.isAdmin());
+
+        // When the General tab becomes active again, re-run PrimeNG's autoResize
+        // height calculation, which would otherwise have been computed as 0 while
+        // the tab panel was hidden.
+        effect(() => {
+            if (this.activeTab() === 'general') {
+                this.resizeCustomInstructionsTextarea();
+            }
+        });
+    }
+
+    /**
+     * Recompute the Additional Guidelines textarea height to fit its content,
+     * mirroring PrimeNG's `autoResize` logic. Deferred to the next animation
+     * frame so the tab panel is visible (and thus has a valid `scrollHeight`)
+     * by the time the height is measured.
+     */
+    private resizeCustomInstructionsTextarea(): void {
+        requestAnimationFrame(() => {
+            const textarea = this.customInstructionsTextarea()?.nativeElement;
+            if (!textarea) {
+                return;
+            }
+            textarea.style.height = 'auto';
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        });
     }
 
     ngOnInit(): void {
@@ -182,10 +297,9 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (!settings) {
             return undefined;
         }
-        return {
-            ...settings,
+        return Object.assign({}, settings, {
             customInstructions: this.normalizeEmpty(settings.customInstructions) as string | undefined,
-        };
+        });
     }
 
     canDeactivateWarning?: string;
@@ -236,29 +350,29 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     /**
      * Save the current settings to the server
      */
-    saveSettings(): void {
+    saveSettings(options: SaveSettingsOptions = {}): void {
         const currentSettings = this.settings();
         if (!this.courseId || !currentSettings) {
             return;
         }
 
         // Normalize empty strings to undefined before saving
-        const settingsToSave: IrisCourseSettingsDTO = {
-            ...currentSettings,
+        const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
             customInstructions: this.normalizeEmpty(currentSettings.customInstructions) as string | undefined,
-        };
+        });
 
         const originalSettingsValue = this.originalSettings();
         if (!this.isAdmin()) {
-            // Non-admins can only change enabled and customInstructions
-            // Restore original variant and rate limits to prevent unauthorized changes
+            // Non-admins can only change enabled, supportLevel and customInstructions.
+            // Restore original variant and rate limits to prevent unauthorized changes.
             if (originalSettingsValue) {
                 settingsToSave.variant = originalSettingsValue.variant;
                 settingsToSave.rateLimit = originalSettingsValue.rateLimit;
             }
         } else {
-            // Admin: reconstruct rateLimit from form fields
-            settingsToSave.rateLimit = this.buildRateLimitForSave();
+            // Admin: reconstruct rateLimit from form fields unless a caller only saves
+            // General-tab changes while the admin rate-limit draft is invalid.
+            settingsToSave.rateLimit = options.keepPersistedRateLimit ? originalSettingsValue?.rateLimit : this.buildRateLimitForSave();
         }
 
         this.isSaving.set(true);
@@ -300,29 +414,52 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     setEnabled(enabled: boolean): void {
         const currentSettings = this.settings();
         if (currentSettings && currentSettings.enabled !== enabled) {
-            this.settings.set({ ...currentSettings, enabled });
+            this.settings.set(Object.assign({}, currentSettings, { enabled }));
             // Auto-save enabled/disabled changes immediately
             this.saveEnabledOnly(enabled);
         }
     }
 
     /**
-     * Save only the enabled state without requiring manual save
+     * Save the enabled-state toggle without requiring a manual save.
+     *
+     * The payload is built from the current `settings()` signal — not from
+     * `originalSettings()` — so that any in-progress edits to `supportLevel` or
+     * `customInstructions` are preserved rather than silently discarded when the
+     * user flips the toggle. Admin-restricted fields (`variant`, `rateLimit`) are
+     * still restored from the original values for non-admins, matching the server's
+     * authorization rules in `saveSettings()`.
      */
     private saveEnabledOnly(enabled: boolean): void {
+        const currentSettings = this.settings();
         const originalSettingsValue = this.originalSettings();
-        if (!this.courseId || !originalSettingsValue) {
+        if (!this.courseId || !currentSettings || !originalSettingsValue) {
             return;
         }
 
         // Prevent dirty flash during auto-save
         this.isAutoSaving.set(true);
 
-        // Create settings object with only enabled changed from original
-        const settingsToSave: IrisCourseSettingsDTO = {
-            ...originalSettingsValue,
+        // Persist the current edits together with the new enabled state, normalizing
+        // empty custom instructions the same way saveSettings() does.
+        const settingsToSave: IrisCourseSettingsDTO = Object.assign({}, currentSettings, {
             enabled,
-        };
+            customInstructions: this.normalizeEmpty(currentSettings.customInstructions) as string | undefined,
+        });
+
+        if (!this.isAdmin()) {
+            // Non-admins cannot change variant or rate limits — restore the originals.
+            settingsToSave.variant = originalSettingsValue.variant;
+            settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+        } else if (this.isFormValid()) {
+            // Admin with a valid rate-limit form: reconstruct rateLimit from the current form fields.
+            settingsToSave.rateLimit = this.buildRateLimitForSave();
+        } else {
+            // Admin with an invalid rate-limit form (e.g. one field filled, one empty):
+            // never auto-save a partial/invalid override. Keep the persisted rateLimit
+            // so flipping the enabled toggle does not corrupt the rate-limit configuration.
+            settingsToSave.rateLimit = originalSettingsValue.rateLimit;
+        }
 
         this.irisSettingsService
             .updateCourseSettings(this.courseId, settingsToSave)
@@ -349,7 +486,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                     // Revert on error
                     const currentSettings = this.settings();
                     if (currentSettings) {
-                        this.settings.set({ ...currentSettings, enabled: !enabled });
+                        this.settings.set(Object.assign({}, currentSettings, { enabled: !enabled }));
                     }
                 },
             });
@@ -363,13 +500,62 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     /**
+     * Reset the General-tab settings to their default values and persist immediately.
+     *
+     * Stages the defaults into the `settings` signal, then calls `saveSettings()` so
+     * the change is written to the server right away (no separate "Save Changes" step).
+     * Only the General-tab editable fields are reset: `supportLevel` and
+     * `customInstructions`. The `enabled` toggle (auto-saved separately) and the
+     * admin-only `variant` / `rateLimit` fields are left as they are.
+     *
+     * No-ops if the General-tab fields already hold their default values, so an
+     * idempotent click does not trigger an unnecessary network request.
+     */
+    resetToDefault(): void {
+        const currentSettings = this.settings();
+        if (!currentSettings) {
+            return;
+        }
+        const defaults = createDefaultCourseSettings();
+        const sameSupportLevel = currentSettings.supportLevel === defaults.supportLevel;
+        const sameCustomInstructions = this.normalizeEmpty(currentSettings.customInstructions) === this.normalizeEmpty(defaults.customInstructions);
+        if (sameSupportLevel && sameCustomInstructions) {
+            return;
+        }
+        this.settings.set(Object.assign({}, currentSettings, { supportLevel: defaults.supportLevel, customInstructions: defaults.customInstructions }));
+        this.saveSettings({ keepPersistedRateLimit: this.isAdmin() && !this.isFormValid() });
+    }
+
+    /**
      * Update custom instructions in the settings signal
      */
     updateCustomInstructions(value: string): void {
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set({ ...currentSettings, customInstructions: value });
+            this.settings.set(Object.assign({}, currentSettings, { customInstructions: value }));
         }
+    }
+
+    /**
+     * Map a discrete slider position back to a support level and update the settings signal.
+     */
+    onSupportLevelSliderChange(value: number): void {
+        const level = SLIDER_VALUE_TO_SUPPORT_LEVEL[value] ?? 'moderate';
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(Object.assign({}, currentSettings, { supportLevel: level }));
+        }
+        this.playHandlePop();
+    }
+
+    /**
+     * Re-triggers the slider handle's "pop" micro animation. The CSS animation
+     * only plays once per element, so the driving class is toggled off and
+     * back on (via two animation frames) to restart it on every value change.
+     */
+    private playHandlePop(): void {
+        this.handlePopping.set(false);
+        requestAnimationFrame(() => requestAnimationFrame(() => this.handlePopping.set(true)));
     }
 
     /**
@@ -378,7 +564,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     updateVariant(value: IrisPipelineVariant): void {
         const currentSettings = this.settings();
         if (currentSettings) {
-            this.settings.set({ ...currentSettings, variant: value });
+            this.settings.set(Object.assign({}, currentSettings, { variant: value }));
         }
     }
 

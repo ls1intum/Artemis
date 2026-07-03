@@ -500,7 +500,7 @@ public class CourseAccessResource {
         if (userToRemoveFromGroup.isEmpty()) {
             throw new EntityNotFoundException("User with login " + userLogin + " does not exist");
         }
-        courseAccessService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
+        courseAccessService.removeUserFromGroup(userToRemoveFromGroup.get(), group, course);
         return ResponseEntity.ok().body(null);
     }
 

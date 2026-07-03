@@ -2,13 +2,18 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { AfterViewInit, ChangeDetectionStrategy, Component, HostListener, OnDestroy, Renderer2, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DOCUMENT } from '@angular/common';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { NavigationStart, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { IrisBaseChatbotComponent } from '../../base-chatbot/iris-base-chatbot.component';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { getIsMobileSignal } from 'app/foundation/util/global.utils';
+
+export interface ChatbotWidgetData {
+    contextProvider?: (() => IrisMessageContextDTO[]) | undefined;
+}
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -22,7 +27,9 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
     private document = inject<Document>(DOCUMENT);
     private router = inject(Router);
     private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
     private chatService = inject(IrisChatService);
+    protected readonly data = this.dialogConfig?.data as ChatbotWidgetData | undefined;
     private renderer = inject(Renderer2);
 
     readonly isMobile = getIsMobileSignal(this.breakpointObserver);

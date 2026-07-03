@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -88,6 +89,11 @@ export class CodeButtonComponent implements OnInit {
     hideLabelMobile = input<boolean>(false);
     hideLabelBreakpoint = input<'md' | 'xl'>('md');
     isPractice = input<boolean>(false);
+    // When set to a base repository type (TEMPLATE, SOLUTION, TESTS, AUXILIARY), the code button uses a repository-scoped staff VCS access token instead of a participation token.
+    repositoryType = input<RepositoryType>();
+    auxiliaryRepositoryId = input<number>();
+    // The exercise id, used as a fallback to load the repository-scoped staff token when the full exercise object is not available (e.g. in the exercise detail view).
+    exerciseId = input<number>();
 
     // Fields (immutable after construction)
     sshEnabled = false;
@@ -109,6 +115,12 @@ export class CodeButtonComponent implements OnInit {
     // either use the participation token (true) OR the user token (false)
     userTokenStillValid = signal(false);
     userTokenPresent = signal(false);
+    // The repository-scoped VCS access token for course staff (used when repositoryType denotes a base repository).
+    repositoryAccessToken = signal<string | undefined>(undefined);
+    // The repository identity the cached repositoryAccessToken was minted for. The repository view reuses one code-button instance across base repositories (only the route
+    // params change), so a token cached for the previous repository must not be reused for the next one: repository tokens are scoped to one exact repository URI and would fail
+    // authentication. We therefore remember which repository the cached token belongs to and reload when it no longer matches the current repository.
+    private repositoryAccessTokenIdentity?: string;
     sshKeyMissingTip = signal('');
     sshKeysExpiredTip = signal('');
     tokenMissingTip = signal('');
@@ -133,7 +145,9 @@ export class CodeButtonComponent implements OnInit {
         return practice && !exercise?.exerciseGroup ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
     });
     activeParticipation = computed<ProgrammingExerciseStudentParticipation | undefined>(() => {
-        const participations = this.participations();
+        // Filter out undefined entries: callers that render a base repository without a student participation (e.g. the
+        // staff tests/auxiliary repository view) pass `[undefined]`, which would otherwise crash getSpecificStudentParticipation.
+        const participations = this.participations().filter((participation) => !!participation);
         if (!participations.length) {
             return undefined;
         }
@@ -146,6 +160,10 @@ export class CodeButtonComponent implements OnInit {
     useToken = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token);
     useSsh = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH);
     usePassword = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password);
+    isBaseRepository = computed(() => {
+        const type = this.repositoryType();
+        return type === RepositoryType.TEMPLATE || type === RepositoryType.SOLUTION || type === RepositoryType.TESTS || type === RepositoryType.AUXILIARY;
+    });
 
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
@@ -162,7 +180,7 @@ export class CodeButtonComponent implements OnInit {
 
         // we only loadVcsAccessToken if participations exist => reduces potentially repeated HTTP calls
         effect(() => {
-            if (this.isInCourseManagement()) {
+            if (this.isInCourseManagement() || this.isBaseRepository()) {
                 return;
             }
             const participations = this.participations();
@@ -217,7 +235,9 @@ export class CodeButtonComponent implements OnInit {
 
     public useHttpsToken() {
         this.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
-        if (this.isInCourseManagement()) {
+        if (this.isBaseRepository()) {
+            this.copyEnabled.set(this.hasValidRepositoryAccessToken());
+        } else if (this.isInCourseManagement()) {
             const stillValid = dayjs().isBefore(dayjs(this.user.vcsAccessTokenExpiryDate));
             const present = !!this.user.vcsAccessToken?.startsWith('vcpat');
             this.userTokenStillValid.set(stillValid);
@@ -251,6 +271,17 @@ export class CodeButtonComponent implements OnInit {
         const storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
         const selectedMechanism = storedState && this.authenticationMechanisms().includes(storedState) ? storedState : this.authenticationMechanisms()[0];
         this.selectedAuthenticationMechanism.set(selectedMechanism);
+
+        // Fallback for course staff: generate the repository-scoped token on demand when the clone dialog is opened and none valid for the current repository exists yet. A token
+        // cached for a previously viewed base repository (this component instance is reused across repositories) is dropped first, so it can never be embedded into another
+        // repository's clone URL.
+        if (this.isBaseRepository() && !this.hasValidRepositoryAccessToken()) {
+            this.repositoryAccessToken.set(undefined);
+            const exerciseId = this.exercise()?.id ?? this.exerciseId();
+            if (exerciseId) {
+                this.loadRepositoryVcsAccessToken(exerciseId, this.repositoryType()!, this.auxiliaryRepositoryId());
+            }
+        }
 
         if (this.useSsh()) {
             this.useSshUrl();
@@ -304,7 +335,11 @@ export class CodeButtonComponent implements OnInit {
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     participation.vcsAccessToken = res.body;
-                    this.copyEnabled.set(this.useToken());
+                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
+                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
+                    if (this.useToken()) {
+                        this.copyEnabled.set(true);
+                    }
                 }
             },
             error: (error: HttpErrorResponse) => {
@@ -326,7 +361,11 @@ export class CodeButtonComponent implements OnInit {
             next: (res: HttpResponse<string>) => {
                 if (res.body) {
                     participation.vcsAccessToken = res.body;
-                    this.copyEnabled.set(this.useToken());
+                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
+                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
+                    if (this.useToken()) {
+                        this.copyEnabled.set(true);
+                    }
                 }
             },
             error: (error: HttpErrorResponse) => {
@@ -337,8 +376,107 @@ export class CodeButtonComponent implements OnInit {
         });
     }
 
+    /**
+     * Loads the repository-scoped VCS access token for a base repository (template, tests, solution or auxiliary) of a programming exercise. If none exists yet, a new one is
+     * created (fallback when course staff open the clone dialog for the first time).
+     */
+    loadRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number) {
+        const requestedRepositoryIdentity = this.currentRepositoryIdentity();
+        this.programmingExerciseService.getRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body && this.isCurrentRepositoryIdentity(requestedRepositoryIdentity)) {
+                    this.setRepositoryAccessToken(res.body, requestedRepositoryIdentity);
+                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
+                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
+                    if (this.useToken()) {
+                        this.copyEnabled.set(true);
+                    }
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (!this.isCurrentRepositoryIdentity(requestedRepositoryIdentity)) {
+                    return;
+                }
+                if (error.status === 404) {
+                    this.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId, requestedRepositoryIdentity);
+                } else if (error.status === 403) {
+                    this.alertService.warning('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
+                } else {
+                    this.alertService.error('artemisApp.exerciseActions.repositoryAccessTokenError');
+                }
+            },
+        });
+    }
+
+    /**
+     * Sends the request to create a new repository-scoped VCS access token for a base repository.
+     */
+    createRepositoryVcsAccessToken(
+        exerciseId: number,
+        repositoryType: RepositoryType,
+        auxiliaryRepositoryId?: number,
+        requestedRepositoryIdentity = this.currentRepositoryIdentity(),
+    ) {
+        this.programmingExerciseService.createRepositoryVcsAccessToken(exerciseId, repositoryType, auxiliaryRepositoryId).subscribe({
+            next: (res: HttpResponse<string>) => {
+                if (res.body && this.isCurrentRepositoryIdentity(requestedRepositoryIdentity)) {
+                    this.setRepositoryAccessToken(res.body, requestedRepositoryIdentity);
+                    // Only ever enable copy here; never disable. An async token response may arrive after the dialog
+                    // opened with SSH/password selected, and must not clobber the copy state those methods already set.
+                    if (this.useToken()) {
+                        this.copyEnabled.set(true);
+                    }
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                if (!this.isCurrentRepositoryIdentity(requestedRepositoryIdentity)) {
+                    return;
+                }
+                if (error.status === 403) {
+                    this.alertService.warning('artemisApp.exerciseActions.repositoryAccessTokenForbidden');
+                } else {
+                    this.alertService.error('artemisApp.exerciseActions.repositoryAccessTokenError');
+                }
+            },
+        });
+    }
+
+    /**
+     * Stores a newly retrieved repository-scoped token together with the identity of the repository it was minted for, so it is only ever reused for that exact repository.
+     */
+    private setRepositoryAccessToken(token: string, repositoryIdentity: string) {
+        this.repositoryAccessToken.set(token);
+        this.repositoryAccessTokenIdentity = repositoryIdentity;
+    }
+
+    /**
+     * @return whether a cached repository-scoped token exists and still belongs to the base repository currently targeted by the clone dialog.
+     */
+    private hasValidRepositoryAccessToken(): boolean {
+        return !!this.repositoryAccessToken() && this.isCurrentRepositoryIdentity(this.repositoryAccessTokenIdentity);
+    }
+
+    /**
+     * @return whether the given repository identity still describes the repository currently targeted by this reused component instance.
+     */
+    private isCurrentRepositoryIdentity(repositoryIdentity: string | undefined): boolean {
+        return !!repositoryIdentity && repositoryIdentity === this.currentRepositoryIdentity();
+    }
+
+    /**
+     * A stable key identifying the base repository the clone dialog currently targets (type, URI, exercise and optional auxiliary repository). Used to detect when this reused
+     * component instance switches to a different base repository, so a repository-scoped token minted for the previous repository is never reused.
+     */
+    private currentRepositoryIdentity(): string {
+        return [this.repositoryType(), this.repositoryUri(), this.exercise()?.id ?? this.exerciseId(), this.auxiliaryRepositoryId()].join('|');
+    }
+
     private getUsedToken(alwaysUseToken = false): string | undefined {
         if (this.useToken() || alwaysUseToken) {
+            if (this.isBaseRepository()) {
+                // Never embed a token cached for a different repository (exact-URI scoped); only the token for the current repository is valid.
+                return this.hasValidRepositoryAccessToken() ? this.repositoryAccessToken() : undefined;
+            }
             if (this.isInCourseManagement()) {
                 return this.user.vcsAccessToken;
             } else {

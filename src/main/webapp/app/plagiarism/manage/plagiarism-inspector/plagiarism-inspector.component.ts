@@ -20,7 +20,7 @@ import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, N
 import { DialogModule } from 'primeng/dialog';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { Subscription } from 'rxjs';
-import { PlagiarismResultDTO, PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
+import { PlagiarismResultDTO, PlagiarismResultStatsDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -81,7 +81,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     /**
      * Statistics for the automated plagiarism detection result
      */
-    readonly plagiarismResultStats = signal<PlagiarismResultStats | undefined>(undefined);
+    readonly plagiarismResultStats = signal<PlagiarismResultStatsDTO | undefined>(undefined);
 
     /**
      * True, if an automated plagiarism detection is running; false otherwise.
