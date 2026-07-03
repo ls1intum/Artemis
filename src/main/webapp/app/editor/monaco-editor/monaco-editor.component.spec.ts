@@ -1,4 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { vi } from 'vitest';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
@@ -86,7 +92,7 @@ describe('MonacoEditorComponent', () => {
         expect(() => comp['reRegisterActions']()).not.toThrow();
         expect(mockAction.dispose).toHaveBeenCalled();
         expect(mockAction.register).toHaveBeenCalled();
-        expect(consoleWarnSpy).toHaveBeenCalled();
+        expect(vi.mocked(captureException)).toHaveBeenCalled();
 
         consoleWarnSpy.mockRestore();
     });

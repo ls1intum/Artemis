@@ -656,7 +656,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             }
         } catch (error) {
             this.isSaving.set(false);
-            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+            const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: message });
         }
     }
 
@@ -877,7 +878,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isFileChanged.set(true);
             this.selectedPages.set(new Set());
         } catch (error) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
+            const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: message });
         } finally {
             this.isPdfLoading.set(false);
             this.dialogErrorSource.next('');
@@ -906,7 +908,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             await this.loadPdf(objectUrl, newPdfBytes, mergeSourceId, undefined, true);
             this.selectedPages.set(new Set());
         } catch (error) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
+            const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: message });
             if (objectUrl) {
                 URL.revokeObjectURL(objectUrl);
             }

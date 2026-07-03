@@ -30,18 +30,18 @@ export class DragAndDropQuestionUtil {
 
         if (mappings) {
             // add mappings that are already correct
-            mappings.forEach(function (mapping) {
+            mappings.forEach((mapping) => {
                 const correctMapping = this.getMapping(question.correctMappings!, mapping.dragItem!, mapping.dropLocation!);
                 if (correctMapping) {
                     sampleMappings.push(correctMapping);
-                    remainingDropLocations = remainingDropLocations?.filter(function (dropLocation) {
+                    remainingDropLocations = remainingDropLocations?.filter((dropLocation) => {
                         return !this.isSameEntityWithTempId(dropLocation, mapping.dropLocation);
-                    }, this);
-                    availableDragItems = availableDragItems?.filter(function (dragItem) {
+                    });
+                    availableDragItems = availableDragItems?.filter((dragItem) => {
                         return !this.isSameEntityWithTempId(dragItem, mapping.dragItem);
-                    }, this);
+                    });
                 }
-            }, this);
+            });
         }
 
         // solve recursively
@@ -68,13 +68,13 @@ export class DragAndDropQuestionUtil {
         remainingDropLocations: DropLocation[] | undefined,
         availableDragItems: DragItem[] | undefined,
         sampleMappings: DragAndDropMapping[],
-    ) {
+    ): boolean | undefined {
         if (!remainingDropLocations || remainingDropLocations.length === 0) {
             return true;
         }
 
         const dropLocation = remainingDropLocations[0];
-        return availableDragItems?.some(function (dragItem, index) {
+        return availableDragItems?.some((dragItem, index) => {
             const correctMapping = this.getMapping(correctMappings, dragItem, dropLocation);
             if (correctMapping) {
                 sampleMappings.push(correctMapping); // add new mapping
@@ -90,7 +90,7 @@ export class DragAndDropQuestionUtil {
             } else {
                 return false;
             }
-        }, this);
+        });
     }
 
     /**
@@ -107,20 +107,21 @@ export class DragAndDropQuestionUtil {
             // no correct mappings at all means there can be no misleading mappings
             return true;
         }
+        const correctMappings = question.correctMappings;
         // iterate through all pairs of drag items
         for (let i = 0; i < question.dragItems.length; i++) {
             for (let j = 0; j < i; j++) {
                 // if these two drag items have one common drop location, they must share all drop locations
                 const dragItem1 = question.dragItems[i];
                 const dragItem2 = question.dragItems[j];
-                const shareOneDropLocation = question.dropLocations?.some(function (dropLocation) {
-                    const isMappedWithDragItem1 = this.isMappedTogether(question.correctMappings, dragItem1, dropLocation);
-                    const isMappedWithDragItem2 = this.isMappedTogether(question.correctMappings, dragItem2, dropLocation);
+                const shareOneDropLocation = question.dropLocations?.some((dropLocation) => {
+                    const isMappedWithDragItem1 = this.isMappedTogether(correctMappings, dragItem1, dropLocation);
+                    const isMappedWithDragItem2 = this.isMappedTogether(correctMappings, dragItem2, dropLocation);
                     return isMappedWithDragItem1 && isMappedWithDragItem2;
-                }, this);
+                });
                 if (shareOneDropLocation) {
-                    const allDropLocationsForDragItem1 = this.getAllDropLocationsForDragItem(question.correctMappings, dragItem1);
-                    const allDropLocationsForDragItem2 = this.getAllDropLocationsForDragItem(question.correctMappings, dragItem2);
+                    const allDropLocationsForDragItem1 = this.getAllDropLocationsForDragItem(correctMappings, dragItem1);
+                    const allDropLocationsForDragItem2 = this.getAllDropLocationsForDragItem(correctMappings, dragItem2);
                     if (!this.isSameSetOfDropLocations(allDropLocationsForDragItem1, allDropLocationsForDragItem2)) {
                         // condition is violated for this pair of dragItems
                         return false;

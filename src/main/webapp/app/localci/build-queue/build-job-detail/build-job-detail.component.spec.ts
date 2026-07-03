@@ -1,4 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
@@ -302,7 +308,7 @@ describe('BuildJobDetailComponent', () => {
 
         component.downloadBuildLogs();
 
-        expect(consoleErrorSpy).toHaveBeenCalled();
+        expect(vi.mocked(captureException)).toHaveBeenCalled();
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.buildQueue.logs.downloadError');
         consoleErrorSpy.mockRestore();
     });

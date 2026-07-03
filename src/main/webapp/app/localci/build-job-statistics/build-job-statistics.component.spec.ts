@@ -1,4 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
@@ -311,7 +317,7 @@ describe('BuildJobStatisticsComponent', () => {
         component.incrementStatisticsByStatus('UNKNOWN_STATUS');
 
         expect(component.buildJobStatistics().totalBuilds).toBe(10);
-        expect(consoleSpy).toHaveBeenCalledWith('Unknown build job status received: UNKNOWN_STATUS');
+        expect(vi.mocked(captureException)).toHaveBeenCalledWith(new Error('Unknown build job status received: UNKNOWN_STATUS'));
         consoleSpy.mockRestore();
     });
 

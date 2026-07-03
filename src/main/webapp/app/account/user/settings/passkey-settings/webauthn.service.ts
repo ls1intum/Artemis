@@ -1,5 +1,6 @@
-import { HttpStatusCode } from '@angular/common/http';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { captureException } from '@sentry/angular';
 import { WebauthnApiService } from 'app/account/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/foundation/util/base64.util';
 import { InvalidCredentialError } from 'app/account/user/settings/passkey-settings/entities/errors/invalid-credential.error';
@@ -166,14 +167,15 @@ export class WebauthnService {
                 internal: this.accountService.userIdentity()?.internal ?? false,
             });
         } catch (error) {
-            const userPressedCancelInPasskeyCreationDialog = error.name === UserAbortedPasskeyCreationError.name && error.code === UserAbortedPasskeyCreationError.code;
+            const domError = error as DOMException;
+            const userPressedCancelInPasskeyCreationDialog = domError.name === UserAbortedPasskeyCreationError.name && domError.code === UserAbortedPasskeyCreationError.code;
             if (userPressedCancelInPasskeyCreationDialog) {
                 return;
             }
 
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else if (error.name === InvalidStateError.name && error.code === InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
+            } else if (domError.name === InvalidStateError.name && domError.code === InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.registration');
@@ -224,15 +226,14 @@ export class WebauthnService {
             }
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
-            } else if (error.status === HttpStatusCode.Forbidden) {
+            } else if ((error as HttpErrorResponse).status === HttpStatusCode.Forbidden) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
-            } else if (error.status === HttpStatusCode.NotFound) {
+            } else if ((error as HttpErrorResponse).status === HttpStatusCode.NotFound) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.noPasskeyFound');
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
             }
-            // eslint-disable-next-line no-undef
-            console.error(error);
+            captureException(error);
             throw error;
         }
     }
@@ -280,8 +281,7 @@ export class WebauthnService {
             return;
         }
 
-        // eslint-disable-next-line no-undef
-        console.warn('Passkey autocomplete error:', error);
+        captureException(new Error('Passkey autocomplete error', { cause: error }));
     }
 
     private isUserCancelledPasskeyError(error: unknown): boolean {

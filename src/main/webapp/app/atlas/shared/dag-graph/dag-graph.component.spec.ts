@@ -1,4 +1,10 @@
 import { Component, signal } from '@angular/core';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -237,7 +243,7 @@ describe('DagGraphComponent', () => {
 
             // the try/catch around the dagre call must degrade gracefully instead of breaking change detection
             expect(component.layout()).toEqual({ nodes: [], edges: [], width: 0, height: 0 });
-            expect(consoleSpy).toHaveBeenCalled();
+            expect(vi.mocked(captureException)).toHaveBeenCalled();
             consoleSpy.mockRestore();
         });
     });

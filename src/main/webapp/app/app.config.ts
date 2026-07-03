@@ -23,6 +23,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { lastValueFrom } from 'rxjs';
+import { captureException } from '@sentry/angular';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LoadingNotificationInterceptor } from 'app/core/loading-notification/loading-notification.interceptor';
@@ -88,8 +89,7 @@ export const appConfig: ApplicationConfig = {
                       // from booting. We log so the failure is observable but recover by rendering
                       // the landing page (or sign-in if the user navigates there manually).
                       .catch((error) => {
-                          // eslint-disable-next-line no-undef
-                          console.warn('SAML2 second-step exchange failed during app initialization', error);
+                          captureException(new Error('SAML2 second-step exchange failed during app initialization', { cause: error }));
                           return undefined;
                       })
                       .finally(() => {
@@ -109,8 +109,7 @@ export const appConfig: ApplicationConfig = {
             // and a flaky i18n endpoint must degrade gracefully (missing-key placeholders, same as
             // the previous fire-and-forget behavior) rather than block the SPA from booting at all.
             const translationsLoaded = lastValueFrom(translateService.use(languageKey)).catch((error) => {
-                // eslint-disable-next-line no-undef
-                console.warn('Translation load failed during app initialization', error);
+                captureException(new Error('Translation load failed during app initialization', { cause: error }));
                 return undefined;
             });
             // Load profile info, resolve user identity, and fetch translations in parallel to minimize startup time.

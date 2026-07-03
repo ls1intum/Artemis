@@ -17,6 +17,7 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -346,8 +347,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                     );
                 } catch (error) {
                     loadingError = true;
-                    if (error.message === ConnectionError.message) {
-                        this.onError.emit('loadingFailed' + error.message);
+                    const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
+                    if (message === ConnectionError.message) {
+                        this.onError.emit('loadingFailed' + message);
                     } else {
                         this.onError.emit('loadingFailed');
                     }
@@ -398,8 +400,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 return;
             }
             this.imagePreviewError.set(true);
-            if (error.message === ConnectionError.message) {
-                this.onError.emit('loadingFailed' + error.message);
+            const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
+            if (message === ConnectionError.message) {
+                this.onError.emit('loadingFailed' + message);
             } else {
                 this.onError.emit('loadingFailed');
             }

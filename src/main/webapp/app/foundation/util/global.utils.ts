@@ -12,7 +12,16 @@ import { TranslateService } from '@ngx-translate/core';
  * @param error the error response that's status is used to determine the error message
  * @param disableTranslation whether the error message should be translated
  */
-export const onError = (alertService: AlertService, error: HttpErrorResponse, disableTranslation: boolean = true) => {
+export const onError = (alertService: AlertService, error: unknown, disableTranslation: boolean = true) => {
+    // `catch (e)` yields `unknown` (useUnknownInCatchVariables); narrow to the HTTP error we normally handle.
+    if (!(error instanceof HttpErrorResponse)) {
+        alertService.addAlert({
+            type: AlertType.DANGER,
+            message: error instanceof Error ? error.message : String(error),
+            disableTranslation: disableTranslation,
+        });
+        return;
+    }
     switch (error.status) {
         case 400:
             alertService.error('error.http.400');
@@ -39,6 +48,19 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse, di
             break;
     }
 };
+
+/**
+ * Extracts a human-readable message from an `unknown` caught error. `catch (e)` clauses are typed `unknown`
+ * (useUnknownInCatchVariables); use this to feed a message to APIs that expect a `string`.
+ *
+ * @param error the caught value
+ */
+export function getErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse || error instanceof Error) {
+        return error.message;
+    }
+    return String(error);
+}
 
 /**
  * Error alerts from the server do already have a user-friendly message defined via the errorKey which is handled by

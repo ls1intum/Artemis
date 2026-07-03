@@ -9,6 +9,7 @@ import { registerLocaleData } from '@angular/common';
 import locale from '@angular/common/locales/en';
 import { NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
 import { artemisIconPack } from 'app/foundation/icons/icons';
+import { captureException } from '@sentry/angular';
 
 ProdConfig();
 MonacoConfig();
@@ -29,5 +30,4 @@ bootstrapApplication(AppComponent, appConfig)
         tooltipConfig.container = 'body';
         tooltipConfig.disableTooltip = breakpointObserver.isMatched(Breakpoints.Handset);
     })
-    // eslint-disable-next-line no-undef
-    .catch((err) => console.error(err));
+    .catch((err) => captureException(err));
