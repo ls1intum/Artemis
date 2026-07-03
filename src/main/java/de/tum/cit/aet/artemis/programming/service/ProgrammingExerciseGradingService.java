@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Precision;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -39,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -880,7 +880,7 @@ public class ProgrammingExerciseGradingService {
     private double calculatePointsForTestCase(final ProgrammingExerciseTestCase testCase, ScoreCalculationData scoreCalculationData) {
         final int totalTestCaseCount = scoreCalculationData.testCases().size();
 
-        final boolean isWeightSumZero = Precision.equals(scoreCalculationData.weightSum(), 0, 1E-8);
+        final boolean isWeightSumZero = RoundingUtil.equalsWithinEpsilon(scoreCalculationData.weightSum(), 0, 1E-8);
         final double testPoints;
         double exerciseMaxPoints = scoreCalculationData.exercise().getMaxPoints();
 
