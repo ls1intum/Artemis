@@ -212,7 +212,7 @@
         }
         @if (showExamSummary()) {
             <div [ngClass]="{ 'p-3 scrollable-content': !testRunId() }">
-                <jhi-exam-participation-summary [studentExam]="studentExam()" />
+                <jhi-exam-participation-summary [studentExam]="studentExam()" [isSidebarCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
             </div>
         }
     }
