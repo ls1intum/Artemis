@@ -4,6 +4,7 @@ import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackChannelReque
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { PaginatorModule, PaginatorState } from 'primeng/paginator';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
@@ -295,7 +296,7 @@ export class FeedbackAnalysisComponent {
                     await this.router.navigateByUrl(urlTree);
                 }
             } catch (error) {
-                this.alertService.error(error);
+                this.alertService.error(getErrorMessage(error));
             }
         });
         try {
