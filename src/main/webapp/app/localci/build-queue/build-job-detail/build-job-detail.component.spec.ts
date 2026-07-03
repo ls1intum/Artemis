@@ -1,5 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { captureException } from '@sentry/angular';
+
+vi.mock('@sentry/angular', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('@sentry/angular')>()),
+    captureException: vi.fn(),
+}));
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 import { BuildJobDetailComponent } from './build-job-detail.component';
@@ -71,6 +77,7 @@ describe('BuildJobDetailComponent', () => {
     };
 
     beforeEach(() => {
+        vi.mocked(captureException).mockClear();
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: mockRoute },
@@ -298,13 +305,10 @@ describe('BuildJobDetailComponent', () => {
             throw new Error('Failed to create object URL');
         });
 
-        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
         component.downloadBuildLogs();
 
-        expect(consoleErrorSpy).toHaveBeenCalled();
+        expect(vi.mocked(captureException)).toHaveBeenCalled();
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.buildQueue.logs.downloadError');
-        consoleErrorSpy.mockRestore();
     });
 
     it('should not load logs if already loading', () => {
