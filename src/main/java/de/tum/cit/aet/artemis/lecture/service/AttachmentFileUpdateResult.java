@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lecture.dto;
+package de.tum.cit.aet.artemis.lecture.service;
 
 public record AttachmentFileUpdateResult(boolean fileBytesChanged, boolean attachmentAdded, boolean attachmentRemoved, Integer oldVersion, Integer newVersion) {
 

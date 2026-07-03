@@ -22,8 +22,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +37,7 @@ class LectureUnitVisibilitySyncServiceTest {
     private static final ZonedDateTime HIDDEN_UNTIL = ZonedDateTime.parse("2026-07-03T12:00:00Z");
 
     @Mock
-    private SlideRepository slideRepository;
+    private SlideTestRepository slideRepository;
 
     @Mock
     private IrisLectureUnitSyncService irisLectureUnitSyncService;

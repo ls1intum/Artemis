@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -26,12 +25,10 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
-import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AttachmentVideoUnitServiceTest {
@@ -44,7 +41,7 @@ class AttachmentVideoUnitServiceTest {
     private SlideSplitterService slideSplitterService;
 
     @Mock
-    private AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Mock
     private AttachmentRepository attachmentRepository;
@@ -65,7 +62,7 @@ class AttachmentVideoUnitServiceTest {
     private AttachmentService attachmentService;
 
     @Mock
-    private SlideRepository slideRepository;
+    private SlideTestRepository slideRepository;
 
     @Mock
     private IrisLectureUnitSyncService irisLectureUnitSyncService;
@@ -75,8 +72,8 @@ class AttachmentVideoUnitServiceTest {
     @BeforeEach
     void setUp() {
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.<CompetencyProgressApi>empty(),
-                lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifier(), slideRepository,
-                irisLectureUnitSyncService);
+                lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, attachmentService, new LectureContentUpdateClassifierService(),
+                slideRepository, irisLectureUnitSyncService);
         when(attachmentVideoUnitRepository.save(any(AttachmentVideoUnit.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of());
     }
@@ -91,7 +88,6 @@ class AttachmentVideoUnitServiceTest {
 
         verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
-        verify(contentProcessingService, never()).triggerProcessingForUpdateKind(any(), any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 
@@ -109,7 +105,6 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnit.class));
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnit.class), any(), any());
-        verify(contentProcessingService, never()).triggerProcessingForUpdateKind(any(), any());
         verify(contentProcessingService, never()).triggerProcessing(any());
         verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
@@ -125,7 +120,6 @@ class AttachmentVideoUnitServiceTest {
         service.updateAttachmentVideoUnit(unit, dto, null, null, false, null, null, Set.of());
 
         verify(contentProcessingService).triggerProcessing(unit);
-        verify(contentProcessingService, never()).triggerProcessingForUpdateKind(any(), eq(LectureContentUpdateKind.CONTENT));
         verify(irisLectureUnitSyncService, never()).markMetadataDirtyAfterCommit(any());
         verify(irisLectureUnitSyncService, never()).markVisibilityDirtyAfterCommit(any());
     }
@@ -141,7 +135,6 @@ class AttachmentVideoUnitServiceTest {
 
         verify(irisLectureUnitSyncService).markMetadataDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
         verify(irisLectureUnitSyncService).markVisibilityDirtyAfterCommit(any(LectureContentUpdateSnapshot.class));
-        verify(contentProcessingService, never()).triggerProcessingForUpdateKind(any(), any());
         verify(contentProcessingService, never()).triggerProcessingForMetadataChange(any());
     }
 

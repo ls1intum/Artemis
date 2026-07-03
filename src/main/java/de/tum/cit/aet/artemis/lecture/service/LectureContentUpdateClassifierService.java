@@ -9,13 +9,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
-import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileUpdateResult;
-import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 
 @Conditional(LectureEnabled.class)
 @Lazy
 @Service
-public class LectureContentUpdateClassifier {
+public class LectureContentUpdateClassifierService {
 
     /**
      * Classifies the cheapest safe Pyris update for a lecture unit snapshot change.

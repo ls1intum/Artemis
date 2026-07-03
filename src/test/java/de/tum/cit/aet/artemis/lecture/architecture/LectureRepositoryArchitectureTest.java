@@ -18,6 +18,6 @@ class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitec
                 // dispatchPendingJobs and handleIrisReset need @Transactional because they use
                 // FOR UPDATE SKIP LOCKED and bulk state resets, and their callers have no transaction context.
                 "de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.dispatchPendingJobs()",
-                "de.tum.cit.aet.artemis.lecture.service.ProcessingStateCallbackService.handleIrisReset()");
+                "de.tum.cit.aet.artemis.lecture.service.ProcessingStateRecoveryService.handleIrisReset()");
     }
 }

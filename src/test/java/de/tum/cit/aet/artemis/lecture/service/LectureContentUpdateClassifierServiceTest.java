@@ -10,16 +10,14 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
-import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileUpdateResult;
-import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 
-class LectureContentUpdateClassifierTest {
+class LectureContentUpdateClassifierServiceTest {
 
     private static final ZonedDateTime RELEASE_DATE = ZonedDateTime.parse("2026-07-02T12:00:00Z");
 
     private static final ZonedDateTime HIDDEN_UNTIL = ZonedDateTime.parse("2026-07-03T12:00:00Z");
 
-    private final LectureContentUpdateClassifier classifier = new LectureContentUpdateClassifier();
+    private final LectureContentUpdateClassifierService classifier = new LectureContentUpdateClassifierService();
 
     @Test
     void classifiesHiddenSlideChangeAsVisibilityUpdate() {
@@ -145,8 +143,8 @@ class LectureContentUpdateClassifierTest {
     void classifiesAllMetadataAndVisibilityChangesTogether() {
         var before = snapshot("Exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE,
                 Map.of(1, HIDDEN_UNTIL));
-        var after = snapshot("Updated exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source",
-                RELEASE_DATE.plusDays(1), Map.of(1, HIDDEN_UNTIL));
+        var after = snapshot("Updated exercise slides", "Lecture 1", "Course", "Description", 7, "attachments/unit.pdf", "https://video.example/source", RELEASE_DATE.plusDays(1),
+                Map.of(1, HIDDEN_UNTIL));
 
         var updateKinds = classifier.classifyAll(before, after, AttachmentFileUpdateResult.unchanged(7));
 

@@ -32,10 +32,8 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileUpdateResult;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
-import de.tum.cit.aet.artemis.lecture.dto.LectureContentUpdateSnapshot;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
@@ -58,7 +56,7 @@ public class AttachmentVideoUnitService {
 
     private final AttachmentService attachmentService;
 
-    private final LectureContentUpdateClassifier lectureContentUpdateClassifier;
+    private final LectureContentUpdateClassifierService lectureContentUpdateClassifierService;
 
     private final SlideRepository slideRepository;
 
@@ -75,13 +73,13 @@ public class AttachmentVideoUnitService {
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
             Optional<LectureContentProcessingService> contentProcessingService, AttachmentFileHashService attachmentFileHashService, AttachmentService attachmentService,
-            LectureContentUpdateClassifier lectureContentUpdateClassifier, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService) {
+            LectureContentUpdateClassifierService lectureContentUpdateClassifierService, SlideRepository slideRepository, IrisLectureUnitSyncService irisLectureUnitSyncService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.attachmentFileHashService = attachmentFileHashService;
         this.attachmentService = attachmentService;
-        this.lectureContentUpdateClassifier = lectureContentUpdateClassifier;
+        this.lectureContentUpdateClassifierService = lectureContentUpdateClassifierService;
         this.slideRepository = slideRepository;
         this.irisLectureUnitSyncService = irisLectureUnitSyncService;
         this.slideSplitterService = slideSplitterService;
@@ -206,7 +204,7 @@ public class AttachmentVideoUnitService {
         }
 
         LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit);
-        var updateKinds = lectureContentUpdateClassifier.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
+        var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
         triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds);
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
 

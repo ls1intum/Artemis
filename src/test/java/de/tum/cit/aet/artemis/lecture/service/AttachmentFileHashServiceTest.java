@@ -6,9 +6,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
@@ -36,7 +36,7 @@ class AttachmentFileHashServiceTest {
     @Test
     void hashesPathWithSha256() throws IOException {
         Path file = tempDir.resolve("abc.txt");
-        Files.writeString(file, "abc", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(file.toFile(), "abc", StandardCharsets.UTF_8);
 
         AttachmentFileHashService.FileHash fileHash = service.sha256(file);
 

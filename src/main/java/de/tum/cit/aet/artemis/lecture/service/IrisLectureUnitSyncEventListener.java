@@ -7,9 +7,10 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureWithIrisEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -19,7 +20,8 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 
 @Conditional(LectureWithIrisEnabled.class)
-@Service
+@Lazy
+@Component
 public class IrisLectureUnitSyncEventListener {
 
     private static final Logger log = LoggerFactory.getLogger(IrisLectureUnitSyncEventListener.class);
@@ -30,13 +32,13 @@ public class IrisLectureUnitSyncEventListener {
 
     private final IrisLectureUnitSyncStateRepository syncStateRepository;
 
-    private final LectureContentProcessingService contentProcessingService;
+    private final IrisLectureUnitSyncDispatchService syncDispatchService;
 
     public IrisLectureUnitSyncEventListener(AttachmentVideoUnitRepository attachmentVideoUnitRepository, IrisLectureUnitSyncStateRepository syncStateRepository,
-            LectureContentProcessingService contentProcessingService) {
+            IrisLectureUnitSyncDispatchService syncDispatchService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.syncStateRepository = syncStateRepository;
-        this.contentProcessingService = contentProcessingService;
+        this.syncDispatchService = syncDispatchService;
     }
 
     @EventListener
@@ -79,7 +81,7 @@ public class IrisLectureUnitSyncEventListener {
                 return;
             }
 
-            contentProcessingService.triggerProcessingForUpdateKind(unit, updateKind);
+            syncDispatchService.triggerSyncForUpdateKind(unit, updateKind);
             markSynced(state, updateKind);
         }
         catch (Exception e) {

@@ -16,8 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class IrisLectureUnitSyncEventListenerTest {
@@ -25,19 +25,19 @@ class IrisLectureUnitSyncEventListenerTest {
     private static final long LECTURE_UNIT_ID = 42L;
 
     @Mock
-    private AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Mock
     private IrisLectureUnitSyncStateRepository syncStateRepository;
 
     @Mock
-    private LectureContentProcessingService contentProcessingService;
+    private IrisLectureUnitSyncDispatchService syncDispatchService;
 
     private IrisLectureUnitSyncEventListener listener;
 
     @BeforeEach
     void setUp() {
-        listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, contentProcessingService);
+        listener = new IrisLectureUnitSyncEventListener(attachmentVideoUnitRepository, syncStateRepository, syncDispatchService);
     }
 
     @Test
@@ -51,7 +51,7 @@ class IrisLectureUnitSyncEventListenerTest {
 
         listener.handleVisibilityDirty(new IrisLectureUnitSyncService.IrisLectureUnitVisibilityDirtyEvent(LECTURE_UNIT_ID));
 
-        verify(contentProcessingService).triggerProcessingForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY);
+        verify(syncDispatchService).triggerSyncForUpdateKind(unit, LectureContentUpdateKind.VISIBILITY);
         verify(syncStateRepository).save(state);
         assertThat(state.getLastSyncedVisibilityHash()).isEqualTo("visibility-hash");
         assertThat(state.getStatus()).isEqualTo(IrisLectureUnitSyncState.STATUS_CLEAN);
@@ -71,7 +71,7 @@ class IrisLectureUnitSyncEventListenerTest {
 
         listener.handleMetadataDirty(new IrisLectureUnitSyncService.IrisLectureUnitMetadataDirtyEvent(LECTURE_UNIT_ID));
 
-        verify(contentProcessingService).triggerProcessingForUpdateKind(unit, LectureContentUpdateKind.METADATA);
+        verify(syncDispatchService).triggerSyncForUpdateKind(unit, LectureContentUpdateKind.METADATA);
         verify(syncStateRepository).save(state);
         assertThat(state.getLastSyncedMetadataHash()).isEqualTo("metadata-hash");
         assertThat(state.getLastSyncedVisibilityHash()).isNull();

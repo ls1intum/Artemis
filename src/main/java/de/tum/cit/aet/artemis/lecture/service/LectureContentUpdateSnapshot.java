@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lecture.dto;
+package de.tum.cit.aet.artemis.lecture.service;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;

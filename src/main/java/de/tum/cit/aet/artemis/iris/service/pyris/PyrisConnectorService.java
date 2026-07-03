@@ -69,19 +69,15 @@ public class PyrisConnectorService {
 
     private final ObjectMapper objectMapper;
 
-    private final PyrisJobService pyrisJobService;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     @Value("${artemis.iris.url}")
     private String pyrisUrl;
 
-    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            PyrisJobService pyrisJobService) {
+    public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
-        this.pyrisJobService = pyrisJobService;
     }
 
     /**
