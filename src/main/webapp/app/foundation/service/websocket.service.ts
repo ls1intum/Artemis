@@ -2,6 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { IWatchParams, ReconnectionTimeMode, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
 import { IMessage, StompHeaders } from '@stomp/stompjs';
+import { parseJson } from 'app/foundation/util/json.util';
 import { gunzipSync, gzipSync, strFromU8, strToU8 } from 'fflate';
 import { BehaviorSubject, EMPTY, Observable, Subscription, of, timer } from 'rxjs';
 import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
@@ -603,7 +604,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      */
     private static parseJSON<T>(response: string): T {
         try {
-            return JSON.parse(response);
+            return parseJson<T>(response);
         } catch {
             return response as T;
         }

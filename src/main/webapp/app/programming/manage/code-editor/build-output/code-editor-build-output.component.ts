@@ -10,6 +10,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { findLatestResult } from 'app/foundation/util/utils';
+import { parseJson } from 'app/foundation/util/json.util';
 import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-solid-svg-icons';
@@ -117,7 +118,7 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
         const buildLogErrors = this.rawBuildLogs().extractErrors(exercise?.programmingLanguage, exercise?.projectType);
         const codeAnalysisIssues = (this.result()!.feedbacks || [])
             .filter(Feedback.isStaticCodeAnalysisFeedback)
-            .map<StaticCodeAnalysisIssue>((feedback) => JSON.parse(feedback.detailText!));
+            .map<StaticCodeAnalysisIssue>((feedback) => parseJson<StaticCodeAnalysisIssue>(feedback.detailText!));
         const codeAnalysisAnnotations = codeAnalysisIssues.map<Annotation>((issue) => ({
             text: issue.message || '',
             fileName: issue.filePath || '',

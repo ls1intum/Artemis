@@ -3,18 +3,17 @@ title: Integrated Code Lifecycle
 sidebar_label: Integrated Code Lifecycle
 ---
 
-import Image, {ImageSize} from "../../../src/components/Image/Image";
+import Image, { ImageSize } from '../../../src/components/Image/Image';
 
-import openRepositoryStudentImg from "../assets/integrated-code-lifecycle/open-repository-student.png";
-import currentRepositoryContentImg from "../assets/integrated-code-lifecycle/current-repository-content-view.png";
-import commitHistoryViewImg from "../assets/integrated-code-lifecycle/commit-history-view.png";
-import commitDiffViewImg from "../assets/integrated-code-lifecycle/commit-diff-view.png";
-import openRepositoryButtonImg from "../assets/integrated-code-lifecycle/open-repository-button.png";
-import codeButtonExtendedImg from "../assets/integrated-code-lifecycle/code-button-extended-authentication.png";
+import openRepositoryStudentImg from '../assets/integrated-code-lifecycle/open-repository-student.png';
+import currentRepositoryContentImg from '../assets/integrated-code-lifecycle/current-repository-content-view.png';
+import commitHistoryViewImg from '../assets/integrated-code-lifecycle/commit-history-view.png';
+import commitDiffViewImg from '../assets/integrated-code-lifecycle/commit-diff-view.png';
+import openRepositoryButtonImg from '../assets/integrated-code-lifecycle/open-repository-button.png';
+import codeButtonExtendedImg from '../assets/integrated-code-lifecycle/code-button-extended-authentication.png';
 
-import addVcsAccessTokenImg from "../assets/integrated-code-lifecycle/add-vcs-access-token.png";
-import openSettingsImg from "../assets/integrated-code-lifecycle/open-settings.png";
-import sshAddPublicKeyImg from "../assets/integrated-code-lifecycle/ssh-add-public-key.png";
+import openSettingsImg from '../assets/integrated-code-lifecycle/open-settings.png';
+import sshAddPublicKeyImg from '../assets/integrated-code-lifecycle/ssh-add-public-key.png';
 
 # Integrated Code Lifecycle
 
@@ -23,7 +22,7 @@ Artemis' Integrated Code Lifecycle consists of two main components: Local Versio
 ## General Information
 
 Artemis offers the Integrated Code Lifecycle (ICL), a comprehensive feature designed to streamline the development process for programming exercises.
-ICL combines version control, secure communication, and continuous integration to provide a seamless experience for students and instructors.
+ICL combines version control, secure communication, and continuous integration to provide a seamless experience for students.
 Understanding these components is crucial for effectively using Artemis, especially if you're new to concepts like SSH and Git. The key components of ICL are:
 
 - Local Version Control: Use the Local Version Control to interact with the repositories of programming exercises.
@@ -40,51 +39,52 @@ Understanding these components is crucial for effectively using Artemis, especia
 
 Programming exercises use a version control system called **Git**. Git is a distributed version control system that allows you to track changes in your code.
 These changes are stored in a repository. A repository is a collection of files and directories that are tracked by Git.
-How to navigate through the repository and view the code is explained in the following sections. This guide is divided into two parts: one for students and one for instructors.
+How to navigate through the repository and view the code is explained in the following sections.
 It is demonstrated using course programming exercises, but the same principles apply to exams as well.
 
 #### Access Repositories as a Student
 
 As a student, you can use the repository to view your course submissions.
-To access your submissions, you need to navigate to the exercise, press the '*Code*' button, and click on <Image src={openRepositoryButtonImg} alt={"Open Repository"} size={ImageSize.small} inline />.
+To access your submissions, you need to navigate to the exercise, press the '_Code_' button, and click on <Image src={openRepositoryButtonImg} alt={"Open Repository"} size={ImageSize.small} inline />.
 
-<Image src={openRepositoryStudentImg} alt={"Opening the repository in the student view"} size={ImageSize.large} />
+<Image src={openRepositoryStudentImg} alt={'Opening the repository in the student view'} size={ImageSize.large} />
 
 After pressing the button, you will be redirected to the **Current Repository Content** page of the repository.
 This view shows the current content of the repository with the latest changes in a read-only code editor. You can view the code, but you cannot edit it.
 You can also navigate through the whole code by clicking on the file names in the file browser on the left side.
 To the right side of the screen, above the problem statement, you can see the result of the submission. You can also copy the repository URI by pressing
-the '*Code*' button to clone the repository to your local machine and see the full commit history by pressing the '*Open Commit History*' button. Finally, you can
-download the repository as a ZIP file by pressing the '*Download Repository*' button.
+the '_Code_' button to clone the repository to your local machine and see the full commit history by pressing the '_Open Commit History_' button. Finally, you can
+download the repository as a ZIP file by pressing the '_Download Repository_' button.
 
-<Image src={currentRepositoryContentImg} alt={"Current Repository Content"} size={ImageSize.large} />
+<Image src={currentRepositoryContentImg} alt={'Current Repository Content'} size={ImageSize.large} />
 
-The *Commit History* page shows all the commits that you uploaded to the repository. The commits are ordered from the latest to the oldest.
+The _Commit History_ page shows all the commits that you uploaded to the repository. The commits are ordered from the latest to the oldest.
 You can see the commit message, the author of the commit, the date of the commit, the commit hash and the result of the commit.
 If you created a submission with multiple commits, you can see all of them here but only the last commit has the result of the submission.
 Lastly, you can also view the code of the commit by pressing on the commit hash.
 
-<Image src={commitHistoryViewImg} alt={"Commit History View"} size={ImageSize.large} />
+<Image src={commitHistoryViewImg} alt={'Commit History View'} size={ImageSize.large} />
 
 By clicking on a commit hash, you are redirected to the **Commit Diff** page. This page shows the changes that you made in this commit.
 You can see the changes in the code, the files that have been added, the files that have been deleted and the files that have been modified.
 Green color indicates the lines that have been added and red color indicates the lines that have been deleted.
 You can also see the commit message, the author of the commit, the date of the commit and the commit hash.
 
-<Image src={commitDiffViewImg} alt={"Commit Diff View"} size={ImageSize.large} />
+<Image src={commitDiffViewImg} alt={'Commit Diff View'} size={ImageSize.large} />
 
 ---
 
 ## Authentication Mechanisms
 
-<Image src={codeButtonExtendedImg} alt={"Commit Diff View"} size={ImageSize.large} />
+<Image src={codeButtonExtendedImg} alt={'Commit Diff View'} size={ImageSize.large} />
 
 Artemis supports three mechanisms for authenticating to repositories: password authentication, token authentication and authentication via SSH.
 Admins can configure which mechanisms should be available for users, and the order in which they appear in the code button drop down, as described in the Artemis configuration.
 
-There are two types of tokens: Each student has a token, for every repository of exercises they participate in, which Artemis automatically generates and provides through the code button dialog.
-Instructors additionally have the ability to create an access token, with the ability to access all repositories their user account has permissions to.
-Find more information on repository types and access rights in the documentation on repository types and access.
+As a student, token authentication normally uses a participation token.
+Artemis automatically generates one token for each programming exercise repository you participate in and provides it through the code button dialog.
+Instructor and course-staff token behavior is documented separately in the [instructor Integrated Code Lifecycle documentation](/instructor/integrations/integrated-code-lifecycle#repository-access-and-automatic-tokens-for-course-staff).
+
 Here is a short overview on the advantages and disadvantages of the provided mechanisms:
 
 ### Password
@@ -98,18 +98,6 @@ Here is a short overview on the advantages and disadvantages of the provided mec
 - slow with external authentication
 - insecure (when user has weak password)
 - not available to all universities
-
-### User Token
-
-**Advantages**
-
-- easy to use, simple setup and revocation
-- useful for repository access via API
-- secure
-
-**Disadvantages**
-
-- dangerous if it gets leaked
 
 ### Participation Token
 
@@ -146,7 +134,7 @@ The default order of authentication mechanisms is: token, SSH, and lastly passwo
 
 ## Cloning a repository
 
-Using the chosen mechanism, you can use `Tower <https://www.git-tower.com/>`_, `git from the terminal <https://git-scm.com/downloads/>`_, or `any other client <https://git-scm.com/downloads/guis/>`_ you like to clone your Git repository.
+Using the chosen mechanism, you can use `Tower <https://www.git-tower.com/>`_, `git from the terminal <https://git-scm.com/downloads/>`_, or `any other client <https://git-scm.com/downloads/guis/>`\_ you like to clone your Git repository.
 These instructions show you how to clone your repository using Git from the terminal.
 
 From the exercise view, click the code button to display the Clone dialog.
@@ -182,21 +170,11 @@ The clone contains the files and metadata that Git requires to maintain the chan
 
 ## VCS access tokens
 
-The tokens for student repositories are automatically created, and provided to the student via the code button dialog.
-For every student's exercise, Artemis automatically generates an access token, only associated with the repository of this particular exercise.
-
-Instructors can create HTTP access tokens for repository access in Artemis.
-They are created in the account settings and are used in place of passwords for Git over HTTPS.
-You can use these to authenticate to the Artemis Local Version Control.
+The tokens for student repositories are automatically created and provided through the code button dialog.
+For every programming exercise you participate in, Artemis automatically generates an access token associated only with that repository.
+You do not need to create this token manually.
 
 **Warning:** Never share your access tokens or commit them to version control. Treat tokens like passwords. If a token is compromised, revoke it immediately and create a new one.
-
-### Token Creation as Instructor
-
-1. Go to Profile > Settings > VCS token.
-2. Create a new token.
-
-<Image src={addVcsAccessTokenImg} alt={"Adding a new VCS access token"} size={ImageSize.large} />
 
 ---
 
@@ -277,8 +255,8 @@ You should check for existing SSH keys on your local computer. Open a command pr
 cd %userprofile%/.ssh
 ```
 
-* If you see "No such file or directory", then there aren't any existing keys: go to step 3.
-* Check to see if you have a key already:
+- If you see "No such file or directory", then there aren't any existing keys: go to step 3.
+- Check to see if you have a key already:
 
 ```bash
 dir id_*
@@ -453,9 +431,9 @@ Note that the key's name is not necessarily id_ed25519.pub, but can be arbitrary
 Open the settings, go to the SSH tab, and select 'New Key'.
 Then paste the copied SSH key into the text box.
 
-<div style={{display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap"}}>
-    <Image src={openSettingsImg} alt={"Open account settings"} size={ImageSize.medium} />
-    <Image src={sshAddPublicKeyImg} alt={"Add public SSH key to account"} size={ImageSize.medium} />
+<div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+    <Image src={openSettingsImg} alt={'Open account settings'} size={ImageSize.medium} />
+    <Image src={sshAddPublicKeyImg} alt={'Add public SSH key to account'} size={ImageSize.medium} />
 </div>
 
 #### 3. Save the key. You're done!

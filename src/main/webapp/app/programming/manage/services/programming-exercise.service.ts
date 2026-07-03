@@ -68,7 +68,7 @@ export class ProgrammingExerciseService {
     automaticSetup(programmingExercise: ProgrammingExercise, emptyRepositories = false): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         const params = new HttpParams().set('emptyRepositories', String(emptyRepositories));
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
@@ -156,7 +156,7 @@ export class ProgrammingExerciseService {
         const options = createRequestOption(importOptions);
         const exercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(adaptedSourceProgrammingExercise);
 
-        exercise.categories = ExerciseService.stringifyExerciseCategories(exercise);
+        ExerciseService.stringifyExerciseCategories(exercise);
         return this.http
             .post<ProgrammingExercise>(`${this.resourceUrl}/import?sourceExerciseId=${adaptedSourceProgrammingExercise.id}`, exercise, {
                 params: options,
@@ -547,7 +547,7 @@ export class ProgrammingExerciseService {
     importFromFile(exercise: ProgrammingExercise, courseId: number): Observable<EntityResponseType> {
         let copy = this.convertDataFromClient(exercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        ExerciseService.stringifyExerciseCategories(copy);
         const formData = new FormData();
         formData.append('file', exercise.zipFileForImport!);
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
@@ -565,5 +565,35 @@ export class ProgrammingExerciseService {
                 checkoutSolution: checkoutSolution,
             },
         });
+    }
+
+    /**
+     * Obtains the repository-scoped VCS access token of the current (staff) user for a base repository of a programming exercise. Returns 404 if none exists yet.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @param repositoryType the base repository type (TEMPLATE, SOLUTION, TESTS or AUXILIARY)
+     * @param auxiliaryRepositoryId the id of the auxiliary repository (only relevant for AUXILIARY)
+     */
+    getRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number): Observable<HttpResponse<string>> {
+        let params = new HttpParams().set('exerciseId', exerciseId).set('repositoryType', repositoryType);
+        if (auxiliaryRepositoryId !== undefined) {
+            params = params.set('auxiliaryRepositoryId', auxiliaryRepositoryId);
+        }
+        return this.http.get<string>('api/programming/repository-vcs-access-token', { observe: 'response', params, responseType: 'text' as 'json' });
+    }
+
+    /**
+     * Obtains, creating it if necessary, the repository-scoped VCS access token of the current (staff) user for a base repository of a programming exercise.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @param repositoryType the base repository type (TEMPLATE, SOLUTION, TESTS or AUXILIARY)
+     * @param auxiliaryRepositoryId the id of the auxiliary repository (only relevant for AUXILIARY)
+     */
+    createRepositoryVcsAccessToken(exerciseId: number, repositoryType: RepositoryType, auxiliaryRepositoryId?: number): Observable<HttpResponse<string>> {
+        let params = new HttpParams().set('exerciseId', exerciseId).set('repositoryType', repositoryType);
+        if (auxiliaryRepositoryId !== undefined) {
+            params = params.set('auxiliaryRepositoryId', auxiliaryRepositoryId);
+        }
+        return this.http.put<string>('api/programming/repository-vcs-access-token', null, { observe: 'response', params, responseType: 'text' as 'json' });
     }
 }

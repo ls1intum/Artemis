@@ -1,5 +1,4 @@
 import { PlagiarismComparison } from './PlagiarismComparison';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 
 /**
@@ -19,11 +18,6 @@ export class PlagiarismResult {
     duration: number;
 
     /**
-     * Exercise for which plagiarism was detected.
-     */
-    exercise: Exercise;
-
-    /**
      * 10-element array representing the similarity distribution of the detected comparisons.
      *
      * Each entry represents the absolute frequency of comparisons whose similarity lies within the
@@ -32,7 +26,7 @@ export class PlagiarismResult {
      * Intervals:
      * 0: [0% - 10%), 1: [10% - 20%), 2: [20% - 30%), ..., 9: [90% - 100%]
      */
-    similarityDistribution: [number, 10];
+    similarityDistribution: number[];
 
     /**
      * Time when the plagiarism checks started.

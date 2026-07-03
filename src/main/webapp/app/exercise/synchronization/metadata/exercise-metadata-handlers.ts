@@ -8,7 +8,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { convertDateFromServer, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { ExerciseSnapshotDTO, TeamAssignmentConfigSnapshot } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import {
     normalizeCategoryArray,
@@ -103,10 +103,16 @@ const baseHandler = <K extends keyof ExerciseSnapshotDTO, V>(
 };
 
 /**
+ * Keys of {@link ExerciseSnapshotDTO} whose value is an ISO date string. The snapshot stores dates as
+ * strings, so their incoming values are normalized with {@link convertDateStringFromServer}.
+ */
+type ExerciseSnapshotDateKey = 'releaseDate' | 'startDate' | 'dueDate' | 'assessmentDueDate' | 'exampleSolutionPublicationDate';
+
+/**
  * Creates a handler for date fields with server-date normalization.
  */
 const dateHandler = (
-    key: keyof ExerciseSnapshotDTO,
+    key: ExerciseSnapshotDateKey,
     labelKey: string,
     getter: (exercise: Exercise) => dayjs.Dayjs | undefined,
     setter: (exercise: Exercise, value: dayjs.Dayjs | undefined) => void,
@@ -114,10 +120,10 @@ const dateHandler = (
     return {
         key,
         labelKey,
-        getCurrentValue: (exercise) => convertDateFromServer(getter(exercise) as any),
-        getBaselineValue: (exercise) => convertDateFromServer(getter(exercise) as any),
-        getIncomingValue: (snapshot) => convertDateFromServer(snapshot[key as keyof ExerciseSnapshotDTO] as any),
-        applyValue: (exercise, value) => setter(exercise, value as dayjs.Dayjs | undefined),
+        getCurrentValue: (exercise) => convertDateFromServer(getter(exercise)),
+        getBaselineValue: (exercise) => convertDateFromServer(getter(exercise)),
+        getIncomingValue: (snapshot) => convertDateStringFromServer(snapshot[key]),
+        applyValue: (exercise, value) => setter(exercise, value),
     };
 };
 
@@ -342,9 +348,9 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
         {
             key: 'programmingData.buildAndTestStudentSubmissionsAfterDueDate',
             labelKey: 'artemisApp.programmingExercise.timeline.afterDueDate',
-            getCurrentValue: (exercise) => convertDateFromServer((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate as any),
-            getBaselineValue: (exercise) => convertDateFromServer((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate as any),
-            getIncomingValue: (snapshot) => convertDateFromServer(snapshot.programmingData?.buildAndTestStudentSubmissionsAfterDueDate as any),
+            getCurrentValue: (exercise) => convertDateFromServer((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate),
+            getBaselineValue: (exercise) => convertDateFromServer((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate),
+            getIncomingValue: (snapshot) => convertDateStringFromServer(snapshot.programmingData?.buildAndTestStudentSubmissionsAfterDueDate),
             applyValue: (exercise, value) => ((exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate = value as dayjs.Dayjs | undefined),
         } satisfies ExerciseMetadataFieldHandler<Exercise, dayjs.Dayjs | undefined>,
         {

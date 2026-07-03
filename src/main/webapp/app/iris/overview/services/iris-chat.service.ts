@@ -20,8 +20,10 @@ import dayjs from 'dayjs/esm';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
+import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -265,8 +267,9 @@ export class IrisChatService implements OnDestroy {
      * Sends a message to the server and returns the created message.
      * @param message to be created
      * @param uncommittedFiles optional map of uncommitted file changes (path to content)
+     * @param context optional list of context objects providing information about what the user is viewing
      */
-    public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}): Observable<undefined> {
+    public sendMessage(message: string, uncommittedFiles: { [path: string]: string } = {}, context?: IrisMessageContextDTO[]): Observable<undefined> {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
@@ -274,7 +277,7 @@ export class IrisChatService implements OnDestroy {
         // Trim messages (Spaces, newlines)
         message = message.trim();
 
-        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles);
+        const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles, context);
 
         const generation = this.stateGeneration;
         return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
@@ -535,7 +538,7 @@ export class IrisChatService implements OnDestroy {
             return;
         }
 
-        const suggestions = JSON.parse(str);
+        const suggestions = parseJson<string[]>(str);
         this.suggestions.next(suggestions);
     }
 

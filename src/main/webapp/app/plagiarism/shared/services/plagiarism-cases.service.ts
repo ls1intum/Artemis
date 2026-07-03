@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PlagiarismCase, PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismCase, PlagiarismCaseDTO, PlagiarismCaseVerdictResponse } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
@@ -10,6 +10,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
+export type VerdictResponseType = HttpResponse<PlagiarismCaseVerdictResponse>;
 export type Comparison = PlagiarismComparison;
 
 @Injectable({ providedIn: 'root' })
@@ -64,8 +65,10 @@ export class PlagiarismCasesService {
         courseId: number,
         plagiarismCaseId: number,
         plagiarismVerdict: { verdict: PlagiarismVerdict; verdictMessage?: string; verdictPointDeduction?: number },
-    ): Observable<EntityResponseType> {
-        return this.http.put<PlagiarismCase>(`${this.resourceUrl}/${courseId}/plagiarism-cases/${plagiarismCaseId}/verdict`, plagiarismVerdict, { observe: 'response' });
+    ): Observable<VerdictResponseType> {
+        return this.http.put<PlagiarismCaseVerdictResponse>(`${this.resourceUrl}/${courseId}/plagiarism-cases/${plagiarismCaseId}/verdict`, plagiarismVerdict, {
+            observe: 'response',
+        });
     }
 
     /* Student */
