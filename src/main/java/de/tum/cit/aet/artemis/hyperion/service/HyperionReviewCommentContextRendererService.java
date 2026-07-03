@@ -216,7 +216,8 @@ public class HyperionReviewCommentContextRendererService {
     }
 
     /**
-     * Renders the explicitly selected review threads for a whole-exercise ADAPT run into a prompt-ready instruction block, across ALL repositories (template/solution/tests), so the
+     * Renders the explicitly selected review threads for a whole-exercise ADAPT run into a prompt-ready instruction block, across ALL repositories (template/solution/tests), so
+     * the
      * agent addresses exactly the feedback the instructor chose regardless of which repository each thread targets. Only active (not resolved, not outdated) threads among the
      * selected ids are included, capped by {@link #MAX_SELECTED_FEEDBACK_THREADS} and the global comment budget.
      *
@@ -239,8 +240,8 @@ public class HyperionReviewCommentContextRendererService {
         RemainingSerializedComments remainingSerializedComments = new RemainingSerializedComments(MAX_SERIALIZED_COMMENTS);
         List<Map<String, Object>> serializedThreads = new ArrayList<>();
         List<CommentThread> selectedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream()
-                .filter(thread -> !thread.isResolved() && !thread.isOutdated())
-                .sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE))).toList();
+                .filter(thread -> !thread.isResolved() && !thread.isOutdated()).sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE)))
+                .toList();
         for (CommentThread thread : selectedThreads) {
             if (remainingSerializedComments.exhausted()) {
                 break;

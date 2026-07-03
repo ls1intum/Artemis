@@ -14,8 +14,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * The {@code mode} is explicit and never inferred from the exercise's contents: one endpoint and one engine drive both {@link GenerationMode#GENERATE} and
  * {@link GenerationMode#ADAPT}, and only the client knows which the instructor intends. When omitted it defaults to {@link GenerationMode#GENERATE} (see {@link #effectiveMode()}).
  *
- * @param mode                     the explicit run intent (generate a fresh exercise vs. adapt an existing one); defaults to {@link GenerationMode#GENERATE} when absent
- * @param prompt                   optional brief (generate) or feedback (adapt); capped to bound LLM cost/abuse
+ * @param mode                      the explicit run intent (generate a fresh exercise vs. adapt an existing one); defaults to {@link GenerationMode#GENERATE} when absent
+ * @param prompt                    optional brief (generate) or feedback (adapt); capped to bound LLM cost/abuse
  * @param selectedFeedbackThreadIds optional review-comment thread ids the adapt run should address; capped to bound the rendered context
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

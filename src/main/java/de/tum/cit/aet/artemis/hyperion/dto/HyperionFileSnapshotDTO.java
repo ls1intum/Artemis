@@ -35,10 +35,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "A whole-file snapshot streamed to the instructor while the agent writes the exercise repositories, for a live editor preview")
 public record HyperionFileSnapshotDTO(@Schema(description = "Constant discriminator identifying a file snapshot on the shared topic") String type,
         @Schema(description = "Workspace-relative file path") String path, @Schema(description = "Owning repository bucket: solution, template, tests or other") String repo,
-        @Schema(description = "Whether the file was created or edited: create or edit") String action, @Schema(description = "The whole current file content (capped)") String content,
-        @Schema(description = "SHA-256 hex digest of the full content") String sha256, @Schema(description = "Full content size in bytes") long bytes,
-        @Schema(description = "Whether the content was truncated because it exceeded the cap") boolean truncated, @Schema(description = "The agent turn the write happened on") int turn,
-        @Schema(description = "The moment the snapshot was produced") Instant timestamp) implements Serializable {
+        @Schema(description = "Whether the file was created or edited: create or edit") String action,
+        @Schema(description = "The whole current file content (capped)") String content, @Schema(description = "SHA-256 hex digest of the full content") String sha256,
+        @Schema(description = "Full content size in bytes") long bytes, @Schema(description = "Whether the content was truncated because it exceeded the cap") boolean truncated,
+        @Schema(description = "The agent turn the write happened on") int turn, @Schema(description = "The moment the snapshot was produced") Instant timestamp)
+        implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -5,9 +5,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.HarmonyScrubbingChatModel;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.HarmonyScrubbingChatModel;
 
 /**
  * Wraps the Spring AI OpenAI-starter {@link OpenAiChatModel} in the {@link HarmonyScrubbingChatModel} decorator so the Hyperion agent loop and every other Spring AI consumer see
@@ -19,6 +20,7 @@ import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.HarmonyScrubbing
  * still drives them; this decorator only cleans leaked harmony tokens (see {@link HarmonyScrubbingChatModel}). A {@link BeanPostProcessor} is used (rather than a second
  * {@code @Primary} bean) so the decorated model REPLACES the raw one in the context, leaving exactly one {@code ChatModel} for {@code Collection<ChatModel>} injection points.
  */
+@Lazy
 @Component
 @Conditional(HyperionEnabled.class)
 public class HyperionChatModelConfiguration implements BeanPostProcessor {

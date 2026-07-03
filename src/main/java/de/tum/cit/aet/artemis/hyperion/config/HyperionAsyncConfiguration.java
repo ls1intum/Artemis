@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentLoopRunner;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 
 /**
  * Wiring for Hyperion's agentic generation infrastructure: the dedicated generation executor and the task-agnostic {@link AgentLoopRunner} bean.

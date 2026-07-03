@@ -27,10 +27,10 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.exercisegeneration.agent.AgentSystemPromptService;
-import de.tum.cit.aet.artemis.hyperion.exercisegeneration.orchestration.ExerciseGenerationJobService;
-import de.tum.cit.aet.artemis.hyperion.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.ExerciseGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseAdaptationRevertService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -150,7 +150,8 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * POST programming-exercises/{exerciseId}/generate-exercise/revert-adaptation : reverts the most recent in-place adaptation of the exercise, resetting its template/solution/tests
+     * POST programming-exercises/{exerciseId}/generate-exercise/revert-adaptation : reverts the most recent in-place adaptation of the exercise, resetting its
+     * template/solution/tests
      * repositories back to the commit state captured at the start of that adaptation run. The deliberately simple alternative to a staging workflow.
      *
      * @param exerciseId the programming exercise id
@@ -166,7 +167,8 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * For an {@link GenerationMode#ADAPT} run, folds the instructor's selected review-comment threads into the brief so the agent addresses exactly that feedback; a GENERATE run or
+     * For an {@link GenerationMode#ADAPT} run, folds the instructor's selected review-comment threads into the brief so the agent addresses exactly that feedback; a GENERATE run
+     * or
      * an adapt with no selected/active threads returns the prompt unchanged.
      *
      * @param basePrompt the resolved brief

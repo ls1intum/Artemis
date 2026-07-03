@@ -24,8 +24,10 @@ Java-only slice; architecture generalized (each future language = one profile ar
 - **Keep the ToolCallingManager loop driver** (turn budget, cancel, streaming, compaction, failure breaker).
 - **Differential oracle = crown jewel; re-author faithfully** (same fail-closed gates, same production
   parsers `TestResultXmlParser` + SCA `ReportParser`). Lock every gate with committed NON-LLM fixture tests.
-- **Clean sub-packaging:** `hyperion/exercisegeneration/{agent,verification,critic,orchestration,persistence,profile}`
-  + `buildagent/service` for the sandbox primitive/relay.
+- **Clean sub-packaging:** `hyperion/service/exercisegeneration/{agent,verification,critic,orchestration,persistence,profile}`
+  + `buildagent/service` for the sandbox primitive/relay. (Nested under `service/` so the ArchUnit
+  "`@Service` classes must live in a `..service..` package" rule holds — the top-level
+  `hyperion/exercisegeneration` form violated it.)
 - **Adapt-with-feedback is 70% pre-wired on develop** (review-comment `selectedFeedbackThreadIds` store,
   per-thread toggle, endpoint field, server renderer). Repoint it from the legacy loop to the agentic
   engine. **Explicit `mode` (GENERATE|ADAPT)**, not a heuristic. One endpoint, one engine, one job model;
