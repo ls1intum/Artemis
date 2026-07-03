@@ -81,13 +81,13 @@ export class FeedbackComponent implements OnInit, OnChanges {
     // Read-only signal inputs. Supplied either via template bindings ([result], [participation], …) or, when the
     // component is opened through DialogService, via `inputValues` — PrimeNG forwards those with componentRef.setInput,
     // so the same signal inputs serve both paths and no imperative "value + getter/setter" facade is needed.
-    readonly result = input<Result>(undefined!);
-    readonly participation = input<Participation>(undefined!);
+    readonly result = input.required<Result>();
+    readonly participation = input.required<Participation>();
     /**
      * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
-     * Used to show only feedback related to a specific task.
+     * Used to show only feedback related to a specific task. Omitted (undefined) in the standalone feedback view.
      */
-    readonly feedbackFilter = input<number[]>(undefined!);
+    readonly feedbackFilter = input<number[] | undefined>(undefined);
     /** Translate key for an HTML message that is displayed at the top of the result details, if defined. */
     readonly messageKey = input<string | undefined>(undefined);
     readonly latestDueDate = input<dayjs.Dayjs | undefined>(undefined);

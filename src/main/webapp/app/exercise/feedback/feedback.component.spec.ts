@@ -239,7 +239,8 @@ describe('FeedbackComponent', () => {
 
     it('should set the exercise from the participation if available', () => {
         fixture.componentRef.setInput('exercise', undefined);
-        comp.participation().exercise = exercise;
+        // Provide the exercise via the participation input (new object reference so the computed re-evaluates).
+        fixture.componentRef.setInput('participation', { ...comp.participation(), exercise });
 
         comp.ngOnInit();
 
@@ -258,7 +259,9 @@ describe('FeedbackComponent', () => {
 
     it('should set the exercise type from a programming participation if not available otherwise', () => {
         fixture.componentRef.setInput('exercise', undefined);
-        comp.result().submission!.participation!.type = ParticipationType.PROGRAMMING;
+        // exerciseType() reads the participation input directly, so set a programming participation (without an
+        // exercise) to exercise the fallback branch.
+        fixture.componentRef.setInput('participation', { id: 55, type: ParticipationType.PROGRAMMING } as ProgrammingExerciseStudentParticipation);
 
         comp.ngOnInit();
 
