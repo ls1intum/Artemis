@@ -79,17 +79,17 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     private showTestDetails = false;
 
-    readonly exerciseInput = input<Exercise | undefined>(undefined, { alias: 'exercise' });
-    readonly resultInput = input<Result>(undefined!, { alias: 'result' });
-    readonly participationInput = input<Participation>(undefined!, { alias: 'participation' });
-    readonly feedbackFilterInput = input<number[]>(undefined!, { alias: 'feedbackFilter' });
-    readonly showScoreChartInput = input(false, { alias: 'showScoreChart' });
-    readonly exerciseTypeInput = input<ExerciseType>(undefined!, { alias: 'exerciseType' });
-    readonly messageKeyInput = input<string | undefined>(undefined, { alias: 'messageKey' });
-    readonly showMissingAutomaticFeedbackInformationInput = input(false, { alias: 'showMissingAutomaticFeedbackInformation' });
-    readonly latestDueDateInput = input<dayjs.Dayjs | undefined>(undefined, { alias: 'latestDueDate' });
-    readonly taskNameInput = input<string | undefined>(undefined, { alias: 'taskName' });
-    readonly numberOfNotExecutedTestsInput = input<number | undefined>(undefined, { alias: 'numberOfNotExecutedTests' });
+    readonly exerciseInput = input<Exercise | undefined>(undefined, { alias: 'exercise' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly resultInput = input<Result>(undefined!, { alias: 'result' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly participationInput = input<Participation>(undefined!, { alias: 'participation' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly feedbackFilterInput = input<number[]>(undefined!, { alias: 'feedbackFilter' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly showScoreChartInput = input(false, { alias: 'showScoreChart' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly exerciseTypeInput = input<ExerciseType>(undefined!, { alias: 'exerciseType' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly messageKeyInput = input<string | undefined>(undefined, { alias: 'messageKey' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly showMissingAutomaticFeedbackInformationInput = input(false, { alias: 'showMissingAutomaticFeedbackInformation' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly latestDueDateInput = input<dayjs.Dayjs | undefined>(undefined, { alias: 'latestDueDate' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly taskNameInput = input<string | undefined>(undefined, { alias: 'taskName' }); // eslint-disable-line @angular-eslint/no-input-rename
+    readonly numberOfNotExecutedTestsInput = input<number | undefined>(undefined, { alias: 'numberOfNotExecutedTests' }); // eslint-disable-line @angular-eslint/no-input-rename
 
     private exerciseValue?: Exercise;
     private resultValue?: Result;

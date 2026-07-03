@@ -82,9 +82,9 @@ export class CourseNotificationComponent {
                 // markdown chunk fails to load, fall back to the raw value rather than leak an unhandled rejection.
                 let sanitized: string;
                 try {
-                    sanitized = await renderPostingMarkdownToHtml(value!.toString());
+                    sanitized = await renderPostingMarkdownToHtml(value.toString());
                 } catch {
-                    sanitized = value!.toString();
+                    sanitized = value.toString();
                 }
                 let previous: string;
                 do {
