@@ -39,7 +39,7 @@
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-exercise>
-            <tr cdkDrag [cdkDragData]="exercise" [cdkDragDisabled]="!showDragHandle()">
+            <tr [attr.id]="'exercise-card-' + exercise.id" cdkDrag [cdkDragData]="exercise" [cdkDragDisabled]="!showDragHandle()">
                 <div *cdkDragPreview class="exercise-drag-preview">
                     @if (showTypeIcon()) {
                         <fa-icon [icon]="icon(exercise)" [fixedWidth]="true" class="text-muted me-1" />
@@ -94,7 +94,7 @@
                         }
                     </div>
                 </td>
-                <td class="text-nowrap">
+                <td class="text-nowrap col-points">
                     <div class="d-flex flex-column">
                         <span>
                             {{ exercise.maxPoints }}pts

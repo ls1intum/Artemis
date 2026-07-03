@@ -39,6 +39,7 @@
         @case ('delete') {
             <button
                 jhiDeleteButton
+                [attr.data-testid]="'exercise-action-' + action.id"
                 [renderButtonText]="false"
                 [renderButtonStyle]="false"
                 [entityTitle]="exercise().title!"
@@ -57,12 +58,20 @@
             </button>
         }
         @case ('button') {
-            <button type="button" class="btn {{ action.styleClass }}" [class.text-start]="inMenu" [class.w-100]="inMenu" (click)="runAction(action)">
+            <button
+                type="button"
+                [attr.data-testid]="'exercise-action-' + action.id"
+                class="btn {{ action.styleClass }}"
+                [class.text-start]="inMenu"
+                [class.w-100]="inMenu"
+                (click)="runAction(action)"
+            >
                 <fa-icon [icon]="action.icon" /><span class="ms-1">{{ action.labelKey | artemisTranslate }}</span>
             </button>
         }
         @default {
             <a
+                [attr.data-testid]="'exercise-action-' + action.id"
                 [routerLink]="action.disabled ? null : action.link"
                 class="btn {{ action.styleClass }}"
                 [class.disabled]="action.disabled"
