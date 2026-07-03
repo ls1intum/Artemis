@@ -6,12 +6,14 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.ExpectedCount;
 
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -32,43 +34,55 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
     private SlideTestRepository slideRepository;
 
     @Autowired
-    private CourseUtilService courseUtilService;
+    private LectureUtilService lectureUtilService;
 
     @Autowired
-    private LectureUtilService lectureUtilService;
+    private IrisRequestMockProvider irisRequestMockProvider;
 
     private Course testCourse;
 
-    private Exercise testExercise;
+    private AttachmentVideoUnit testAttachmentVideoUnit;
+
+    private Slide testSlide;
 
     @BeforeEach
     void initTestCase() {
-        // Create a test exercise
+        irisRequestMockProvider.enableMockingOfRequests();
+
         var lecture = lectureUtilService.createCourseWithLecture(true);
         testCourse = lecture.getCourse();
-        testExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(7), ZonedDateTime.now().plusDays(8), testCourse);
+        testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
+        testSlide = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).getFirst();
+    }
 
-        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
-        List<Slide> testSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
-        testSlides.getFirst().setHidden(testExercise.getDueDate());
-        slideRepository.save(testSlides.getFirst());
+    @AfterEach
+    void tearDown() throws Exception {
+        irisRequestMockProvider.reset();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testHandleDueDateChange_withNewDueDate() {
-        Exercise originalExercise = testExercise;
-        ZonedDateTime newDueDate = testExercise.getDueDate().plusDays(3);
-        testExercise.setDueDate(newDueDate);
-        Exercise updatedTextExercise = exerciseRepository.save(testExercise);
+        ZonedDateTime originalDueDate = ZonedDateTime.now().plusDays(7);
+        Exercise originalExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), originalDueDate, ZonedDateTime.now().plusDays(8), testCourse);
+        originalExercise = exerciseRepository.save(originalExercise);
+        testSlide.setExercise(originalExercise);
+        testSlide.setHidden(originalDueDate);
+        slideRepository.save(testSlide);
 
+        ZonedDateTime newDueDate = originalDueDate.plusDays(3);
+        Exercise updatedTextExercise = TextExerciseFactory.generateTextExercise(originalExercise.getReleaseDate(), newDueDate, originalExercise.getAssessmentDueDate(), testCourse);
+        updatedTextExercise.setId(originalExercise.getId());
+        updatedTextExercise.setTitle(originalExercise.getTitle());
+        updatedTextExercise = exerciseRepository.save(updatedTextExercise);
+
+        expectVisibilityWebhook(newDueDate);
         slideService.handleDueDateChange(originalExercise, updatedTextExercise);
 
-        // Verify the slides were updated with the new due date
-        List<Slide> updatedSlides = slideRepository.findByExerciseId(testExercise.getId());
-        for (Slide slide : updatedSlides) {
-            assertThat(slide.getHidden()).isEqualTo(newDueDate);
-        }
+        List<Slide> updatedSlides = slideRepository.findByExerciseId(originalExercise.getId());
+        assertThat(updatedSlides).hasSize(1);
+        assertThat(updatedSlides.getFirst().getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(newDueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        irisRequestMockProvider.verify();
     }
 
     @Test
@@ -86,16 +100,15 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         updatedExercise = exerciseRepository.save(updatedExercise);
 
         // Create slides linked to this exercise
-        Slide slide = slideRepository.findAll().getFirst();
-        slide.setExercise(originalExercise);
-        slideRepository.save(slide);
+        testSlide.setExercise(originalExercise);
+        Slide savedSlide = slideRepository.save(testSlide);
 
-        // Handle due date change
+        expectVisibilityWebhook(newDueDate);
         slideService.handleDueDateChange(originalExercise, updatedExercise);
 
-        // Verify the slide was updated
-        Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
+        Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
         assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(newDueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        irisRequestMockProvider.verify();
     }
 
     @Test
@@ -113,17 +126,23 @@ class SlideServiceIntegrationTest extends AbstractSpringIntegrationIndependentBa
         updatedExercise.setTitle(originalExercise.getTitle());
         updatedExercise = exerciseRepository.save(updatedExercise);
 
-        // Create slide with original due date as hidden date
-        Slide slide = slideRepository.findAll().getFirst();
-        slide.setExercise(originalExercise); // Using persisted Exercise
-        slide.setHidden(dueDate);
-        Slide savedSlide = slideRepository.save(slide);
+        testSlide.setExercise(originalExercise);
+        testSlide.setHidden(dueDate);
+        Slide savedSlide = slideRepository.save(testSlide);
 
-        // Handle due date change (which shouldn't change anything)
         slideService.handleDueDateChange(originalExercise, updatedExercise);
 
-        // Verify the slide hasn't changed
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
         assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(dueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
+    }
+
+    private void expectVisibilityWebhook(ZonedDateTime expectedHiddenUntil) {
+        irisRequestMockProvider.mockLectureUnitVisibilityWebhookRunResponse(dto -> {
+            assertThat(dto.lectureUnitId()).isEqualTo(testAttachmentVideoUnit.getId());
+            assertThat(dto.slides()).anySatisfy(slide -> {
+                assertThat(slide.slideNumber()).isEqualTo(testSlide.getSlideNumber());
+                assertThat(slide.hiddenUntil().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(expectedHiddenUntil.toInstant().truncatedTo(ChronoUnit.SECONDS));
+            });
+        }, ExpectedCount.once());
     }
 }

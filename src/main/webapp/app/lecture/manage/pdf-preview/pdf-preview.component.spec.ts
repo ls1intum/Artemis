@@ -584,6 +584,7 @@ describe('PdfPreviewComponent', () => {
         it('should finish saving a video unit without a student version when no pages are hidden', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+            component.isFileChanged.set(true);
 
             await component.updateAttachmentWithFile();
 
@@ -623,6 +624,7 @@ describe('PdfPreviewComponent', () => {
         it('should surface an error when the video unit update service call fails', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+            component.isFileChanged.set(true);
             attachmentVideoUnitService.update.mockReturnValueOnce(throwError(() => new Error('unit update failed')));
 
             await component.updateAttachmentWithFile();
@@ -635,6 +637,7 @@ describe('PdfPreviewComponent', () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
             component.hidePages({ slideId: component.pageOrder()[0].slideId, date: dayjs().add(1, 'day'), exerciseId: undefined });
+            component.isFileChanged.set(true);
             attachmentVideoUnitService.updateStudentVersion.mockReturnValueOnce(throwError(() => new Error('student failed')));
 
             await component.updateAttachmentWithFile();
@@ -647,6 +650,7 @@ describe('PdfPreviewComponent', () => {
         it('should send the final page order (with slideId/order) to the video unit update endpoint', async () => {
             await loadOriginal(2);
             component.attachmentVideoUnit.set({ id: 9, lecture: { id: 4 }, attachment: { id: 11, version: 1 } } as any);
+            component.isFileChanged.set(true);
 
             await component.updateAttachmentWithFile();
 
