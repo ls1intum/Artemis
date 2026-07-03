@@ -40,9 +40,10 @@ jobs:
           name: nightly-lti-reports-moodle
           path: build/reports/tests/test
       - name: Open a tracking issue on failure
-        # Only on the scheduled nightly: manual workflow_dispatch runs are actively watched by whoever
-        # triggered them, so they should not create tracking issues.
-        if: failure() && github.event_name == 'schedule'
+        # Runs on any failed run. On the nightly schedule this is the primary signal (nobody is watching);
+        # on a manual workflow_dispatch it also lets us verify the notification works. Deduplicated by title,
+        # so repeated failures update one open issue instead of piling up.
+        if: failure()
         uses: ./.github/actions/open-failure-issue
         with:
           title: Nightly LTI interop failed (Moodle)
