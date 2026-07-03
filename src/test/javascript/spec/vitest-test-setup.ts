@@ -105,7 +105,7 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Ensure Element.prototype.matches exists (used by PrimeNG/PrimeUIX utils)
 if (typeof Element.prototype.matches === 'undefined') {
-    Element.prototype.matches = function (selector: string): boolean {
+    Element.prototype.matches = function (this: Element, selector: string): boolean {
         const matches = (this.ownerDocument || document).querySelectorAll(selector);
         let i = matches.length;
         while (--i >= 0 && matches.item(i) !== this) {}
