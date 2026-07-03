@@ -117,7 +117,9 @@ public class PyrisPipelineService {
         statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
 
         var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant, supportLevel), List.of(preparing.done()));
+        long dtoBuildStart = System.nanoTime();
         var pipelineDto = dtoMapper.apply(baseDto);
+        log.info("Pyris {} pipeline DTO built in {} ms", name, (System.nanoTime() - dtoBuildStart) / 1_000_000);
 
         try {
             // Send a status update that preparation is done and pipeline execution is starting
@@ -125,7 +127,9 @@ public class PyrisPipelineService {
 
             try {
                 // Execute the pipeline using the connector service
+                long requestStart = System.nanoTime();
                 pyrisConnectorService.executePipeline(name, pipelineDto, event);
+                log.info("Pyris {} pipeline run request accepted in {} ms", name, (System.nanoTime() - requestStart) / 1_000_000);
             }
             catch (PyrisConnectorException | IrisException e) {
                 log.error("Failed to execute {} pipeline", name, e);
