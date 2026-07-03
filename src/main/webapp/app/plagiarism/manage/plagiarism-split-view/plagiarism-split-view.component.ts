@@ -82,7 +82,7 @@ export class PlagiarismSplitViewComponent implements OnChanges, OnInit, OnDestro
      * The gutter centre sits at the first panel's width plus half the gutter size, measured from the splitter's left.
      */
     private observeGutterPosition(): void {
-        const firstPanel = this.hostElement.nativeElement.querySelector<HTMLElement>('.p-splitterpanel');
+        const firstPanel = this.hostElement.nativeElement.querySelector<HTMLElement>('.p-splitter-panel');
         if (!firstPanel || typeof ResizeObserver === 'undefined') {
             return;
         }
