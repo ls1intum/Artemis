@@ -13,9 +13,9 @@ export class Credentials {
 }
 
 export interface IAuthServerProvider {
-    login: (credentials: Credentials) => Observable<any>;
-    loginSAML2: (rememberMe: boolean) => Observable<any>;
-    logout: () => Observable<any>;
+    login: (credentials: Credentials) => Observable<object>;
+    loginSAML2: (rememberMe: boolean) => Observable<object>;
+    logout: () => Observable<object>;
     clearCaches: () => Observable<undefined>;
 }
 

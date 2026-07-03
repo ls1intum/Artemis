@@ -9,6 +9,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { parseJson } from 'app/foundation/util/json.util';
 import { findParamInRouteHierarchy } from 'app/foundation/util/navigation.utils';
 import { booleanLabel } from 'app/exercise/version-history/shared/version-history.utils';
 import dayjs from 'dayjs/esm';
@@ -344,7 +345,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             return undefined;
         }
         try {
-            return JSON.stringify(JSON.parse(raw), undefined, 2);
+            return JSON.stringify(parseJson(raw), undefined, 2);
         } catch {
             return raw;
         }

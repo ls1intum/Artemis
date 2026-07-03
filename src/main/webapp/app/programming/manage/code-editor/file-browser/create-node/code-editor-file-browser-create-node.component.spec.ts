@@ -42,7 +42,7 @@ describe('CodeEditorFileBrowserCreateNodeComponent', () => {
             const emitSpy = vi.spyOn(comp.onCreateFile, 'emit');
             const event = { target: { value: 'newFile.ts' } };
 
-            comp.createFile(event);
+            comp.createFile(event as unknown as Event);
 
             expect(emitSpy).toHaveBeenCalledWith('newFile.ts');
         });
@@ -52,7 +52,7 @@ describe('CodeEditorFileBrowserCreateNodeComponent', () => {
             const createSpy = vi.spyOn(comp.onCreateFile, 'emit');
             const event = { target: { value: '' } };
 
-            comp.createFile(event);
+            comp.createFile(event as unknown as Event);
 
             expect(clearSpy).toHaveBeenCalledWith(event);
             expect(createSpy).not.toHaveBeenCalled();
@@ -62,7 +62,7 @@ describe('CodeEditorFileBrowserCreateNodeComponent', () => {
             const clearSpy = vi.spyOn(comp.onClearCreatingFile, 'emit');
             const event = { target: { value: undefined } };
 
-            comp.createFile(event);
+            comp.createFile(event as unknown as Event);
 
             expect(clearSpy).toHaveBeenCalled();
         });

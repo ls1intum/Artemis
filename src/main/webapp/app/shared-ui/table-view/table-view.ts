@@ -344,7 +344,7 @@ export class TableViewComponent<T> {
         this.handleLazyLoad({
             first: 0,
             rows: this.effectivePageSize(),
-            sortField: dt.sortField as string | undefined,
+            sortField: dt.sortField,
             sortOrder: dt.sortOrder ?? undefined,
             filters: {},
             globalFilter: null,
@@ -367,7 +367,7 @@ export class TableViewComponent<T> {
         this.handleLazyLoad({
             first: 0,
             rows: this.effectivePageSize(),
-            sortField: dt.sortField as string | undefined,
+            sortField: dt.sortField,
             sortOrder: dt.sortOrder ?? undefined,
             filters: dt.filters ?? {},
             globalFilter: (dt.filters?.['global'] as { value?: string } | undefined)?.value ?? null,

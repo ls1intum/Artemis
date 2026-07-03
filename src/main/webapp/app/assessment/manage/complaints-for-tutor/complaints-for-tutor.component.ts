@@ -61,7 +61,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     readonly maxComplaintResponseTextLimit = signal<number>(undefined!);
 
     ngOnInit(): void {
-        this.course = getCourseFromExercise(this.exercise()!);
+        this.course = getCourseFromExercise(this.exercise());
 
         this.maxComplaintResponseTextLimit.set(this.course?.maxComplaintResponseTextLimit ?? 0);
         if (this.exercise()?.exerciseGroup) {
@@ -110,8 +110,8 @@ export class ComplaintsForTutorComponent implements OnInit {
                 next: (response) => {
                     this.complaintResponse = response.body!;
                     this.complaintResponse.complaint = this.complaint();
-                    this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
-                    this.complaint.set(this.complaintResponse.complaint!);
+                    this.complaintResponse.complaint.complaintResponse = this.complaintResponse;
+                    this.complaint.set(this.complaintResponse.complaint);
                     this.lockedByCurrentUser.set(true);
                     this.showLockDuration.set(true);
                     this.alertService.success('artemisApp.locks.acquired');
@@ -131,7 +131,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             // update the lock
             this.isLoading.set(true);
             this.complaintResponseService
-                .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint().id!)
+                .refreshLockOrResolveComplaint(this.complaintResponseUpdate, this.complaint().id)
                 .pipe(
                     finalize(() => {
                         this.isLoading.set(false);
@@ -141,8 +141,8 @@ export class ComplaintsForTutorComponent implements OnInit {
                     next: (response) => {
                         this.complaintResponse = response.body!;
                         this.complaintResponse.complaint = this.complaint();
-                        this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
-                        this.complaint.set(this.complaintResponse.complaint!);
+                        this.complaintResponse.complaint.complaintResponse = this.complaintResponse;
+                        this.complaint.set(this.complaintResponse.complaint);
                         this.lockedByCurrentUser.set(true);
                         this.alertService.success('artemisApp.locks.acquired');
                     },
@@ -188,7 +188,7 @@ export class ComplaintsForTutorComponent implements OnInit {
 
         this.complaintResponse.complaint = this.complaint();
         this.complaintResponse.complaint.complaintResponse = undefined; // breaking circular structure
-        this.complaintResponse.complaint!.accepted = acceptComplaint;
+        this.complaintResponse.complaint.accepted = acceptComplaint;
 
         if (acceptComplaint && this.complaint().complaintType === ComplaintType.COMPLAINT) {
             // Tell the parent (assessment) component to update the corresponding result if the complaint was accepted.
@@ -235,9 +235,9 @@ export class ComplaintsForTutorComponent implements OnInit {
                     }
                     this.complaintResponse = response.body!;
                     this.complaintResponse.complaint = this.complaint();
-                    this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
-                    this.complaintResponse.complaint!.accepted = this.complaintResponseUpdate.complaintIsAccepted;
-                    this.complaint.set(this.complaintResponse.complaint!);
+                    this.complaintResponse.complaint.complaintResponse = this.complaintResponse;
+                    this.complaintResponse.complaint.accepted = this.complaintResponseUpdate.complaintIsAccepted;
+                    this.complaint.set(this.complaintResponse.complaint);
                     this.isLockedForLoggedInUser.set(false);
                     this.showLockDuration.set(false);
                     this.lockedByCurrentUser.set(false);

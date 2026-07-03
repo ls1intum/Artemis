@@ -13,6 +13,8 @@ Your task is to generate the boilerplate code for each test file based on the te
 **Current Repository Structure:**
 {{repositoryStructure}}
 
+If the file structure includes `deletedFiles`, preserve those obsolete paths for the final response. `.gitkeep` placeholder files may be removed only when they are explicitly obsolete or selected feedback requests their removal.
+
 **Build Environment Context:**
 {{buildEnvironmentContext}}
 
@@ -29,6 +31,7 @@ If the selected feedback payload contains threads, treat those threads as reques
 2. Do not reference invented helpers such as `TestDataFactory`, `TestUtils`, fixture classes, builders, or custom assertions unless those helpers are already present in the context or are explicitly generated in the output.
 3. Match the actual package structure and constructor signatures of the production code exactly.
 4. If a helper is not present, generate headers that construct test data inline instead of depending on a missing abstraction.
+5. For Java, never add `package test;` merely because the file path is under `/test/`. If the production class has no `package ...;` declaration, the generated test class must also have no package declaration so it can reference the default-package production class.
 
 If both the consistency issues section and the selected feedback threads section above are empty or None, skip the following steps. Otherwise, proceed.
 Treat the issues above as hard constraints. Be critical and explicit:
@@ -46,4 +49,6 @@ First, think step-by-step for each test file.
 4.  **Write docstrings:** Each test method should have a clear docstring explaining what it tests.
 5.  **Leave bodies empty:** The test method bodies should be empty.
 
-After your analysis, provide the result as a JSON object. The JSON object must contain a single key "files" which is an array of objects, where each object has a "path" and "content" key.
+After your analysis, provide the result as a JSON object with:
+- "files": an array of objects, each with "path" and "content" keys.
+- "deletedFiles": an array of obsolete test-source paths (and any explicitly obsolete `.gitkeep` placeholders). Use an empty array if none.

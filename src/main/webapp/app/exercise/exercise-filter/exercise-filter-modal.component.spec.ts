@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseCategoryFilterOption } from 'app/foundation/types/exercise-filter';
 import { MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { RangeFilter } from 'app/foundation/types/exercise-filter';
@@ -182,7 +183,7 @@ describe('ExerciseFilterModalComponent', () => {
                 item: undefined,
                 preventDefault: vi.fn(),
                 stopPropagation: vi.fn(),
-            };
+            } as unknown as NgbTypeaheadSelectItemEvent<ExerciseCategoryFilterOption>;
             component.onSelectItem(event);
             fixture.changeDetectorRef.detectChanges();
 

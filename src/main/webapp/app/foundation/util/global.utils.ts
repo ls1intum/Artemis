@@ -46,12 +46,13 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse, di
  *
  * @param error which was received
  */
-export function isErrorAlert(error: any) {
-    if (!error) {
+export function isErrorAlert(error: unknown): boolean {
+    if (!error || typeof error !== 'object') {
         return false;
     }
 
-    return !!error.error?.errorKey;
+    const errorBody = (error as { error?: { errorKey?: unknown } }).error;
+    return !!errorBody?.errorKey;
 }
 
 export function getCurrentLocaleSignal(translateService: TranslateService): Signal<string> {

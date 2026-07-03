@@ -745,7 +745,7 @@ export class ExamStudentsComponent implements OnDestroy {
         this.exercisePreparationPercentage.set(newStatus.overall ? Math.round((processedExams / newStatus.overall) * 100) : 100);
 
         if (exPrepRunning && processedExams) {
-            const passedSeconds = dayjs().diff(newStatus!.startedAt!, 's');
+            const passedSeconds = dayjs().diff(newStatus.startedAt, 's');
             const remainingSeconds = (passedSeconds / processedExams) * remainingExams;
 
             const h = Math.floor(remainingSeconds / 60 / 60);
