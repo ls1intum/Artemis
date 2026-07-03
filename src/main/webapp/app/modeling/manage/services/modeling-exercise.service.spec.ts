@@ -95,6 +95,26 @@ describe('ModelingExercise Service', () => {
         req.flush(returnedFromService);
     });
 
+    it('should send a flat course-exercise create body carrying courseId and no exerciseGroupId', () => {
+        const course = { id: 42 } as unknown as ModelingExercise['course'];
+        const exercise = new ModelingExercise(UMLDiagramType.ComponentDiagram, course, undefined);
+        service.create(exercise).pipe(take(1)).subscribe();
+        const req = httpMock.expectOne({ method: 'POST' });
+        expect(req.request.body.courseId).toBe(42);
+        expect(req.request.body.exerciseGroupId).toBeUndefined();
+        req.flush({ id: 1, ...exercise });
+    });
+
+    it('should send a flat exam-exercise create body carrying exerciseGroupId and no courseId', () => {
+        const exerciseGroup = { id: 7, exam: { id: 3, course: { id: 42 } } } as unknown as ModelingExercise['exerciseGroup'];
+        const exercise = new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, exerciseGroup);
+        service.create(exercise).pipe(take(1)).subscribe();
+        const req = httpMock.expectOne({ method: 'POST' });
+        expect(req.request.body.exerciseGroupId).toBe(7);
+        expect(req.request.body.courseId).toBeUndefined();
+        req.flush({ id: 1, ...exercise });
+    });
+
     it('should delete a ModelingExercise', () => {
         service.delete(123).subscribe((resp) => expect(resp.ok).toBe(true));
 

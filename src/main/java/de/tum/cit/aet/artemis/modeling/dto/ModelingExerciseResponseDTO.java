@@ -1,0 +1,128 @@
+package de.tum.cit.aet.artemis.modeling.dto;
+
+import java.io.Serializable;
+import java.time.ZonedDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.hibernate.Hibernate;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForQuizExerciseDTO;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
+
+/**
+ * Read DTO for a single {@link ModelingExercise}.
+ * Dumb DTO: contains only scalars, enums, date/time values, and nested DTOs.
+ * Lazy associations are guarded with {@link Hibernate#isInitialized(Object)} so uninitialized proxies map to {@code null}/empty.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ModelingExerciseResponseDTO(Long id, String title, String shortName, String type, ExerciseType exerciseType, DifficultyLevel difficulty, ExerciseMode mode,
+        Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
+        ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, AssessmentType assessmentType, boolean secondCorrectionEnabled,
+        Boolean presentationScoreEnabled, String problemStatement, DiagramType diagramType, String exampleSolutionModel, String exampleSolutionExplanation,
+        String gradingInstructions, Set<String> categories, String channelName, String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments,
+        boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores, CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId,
+        ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed, Set<ModelingExampleSubmissionDTO> exampleSubmissions, Boolean teamMode,
+        ModelingExerciseExamGroupDTO exerciseGroup) implements Serializable {
+
+    /**
+     * Creates a {@link ModelingExerciseResponseDTO} from the given {@link ModelingExercise}.
+     *
+     * @param exercise the modeling exercise to convert (may be {@code null})
+     * @return the corresponding DTO, or {@code null} if the input was {@code null}
+     */
+    public static ModelingExerciseResponseDTO of(ModelingExercise exercise) {
+        if (exercise == null) {
+            return null;
+        }
+
+        Long courseId = null;
+        Double courseAccuracyOfScores = null;
+        // Light nested course projection (id, title, group names, complaint config, ...) so the unchanged client can read
+        // exercise.course for display links and to compute access rights (account.service reads the course group names).
+        // Only populated for course exercises, mirroring the original entity where exercise.course was set for course
+        // exercises only; exam exercises resolve their course client-side via the exercise group.
+        CourseForQuizExerciseDTO course = null;
+        Long exerciseGroupId = null;
+        Long examId = null;
+        ZonedDateTime examPublishResultsDate = null;
+        // The student modeling editor / exam result summary detect exam mode from the presence of exercise.exerciseGroup
+        // and read exercise.exerciseGroup.exam.publishResultsDate; carry that nested shape for exam exercises.
+        ModelingExerciseExamGroupDTO exerciseGroup = null;
+
+        if (exercise.isExamExercise()) {
+            exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
+            exerciseGroup = ModelingExerciseExamGroupDTO.of(exercise.getExerciseGroup());
+            Exam exam = exercise.getExam();
+            if (exam != null) {
+                examId = exam.getId();
+                examPublishResultsDate = exam.getPublishResultsDate();
+            }
+        }
+        else {
+            Course courseEntity = exercise.getCourseViaExerciseGroupOrCourseMember();
+            if (courseEntity != null) {
+                courseId = courseEntity.getId();
+                courseAccuracyOfScores = courseEntity.getAccuracyOfScores() != null ? courseEntity.getAccuracyOfScores().doubleValue() : null;
+                course = CourseForQuizExerciseDTO.of(courseEntity);
+            }
+        }
+
+        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
+        if (criteria != null && Hibernate.isInitialized(criteria)) {
+            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        }
+        else {
+            gradingCriterionDTOs = null;
+        }
+
+        Set<CompetencyLinkDTO> competencyLinkDTOs;
+        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
+        if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
+            competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
+        }
+        else {
+            competencyLinkDTOs = null;
+        }
+
+        TeamAssignmentConfigDTO teamAssignmentConfigDTO = Hibernate.isInitialized(exercise.getTeamAssignmentConfig())
+                ? TeamAssignmentConfigDTO.of(exercise.getTeamAssignmentConfig())
+                : null;
+
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfigDTO = Hibernate.isInitialized(exercise.getPlagiarismDetectionConfig())
+                ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
+                : null;
+
+        // Only populated on the single-exercise detail endpoint, which explicitly loads example submissions; null/omitted elsewhere.
+        Set<ModelingExampleSubmissionDTO> exampleSubmissionDTOs = Hibernate.isInitialized(exercise.getExampleSubmissions())
+                ? exercise.getExampleSubmissions().stream().map(ModelingExampleSubmissionDTO::of).collect(Collectors.toSet())
+                : null;
+
+        return new ModelingExerciseResponseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(),
+                exercise.getDifficulty(), exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(),
+                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
+                exercise.getSecondCorrectionEnabled(), exercise.getPresentationScoreEnabled(), exercise.getProblemStatement(), exercise.getDiagramType(),
+                exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), exercise.getGradingInstructions(), exercise.getCategories(),
+                exercise.getChannelName(), exercise.getFeedbackSuggestionModule(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
+                courseId, courseAccuracyOfScores, course, exerciseGroupId, examId, examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs,
+                plagiarismDetectionConfigDTO, exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup);
+    }
+}

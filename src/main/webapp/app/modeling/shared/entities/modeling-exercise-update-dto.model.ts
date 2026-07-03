@@ -1,12 +1,19 @@
-import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { CompetencyLinkDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+import { UMLDiagramType } from '@tumaet/apollon';
+
+/** Minimal team assignment configuration sent to the server (matches the server-side TeamAssignmentConfigDTO). */
+export interface TeamAssignmentConfigDTO {
+    minTeamSize?: number;
+    maxTeamSize?: number;
+}
 
 export interface UpdateModelingExerciseDTO {
-    id: number;
+    id?: number;
 
     title?: string;
     channelName?: string;
@@ -29,11 +36,16 @@ export interface UpdateModelingExerciseDTO {
     assessmentDueDate?: string;
     exampleSolutionPublicationDate?: string;
 
+    diagramType?: UMLDiagramType;
     exampleSolutionModel?: string;
     exampleSolutionExplanation?: string;
 
     courseId?: number;
     exerciseGroupId?: number;
+
+    // Mode and team configuration (only honored at creation time on the server)
+    mode?: ExerciseMode;
+    teamAssignmentConfig?: TeamAssignmentConfigDTO;
 
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
@@ -42,13 +54,26 @@ export interface UpdateModelingExerciseDTO {
 }
 
 /**
+ * DTO for importing modeling exercises. Superset of {@link UpdateModelingExerciseDTO} carrying the additional
+ * configuration needed during import. Matches the server-side ImportModelingExerciseDTO record.
+ */
+export interface ImportModelingExerciseDTO extends UpdateModelingExerciseDTO {
+    plagiarismDetectionConfig?: ModelingExercise['plagiarismDetectionConfig'];
+}
+
+/**
  * Convert ModelingExercise → Update DTO.
  */
 export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise): UpdateModelingExerciseDTO {
     modelingExercise = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(modelingExercise);
     const categories = ExerciseService.stringifyExerciseDTOCategories(modelingExercise);
+    // Determine courseId and exerciseGroupId - only one should be set (mutually exclusive).
+    // For course exercises: set courseId, leave exerciseGroupId undefined.
+    // For exam exercises: set exerciseGroupId, leave courseId undefined (checkCourseAndExerciseGroupExclusivity rejects both).
+    const exerciseGroupId = modelingExercise.exerciseGroup?.id;
+    const courseId = exerciseGroupId ? undefined : (modelingExercise.course?.id ?? modelingExercise.exerciseGroup?.exam?.course?.id);
     return {
-        id: modelingExercise.id!,
+        id: modelingExercise.id,
         title: modelingExercise.title,
         channelName: modelingExercise.channelName,
         shortName: modelingExercise.shortName,
@@ -67,10 +92,15 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         dueDate: convertDateFromClient(modelingExercise.dueDate),
         assessmentDueDate: convertDateFromClient(modelingExercise.assessmentDueDate),
         exampleSolutionPublicationDate: convertDateFromClient(modelingExercise.exampleSolutionPublicationDate),
+        diagramType: modelingExercise.diagramType,
         exampleSolutionModel: modelingExercise.exampleSolutionModel,
         exampleSolutionExplanation: modelingExercise.exampleSolutionExplanation,
-        courseId: modelingExercise.course?.id ?? modelingExercise.exerciseGroup?.exam?.course?.id,
-        exerciseGroupId: modelingExercise.exerciseGroup?.id,
+        courseId,
+        exerciseGroupId,
+        mode: modelingExercise.mode,
+        teamAssignmentConfig: modelingExercise.teamAssignmentConfig
+            ? { minTeamSize: modelingExercise.teamAssignmentConfig.minTeamSize, maxTeamSize: modelingExercise.teamAssignmentConfig.maxTeamSize }
+            : undefined,
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
         gradingInstructions: modelingExercise.gradingInstructions,
         feedbackSuggestionModule: modelingExercise.feedbackSuggestionModule,
@@ -79,4 +109,17 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
             weight: link.weight ?? 1,
         })),
     };
+}
+
+/**
+ * Converts a ModelingExercise entity to an ImportModelingExerciseDTO (flat course/exerciseGroup ids plus mode, team and
+ * plagiarism configuration), so the import endpoint receives the dumb DTO shape instead of a nested entity.
+ *
+ * @param modelingExercise the (adapted) source exercise to import
+ * @returns the corresponding ImportModelingExerciseDTO
+ */
+export function toImportModelingExerciseDTO(modelingExercise: ModelingExercise): ImportModelingExerciseDTO {
+    const dto: ImportModelingExerciseDTO = toUpdateModelingExerciseDTO(modelingExercise);
+    dto.plagiarismDetectionConfig = modelingExercise.plagiarismDetectionConfig;
+    return dto;
 }
