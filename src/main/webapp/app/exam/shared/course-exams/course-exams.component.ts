@@ -143,10 +143,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         const examId = this.route.firstChild?.snapshot.params.examId;
         if (!examId && lastSelectedExam) {
             // First, try to navigate to the last selected exam
-            this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([lastSelectedExam], { relativeTo: this.route, replaceUrl: true });
         } else if (!examId && upcomingExam) {
             // Second, try to navigate to the upcoming exam
-            this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([upcomingExam.id], { relativeTo: this.route, replaceUrl: true });
         } else {
             // If both is not defined, do not navigate and only set examSelected to true when the examId was found in the client URL
             this.examSelected.set(!!examId);
@@ -164,7 +164,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
             // get student exams for real exams
-            lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
+            void lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
                 studentExams.forEach((exam) => {
                     const studentExam = cloneDeep(exam) as StudentExam;
                     this.studentExamsForRealExams.set(studentExam.id!, studentExam);

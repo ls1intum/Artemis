@@ -440,7 +440,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (threadBelongsToActiveConversation) {
             queryParams.messageId = this.postInThread()!.id;
         }
-        this.router.navigate([], {
+        void this.router.navigate([], {
             relativeTo: this.activatedRoute,
             queryParams,
             replaceUrl: true,

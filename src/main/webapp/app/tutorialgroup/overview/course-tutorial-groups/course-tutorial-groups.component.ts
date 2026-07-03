@@ -229,9 +229,9 @@ export class CourseTutorialGroupsComponent {
         const lastSelectedSubRoute = this.getLastSelectedSubRoute();
         const nothingSelected = !this.itemSelected();
         if (nothingSelected && lastSelectedSubRoute) {
-            this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
+            void this.router.navigate([lastSelectedSubRoute], { relativeTo: this.activatedRoute, replaceUrl: true });
         } else if (nothingSelected && upcomingTutorialGroup) {
-            this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
+            void this.router.navigate([upcomingTutorialGroup.id], { relativeTo: this.activatedRoute, replaceUrl: true });
         }
     }
 

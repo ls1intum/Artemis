@@ -72,13 +72,13 @@ export class AppComponent implements OnInit, OnDestroy {
     readonly showPageRibbon = signal(true);
 
     constructor() {
-        this.setupErrorHandling().then(undefined);
+        void this.setupErrorHandling();
     }
 
     private async setupErrorHandling() {
         const profileInfo = this.profileService.getProfileInfo();
         // sentry is only activated if it was specified in the application.yml file
-        this.sentryErrorHandler.initSentry(profileInfo);
+        void this.sentryErrorHandler.initSentry(profileInfo);
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {
@@ -146,7 +146,7 @@ export class AppComponent implements OnInit, OnDestroy {
             }
             if (event instanceof NavigationError && event.error.status === 404) {
                 // noinspection JSIgnoredPromiseFromCall
-                this.router.navigate(['/404']);
+                void this.router.navigate(['/404']);
             }
         });
 

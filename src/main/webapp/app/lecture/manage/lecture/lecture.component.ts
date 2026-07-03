@@ -135,7 +135,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                     .subscribe({
                         next: (res: Lecture) => {
                             this.lectures.set([...this.lectures(), res]);
-                            this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
+                            void this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
                     });
@@ -236,7 +236,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     }
 
     navigateToLectureCreationPage(): void {
-        this.router.navigate(['course-management', this.courseId, 'lectures', 'new'], {
+        void this.router.navigate(['course-management', this.courseId, 'lectures', 'new'], {
             state: { existingLectures: this.lectures() },
         });
     }
@@ -305,7 +305,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 next: (createdLecture: Lecture) => {
                     this.isUploadingPdfs.set(false);
                     this.alertService.success('artemisApp.lecture.pdfUpload.success');
-                    this.router.navigate(['course-management', this.courseId, 'lectures', createdLecture.id, 'edit']);
+                    void this.router.navigate(['course-management', this.courseId, 'lectures', createdLecture.id, 'edit']);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.isUploadingPdfs.set(false);
@@ -333,7 +333,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 complete: () => {
                     this.isUploadingPdfs.set(false);
                     this.alertService.success('artemisApp.lecture.pdfUpload.success');
-                    this.router.navigate(['course-management', this.courseId, 'lectures', lectureId, 'edit']);
+                    void this.router.navigate(['course-management', this.courseId, 'lectures', lectureId, 'edit']);
                 },
             });
     }

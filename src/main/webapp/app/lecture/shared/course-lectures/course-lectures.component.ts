@@ -109,9 +109,9 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         const lastSelectedLecture = this.getLastSelectedLecture();
         const lectureId = this.route.firstChild?.snapshot?.params?.lectureId;
         if (!lectureId && lastSelectedLecture) {
-            this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([lastSelectedLecture], { relativeTo: this.route, replaceUrl: true });
         } else if (!lectureId && upcomingLecture) {
-            this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
+            void this.router.navigate([upcomingLecture.id], { relativeTo: this.route, replaceUrl: true });
         } else {
             this.lectureSelected.set(!!lectureId);
         }

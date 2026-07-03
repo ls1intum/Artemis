@@ -111,7 +111,7 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                 this.formattedConfirmationText.set(this.artemisMarkdown.safeHtmlForMarkdown(exam.confirmationEndText));
             }
 
-            this.accountService.identity().then((user) => {
+            void this.accountService.identity().then((user) => {
                 if (user && user.name) {
                     this.accountName.set(user.name);
                 }

@@ -70,8 +70,8 @@ export class BrowserFingerprintService {
      * screen resolution, installed fonts, plugins, and other attributes.
      */
     private generateBrowserFingerprint(): void {
-        FingerprintJS.load().then((fingerprintAgent: { get: () => Promise<GetResult> }) => {
-            fingerprintAgent.get().then((result) => {
+        void FingerprintJS.load().then((fingerprintAgent: { get: () => Promise<GetResult> }) => {
+            void fingerprintAgent.get().then((result) => {
                 this.browserFingerprint.next(result.visitorId);
             });
         });

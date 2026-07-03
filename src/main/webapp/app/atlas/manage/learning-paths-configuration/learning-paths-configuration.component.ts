@@ -35,7 +35,7 @@ export class LearningPathsConfigurationComponent {
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            untracked(() => this.loadLearningPathsConfiguration(courseId));
+            void untracked(() => this.loadLearningPathsConfiguration(courseId));
         });
     }
 

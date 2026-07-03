@@ -469,12 +469,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     if (this.testRunId()) {
                         // If this is a test run, forward the user directly to the exam summary
-                        this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);
+                        void this.router.navigate(['course-management', this.courseId(), 'exams', this.examId(), 'test-runs', this.testRunId(), 'summary']);
                     }
 
                     if (this.testExam()) {
                         this.examParticipationService.resetExamLayout();
-                        this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam().id]);
+                        void this.router.navigate(['courses', this.courseId(), 'exams', this.examId(), 'test-exam', this.studentExam().id]);
                         this.examParticipationService.setShouldUpdateTestExams(true);
                     }
 

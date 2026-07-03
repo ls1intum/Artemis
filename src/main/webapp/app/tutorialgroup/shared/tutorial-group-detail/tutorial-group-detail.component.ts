@@ -206,7 +206,7 @@ export class TutorialGroupDetailComponent {
                 next: (response) => {
                     const chatId = response.body?.id;
                     if (chatId) {
-                        this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
+                        void this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
                     } else {
                         this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.createOneToOneChat');
                     }

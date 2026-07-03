@@ -270,6 +270,6 @@ export class CourseDashboardComponent implements OnDestroy {
     }
 
     navigateToLearningPaths() {
-        this.router.navigate(['courses', this._courseId(), 'learning-path']);
+        void this.router.navigate(['courses', this._courseId(), 'learning-path']);
     }
 }
