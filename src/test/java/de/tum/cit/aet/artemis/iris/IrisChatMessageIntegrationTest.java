@@ -11,6 +11,7 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -19,6 +20,9 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -30,9 +34,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -56,6 +62,8 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedViewContextDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCommandAckDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCommandRequestWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
@@ -68,10 +76,15 @@ import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandCoordinationService;
+import de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisPointOutCommandDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -95,6 +108,17 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     private static final String TEST_PREFIX = "irismessageintegration";
+
+    private static final long COMMAND_ACK_TIMEOUT_MS = 5000;
+
+    @Autowired
+    private IrisCommandService irisCommandService;
+
+    @Autowired
+    private IrisCommandCoordinationService irisCommandCoordinationService;
+
+    @Autowired
+    private PyrisJobService pyrisJobService;
 
     @Autowired
     private IrisMessageService irisMessageService;
@@ -235,16 +259,13 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void sendMessage_withPointOutAction_persistsCommandMarkerMessage() throws Exception {
+    void pointOutCommand_whenClientAcknowledgesApplied_persistsCommandMarkerMessage() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
 
-        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatusWithPointOut(dto.settings().authenticationToken(), "Take a look at the slide I opened.",
-                dto.initialStages(), new PyrisPointOutCommandDTO(42L, 3, null, "Sorting Algorithms"))));
+        var result = executePointOutWithAck(session, new PyrisPointOutCommandDTO(42L, 3, null, "Sorting Algorithms"), true);
+        assertThat(result.applied()).isTrue();
 
-        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
-
-        // user message + COMMAND marker + LLM answer
-        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 3);
+        await().until(() -> irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.COMMAND));
 
         var commandMessages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().filter(m -> m.getSender() == IrisMessageSender.COMMAND)
                 .toList();
@@ -259,16 +280,54 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void sendMessage_withoutPointOutAction_persistsNoCommandMessage() throws Exception {
+    void pointOutCommand_whenClientReportsNotApplied_persistsNoCommandMarker() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
 
-        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null, null)));
-
-        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
-
-        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 2);
+        var result = executePointOutWithAck(session, new PyrisPointOutCommandDTO(42L, 3, null, "Sorting Algorithms"), false);
+        assertThat(result.applied()).isFalse();
 
         assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().noneMatch(m -> m.getSender() == IrisMessageSender.COMMAND)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void pointOutCommandEndpoint_whenClientAcknowledgesApplied_returnsSuccess() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
+        String userLogin = TEST_PREFIX + "student1";
+        String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null);
+        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
+        var commandBody = """
+                {
+                    "type": "pointOut",
+                    "lectureUnitId": 42,
+                    "page": 3
+                }
+                """;
+
+        var securityContext = SecurityContextHolder.getContext();
+        var responseFuture = CompletableFuture.supplyAsync(() -> {
+            SecurityContextHolder.setContext(securityContext);
+            try {
+                return request.postWithResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/command", commandBody, true, PyrisCommandResultDTO.class, HttpStatus.OK,
+                        headers, null);
+            }
+            catch (Exception e) {
+                throw new CompletionException(e);
+            }
+            finally {
+                SecurityContextHolder.clearContext();
+            }
+        });
+
+        ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService, timeout(COMMAND_ACK_TIMEOUT_MS)).sendMessageToUser(eq(userLogin),
+                eq("/topic/iris/" + session.getId() + IrisCommandService.COMMAND_TOPIC_SUFFIX), payloadCaptor.capture());
+        var commandRequest = (IrisCommandRequestWebsocketDTO) payloadCaptor.getValue();
+        irisCommandCoordinationService.handleAck(new IrisCommandAckDTO(commandRequest.correlationId(), true, null), userLogin);
+
+        var result = responseFuture.get(COMMAND_ACK_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        assertThat(result.applied()).isTrue();
     }
 
     @Test
@@ -276,19 +335,17 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     void followUpMessage_excludesCommandMarkerFromPyrisHistory() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
 
-        // Both Pyris responses must be queued up front: the mock server rejects new expectations once a request has been made.
+        // A successful point-out persists a COMMAND marker in the chat history.
+        var result = executePointOutWithAck(session, new PyrisPointOutCommandDTO(42L, 1, null, "Sorting Algorithms"), true);
+        assertThat(result.applied()).isTrue();
+        await().until(() -> irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId()).stream().anyMatch(m -> m.getSender() == IrisMessageSender.COMMAND));
+
+        // A subsequent turn forwards the chat history to Pyris; it must not contain the COMMAND marker (Pyris has no such role).
         AtomicReference<PyrisChatPipelineExecutionDTO> capturedFollowUpDto = new AtomicReference<>();
-        // Turn 1: Iris points out a slide -> persists a COMMAND marker plus the LLM answer (3 messages total).
-        mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatusWithPointOut(dto.settings().authenticationToken(), "Look at the slide.", dto.initialStages(),
-                new PyrisPointOutCommandDTO(42L, 1, null, "Sorting Algorithms"))));
-        // Turn 2: capture the DTO forwarded to Pyris; its chat history must not contain the COMMAND marker (Pyris has no such role).
         mockChatResponse(dto -> {
             capturedFollowUpDto.set(dto);
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Sure.", dto.initialStages(), null, null));
         });
-
-        request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
-        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 3);
 
         request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
         await().until(() -> capturedFollowUpDto.get() != null);
@@ -1375,13 +1432,30 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, suggestions, null, null, null, null), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, suggestions, null, null, null), HttpStatus.OK, headers);
     }
 
-    private void sendStatusWithPointOut(String jobId, String result, List<PyrisStageDTO> stages, PyrisPointOutCommandDTO pointOutCommand) throws Exception {
-        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, stages, null, null, null, null, null, pointOutCommand), HttpStatus.OK, headers);
+    /**
+     * Drives a point-out command through {@link IrisCommandService} and simulates the client's ack, returning the result reported back to Pyris. The command is executed directly
+     * (not via the internal HTTP endpoint) so the blocking round-trip and the ack can be coordinated on the test thread.
+     *
+     * @param session  the chat session the command targets
+     * @param pointOut the point-out command Iris wants to perform
+     * @param applied  whether the simulated client reports the command as carried out
+     * @return the command result once the (simulated) client has acknowledged
+     */
+    private PyrisCommandResultDTO executePointOutWithAck(IrisChatSession session, PyrisPointOutCommandDTO pointOut, boolean applied) throws Exception {
+        String userLogin = TEST_PREFIX + "student1";
+        var job = new ChatJob("command-job", course.getId(), session.getId(), null, null, null, null);
+        var future = irisCommandService.executeCommand(job, pointOut);
+
+        ArgumentCaptor<Object> payloadCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(websocketMessagingService, timeout(COMMAND_ACK_TIMEOUT_MS)).sendMessageToUser(eq(userLogin),
+                eq("/topic/iris/" + session.getId() + IrisCommandService.COMMAND_TOPIC_SUFFIX), payloadCaptor.capture());
+        var commandRequest = (IrisCommandRequestWebsocketDTO) payloadCaptor.getValue();
+        irisCommandCoordinationService.handleAck(new IrisCommandAckDTO(commandRequest.correlationId(), applied, applied ? null : "combinedViewClosed"), userLogin);
+
+        return future.get(COMMAND_ACK_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
 
     private static String messagesUrl(IrisChatSession session) {

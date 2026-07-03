@@ -24,7 +24,7 @@ import { IrisMessageContextDTO } from 'app/iris/shared/entities/iris-message-con
 import { randomInt } from 'app/foundation/util/utils';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisPointOutNavigation } from 'app/iris/shared/entities/iris-point-out-navigation.model';
-import { getPointOutData } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisCommandRequestDTO } from 'app/iris/shared/entities/iris-command-request-dto.model';
 import { parseJson } from 'app/foundation/util/json.util';
 
 export enum ChatServiceMode {
@@ -100,6 +100,7 @@ export class IrisChatService implements OnDestroy {
     private chatSessionByIdSubscription?: Subscription;
     private sessionLoadingSubscription?: Subscription;
     private websocketSessionSubscription?: Subscription;
+    private websocketCommandSubscription?: Subscription;
     private authenticationStateSubscription: Subscription;
 
     /**
@@ -114,10 +115,15 @@ export class IrisChatService implements OnDestroy {
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
 
-    // Emits when Iris points the student to a position in the combined view (on COMMAND message
-    // arrival, or when its marker is clicked). The lecture combined view subscribes to navigate.
+    // Emits when Iris points the student to a position in the combined view (when a COMMAND marker is
+    // clicked in the chat history). The lecture combined view subscribes to navigate.
     private pointOutNavigationSubject = new Subject<IrisPointOutNavigation>();
     public pointOutNavigation$ = this.pointOutNavigationSubject.asObservable();
+
+    // Emits when the server requests a client command mid-pipeline (e.g. a point-out). The lecture combined
+    // view subscribes, tries to carry it out, and acknowledges the outcome via sendCommandAck.
+    private commandRequestSubject = new Subject<IrisCommandRequestDTO>();
+    public commandRequest$ = this.commandRequestSubject.asObservable();
 
     // Emits when the floating Iris chat widget (exercise/lecture chatbot button popup) should close,
     // e.g. when the lecture combined view opens in fullscreen and would otherwise overlay it.
@@ -178,6 +184,8 @@ export class IrisChatService implements OnDestroy {
         }
         this.websocketSessionSubscription?.unsubscribe();
         this.websocketSessionSubscription = undefined;
+        this.websocketCommandSubscription?.unsubscribe();
+        this.websocketCommandSubscription = undefined;
         this.chatSessionSubscription?.unsubscribe();
         this.chatSessionSubscription = undefined;
         this.chatSessionByIdSubscription?.unsubscribe();
@@ -256,6 +264,7 @@ export class IrisChatService implements OnDestroy {
         this.chatSessionByIdSubscription?.unsubscribe();
         this.sessionLoadingSubscription?.unsubscribe();
         this.websocketSessionSubscription?.unsubscribe();
+        this.websocketCommandSubscription?.unsubscribe();
         this.authenticationStateSubscription.unsubscribe();
     }
 
@@ -528,6 +537,10 @@ export class IrisChatService implements OnDestroy {
                 this.initialLoadCompleteSubject.next(true);
                 this.websocketSessionSubscription?.unsubscribe();
                 this.websocketSessionSubscription = this.irisWebsocketService.subscribeToSession(this.sessionId).subscribe((message) => this.handleWebsocketMessage(message));
+                this.websocketCommandSubscription?.unsubscribe();
+                this.websocketCommandSubscription = this.irisWebsocketService
+                    .subscribeToSessionCommands(this.sessionId)
+                    .subscribe((request) => this.commandRequestSubject.next(request));
             },
             error: (error: IrisErrorMessageKey) => {
                 this.error.next(error);
@@ -588,9 +601,8 @@ export class IrisChatService implements OnDestroy {
                 if (payload.message?.id) {
                     const message = this.mapMessageDTO(payload.message);
                     this.replaceOrAddMessage(message);
-                    if (message.sender === IrisSender.COMMAND) {
-                        this.emitPointOutNavigation(message, false);
-                    }
+                    // Navigation for a point-out already happened at command time (via the command-request round-trip);
+                    // the persisted COMMAND marker is only a clickable history entry, so no auto-navigation here.
                 }
                 if (payload.stages) {
                     this.stages.next(this.filterStages(payload.stages));
@@ -620,6 +632,8 @@ export class IrisChatService implements OnDestroy {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
             this.websocketSessionSubscription?.unsubscribe();
             this.websocketSessionSubscription = undefined;
+            this.websocketCommandSubscription?.unsubscribe();
+            this.websocketCommandSubscription = undefined;
             this.sessionId = undefined;
             this.currentRelatedEntityIdSubject.next(undefined);
             this.currentChatModeSubject.next(undefined);
@@ -895,15 +909,12 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
-     * Reads the point-out payload from a COMMAND message and emits a navigation request.
-     * @param message  the COMMAND message
-     * @param forceOpen whether to (re)open the combined view even if it is currently closed
+     * Acknowledges a server command request, unblocking the Iris pipeline that is waiting on it.
+     * @param correlationId the correlation id of the request being answered
+     * @param applied       whether the command was carried out on the client
+     * @param reason        optional short reason when not applied (e.g. "combinedViewClosed")
      */
-    private emitPointOutNavigation(message: IrisMessage, forceOpen: boolean): void {
-        const data = message.content?.map((content) => getPointOutData(content)).find((d) => d !== undefined);
-        if (!data) {
-            return;
-        }
-        this.pointOutNavigationSubject.next({ lectureUnitId: data.lectureUnitId, page: data.page, timestamp: data.timestamp, forceOpen });
+    public sendCommandAck(correlationId: string, applied: boolean, reason?: string): void {
+        this.irisWebsocketService.sendCommandAck({ correlationId, applied, reason });
     }
 }

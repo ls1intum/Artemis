@@ -58,6 +58,7 @@ import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/set
 import { IrisCombinedViewContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisPointOutNavigation } from 'app/iris/shared/entities/iris-point-out-navigation.model';
+import { IrisCommandRequestDTO } from 'app/iris/shared/entities/iris-command-request-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -311,6 +312,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         // forces it open — see applyPointOut).
         this.chatService.pointOutNavigation$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((navigation) => this.applyPointOut(navigation));
 
+        // Iris requests a point-out mid-pipeline and waits for the result: navigate if this unit's combined view is
+        // open and acknowledge the outcome, so Iris only claims to have shown something when it actually did.
+        this.chatService.commandRequest$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((request) => this.handleCommandRequest(request));
+
         // Apply a pending point-out target once the combined view is open and the viewer it needs has
         // rendered. Reading the viewChild signals here re-runs this effect as they become available.
         effect(() => {
@@ -348,6 +353,24 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.openFullscreen();
         }
         this.pendingPointOut.set(navigation);
+    }
+
+    /**
+     * Handles a server command request for this unit. For a point-out: if this unit's combined view is open, defer the
+     * navigation (via {@link pendingPointOut}) and acknowledge success; if it is closed, acknowledge that nothing was
+     * shown. Requests for other units are ignored — the matching unit (or the server-side timeout) handles them.
+     * @param request the command request to carry out
+     */
+    private handleCommandRequest(request: IrisCommandRequestDTO): void {
+        if (request.type !== 'pointOut' || request.lectureUnitId !== this.lectureUnit()?.id) {
+            return;
+        }
+        if (!this.isFullscreen()) {
+            this.chatService.sendCommandAck(request.correlationId, false, 'combinedViewClosed');
+            return;
+        }
+        this.pendingPointOut.set({ lectureUnitId: request.lectureUnitId, page: request.page, timestamp: request.timestamp, forceOpen: false });
+        this.chatService.sendCommandAck(request.correlationId, true);
     }
 
     /** Jumps the slides to the requested page and/or seeks the video to the requested timestamp. */

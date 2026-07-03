@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisPointOutCommandDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
@@ -35,7 +34,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
-import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 
 @Lazy
@@ -61,12 +59,9 @@ public class PyrisStatusUpdateService {
 
     private final IrisWebsocketService irisWebsocketService;
 
-    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
-
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisChatSessionService irisChatSessionService, IrisCompetencyGenerationService competencyGenerationService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, AutonomousTutorService autonomousTutorService,
-            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService,
-            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+            Optional<ProcessingStateCallbackApi> processingStateCallbackApi, IrisWebsocketService irisWebsocketService) {
         this.pyrisJobService = pyrisJobService;
         this.irisChatSessionService = irisChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
@@ -74,7 +69,6 @@ public class PyrisStatusUpdateService {
         this.autonomousTutorService = autonomousTutorService;
         this.processingStateCallbackApi = processingStateCallbackApi;
         this.irisWebsocketService = irisWebsocketService;
-        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
     /**
@@ -85,42 +79,9 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var enrichedStatusUpdate = enrichPointOutCommand(statusUpdate);
-        var updatedJob = irisChatSessionService.handleStatusUpdate(job, enrichedStatusUpdate);
+        var updatedJob = irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
-        removeJobIfTerminatedElseUpdate(enrichedStatusUpdate.stages(), updatedJob);
-    }
-
-    /**
-     * Fills in the lecture unit's display name on a point-out navigation marker. Pyris may already provide it; if it does not, the name is resolved authoritatively from the
-     * database
-     * by lecture unit id and a copy of the status update carrying the enriched command is returned. Returns the original status update unchanged when the command is not a
-     * point-out,
-     * its id is missing, a name is already present, or no name can be resolved.
-     *
-     * @param statusUpdate the incoming status update
-     * @return the status update with an enriched point-out command, or the original if nothing to enrich
-     */
-    private PyrisChatStatusUpdateDTO enrichPointOutCommand(PyrisChatStatusUpdateDTO statusUpdate) {
-        if (!(statusUpdate.command() instanceof PyrisPointOutCommandDTO pointOut) || pointOut.lectureUnitId() == null
-                || (pointOut.lectureUnitName() != null && !pointOut.lectureUnitName().isBlank())) {
-            return statusUpdate;
-        }
-        String name = lectureUnitRepositoryApi.flatMap(api -> {
-            try {
-                return Optional.ofNullable(api.findByIdElseThrow(pointOut.lectureUnitId()).getName());
-            }
-            catch (Exception e) {
-                log.warn("Could not resolve lecture unit name for point-out marker (unitId={})", pointOut.lectureUnitId());
-                return Optional.<String>empty();
-            }
-        }).orElse(null);
-        if (name == null || name.isBlank()) {
-            return statusUpdate;
-        }
-        var enrichedCommand = new PyrisPointOutCommandDTO(pointOut.lectureUnitId(), pointOut.page(), pointOut.timestamp(), name);
-        return new PyrisChatStatusUpdateDTO(statusUpdate.result(), statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
-                statusUpdate.accessedMemories(), statusUpdate.createdMemories(), enrichedCommand);
+        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
     /**
