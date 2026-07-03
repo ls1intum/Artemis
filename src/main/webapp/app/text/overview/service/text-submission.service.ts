@@ -80,7 +80,10 @@ export class TextSubmissionService {
                 // are no longer carried on the top-level submission. Hoist them onto the returned submission so the
                 // assessment editor (which reads participation.submissions.last() and its results/blocks) receives the
                 // locked result it needs to save and submit.
-                const lockedSubmission = submission.participation?.submissions?.find((s) => s.id === submission.id) ?? submission.participation?.submissions?.last();
+                // Participation.submissions is typed as the base Submission[]; narrow it to TextSubmission[] so
+                // lockedSubmission.blocks (a text-only field) type-checks below.
+                const participationSubmissions: TextSubmission[] | undefined = submission.participation?.submissions;
+                const lockedSubmission = participationSubmissions?.find((s) => s.id === submission.id) ?? participationSubmissions?.last();
                 if (lockedSubmission) {
                     submission.results = lockedSubmission.results;
                     submission.blocks = lockedSubmission.blocks;
