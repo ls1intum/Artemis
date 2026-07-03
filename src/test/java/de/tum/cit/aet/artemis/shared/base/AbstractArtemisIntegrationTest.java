@@ -17,6 +17,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.SystemReader;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -208,10 +209,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     private static volatile boolean fileUploadPathInitialized = false;
 
-    private static final Object JGIT_SYSTEM_READER_LOCK = new Object();
-
-    private static volatile boolean jgitSystemReaderConfigured = false;
-
     @BeforeAll
     static void setup() {
         // Configure JGit to skip reading system-level git config files.
@@ -235,26 +232,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      * causing test failures on some machines.
      */
     private static void configureJGitSystemReader() {
-        if (jgitSystemReaderConfigured) {
-            return;
-        }
+        final var defaultReader = getSystemReader();
 
-        synchronized (JGIT_SYSTEM_READER_LOCK) {
-            if (jgitSystemReaderConfigured) {
-                return;
-            }
-
-            SystemReader.setInstance(createTestSystemReader(SystemReader.getInstance()));
-            jgitSystemReaderConfigured = true;
-        }
-    }
-
-    private static SystemReader createTestSystemReader(SystemReader defaultReader) {
-        boolean isMacOS = defaultReader.isMacOS();
-        boolean isWindows = defaultReader.isWindows();
-        boolean isLinux = defaultReader.isLinux();
-
-        return new SystemReader() {
+        SystemReader.setInstance(new SystemReader() {
 
             @Override
             public String getHostname() {
@@ -319,22 +299,20 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
             public int getTimezone(long when) {
                 return defaultReader.getTimezone(when);
             }
+        });
+    }
 
-            @Override
-            public boolean isMacOS() {
-                return isMacOS;
-            }
+    private static @NonNull SystemReader getSystemReader() {
+        SystemReader defaultReader = SystemReader.getInstance();
 
-            @Override
-            public boolean isWindows() {
-                return isWindows;
-            }
-
-            @Override
-            public boolean isLinux() {
-                return isLinux;
-            }
-        };
+        // Force initialization of static platform detection fields before calling setInstance().
+        // This prevents a race condition where setInstance() -> init() -> setPlatformChecker()
+        // accesses static fields (isMacOS, isWindows) that haven't been initialized yet
+        // during parallel test execution, causing NullPointerException.
+        defaultReader.isMacOS();
+        defaultReader.isWindows();
+        defaultReader.isLinux();
+        return defaultReader;
     }
 
     @BeforeEach
