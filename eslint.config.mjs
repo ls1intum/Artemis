@@ -106,7 +106,6 @@ export default tseslint.config(
             'src/test/vitest/',
             // Specific file exclusions within linted directories
             'src/main/webapp/app/openapi/**',
-            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
             'src/test/javascript/spec/stub.js',
             // Root-level config files (not part of the Angular client)
             '*.js',
@@ -167,7 +166,10 @@ export default tseslint.config(
             '@typescript-eslint/no-floating-promises': 'off',
             '@typescript-eslint/no-unsafe-assignment': 'off',
             '@angular-eslint/no-output-on-prefix': 'off',
-            '@typescript-eslint/ban-ts-comment': 'warn',
+            // Production client code must not silently disable the type checker. `@ts-ignore` is banned outright
+            // (convert to `@ts-expect-error` with a description, or fix the underlying type); `@ts-expect-error`
+            // is allowed only with a description. Specs relax this to 'off' in the test-file block below.
+            '@typescript-eslint/ban-ts-comment': 'error',
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
@@ -250,6 +252,9 @@ export default tseslint.config(
                         'Avoid untyped JSON.parse(): its result is `any`, so property access is unchecked. Use parseJson<T>() from app/foundation/util/json.util and pass the expected type.',
                 },
             ],
+            // Template literals must not stringify `any`, objects, nullish, etc. (which produce "[object Object]" /
+            // "undefined"). Numbers are allowed (allowNumber default); everything else must be converted explicitly.
+            '@typescript-eslint/restrict-template-expressions': 'error',
         },
     },
     // Forbid `any` in all production client code. `any` opts a value out of type checking entirely, so it is
@@ -275,6 +280,21 @@ export default tseslint.config(
         rules: {
             '@typescript-eslint/no-unnecessary-type-assertion': 'error',
             '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'as', objectLiteralTypeAssertions: 'never' }],
+        },
+    },
+    // Keep diagnostics out of the console and off `globalThis` in production code.
+    //   - `no-console`: bare `console.*` is invisible in production; route real diagnostics to Sentry
+    //     (`captureException` from `@sentry/angular`). Specs may log freely (excluded below).
+    //   - `no-restricted-globals` on `globalThis`: prod is already `globalThis`-free; this is a regression guard.
+    //     Use `window` for browser globals and Sentry for diagnostics. It is a separate rule from the Monaco
+    //     `no-restricted-syntax` block above, so the two do not clobber each other. Specs use `globalThis` for
+    //     mocking (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-console': 'error',
+            'no-restricted-globals': ['error', { name: 'globalThis', message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.' }],
         },
     },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived
