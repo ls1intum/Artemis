@@ -612,14 +612,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             if (!this.studentExam().submitted && this.studentExam().started && this.studentExam().startedDate) {
                 const startedDate = dayjs(this.studentExam().startedDate);
                 const relevantStartDate = this.isSimulationAttempt(startedDate) ? dayjs(this.exam().startDate) : startedDate;
-                individualStudentEndDate = relevantStartDate.add(this.studentExam().workingTime!, 'seconds');
+                individualStudentEndDate = relevantStartDate.add(this.studentExam().workingTime ?? 0, 'seconds');
             } else {
                 return false;
             }
         } else {
-            individualStudentEndDate = dayjs(this.exam().startDate).add(this.studentExam().workingTime!, 'seconds');
+            individualStudentEndDate = dayjs(this.exam().startDate).add(this.studentExam().workingTime ?? 0, 'seconds');
         }
-        return individualStudentEndDate.add(this.exam().gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam().submitted;
+        return individualStudentEndDate.add(this.exam().gracePeriod ?? 0, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam().submitted;
     }
 
     /**
@@ -757,8 +757,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param startDate the start date of the exam
      */
     initIndividualEndDates(startDate: dayjs.Dayjs) {
-        this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
-        this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
+        this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime ?? 0, 'seconds'));
+        this.individualStudentEndDateWithGracePeriod.set(
+            this.individualStudentEndDate()
+                .clone()
+                .add(this.exam().gracePeriod ?? 0, 'seconds'),
+        );
 
         this.subscribeToWorkingTimeUpdates(startDate);
     }
@@ -773,8 +777,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 // Create new object to make change detection work, otherwise the date will not update
                 this.studentExam.set({ ...this.studentExam(), workingTime: event.newWorkingTime });
                 this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam());
-                this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime!, 'seconds'));
-                this.individualStudentEndDateWithGracePeriod.set(this.individualStudentEndDate().clone().add(this.exam().gracePeriod!, 'seconds'));
+                this.individualStudentEndDate.set(dayjs(startDate).add(this.studentExam().workingTime ?? 0, 'seconds'));
+                this.individualStudentEndDateWithGracePeriod.set(
+                    this.individualStudentEndDate()
+                        .clone()
+                        .add(this.exam().gracePeriod ?? 0, 'seconds'),
+                );
                 this.liveEventsService.acknowledgeEvent(event, false);
             });
     }
