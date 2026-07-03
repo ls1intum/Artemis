@@ -31,7 +31,6 @@ import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { onError } from 'app/foundation/util/global.utils';
-import { HttpErrorResponse } from '@angular/common/http';
 
 vi.mock('pdfjs-dist/build/pdf.worker', () => {
     return {};
@@ -736,9 +735,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                         const canvas = this.createCanvas(viewport);
 
                         const context = canvas.getContext('2d');
-                        await page.pageProxy.render({ canvasContext: context, viewport }).promise;
+                        await page.pageProxy.render({ canvasContext: context ?? undefined, canvas, viewport }).promise;
 
-                        this.loadedPages.update((loadedPages: Iterable<unknown> | undefined) => {
+                        this.loadedPages.update((loadedPages) => {
                             const newLoadedPages = new Set(loadedPages);
                             newLoadedPages.add(page.order);
                             return newLoadedPages;
@@ -807,7 +806,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const originalRenderPages = component.renderPages;
 
             component.renderPages = async function () {
-                onError(this.alertService, mockError as HttpErrorResponse);
+                onError(this['alertService'], mockError);
             };
 
             await component.renderPages();
@@ -971,7 +970,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const originalRenderPages = component.renderPages;
 
             component.renderPages = async function () {
-                this.loadedPages.update((loadedPages: Iterable<unknown> | undefined) => {
+                this.loadedPages.update((loadedPages) => {
                     const newLoadedPages = new Set(loadedPages);
                     newLoadedPages.add(3);
                     newLoadedPages.add(7);

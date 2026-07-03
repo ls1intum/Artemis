@@ -93,9 +93,7 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
         }
         return credential;
     } catch (error) {
-        captureException(error);
-        // eslint-disable-next-line no-undef
-        console.warn(`Authenticator returned a malformed ${credentialType} credential, attempting to fix it`, error);
+        captureException(new Error(`Authenticator returned a malformed ${credentialType} credential, attempting to fix it`, { cause: error }));
 
         // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
         let fixedCredential = malformedHandler<MalformedBitwardenRegistrationCredential>(credential, bitwardenConverter);
@@ -103,8 +101,7 @@ function getCredentialWithGracefullyHandlingAuthenticatorIssues<T extends Serial
         // 1Password8 returns empty string for authenticatorData when the Bitwarden workaround is applied
         const is1Password8Credential = fixedCredential.response?.authenticatorData === '';
         if (is1Password8Credential) {
-            // eslint-disable-next-line no-undef
-            console.warn('Bitwarden workaround did not succeed, attempting 1password8 workaround', error);
+            captureException(new Error('Bitwarden workaround did not succeed, attempting 1password8 workaround', { cause: error }));
             fixedCredential = malformedHandler<Malformed1Password8RegistrationCredential>(credential, onePassword8Converter);
         }
 

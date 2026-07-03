@@ -30,7 +30,7 @@ export enum CourseOverviewRoutePath {
 
 /**
  * The child route paths of /courses/:courseId that carry the {@link CourseOverviewGuard} in their
- * canActivate below — keep in sync with the route definitions. Note that the guard's handleReturn
+ * canActivate below — keep in sync with the route definitions. Note that the guard's decideAccess
  * contains rules for additional paths (e.g. communication) that are intentionally NOT guarded here.
  * Child routes outside this set (e.g. statistics, settings, calendar) have no access rule and must
  * never be subjected to the guard's access check.
