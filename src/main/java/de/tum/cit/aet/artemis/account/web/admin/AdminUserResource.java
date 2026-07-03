@@ -42,9 +42,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
+import de.tum.cit.aet.artemis.account.service.user.AdminUserImportService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserImportDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
@@ -97,6 +99,8 @@ public class AdminUserResource {
 
     private final UserService userService;
 
+    private final AdminUserImportService adminUserImportService;
+
     private final UserCreationService userCreationService;
 
     private final UserRepository userRepository;
@@ -107,11 +111,12 @@ public class AdminUserResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService,
+    public AdminUserResource(UserRepository userRepository, UserService userService, AdminUserImportService adminUserImportService, UserCreationService userCreationService,
+            AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService,
             @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String artemisInternalAdminUsername) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.adminUserImportService = adminUserImportService;
         this.userCreationService = userCreationService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
@@ -307,18 +312,17 @@ public class AdminUserResource {
      * <p>
      * If {@code createInternalUsers} is set to {@code true}, users that cannot be found are created as internal Artemis
      * users. In that case, an optional {@code password} per entry is honored; if no password is supplied, a random one
-     * is generated. This is intended for admins who want to provision multiple internal users (e.g. test personas) at
-     * once, without having to issue a password reset for each of them.
+     * is generated. This is intended for admins who want to provision multiple internal users (e.g. test personas) at once.
      *
      * @param userDtos            the list of users (each with at least one unique identifier) who should be imported
      * @param createInternalUsers whether to create users that cannot be found as internal Artemis users
-     * @return the list of users who could not be imported (neither found nor — when requested — created)
+     * @return the list of users who could not be imported (neither found nor, when requested, created)
      */
     @PostMapping("users/import")
-    public ResponseEntity<List<UserImportDTO>> importUsers(@RequestBody List<UserImportDTO> userDtos,
+    public ResponseEntity<List<StudentDTO>> importUsers(@RequestBody List<UserImportDTO> userDtos,
             @RequestParam(value = "createInternalUsers", defaultValue = "false") boolean createInternalUsers) {
         log.debug("REST request to import {} users to Artemis (createInternalUsers={})", userDtos.size(), createInternalUsers);
-        List<UserImportDTO> notImportedUsers = userService.importUsers(userDtos, createInternalUsers);
+        List<StudentDTO> notImportedUsers = adminUserImportService.importUsers(userDtos, createInternalUsers);
         return ResponseEntity.ok().body(notImportedUsers);
     }
 

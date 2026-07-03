@@ -19,7 +19,9 @@ import { HelpIconComponent } from '../../components/help-icon/help-icon.componen
 import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PrimeTemplate } from 'primeng/api';
+import { CheckboxModule } from 'primeng/checkbox';
 import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
+import { readUserImportDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-user-imports-from-csv';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Component({
@@ -27,7 +29,7 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ArtemisTranslatePipe, PrimeTemplate],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, ArtemisTranslatePipe, PrimeTemplate, CheckboxModule],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
@@ -109,7 +111,7 @@ export class UsersImportDialogComponent implements OnDestroy {
 
                     this.examUsersToImport.set(result.examUsers);
                 } else {
-                    const result = await readStudentDTOsFromCSVFile(file);
+                    const result = this.adminUserMode() ? await readUserImportDTOsFromCSVFile(file) : await readStudentDTOsFromCSVFile(file);
                     if (!result.ok) {
                         this.validationError.set(result.invalidRowIndices.join(', '));
                         input.value = '';
@@ -165,12 +167,13 @@ export class UsersImportDialogComponent implements OnDestroy {
         } else if (this.adminUserMode()) {
             // convert StudentDTO to User
             const artemisUsers = this.usersToImport().map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
-            this.adminUserService.importAll(artemisUsers, this.createInternalUsers()).subscribe({
+            const importRequest = this.createInternalUsers() ? this.adminUserService.importAll(artemisUsers, true) : this.adminUserService.importAll(artemisUsers);
+            importRequest.subscribe({
                 next: (res) => {
                     const convertedStudents =
                         res.body?.map((user) => ({
                             ...user,
-                            registrationNumber: user.visibleRegistrationNumber,
+                            registrationNumber: user.visibleRegistrationNumber ?? (user as Partial<StudentDTO>).registrationNumber,
                         })) || [];
                     this.onSaveSuccess(convertedStudents);
                 },

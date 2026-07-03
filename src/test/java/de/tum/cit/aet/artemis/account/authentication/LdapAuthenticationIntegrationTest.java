@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.security.LdapAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.dto.UserImportDTO;
+import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -92,9 +92,9 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Test
     @WithMockUser(username = "admin", roles = { "ADMIN" })
     void testImportUsers() throws Exception {
-        UserImportDTO existingUser = new UserImportDTO(LOGIN, "", "", "", "", null);
-        UserImportDTO nonExistingUser = new UserImportDTO(NONEXISTENT_LOGIN, "", "", "", "", null);
-        var output = request.postListWithResponseBody("/api/account/admin/users/import", List.of(existingUser, nonExistingUser), UserImportDTO.class, HttpStatus.OK);
+        StudentDTO existingUser = new StudentDTO(new User((long) 1, LOGIN, "", "", "de", ""));
+        StudentDTO nonExistingUser = new StudentDTO(new User((long) 1, NONEXISTENT_LOGIN, "", "", "de", ""));
+        var output = request.postListWithResponseBody("/api/account/admin/users/import", List.of(existingUser, nonExistingUser), StudentDTO.class, HttpStatus.OK);
         assertThat(output).hasSize(1);
         assertThat(output.getFirst().login()).isEqualTo(NONEXISTENT_LOGIN);
     }
