@@ -30,6 +30,7 @@ import {
     faListAlt,
     faPencilAlt,
     faRedo,
+    faRobot,
     faTable,
     faTrash,
     faUsers,
@@ -54,6 +55,7 @@ import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-u
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
+import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
 
 /** A single collapsible main action rendered in the action row or the ellipsis overflow menu. */
 interface ActionItem {
@@ -81,7 +83,17 @@ const SAFETY_MARGIN_PX = 8;
     selector: 'jhi-exercise-actions',
     templateUrl: './exercise-actions.component.html',
     styleUrl: './exercise-actions.component.scss',
-    imports: [RouterLink, NgTemplateOutlet, FaIconComponent, PopoverModule, TooltipModule, ArtemisTranslatePipe, DeleteButtonDirective, QuizExerciseLifecycleButtonsComponent],
+    imports: [
+        RouterLink,
+        NgTemplateOutlet,
+        FaIconComponent,
+        PopoverModule,
+        TooltipModule,
+        ArtemisTranslatePipe,
+        DeleteButtonDirective,
+        QuizExerciseLifecycleButtonsComponent,
+        ExerciseVariantAiModalWizardComponent,
+    ],
 })
 export class ExerciseActionsComponent {
     readonly exercise = input.required<Exercise>();
@@ -100,6 +112,9 @@ export class ExerciseActionsComponent {
 
     protected readonly ExerciseType = ExerciseType;
     protected readonly faEllipsis = faEllipsis;
+
+    /** Controls the AI variant generation wizard/modal opened via the "Create Variant with AI" action. */
+    protected readonly aiVariantModalVisible = signal(false);
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
@@ -136,7 +151,7 @@ export class ExerciseActionsComponent {
     /** The current exercise typed as a quiz, or `undefined` for non-quiz exercises. Drives the lifecycle buttons. */
     readonly quizExercise = computed<QuizExercise | undefined>(() => {
         const ex = this.exercise();
-        return ex.type === ExerciseType.QUIZ ? (ex as QuizExercise) : undefined;
+        return ex.type === ExerciseType.QUIZ ? ex : undefined;
     });
 
     /** True when the lifecycle buttons component will render at least one button. Used to show/hide the separator. */
@@ -159,6 +174,16 @@ export class ExerciseActionsComponent {
         const seg = getExerciseUrlSegment(ex.type);
         const items: ActionItem[] = [];
 
+        if (ex.isAtLeastEditor) {
+            items.push({
+                id: 'create-variant-ai',
+                labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
+                icon: faRobot,
+                styleClass: 'btn-warning',
+                kind: 'button',
+                onClick: () => this.aiVariantModalVisible.set(true),
+            });
+        }
         if (ex.mode === ExerciseMode.TEAM) {
             items.push({
                 id: 'teams',

@@ -5,7 +5,8 @@
             "moreActions": "More actions",
             "action": {
                 "import": "Import",
-                "export": "Export"
+                "export": "Export",
+                "createVariantWithAi": "Create Variant"
             },
             "error": {
                 "onlyIndividualQuiz": "Only individual-mode quizzes can be added to an exercise group."

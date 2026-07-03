@@ -5,7 +5,8 @@
             "moreActions": "Weitere Aktionen",
             "action": {
                 "import": "Importieren",
-                "export": "Exportieren"
+                "export": "Exportieren",
+                "createVariantWithAi": "Variante erstellen"
             },
             "error": {
                 "onlyIndividualQuiz": "Nur Quizze im Einzelmodus können einer Aufgabengruppe hinzugefügt werden."
