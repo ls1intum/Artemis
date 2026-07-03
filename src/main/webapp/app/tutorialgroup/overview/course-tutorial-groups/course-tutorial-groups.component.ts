@@ -8,8 +8,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseTutorialGroupDetailContainerComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/foundation/types/sidebar';
@@ -24,7 +24,7 @@ import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgr
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseTutorialGroupsComponent {
     protected readonly DEFAULT_COLLAPSE_STATE: CollapseState = {
@@ -59,7 +59,11 @@ export class CourseTutorialGroupsComponent {
     sidebarData = signal<SidebarData | undefined>(undefined);
     itemSelected = this.getItemSelectedSignal();
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     currentTutorialLectureId = computed(() => this.computeCurrentTutorialLectureId());
+
+    private readonly activeDetail = signal<CourseTutorialGroupDetailContainerComponent | undefined>(undefined);
+    protected readonly activeDetailSidebarSync = effect(() => this.activeDetail()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     constructor() {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('tutorialGroup'));
@@ -88,6 +92,16 @@ export class CourseTutorialGroupsComponent {
     toggleSidebar() {
         this.isCollapsed.update((collapsed) => !collapsed);
         this.courseOverviewService.setSidebarCollapseState('tutorialGroup', this.isCollapsed());
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof CourseTutorialGroupDetailContainerComponent) {
+            this.activeDetail.set(componentRef);
+        }
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     private setTutorialGroupsAndTutorialLectures(courseId: number) {

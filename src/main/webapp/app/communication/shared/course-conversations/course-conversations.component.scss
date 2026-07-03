@@ -6,12 +6,23 @@
 .scrollable-communication-content {
     --channel-search-height: 59px;
     @include dynamic-content-height(--header-height, --channel-search-height);
+
     overflow-y: auto;
 }
 
 .message-input {
     border-top: 1px solid;
     border-color: var(--bs-border-color);
+}
+
+// Content column beside the sidebar; holds the search above the message/thread row.
+.communication-content-main {
+    --header-height: 16px;
+
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .communication-message-wrap {

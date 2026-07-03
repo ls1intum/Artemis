@@ -8,6 +8,7 @@ import { CourseTitleBarComponent } from 'app/course/shared/course-title-bar/cour
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 
 describe('CourseTitleBarComponent', () => {
     setupTestBed({ zoneless: true });
@@ -148,5 +149,67 @@ describe('CourseTitleBarComponent', () => {
         expect(titleBar.classes['rounded']).toBeTruthy();
         expect(titleBar.classes['rounded-3']).toBeTruthy();
         expect(titleBar.classes['sticky-top']).toBeTruthy();
+    });
+
+    it('should hide the default title when titleInSidebar is true and the sidebar is expanded', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('titleInSidebar', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.componentRef.setInput('pageTitle', 'overview.lectures');
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.directive(CourseTitleBarTitleComponent))).toBeNull();
+    });
+
+    it('should also hide the default title when titleInSidebar is true and the sidebar is collapsed', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('titleInSidebar', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.componentRef.setInput('pageTitle', 'overview.lectures');
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.directive(CourseTitleBarTitleComponent))).toBeNull();
+    });
+
+    it('should hide the toggle button when toggleInSidebar is true and the sidebar is expanded', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('toggleInSidebar', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeNull();
+    });
+
+    it('should show the toggle button when toggleInSidebar is true and the sidebar is collapsed', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('toggleInSidebar', true);
+        fixture.componentRef.setInput('isSidebarCollapsed', true);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeTruthy();
+    });
+
+    it('should keep default behavior (toggle and title shown) when titleInSidebar and toggleInSidebar are false', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('titleInSidebar', false);
+        fixture.componentRef.setInput('toggleInSidebar', false);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.componentRef.setInput('pageTitle', 'overview.lectures');
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeTruthy();
+        expect(fixture.debugElement.query(By.directive(CourseTitleBarTitleComponent))).toBeTruthy();
+    });
+
+    it('should hide only the toggle but keep the title when toggleInSidebar is true and titleInSidebar is false (Iris case)', () => {
+        fixture.componentRef.setInput('hasSidebar', true);
+        fixture.componentRef.setInput('toggleInSidebar', true);
+        fixture.componentRef.setInput('titleInSidebar', false);
+        fixture.componentRef.setInput('isSidebarCollapsed', false);
+        fixture.componentRef.setInput('pageTitle', 'overview.iris');
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.directive(CourseSidebarToggleButtonComponent))).toBeNull();
+        expect(fixture.debugElement.query(By.directive(CourseTitleBarTitleComponent))).toBeTruthy();
     });
 });

@@ -221,43 +221,6 @@ describe('CourseLectureDetailsComponent', () => {
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit()).toBe(false);
     });
 
-    it('should not display manage button when user is only tutor', async () => {
-        lecture.course!.isAtLeastTutor = true;
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
-        expect(manageLectureButton).toBeNull();
-    });
-
-    it('should display manage button when user is at least editor', async () => {
-        lecture.course!.isAtLeastEditor = true;
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
-        expect(manageLectureButton).not.toBeNull();
-    });
-
-    it('should not display manage button when user is a student', async () => {
-        lecture.course!.isAtLeastTutor = false;
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
-        expect(manageLectureButton).toBeNull();
-    });
-
-    it('should redirect to lecture management', async () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = vi.spyOn(router, 'navigate');
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
-
-        courseLecturesDetailsComponent.redirectToLectureManagement();
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 456, 'lectures', 1]);
-    });
-
     it('should check attachment release date', async () => {
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();

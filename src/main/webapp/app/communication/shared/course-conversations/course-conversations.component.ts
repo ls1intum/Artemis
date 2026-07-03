@@ -1,5 +1,4 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { NgClass } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -136,7 +135,6 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         FormsModule,
         CourseConversationsCodeOfConductComponent,
         TranslateDirective,
-        NgClass,
         SidebarComponent,
         ConversationHeaderComponent,
         ConversationMessagesComponent,
@@ -188,6 +186,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     readonly accordionConversationGroups = signal<AccordionGroups>(undefined!);
     readonly sidebarConversations = signal<SidebarCardElement[]>([]);
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     readonly focusPostId = signal<number | undefined>(undefined);
     focusReplyId: number | undefined = undefined;
     readonly openThreadOnFocus = signal(false);
@@ -626,6 +625,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     toggleSidebar() {
         this.setIsCollapsed(!this.isCollapsed());
+    }
+
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
     }
 
     closeSidebarOnMobile() {

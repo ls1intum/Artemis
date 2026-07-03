@@ -2,19 +2,23 @@
     @let currentCourseId = courseId();
     @let currentSidebarData = sidebarData();
     @if (currentCourseId && currentSidebarData) {
-        <div [ngClass]="{ 'sidebar-collapsed': isCollapsed() }">
+        <div [class.sidebar-collapsed]="isCollapsed()">
             <jhi-sidebar
                 [itemSelected]="itemSelected()"
                 [courseId]="currentCourseId"
                 [sidebarData]="currentSidebarData"
                 [collapseState]="DEFAULT_COLLAPSE_STATE"
                 [sidebarItemAlwaysShow]="DEFAULT_SHOW_ALWAYS"
+                [pageTitle]="pageTitle()"
+                [showSidebarToggle]="true"
+                [isSidebarCollapsed]="isCollapsed()"
+                (toggleSidebar)="toggleSidebar()"
             />
         </div>
 
         @if (itemSelected()) {
             <div class="vw-100 module-bg rounded-3">
-                <router-outlet />
+                <router-outlet (activate)="onSubRouteActivate($event)" />
             </div>
         } @else {
             <div class="vw-100 module-bg rounded-3 p-3 d-flex justify-content-between">

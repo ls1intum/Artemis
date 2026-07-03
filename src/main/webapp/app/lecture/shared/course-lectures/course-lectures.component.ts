@@ -1,11 +1,11 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
@@ -42,7 +42,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     selector: 'jhi-course-lectures',
     templateUrl: './course-lectures.component.html',
     styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
     private courseStorageService = inject(CourseStorageService);
@@ -62,15 +62,19 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number>(undefined!);
 
     readonly lectureSelected = signal(true);
-    readonly sidebarData = signal<SidebarData>(undefined!);
+    readonly sidebarData = signal<SidebarData | undefined>(undefined);
     accordionLectureGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
     readonly isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     isMultiLaunch = false;
     multiLaunchLectureIDs: number[] = [];
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
+
+    private readonly activeLectureDetails = signal<CourseLectureDetailsComponent | undefined>(undefined);
+    protected readonly activeLectureDetailsSidebarSync = effect(() => this.activeLectureDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     ngOnInit() {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture'));
@@ -150,6 +154,10 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         });
     }
 
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
+    }
+
     toggleSidebar() {
         this.isCollapsed.update((collapsed) => !collapsed);
         this.courseOverviewService.setSidebarCollapseState('lecture', this.isCollapsed());
@@ -157,6 +165,12 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
 
     getLastSelectedLecture(): string | undefined {
         return this.sessionStorageService.retrieve<string>('sidebar.lastSelectedItem.lecture.byCourse.' + this.courseId());
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof CourseLectureDetailsComponent) {
+            this.activeLectureDetails.set(componentRef);
+        }
     }
 
     onSubRouteDeactivate() {

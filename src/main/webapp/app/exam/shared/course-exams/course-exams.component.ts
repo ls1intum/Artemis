@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
@@ -10,8 +10,8 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { cloneDeep } from 'lodash-es';
-import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
+import { ExamParticipationComponent } from 'app/exam/overview/exam-participation/exam-participation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
@@ -39,7 +39,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
     styleUrls: ['./course-exams.component.scss'],
-    imports: [NgClass, SidebarComponent, RouterOutlet, TranslateDirective],
+    imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -77,11 +77,15 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     sidebarData = signal<SidebarData | undefined>(undefined);
     sidebarExams: SidebarCardElement[] = [];
     isCollapsed = signal(false);
+    readonly pageTitle = signal<string>('');
     isExamStarted = signal(false);
     withinWorkingTime: boolean;
 
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
+
+    private readonly activeExamDetails = signal<ExamParticipationComponent | undefined>(undefined);
+    protected readonly activeExamDetailsSidebarSync = effect(() => this.activeExamDetails()?.setSidebarToggle(this.isCollapsed(), () => this.toggleSidebar()));
 
     /**
      * subscribe to changes in the course and fetch course by the path parameter
@@ -265,6 +269,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
         return this.sessionStorageService.retrieve<number>('sidebar.lastSelectedItem.exam.byCourse.' + this.courseId());
     }
 
+    setPageTitle(pageTitle: string): void {
+        this.pageTitle.set(pageTitle);
+    }
+
     toggleSidebar() {
         const newState = !this.isCollapsed();
         this.isCollapsed.set(newState);
@@ -309,6 +317,12 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
         this.accordionExamGroups = this.groupExamsByRealOrTest(this.sortedRealExams, this.sortedTestExams);
         this.updateSidebarData();
+    }
+
+    onSubRouteActivate(componentRef: unknown) {
+        if (componentRef instanceof ExamParticipationComponent) {
+            this.activeExamDetails.set(componentRef);
+        }
     }
 
     onSubRouteDeactivate() {

@@ -13,6 +13,7 @@ import { PostingSummaryComponent } from 'app/communication/course-conversations-
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 
 describe('SavedPostsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -155,6 +156,14 @@ describe('SavedPostsComponent', () => {
             component['onTriggerNavigateToPost'](mockPosting);
 
             expect(emitSpy).toHaveBeenCalledWith(mockPosting);
+        });
+
+        it('should open the sidebar when openSidebar is called', () => {
+            const openSidebarSpy = vi.spyOn(TestBed.inject(CourseSidebarService), 'openSidebar');
+
+            component['openSidebar']();
+
+            expect(openSidebarSpy).toHaveBeenCalledOnce();
         });
     });
 

@@ -16,7 +16,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
+import { CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { HttpResponse } from '@angular/common/http';
@@ -264,9 +264,12 @@ function getSidebarCardElementForTutorialGroup(tutorialGroup: TutorialGroup): Si
 
 @Component({ selector: 'jhi-sidebar', template: '' })
 class MockSidebarComponent {
-    itemSelected = input<any>();
-    courseId = input<any>();
-    sidebarData = input<any>();
-    collapseState = input<any>();
-    sidebarItemAlwaysShow = input<any>();
+    itemSelected = input<boolean>();
+    courseId = input<number>();
+    sidebarData = input<SidebarData>();
+    collapseState = input<CollapseState>();
+    sidebarItemAlwaysShow = input<SidebarItemShowAlways>();
+    pageTitle = input<string>();
+    showSidebarToggle = input<boolean>();
+    isSidebarCollapsed = input<boolean>();
 }

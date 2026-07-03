@@ -127,6 +127,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     readonly studentExamId = signal<number>(undefined!);
     readonly testStartTime = signal<dayjs.Dayjs | undefined>(undefined);
 
+    readonly isSidebarCollapsed = signal(false);
+    private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
+    readonly toggleSidebar = (): void => this.sidebarToggle()?.();
+
     // determines if component was once drawn visited
     readonly pageComponentVisited = signal<boolean[]>(undefined!);
 
@@ -314,6 +318,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             (submissionComponent) =>
                 !this.activeExamPage().isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage().exercise!.id,
         );
+    }
+
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
     }
 
     /**

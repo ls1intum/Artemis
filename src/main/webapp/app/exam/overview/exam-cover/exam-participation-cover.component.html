@@ -4,9 +4,14 @@
 <div class="px-3 pb-3 overflow-auto" [ngClass]="{ 'scrollable-content-exam-cover': !testRunStartTime() && startView() }">
     @if (startView()) {
         <div class="d-flex justify-content-between">
-            <h3 class="mt-3">
-                {{ exam().title }}
-            </h3>
+            <div class="d-flex align-items-center gap-2 mt-3 mb-2">
+                @if (isSidebarCollapsed()) {
+                    <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar.emit()" />
+                }
+                <h3 class="my-0">
+                    {{ exam().title }}
+                </h3>
+            </div>
             <div class="mt-3">
                 <jhi-exam-live-events-button [examStartDate]="exam().startDate!" />
             </div>

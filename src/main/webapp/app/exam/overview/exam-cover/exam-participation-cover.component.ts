@@ -19,6 +19,7 @@ import { ExamStartInformationComponent } from '../exam-start-information/exam-st
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
@@ -26,7 +27,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
     styleUrls: ['./exam-participation-cover.scss'],
-    imports: [NgClass, ExamLiveEventsButtonComponent, ExamStartInformationComponent, FormsModule, TranslateDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [
+        NgClass,
+        ExamLiveEventsButtonComponent,
+        ExamStartInformationComponent,
+        FormsModule,
+        TranslateDirective,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        CourseSidebarToggleButtonComponent,
+    ],
 })
 export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
@@ -50,6 +61,8 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     readonly onExamStarted = output<StudentExam>();
     readonly onExamEnded = output<StudentExam>();
     readonly onExamContinueAfterHandInEarly = output<void>();
+    readonly isSidebarCollapsed = input(false);
+    readonly toggleSidebar = output<void>();
     course?: Course;
     readonly startEnabled = signal(false);
     readonly endEnabled = signal(false);
