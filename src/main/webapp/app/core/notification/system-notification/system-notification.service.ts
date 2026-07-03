@@ -9,6 +9,9 @@ import { map } from 'rxjs/operators';
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 
+/** Request options for a paged/sorted query, matching what {@link createRequestOption} consumes. */
+type SystemNotificationQueryOptions = { sort?: string[] } & Record<string, string | number | boolean | string[]>;
+
 @Injectable({ providedIn: 'root' })
 export class SystemNotificationService {
     private http = inject(HttpClient);
@@ -26,7 +29,7 @@ export class SystemNotificationService {
             .pipe(map((res: EntityResponseType) => this.convertSystemNotificationResponseDatesFromServer(res)));
     }
 
-    query(req?: any): Observable<EntityArrayResponseType> {
+    query(req?: SystemNotificationQueryOptions): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<SystemNotification[]>(this.resourceUrl, { params: options, observe: 'response' })

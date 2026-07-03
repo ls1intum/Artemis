@@ -76,7 +76,7 @@ export function issuesForSelectedFile(
 
     for (const issue of issues) {
         for (const loc of issue.relatedLocations) {
-            if (!isMatchingRepository(loc.type, selectedRepo!)) {
+            if (!isMatchingRepository(loc.type, selectedRepo)) {
                 continue;
             }
 

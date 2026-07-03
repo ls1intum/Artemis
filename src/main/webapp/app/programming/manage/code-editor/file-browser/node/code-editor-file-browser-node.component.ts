@@ -39,7 +39,7 @@ export abstract class CodeEditorFileBrowserNodeComponent {
      * Emit that this node should be renamed.
      * @param event
      */
-    setRenamingNode(event: any) {
+    setRenamingNode(event: Event) {
         event.stopPropagation();
         this.onSetRenamingNode.emit(this.item());
     }
@@ -48,7 +48,7 @@ export abstract class CodeEditorFileBrowserNodeComponent {
      * Stop renaming this node.
      * @param event
      */
-    clearRenamingNode(event: any) {
+    clearRenamingNode(event: Event) {
         event.stopPropagation();
         this.onClearRenamingNode.emit();
     }
@@ -57,21 +57,22 @@ export abstract class CodeEditorFileBrowserNodeComponent {
      * Send an event to the parent with the new name of the node.
      * @param event
      */
-    renameNode(event: any) {
-        if (!event.target.value || !this.isBeingRenamed()) {
+    renameNode(event: Event) {
+        const value = (event.target as HTMLInputElement).value;
+        if (!value || !this.isBeingRenamed()) {
             return;
-        } else if (event.target.value === this.item().text) {
+        } else if (value === this.item().text) {
             this.onClearRenamingNode.emit();
             return;
         }
-        this.onRenameNode.emit(event.target.value);
+        this.onRenameNode.emit(value);
     }
 
     /**
      * Delete the node.
      * @param event
      */
-    deleteNode(event: any) {
+    deleteNode(event: Event) {
         event.stopPropagation();
         this.onDeleteNode.emit(this.item());
     }
