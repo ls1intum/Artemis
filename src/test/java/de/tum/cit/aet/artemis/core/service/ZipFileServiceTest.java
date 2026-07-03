@@ -1,12 +1,18 @@
 package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
@@ -69,6 +75,48 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(result.contentLength()).isGreaterThan(0);
 
         ZipTestUtil.verifyZipStructureAndContent(result.getByteArray());
+    }
+
+    @Test
+    void testCreateZipFile_withFileAndDirectory_storesFileAtRootAndDirectoryWithPrefix() throws IOException {
+        Path sourceDir = tempFileUtilService.createTempDirectory("create-zip-src");
+        Path standaloneFile = tempFileUtilService.createTempFile(sourceDir, "standalone", ".txt");
+        FileUtils.writeByteArrayToFile(standaloneFile.toFile(), "hello".getBytes());
+        Path contentDir = tempFileUtilService.createTempDirectory(sourceDir, "content-dir");
+        Path nestedFile = tempFileUtilService.createTempFile(contentDir, "nested", ".txt");
+        FileUtils.writeByteArrayToFile(nestedFile.toFile(), "world".getBytes());
+
+        Path zipOutDir = tempFileUtilService.createTempDirectory("create-zip-out");
+        Path zipFilePath = zipOutDir.resolve("archive.zip");
+        zipFileService.createZipFile(zipFilePath, List.of(standaloneFile, contentDir));
+
+        assertThat(zipFilePath).exists();
+        List<String> entryNames = new ArrayList<>();
+        try (ZipFile zipFile = new ZipFile(zipFilePath.toFile())) {
+            var entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                entryNames.add(entries.nextElement().getName());
+            }
+        }
+        // a single file is stored at the zip root under its file name
+        assertThat(entryNames).contains(standaloneFile.getFileName().toString());
+        // a directory is stored recursively with the directory name as the top-level entry
+        assertThat(entryNames).contains(contentDir.getFileName().toString() + "/" + nestedFile.getFileName().toString());
+    }
+
+    @Test
+    void testExtractZipFileRecursively_rejectsZipSlipEntry() throws IOException {
+        Path zipDir = tempFileUtilService.createTempDirectory("zip-slip");
+        Path maliciousZip = zipDir.resolve("evil.zip");
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(maliciousZip))) {
+            zipOutputStream.putNextEntry(new ZipEntry("../escaped.txt"));
+            zipOutputStream.write("pwned".getBytes());
+            zipOutputStream.closeEntry();
+        }
+
+        assertThatExceptionOfType(IOException.class).isThrownBy(() -> zipFileService.extractZipFileRecursively(maliciousZip));
+        // the traversal target must never be written outside the extraction directory
+        assertThat(zipDir.resolve("escaped.txt")).doesNotExist();
     }
 
 }
