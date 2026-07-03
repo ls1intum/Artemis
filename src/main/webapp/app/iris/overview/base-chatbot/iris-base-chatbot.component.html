@@ -5,17 +5,7 @@
         <div class="chat-history" [class.chat-history-open]="isChatHistoryOpen()">
             @if (!isChatHistoryOpen()) {
                 <div class="chat-history-collapsed">
-                    <div
-                        class="collapsed-icon-button"
-                        (click)="setChatHistoryVisibility(true)"
-                        role="button"
-                        tabindex="0"
-                        (keydown.enter)="setChatHistoryVisibility(true)"
-                        (keydown.space)="setChatHistoryVisibility(true)"
-                        [attr.aria-label]="'artemisApp.iris.chatHistory.openChatHistory' | artemisTranslate"
-                    >
-                        <fa-icon [icon]="faMagnifyingGlass" />
-                    </div>
+                    <jhi-course-sidebar-toggle-button [isCollapsed]="true" (toggleSidebar)="setChatHistoryVisibility(true)" />
                     <div
                         class="new-chat-button"
                         (click)="openNewSession()"

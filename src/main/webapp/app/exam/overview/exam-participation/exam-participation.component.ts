@@ -320,6 +320,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         );
     }
 
+    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
+        this.isSidebarCollapsed.set(isCollapsed);
+        this.sidebarToggle.set(toggleSidebar);
+    }
+
     /**
      * exam start text confirmed and name entered, start button clicked and exam active
      *
@@ -328,11 +333,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      *                               locally cached sync state of each submission is kept (so not-yet-saved answers stay
      *                               isSynced=false and are re-sent) instead of marking everything as synced.
      */
-    setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
-        this.isSidebarCollapsed.set(isCollapsed);
-        this.sidebarToggle.set(toggleSidebar);
-    }
-
     examStarted(studentExam: StudentExam, resumedFromFailedSave = false) {
         if (studentExam) {
             // Keep working time

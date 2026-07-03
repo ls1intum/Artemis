@@ -8,7 +8,6 @@ import {
     faCopy,
     faExpand,
     faLink,
-    faMagnifyingGlass,
     faPaperPlane,
     faPenToSquare,
     faThumbsDown,
@@ -178,7 +177,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faThumbsDown = faThumbsDown;
     protected readonly faPenToSquare = faPenToSquare;
     protected readonly faLink = faLink;
-    protected readonly faMagnifyingGlass = faMagnifyingGlass;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
     protected readonly faCheck = faCheck;
