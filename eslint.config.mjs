@@ -159,6 +159,7 @@ export default tseslint.config(
         rules: {
             ...prettierPlugin.configs.recommended.rules,
             ...tsPlugin.configs.recommended.rules,
+            ...angularPlugin.configs.recommended.rules,
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-unsafe-return': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',
@@ -274,6 +275,21 @@ export default tseslint.config(
         rules: {
             '@typescript-eslint/no-unnecessary-type-assertion': 'error',
             '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'as', objectLiteralTypeAssertions: 'never' }],
+        },
+    },
+    // Keep diagnostics out of the console and off `globalThis` in production code.
+    //   - `no-console`: bare `console.*` is invisible in production; route real diagnostics to Sentry
+    //     (`captureException` from `@sentry/angular`). Specs may log freely (excluded below).
+    //   - `no-restricted-globals` on `globalThis`: prod is already `globalThis`-free; this is a regression guard.
+    //     Use `window` for browser globals and Sentry for diagnostics. It is a separate rule from the Monaco
+    //     `no-restricted-syntax` block above, so the two do not clobber each other. Specs use `globalThis` for
+    //     mocking (excluded below).
+    {
+        files: ['src/main/webapp/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'no-console': 'error',
+            'no-restricted-globals': ['error', { name: 'globalThis', message: 'Do not use globalThis in production. Use `window` for browser globals, and Sentry captureException for diagnostics instead of globalThis.console.' }],
         },
     },
     // Discourage `ngOnChanges` across Angular client files that have a clean baseline. Prefer computed() for derived

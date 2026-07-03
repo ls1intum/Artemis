@@ -3,6 +3,7 @@ import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 
 
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { getErrorMessage } from 'app/foundation/util/global.utils';
 import { faLightbulb, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
@@ -249,7 +250,7 @@ export class CourseCompetencyRelationFormComponent {
             this.relations.update((relations) => [...relations, courseCompetencyRelation]);
             this.selectedRelationId.set(courseCompetencyRelation.id);
         } catch (error) {
-            this.alertService.error(error.message);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }
@@ -281,7 +282,7 @@ export class CourseCompetencyRelationFormComponent {
                 }),
             );
         } catch (error) {
-            this.alertService.error(error.message);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }
@@ -302,7 +303,7 @@ export class CourseCompetencyRelationFormComponent {
             this.relations.update((relations) => relations.filter(({ id }) => id !== deletedRelation.id));
             this.selectedRelationId.set(undefined);
         } catch (error) {
-            this.alertService.error(error.message);
+            this.alertService.error(getErrorMessage(error));
         } finally {
             this.isLoading.set(false);
         }

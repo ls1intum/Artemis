@@ -596,11 +596,14 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(discussionSection).toBeTruthy();
     });
 
-    it('should propagate a newly started participation into the cached course so the sidebar updates live', () => {
+    it('should propagate a newly started participation into the cached course so the sidebar updates live, preserving the fully-loaded marker', () => {
         const courseStorageService = TestBed.inject(CourseStorageService);
         const cachedExercise = { id: exercise.id, studentParticipations: [] } as unknown as Exercise;
         const cachedCourse = { id: 1, exercises: [cachedExercise] } as unknown as Course;
         vi.spyOn(courseStorageService, 'getCourse').mockReturnValue(cachedCourse);
+        // The parent course overview has fully loaded the course; enriching it in place must keep the marker the
+        // CourseOverviewGuard relies on, otherwise switching to a guarded tab would silently skip the access check.
+        vi.spyOn(courseStorageService, 'isCourseFullyLoaded').mockReturnValue(true);
         const updateCourseSpy = vi.spyOn(courseStorageService, 'updateCourse').mockImplementation(() => {});
 
         comp.courseId = 1;
@@ -609,7 +612,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.onNewParticipation(newParticipation);
 
-        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse, true);
         expect(cachedExercise.studentParticipations).toContain(newParticipation);
     });
 
@@ -631,7 +634,8 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.onNewParticipation(existingParticipation);
 
-        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse);
+        // isCourseFullyLoaded is not stubbed here, so the real (empty) marker set returns false: the in-place update preserves it
+        expect(updateCourseSpy).toHaveBeenCalledWith(cachedCourse, false);
         // onNewParticipation now merges submissions into a fresh participation object (so prior attempts survive and
         // the signal change is detected), so assert by id rather than reference identity.
         expect(cachedExercise.studentParticipations?.some((p) => p.id === existingParticipation.id)).toBe(true);
