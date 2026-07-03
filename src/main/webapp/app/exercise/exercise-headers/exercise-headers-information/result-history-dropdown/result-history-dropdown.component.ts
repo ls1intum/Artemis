@@ -291,11 +291,10 @@ export class ResultHistoryDropdownComponent {
             closable: true,
             closeOnEscape: true,
             dismissableMask: true,
-            data: {
+            inputValues: {
                 exercise,
                 result,
                 participation,
-                exerciseType: feedbackParams.exerciseType,
                 showScoreChart: feedbackParams.showScoreChart,
                 messageKey: feedbackParams.messageKey,
                 latestDueDate: feedbackParams.latestDueDate,
