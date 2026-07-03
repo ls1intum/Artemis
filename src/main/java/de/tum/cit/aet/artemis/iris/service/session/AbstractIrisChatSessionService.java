@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.MessageSource;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisPointOutCommandDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -168,8 +170,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
 
-        // Persist and push a navigation marker before the answer so it appears first in the chat history.
-        handlePointOutAction(session, statusUpdate);
+        // Persist and push any command marker before the answer so it appears first in the chat history.
+        handleCommand(session, statusUpdate);
 
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
@@ -234,34 +236,51 @@ public abstract class AbstractIrisChatSessionService<S extends IrisSession> impl
     }
 
     /**
-     * If the status update carries a point-out action (Iris pointed the student to a position in the combined view), persist it as a COMMAND message holding the navigation
-     * target as JSON content and push it to the client. The client renders it as a clickable marker and, if the combined view is still open, navigates there. Does nothing if no
-     * (valid) action is present.
+     * If the status update carries a command (an action Iris performed on the client, such as pointing the student to a position in the combined view), persist it as a COMMAND
+     * message holding the command as JSON content and push it to the client. The client renders it as a clickable marker and drives the corresponding client-side action. Does
+     * nothing if no (valid) command is present.
      *
      * @param session      the chat session the marker belongs to
-     * @param statusUpdate the status update potentially carrying the point-out action
+     * @param statusUpdate the status update potentially carrying a command
      */
-    private void handlePointOutAction(S session, PyrisChatStatusUpdateDTO statusUpdate) {
-        var action = statusUpdate.pointOutAction();
-        if (action == null || action.lectureUnitId() == null || (action.page() == null && action.timestamp() == null)) {
+    private void handleCommand(S session, PyrisChatStatusUpdateDTO statusUpdate) {
+        var content = switch (statusUpdate.command()) {
+            case PyrisPointOutCommandDTO pointOut -> buildPointOutContent(pointOut);
+            case null -> null;
+        };
+        if (content == null) {
             return;
         }
-        ObjectNode node = objectMapper.createObjectNode();
-        node.put("type", "pointOut");
-        node.put("lectureUnitId", action.lectureUnitId());
-        if (action.page() != null) {
-            node.put("page", action.page());
-        }
-        if (action.timestamp() != null) {
-            node.put("timestamp", action.timestamp());
-        }
-        if (action.lectureUnitName() != null && !action.lectureUnitName().isBlank()) {
-            node.put("lectureUnitName", action.lectureUnitName());
-        }
         var commandMessage = new IrisMessage();
-        commandMessage.addContent(new IrisJsonMessageContent(node));
+        commandMessage.addContent(new IrisJsonMessageContent(content));
         var savedCommand = irisMessageService.saveMessage(commandMessage, session, IrisMessageSender.COMMAND);
         irisChatWebsocketService.sendMessage(session, savedCommand, statusUpdate.stages());
+    }
+
+    /**
+     * Builds the JSON content for a point-out navigation marker (slide page and/or video timestamp in the combined view), or returns {@code null} if the command lacks a valid
+     * target and should be skipped.
+     *
+     * @param pointOut the point-out command to render as JSON content
+     * @return the JSON content node, or {@code null} if the command has no valid navigation target
+     */
+    private @Nullable ObjectNode buildPointOutContent(PyrisPointOutCommandDTO pointOut) {
+        if (pointOut.lectureUnitId() == null || (pointOut.page() == null && pointOut.timestamp() == null)) {
+            return null;
+        }
+        ObjectNode node = objectMapper.createObjectNode();
+        node.put("type", pointOut.type());
+        node.put("lectureUnitId", pointOut.lectureUnitId());
+        if (pointOut.page() != null) {
+            node.put("page", pointOut.page());
+        }
+        if (pointOut.timestamp() != null) {
+            node.put("timestamp", pointOut.timestamp());
+        }
+        if (pointOut.lectureUnitName() != null && !pointOut.lectureUnitName().isBlank()) {
+            node.put("lectureUnitName", pointOut.lectureUnitName());
+        }
+        return node;
     }
 
     private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";

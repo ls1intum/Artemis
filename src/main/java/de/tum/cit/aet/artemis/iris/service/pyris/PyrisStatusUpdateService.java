@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisPointOutActionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisPointOutCommandDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
@@ -85,39 +85,55 @@ public class PyrisStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var enrichedStatusUpdate = enrichPointOutActionWithUnitName(statusUpdate);
+        var enrichedStatusUpdate = enrichCommand(statusUpdate);
         var updatedJob = irisChatSessionService.handleStatusUpdate(job, enrichedStatusUpdate);
 
         removeJobIfTerminatedElseUpdate(enrichedStatusUpdate.stages(), updatedJob);
     }
 
     /**
-     * Ensures a point-out navigation marker carries the lecture unit's display name. Pyris may already provide it; if it does not, the name is resolved authoritatively from the
-     * database by lecture unit id. Returns the original status update unchanged when there is no point-out action or no name can be resolved.
+     * Enriches the command carried by a status update with data that only Artemis can resolve authoritatively (e.g. display names looked up from the database). Returns the
+     * original status update unchanged when there is no command or nothing to enrich for its type.
      *
      * @param statusUpdate the incoming status update
-     * @return the status update with a named point-out action, or the original if nothing to enrich
+     * @return the status update with an enriched command, or the original if nothing to enrich
      */
-    private PyrisChatStatusUpdateDTO enrichPointOutActionWithUnitName(PyrisChatStatusUpdateDTO statusUpdate) {
-        var action = statusUpdate.pointOutAction();
-        if (action == null || action.lectureUnitId() == null || (action.lectureUnitName() != null && !action.lectureUnitName().isBlank())) {
+    private PyrisChatStatusUpdateDTO enrichCommand(PyrisChatStatusUpdateDTO statusUpdate) {
+        var enrichedCommand = switch (statusUpdate.command()) {
+            case PyrisPointOutCommandDTO pointOut -> enrichPointOutWithUnitName(pointOut);
+            case null -> null;
+        };
+        if (enrichedCommand == statusUpdate.command()) {
             return statusUpdate;
+        }
+        return new PyrisChatStatusUpdateDTO(statusUpdate.result(), statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
+                statusUpdate.accessedMemories(), statusUpdate.createdMemories(), enrichedCommand);
+    }
+
+    /**
+     * Ensures a point-out navigation marker carries the lecture unit's display name. Pyris may already provide it; if it does not, the name is resolved authoritatively from the
+     * database by lecture unit id. Returns the original command unchanged when its id is missing, a name is already present, or no name can be resolved.
+     *
+     * @param pointOut the point-out command to enrich
+     * @return a point-out command with a resolved name, or the original if nothing to enrich
+     */
+    private PyrisPointOutCommandDTO enrichPointOutWithUnitName(PyrisPointOutCommandDTO pointOut) {
+        if (pointOut.lectureUnitId() == null || (pointOut.lectureUnitName() != null && !pointOut.lectureUnitName().isBlank())) {
+            return pointOut;
         }
         String name = lectureUnitRepositoryApi.flatMap(api -> {
             try {
-                return Optional.ofNullable(api.findByIdElseThrow(action.lectureUnitId()).getName());
+                return Optional.ofNullable(api.findByIdElseThrow(pointOut.lectureUnitId()).getName());
             }
             catch (Exception e) {
-                log.warn("Could not resolve lecture unit name for point-out marker (unitId={})", action.lectureUnitId());
+                log.warn("Could not resolve lecture unit name for point-out marker (unitId={})", pointOut.lectureUnitId());
                 return Optional.<String>empty();
             }
         }).orElse(null);
         if (name == null || name.isBlank()) {
-            return statusUpdate;
+            return pointOut;
         }
-        var enrichedAction = new PyrisPointOutActionDTO(action.lectureUnitId(), action.page(), action.timestamp(), name);
-        return new PyrisChatStatusUpdateDTO(statusUpdate.result(), statusUpdate.stages(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
-                statusUpdate.accessedMemories(), statusUpdate.createdMemories(), enrichedAction);
+        return new PyrisPointOutCommandDTO(pointOut.lectureUnitId(), pointOut.page(), pointOut.timestamp(), name);
     }
 
     /**

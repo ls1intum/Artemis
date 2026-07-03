@@ -70,7 +70,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisPointOutActionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisPointOutCommandDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
@@ -239,7 +239,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         IrisChatSession session = createSessionForUser(IrisChatMode.LECTURE_CHAT, "student1");
 
         mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatusWithPointOut(dto.settings().authenticationToken(), "Take a look at the slide I opened.",
-                dto.initialStages(), new PyrisPointOutActionDTO(42L, 3, null, "Sorting Algorithms"))));
+                dto.initialStages(), new PyrisPointOutCommandDTO(42L, 3, null, "Sorting Algorithms"))));
 
         request.postWithoutResponseBody(messagesUrl(session), IrisMessageFactory.createIrisMessageForSessionWithContent(session), HttpStatus.CREATED);
 
@@ -280,7 +280,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         AtomicReference<PyrisChatPipelineExecutionDTO> capturedFollowUpDto = new AtomicReference<>();
         // Turn 1: Iris points out a slide -> persists a COMMAND marker plus the LLM answer (3 messages total).
         mockChatResponse(dto -> assertThatNoException().isThrownBy(() -> sendStatusWithPointOut(dto.settings().authenticationToken(), "Look at the slide.", dto.initialStages(),
-                new PyrisPointOutActionDTO(42L, 1, null, "Sorting Algorithms"))));
+                new PyrisPointOutCommandDTO(42L, 1, null, "Sorting Algorithms"))));
         // Turn 2: capture the DTO forwarded to Pyris; its chat history must not contain the COMMAND marker (Pyris has no such role).
         mockChatResponse(dto -> {
             capturedFollowUpDto.set(dto);
@@ -1378,10 +1378,10 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
                 new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, suggestions, null, null, null, null), HttpStatus.OK, headers);
     }
 
-    private void sendStatusWithPointOut(String jobId, String result, List<PyrisStageDTO> stages, PyrisPointOutActionDTO pointOutAction) throws Exception {
+    private void sendStatusWithPointOut(String jobId, String result, List<PyrisStageDTO> stages, PyrisPointOutCommandDTO pointOutCommand) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
         request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, stages, null, null, null, null, null, pointOutAction), HttpStatus.OK, headers);
+                new PyrisChatStatusUpdateDTO(result, stages, null, null, null, null, null, pointOutCommand), HttpStatus.OK, headers);
     }
 
     private static String messagesUrl(IrisChatSession session) {
