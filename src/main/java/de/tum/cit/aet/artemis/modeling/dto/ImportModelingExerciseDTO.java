@@ -61,8 +61,13 @@ public record ImportModelingExerciseDTO(Long id, String title, String channelNam
                 ? PlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
                 : null;
 
-        return new ImportModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
-                exercise.getCategories(), exercise.getDifficulty(), exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
+        // categories is a LAZY @ElementCollection; copy it (guarded) so the DTO never holds the live Hibernate persistent
+        // set (a DTO toString via LoggingAspect would otherwise trigger a LazyInitializationException on Exercise.categories).
+        Set<String> exerciseCategories = exercise.getCategories();
+        Set<String> categories = exerciseCategories != null && Hibernate.isInitialized(exerciseCategories) ? Set.copyOf(exerciseCategories) : null;
+
+        return new ImportModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(), categories,
+                exercise.getDifficulty(), exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
                 exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getDiagramType(),

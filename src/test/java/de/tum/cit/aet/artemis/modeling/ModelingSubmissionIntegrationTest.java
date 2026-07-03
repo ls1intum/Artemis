@@ -9,8 +9,10 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -872,6 +874,75 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         // The masked editor payload maps exerciseGroup WITHOUT exam for exam exercises
         assertThat(submission.participation().exercise().exerciseGroup()).as("exercise group is present").isNotNull();
         assertThat(submission.participation().exercise().exerciseGroup().exam()).as("The exam object should not be sent to students").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getModelingResult_examExerciseWithPublishedResult_masksExamAndReturnsResult() throws Exception {
+        // Regression pin for the ExamResults student-editor 500 (masked-exam course resolution): a real (non-test) exam
+        // whose results are already published, so the student is allowed to view the assessed result.
+        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setEndDate(ZonedDateTime.now().minusHours(2));
+        exam.setVisibleDate(ZonedDateTime.now().minusHours(4));
+        exam.setPublishResultsDate(ZonedDateTime.now().minusHours(1));
+
+        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+        ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ActivityDiagram, exerciseGroup);
+        exerciseGroup.addExercise(modelingExercise);
+        exerciseGroupRepository.save(exerciseGroup);
+        modelingExercise = exerciseRepository.save(modelingExercise);
+        examRepository.save(exam);
+
+        // A submitted submission with a rated, completed, assessor-attached result: the endpoint keeps the result and maps
+        // it, so the response walks result -> submission -> participation -> (exam) exercise. That path used to NPE because
+        // the endpoint masks exerciseGroup.exam for exam exercises while ParticipationExerciseDTO resolved the course via
+        // the (now missing) exam.
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        ModelingSubmission modelingSubmission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        modelingSubmission.setParticipation(participation);
+        modelingSubmission = modelingSubmissionRepo.save(modelingSubmission);
+        participation.addSubmission(modelingSubmission);
+        studentParticipationRepository.save(participation);
+
+        User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        Result result = createResult(AssessmentType.MANUAL, modelingSubmission, participation, assessor);
+        result.setRated(true);
+        resultRepository.save(result);
+
+        ModelingSubmissionResponseDTO submission = request.get("/api/modeling/participations/" + participation.getId() + "/latest-modeling-submission", HttpStatus.OK,
+                ModelingSubmissionResponseDTO.class);
+
+        assertThat(submission).isNotNull();
+        assertThat(submission.id()).isEqualTo(modelingSubmission.getId());
+        // The masked editor payload carries the exercise group but strips the exam for exam exercises.
+        assertThat(submission.participation().exercise().exerciseGroup()).as("exercise group is present").isNotNull();
+        assertThat(submission.participation().exercise().exerciseGroup().exam()).as("exam is stripped for students").isNull();
+        // The published exam result is visible and maps without NPE (the masked-exam course-resolution fix).
+        assertThat(submission.results()).as("the assessed result is returned after publication").isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void getModelSubmissionForModelingEditor_uninitializedCategories_mapsSafely() throws Exception {
+        // The exercise has categories in the DB, but the editor fetch path leaves the LAZY @ElementCollection uninitialized.
+        // The DTO factory must copy (guarded) rather than embed the live persistent set, so the response maps to 200 and the
+        // categories are simply omitted instead of leaking a live Hibernate collection into the response record.
+        classExercise.setCategories(new HashSet<>(Set.of("uml", "diagram")));
+        exerciseRepository.save(classExercise);
+
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        submission.setParticipation(participation);
+        submission = modelingSubmissionRepo.save(submission);
+        participation.addSubmission(submission);
+        studentParticipationRepository.save(participation);
+
+        ModelingSubmissionResponseDTO returnedSubmission = request.get("/api/modeling/participations/" + participation.getId() + "/latest-modeling-submission", HttpStatus.OK,
+                ModelingSubmissionResponseDTO.class);
+
+        assertThat(returnedSubmission).isNotNull();
+        assertThat(returnedSubmission.participation().exercise()).as("exercise maps without a live categories collection").isNotNull();
     }
 
     @Test

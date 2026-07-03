@@ -78,9 +78,14 @@ public record ModelingExerciseListItemDTO(Long id, String title, String shortNam
         // the cross-course import search; resolves the course for both course and exam exercises.
         CourseRefDTO course = CourseRefDTO.from(exercise.getCourseViaExerciseGroupOrCourseMember());
 
+        // categories is a LAZY @ElementCollection; copy it (guarded) so the DTO never holds the live Hibernate persistent
+        // set (a DTO toString via LoggingAspect would otherwise trigger a LazyInitializationException on Exercise.categories).
+        Set<String> exerciseCategories = exercise.getCategories();
+        Set<String> categories = exerciseCategories != null && Hibernate.isInitialized(exerciseCategories) ? Set.copyOf(exerciseCategories) : null;
+
         return new ModelingExerciseListItemDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(),
                 exercise.getDiagramType(), exercise.getReleaseDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getMaxPoints(), exercise.getBonusPoints(),
-                exercise.getIncludedInOverallScore(), exercise.getPresentationScoreEnabled(), exercise.getMode() == ExerciseMode.TEAM, exercise.getCategories(),
-                gradingCriterionDTOs, courseId, course, examId, examTitle, exerciseGroup);
+                exercise.getIncludedInOverallScore(), exercise.getPresentationScoreEnabled(), exercise.getMode() == ExerciseMode.TEAM, categories, gradingCriterionDTOs, courseId,
+                course, examId, examTitle, exerciseGroup);
     }
 }

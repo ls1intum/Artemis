@@ -117,13 +117,18 @@ public record ModelingExerciseResponseDTO(Long id, String title, String shortNam
                 ? exercise.getExampleSubmissions().stream().map(ModelingExampleSubmissionDTO::of).collect(Collectors.toSet())
                 : null;
 
+        // categories is a LAZY @ElementCollection; copy it (guarded) so the DTO never holds the live Hibernate persistent
+        // set (a DTO toString via LoggingAspect would otherwise trigger a LazyInitializationException on Exercise.categories).
+        Set<String> exerciseCategories = exercise.getCategories();
+        Set<String> categories = exerciseCategories != null && Hibernate.isInitialized(exerciseCategories) ? Set.copyOf(exerciseCategories) : null;
+
         return new ModelingExerciseResponseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(),
                 exercise.getDifficulty(), exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
                 exercise.getSecondCorrectionEnabled(), exercise.getPresentationScoreEnabled(), exercise.getProblemStatement(), exercise.getDiagramType(),
-                exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), exercise.getGradingInstructions(), exercise.getCategories(),
-                exercise.getChannelName(), exercise.getFeedbackSuggestionModule(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(),
-                courseId, courseAccuracyOfScores, course, exerciseGroupId, examId, examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs,
-                plagiarismDetectionConfigDTO, exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup);
+                exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(), exercise.getGradingInstructions(), categories, exercise.getChannelName(),
+                exercise.getFeedbackSuggestionModule(), exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), courseId, courseAccuracyOfScores,
+                course, exerciseGroupId, examId, examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
+                exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup);
     }
 }
