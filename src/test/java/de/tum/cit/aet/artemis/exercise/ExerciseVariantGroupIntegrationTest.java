@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -48,7 +48,7 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
     private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
+    private ExerciseTestRepository exerciseRepository;
 
     private Course course;
 

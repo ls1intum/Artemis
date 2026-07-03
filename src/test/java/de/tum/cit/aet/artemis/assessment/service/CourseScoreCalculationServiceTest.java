@@ -39,14 +39,18 @@ import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
@@ -391,6 +395,58 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // The group contributes min(5 + 5, 5) = 5, plus the standalone 3, for 8 instead of 13.
         assertThat(reachablePoints).isEqualTo(8.0);
+    }
+
+    @Test
+    void variantGroupPointsAreCappedInParticipationBasedScore() {
+        // The participation-based path reads the cap straight off each exercise's variant group entity (rather than from a
+        // pre-built DTO), so it needs its own coverage next to the DTO-based calculateCourseScoreForStudent tests above.
+        Course variantCourse = new Course();
+        variantCourse.setId(1L);
+        variantCourse.setAccuracyOfScores(1);
+
+        // Two interchangeable text variants worth 5 points each, in a group capped at 5 points, both already past due.
+        ExerciseVariantGroup group = new ExerciseVariantGroup();
+        group.setId(200L);
+        group.setMaxPoints(5.0);
+        TextExercise variant1 = variantExercise(101L, variantCourse, group);
+        TextExercise variant2 = variantExercise(102L, variantCourse, group);
+
+        // The student earned full marks on both variants: 5 + 5 = 10 points before the group cap is applied.
+        StudentParticipation participation1 = ratedParticipation(variant1, 100.0);
+        StudentParticipation participation2 = ratedParticipation(variant2, 100.0);
+
+        StudentScoresDTO scores = courseScoreCalculationService.calculateCourseScoreForStudentParticipations(variantCourse, null, 1L, List.of(participation1, participation2),
+                new MaxAndReachablePointsDTO(5.0, 5.0, 0.0), List.of());
+
+        // The credited score caps the group's combined contribution at 5, while the total score keeps the uncapped 10.
+        assertThat(scores.absoluteScore()).isEqualTo(5.0);
+        assertThat(scores.absoluteScoreTotal()).isEqualTo(10.0);
+    }
+
+    /** Builds an in-memory text exercise worth 5 points that belongs to the given (capped) variant group and is already due. */
+    private static TextExercise variantExercise(long id, Course course, ExerciseVariantGroup group) {
+        TextExercise exercise = new TextExercise();
+        exercise.setId(id);
+        exercise.setCourse(course);
+        exercise.setMaxPoints(5.0);
+        exercise.setBonusPoints(0.0);
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        exercise.setExerciseVariantGroup(group);
+        return exercise;
+    }
+
+    /** Builds an in-memory participation for the given exercise carrying a single rated result with the given score. */
+    private static StudentParticipation ratedParticipation(TextExercise exercise, double score) {
+        StudentParticipation participation = new StudentParticipation();
+        participation.setExercise(exercise);
+        TextSubmission submission = new TextSubmission();
+        Result result = ParticipationFactory.generateResult(true, score);
+        result.setCompletionDate(ZonedDateTime.now().minusHours(1));
+        submission.addResult(result);
+        participation.addSubmission(submission);
+        return participation;
     }
 
     @Test
