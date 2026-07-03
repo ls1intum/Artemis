@@ -8,9 +8,12 @@ import static de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -49,6 +52,30 @@ public class AuthorityService {
      * @return a set of authorities based on the user's course roles
      */
     public Set<Authority> buildAuthorities(User user) {
+        Long userId = user.getId();
+        boolean isInstructor = userId != null && userCourseRoleRepository.existsByUser_IdAndRoleIn(userId, List.of(CourseRole.INSTRUCTOR));
+        boolean isEditor = userId != null && userCourseRoleRepository.existsByUser_IdAndRoleIn(userId, List.of(CourseRole.EDITOR));
+        boolean isTeachingAssistant = userId != null && userCourseRoleRepository.existsByUser_IdAndRoleIn(userId, List.of(CourseRole.TEACHING_ASSISTANT));
+        return buildAuthorities(user, isInstructor, isEditor, isTeachingAssistant);
+    }
+
+    /**
+     * Batch variant of {@link #buildAuthorities(User)} for bulk operations (e.g. registering many tutors, editors or
+     * instructors at once via CSV import). Issues 3 queries in total instead of 3 per user.
+     *
+     * @param users the users whose authorities should be rebuilt; each must already have {@code authorities} initialized
+     * @return a map from user id to the rebuilt authority set
+     */
+    public Map<Long, Set<Authority>> buildAuthoritiesForUsers(Collection<User> users) {
+        Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+        Set<Long> instructorIds = userCourseRoleRepository.findUserIdsByUser_IdInAndRole(userIds, CourseRole.INSTRUCTOR);
+        Set<Long> editorIds = userCourseRoleRepository.findUserIdsByUser_IdInAndRole(userIds, CourseRole.EDITOR);
+        Set<Long> teachingAssistantIds = userCourseRoleRepository.findUserIdsByUser_IdInAndRole(userIds, CourseRole.TEACHING_ASSISTANT);
+        return users.stream().collect(Collectors.toMap(User::getId,
+                user -> buildAuthorities(user, instructorIds.contains(user.getId()), editorIds.contains(user.getId()), teachingAssistantIds.contains(user.getId()))));
+    }
+
+    private Set<Authority> buildAuthorities(User user, boolean isInstructor, boolean isEditor, boolean isTeachingAssistant) {
         Set<Authority> authorities = new HashSet<>();
 
         // Users who already have admin access, keep admin access.
@@ -58,25 +85,15 @@ public class AuthorityService {
         if (user.getAuthorities() != null && user.getAuthorities().contains(ADMIN_AUTHORITY)) {
             authorities.add(ADMIN_AUTHORITY);
         }
-
-        Long userId = user.getId();
-        if (userId != null) {
-            // Check if user is an instructor in any course
-            if (userCourseRoleRepository.existsByUser_IdAndRoleIn(userId, List.of(CourseRole.INSTRUCTOR))) {
-                authorities.add(new Authority(INSTRUCTOR.getAuthority()));
-            }
-
-            // Check if user is an editor in any course
-            if (userCourseRoleRepository.existsByUser_IdAndRoleIn(userId, List.of(CourseRole.EDITOR))) {
-                authorities.add(new Authority(EDITOR.getAuthority()));
-            }
-
-            // Check if user is a tutor in any course
-            if (userCourseRoleRepository.existsByUser_IdAndRoleIn(userId, List.of(CourseRole.TEACHING_ASSISTANT))) {
-                authorities.add(new Authority(TEACHING_ASSISTANT.getAuthority()));
-            }
+        if (isInstructor) {
+            authorities.add(new Authority(INSTRUCTOR.getAuthority()));
         }
-
+        if (isEditor) {
+            authorities.add(new Authority(EDITOR.getAuthority()));
+        }
+        if (isTeachingAssistant) {
+            authorities.add(new Authority(TEACHING_ASSISTANT.getAuthority()));
+        }
         authorities.add(new Authority(STUDENT.getAuthority()));
         return authorities;
     }

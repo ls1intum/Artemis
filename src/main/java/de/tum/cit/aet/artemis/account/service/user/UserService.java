@@ -20,9 +20,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
@@ -607,6 +609,40 @@ public class UserService {
     }
 
     /**
+     * Batch variant of {@link #addUserToCourse(User, Course, CourseRole)} for bulk enrollment (CSV import, bulk exam
+     * registration). Replaces one existsBy query + insert (+ authority rebuild) per user with a single batch
+     * existence check, a single batch insert, and — if {@code role != STUDENT} — a single batch authority rebuild.
+     *
+     * @param users  the users to add; users who already hold the role in the course are skipped
+     * @param course the course to add the users to
+     * @param role   the role the users should have in the course
+     */
+    public void addUsersToCourse(List<User> users, Course course, CourseRole role) {
+        if (users.isEmpty()) {
+            return;
+        }
+        log.debug("Add {} users to course {} with role {}", users.size(), course.getId(), role);
+
+        Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
+        Set<Long> alreadyEnrolledIds = userCourseRoleRepository.findUserIdsByCourse_IdAndRoleAndUser_IdIn(course.getId(), role, userIds);
+        List<User> newlyEnrolled = users.stream().filter(user -> !alreadyEnrolledIds.contains(user.getId())).toList();
+        if (newlyEnrolled.isEmpty()) {
+            return;
+        }
+        userCourseRoleRepository.saveAll(newlyEnrolled.stream().map(user -> new UserCourseRole(user, course, role)).toList());
+
+        // ROLE_STUDENT is always granted, so adding a STUDENT role never changes the global authorities; only a newly
+        // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
+        if (role != CourseRole.STUDENT) {
+            Set<String> logins = newlyEnrolled.stream().map(User::getLogin).collect(Collectors.toSet());
+            List<User> usersWithAuthorities = new ArrayList<>(userRepository.findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(logins));
+            Map<Long, Set<Authority>> rebuiltAuthorities = authorityService.buildAuthoritiesForUsers(usersWithAuthorities);
+            usersWithAuthorities.forEach(user -> user.setAuthorities(rebuiltAuthorities.get(user.getId())));
+            userRepository.saveAll(usersWithAuthorities);
+        }
+    }
+
+    /**
      * Remove the user from a course role.
      *
      * @param user   the user to remove
@@ -663,27 +699,6 @@ public class UserService {
         catch (Exception ex) {
             log.warn("Error while trying to find user with registration number {}, login {}, email {}", registrationNumber, login, email, ex);
         }
-        return Optional.empty();
-    }
-
-    /**
-     * This method first tries to find the user and then enrolls them in the course with the given role.
-     *
-     * @param registrationNumber the registration number of the user
-     * @param login              the login of the user
-     * @param email              the email of the user
-     * @param course             the course the user should be added to
-     * @param role               the role the user should have in the course
-     * @return the found user, otherwise returns an empty optional
-     */
-    public Optional<User> findUserAndAddToCourse(@Nullable String registrationNumber, @Nullable String login, @Nullable String email, Course course, CourseRole role) {
-        var optionalUser = findUser(registrationNumber, login, email);
-
-        if (optionalUser.isPresent()) {
-            this.addUserToCourse(optionalUser.get(), course, role);
-            return optionalUser;
-        }
-
         return Optional.empty();
     }
 

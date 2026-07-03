@@ -134,16 +134,26 @@ public class CourseAccessService {
         }
         CourseRole courseRole = CourseRole.fromRole(Role.fromString(courseRoleSlug));
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
+        List<User> foundUsers = new ArrayList<>();
         for (var studentDto : studentDTOs) {
-            var optionalStudent = userService.findUserAndAddToCourse(studentDto.registrationNumber(), studentDto.login(), studentDto.email(), course, courseRole);
+            var optionalStudent = userService.findUser(studentDto.registrationNumber(), studentDto.login(), studentDto.email());
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }
-            else if (courseRole == CourseRole.STUDENT && course.getLearningPathsEnabled()) {
-                final Course finalCourse = course;
-                learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(finalCourse, optionalStudent.get()));
-                learningPathApi.ifPresent(api -> api.generateLearningPathForUser(finalCourse, optionalStudent.get()));
+            else {
+                foundUsers.add(optionalStudent.get());
             }
+        }
+
+        // Batch-enroll all found users in a single round trip instead of one existsBy query + insert per user.
+        userService.addUsersToCourse(foundUsers, course, courseRole);
+
+        if (courseRole == CourseRole.STUDENT && course.getLearningPathsEnabled()) {
+            final Course finalCourse = course;
+            foundUsers.forEach(user -> {
+                learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfile(finalCourse, user));
+                learningPathApi.ifPresent(api -> api.generateLearningPathForUser(finalCourse, user));
+            });
         }
 
         return notFoundStudentsDTOs;

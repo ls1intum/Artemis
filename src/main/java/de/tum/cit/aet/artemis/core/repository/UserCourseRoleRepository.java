@@ -37,6 +37,30 @@ public interface UserCourseRoleRepository extends ArtemisJpaRepository<UserCours
     @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role = :role)")
     boolean existsByUser_IdAndCourse_IdAndRole(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("role") CourseRole role);
 
+    /**
+     * Batch variant of {@link #existsByUser_IdAndCourse_IdAndRole}: returns which of the given users already hold the
+     * role in the course in a single query, so bulk enrollment can skip the already-enrolled subset without one
+     * existence check per user.
+     *
+     * @param courseId the id of the course
+     * @param role     the role to check for
+     * @param userIds  the candidate user ids
+     * @return the subset of userIds that already hold the role in the course
+     */
+    @Query("SELECT ucr.user.id FROM UserCourseRole ucr WHERE ucr.course.id = :courseId AND ucr.role = :role AND ucr.user.id IN :userIds")
+    Set<Long> findUserIdsByCourse_IdAndRoleAndUser_IdIn(@Param("courseId") Long courseId, @Param("role") CourseRole role, @Param("userIds") Collection<Long> userIds);
+
+    /**
+     * Returns which of the given users hold the given role in any course, in a single query. Used to batch-rebuild
+     * global authorities for many users at once instead of one query per user.
+     *
+     * @param userIds the candidate user ids
+     * @param role    the role to check for
+     * @return the subset of userIds that hold the role in at least one course
+     */
+    @Query("SELECT DISTINCT ucr.user.id FROM UserCourseRole ucr WHERE ucr.user.id IN :userIds AND ucr.role = :role")
+    Set<Long> findUserIdsByUser_IdInAndRole(@Param("userIds") Collection<Long> userIds, @Param("role") CourseRole role);
+
     @Query("SELECT EXISTS (FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN :roles)")
     boolean existsByUser_IdAndCourse_IdAndRoleIn(@Param("userId") Long userId, @Param("courseId") Long courseId, @Param("roles") Collection<CourseRole> roles);
 

@@ -124,41 +124,52 @@ public class ExamRegistrationService {
 
         List<ExamUserDTO> notFoundStudentsDTOs = new ArrayList<>();
         List<String> usersAddedToExam = new ArrayList<>();
+
+        record ResolvedStudent(ExamUserDTO dto, User student) {
+        }
+        List<ResolvedStudent> resolvedStudents = new ArrayList<>();
         for (var examUserDto : examUserDTOs) {
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email(), course,
-                    CourseRole.STUDENT);
+            Optional<User> optionalStudent = userService.findUser(examUserDto.registrationNumber(), examUserDto.login(), examUserDto.email());
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(examUserDto);
             }
             else {
-                User student = optionalStudent.get();
-                Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+                resolvedStudents.add(new ResolvedStudent(examUserDto, optionalStudent.get()));
+            }
+        }
 
-                if ((examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) && !instructorIds.contains(student.getId())
-                        && !authorizationCheckService.isAdmin(student)) {
-                    ExamUser registeredExamUser = new ExamUser();
-                    registeredExamUser.setUser(optionalStudent.get());
-                    registeredExamUser.setExam(exam);
+        // Batch-enroll all resolved students in the course in a single round trip instead of one existsBy query + insert per student.
+        userService.addUsersToCourse(resolvedStudents.stream().map(ResolvedStudent::student).toList(), course, CourseRole.STUDENT);
 
-                    if (StringUtils.hasText(examUserDto.room())) {
-                        registeredExamUser.setPlannedRoom(examUserDto.room());
-                    }
-                    if (StringUtils.hasText(examUserDto.seat())) {
-                        registeredExamUser.setPlannedSeat(examUserDto.seat());
-                    }
-                    registeredExamUser = examUserRepository.save(registeredExamUser);
-                    exam.addExamUser(registeredExamUser);
-                    usersAddedToExam.add(registeredExamUser.getUser().getLogin());
+        for (var resolved : resolvedStudents) {
+            var examUserDto = resolved.dto();
+            User student = resolved.student();
+            Optional<ExamUser> examUserOptional = examUserRepository.findByExamIdAndUserId(exam.getId(), student.getId());
+
+            if ((examUserOptional.isEmpty() || !exam.getExamUsers().contains(examUserOptional.get())) && !instructorIds.contains(student.getId())
+                    && !authorizationCheckService.isAdmin(student)) {
+                ExamUser registeredExamUser = new ExamUser();
+                registeredExamUser.setUser(student);
+                registeredExamUser.setExam(exam);
+
+                if (StringUtils.hasText(examUserDto.room())) {
+                    registeredExamUser.setPlannedRoom(examUserDto.room());
                 }
-
-                if (examUserOptional.isPresent() && exam.getExamUsers().contains(examUserOptional.get())) {
-                    ExamUser examUser = examUserOptional.get();
-                    examUser.setPlannedRoom(examUserDto.room());
-                    examUser.setPlannedSeat(examUserDto.seat());
-                    examUser = examUserRepository.save(examUser);
-                    exam.addExamUser(examUser);
-                    usersAddedToExam.add(examUser.getUser().getLogin());
+                if (StringUtils.hasText(examUserDto.seat())) {
+                    registeredExamUser.setPlannedSeat(examUserDto.seat());
                 }
+                registeredExamUser = examUserRepository.save(registeredExamUser);
+                exam.addExamUser(registeredExamUser);
+                usersAddedToExam.add(registeredExamUser.getUser().getLogin());
+            }
+
+            if (examUserOptional.isPresent() && exam.getExamUsers().contains(examUserOptional.get())) {
+                ExamUser examUser = examUserOptional.get();
+                examUser.setPlannedRoom(examUserDto.room());
+                examUser.setPlannedSeat(examUserDto.seat());
+                examUser = examUserRepository.save(examUser);
+                exam.addExamUser(examUser);
+                usersAddedToExam.add(examUser.getUser().getLogin());
             }
         }
         examRepository.save(exam);
