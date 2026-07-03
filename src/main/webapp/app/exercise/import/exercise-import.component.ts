@@ -139,6 +139,6 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     }
 
     asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
-        return exercise as ProgrammingExercise;
+        return exercise;
     }
 }

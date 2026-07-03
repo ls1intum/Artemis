@@ -257,9 +257,9 @@ function convertShortAnswerQuestionToUpdateDTO(question: ShortAnswerQuestion): S
 function convertQuizQuestionToUpdateDTO(question: QuizQuestion): QuizQuestionUpdateDTO {
     switch (question.type) {
         case QuizQuestionType.MULTIPLE_CHOICE:
-            return convertMultipleChoiceQuestionToUpdateDTO(question as MultipleChoiceQuestion);
+            return convertMultipleChoiceQuestionToUpdateDTO(question);
         case QuizQuestionType.DRAG_AND_DROP:
-            return convertDragAndDropQuestionToUpdateDTO(question as DragAndDropQuestion);
+            return convertDragAndDropQuestionToUpdateDTO(question);
         case QuizQuestionType.SHORT_ANSWER:
             return convertShortAnswerQuestionToUpdateDTO(question as ShortAnswerQuestion);
         default:

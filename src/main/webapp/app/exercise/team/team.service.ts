@@ -276,13 +276,13 @@ export class TeamService implements ITeamService, OnDestroy {
     exportTeams(teams: Team[]) {
         // Make list of teams which we need to export,
         const exportedTeams: StudentWithTeam[] = [];
-        teams!.forEach((team) => {
+        teams.forEach((team) => {
             if (team.students) {
                 team.students.forEach((student) => {
-                    const exportStudent = {
+                    const exportStudent: StudentWithTeam = {
                         teamName: team.name ?? '',
                         username: student.login ?? '',
-                    } as StudentWithTeam;
+                    };
                     if (student.firstName) {
                         exportStudent.firstName = student.firstName;
                     }

@@ -4,7 +4,7 @@ import { AttachmentService } from 'app/lecture/manage/services/attachment.servic
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { onError } from 'app/foundation/util/global.utils';
+import { getErrorMessage, onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -28,11 +28,36 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import * as PDFJS from 'pdfjs-dist';
 
-interface PdfOperation {
-    type: 'MERGE' | 'DELETE' | 'HIDE' | 'SHOW' | 'REORDER';
+interface PdfOperationBase {
     timestamp: dayjs.Dayjs;
-    data: any;
 }
+
+interface MergePdfOperation extends PdfOperationBase {
+    type: 'MERGE';
+    data: { sourceId: string; pageCount: number };
+}
+
+interface DeletePdfOperation extends PdfOperationBase {
+    type: 'DELETE';
+    data: { slideIds: string[] };
+}
+
+interface HidePdfOperation extends PdfOperationBase {
+    type: 'HIDE';
+    data: { pages: HiddenPage[] };
+}
+
+interface ShowPdfOperation extends PdfOperationBase {
+    type: 'SHOW';
+    data: { slideIds: string[] };
+}
+
+interface ReorderPdfOperation extends PdfOperationBase {
+    type: 'REORDER';
+    data: { pageOrder: { slideId: string; order: number }[] };
+}
+
+type PdfOperation = MergePdfOperation | DeletePdfOperation | HidePdfOperation | ShowPdfOperation | ReorderPdfOperation;
 
 export interface PDFSource {
     id: string;
@@ -371,8 +396,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @returns `true` if the initial and current hidden pages differ, indicating a change; otherwise, `false`.
      */
     hiddenPagesChanged() {
-        const initial = this.initialHiddenPages()!;
-        const current = this.hiddenPages()!;
+        const initial = this.initialHiddenPages();
+        const current = this.hiddenPages();
         return JSON.stringify(initial) !== JSON.stringify(current);
     }
 
@@ -631,7 +656,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             }
         } catch (error) {
             this.isSaving.set(false);
-            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+            const message = getErrorMessage(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: message });
         }
     }
 
@@ -663,7 +689,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     private async updateAttachmentVideoUnit(instructorPdfFile: File, hiddenPages: HiddenPage[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment!);
+            this.attachmentToBeEdited.set(this.attachmentVideoUnit()!.attachment);
             this.attachmentToBeEdited()!.uploadDate = dayjs();
 
             const formData = new FormData();
@@ -852,7 +878,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isFileChanged.set(true);
             this.selectedPages.set(new Set());
         } catch (error) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
+            const message = getErrorMessage(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: message });
         } finally {
             this.isPdfLoading.set(false);
             this.dialogErrorSource.next('');
@@ -881,13 +908,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             await this.loadPdf(objectUrl, newPdfBytes, mergeSourceId, undefined, true);
             this.selectedPages.set(new Set());
         } catch (error) {
-            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
+            const message = getErrorMessage(error);
+            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: message });
             if (objectUrl) {
                 URL.revokeObjectURL(objectUrl);
             }
         } finally {
             this.isPdfLoading.set(false);
-            this.fileInput()!.nativeElement.value = '';
+            this.fileInput().nativeElement.value = '';
         }
     }
 

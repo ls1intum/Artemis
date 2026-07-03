@@ -9,6 +9,7 @@ import { Subscription } from 'rxjs';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
+import { parseJson } from 'app/foundation/util/json.util';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
@@ -79,7 +80,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             this.gradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise().gradingInstructions);
             this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.modelingExercise().exampleSolutionExplanation);
             if (this.modelingExercise().exampleSolutionModel && this.modelingExercise().exampleSolutionModel !== '') {
-                this.exampleSolutionUML = importDiagram(JSON.parse(this.modelingExercise().exampleSolutionModel!));
+                this.exampleSolutionUML = importDiagram(parseJson(this.modelingExercise().exampleSolutionModel!));
             }
             this.detailOverviewSections.set(this.getExerciseDetailSections());
         });

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { parseJson } from 'app/foundation/util/json.util';
 
 /**
  * The purpose of this service is to transform the legacy build plan into the new format so it can still be edited
@@ -15,7 +16,7 @@ export class LegacyBuildPlanConverterService {
 
         if (buildPlanConfiguration?.trim()) {
             try {
-                const parsedJson = JSON.parse(buildPlanConfiguration);
+                const parsedJson = parseJson(buildPlanConfiguration);
                 if (this.isObject(parsedJson)) {
                     parsed = parsedJson;
                 }

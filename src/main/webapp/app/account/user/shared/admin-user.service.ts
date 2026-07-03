@@ -63,7 +63,7 @@ export class AdminUserService {
      * @param filter additional filter
      * @return Observable<HttpResponse<User[]>> with the list of users that match the query as body.
      */
-    query(req?: any, filter?: UserFilter): Observable<HttpResponse<User[]>> {
+    query(req?: Record<string, unknown>, filter?: UserFilter): Observable<HttpResponse<User[]>> {
         let options = createRequestOption(req);
         if (filter) {
             options = filter.adjustOptions(options);
