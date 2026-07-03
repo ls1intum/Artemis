@@ -435,7 +435,7 @@ export class MetisService implements OnDestroy {
                     // Only add reaction if not already there (can happen due to WebSocket update)
                     if (indexOfReaction === -1) {
                         cachedPost.reactions = cachedPost.reactions ?? [];
-                        cachedPost.reactions!.push(createdReaction);
+                        cachedPost.reactions.push(createdReaction);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
                         this.cachedPosts[indexToUpdate] = { ...cachedPost };
                         this.posts$.next(this.cachedPosts);
@@ -510,7 +510,7 @@ export class MetisService implements OnDestroy {
         if (conversation) {
             emptyPost.conversation = conversation;
         } else if (plagiarismCase) {
-            emptyPost.plagiarismCase = { id: plagiarismCase.id } as PlagiarismCase;
+            emptyPost.plagiarismCase = { id: plagiarismCase.id };
         }
         return emptyPost;
     }
@@ -653,7 +653,7 @@ export class MetisService implements OnDestroy {
     }
 
     public savePost(post: Posting) {
-        this.setIsSavedAndStatusOfPost(post, true, post.savedPostStatus as SavedPostStatus);
+        this.setIsSavedAndStatusOfPost(post, true, post.savedPostStatus);
         this.savedPostService.savePost(post).subscribe({
             next: () => {},
         });
@@ -661,7 +661,7 @@ export class MetisService implements OnDestroy {
     }
 
     public removeSavedPost(post: Posting) {
-        this.setIsSavedAndStatusOfPost(post, false, post.savedPostStatus as SavedPostStatus);
+        this.setIsSavedAndStatusOfPost(post, false, post.savedPostStatus);
         this.savedPostService.removeSavedPost(post).subscribe({
             next: () => {},
         });
@@ -764,7 +764,7 @@ export class MetisService implements OnDestroy {
                 if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
                     setTimeout(() => {
                         // We add a small timeout to avoid concurrency issues
-                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter!.conversationIds![0]).subscribe();
+                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds![0]).subscribe();
                     }, 1000);
                 }
 
@@ -951,7 +951,7 @@ export class MetisService implements OnDestroy {
 
                 // Map original posts to ForwardedMessage instances referencing the newly created post
                 const forwardedMessages: ForwardedMessage[] = originalPosts.map(
-                    (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id } as Post, undefined, newContent || ''),
+                    (post) => new ForwardedMessage(undefined, post.id, sourceType, { id: createdPostBody.id }, undefined, newContent || ''),
                 );
 
                 // Send a creation request for each ForwardedMessage

@@ -92,7 +92,7 @@ export class CourseNotificationSettingService implements OnDestroy {
             )
             .subscribe();
 
-        return subject.asObservable().pipe(map((value) => value as CourseNotificationSettingInfo | undefined));
+        return subject.asObservable().pipe(map((value) => value));
     }
 
     /**

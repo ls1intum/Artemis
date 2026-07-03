@@ -177,9 +177,9 @@ function convertShortAnswerQuestionToDTO(question: ShortAnswerQuestion): ShortAn
 export function convertQuizQuestionToDTO(question: QuizQuestion): QuizQuestionCreateDTO {
     switch (question.type) {
         case QuizQuestionType.MULTIPLE_CHOICE:
-            return convertMultipleChoiceQuestionToDTO(question as MultipleChoiceQuestion);
+            return convertMultipleChoiceQuestionToDTO(question);
         case QuizQuestionType.DRAG_AND_DROP:
-            return convertDragAndDropQuestionToDTO(question as DragAndDropQuestion);
+            return convertDragAndDropQuestionToDTO(question);
         case QuizQuestionType.SHORT_ANSWER:
             return convertShortAnswerQuestionToDTO(question as ShortAnswerQuestion);
         default:

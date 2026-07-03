@@ -24,8 +24,8 @@ export class QuizStatisticUtil {
         }
 
         // Otherwise, we are in the exam mode
-        const examId = quizExercise.exerciseGroup!.exam!.id!;
-        const groupId = quizExercise.exerciseGroup!.id!;
+        const examId = quizExercise.exerciseGroup.exam!.id!;
+        const groupId = quizExercise.exerciseGroup.id!;
         return `/course-management/${courseId}/exams/${examId}/exercise-groups/${groupId}/quiz-exercises/${quizExercise.id}`;
     }
 
