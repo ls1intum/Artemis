@@ -3,6 +3,7 @@
 }
 
 /* Fill the panel; the table's own scroll container absorbs horizontal overflow. */
+/* stylelint-disable-next-line selector-pseudo-element-no-unknown */
 :host ::ng-deep .p-datatable-table {
     width: 100%;
 }

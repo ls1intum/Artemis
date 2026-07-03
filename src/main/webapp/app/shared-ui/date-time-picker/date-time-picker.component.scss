@@ -21,8 +21,8 @@
     border-color: var(--warning) !important;
 }
 
-// Transparent click-catcher shown over a field whose value is governed by the variant group. It sits above the
-// disabled input so a click opens the group-edit dialog instead of focusing the (read-only) input.
+/* Transparent click-catcher shown over a field whose value is governed by the variant group. It sits above the
+   disabled input so a click opens the group-edit dialog instead of focusing the (read-only) input. */
 .date-lock-overlay {
     position: absolute;
     inset: 0;

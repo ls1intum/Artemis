@@ -30,7 +30,7 @@
         <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.createHint"></p>
         <div class="exercise-grid">
             @for (card of exerciseTypeCards(); track card.type) {
-                <button class="exercise-card {{ card.accentClass }}" (click)="navigateToCreate(card)" type="button">
+                <button class="exercise-card {{ card.accentClass }}" [attr.data-testid]="'create-' + card.type + '-exercise'" (click)="navigateToCreate(card)" type="button">
                     <div class="card-icon-wrapper">
                         <fa-icon [icon]="card.icon" />
                     </div>
@@ -61,7 +61,7 @@
         <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.importHint"></p>
         <div class="exercise-grid">
             @for (card of exerciseTypeCards(); track card.type) {
-                <button class="exercise-card {{ card.accentClass }}" (click)="startImport(card.type)" type="button">
+                <button class="exercise-card {{ card.accentClass }}" [attr.data-testid]="'import-' + card.type + '-exercise'" (click)="startImport(card.type)" type="button">
                     <div class="card-icon-wrapper">
                         <fa-icon [icon]="card.icon" />
                     </div>
